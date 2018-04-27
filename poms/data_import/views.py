@@ -1,5 +1,6 @@
 import io
 import csv
+import json
 from dateutil.parser import parse
 from django.db import IntegrityError
 from django.db.models.base import ModelBase
@@ -29,6 +30,8 @@ class DataImportViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        status = HTTP_201_CREATED
+        response_data = []
         self.perform_create(serializer)
         f = csv.DictReader(io.TextIOWrapper(request.data['files'].file))
         schema = DataImportSchema.objects.get(pk=request.data['schema'])
@@ -56,9 +59,7 @@ class DataImportViewSet(viewsets.ModelViewSet):
                     if data:
                         master_user_id = Member.objects.get(user=self.request.user).master_user.id
                         accepted_data = {}
-                        additional_data = {}
                         relation_data = {}
-                        mapping_attr = None
                         accepted_data['master_user_id'] = master_user_id
                         for key in PUBLIC_FIELDS[schema.model.model]:
                             accepted_data[key] = data.get(key)
@@ -68,16 +69,13 @@ class DataImportViewSet(viewsets.ModelViewSet):
                                 try:
                                     if k._meta.model_name == 'counterparty':
                                         mapping_model = CounterpartyMapping
-                                        mapping_attr = 'counterparties'
                                     elif k._meta.model_name == 'responsible':
                                         mapping_model = ResponsibleMapping
-                                        mapping_attr = 'responsibles'
                                     elif k._meta.model_name == 'account':
                                         mapping_model = AccountMapping
-                                        mapping_attr = 'accounts'
                                     else:
                                         raise KeyError
-                                    relation_data[k._meta.model_name] = mapping_model.objects.filter(value=raw_data[k._meta.model_name.capitalize()])[0].content_object
+                                    relation_data[k._meta.verbose_name_plural] = mapping_model.objects.filter(value=raw_data[k._meta.model_name.capitalize()])[0].content_object
                                 except (KeyError, IndexError):
                                     continue
                             else:
@@ -89,33 +87,35 @@ class DataImportViewSet(viewsets.ModelViewSet):
 
                         o, _ = schema.model.model_class().objects.get_or_create(**accepted_data)
                         for r in relation_data.keys():
-                            if mapping_attr:
-                                getattr(o, mapping_attr).add(relation_data[r])
+                            getattr(o, str(r)).add(relation_data[r])
                         for additional_key in additional_keys:
                             attr_type = GenericAttributeType.objects.filter(user_code=additional_key).first()
                             attribute = GenericAttribute(content_object=o, attribute_type=attr_type)
                             if attr_type:
                                 if attr_type.value_type == 40:
-                                    attribute.value_date = parse(additional_data[additional_key])
+                                    attribute.value_date = str(data[additional_key])
                                 elif attr_type.value_type == 10:
-                                    attribute.value_string = additional_data[additional_key]
+                                    attribute.value_string = data[additional_key]
                                 elif attr_type.value_type == 20:
-                                    attribute.value_float = additional_data[additional_key]
+                                    attribute.value_float = float(data[additional_key])
                                 else:
                                     pass
-                            attribute.save()
-                except (IntegrityError, ExpressionSyntaxError, KeyError, IndexError) as e:
+                                attribute.save()
+                except Exception as e:
+                    response_data.append({'error': e.__str__(), 'row': json.dumps(raw_data)})
                     if int(request.data.get('error_handling')[0]):
                         continue
                     else:
-                        return Response(e, status=HTTP_500_INTERNAL_SERVER_ERROR)
+                        return Response(response_data, status=HTTP_500_INTERNAL_SERVER_ERROR)
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=HTTP_201_CREATED, headers=headers)
+        return Response(response_data, status=status, headers=headers)
 
 
 class DataImportSchemaViewSet(viewsets.ModelViewSet):
     queryset = DataImportSchema.objects.all()
     serializer_class = DataImportSchemaSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filter_fields = ('id', 'model',)
 
 
 class DataImportSchemaFieldsViewSet(viewsets.ModelViewSet):
@@ -136,19 +136,17 @@ class DataImportSchemaFieldsViewSet(viewsets.ModelViewSet):
         if field_list:
             for i in field_list:
                 serializer = self.get_serializer(data=i)
-                if i.get('id', None):
-                    serializer.instance = self.queryset.get(id=i['id'])
-                    if request.data.get('matching_list'):
-                        for m in request.data['matching_list']:
-                            if m.get('expression'):
-                                o, _ = DataImportSchemaMatching.objects.update_or_create(schema=serializer.instance.schema,
-                                                                                         model_field=m['model_field'],
-                                                                                         defaults={
-                                                                                             'expression': m['expression']
-                                                                                         })
-
+                # serializer.instance = self.queryset.get(id=i['id'])
                 serializer.is_valid(raise_exception=True)
                 self.perform_create(serializer)
+        if request.data.get('matching_list'):
+            for m in request.data['matching_list']:
+                if m.get('expression'):
+                    o, _ = DataImportSchemaMatching.objects.update_or_create(schema=schema,
+                                                                             model_field=m['model_field'],
+                                                                             defaults={
+                                                                                 'expression': m['expression']
+                                                                             })
         return Response(status=HTTP_201_CREATED)
 
 
@@ -211,7 +209,8 @@ class ContentTypeViewSet(viewsets.ModelViewSet):
     ])
     serializer_class = DataImportContentTypeSerializer
     filter_backends = (DjangoFilterBackend,)
-    filter_fields = ('id',)
+    filter_fields = ('id', 'model',)
+
 
     @detail_route(methods=['get'])
     def fields(self, request, pk=None):

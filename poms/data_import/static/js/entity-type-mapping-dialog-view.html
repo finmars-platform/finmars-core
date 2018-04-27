@@ -70,7 +70,6 @@
                 </md-input-container>
               </div>
             </div>
-
             <div data-ng-repeat="item in vm.entityItems | filter:vm.query | orderBy:vm.sort:vm.direction">
               <div layout="row" data-ng-repeat="mappingItem in item.mapping" data-ng-show="!mappingItem.isDeleted">
                 <div flex="50" layout="row">

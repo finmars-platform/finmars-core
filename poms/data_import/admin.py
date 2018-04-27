@@ -8,6 +8,7 @@ class DataImportAdmin(admin.ModelAdmin):
 
 class DataImportSchemaFieldsAdmin(admin.ModelAdmin):
     list_display = ('num', 'source', 'schema')
+    list_filter = ('schema',)
 
 
 class DataImportSchemaMatchingAdmin(admin.ModelAdmin):

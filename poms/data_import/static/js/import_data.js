@@ -762,15 +762,16 @@ angular.module('portal', [
       };
     }
     function MappingController($scope, $mdDialog, data, item, schema, vm, field_list) {
+      $scope.vm = vm;
       $scope.saveMapping = function (mapping) {
         var model = mapping.model.split(',')[1];
         api.patch('schema_matching', item.id, {model_field: model + ':' + mapping.field});
         $mdDialog.hide();
       };
-      vm.cancel = function() {
+      $scope.vm.cancel = function() {
         $mdDialog.hide();
       };
-      vm.agree = function() {
+      $scope.vm.agree = function() {
         var i = 0;
         function updateRow() {
             if (i < vm.entityItems.length) {
