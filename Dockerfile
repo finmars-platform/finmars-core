@@ -22,7 +22,7 @@ RUN /var/app-venv/bin/pip install -U pip wheel && /var/app-venv/bin/pip install 
 ADD docker/finmars-run.sh /var/app/docker/finmars-run.sh
 #ADD docker/uwsgi-*.sh /var/app/docker/
 ADD data/ /var/app/data/
-ADD ext/ /var/app/ext/
+#ADD ext/ /var/app/ext/
 ADD poms/ /var/app/poms/
 ADD poms_app/ /var/app/poms_app/
 ADD manage.py /var/app/manage.py
@@ -42,16 +42,16 @@ COPY docker/uwsgi-emperor.ini /etc/uwsgi/apps-enabled/finmars.ini
 
 RUN chmod +x /var/app/docker/finmars-run.sh
 
-ENV DJANGO_SETTINGS_MODULE poms_app.settings_standalone
+#ENV DJANGO_SETTINGS_MODULE poms_app.settings_standalone
 
-ENV RDS_DB_NAME postgres
-ENV RDS_USERNAME postgres
-ENV RDS_PASSWORD finmars
-ENV RDS_HOSTNAME finmars-db
-ENV REDIS_HOST finmars-redis:6379
-ENV POMS_DEV False
-ENV POMS_BLOOMBERG_SANDBOX True
-ENV POMS_PRICING_AUTO_DOWNLOAD_DISABLED True
+#ENV RDS_DB_NAME postgres
+#ENV RDS_USERNAME postgres
+#ENV RDS_PASSWORD finmars
+#ENV RDS_HOSTNAME finmars-db
+#ENV REDIS_HOST finmars-redis:6379
+#ENV POMS_DEV False
+#ENV POMS_BLOOMBERG_SANDBOX True
+#ENV POMS_PRICING_AUTO_DOWNLOAD_DISABLED True
 
 EXPOSE 8080
 

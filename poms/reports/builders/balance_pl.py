@@ -1097,7 +1097,13 @@ class ReportBuilder(BaseReportBuilder):
             return
 
         _l.debug('aggregate summary')
-        total = ReportItem(self.instance, self.pricing_provider, self.fx_rate_provider, ReportItem.TYPE_SUMMARY)
+        # total = ReportItem(self.instance, self.pricing_provider, self.fx_rate_provider, ReportItem.TYPE_SUMMARY)
+        total = ReportItem.from_trn(self.instance, self.pricing_provider, self.fx_rate_provider,
+                                    ReportItem.TYPE_SUMMARY, trn)
+
+        _l.debug('items len %s' % len(self._items))
+        _l.debug(repr(self._items[0]))
+
         for item in self._items:
             if item.type in [ReportItem.TYPE_INSTRUMENT, ReportItem.TYPE_CURRENCY, ReportItem.TYPE_TRANSACTION_PL,
                              ReportItem.TYPE_FX_TRADE, ReportItem.TYPE_CASH_IN_OUT]:

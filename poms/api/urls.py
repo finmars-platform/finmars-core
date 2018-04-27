@@ -23,6 +23,9 @@ import poms.ui.views as ui
 import poms.users.views as users
 import poms.data_import.views as data_import
 
+
+import poms.csv_import.views as csv_import
+
 router = routers.DefaultRouter()
 router.register(r'users/login', users.LoginViewSet, 'login')
 router.register(r'users/logout', users.LogoutViewSet, 'logout')
@@ -196,6 +199,10 @@ router.register(r'import/schema_fields', data_import.DataImportSchemaFieldsViewS
 router.register(r'import/schema_models', data_import.DataImportSchemaModelsViewSet, 'data_import_schema_models')
 router.register(r'import/schema_matching', data_import.DataImportSchemaMatchingViewSet, 'data_import_schema_matching')
 router.register(r'import/content_type', data_import.ContentTypeViewSet, 'data_import_content_types')
+
+# router.register(r'import/csv', data_import.ContentTypeViewSet, 'data_import_content_types')
+router.register(r'import/csv/scheme', csv_import.SchemeViewSet, 'import_csv_scheme')
+router.register(r'import/csv', csv_import.CsvDataImportViewSet, 'import_csv')
 
 urlpatterns = [
     url(r'^v1/', include(router.urls, namespace='v1')),

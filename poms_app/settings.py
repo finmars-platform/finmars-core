@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'poms.reports',
     'poms.api',
     'poms.data_import',
+    'poms.csv_import',
 
     'django.contrib.admin',
     'django.contrib.admindocs',
@@ -140,6 +141,9 @@ WSGI_APPLICATION = 'poms_app.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.9/ref/settings/#databases
+
+print('RDS_DB_NAME %s' % os.environ.get('RDS_DB_NAME'))
+print('RDS_HOSTNAME %s' % os.environ.get('RDS_HOSTNAME'))
 
 DATABASES = {
     'default': {
@@ -236,6 +240,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 REDIS_HOST = os.environ.get('REDIS_HOST', '127.0.0.1:6379')
 # if DEBUG and REDIS_HOST == '127.0.0.1:6379':
 #     REDIS_HOST = '192.168.57.2:6379'
+
+print('REDIS_HOST %s' % os.environ.get('REDIS_HOST'))
 
 CACHE_VERSION = 1
 CACHE_SERIALIZER = "django_redis.serializers.json.JSONSerializer"

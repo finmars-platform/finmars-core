@@ -23,7 +23,7 @@ SECURE_SSL_REDIRECT = False
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 
-CORS_ORIGIN_WHITELIST += ('localhost:8080', '127.0.0.1:8080',)
+CORS_ORIGIN_WHITELIST = ('localhost:8080', '127.0.0.1:8080',)
 
 DEFAULT_FROM_EMAIL = '"Standalone: Finmars Notifications" <no-reply@finmars.com>'
 SERVER_EMAIL = '"STANDALONE: FinMars" <no-reply@finmars.com>'
