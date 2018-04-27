@@ -10,12 +10,13 @@ https://docs.djangoproject.com/en/1.9/howto/deployment/wsgi/
 from __future__ import unicode_literals
 
 import os
-
-from django.contrib.staticfiles.handlers import StaticFilesHandler
+import sys
 from django.core.wsgi import get_wsgi_application
 
 # import djcelery
 # djcelery.setup_loader()
+del sys.path[0]
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "poms_app.settings")
 
 application = get_wsgi_application()

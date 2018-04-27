@@ -1,0 +1,35 @@
+version: '2'
+services:
+  app:
+    image: finmars
+    environment:
+      DJANGO_SETTINGS_MODULE: poms_app.settings_standalone
+      RDS_DB_NAME: finmars_dev
+      RDS_USERNAME: postgres
+      RDS_PASSWORD: postgres
+      RDS_HOSTNAME: database
+      RDS_PORT: 5432
+      REDIS_HOST: redis
+      POMS_DEV: "False"
+      POMS_BLOOMBERG_SANDBOX: "True"
+      POMS_PRICING_AUTO_DOWNLOAD_DISABLED: "True"
+    ports:
+      - 8080:8080
+    depends_on:
+      - database
+  database:
+    image: postgres:10.1-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: finmars_dev
+    ports:
+      - "5432:5432"
+    stdin_open: true
+    tty: true
+  redis:
+      image: redis:alpine
+      ports:
+        - "6379:6379"
+      stdin_open: true
+      tty: true

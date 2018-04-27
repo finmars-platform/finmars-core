@@ -1,0 +1,33 @@
+<!DOCTYPE html><html lang=en data-ng-app=app><head><meta charset=UTF-8><title>Finmars</title><link rel=stylesheet href=core/content/css/angular.min.css><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="width=device-width, initial-scale=1"><link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel=stylesheet><link rel=stylesheet href=landing/content/css/main.min.css></head><body data-ng-controller="PricingController as vm" ng-cloak><div data-ng-include="'views/header-view.html'"></div><div data-ng-include="'views/sidenav-view.html'"></div><md-content><div layout=row class=pricing-section><div flex-offset-md=15 flex-offset-gt-md=15 flex-offset-lg=15 flex-offset-gt-lg=15 flex-offset-xl=15 flex=100 flex-sm=100 flex-xs=100 flex-gt-sm=70><h1 class="landing-h1 text-center">Pricing</h1><div class=pricing-block><div class=thead><div class=row><div class=td></div><div class=td>Free</div><div class="td popular">Launch</div><div class=td>Orbit</div><div class=td>Space</div><div class=td>Galaxy</div></div></div><div class=tbody><div class=row><div class=td>Transactions limit</div><div class=td>100</div><div class="td popular">200</div><div class=td>500</div><div class=td>1000</div><div class=td>No</div></div><div class=row><div class=td>Portfolios limit</div><div class=td>1</div><div class="td popular">2</div><div class=td>5</div><div class=td>10</div><div class=td>No</div></div><div class=row><div class=td>Consolidation</div><div class=td>No</div><div class="td popular">Yes</div><div class=td>Yes</div><div class=td>Yes</div><div class=td>Yes</div></div><div class=row><div class=td>Typical investment users</div><div class=td>Retail investors</div><div class="td popular">Mass affluent investors</div><div class=td>High Net Worth Individuals</div><div class=td>Investment Professionals</div><div class=td>Brokers and Financial institutions</div></div><div class=row><div class=td>Typical users</div><div class=td>Individuals</div><div class="td popular">Families</div><div class=td>Small businesses</div><div class=td>Corporates</div><div class=td>Holdings</div></div><div class=row><div class=td>Monthly/Annual payment</div><div class=td>0</div><div class="td popular">$ 49 / $ 500</div><div class=td>$ 199 / $ 2 000</div><div class=td>$ 499 / $ 5 000</div><div class=td>Individual</div></div></div></div></div></div><script type=text/javascript>
+        window.onload = function () {
+
+            var recalc = function () {
+                var rows = $('.pricing-section .row');
+                var cells;
+                var max = 0;
+                var i, x;
+                for (i = 0; i < rows.length; i = i + 1) {
+                    cells = $(rows[i]).find('.td');
+                    for (x = 0; x < cells.length; x = x + 1) {
+                        if (max < $(cells[x]).height()) {
+                            max = $(cells[x]).height();
+                        }
+                    }
+                    cells.height(max);
+                    max = 0;
+                }
+
+                if ($('body').height() < $(window).height()) {
+                    var footer = $('footer');
+                    var marginTop = $(window).height() - footer.offset().top - footer.outerHeight();
+                    footer.css({'margin-top': marginTop + 'px'});
+                }
+            };
+
+            setTimeout(function () {
+                recalc();
+                window.addEventListener('resize', recalc, false);
+            }, 100)
+
+        }
+    </script></md-content><div data-ng-include="'views/footer-view.html'"></div><script src=core/scripts/corejs.min.js></script><script src=core/scripts/jquery.min.js></script><script src=core/scripts/angular.min.js></script><script src=landing/scripts/main.min.js></script></body></html>

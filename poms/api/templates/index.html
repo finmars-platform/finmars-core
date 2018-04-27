@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block content %}
+  <div data-ui-view class=min-height id=root></div>
+  <div id=width-fallback>
+    <ng-md-icon icon=phonelink_erase size=86></ng-md-icon>
+    <h3>Sorry, web application is not suitable for small mobile devices</h3>
+  </div>
+{% endblock %}
+{% block js %}
+  <script type=text/javascript src={% static 'portal/scripts/main.min.js' %}></script>
+{% endblock %}

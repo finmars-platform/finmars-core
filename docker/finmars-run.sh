@@ -6,12 +6,27 @@
 
 echo "Finmars"
 
+echo "Migrating"
+
 /var/app-venv/bin/python /var/app/manage.py migrate
+
+echo "Create cache table"
+
 /var/app-venv/bin/python /var/app/manage.py createcachetable
+
+echo "Clear sessions"
+
 /var/app-venv/bin/python /var/app/manage.py clearsessions
+
+echo "Collect static"
+
 /var/app-venv/bin/python /var/app/manage.py collectstatic -c --noinput
 
-/var/app-venv/bin/python /var/app/manage.py initstandalone
+#echo "Standalone"
+#
+#/var/app-venv/bin/python /var/app/manage.py initstandalone
+
+echo "Run uwsgi"
 
 /usr/bin/uwsgi /etc/uwsgi/apps-enabled/finmars.ini
 

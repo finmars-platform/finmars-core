@@ -1,0 +1,40 @@
+<md-dialog aria-label="" ng-cloak class="expression-editor-dialog draggable-dialog" drag-dialog style="width: 50%">
+  <md-toolbar>
+    <div class="md-toolbar-tools">
+      <h2>Expression editor</h2>
+      <span flex></span>
+    </div>
+  </md-toolbar>
+  <md-dialog-content data-custom-scroll class="custom-scrollbar">
+    <md-content>
+      <div>
+        <md-input-container class="md-block"><label for="">Expression</label><textarea name="" id="editorExpressionInput" cols="30" rows="10" data-ng-model="vm.item.expression"></textarea></md-input-container>
+      </div>
+      <!--<h2>Expression help</h2>--><!--<p>You could use this form to build an expression based on provided variables. You could use basic operators--><!--like +, -, *, /. Plus (+) could be used for strings concatenation. Based on scope of expression, you--><!--could use different set of expressions. For example inside "Instrument import schema" you could use data--><!--provider variables to build your own vlaues. For example, you build a custom Instrument name based on--><!--Bloomber downloaded parameters:--><!--</p>--><!--<p>ISSUER + ' ' +format_number(CPN)+'% ' + format_date(parse_date(MATURITY, '%m/%d/%Y'),'%d-%h-%Y')--><!--</p>--><!--<p>Where ISSUER, CPN and MATURITY - are bloomberg parameters, and format_date, parse_date - two predifined--><!--functions. You could see predefined functions definition in a list below.--><!--</p>-->
+      <h2 style="text-align: center">Available functions</h2>
+      <div class="expression-editor-helper" layout="row">
+        <div class="help-item-list" layout="column" flex="30">
+          <md-input-container class="help-search-control"><input type="text" data-ng-model="vm.searchExpr" placeholder="Search"></md-input-container>
+          <div class="custom-scrollbar" data-custom-scroll style="height: 164px">
+            <div class="{{item.isSelected ? 'selected' : ''}} help-item-menu-item" data-ng-repeat="item in vm.expressions | filter: { name: vm.searchExpr }" data-ng-click="vm.selectHelpItem(item)">{{item.name}}</div>
+          </div>
+        </div>
+        <div class="help-item-description" layout="column" flex="70">
+          <div data-custom-scroll class="help-item-description-content custom-scrollbar" data-ng-bind-html="vm.selectedHelpItem.description | trustAsHtml"></div>
+          <div layout="row" layout-align="end begin">
+            <md-button class="md-raised" data-ng-click="vm.appendFunction(vm.selectedHelpItem)">Add</md-button>
+          </div>
+        </div>
+      </div>
+    </md-content>
+  </md-dialog-content>
+  <md-dialog-actions layout="row" layout-align="space-between">
+    <div>
+      <md-button ng-click="vm.openHelp($event)" class="md-raised md-primary">Help</md-button>
+    </div>
+    <div>
+      <md-button ng-click="vm.cancel()">Cancel</md-button>
+      <md-button ng-click="vm.agree()" style="margin-right:20px">OK</md-button>
+    </div>
+  </md-dialog-actions>
+</md-dialog>

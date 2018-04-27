@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-
+from django.shortcuts import render
 from functools import lru_cache
 
 import pytz
@@ -19,7 +19,10 @@ _languages = [Language(code, name) for code, name in settings.LANGUAGES]
 
 
 def index(request):
-    return HttpResponse('ok', content_type='text/plain; charset=utf-8')
+    if request.user.is_authenticated:
+        return render(request, 'index.html')
+    else:
+        return render(request, 'portal.html')
 
 
 @lru_cache()

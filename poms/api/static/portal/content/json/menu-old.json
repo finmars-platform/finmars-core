@@ -1,0 +1,176 @@
+[
+  {
+    "state" : "app.dashboard",
+    "title": "Dashboard",
+    "type": "link",
+    "icon": "dashboard"
+  },
+  {
+    "state" : "",
+    "title": "Reports",
+    "icon": "group",
+    "type": "toggle",
+    "pages": [
+      {
+        "state" : "app.dashboard",
+        "title": "New Balance",
+        "icon": "dashboard"
+      },
+      {
+        "state" : "app.dashboard",
+        "title": "New Performance",
+        "icon": "dashboard"
+      },
+      {
+        "state" : "app.dashboard",
+        "title": "New Cash flow",
+        "icon": "dashboard"
+      },
+      {
+        "state" : "app.dashboard",
+        "title": "New Transaction",
+        "icon": "dashboard"
+      }
+    ]
+  },
+  {
+    "state": "",
+    "title": "Administration",
+    "icon": "message",
+    "type": "toggle",
+    "pages": [
+      {
+        "state" : "app.administration.portfolio",
+        "title": "Portfolio",
+        "icon": "dashboard"
+      },
+      {
+        "state" : "app.dashboard",
+        "title": "New Performance",
+        "icon": "dashboard"
+      },
+      {
+        "state" : "app.dashboard",
+        "title": "New Cash flow",
+        "icon": "dashboard"
+      },
+      {
+        "state" : "app.dashboard",
+        "title": "New Transaction",
+        "icon": "dashboard"
+      }
+    ]
+  },
+  {
+    "state": "",
+    "title": "INSTRUMENTS",
+    "icon": "message",
+    "type": "toggle",
+    "pages": [
+      {
+        "state" : "app.dashboard",
+        "title": "New Balance",
+        "icon": "dashboard"
+      },
+      {
+        "state" : "app.dashboard",
+        "title": "New Performance",
+        "icon": "dashboard"
+      },
+      {
+        "state" : "app.dashboard",
+        "title": "New Cash flow",
+        "icon": "dashboard"
+      },
+      {
+        "state" : "app.dashboard",
+        "title": "New Transaction",
+        "icon": "dashboard"
+      }
+    ]
+  },
+  {
+    "state": "",
+    "title": "PRICES",
+    "icon": "message",
+    "type": "toggle",
+    "pages": [
+      {
+        "state" : "app.dashboard",
+        "title": "New Balance",
+        "icon": "dashboard"
+      },
+      {
+        "state" : "app.dashboard",
+        "title": "New Performance",
+        "icon": "dashboard"
+      },
+      {
+        "state" : "app.dashboard",
+        "title": "New Cash flow",
+        "icon": "dashboard"
+      },
+      {
+        "state" : "app.dashboard",
+        "title": "New Transaction",
+        "icon": "dashboard"
+      }
+    ]
+  },
+  {
+    "state": "",
+    "title": "TRANSACTIONS",
+    "icon": "message",
+    "type": "toggle",
+    "pages": [
+      {
+        "state" : "app.dashboard",
+        "title": "New Balance",
+        "icon": "dashboard"
+      },
+      {
+        "state" : "app.dashboard",
+        "title": "New Performance",
+        "icon": "dashboard"
+      },
+      {
+        "state" : "app.dashboard",
+        "title": "New Cash flow",
+        "icon": "dashboard"
+      },
+      {
+        "state" : "app.dashboard",
+        "title": "New Transaction",
+        "icon": "dashboard"
+      }
+    ]
+  },
+  {
+    "state": "",
+    "title": "SETTINGS",
+    "icon": "message",
+    "type": "toggle",
+     "pages": [
+      {
+        "state" : "app.dashboard",
+        "title": "New Balance",
+        "icon": "dashboard"
+      },
+      {
+        "state" : "app.dashboard",
+        "title": "New Performance",
+        "icon": "dashboard"
+      },
+      {
+        "state" : "app.dashboard",
+        "title": "New Cash flow",
+        "icon": "dashboard"
+      },
+      {
+        "state" : "app.dashboard",
+        "title": "New Transaction",
+        "icon": "dashboard"
+      }
+    ]
+  }
+]

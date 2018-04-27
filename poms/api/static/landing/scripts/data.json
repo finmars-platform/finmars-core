@@ -1,0 +1,137 @@
+{
+  "keyFeatures": [
+    {
+      "icon": "/static/landing/content/img/finmars-17.png",
+      "header": "Import transactions, contracts and positions easily",
+      "description": "Finmars offers a possibility to have information in a right format at the right time and at the right place using convenient transactions import and input engine. <br/> Each transaction is then assigned to specific investment portfolio, strategy and tags defined by the users. <br/> The import process can be delegated to those service providers in whom prinvestors have confidence."
+    },
+    {
+      "icon": "/static/landing/content/img/finmars-20.png",
+      "header": "Consolidate transactions and portfolios",
+      "description": "Once the import is successfully accomplished (at inception or on on-going basis), the system allows consolidating all bankable and non-bankable investment transactions/contracts assigned to a specific investment strategy, tag, portfolio and different portfolios all together"
+    },
+    {
+      "icon": "/static/landing/content/img/finmars-21.png",
+      "header": "Conduct analysis",
+      "description": "The users are able to conduct various investment, risk and performance analyses in a format and according to criteria defined by them."
+    },
+    {
+      "icon": "/static/landing/content/img/finmars-22.png",
+      "header": "Produce reports",
+      "description": "The users are able to produce comprehensive and customized reports configured by them in a matter of touch through customized buttons and links. <br/>The reports can then be extracted in pdf, xls and csv formats."
+    },
+    {
+      "icon": "/static/landing/content/img/finmars-19.png",
+      "header": "Know, evaluate and track investment opportunities",
+      "description": "Prinvestors who legally qualify and would like to receive targeted information about different investment opportunities, research and advises can do this on free and paid basis though Finmars. <br/> This solution will also offer to investment analysts and advisers a possibility to get public profile, track record and recognition from prinvestors resulting in free or paid subscription to their products."
+    },
+    {
+      "icon": "/static/landing/content/img/finmars-18.png",
+      "header": "Prepare and follow budget",
+      "description": "As soon as Finmars has full information about the contracts/positions resulting in fixed or variable revenues and expenses, it allows the users to produce their budgets and cash flow projections. <br/> Businesses and families will appreciate this facility and will be able to analyse and track their inflows and outflows in a simple and comprehensive manner."
+    }
+  ],
+  "keyChars": [
+    {
+      "icon": "/static/landing/content/img/finmars-23.png",
+      "header": "Simple",
+      "description": "Easy to start, integrate; Intuitive; User friendly;"
+    },
+    {
+      "icon": "/static/landing/content/img/finmars-24.png",
+      "header": "Flexible",
+      "description": "Adapted to needs of any user; From simple to sophisticated."
+    },
+    {
+      "icon": "/static/landing/content/img/finmars-25.png",
+      "header": "Affordable",
+      "description": "Low cost professional tool; Tailored to users' situation"
+    },
+    {
+      "icon": "/static/landing/content/img/finmars-26.png",
+      "header": "Secure",
+      "description": "State of art secure access; Encrypted information stored in the cloud; Data protected by Swiss/EU legislation; Unanimity and confidentiality."
+    },
+    {
+      "icon": "/static/landing/content/img/finmars-27.png",
+      "header": "Convenient",
+      "description": "Always at hand; Programmable alerts; Available opportunities and strategiesl; Subscriptions to investment advice/research."
+    },
+    {
+      "icon": "/static/landing/content/img/finmars-28.png",
+      "header": "Universal",
+      "description": "Allows to manage all contracts, assets, liabilities and commitments; Can be used for investments and financial planning; Suitable for investors, families and businesses"
+    }
+  ],
+  "customerRecommendations": [
+    {
+      "author": "Tomothy Tucker",
+      "position": "Manager SEGA",
+      "photo": "landing/content/img/finmars_customer1.png",
+      "comment": "I have owned a john hancock life insurance policy since approximately 1981. At that time the representative's pitch to sell the insureance was that it was to be paid in full in .."
+    },
+    {
+      "author": "Jessica Freeman",
+      "position": "Engineer Samsung",
+      "photo": "landing/content/img/finmars_customer2.png",
+      "comment": "I applied for a loan online. Was given an approval pending an appointment to complete the process. I called and spoke to a rep. That went over my personal information..."
+    },
+    {
+      "author": "Edward Simpson",
+      "position": "Business Analyst Xerox",
+      "photo": "landing/content/img/finmars_customer3.png",
+      "comment": "Very pleased with the representatives of Springleaf loan. Was easy. Would have liked to been approved for more but the overall experience was great. I would defenitly..."
+    }
+  ],
+  "slides": [
+    {
+      "image": "/static/landing/content/img/finmars_slide7.jpg",
+      "title": "What is Finmars",
+      "content": "<p>Comprehensive solution for persons managing their finances and investments.</p><p>Relevant information always at hand.</p><p>Professional analytical and risk management tools to achieve targets and improve returns.</p>",
+      "subtitle": "Financial Management Resolution System"
+    },
+    {
+      "image": "/static/landing/content/img/finmars_slide1.jpg",
+      "title": "For principals and investors (\"prinvestors\")",
+      "content": "<ul class='checkboxed' layout='row'><li flex='33'>Import data from different sources </li><li flex='33'>Consolidation of information on holding, transactions and investments</li><li flex='33'>Management and control of assets and liabilities</li></ul>",
+      "subtitle": "Master your finances from big picture to small details"
+    },
+    {
+      "image": "/static/landing/content/img/finmars_slide5.jpg",
+      "title": "For investment analysts and advisers",
+      "content": "<ul class='checkboxed' layout='row'><li flex='33'>Public tracking of investment analysis and recommendations</li><li flex='33'>Distribution of investment analysis and recommendations to a target investors' audience;</li><li flex='33'>Receipt of subscriptions to investment analysis and recommendations.</li></ul>",
+      "subtitle": "Get independent track of your advises and new subscribers"
+    },
+    {
+      "image": "/static/landing/content/img/finmars_slide6.jpg",
+      "title": "For businesses and families",
+      "content": "<ul class='checkboxed' layout='row'><li flex='33'>Financial management of contracts and projects</li><li flex='33'>Consolidation of income and expenses</li><li flex='33'>Financial planning, budgeting, managerial accounting and control</li></ul>",
+      "subtitle": "Manage your budgets and projects"
+    },
+    {
+      "image": "/static/landing/content/img/finmars_slide2.jpg",
+      "title": "For family offices and wealth planners",
+      "content": "<ul class='checkboxed' layout='row'><li flex='33'>Investment, risk and performance analysis and reporting</li><li flex='33'>Comparison of investment strategies with targets and investment alternatives</li><li flex='33'>Evaluation and follow up of potential investments</li></ul>",
+      "subtitle": "Monitor targets and compare alternatives"
+    },
+    {
+      "image": "/static/landing/content/img/finmars_slide4.jpg",
+      "title": "For investment managers",
+      "content": "<ul class='checkboxed' layout='row'><li flex='33'>Investment management system</li><li flex='33'>Investment and risk analys</li><li flex='33'>Customized reporting to principals and investors</li></ul>",
+      "subtitle": "Discover and manage your risks and opportunities"
+    }
+
+  ],
+  "about": [
+    {
+      "title": "About company",
+      "image": "/static/landing/content/img/finmars_marscap_logo.png",
+      "description": "MARS Capital SA, Geneva (MCSA) founded in 2007 is an investment manager, member of ASG (Swiss Association of Asset Managers).<br/><br/>Having accumulated a long-standing proprietary and client investment experience and deep understanding of principals/investor'(\"prinvestors\" or persons who take ultimate proprietary and investment risks) needs, MCSA has moved its focus towards development and implementation of a concept of FinMARS, high-tech finance and investment office, a step forward to facilitate prinvestors' and their service provider' lives)"
+    },
+    {
+      "title": "About service",
+      "image": "/static/landing/content/img/finmars_inverse_logo.png",
+      "description": "Finmars aims to become the next generation investment toolbox available for any professional or novice prinvestor or service provider at a competitive price.<br/></br>It will consist of innovative and state-of-the-art customized solutions to be developed constantly to add value at every step of investment process - booking, consolidation and investment analysis of existing positions, advisory, decision making and trade execution and more."
+    }
+  ]
+}

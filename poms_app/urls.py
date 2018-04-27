@@ -5,16 +5,24 @@ from django.conf.urls import url, include
 from django.contrib import admin
 from django.views import static
 from poms.api.views import index
-from poms.data_import.views import ImportCreate, ImportUpdate
+from django.views.generic import TemplateView
+from poms.data_import.views import DataImportViewSet, DataImportSchemaViewSet
 
 urlpatterns = []
 
 urlpatterns += [
     url(r'^$', index, name='index'),
-    url(r'^import/add/', ImportCreate.as_view(), name='import_add'),
-    url(r'^import/(?P<pk>\d+)/change/$', ImportUpdate.as_view(), name='import_change'),
+    url(r'^portal/', index, name='portal'),
+    url(r'^import/add/', TemplateView.as_view(template_name='import_form.html'), name='import_add'),
+    # url(r'^import/(?P<pk>\d+)/change/$', ImportUpdate.as_view(), name='import_change'),
     url(r'^api/', include('poms.api.urls')),
 ]
+
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns = [
+        url(r'^__debug__/', include(debug_toolbar.urls)),
+    ] + urlpatterns
 
 if 'django.contrib.admin' in settings.INSTALLED_APPS:
     if settings.DEBUG:

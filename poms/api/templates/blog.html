@@ -1,0 +1,31 @@
+<!DOCTYPE html><html lang=en data-ng-app=app><head><meta charset=UTF-8><title>Finmars</title><link rel=stylesheet href=core/content/css/angular.min.css><meta http-equiv=X-UA-Compatible content="IE=edge"><meta name=viewport content="width=device-width, initial-scale=1"><link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel=stylesheet><link rel=stylesheet href=landing/content/css/main.min.css></head><body data-ng-controller="PricingController as vm" ng-cloak><div data-ng-include="'views/header-view.html'"></div><div data-ng-include="'views/sidenav-view.html'"></div><md-content><div layout=row class=pricing-section><div flex-offset-md=15 flex-offset-gt-md=15 flex-offset-lg=15 flex-offset-gt-lg=15 flex-offset-xl=15 flex=100 flex-sm=100 flex-xs=100 flex-gt-sm=70><h1 class="landing-h1 text-center">Blog</h1></div></div><script type=text/javascript>
+        window.onload  = function () {
+
+            var recalc = function() {
+                var rows = $('.pricing-section .row');
+                var cells;
+                var max = 0;
+                var i, x;
+                for (i = 0; i < rows.length; i = i + 1) {
+                    cells = $(rows[i]).find('.td');
+                    for (x = 0; x < cells.length; x = x + 1) {
+                        if (max < $(cells[x]).height()) {
+                            max = $(cells[x]).height();
+                        }
+                    }
+                    cells.height(max);
+                    max = 0;
+                }
+
+                if ($('body').height() < $(window).height()) {
+                    var footer = $('footer');
+                    var marginTop = $(window).height() - footer.offset().top - footer.outerHeight();
+                    footer.css({'margin-top': marginTop + 'px'});
+                }
+            };
+
+            recalc();
+            window.addEventListener('resize', recalc, false);
+
+        }
+    </script></md-content><div data-ng-include="'views/footer-view.html'"></div><script src=core/scripts/corejs.min.js></script><script src=core/scripts/jquery.min.js></script><script src=core/scripts/angular.min.js></script><script src=landing/scripts/main.min.js></script></body></html>

@@ -27,8 +27,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'jrixf-%65l5&#@hbmq()sa-pzy@e)=zpdr6g0cg8a!i_&w-c!)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = bool(os.environ.get('DEBUG', True))
 DEV = DEBUG or bool(os.environ.get('POMS_DEV', None))
+
+print('DEBUG %s' % os.environ.get('DEBUG'))
+print('POMS_DEV %s' % os.environ.get('POMS_DEV'))
+
 ADMIN = True
 
 ALLOWED_HOSTS = ['*']
@@ -65,6 +69,8 @@ INSTALLED_APPS = [
     'poms.integrations',
     'poms.reports',
     'poms.api',
+    'poms.data_import',
+    'poms.csv_import',
 
     'django.contrib.admin',
     'django.contrib.admindocs',
@@ -83,8 +89,7 @@ INSTALLED_APPS = [
     # 'two_factor',
     'django_celery_results',
     'django_celery_beat',
-    'poms.data_import'
-    # 'silk'
+    # 'debug_toolbar',
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -111,6 +116,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # 'poms.notifications.middleware.NotificationMiddleware',
     # 'django.middleware.cache.FetchFromCacheMiddleware',
+    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'poms_app.urls'
@@ -139,6 +145,9 @@ WSGI_APPLICATION = 'poms_app.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.9/ref/settings/#databases
+
+print('RDS_DB_NAME %s' % os.environ.get('RDS_DB_NAME'))
+print('RDS_HOSTNAME %s' % os.environ.get('RDS_HOSTNAME'))
 
 DATABASES = {
     'default': {
@@ -220,11 +229,11 @@ if not DEBUG:
     CSRF_COOKIE_DOMAIN = 'finmars.com'
     CSRF_TRUSTED_ORIGINS = ['finmars.com', 'api.finmars.com', 'dev.finmars.com', 'api.dev.finmars.com']
 
-CORS_ORIGIN_WHITELIST = ('dev.finmars.com', 'finmars.com', )
-CORS_URLS_REGEX = r'^/api/.*$'
-CORS_REPLACE_HTTPS_REFERER = True
-CORS_ALLOW_CREDENTIALS = True
-CORS_PREFLIGHT_MAX_AGE = 300
+    CORS_ORIGIN_WHITELIST = ('dev.finmars.com', 'finmars.com', )
+    CORS_URLS_REGEX = r'^/api/.*$'
+    CORS_REPLACE_HTTPS_REFERER = True
+    CORS_ALLOW_CREDENTIALS = True
+    CORS_PREFLIGHT_MAX_AGE = 300
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
@@ -235,6 +244,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 REDIS_HOST = os.environ.get('REDIS_HOST', '127.0.0.1:6379')
 # if DEBUG and REDIS_HOST == '127.0.0.1:6379':
 #     REDIS_HOST = '192.168.57.2:6379'
+
+print('REDIS_HOST %s' % os.environ.get('REDIS_HOST'))
 
 CACHE_VERSION = 1
 CACHE_SERIALIZER = "django_redis.serializers.json.JSONSerializer"
@@ -393,12 +404,13 @@ LOGGING = {
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'poms.common.pagination.PageNumberPaginationExt',
-    'PAGE_SIZE': 20,
+    'PAGE_SIZE': 40,
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',
         # 'rest_framework.authentication.BasicAuthentication',
         # 'rest_framework.authentication.TokenAuthentication',
     ),
+    'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
@@ -588,8 +600,7 @@ BLOOMBERG_SANDBOX_WAIT_FAIL = False
 # ----
 
 INSTRUMENT_EVENTS_REGULAR_MAX_INTERVALS = 1000
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 try:
-    from .settings_local import *
+    from poms_app.settings_local import *
 except ImportError:
     pass

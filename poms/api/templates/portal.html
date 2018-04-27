@@ -1,0 +1,162 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html lang=en data-ng-app=app>
+    <head>
+        <meta charset=UTF-8>
+        <title>Finmars</title>
+        <link rel=stylesheet href={% static 'core/content/css/angular.min.css' %}>
+        <meta http-equiv=X-UA-Compatible content="IE=edge">
+        <meta name=viewport content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel=stylesheet>
+        <link rel=stylesheet href={% static 'landing/content/css/main.min.css' %}>
+    </head>
+    <body data-ng-controller="AppController as vm" ng-cloak>
+        <div data-ng-include="'views/header-view.html'"></div>
+        <div data-ng-include="'views/sidenav-view.html'"></div>
+        <div>
+            <div class=mobile-fake-img>
+                <div class=slider-overlay></div>
+                <h1>For investment analysts and advisers</h1>
+                <img src={% static 'landing/content/img/finmars_slide7.jpg' %}>
+            </div>
+            <div data-ng-if=vm.slides.length class=slider-holder>
+                <div data-zh-slider class=zh-slider>
+                    <ul class=block>
+                        <li data-ng-repeat="slide in vm.slides">
+                            <div class=image-bg>
+                                <div class=slider-overlay></div>
+                                <img data-ng-src={{slide.image}}>
+                            </div>
+                            <div layout=row class=slide-content>
+                                <div flex-offset-md=15 flex-offset-gt-md=15 flex-offset-lg=15 flex-offset-gt-lg=15 flex-offset-xl=15 flex=100 flex-sm=100 flex-xs=100 flex-gt-sm=70>
+                                    <div>
+                                        <h2 data-ng-bind=slide.title width=900></h2>
+                                        <div data-ng-bind-html="slide.content | unsafe_html"></div>
+                                        <div class=slide-subtitle data-ng-bind=slide.subtitle></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                        <div id=next>next</div>
+                        <div id=prev>prev</div>
+                    </ul>
+                    <ul class=count>
+                        <li data-ng-repeat="slide in vm.slides"></li>
+                    </ul>
+                </div>
+            </div>
+            <div data-ng-if=!vm.slides.length class=content-loader>
+                <md-progress-circular md-mode=indeterminate class=loader></md-progress-circular>
+            </div>
+            <div class=email-input-holder data-zh-sign-up-position><input type=text placeholder="Email address"> <a href=# class=email-start-btn>Sign Up!</a></div>
+            <div layout=row data-ng-if=vm.keyFeatures.length>
+                <div flex-offset-md=15 flex-offset-gt-md=15 flex-offset-lg=15 flex-offset-gt-lg=15 flex-offset-xl=15 flex=100 flex-sm=100 flex-xs=100 flex-gt-sm=70>
+                    <h1 class="landing-h1 text-center">Key features</h1>
+                    <md-grid-list class=landing-key-features-list layout=row layout-wrap layout-align=flex-start>
+                        <md-list-item data-ng-repeat="item in vm.keyFeatures" flex=33 flex-xs=100 flex-sm=100>
+                            <div>
+                                <img class=landing-key-image data-ng-src={{item.icon}} alt=icon>
+                                <h4 class="landing-h4 text-center" data-ng-bind=::item.header></h4>
+                                <p class=landing-p data-ng-bind=::item.description></p>
+                            </div>
+                        </md-list-item>
+                    </md-grid-list>
+                </div>
+            </div>
+            <div data-ng-if=!vm.keyFeatures.length class=content-loader>
+                <md-progress-circular md-mode=indeterminate class=loader></md-progress-circular>
+            </div>
+            <div layout=row class=landing-infographics-section>
+                <div flex-offset-md=15 flex-offset-gt-md=15 flex-offset-lg=15 flex-offset-gt-lg=15 flex-offset-xl=15 flex=100 flex-sm=100 flex-xs=100 flex-gt-sm=70>
+                    <h1 class="landing-h1 text-center">What to do with all this data?</h1>
+                    <h2><span>Transactions / Contracts / Positions</span></h2>
+                    <div class=main-ig><img src={% static 'landing/content/img/ig1.png' %}></div>
+                    <h2 class=cloud><span><img src={% static 'landing/content/img/ig2.png' %}></span></h2>
+                    <div class=secondary-ig><img src={% static 'landing/content/img/ig3.png' %}></div>
+                    <div class=steps-holder>
+                        <div>
+                            <h5>Import</h5>
+                            <img src={% static 'landing/content/img/ig_step_1.png' %}>
+                            <p>Import data from file based on your own rules or manually</p>
+                        </div>
+                        <div class=arrow><img src={% static 'landing/content/img/ig_arrow.png' %}></div>
+                        <div>
+                            <h5>Classify</h5>
+                            <img src={% static 'landing/content/img/ig_step_2.png' %}>
+                            <p>Classify data, add tags, risk and other criteria</p>
+                        </div>
+                        <div class=arrow><img src={% static 'landing/content/img/ig_arrow.png' %}></div>
+                        <div>
+                            <h5>Report</h5>
+                            <img src={% static 'landing/content/img/ig_step_3.png' %}>
+                            <p>Report balance, P&L, cash flow, performance, risks, currencies, maturities and more</p>
+                        </div>
+                    </div>
+                    <h2><span>Enjoy...</span></h2>
+                    <div class=last-ig><img src={% static 'landing/content/img/ig4.png' %}></div>
+                </div>
+            </div>
+            <div layout=row class=key-chars-section data-ng-if=vm.keyChars.length>
+                <div flex-offset-md=15 flex-offset-gt-md=15 flex-offset-lg=15 flex-offset-gt-lg=15 flex-offset-xl=15 flex=100 flex-sm=100 flex-xs=100 flex-gt-sm=70>
+                    <h1 class="landing-h1 text-center">Key characteristics</h1>
+                    <md-list class=landing-key-chars-list layout=row layout-wrap layout-align=flex-start>
+                        <md-list-item class=key-char-item data-ng-repeat="item in vm.keyChars" flex=100 flex-sm=100 flex-gt-sm=50>
+                            <div class=col-wrapper>
+                                <div class=img-col><img data-ng-src={{item.icon}} alt=icon></div>
+                                <div class=content-col>
+                                    <h3 class="landing-h3 text-center" data-ng-bind=::item.header></h3>
+                                    <p data-ng-bind-html=::item.description></p>
+                                </div>
+                            </div>
+                        </md-list-item>
+                    </md-list>
+                </div>
+            </div>
+            <div data-ng-if=!vm.keyChars.length class=content-loader>
+                <md-progress-circular md-mode=indeterminate class=loader></md-progress-circular>
+            </div>
+            <div layout=row class=recommendations-section data-ng-if=vm.customerRecommendations.length>
+                <div flex-offset-md=15 flex-offset-gt-md=15 flex-offset-lg=15 flex-offset-gt-lg=15 flex-offset-xl=15 flex=100 flex-sm=100 flex-xs=100 flex-gt-sm=70>
+                    <h1 class="landing-h1 text-center">Customer recommendations</h1>
+                    <md-list class=landing-recommendations-list layout=column layout-gt-sm=row layout-align="center center">
+                        <md-list-item class=recommendations-item flex=100 flex-gt-sm=100 data-ng-repeat="customer in vm.customerRecommendations">
+                            <img class=rec-photo data-ng-src={{customer.photo}}>
+                            <p class=rec-author data-ng-bind=customer.author></p>
+                            <p class=rec-position data-ng-bind=customer.position></p>
+                            <div class=rec-comment data-ng-bind=customer.comment></div>
+                        </md-list-item>
+                    </md-list>
+                </div>
+            </div>
+            <div data-ng-if=!vm.customerRecommendations.length>
+                <md-progress-circular md-mode=indeterminate class=loader></md-progress-circular>
+            </div>
+            <div layout=row class=landing-about-section data-ng-if=vm.about.length>
+                <div flex-offset-md=15 flex-offset-gt-md=15 flex-offset-lg=15 flex-offset-gt-lg=15 flex-offset-xl=15 flex=100 flex-sm=100 flex-xs=100 flex-gt-sm=70>
+                    <md-list>
+                        <md-list-item class=about-item data-ng-repeat="item in vm.about">
+                            <div layout=column layout-gt-sm=row>
+                                <div flex=100 flex-sm=100 flex-xs=100 flex-gt-sm=30>
+                                    <div class=about-img-holder><img data-ng-src={{item.image}}></div>
+                                </div>
+                                <div flex=100 flex-sm=100 flex-xs=100 flex-gt-sm=70>
+                                    <h3 class=landing-h3 data-ng-bind=item.title></h3>
+                                    <div class=landing-p data-ng-bind-html="item.description | unsafe_html"></div>
+                                </div>
+                            </div>
+                        </md-list-item>
+                    </md-list>
+                </div>
+            </div>
+            <div data-ng-if=!vm.about.length class=content-loader>
+                <md-progress-circular md-mode=indeterminate class=loader></md-progress-circular>
+            </div>
+        </div>
+        <div data-ng-include="'views/footer-view.html'"></div>
+        <script src={% static 'core/scripts/corejs.min.js' %}></script>
+        <script src={% static 'core/scripts/fetch.min.js' %}></script>
+        <script src={% static 'core/scripts/jquery.min.js' %}></script>
+        <script src={% static 'core/scripts/angular.min.js' %}></script>
+        <script src={% static 'landing/scripts/main.min.js' %}></script>
+    </body>
+</html>
