@@ -110,6 +110,8 @@ class CsvDataImportViewSet(viewsets.ModelViewSet):
 
                 except:
 
+                    instance['master_user'] = None
+
                     errors.append({"line": row_number, 'instance': instance})
 
                     if error_handler == 'break':
@@ -206,6 +208,8 @@ class CsvDataImportViewSet(viewsets.ModelViewSet):
                 instance.save()
 
             except:
+
+                result['master_user'] = None
 
                 errors.append({"line": row_number + 1, 'instance': result})  # we skipped first row in csv, so +1
 
