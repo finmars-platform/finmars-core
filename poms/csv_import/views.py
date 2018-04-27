@@ -143,7 +143,7 @@ class CsvDataImportViewSet(viewsets.ModelViewSet):
 
         results, errors = self.get_results(request, scheme, entity_fields, csv_fields, reader, error_handler)
 
-        for row_number, result in results:
+        for result in results:
 
             # try:
 
