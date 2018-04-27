@@ -1093,6 +1093,9 @@ class ReportBuilder(BaseReportBuilder):
     #         item.close_pass2()
 
     def _aggregate_summary(self):
+
+        print('settings.DEBUG %s' % settings.DEBUG)
+
         if not settings.DEBUG:
             return
 

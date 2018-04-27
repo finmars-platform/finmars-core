@@ -28,10 +28,14 @@ SECRET_KEY = 'jrixf-%65l5&#@hbmq()sa-pzy@e)=zpdr6g0cg8a!i_&w-c!)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(os.environ.get('DEBUG', True))
-DEV = DEBUG or bool(os.environ.get('POMS_DEV', None))
+DEV = bool(os.environ.get('POMS_DEV', True))
+
 
 print('DEBUG %s' % os.environ.get('DEBUG'))
 print('POMS_DEV %s' % os.environ.get('POMS_DEV'))
+
+if not DEBUG:
+    print('Debug disabled')
 
 ADMIN = True
 
