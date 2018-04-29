@@ -1,0 +1,18 @@
+version: '2'
+services:
+  db:
+    image: postgres:10.1-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: finmars_dev
+    stdin_open: true
+    tty: true
+    ports:
+      - "5434:5432"
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    stdin_open: true
+    tty: true

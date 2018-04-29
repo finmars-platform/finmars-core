@@ -885,10 +885,10 @@ class SimpleEval2(object):
             self.result = self._eval(self.expr_ast.body)
             return self.result
         except InvalidExpression:
-            _l.debug('InvalidExpression', exc_info=True)
+            # _l.debug('InvalidExpression', exc_info=True)
             raise
         except Exception as e:
-            _l.debug('Exception', exc_info=True)
+            # _l.debug('Exception', exc_info=True)
             raise ExpressionEvalError(e)
         finally:
             self._table = save_table

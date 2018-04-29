@@ -79,8 +79,6 @@ class SchemeSerializer(serializers.ModelSerializer):
 
                 try:
 
-                    print(entity_field.get('expression', ''))
-
                     instance = EntityField.objects.get(scheme=scheme,
                                                        system_property_key=entity_field.get(
                                                            'system_property_key'))

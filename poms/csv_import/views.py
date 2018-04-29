@@ -1,27 +1,46 @@
 from rest_framework.exceptions import ValidationError
 
-from .models import Scheme, CsvDataImport
-from .serializers import SchemeSerializer, CsvDataImportSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.parsers import MultiPartParser
+from rest_framework.filters import FilterSet
 from django.apps import apps
 
 from poms.users.models import Member
+from poms.common import formula
+from poms.common.formula import safe_eval, ExpressionSyntaxError, ExpressionEvalError
 
-from poms.common.formula import safe_eval, ExpressionSyntaxError
 from poms.integrations.models import CounterpartyMapping, AccountMapping, ResponsibleMapping, PortfolioMapping
 
 from poms.obj_attrs.models import GenericAttributeType, GenericAttribute
 
+from django.utils.translation import ugettext
+
 import io
 import csv
+
+from .filters import SchemeContentTypeFilter
+from .models import Scheme, CsvDataImport
+from .serializers import SchemeSerializer, CsvDataImportSerializer
+
+from logging import getLogger
+
+_l = getLogger('poms.csv_import')
+
+
+class SchemeFilterSet(FilterSet):
+    content_type = SchemeContentTypeFilter(name='content_type')
+
+    class Meta:
+        model = Scheme
+        fields = []
 
 
 class SchemeViewSet(viewsets.ModelViewSet):
     queryset = Scheme.objects.all()
     serializer_class = SchemeSerializer
+    filter_class = SchemeFilterSet
 
     def create(self, request, *args, **kwargs):
         serializer = SchemeSerializer(data=request.data)
@@ -44,82 +63,287 @@ class CsvDataImportViewSet(viewsets.ModelViewSet):
         csv_row_dict = {}
 
         for csv_field in csv_fields:
-            row_value = row[csv_field.column]
 
-            csv_row_dict[csv_field.value] = row_value
+            if csv_field.column < len(row):
+                row_value = row[csv_field.column]
+
+                csv_row_dict[csv_field.value] = row_value
 
         return csv_row_dict
 
-    def get_results(self, request, scheme, entity_fields, csv_fields, reader, error_handler):
+    def get_field_type(self, field):
+
+        if field.system_property_key is not None:
+            return 'system_attribute'
+        else:
+            return 'dynamic_attribute'
+
+    def process_csv_file(self, master_user, scheme, rows, error_handler):
+
+        csv_fields = scheme.csv_fields.all()
+        entity_fields = scheme.entity_fields.all()
 
         errors = []
         results = []
 
-        row_number = 0
+        row_index = 0
 
-        for row in reader:
+        for row in rows:
 
-            if row_number != 0:
-
-                # try:
-
-                print('scheme.content_type.model %s' % scheme.content_type.model)
+            if row_index != 0:
 
                 csv_row_dict = self.get_row_data(row, csv_fields)
 
                 instance = {}
-                instance['master_user'] = Member.objects.get(user=request.user).master_user
+                instance['_row_index'] = row_index
+                instance['_row'] = row
+                instance['master_user'] = master_user
                 instance['attributes'] = []
+
+                inputs_error = []
+                error_row = {
+                    'error_message': None,
+                    'original_row_index': row_index,
+                    'original_row': row,
+                }
 
                 for entity_field in entity_fields:
 
                     key = entity_field.system_property_key
 
-                    if key is not None:
+                    if self.get_field_type(entity_field) == 'system_attribute':
 
                         if entity_field.expression != '':
 
                             if key == 'counterparties':
-                                instance[key] = CounterpartyMapping.objects.get(
-                                    value=csv_row_dict[entity_field.expression]).content_object
+
+                                try:
+                                    instance[key] = CounterpartyMapping.objects.get(
+                                        value=csv_row_dict[entity_field.expression]).content_object
+
+                                except (CounterpartyMapping.DoesNotExist, KeyError):
+
+                                    inputs_error.append(entity_field)
+
+                                    _l.debug('CounterpartyMapping %s does not exist', entity_field.expression)
+
                             elif key == 'responsibles':
-                                instance[key] = ResponsibleMapping.objects.get(
-                                    value=csv_row_dict[entity_field.expression]).content_object
+
+                                try:
+                                    instance[key] = ResponsibleMapping.objects.get(
+                                        value=csv_row_dict[entity_field.expression]).content_object
+
+                                except (ResponsibleMapping.DoesNotExist, KeyError):
+
+                                    inputs_error.append(entity_field)
+
+                                    _l.debug('ResponsibleMapping %s does not exist', entity_field.expression)
+
                             elif key == 'accounts':
-                                instance[key] = AccountMapping.objects.get(
-                                    value=csv_row_dict[entity_field.expression]).content_object
+
+                                try:
+                                    instance[key] = AccountMapping.objects.get(
+                                        value=csv_row_dict[entity_field.expression]).content_object
+
+                                except (AccountMapping.DoesNotExist, KeyError):
+
+                                    inputs_error.append(entity_field)
+
+                                    _l.debug('AccountMapping %s does not exist', entity_field.expression)
+
                             elif key == 'portfolios':
-                                instance[key] = PortfolioMapping.objects.get(
-                                    value=csv_row_dict[entity_field.expression]).content_object
+
+                                try:
+                                    instance[key] = PortfolioMapping.objects.get(
+                                        value=csv_row_dict[entity_field.expression]).content_object
+
+                                except (PortfolioMapping.DoesNotExist, KeyError):
+
+                                    inputs_error.append(entity_field)
+
+                                    _l.debug('PortfolioMapping %s does not exist', entity_field.expression)
+
                             else:
-                                instance[key] = safe_eval(entity_field.expression,
-                                                          names=csv_row_dict)
-                    else:
+
+                                try:
+
+                                    instance[key] = safe_eval(entity_field.expression, names=csv_row_dict)
+
+                                except (ExpressionEvalError, TypeError, Exception, KeyError):
+
+                                    inputs_error.append(entity_field)
+
+                                    # _l.debug('Can not evaluate system attribute % expression ', entity_field.expression)
+
+                    if self.get_field_type(entity_field) == 'dynamic_attribute':
 
                         executed_attr = {}
                         executed_attr['dynamic_attribute_id'] = entity_field.dynamic_attribute_id
-                        executed_attr['executed_expression'] = safe_eval(entity_field.expression,
-                                                                         names=csv_row_dict)
+
+                        try:
+
+                            attr_type = GenericAttributeType.objects.get(pk=executed_attr['dynamic_attribute_id'])
+
+                            if attr_type.value_type == 40:
+
+                                executed_attr['executed_expression'] = safe_eval(entity_field.expression,
+                                                                                 names=csv_row_dict)
+                                try:
+
+                                    formula._parse_date(executed_attr['executed_expression'])
+
+                                except (ExpressionEvalError, TypeError):
+
+                                    inputs_error.append(entity_field)
+
+                            if attr_type.value_type == 20:
+
+                                executed_attr['executed_expression'] = safe_eval(entity_field.expression,
+                                                                                 names=csv_row_dict)
+                                try:
+
+                                    formula._float(executed_attr['executed_expression'])
+
+                                except (ExpressionEvalError, TypeError):
+
+                                    inputs_error.append(entity_field)
+
+                            else:
+
+                                executed_attr['executed_expression'] = safe_eval(entity_field.expression,
+                                                                                 names=csv_row_dict)
+                        except (ExpressionEvalError, TypeError, Exception):
+
+                            inputs_error.append(entity_field)
+
+                            # _l.debug('Can not evaluate dynamic attribute % expression ', entity_field.expression)
 
                         instance['attributes'].append(executed_attr)
 
-                if instance['user_code'] == '':
-                    instance['user_code'] = instance['name']
+                if inputs_error:
 
-                results.append(instance)
+                    error_row['error_message'] = ugettext('Can\'t process field: %(inputs)s') % {
+                        'inputs': ', '.join(i.name for i in inputs_error)
+                    }
 
-                # except:
-                #
-                #     instance['master_user'] = None
-                #
-                #     errors.append({"line": row_number, 'instance': instance})
-                #
-                #     if error_handler == 'break':
-                #         break
+                    errors.append(error_row)
 
-            row_number = row_number + 1
+                    if error_handler == 'break':
+                        return results, errors
+
+                else:
+
+                    if instance['user_code'] == '':
+                        instance['user_code'] = instance['name']
+
+                    results.append(instance)
+
+            row_index = row_index + 1
 
         return results, errors
+
+    def fill_with_dynamic_attributes(self, instance, attributes):
+
+        for result_attr in attributes:
+
+            attr_type = GenericAttributeType.objects.get(pk=result_attr['dynamic_attribute_id'])
+
+            attribute = GenericAttribute(content_object=instance, attribute_type=attr_type)
+
+            if attr_type:
+                if attr_type.value_type == 40:
+                    attribute.value_date = formula._parse_date(result_attr['executed_expression'])
+                elif attr_type.value_type == 10:
+                    attribute.value_string = str(result_attr['executed_expression'])
+                elif attr_type.value_type == 20:
+                    attribute.value_float = float(result_attr['executed_expression'])
+                else:
+                    pass
+
+            attribute.save()
+
+    def fill_with_relation_attributes(self, instance, result):
+
+        for key, value in result.items():
+
+            if key == 'counterparties':
+                getattr(instance, key, False).add(result[key])
+            elif key == 'responsibles':
+                getattr(instance, key, False).add(result[key])
+            elif key == 'accounts':
+                getattr(instance, key, False).add(result[key])
+            elif key == 'portfolios':
+                getattr(instance, key, False).add(result[key])
+
+    def create_simple_instance(self, scheme, result):
+
+        Model = apps.get_model(app_label=scheme.content_type.app_label, model_name=scheme.content_type.model)
+
+        result_without_many_to_many = {}
+
+        many_to_many_fields = ['counterparties', 'responsibles', 'accounts', 'portfolios']
+        system_fields = ['_row_index', '_row']
+
+        for key, value in result.items():
+
+            if key != 'attributes':
+
+                if key not in many_to_many_fields and key not in system_fields:
+                    result_without_many_to_many[key] = value
+
+        instance = Model.objects.create(**result_without_many_to_many)
+
+        return instance
+
+    def import_results(self, scheme, error_handler, results, process_errors):
+
+        Model = apps.get_model(app_label=scheme.content_type.app_label, model_name=scheme.content_type.model)
+
+        for result in results:
+
+            try:
+
+                Model.objects.get(master_user_id=result['master_user'], user_code=result['user_code'])
+
+                error_row = {
+                    'error_message': ugettext('Entry with user code %(user_code)s already exists ') % {
+                        'user_code': result['user_code']
+                    },
+                    'original_row_index': result['_row_index'],
+                    'original_row': result['_row'],
+                }
+
+                process_errors.append(error_row)
+
+                if error_handler == 'break':
+                    return process_errors
+
+            except Model.DoesNotExist:
+
+                try:
+
+                    instance = self.create_simple_instance(scheme, result)
+
+                    self.fill_with_relation_attributes(instance, result)
+                    self.fill_with_dynamic_attributes(instance, result['attributes'])
+
+                    instance.save()
+                except ValidationError as e:
+
+                    error_row = {
+                        'error_message': ugettext('Validation error %(error)s ') % {
+                            'error': e
+                        },
+                        'original_row_index': result['_row_index'],
+                        'original_row': result['_row'],
+                    }
+
+                    process_errors.append(error_row)
+
+                    if error_handler == 'break':
+                        return process_errors
+
+        return process_errors
 
     def create(self, request, *args, **kwargs):
 
@@ -134,89 +358,21 @@ class CsvDataImportViewSet(viewsets.ModelViewSet):
         file = request.data['file'].read().decode('utf-8')
 
         io_string = io.StringIO(file)
-        reader = csv.reader(io_string, delimiter=';')
+        rows = csv.reader(io_string, delimiter=';')
 
-        csv_fields = scheme.csv_fields.all()
-        entity_fields = scheme.entity_fields.all()
+        master_user = Member.objects.get(user=request.user).master_user
 
-        Model = apps.get_model(app_label=scheme.content_type.app_label, model_name=scheme.content_type.model)
+        results, process_errors = self.process_csv_file(master_user, scheme, rows, error_handler)
 
-        results, errors = self.get_results(request, scheme, entity_fields, csv_fields, reader, error_handler)
+        if error_handler == 'break' and len(process_errors) != 0:
+            return Response({
+                "imported": len(results),
+                "errors": process_errors
+            }, status=status.HTTP_202_ACCEPTED)
 
-        for result in results:
+        process_errors = self.import_results(scheme, error_handler, results, process_errors)
 
-            # try:
-
-            result_without_many_to_many = {}
-
-            many_to_many_fields = ['counterparties', 'responsibles', 'accounts', 'portfolios']
-
-            for key, value in result.items():
-
-                print('key %s' % key)
-
-                if key != 'attributes':
-
-                    if key not in many_to_many_fields:
-                        result_without_many_to_many[key] = value
-
-            print('result_without_many_to_many %s ' % result_without_many_to_many)
-
-            instance = Model.objects.create(**result_without_many_to_many)
-
-            print('saved result %s' % instance)
-
-            for key, value in result.items():
-
-                if key == 'counterparties':
-                    getattr(instance, key, False).add(result[key])
-                elif key == 'responsibles':
-                    getattr(instance, key, False).add(result[key])
-                elif key == 'accounts':
-                    getattr(instance, key, False).add(result[key])
-                elif key == 'portfolios':
-                    getattr(instance, key, False).add(result[key])
-
-            print('result %s' % result['attributes'])
-
-            for result_attr in result['attributes']:
-
-                print('attr', result_attr)
-
-                attr_type = GenericAttributeType.objects.get(pk=result_attr['dynamic_attribute_id'])
-
-                print('attr_type %s' % attr_type)
-
-                print(repr(instance))
-
-                attribute = GenericAttribute(content_object=instance, attribute_type=attr_type)
-
-                if attr_type:
-                    if attr_type.value_type == 40:
-                        attribute.value_date = result_attr['executed_expression']
-                    elif attr_type.value_type == 10:
-                        attribute.value_string = result_attr['executed_expression']
-                    elif attr_type.value_type == 20:
-                        attribute.value_float = result_attr['executed_expression']
-                    else:
-                        pass
-
-                print('attribute %s' % attribute)
-
-                attribute.save()
-
-            instance.save()
-
-            # except:
-            #
-            #     result['master_user'] = None
-            #
-            #     errors.append({"line": row_number + 1, 'instance': result})  # we skipped first row in csv, so +1
-            #
-            #     if error_handler == 'break':
-            #         break
-
-        if len(errors):
-            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(request.data, status=status.HTTP_201_CREATED)
+        return Response({
+            "imported": len(results),
+            "errors": process_errors
+        }, status=status.HTTP_202_ACCEPTED)
