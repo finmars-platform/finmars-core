@@ -17,6 +17,7 @@ from django.utils.translation import ugettext, ugettext_lazy
 from poms.common.models import TimeStampedModel, AbstractClassModel, EXPRESSION_FIELD_LENGTH
 from poms.instruments.models import Instrument
 from poms.integrations.storage import import_config_storage
+from poms.obj_attrs.models import GenericClassifier, GenericAttributeType
 
 _l = getLogger('poms.integrations')
 
@@ -427,6 +428,21 @@ class AccountMapping(AbstractMapping):
         return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
 
 
+class AccountClassifierMapping(AbstractMapping):
+    attribute_type = models.ForeignKey(GenericAttributeType)
+    content_object = models.ForeignKey(GenericClassifier)
+
+    class Meta(AbstractMapping.Meta):
+        verbose_name = ugettext_lazy('account classifier mapping')
+        verbose_name_plural = ugettext_lazy('account classifier mappings')
+        unique_together = [
+            ['master_user', 'provider', 'value'],
+        ]
+
+    def __str__(self):
+        return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
+
+
 class InstrumentMapping(AbstractMapping):
     content_object = models.ForeignKey('instruments.Instrument', verbose_name=ugettext_lazy('instrument'))
 
@@ -454,6 +470,19 @@ class CounterpartyMapping(AbstractMapping):
     def __str__(self):
         return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
 
+class CounterpartyClassifierMapping(AbstractMapping):
+    attribute_type = models.ForeignKey(GenericAttributeType)
+    content_object = models.ForeignKey(GenericClassifier)
+
+    class Meta(AbstractMapping.Meta):
+        verbose_name = ugettext_lazy('responsible classifier mapping')
+        verbose_name_plural = ugettext_lazy('responsible classifier mappings')
+        unique_together = [
+            ['master_user', 'provider', 'value'],
+        ]
+
+    def __str__(self):
+        return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
 
 class ResponsibleMapping(AbstractMapping):
     content_object = models.ForeignKey('counterparties.Responsible', verbose_name=ugettext_lazy('responsible'))
@@ -461,6 +490,20 @@ class ResponsibleMapping(AbstractMapping):
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('responsible mapping')
         verbose_name_plural = ugettext_lazy('responsible mappings')
+        unique_together = [
+            ['master_user', 'provider', 'value'],
+        ]
+
+    def __str__(self):
+        return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
+
+class ResponsibleClassifierMapping(AbstractMapping):
+    attribute_type = models.ForeignKey(GenericAttributeType)
+    content_object = models.ForeignKey(GenericClassifier)
+
+    class Meta(AbstractMapping.Meta):
+        verbose_name = ugettext_lazy('responsible classifier mapping')
+        verbose_name_plural = ugettext_lazy('responsible classifier mappings')
         unique_together = [
             ['master_user', 'provider', 'value'],
         ]
@@ -482,6 +525,20 @@ class PortfolioMapping(AbstractMapping):
     def __str__(self):
         return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
 
+
+class PortfolioClassifierMapping(AbstractMapping):
+    attribute_type = models.ForeignKey(GenericAttributeType)
+    content_object = models.ForeignKey(GenericClassifier)
+
+    class Meta(AbstractMapping.Meta):
+        verbose_name = ugettext_lazy('portfolio classifier mapping')
+        verbose_name_plural = ugettext_lazy('portfolio classifier mappings')
+        unique_together = [
+            ['master_user', 'provider', 'value'],
+        ]
+
+    def __str__(self):
+        return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
 
 class Strategy1Mapping(AbstractMapping):
     content_object = models.ForeignKey('strategies.Strategy1', verbose_name=ugettext_lazy('strategy1'))

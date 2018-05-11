@@ -14,7 +14,8 @@ from poms.integrations.models import Task, ImportConfig, ProviderClass, Currency
     CounterpartyMapping, ResponsibleMapping, PortfolioMapping, Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, \
     DailyPricingModelMapping, PaymentSizeDetailMapping, PriceDownloadSchemeMapping, InstrumentAttributeValueMapping, \
     ComplexTransactionImportScheme, ComplexTransactionImportSchemeField, ComplexTransactionImportSchemeInput, \
-    ComplexTransactionImportSchemeRule
+    ComplexTransactionImportSchemeRule, PortfolioClassifierMapping, AccountClassifierMapping, \
+    CounterpartyClassifierMapping, ResponsibleClassifierMapping
 
 admin.site.register(ProviderClass, ClassModelAdmin)
 admin.site.register(FactorScheduleDownloadMethod, ClassModelAdmin)
@@ -127,6 +128,14 @@ class AbstractMappingAdmin(AbstractModelAdmin):
     search_fields = ['value', ]
 
 
+class AbstractClassifierMappingAdmin(AbstractModelAdmin):
+    master_user_path = 'master_user'
+    list_display = ['id', 'master_user', 'provider', 'value', 'attribute_type', 'content_object', ]
+    list_select_related = ['master_user', 'provider', 'attribute_type', 'content_object', ]
+    raw_id_fields = ['master_user', 'attribute_type', 'content_object', ]
+    search_fields = ['value', ]
+
+
 class InstrumentAttributeValueMappingAdmin(AbstractMappingAdmin):
     list_display = AbstractMappingAdmin.list_display + ['value_string', 'value_float', 'value_date', 'classifier']
     list_select_related = AbstractMappingAdmin.list_select_related + ['classifier']
@@ -139,10 +148,14 @@ admin.site.register(AccrualCalculationModelMapping, AbstractMappingAdmin)
 admin.site.register(InstrumentAttributeValueMapping, InstrumentAttributeValueMappingAdmin)
 admin.site.register(PeriodicityMapping, AbstractMappingAdmin)
 admin.site.register(AccountMapping, AbstractMappingAdmin)
+admin.site.register(AccountClassifierMapping, AbstractClassifierMappingAdmin)
 admin.site.register(InstrumentMapping, AbstractMappingAdmin)
 admin.site.register(CounterpartyMapping, AbstractMappingAdmin)
+admin.site.register(CounterpartyClassifierMapping, AbstractClassifierMappingAdmin)
 admin.site.register(ResponsibleMapping, AbstractMappingAdmin)
+admin.site.register(ResponsibleClassifierMapping, AbstractClassifierMappingAdmin)
 admin.site.register(PortfolioMapping, AbstractMappingAdmin)
+admin.site.register(PortfolioClassifierMapping, AbstractClassifierMappingAdmin)
 admin.site.register(Strategy1Mapping, AbstractMappingAdmin)
 admin.site.register(Strategy2Mapping, AbstractMappingAdmin)
 admin.site.register(Strategy3Mapping, AbstractMappingAdmin)

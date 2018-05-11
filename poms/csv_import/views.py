@@ -7,13 +7,15 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.filters import FilterSet
 from django.apps import apps
 
+from poms.portfolios.models import Portfolio
 from poms.users.models import Member
 from poms.common import formula
 from poms.common.formula import safe_eval, ExpressionSyntaxError, ExpressionEvalError
 
-from poms.integrations.models import CounterpartyMapping, AccountMapping, ResponsibleMapping, PortfolioMapping
+from poms.integrations.models import CounterpartyMapping, AccountMapping, ResponsibleMapping, PortfolioMapping, \
+    PortfolioClassifierMapping, AccountClassifierMapping, ResponsibleClassifierMapping, CounterpartyClassifierMapping
 
-from poms.obj_attrs.models import GenericAttributeType, GenericAttribute
+from poms.obj_attrs.models import GenericAttributeType, GenericAttribute, GenericClassifier
 
 from django.utils.translation import ugettext
 
@@ -208,10 +210,62 @@ class CsvDataImportViewSet(viewsets.ModelViewSet):
 
                                     inputs_error.append(entity_field)
 
-                            else:
+                            if attr_type.value_type == 10:
 
                                 executed_attr['executed_expression'] = safe_eval(entity_field.expression,
                                                                                  names=csv_row_dict)
+
+                            if attr_type.value_type == 30:
+
+                                if scheme.content_type.model == 'portfolio':
+
+                                    try:
+                                        executed_attr['executed_expression'] = PortfolioClassifierMapping.objects.get(
+                                            value=csv_row_dict[entity_field.expression]).content_object
+
+                                    except (PortfolioClassifierMapping.DoesNotExist, KeyError):
+
+                                        inputs_error.append(entity_field)
+
+                                        _l.debug('PortfolioClassifierMapping %s does not exist', entity_field.expression)
+
+                                if scheme.content_type.model == 'account':
+
+                                    try:
+                                        executed_attr['executed_expression'] = AccountClassifierMapping.objects.get(
+                                            value=csv_row_dict[entity_field.expression]).content_object
+
+                                    except (AccountClassifierMapping.DoesNotExist, KeyError):
+
+                                        inputs_error.append(entity_field)
+
+                                        _l.debug('AccountClassifierMapping %s does not exist', entity_field.expression)
+
+                                if scheme.content_type.model == 'responsible':
+
+                                    try:
+                                        executed_attr['executed_expression'] = ResponsibleClassifierMapping.objects.get(
+                                            value=csv_row_dict[entity_field.expression]).content_object
+
+                                    except (ResponsibleClassifierMapping.DoesNotExist, KeyError):
+
+                                        inputs_error.append(entity_field)
+
+                                        _l.debug('ResponsibleClassifierMapping %s does not exist', entity_field.expression)
+
+                                if scheme.content_type.model == 'counterparty':
+
+                                    try:
+                                        executed_attr['executed_expression'] = CounterpartyClassifierMapping.objects.get(
+                                            value=csv_row_dict[entity_field.expression]).content_object
+
+                                    except (CounterpartyClassifierMapping.DoesNotExist, KeyError):
+
+                                        inputs_error.append(entity_field)
+
+                                        _l.debug('CounterpartyClassifierMapping %s does not exist', entity_field.expression)
+
+
                         except (ExpressionEvalError, TypeError, Exception):
 
                             inputs_error.append(entity_field)
@@ -248,19 +302,26 @@ class CsvDataImportViewSet(viewsets.ModelViewSet):
 
             attr_type = GenericAttributeType.objects.get(pk=result_attr['dynamic_attribute_id'])
 
-            attribute = GenericAttribute(content_object=instance, attribute_type=attr_type)
-
             if attr_type:
-                if attr_type.value_type == 40:
-                    attribute.value_date = formula._parse_date(result_attr['executed_expression'])
-                elif attr_type.value_type == 10:
-                    attribute.value_string = str(result_attr['executed_expression'])
-                elif attr_type.value_type == 20:
-                    attribute.value_float = float(result_attr['executed_expression'])
-                else:
-                    pass
 
-            attribute.save()
+                    attribute = GenericAttribute(content_object=instance, attribute_type=attr_type)
+
+                    if attr_type.value_type == 10:
+                        attribute.value_string = str(result_attr['executed_expression'])
+                    elif attr_type.value_type == 20:
+                        attribute.value_float = float(result_attr['executed_expression'])
+                    elif attr_type.value_type == 30:
+
+                        attribute.classifier = result_attr['executed_expression']
+
+                        print('attribute', attribute)
+
+                    elif attr_type.value_type == 40:
+                        attribute.value_date = formula._parse_date(result_attr['executed_expression'])
+                    else:
+                        pass
+
+                    attribute.save()
 
     def fill_with_relation_attributes(self, instance, result):
 

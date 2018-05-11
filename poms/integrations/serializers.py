@@ -32,14 +32,17 @@ from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDo
     AbstractMapping, AccountMapping, InstrumentMapping, CounterpartyMapping, ResponsibleMapping, PortfolioMapping, \
     Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, DailyPricingModelMapping, PaymentSizeDetailMapping, \
     PriceDownloadSchemeMapping, ComplexTransactionImportScheme, ComplexTransactionImportSchemeInput, \
-    ComplexTransactionImportSchemeRule, ComplexTransactionImportSchemeField
+    ComplexTransactionImportSchemeRule, ComplexTransactionImportSchemeField, PortfolioClassifierMapping, \
+    AccountClassifierMapping, CounterpartyClassifierMapping, ResponsibleClassifierMapping
 from poms.integrations.providers.base import get_provider, ProviderException
 from poms.integrations.storage import import_file_storage
 from poms.integrations.tasks import download_pricing, download_instrument
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
-from poms.obj_attrs.serializers import ModelWithAttributesSerializer
+from poms.obj_attrs.serializers import ModelWithAttributesSerializer, GenericAttributeTypeSerializer, \
+    GenericClassifierSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.portfolios.fields import PortfolioField
+from poms.portfolios.models import Portfolio
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
 from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeField, TransactionTypeInputField
@@ -453,6 +456,45 @@ class AbstractMappingSerializer(serializers.ModelSerializer):
         raise NotImplementedError()
 
 
+class AbstractClassifierMappingSerializer(serializers.ModelSerializer):
+    master_user = MasterUserField()
+
+    # currency = CurrencyField()
+    # currency_object = serializers.PrimaryKeyRelatedField(source='currency', read_only=True)
+
+    class Meta:
+        model = AbstractMapping
+        fields = [
+            'id', 'master_user', 'provider', 'value', 'attribute_type', 'content_object',
+            # 'provider_object', 'content_object_object',
+        ]
+        # validators = [
+        #     UniqueTogetherValidator(
+        #         queryset=CurrencyMapping.objects.all(),
+        #         fields=('master_user', 'provider', 'value'),
+        #         message=ugettext_lazy('The fields provider and value must make a unique set.')
+        #     )
+        # ]
+
+    def __init__(self, *args, **kwargs):
+        super(AbstractClassifierMappingSerializer, self).__init__(*args, **kwargs)
+
+        self.fields['provider_object'] = ProviderClassSerializer(source='provider', read_only=True)
+
+        self.fields['attribute_type_object'] = GenericAttributeTypeSerializer(source='attribute_type', read_only=True)
+
+        self.fields['content_object_object'] = GenericClassifierSerializer(source='content_object', read_only=True)
+
+        model = self.Meta.model
+        self.validators.append(
+            UniqueTogetherValidator(
+                queryset=model.objects.all(),
+                fields=('master_user', 'provider', 'value'),
+                message=ugettext_lazy('The fields provider and value must make a unique set.')
+            )
+        )
+
+
 class CurrencyMappingSerializer(AbstractMappingSerializer):
     content_object = CurrencyField()
 
@@ -558,6 +600,16 @@ class AccountMappingSerializer(AbstractMappingSerializer):
         from poms.accounts.serializers import AccountViewSerializer
         return AccountViewSerializer
 
+class AccountClassifierMappingSerializer(AbstractClassifierMappingSerializer):
+    attribute_type = GenericAttributeTypeField()
+    content_object = GenericClassifierField()
+
+    class Meta(AbstractClassifierMappingSerializer.Meta):
+        model = AccountClassifierMapping
+
+    def __init__(self, *args, **kwargs):
+        super(AccountClassifierMappingSerializer, self).__init__(*args, **kwargs)
+
 
 class InstrumentMappingSerializer(AbstractMappingSerializer):
     content_object = InstrumentField()
@@ -586,6 +638,16 @@ class CounterpartyMappingSerializer(AbstractMappingSerializer):
         from poms.counterparties.serializers import CounterpartyViewSerializer
         return CounterpartyViewSerializer
 
+class CounterpartyClassifierMappingSerializer(AbstractClassifierMappingSerializer):
+    attribute_type = GenericAttributeTypeField()
+    content_object = GenericClassifierField()
+
+    class Meta(AbstractClassifierMappingSerializer.Meta):
+        model = CounterpartyClassifierMapping
+
+    def __init__(self, *args, **kwargs):
+        super(CounterpartyClassifierMappingSerializer, self).__init__(*args, **kwargs)
+
 
 class ResponsibleMappingSerializer(AbstractMappingSerializer):
     content_object = ResponsibleField()
@@ -600,6 +662,16 @@ class ResponsibleMappingSerializer(AbstractMappingSerializer):
         from poms.counterparties.serializers import ResponsibleViewSerializer
         return ResponsibleViewSerializer
 
+class ResponsibleClassifierMappingSerializer(AbstractClassifierMappingSerializer):
+    attribute_type = GenericAttributeTypeField()
+    content_object = GenericClassifierField()
+
+    class Meta(AbstractClassifierMappingSerializer.Meta):
+        model = ResponsibleClassifierMapping
+
+    def __init__(self, *args, **kwargs):
+        super(ResponsibleClassifierMappingSerializer, self).__init__(*args, **kwargs)
+
 
 class PortfolioMappingSerializer(AbstractMappingSerializer):
     content_object = PortfolioField()
@@ -613,6 +685,17 @@ class PortfolioMappingSerializer(AbstractMappingSerializer):
     def get_content_object_view_serializer(self):
         from poms.portfolios.serializers import PortfolioViewSerializer
         return PortfolioViewSerializer
+
+
+class PortfolioClassifierMappingSerializer(AbstractClassifierMappingSerializer):
+    attribute_type = GenericAttributeTypeField()
+    content_object = GenericClassifierField()
+
+    class Meta(AbstractClassifierMappingSerializer.Meta):
+        model = PortfolioClassifierMapping
+
+    def __init__(self, *args, **kwargs):
+        super(PortfolioClassifierMappingSerializer, self).__init__(*args, **kwargs)
 
 
 class Strategy1MappingSerializer(AbstractMappingSerializer):
@@ -1005,7 +1088,7 @@ class ImportPricingEntry(object):
             existed_instrument_prices = {
                 (p.instrument_id, p.pricing_policy_id): p
                 for p in PriceHistory.objects.filter(instrument__in=instruments_pk, date=self.date_to)
-                }
+            }
 
             instrument_price_missed_objects = []
             for instrument_id, pricing_policy_id in instrument_price_missed:
@@ -1028,7 +1111,7 @@ class ImportPricingEntry(object):
             existed_currency_prices = {
                 (p.currency_id, p.pricing_policy_id): p
                 for p in CurrencyHistory.objects.filter(currency__in=currencies_pk, date=self.date_to)
-                }
+            }
             currency_price_missed_objects = []
             for currency_id, pricing_policy_id in currency_price_missed:
                 op = existed_currency_prices.get((currency_id, pricing_policy_id), None)

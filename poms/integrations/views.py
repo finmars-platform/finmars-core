@@ -27,7 +27,8 @@ from poms.integrations.models import ImportConfig, Task, InstrumentDownloadSchem
     PricingAutomatedSchedule, InstrumentDownloadSchemeAttribute, AccountMapping, InstrumentMapping, CounterpartyMapping, \
     ResponsibleMapping, PortfolioMapping, Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, \
     DailyPricingModelMapping, \
-    PaymentSizeDetailMapping, PriceDownloadSchemeMapping, ComplexTransactionImportScheme
+    PaymentSizeDetailMapping, PriceDownloadSchemeMapping, ComplexTransactionImportScheme, PortfolioClassifierMapping, \
+    AccountClassifierMapping, CounterpartyClassifierMapping, ResponsibleClassifierMapping
 from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer, ImportInstrumentSerializer, \
     ImportPricingSerializer, InstrumentDownloadSchemeSerializer, ProviderClassSerializer, \
     FactorScheduleDownloadMethodSerializer, AccrualScheduleDownloadMethodSerializer, PriceDownloadSchemeSerializer, \
@@ -38,9 +39,10 @@ from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer
     PortfolioMappingSerializer, \
     Strategy1MappingSerializer, Strategy2MappingSerializer, Strategy3MappingSerializer, \
     DailyPricingModelMappingSerializer, PaymentSizeDetailMappingSerializer, PriceDownloadSchemeMappingSerializer, \
-    ComplexTransactionImportSchemeSerializer
+    ComplexTransactionImportSchemeSerializer, PortfolioClassifierMappingSerializer, AccountClassifierMappingSerializer, \
+    CounterpartyClassifierMappingSerializer, ResponsibleClassifierMappingSerializer
 from poms.integrations.tasks import complex_transaction_csv_file_import
-from poms.obj_attrs.models import GenericAttributeType
+from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
@@ -436,6 +438,12 @@ class AccountMappingFilterSet(AbstractMappingFilterSet):
     class Meta(AbstractMappingFilterSet.Meta):
         model = AccountMapping
 
+class AccountClassifierMappingFilterSet(AbstractMappingFilterSet):
+
+    attribute_type = ModelExtWithPermissionMultipleChoiceFilter(model=GenericAttributeType)
+
+    class Meta(AbstractMappingFilterSet.Meta):
+        model = AccountClassifierMapping
 
 class AccountMappingViewSet(AbstractMappingViewSet):
     queryset = AccountMapping.objects.select_related(
@@ -446,6 +454,16 @@ class AccountMappingViewSet(AbstractMappingViewSet):
         AccountMappingObjectPermissionFilter,
     ]
     filter_class = AccountMappingFilterSet
+
+class AccountClassifierMappingViewSet(AbstractMappingViewSet):
+    queryset = AccountClassifierMapping.objects.select_related(
+        'master_user', 'provider', 'content_object', 'attribute_type'
+    )
+    serializer_class = AccountClassifierMappingSerializer
+    filter_backends = AbstractMappingViewSet.filter_backends + [
+        AccountMappingObjectPermissionFilter,
+    ]
+    filter_class = AccountClassifierMappingFilterSet
 
 
 class InstrumentMappingFilterSet(AbstractMappingFilterSet):
@@ -472,6 +490,13 @@ class CounterpartyMappingFilterSet(AbstractMappingFilterSet):
     class Meta(AbstractMappingFilterSet.Meta):
         model = CounterpartyMapping
 
+class CounterpartyClassifierMappingFilterSet(AbstractMappingFilterSet):
+
+    attribute_type = ModelExtWithPermissionMultipleChoiceFilter(model=GenericAttributeType)
+
+    class Meta(AbstractMappingFilterSet.Meta):
+        model = CounterpartyClassifierMapping
+
 
 class CounterpartyMappingViewSet(AbstractMappingViewSet):
     queryset = CounterpartyMapping.objects.select_related(
@@ -484,11 +509,30 @@ class CounterpartyMappingViewSet(AbstractMappingViewSet):
     filter_class = CounterpartyMappingFilterSet
 
 
+class CounterpartyClassifierMappingViewSet(AbstractMappingViewSet):
+    queryset = CounterpartyClassifierMapping.objects.select_related(
+        'master_user', 'provider', 'content_object', 'attribute_type'
+    )
+    serializer_class = CounterpartyClassifierMappingSerializer
+    filter_backends = AbstractMappingViewSet.filter_backends + [
+        CounterpartyMappingObjectPermissionFilter,
+    ]
+    filter_class = CounterpartyClassifierMappingFilterSet
+
+
 class ResponsibleMappingFilterSet(AbstractMappingFilterSet):
     content_object = ModelExtWithPermissionMultipleChoiceFilter(model=Responsible)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = ResponsibleMapping
+
+
+class ResponsibleClassifierMappingFilterSet(AbstractMappingFilterSet):
+
+    attribute_type = ModelExtWithPermissionMultipleChoiceFilter(model=GenericAttributeType)
+
+    class Meta(AbstractMappingFilterSet.Meta):
+        model = CounterpartyClassifierMapping
 
 
 class ResponsibleMappingViewSet(AbstractMappingViewSet):
@@ -502,12 +546,30 @@ class ResponsibleMappingViewSet(AbstractMappingViewSet):
     filter_class = ResponsibleMappingFilterSet
 
 
+class ResponsibleClassifierMappingViewSet(AbstractMappingViewSet):
+    queryset = ResponsibleClassifierMapping.objects.select_related(
+        'master_user', 'provider', 'content_object', 'attribute_type'
+    )
+    serializer_class = ResponsibleClassifierMappingSerializer
+    filter_backends = AbstractMappingViewSet.filter_backends + [
+        ResponsibleMappingObjectPermissionFilter,
+    ]
+    filter_class = ResponsibleClassifierMappingFilterSet
+
+
 class PortfolioMappingFilterSet(AbstractMappingFilterSet):
     content_object = ModelExtWithPermissionMultipleChoiceFilter(model=Portfolio)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = PortfolioMapping
 
+
+class PortfolioClassifierMappingFilterSet(AbstractMappingFilterSet):
+
+    attribute_type = ModelExtWithPermissionMultipleChoiceFilter(model=GenericAttributeType)
+
+    class Meta(AbstractMappingFilterSet.Meta):
+        model = PortfolioClassifierMapping
 
 class PortfolioMappingViewSet(AbstractMappingViewSet):
     queryset = PortfolioMapping.objects.select_related(
@@ -518,6 +580,16 @@ class PortfolioMappingViewSet(AbstractMappingViewSet):
         PortfolioMappingObjectPermissionFilter,
     ]
     filter_class = PortfolioMappingFilterSet
+
+class PortfolioClassifierMappingViewSet(AbstractMappingViewSet):
+    queryset = PortfolioClassifierMapping.objects.select_related(
+        'master_user', 'provider', 'content_object', 'attribute_type'
+    )
+    serializer_class = PortfolioClassifierMappingSerializer
+    filter_backends = AbstractMappingViewSet.filter_backends + [
+        PortfolioMappingObjectPermissionFilter,
+    ]
+    filter_class = PortfolioClassifierMappingFilterSet
 
 
 class Strategy1MappingFilterSet(AbstractMappingFilterSet):
