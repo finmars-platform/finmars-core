@@ -419,7 +419,7 @@ class CsvDataImportViewSet(viewsets.ModelViewSet):
         file = request.data['file'].read().decode('utf-8')
 
         io_string = io.StringIO(file)
-        rows = csv.reader(io_string, delimiter=';')
+        rows = csv.reader(io_string, delimiter=',')
 
         master_user = Member.objects.get(user=request.user).master_user
 
