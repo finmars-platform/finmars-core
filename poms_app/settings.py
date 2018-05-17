@@ -227,6 +227,7 @@ USE_L10N = True
 USE_TZ = True
 USE_ETAGS = True
 if not DEBUG:
+
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
@@ -235,6 +236,9 @@ if not DEBUG:
     CSRF_TRUSTED_ORIGINS = ['finmars.com', 'api.finmars.com', 'dev.finmars.com', 'api.dev.finmars.com']
 
     CORS_ORIGIN_WHITELIST = ('dev.finmars.com', 'finmars.com', )
+
+    print('CORS_ORIGIN_WHITELIST %s' % CORS_ORIGIN_WHITELIST)
+
     CORS_URLS_REGEX = r'^/api/.*$'
     CORS_REPLACE_HTTPS_REFERER = True
     CORS_ALLOW_CREDENTIALS = True
