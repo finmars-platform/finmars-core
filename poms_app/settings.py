@@ -242,7 +242,6 @@ CSRF_TRUSTED_ORIGINS = ['finmars.com', 'api.finmars.com', 'dev.finmars.com', 'ap
 
 CORS_ORIGIN_WHITELIST = ('dev.finmars.com', 'finmars.com', )
 
-print('CORS_ORIGIN_WHITELIST %s' % CORS_ORIGIN_WHITELIST)
 
 CORS_URLS_REGEX = r'^/api/.*$'
 CORS_REPLACE_HTTPS_REFERER = True
