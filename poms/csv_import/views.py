@@ -7,6 +7,7 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.filters import FilterSet
 from django.apps import apps
 
+from poms.common.views import AbstractModelViewSet
 from poms.portfolios.models import Portfolio
 from poms.users.models import Member
 from poms.common import formula
@@ -39,24 +40,31 @@ class SchemeFilterSet(FilterSet):
         fields = []
 
 
-class SchemeViewSet(viewsets.ModelViewSet):
-    queryset = Scheme.objects.all()
+class SchemeViewSet(AbstractModelViewSet):
+    queryset = Scheme.objects.select_related(
+        'master_user',
+    )
     serializer_class = SchemeSerializer
     filter_class = SchemeFilterSet
 
-    def create(self, request, *args, **kwargs):
-        serializer = SchemeSerializer(data=request.data)
+    # def create(self, request, *args, **kwargs):
+    #
+    #     request.data['master_user'] = request.user
+    #
+    #     serializer = SchemeSerializer(data=request.data, context={'user': request.user})
+    #
+    #     if serializer.is_valid(raise_exception=ValueError):
+    #         serializer.save()
+    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    #
+    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        if serializer.is_valid(raise_exception=ValueError):
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class CsvDataImportViewSet(viewsets.ModelViewSet):
+class CsvDataImportViewSet(AbstractModelViewSet):
     parser_classes = (MultiPartParser,)
-    queryset = CsvDataImport.objects.all()
+    queryset = CsvDataImport.objects.select_related(
+        'master_user',
+    )
     serializer_class = CsvDataImportSerializer
     http_method_names = ['get', 'post', 'head']
 
@@ -211,7 +219,6 @@ class CsvDataImportViewSet(viewsets.ModelViewSet):
                                     inputs_error.append(entity_field)
 
                             if attr_type.value_type == 10:
-
                                 executed_attr['executed_expression'] = safe_eval(entity_field.expression,
                                                                                  names=csv_row_dict)
 
@@ -227,7 +234,8 @@ class CsvDataImportViewSet(viewsets.ModelViewSet):
 
                                         inputs_error.append(entity_field)
 
-                                        _l.debug('PortfolioClassifierMapping %s does not exist', entity_field.expression)
+                                        _l.debug('PortfolioClassifierMapping %s does not exist',
+                                                 entity_field.expression)
 
                                 if scheme.content_type.model == 'account':
 
@@ -251,19 +259,22 @@ class CsvDataImportViewSet(viewsets.ModelViewSet):
 
                                         inputs_error.append(entity_field)
 
-                                        _l.debug('ResponsibleClassifierMapping %s does not exist', entity_field.expression)
+                                        _l.debug('ResponsibleClassifierMapping %s does not exist',
+                                                 entity_field.expression)
 
                                 if scheme.content_type.model == 'counterparty':
 
                                     try:
-                                        executed_attr['executed_expression'] = CounterpartyClassifierMapping.objects.get(
+                                        executed_attr[
+                                            'executed_expression'] = CounterpartyClassifierMapping.objects.get(
                                             value=csv_row_dict[entity_field.expression]).content_object
 
                                     except (CounterpartyClassifierMapping.DoesNotExist, KeyError):
 
                                         inputs_error.append(entity_field)
 
-                                        _l.debug('CounterpartyClassifierMapping %s does not exist', entity_field.expression)
+                                        _l.debug('CounterpartyClassifierMapping %s does not exist',
+                                                 entity_field.expression)
 
 
                         except (ExpressionEvalError, TypeError, Exception):
@@ -304,24 +315,24 @@ class CsvDataImportViewSet(viewsets.ModelViewSet):
 
             if attr_type:
 
-                    attribute = GenericAttribute(content_object=instance, attribute_type=attr_type)
+                attribute = GenericAttribute(content_object=instance, attribute_type=attr_type)
 
-                    if attr_type.value_type == 10:
-                        attribute.value_string = str(result_attr['executed_expression'])
-                    elif attr_type.value_type == 20:
-                        attribute.value_float = float(result_attr['executed_expression'])
-                    elif attr_type.value_type == 30:
+                if attr_type.value_type == 10:
+                    attribute.value_string = str(result_attr['executed_expression'])
+                elif attr_type.value_type == 20:
+                    attribute.value_float = float(result_attr['executed_expression'])
+                elif attr_type.value_type == 30:
 
-                        attribute.classifier = result_attr['executed_expression']
+                    attribute.classifier = result_attr['executed_expression']
 
-                        print('attribute', attribute)
+                    print('attribute', attribute)
 
-                    elif attr_type.value_type == 40:
-                        attribute.value_date = formula._parse_date(result_attr['executed_expression'])
-                    else:
-                        pass
+                elif attr_type.value_type == 40:
+                    attribute.value_date = formula._parse_date(result_attr['executed_expression'])
+                else:
+                    pass
 
-                    attribute.save()
+                attribute.save()
 
     def fill_with_relation_attributes(self, instance, result):
 
@@ -416,18 +427,15 @@ class CsvDataImportViewSet(viewsets.ModelViewSet):
         if 'file' not in request.data:
             raise ValidationError('File is not set')
 
+        if not request.data['file'].name.endswith('.csv'):
+            raise ValidationError('File is not csv format')
+
         file = request.data['file'].read().decode('utf-8')
 
         io_string = io.StringIO(file)
         rows = csv.reader(io_string, delimiter=',')
 
-        # print(len(Member.objects.filter(user=request.user)))
-        # print(request.user)
-
-        if len(Member.objects.filter(user=request.user)) > 1:
-            master_user = request.user
-        else:
-            master_user = Member.objects.filter(user=request.user)[0].master_user
+        master_user = self.request.user.master_user
 
         results, process_errors = self.process_csv_file(master_user, scheme, rows, error_handler)
 
