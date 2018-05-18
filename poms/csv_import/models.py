@@ -8,6 +8,7 @@ from poms.users.models import MasterUser
 class Scheme(models.Model):
     name = models.CharField(max_length=255)
     content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'))
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'))
 
     def __str__(self):
         return self.name

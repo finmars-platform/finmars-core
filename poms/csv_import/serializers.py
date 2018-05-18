@@ -3,6 +3,7 @@ from django.apps import apps
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from poms.users.fields import MasterUserField
 from .models import Scheme, CsvField, EntityField, CsvDataImport
 from .fields import CsvImportContentTypeField
 
@@ -25,14 +26,17 @@ class EntityFieldSerializer(serializers.ModelSerializer):
 
 
 class SchemeSerializer(serializers.ModelSerializer):
+
+    master_user = MasterUserField()
     csv_fields = CsvFieldSerializer(many=True)
     entity_fields = EntityFieldSerializer(many=True)
     content_type = CsvImportContentTypeField()
 
+
     class Meta:
 
         model = Scheme
-        fields = ('id', 'name', 'content_type', 'csv_fields', 'entity_fields')
+        fields = ('id', 'master_user', 'name', 'content_type', 'csv_fields', 'entity_fields')
 
     def create_entity_fields_if_not_exist(self, scheme):
 
@@ -104,6 +108,8 @@ class SchemeSerializer(serializers.ModelSerializer):
                                            expression=entity_field.get('expression'))
 
     def create(self, validated_data):
+
+        print(self.context)
 
         csv_fields = validated_data.pop('csv_fields')
         entity_fields = validated_data.pop('entity_fields')
