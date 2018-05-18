@@ -421,7 +421,13 @@ class CsvDataImportViewSet(viewsets.ModelViewSet):
         io_string = io.StringIO(file)
         rows = csv.reader(io_string, delimiter=',')
 
-        master_user = Member.objects.get(user=request.user).master_user
+        # print(len(Member.objects.filter(user=request.user)))
+        # print(request.user)
+
+        if len(Member.objects.filter(user=request.user)) > 1:
+            master_user = request.user
+        else:
+            master_user = Member.objects.filter(user=request.user)[0].master_user
 
         results, process_errors = self.process_csv_file(master_user, scheme, rows, error_handler)
 

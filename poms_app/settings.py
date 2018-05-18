@@ -38,6 +38,10 @@ if os.environ.get('POMS_DEV') == 'False':
 if not DEBUG:
     print('Debug disabled')
 
+LOCAL = True
+if os.environ.get('LOCAL') == 'False':
+    LOCAL = False
+
 ADMIN = True
 
 ALLOWED_HOSTS = ['*']
@@ -227,20 +231,21 @@ USE_L10N = True
 USE_TZ = True
 USE_ETAGS = True
 
+if not LOCAL:
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-CSRF_COOKIE_DOMAIN = 'finmars.com'
-CSRF_TRUSTED_ORIGINS = ['finmars.com', 'api.finmars.com', 'dev.finmars.com', 'api.dev.finmars.com']
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    CSRF_COOKIE_DOMAIN = 'finmars.com'
+    CSRF_TRUSTED_ORIGINS = ['finmars.com', 'api.finmars.com', 'dev.finmars.com', 'api.dev.finmars.com']
 
-CORS_ORIGIN_WHITELIST = ('dev.finmars.com', 'finmars.com', )
+    CORS_ORIGIN_WHITELIST = ('dev.finmars.com', 'finmars.com', )
 
-CORS_URLS_REGEX = r'^/api/.*$'
-CORS_REPLACE_HTTPS_REFERER = True
-CORS_ALLOW_CREDENTIALS = True
-CORS_PREFLIGHT_MAX_AGE = 300
+    CORS_URLS_REGEX = r'^/api/.*$'
+    CORS_REPLACE_HTTPS_REFERER = True
+    CORS_ALLOW_CREDENTIALS = True
+    CORS_PREFLIGHT_MAX_AGE = 300
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
