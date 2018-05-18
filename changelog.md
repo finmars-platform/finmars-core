@@ -1,5 +1,10 @@
 # Changelog
 
+## 18.05.2018
+
+- Change CSV import delimiter from ; to ,
+- Update DEV env settings (CSRF protection)
+
 ## 15.05.2018
 
 - Error handler in CSV file import wizard
