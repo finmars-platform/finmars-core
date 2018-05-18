@@ -227,11 +227,6 @@ USE_L10N = True
 USE_TZ = True
 USE_ETAGS = True
 
-print('Here? DEBUG %s' % DEBUG)
-
-# if not DEBUG:
-
-print('Here?')
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = True
@@ -241,7 +236,6 @@ CSRF_COOKIE_DOMAIN = 'finmars.com'
 CSRF_TRUSTED_ORIGINS = ['finmars.com', 'api.finmars.com', 'dev.finmars.com', 'api.dev.finmars.com']
 
 CORS_ORIGIN_WHITELIST = ('dev.finmars.com', 'finmars.com', )
-
 
 CORS_URLS_REGEX = r'^/api/.*$'
 CORS_REPLACE_HTTPS_REFERER = True
