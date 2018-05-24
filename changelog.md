@@ -1,5 +1,9 @@
 # Changelog
 
+## 24.05.2018
+
+- **HOTFIX**: Change Bloomberg setup
+
 ## 18.05.2018
 
 - Change CSV import delimiter from ; to ,

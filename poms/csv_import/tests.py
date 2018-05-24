@@ -10,9 +10,9 @@ from poms.counterparties.models import Responsible, Counterparty
 from poms.accounts.models import AccountType, Account
 from poms.portfolios.models import Portfolio
 
-from poms.obj_attrs.models import GenericAttributeType, GenericAttribute
+from poms.obj_attrs.models import GenericAttributeType, GenericAttribute, GenericClassifier
 from poms.integrations.models import AccountMapping, ResponsibleMapping, PortfolioMapping, CounterpartyMapping, \
-    ProviderClass
+    ProviderClass, PortfolioClassifierMapping
 
 from .tests_data import TestData
 
@@ -22,6 +22,36 @@ logger = logging.getLogger('django_test')
 
 
 class CsvImportTestCase(TestCase):
+
+    def setUp(self):
+        user = User.objects.create_user('a1')
+        self.master_user = MasterUser.objects.create_master_user(user=user, name='a1_m1')
+
+        self.default_p1 = Portfolio.objects.get(master_user=self.master_user, user_code='-')
+        self.at1 = AccountType.objects.create(master_user=self.master_user, name='at1', show_transaction_details=False)
+        self.ac1 = Account.objects.create(master_user=self.master_user, name='ac1', type=self.at1)
+        self.res1 = Responsible.objects.create(master_user=self.master_user, name='res1')
+
+        self.bloomberg = ProviderClass.objects.get(pk=ProviderClass.BLOOMBERG)
+
+        self.setPortfolioDynamicAttrs()
+        self.setAccountDynamicAttrs()
+        self.setResponsibleDynamicAttrs()
+        self.setCounterpartyDynamicAttrs()
+
+        self.res1_map = ResponsibleMapping.objects.create(master_user=self.master_user, provider=self.bloomberg,
+                                                          content_object=self.res1, value='res_1')
+        self.ac1_map = AccountMapping.objects.create(master_user=self.master_user, provider=self.bloomberg,
+                                                     content_object=self.ac1, value='account_2')
+
+        self.default_p1_map = PortfolioMapping.objects.create(master_user=self.master_user, provider=self.bloomberg,
+                                                              content_object=self.default_p1, value='-')
+
+        self.scheme = self.create_portfolio_scheme()
+        self.portfolio_scheme = self.create_portfolio_scheme()
+        self.account_scheme = self.create_account_scheme()
+        self.counterparty_scheme = self.create_counterparty_scheme()
+        self.responsible_scheme = self.create_responsible_scheme()
 
     def setPortfolioDynamicAttrs(self):
         self.portfolio_dynamic_attr_string = GenericAttributeType.objects.create(master_user=self.master_user,
@@ -40,6 +70,36 @@ class CsvImportTestCase(TestCase):
                                                                                value_type=GenericAttributeType.DATE,
                                                                                content_type=ContentType.objects.get_for_model(
                                                                                    Portfolio))
+        self.portfolio_dynamic_attr_classifier = GenericAttributeType.objects.create(master_user=self.master_user,
+                                                                                     name="Portfolio Country (Classifier)",
+                                                                                     value_type=GenericAttributeType.CLASSIFIER,
+                                                                                     content_type=ContentType.objects.get_for_model(
+                                                                                         Portfolio))
+
+        self.portfolio_classifier_russia = GenericClassifier.objects.create(
+            attribute_type=self.portfolio_dynamic_attr_classifier, name="Russia")
+        self.portfolio_classifier_usa = GenericClassifier.objects.create(
+            attribute_type=self.portfolio_dynamic_attr_classifier, name="USA")
+        self.portfolio_classifier_germany = GenericClassifier.objects.create(
+            attribute_type=self.portfolio_dynamic_attr_classifier, name="Germany")
+
+        self.portfolio_classifier_russia_map = PortfolioClassifierMapping.objects.create(master_user=self.master_user,
+                                                                                         provider=self.bloomberg,
+                                                                                         attribute_type=self.portfolio_dynamic_attr_classifier,
+                                                                                         content_object=self.portfolio_classifier_russia,
+                                                                                         value='ru')
+
+        self.portfolio_classifier_usa_map = PortfolioClassifierMapping.objects.create(master_user=self.master_user,
+                                                                                      provider=self.bloomberg,
+                                                                                      attribute_type=self.portfolio_dynamic_attr_classifier,
+                                                                                      content_object=self.portfolio_classifier_usa,
+                                                                                      value='us')
+
+        self.portfolio_classifier_germany_map = PortfolioClassifierMapping.objects.create(master_user=self.master_user,
+                                                                                          provider=self.bloomberg,
+                                                                                          attribute_type=self.portfolio_dynamic_attr_classifier,
+                                                                                          content_object=self.portfolio_classifier_germany,
+                                                                                          value='de')
 
     def setAccountDynamicAttrs(self):
         self.account_dynamic_attr_string = GenericAttributeType.objects.create(master_user=self.master_user,
@@ -95,38 +155,9 @@ class CsvImportTestCase(TestCase):
                                                                                   content_type=ContentType.objects.get_for_model(
                                                                                       Counterparty))
 
-    def setUp(self):
-        user = User.objects.create_user('a1')
-        self.master_user = MasterUser.objects.create_master_user(user=user, name='a1_m1')
-
-        self.default_p1 = Portfolio.objects.get(master_user=self.master_user, user_code='-')
-        self.at1 = AccountType.objects.create(master_user=self.master_user, name='at1', show_transaction_details=False)
-        self.ac1 = Account.objects.create(master_user=self.master_user, name='ac1', type=self.at1)
-        self.res1 = Responsible.objects.create(master_user=self.master_user, name='res1')
-
-        self.setPortfolioDynamicAttrs()
-        self.setAccountDynamicAttrs()
-        self.setResponsibleDynamicAttrs()
-        self.setCounterpartyDynamicAttrs()
-
-        self.bloomberg = ProviderClass.objects.get(pk=ProviderClass.BLOOMBERG)
-
-        self.res1_map = ResponsibleMapping.objects.create(master_user=self.master_user, provider=self.bloomberg,
-                                                         content_object=self.res1, value='res_1')
-        self.ac1_map = AccountMapping.objects.create(master_user=self.master_user, provider=self.bloomberg,
-                                                    content_object=self.ac1, value='account_2')
-
-        self.default_p1_map = PortfolioMapping.objects.create(master_user=self.master_user, provider=self.bloomberg,
-                                                              content_object=self.default_p1, value='-')
-
-        self.scheme = self.create_portfolio_scheme()
-        self.portfolio_scheme = self.create_portfolio_scheme()
-        self.account_scheme = self.create_account_scheme()
-        self.counterparty_scheme = self.create_counterparty_scheme()
-        self.responsible_scheme = self.create_responsible_scheme()
-
     def create_portfolio_scheme(self):
         scheme = Scheme.objects.create(name="Portfolio scheme",
+                                       master_user=self.master_user,
                                        content_type=ContentType.objects.get_for_model(Portfolio))
 
         CsvField.objects.create(column=0, value="name", scheme=scheme)
@@ -136,6 +167,7 @@ class CsvImportTestCase(TestCase):
         CsvField.objects.create(column=4, value="date", scheme=scheme)
         CsvField.objects.create(column=5, value="num", scheme=scheme)
         CsvField.objects.create(column=6, value="responsible", scheme=scheme)
+        CsvField.objects.create(column=7, value="country_classifier", scheme=scheme)
 
         EntityField.objects.create(name="Name", expression="name", system_property_key="name", scheme=scheme)
         EntityField.objects.create(name="Short name", expression="short_name", system_property_key="short_name",
@@ -156,11 +188,13 @@ class CsvImportTestCase(TestCase):
                                    dynamic_attribute_id=self.portfolio_dynamic_attr_date.id, scheme=scheme)
         EntityField.objects.create(name="Country", expression="country",
                                    dynamic_attribute_id=self.portfolio_dynamic_attr_string.id, scheme=scheme)
+        EntityField.objects.create(name="Country (Classifier)", expression="country_classifier",
+                                   dynamic_attribute_id=self.portfolio_dynamic_attr_classifier.id, scheme=scheme)
 
         return Scheme.objects.get(pk=scheme.id)
 
     def create_account_scheme(self):
-        scheme = Scheme.objects.create(name="Account scheme", content_type=ContentType.objects.get_for_model(Account))
+        scheme = Scheme.objects.create(name="Account scheme", master_user=self.master_user, content_type=ContentType.objects.get_for_model(Account))
 
         CsvField.objects.create(column=0, value="name", scheme=scheme)
         CsvField.objects.create(column=1, value="code", scheme=scheme)
@@ -190,7 +224,9 @@ class CsvImportTestCase(TestCase):
         return Scheme.objects.get(pk=scheme.id)
 
     def create_counterparty_scheme(self):
-        scheme = Scheme.objects.create(name="Counterparty scheme", content_type=ContentType.objects.get_for_model(Counterparty))
+        scheme = Scheme.objects.create(name="Counterparty scheme",
+                                       master_user=self.master_user,
+                                       content_type=ContentType.objects.get_for_model(Counterparty))
 
         CsvField.objects.create(column=0, value="name", scheme=scheme)
         CsvField.objects.create(column=1, value="notes", scheme=scheme)
@@ -211,7 +247,9 @@ class CsvImportTestCase(TestCase):
         return Scheme.objects.get(pk=scheme.id)
 
     def create_responsible_scheme(self):
-        scheme = Scheme.objects.create(name="Responsible scheme", content_type=ContentType.objects.get_for_model(Responsible))
+        scheme = Scheme.objects.create(name="Responsible scheme",
+                                       master_user=self.master_user,
+                                       content_type=ContentType.objects.get_for_model(Responsible))
 
         CsvField.objects.create(column=0, value="name", scheme=scheme)
         CsvField.objects.create(column=1, value="notes", scheme=scheme)
@@ -230,7 +268,6 @@ class CsvImportTestCase(TestCase):
                                    dynamic_attribute_id=self.responsible_dynamic_attr_string.id, scheme=scheme)
 
         return Scheme.objects.get(pk=scheme.id)
-
 
     def test_scheme_create(self):
         return self.create_portfolio_scheme()

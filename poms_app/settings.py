@@ -232,7 +232,6 @@ USE_TZ = True
 USE_ETAGS = True
 
 if not LOCAL:
-
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
@@ -240,7 +239,7 @@ if not LOCAL:
     CSRF_COOKIE_DOMAIN = 'finmars.com'
     CSRF_TRUSTED_ORIGINS = ['finmars.com', 'api.finmars.com', 'dev.finmars.com', 'api.dev.finmars.com']
 
-    CORS_ORIGIN_WHITELIST = ('dev.finmars.com', 'finmars.com', )
+    CORS_ORIGIN_WHITELIST = ('dev.finmars.com', 'finmars.com',)
 
     CORS_URLS_REGEX = r'^/api/.*$'
     CORS_REPLACE_HTTPS_REFERER = True
@@ -460,7 +459,6 @@ if DEBUG or DEV:
         'rest_framework.renderers.AdminRenderer',
     )
 
-
 # CURRENCY_CODE = 'USD'
 
 AUTHENTICATION_BACKENDS = (
@@ -522,9 +520,9 @@ CELERY_TIMEZONE = 'UTC'
 CELERY_ACCEPT_CONTENT = ['json', 'pickle-signed']
 CELERY_TASK_SERIALIZER = 'pickle-signed'
 CELERY_RESULT_SERIALIZER = 'pickle-signed'
-if CELERY_RESULT_BACKEND in ['django-db',]:
+if CELERY_RESULT_BACKEND in ['django-db', ]:
     CELERY_RESULT_EXPIRES = 2 * 24 * 60 * 60
-    CELERY_TASK_STORE_ERRORS_EVEN_IF_IGNORED = CELERY_RESULT_BACKEND in ['django-db',]
+    CELERY_TASK_STORE_ERRORS_EVEN_IF_IGNORED = CELERY_RESULT_BACKEND in ['django-db', ]
 else:
     CELERY_RESULT_EXPIRES = 60
     CELERY_TASK_STORE_ERRORS_EVEN_IF_IGNORED = True
@@ -592,8 +590,10 @@ IMPORT_FILE_STORAGE = {
 #         'base_url': '/api/import/'
 #     }
 # }
+PRICING_AUTO_DOWNLOAD_DISABLED = True
+if os.environ.get('POMS_PRICING_AUTO_DOWNLOAD_DISABLED') == 'False':
+    PRICING_AUTO_DOWNLOAD_DISABLED = False
 
-PRICING_AUTO_DOWNLOAD_DISABLED = bool(os.environ.get('POMS_PRICING_AUTO_DOWNLOAD_DISABLED', None))
 PRICING_AUTO_DOWNLOAD_MIN_TIMEDELTA = 6 * 60  # min delta is 12 hour
 
 BLOOMBERG_WSDL = 'https://service.bloomberg.com/assets/dl/dlws.wsdl'
@@ -602,7 +602,10 @@ BLOOMBERG_MAX_RETRIES = 60
 BLOOMBERG_DATE_INPUT_FORMAT = '%m/%d/%Y'
 BLOOMBERG_EMPTY_VALUE = [None, '', 'N.S.']
 
-BLOOMBERG_SANDBOX = bool(os.environ.get('POMS_BLOOMBERG_SANDBOX', None))
+BLOOMBERG_SANDBOX = True
+if os.environ.get('POMS_BLOOMBERG_SANDBOX') == 'False':
+    BLOOMBERG_SANDBOX = False
+
 if BLOOMBERG_SANDBOX:
     BLOOMBERG_RETRY_DELAY = 0.1
 BLOOMBERG_SANDBOX_SEND_EMPTY = False
