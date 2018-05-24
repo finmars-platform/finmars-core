@@ -3,6 +3,7 @@
 ## 24.05.2018
 
 - **HOTFIX**: Change Bloomberg setup
+- Change Amazon S3 setup
 
 ## 18.05.2018
 

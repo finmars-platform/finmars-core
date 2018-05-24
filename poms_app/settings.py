@@ -499,9 +499,9 @@ GEOIP_CITY = "GeoLite2-City.mmdb"
 # MEDIA_SERVE = True
 
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-AWS_S3_ACCESS_KEY_ID = 'AKIAJPY5UUTLP7TT7JQA'
+AWS_S3_ACCESS_KEY_ID = os.environ.get('AWS_S3_ACCESS_KEY_ID', None)
 AWS_S3_SECRET_ACCESS_KEY = os.environ.get('AWS_S3_SECRET_ACCESS_KEY', None)
-AWS_S3_REGION_NAME = 'eu-central-1'
+AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', None)
 AWS_DEFAULT_ACL = 'private'
 AWS_BUCKET_ACL = 'private'
 AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', None)

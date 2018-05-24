@@ -386,6 +386,7 @@ def get_provider(master_user=None, provider=None, task=None):
 
     if provider == ProviderClass.BLOOMBERG:
         if settings.BLOOMBERG_SANDBOX:
+
             from poms.integrations.providers.bloomberg import FakeBloombergDataProvider
             return FakeBloombergDataProvider()
         else:
