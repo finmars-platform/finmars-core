@@ -1,7 +1,8 @@
 from __future__ import unicode_literals, print_function
 
 import json
-import uuid
+
+
 from datetime import timedelta
 from logging import getLogger
 

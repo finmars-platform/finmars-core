@@ -395,10 +395,10 @@ LOGGING = {
             'handlers': ['console'],
             'propagate': False,
         },
-        # 'celery': {
-        #     'level': 'INFO',
-        #     'handlers': ['console'],
-        # },
+        'celery': {
+            'level': 'INFO',
+            'handlers': ['console'],
+        },
         'suds': {
             'level': 'INFO',
             'handlers': ['console'],

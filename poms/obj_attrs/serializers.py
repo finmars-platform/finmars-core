@@ -11,6 +11,8 @@ from rest_framework.fields import empty
 from rest_framework.serializers import ListSerializer
 
 from poms.common.serializers import ModelWithUserCodeSerializer
+from poms.integrations.models import PortfolioClassifierMapping, ProviderClass, AccountClassifierMapping, \
+    CounterpartyClassifierMapping, ResponsibleClassifierMapping
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier, GenericAttribute
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
@@ -374,6 +376,11 @@ class GenericClassifierNodeSerializer(serializers.ModelSerializer):
         model = GenericClassifier
         fields = ['id', 'attribute_type', 'level', 'parent', 'name', ]
 
+    def create(self, validated_data):
+        print('Create classifier node')
+
+        return GenericClassifier(**validated_data)
+
 
 class GenericClassifierViewSerializer(serializers.ModelSerializer):
     parent = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -489,26 +496,96 @@ class GenericAttributeTypeSerializer(ModelWithObjectPermissionSerializer, ModelW
         instance.classifiers.exclude(pk__in=processed).delete()
 
     def save_classifier(self, instance, node, parent, processed):
+
+        print('Save classifier instance content_type %s' % instance.content_type)
+        print('Save classifier instance value_type %s' % instance.value_type)
+        print('Save classifier node %s' % node)
+
+        is_new_node = False
+
         if 'id' in node:
             try:
                 o = instance.classifiers.get(pk=node.pop('id'))
             except ObjectDoesNotExist:
                 o = GenericClassifier()
+                is_new_node = True
         else:
             o = GenericClassifier()
-        o.parent = parent
-        o.attribute_type = instance
-        children = node.pop('get_children', node.pop('children', []))
-        for k, v in node.items():
-            setattr(o, k, v)
+            is_new_node = True
+
+        print('o %s', o)
+
+
         try:
+
+            self.delete_matched_classifier_node_mapping(instance, o)
+
+            o.parent = parent
+            o.attribute_type = instance
+            children = node.pop('get_children', node.pop('children', []))
+            for k, v in node.items():
+                setattr(o, k, v)
+
             o.save()
+
+            self.create_classifier_node_mapping(instance, o)
+
         except IntegrityError:
             raise ValidationError("non unique user_code")
         processed.add(o.id)
 
         for c in children:
             self.save_classifier(instance, c, o, processed)
+
+    def create_classifier_node_mapping(self, instance, node):
+
+        master_user = get_master_user_from_context(self.context)
+        bloomberg = ProviderClass.objects.get(pk=ProviderClass.BLOOMBERG)
+
+        if instance.content_type.model == 'portfolio':
+            PortfolioClassifierMapping.objects.create(master_user=master_user,
+                                                      content_object=node,
+                                                      provider=bloomberg,
+                                                      attribute_type=instance,
+                                                      value=node.name)
+
+        if instance.content_type.model == 'account':
+            AccountClassifierMapping.objects.create(master_user=master_user,
+                                                    content_object=node,
+                                                    provider=bloomberg,
+                                                    attribute_type=instance,
+                                                    value=node.name)
+        if instance.content_type.model == 'counterparty':
+            CounterpartyClassifierMapping.objects.create(master_user=master_user,
+                                                    content_object=node,
+                                                    provider=bloomberg,
+                                                    attribute_type=instance,
+                                                    value=node.name)
+        if instance.content_type.model == 'responsible':
+            ResponsibleClassifierMapping.objects.create(master_user=master_user,
+                                                         content_object=node,
+                                                         provider=bloomberg,
+                                                         attribute_type=instance,
+                                                         value=node.name)
+
+    def delete_matched_classifier_node_mapping(self, instance, node):
+
+        print('delete node %s' %node )
+
+        if instance.content_type.model == 'portfolio':
+            PortfolioClassifierMapping.objects.filter(attribute_type=instance,
+                                                      value=node.name).delete()
+
+        if instance.content_type.model == 'account':
+            AccountClassifierMapping.objects.filter(attribute_type=instance,
+                                                     value=node.name).delete()
+        if instance.content_type.model == 'counterparty':
+            CounterpartyClassifierMapping.objects.filter(attribute_type=instance,
+                                                         value=node.name).delete()
+        if instance.content_type.model == 'responsible':
+            ResponsibleClassifierMapping.objects.filter(attribute_type=instance,
+                                                        value=node.name).delete()
+
 
 
 class GenericAttributeTypeViewSerializer(ModelWithObjectPermissionSerializer):

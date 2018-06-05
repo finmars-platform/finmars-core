@@ -7,6 +7,10 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.filters import FilterSet
 from django.apps import apps
 
+from poms.integrations.storage import import_file_storage
+from django.utils import timezone
+import uuid
+
 from poms.common.views import AbstractModelViewSet
 from poms.portfolios.models import Portfolio
 from poms.users.models import Member
@@ -38,6 +42,11 @@ class SchemeFilterSet(FilterSet):
     class Meta:
         model = Scheme
         fields = []
+
+
+def utf_8_encoder(unicode_csv_data):
+    for line in unicode_csv_data:
+        yield line.encode('utf-8')
 
 
 class SchemeViewSet(AbstractModelViewSet):
@@ -430,10 +439,12 @@ class CsvDataImportViewSet(AbstractModelViewSet):
         if not request.data['file'].name.endswith('.csv'):
             raise ValidationError('File is not csv format')
 
-        file = request.data['file'].read().decode('utf-8')
+        csv_contents = request.data['file'].read().decode('utf-8-sig')
+        rows = csv_contents.splitlines()
 
-        io_string = io.StringIO(file)
-        rows = csv.reader(io_string, delimiter=',')
+        rows = map(lambda x: x.split(','), rows)
+
+        print(rows)
 
         master_user = self.request.user.master_user
 
