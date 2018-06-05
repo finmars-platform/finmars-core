@@ -1,5 +1,10 @@
 # Changelog
 
+## 05.06.2018
+
+- Universal CSV import handler (works with Windows line breaks and Linux line breaks)
+- Default Classifier Mapping Values after classifier Create/Update
+
 ## 24.05.2018
 
 - **HOTFIX**: Change Bloomberg setup
