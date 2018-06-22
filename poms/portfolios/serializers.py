@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+from rest_framework import serializers
+
 from poms.accounts.fields import AccountField
 from poms.common.serializers import ModelWithUserCodeSerializer
 from poms.counterparties.fields import ResponsibleField, CounterpartyField
@@ -60,7 +62,7 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
         model = Portfolio
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_default',
-            'is_deleted', 'accounts', 'responsibles', 'counterparties', 'transaction_types',
+            'is_deleted', 'accounts', 'responsibles', 'counterparties', 'transaction_types'
             # 'attributes',
             # 'tags', 'tags_object',
         ]
@@ -86,3 +88,7 @@ class PortfolioViewSerializer(ModelWithObjectPermissionSerializer):
         fields = [
             'id', 'user_code', 'name', 'short_name', 'public_name',
         ]
+
+
+class PortfolioGroupSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=256)

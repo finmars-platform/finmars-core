@@ -1,12 +1,17 @@
 from __future__ import unicode_literals
 
 import django_filters
-from django.db.models import Prefetch
+from django.db.models import Prefetch, FieldDoesNotExist
 from rest_framework.filters import FilterSet
 
 from poms.accounts.models import Account, AccountType
-from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter
+from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
+    ModelExtMultipleChoiceFilter, AttributeFilter
+from poms.common.grouping_handlers import handle_groups
+from poms.common.mixins import DestroyModelFakeMixin
+from poms.common.pagination import CustomPaginationMixin
 from poms.counterparties.models import Responsible, Counterparty, CounterpartyGroup, ResponsibleGroup
+from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
     GenericClassifierViewSet
@@ -15,11 +20,16 @@ from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissio
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet
 from poms.portfolios.models import Portfolio
-from poms.portfolios.serializers import PortfolioSerializer
+from poms.portfolios.serializers import PortfolioSerializer, PortfolioGroupSerializer
 from poms.tags.filters import TagFilter
 from poms.tags.utils import get_tag_prefetch
 from poms.transactions.models import TransactionType, TransactionTypeGroup
 from poms.users.filters import OwnerByMasterUserFilter
+
+from rest_framework.response import Response
+
+from rest_framework import viewsets, status
+from rest_framework.settings import api_settings
 
 
 # class PortfolioAttributeTypeFilterSet(FilterSet):
@@ -91,6 +101,8 @@ class PortfolioFilterSet(FilterSet):
     member = ObjectPermissionMemberFilter(object_permission_model=Portfolio)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Portfolio)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Portfolio)
+    attribute_types = AttributeFilter()
+    attribute_values = AttributeFilter()
 
     class Meta:
         model = Portfolio
@@ -129,8 +141,52 @@ class PortfolioViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = PortfolioSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        AttributeFilter
     ]
     filter_class = PortfolioFilterSet
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
     ]
+
+
+class PortfolioEvGroupViewSet(viewsets.ViewSet, CustomPaginationMixin):
+    serializer_class = PortfolioGroupSerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+
+    def list(self, request):
+        qs = Portfolio.objects.select_related(
+            'master_user',
+        ).prefetch_related(
+            Prefetch('accounts', queryset=Account.objects.select_related('type')),
+            Prefetch('responsibles', queryset=Responsible.objects.select_related('group')),
+            Prefetch('counterparties', queryset=Counterparty.objects.select_related('group')),
+            Prefetch('transaction_types', queryset=TransactionType.objects.select_related('group')),
+            get_attributes_prefetch(),
+            get_tag_prefetch(),
+            *get_permissions_prefetch_lookups(
+                (None, Portfolio),
+                ('accounts', Account),
+                ('accounts__type', AccountType),
+                ('counterparties', Counterparty),
+                ('counterparties__group', CounterpartyGroup),
+                ('responsibles', Responsible),
+                ('responsibles__group', ResponsibleGroup),
+                ('transaction_types', TransactionType),
+                ('transaction_types__group', TransactionTypeGroup),
+            )
+        )
+
+        if len(request.query_params.getlist('groups_types')) == 0:
+            return Response({
+                "status": status.HTTP_404_NOT_FOUND,
+                "message": 'No groups provided.',
+                "data": []
+            })
+
+        qs = handle_groups(qs, request)
+
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            return self.get_paginated_response(page)
+
+        return Response(qs)

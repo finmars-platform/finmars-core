@@ -18,6 +18,8 @@ urlpatterns += [
     url(r'^api/', include('poms.api.urls')),
 ]
 
+print('settings.DEBUG %s' % settings.DEBUG)
+
 if settings.DEBUG:
     import debug_toolbar
     urlpatterns = [

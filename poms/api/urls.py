@@ -23,7 +23,6 @@ import poms.ui.views as ui
 import poms.users.views as users
 import poms.data_import.views as data_import
 
-
 import poms.csv_import.views as csv_import
 
 router = routers.DefaultRouter()
@@ -95,6 +94,7 @@ router.register(r'portfolios/portfolio-attribute-type', portfolios.PortfolioAttr
 # router.register(r'portfolios/portfolio-classifier', portfolios.PortfolioClassifierViewSet)
 router.register(r'portfolios/portfolio-classifier', portfolios.PortfolioClassifierViewSet, 'portfolioclassifier')
 router.register(r'portfolios/portfolio', portfolios.PortfolioViewSet)
+router.register(r'portfolios/portfolio-ev-group', portfolios.PortfolioEvGroupViewSet, 'portfolioevgroup')
 
 router.register(r'strategies/1/group', strategies.Strategy1GroupViewSet)
 router.register(r'strategies/1/subgroup', strategies.Strategy1SubgroupViewSet)
@@ -142,7 +142,6 @@ router.register(r'reports/transaction-report', reports.TransactionReportViewSet,
 router.register(r'reports/cash-flow-projection-report', reports.CashFlowProjectionReportViewSet,
                 "cash-flow-projection-report")
 router.register(r'reports/performance-report', reports.PerformanceReportViewSet, "performance-report")
-
 
 router.register(r'notifications/notification', notifications.NotificationViewSet)
 
