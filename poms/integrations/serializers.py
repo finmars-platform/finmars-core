@@ -14,6 +14,8 @@ from rest_framework import serializers
 from rest_framework.fields import empty
 from rest_framework.validators import UniqueTogetherValidator
 
+import uuid
+
 from poms.accounts.fields import AccountField
 from poms.common.fields import ExpressionField, DateTimeTzAwareField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
@@ -48,6 +50,8 @@ from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Fiel
 from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeField, TransactionTypeInputField
 from poms.users.fields import MasterUserField, MemberField, HiddenMemberField
+
+
 
 _l = getLogger('poms.integrations')
 

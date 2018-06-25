@@ -1,5 +1,9 @@
 # Changelog
 
+## 25.06.2018
+
+- **HOTFIX** CSV transaction import (uuid module is missed)
+
 ## 05.06.2018
 
 - Universal CSV import handler (works with Windows line breaks and Linux line breaks)
