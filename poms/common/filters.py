@@ -133,8 +133,6 @@ class AttributeFilter(BaseFilterBackend):
                     if attribute_type.value_type == 10 and len(group_values) > i:
                         qs = qs.filter(attributes__value_string=group_values[i])
 
-                    i = i + 1
-
                 else:
 
                     params = {}
@@ -143,7 +141,7 @@ class AttributeFilter(BaseFilterBackend):
 
                     qs = qs.filter(**params)
 
-
+                i = i + 1
 
             return qs
 
