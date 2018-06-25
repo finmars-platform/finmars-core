@@ -9,6 +9,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import empty
 from rest_framework.serializers import ListSerializer
+from django.db import models
 
 from poms.common.serializers import ModelWithUserCodeSerializer
 from poms.integrations.models import PortfolioClassifierMapping, ProviderClass, AccountClassifierMapping, \
@@ -622,11 +623,21 @@ class GenericAttributeListSerializer(serializers.ListSerializer):
         )
 
 
+class GenericAttributeViewListSerializer(serializers.ListSerializer):
+    def get_attribute(self, instance):
+        objects = super(GenericAttributeViewListSerializer, self).get_attribute(instance)
+        objects = objects.all() if isinstance(objects, models.Manager) else objects
+        member = get_member_from_context(self.context)
+        return [
+            o for o in objects if has_view_perms(member, o.attribute)
+        ]
+
 class GenericAttributeSerializer(serializers.ModelSerializer):
     attribute_type = GenericAttributeTypeField()
     classifier = GenericClassifierField(required=False, allow_null=True)
     attribute_type_object = GenericAttributeTypeViewSerializer(source='attribute_type', read_only=True)
     classifier_object = GenericClassifierViewSerializer(source='classifier', read_only=True)
+    list_serializer_class = GenericAttributeViewListSerializer
 
     class Meta:
         model = GenericAttribute
@@ -678,3 +689,5 @@ class GenericAttributeSerializer(serializers.ModelSerializer):
             instance.classifier = self._attribute_type_classifiers[instance.classifier_id]
 
         return super(GenericAttributeSerializer, self).to_representation(instance)
+
+

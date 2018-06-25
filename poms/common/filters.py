@@ -5,6 +5,7 @@ from django.db.models import F
 from rest_framework.filters import BaseFilterBackend, FilterSet
 
 from poms.common.middleware import get_request
+from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.obj_perms.utils import obj_perms_filter_objects_for_view
 
 
@@ -99,6 +100,52 @@ class CharFilter(django_filters.CharFilter):
         kwargs['lookup_expr'] = 'icontains'
         super(CharFilter, self).__init__(*args, **kwargs)
 
+
+class AttributeFilter(BaseFilterBackend):
+
+    def filter_queryset(self, request, queryset, view):
+
+        group_types = request.query_params.getlist('groups_types')
+        group_values = request.query_params.getlist('groups_values')
+
+        print(group_types)
+        print(group_values)
+
+        if len(group_types) and len(group_values):
+
+            i = 0
+
+            qs = queryset
+
+            for attr in group_types:
+
+                print('attr %s' % attr)
+
+                if attr.isdigit():
+
+                    attribute_type = GenericAttributeType.objects.get(id=attr)
+
+                    qs = qs.filter(attributes__attribute_type__id=attr)
+
+                    if attribute_type.value_type == 20 and len(group_values) > i:
+                        qs = qs.filter(attributes__value_float=group_values[i])
+
+                    if attribute_type.value_type == 10 and len(group_values) > i:
+                        qs = qs.filter(attributes__value_string=group_values[i])
+
+                else:
+
+                    params = {}
+
+                    params[attr] = group_values[i]
+
+                    qs = qs.filter(**params)
+
+                i = i + 1
+
+            return qs
+
+        return queryset
 
 class ClassifierFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
