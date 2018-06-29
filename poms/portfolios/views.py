@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import django_filters
 from django.db.models import Prefetch, FieldDoesNotExist
 from rest_framework.filters import FilterSet
+from rest_framework.viewsets import ModelViewSet
 
 from poms.accounts.models import Account, AccountType
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
@@ -149,32 +150,35 @@ class PortfolioViewSet(AbstractWithObjectPermissionViewSet):
     ]
 
 
-class PortfolioEvGroupViewSet(viewsets.ViewSet, CustomPaginationMixin):
+class PortfolioEvGroupViewSet(AbstractWithObjectPermissionViewSet, CustomPaginationMixin):
+
+    queryset = Portfolio.objects.select_related(
+        'master_user',
+    ).prefetch_related(
+        Prefetch('accounts', queryset=Account.objects.select_related('type')),
+        Prefetch('responsibles', queryset=Responsible.objects.select_related('group')),
+        Prefetch('counterparties', queryset=Counterparty.objects.select_related('group')),
+        Prefetch('transaction_types', queryset=TransactionType.objects.select_related('group')),
+        get_attributes_prefetch(),
+        get_tag_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, Portfolio),
+            ('accounts', Account),
+            ('accounts__type', AccountType),
+            ('counterparties', Counterparty),
+            ('counterparties__group', CounterpartyGroup),
+            ('responsibles', Responsible),
+            ('responsibles__group', ResponsibleGroup),
+            ('transaction_types', TransactionType),
+            ('transaction_types__group', TransactionTypeGroup),
+        )
+    )
+
     serializer_class = PortfolioGroupSerializer
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = PortfolioFilterSet
 
     def list(self, request):
-        qs = Portfolio.objects.select_related(
-            'master_user',
-        ).prefetch_related(
-            Prefetch('accounts', queryset=Account.objects.select_related('type')),
-            Prefetch('responsibles', queryset=Responsible.objects.select_related('group')),
-            Prefetch('counterparties', queryset=Counterparty.objects.select_related('group')),
-            Prefetch('transaction_types', queryset=TransactionType.objects.select_related('group')),
-            get_attributes_prefetch(),
-            get_tag_prefetch(),
-            *get_permissions_prefetch_lookups(
-                (None, Portfolio),
-                ('accounts', Account),
-                ('accounts__type', AccountType),
-                ('counterparties', Counterparty),
-                ('counterparties__group', CounterpartyGroup),
-                ('responsibles', Responsible),
-                ('responsibles__group', ResponsibleGroup),
-                ('transaction_types', TransactionType),
-                ('transaction_types__group', TransactionTypeGroup),
-            )
-        )
 
         if len(request.query_params.getlist('groups_types')) == 0:
             return Response({
@@ -182,6 +186,10 @@ class PortfolioEvGroupViewSet(viewsets.ViewSet, CustomPaginationMixin):
                 "message": 'No groups provided.',
                 "data": []
             })
+
+        qs = self.get_queryset()
+
+        qs = self.filter_queryset(qs)
 
         qs = handle_groups(qs, request)
 
