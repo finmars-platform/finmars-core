@@ -2,10 +2,12 @@ from __future__ import unicode_literals
 
 import django_filters
 from rest_framework.filters import FilterSet
+from rest_framework.settings import api_settings
 
 from poms.accounts.models import Account, AccountType
 from poms.accounts.serializers import AccountSerializer, AccountTypeSerializer
 from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMultipleChoiceFilter
+from poms.common.pagination import CustomPaginationMixin
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, GenericClassifierViewSet
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
@@ -16,6 +18,10 @@ from poms.portfolios.models import Portfolio
 from poms.tags.filters import TagFilter
 from poms.tags.utils import get_tag_prefetch
 from poms.users.filters import OwnerByMasterUserFilter
+
+from rest_framework.response import Response
+from poms.common.grouping_handlers import handle_groups
+from rest_framework import viewsets, status
 
 
 class AccountTypeFilterSet(FilterSet):
@@ -166,3 +172,49 @@ class AccountViewSet(AbstractWithObjectPermissionViewSet):
         'user_code', 'name', 'short_name', 'public_name', 'is_valid_for_all_portfolios',
         'type', 'type__user_code', 'type__name', 'type__short_name', 'type__public_name',
     ]
+
+class AccountEvGroupViewSet(AbstractWithObjectPermissionViewSet, CustomPaginationMixin):
+
+    queryset = Account.objects.select_related(
+        'master_user',
+        'type',
+    ).prefetch_related(
+        'portfolios',
+        # Prefetch('attributes', queryset=AccountAttribute.objects.select_related(
+        #     'attribute_type', 'classifier'
+        # ).prefetch_related(
+        #     'attribute_type__options'
+        # )),
+        get_attributes_prefetch(),
+        get_tag_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, Account),
+            ('type', AccountType),
+            ('portfolios', Portfolio),
+            # ('attributes__attribute_type', AccountAttributeType),
+        )
+    )
+    serializer_class = AccountSerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = AccountFilterSet
+
+    def list(self, request):
+
+        if len(request.query_params.getlist('groups_types')) == 0:
+            return Response({
+                "status": status.HTTP_404_NOT_FOUND,
+                "message": 'No groups provided.',
+                "data": []
+            })
+
+        qs = self.get_queryset()
+
+        qs = self.filter_queryset(qs)
+
+        qs = handle_groups(qs, request)
+
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            return self.get_paginated_response(page)
+
+        return Response(qs)
