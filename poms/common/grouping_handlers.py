@@ -74,11 +74,9 @@ def get_root_system_attr_group(qs, root_group, groups_order):
 def get_last_dynamic_attr_group(qs, last_group, groups_order):
     attribute_type = GenericAttributeType.objects.get(id=last_group)
 
-    force_qs_evaluation(qs)
+    attr_qs = GenericAttribute.objects.filter(attribute_type=attribute_type)
 
-    qs = qs.filter(attributes__attribute_type=attribute_type)
-
-    force_qs_evaluation(qs)
+    qs = qs.filter(attributes__in=attr_qs)
 
     if attribute_type.value_type == 20:
         qs = qs.distinct('attributes__value_float') \
@@ -104,8 +102,6 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
             .order_by('-attributes__value_date') \
             .annotate(group_name=F('attributes__value_date')) \
             .values('group_name')
-
-    force_qs_evaluation(qs)
 
     if groups_order == 'asc':
         qs = qs.order_by(F('group_name').asc())
@@ -150,37 +146,41 @@ def get_queryset_filters(qs, groups_types, groups_values):
 
                 attribute_type = GenericAttributeType.objects.get(id=attr)
 
-                qs = qs.filter(attributes__attribute_type=attribute_type)
-
-                force_qs_evaluation(qs)
-
                 if attribute_type.value_type == 20:
 
                     if groups_values[i] == '-':
-                        qs = qs.filter(attributes__value_float__isnull=True)
+                        qs = qs.filter(attributes__value_float__isnull=True,
+                                       attributes__attribute_type=attribute_type)
                     else:
-                        qs = qs.filter(attributes__value_float=groups_values[i])
+                        qs = qs.filter(attributes__value_float=groups_values[i],
+                                       attributes__attribute_type=attribute_type)
 
                 if attribute_type.value_type == 10:
 
                     if groups_values[i] == '-':
-                        qs = qs.filter(attributes__value_string__isnull=True)
+                        qs = qs.filter(attributes__value_string__isnull=True,
+                                       attributes__attribute_type=attribute_type)
                     else:
-                        qs = qs.filter(attributes__value_string=groups_values[i])
+                        qs = qs.filter(attributes__value_string=groups_values[i],
+                                       attributes__attribute_type=attribute_type)
 
                 if attribute_type.value_type == 30:
 
                     if groups_values[i] == '-':
-                        qs = qs.filter(attributes__classifier__isnull=True)
+                        qs = qs.filter(attributes__classifier__isnull=True,
+                                       attributes__attribute_type=attribute_type)
                     else:
-                        qs = qs.filter(attributes__classifier=groups_values[i])
+                        qs = qs.filter(attributes__classifier=groups_values[i],
+                                       attributes__attribute_type=attribute_type)
 
                 if attribute_type.value_type == 40:
 
                     if groups_values[i] == '-':
-                        qs = qs.filter(attributes__value_date__isnull=True)
+                        qs = qs.filter(attributes__value_date__isnull=True,
+                                       attributes__attribute_type=attribute_type)
                     else:
-                        qs = qs.filter(attributes__value_date=groups_values[i])
+                        qs = qs.filter(attributes__value_date=groups_values[i],
+                                       attributes__attribute_type=attribute_type)
 
                 force_qs_evaluation(qs)
 

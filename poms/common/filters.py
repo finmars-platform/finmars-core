@@ -5,6 +5,7 @@ from django.db.models import F
 from rest_framework.filters import BaseFilterBackend, FilterSet
 
 from poms.common.middleware import get_request
+from poms.common.utils import force_qs_evaluation
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.obj_perms.utils import obj_perms_filter_objects_for_view
 
@@ -125,36 +126,42 @@ class AttributeFilter(BaseFilterBackend):
 
                     attribute_type = GenericAttributeType.objects.get(id=attr)
 
-                    qs = qs.filter(attributes__attribute_type__id=attr)
-
                     if attribute_type.value_type == 20 and len(groups_values) > i:
 
                         if groups_values[i] == '-':
 
-                            qs = qs.filter(attributes__value_float__isnull=True)
+                            qs = qs.filter(attributes__value_float__isnull=True,
+                                           attributes__attribute_type=attribute_type)
                         else:
-                            qs = qs.filter(attributes__value_float=groups_values[i])
+                            qs = qs.filter(attributes__value_float=groups_values[i],
+                                           attributes__attribute_type=attribute_type)
 
                     if attribute_type.value_type == 10 and len(groups_values) > i:
 
                         if groups_values[i] == '-':
-                            qs = qs.filter(attributes__value_string__isnull=True)
+                            qs = qs.filter(attributes__value_string__isnull=True,
+                                           attributes__attribute_type=attribute_type)
                         else:
-                            qs = qs.filter(attributes__value_string=groups_values[i])
+                            qs = qs.filter(attributes__value_string=groups_values[i],
+                                           attributes__attribute_type=attribute_type)
 
                     if attribute_type.value_type == 30 and len(groups_values) > i:
 
                         if groups_values[i] == '-':
-                            qs = qs.filter(attributes__classifier__isnull=True)
+                            qs = qs.filter(attributes__classifier__isnull=True,
+                                           attributes__attribute_type=attribute_type)
                         else:
-                            qs = qs.filter(attributes__classifier=groups_values[i])
+                            qs = qs.filter(attributes__classifier=groups_values[i],
+                                           attributes__attribute_type=attribute_type)
 
                     if attribute_type.value_type == 40 and len(groups_values) > i:
 
                         if groups_values[i] == '-':
-                            qs = qs.filter(attributes__value_date__isnull=True)
+                            qs = qs.filter(attributes__value_date__isnull=True,
+                                           attributes__attribute_type=attribute_type)
                         else:
-                            qs = qs.filter(attributes__value_date=groups_values[i])
+                            qs = qs.filter(attributes__value_date=groups_values[i],
+                                           attributes__attribute_type=attribute_type)
 
                 else:
 
@@ -167,6 +174,8 @@ class AttributeFilter(BaseFilterBackend):
                     qs = qs.filter(**params)
 
                 i = i + 1
+
+                force_qs_evaluation(qs)
 
             return qs
 
