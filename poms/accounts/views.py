@@ -6,7 +6,7 @@ from rest_framework.settings import api_settings
 
 from poms.accounts.models import Account, AccountType
 from poms.accounts.serializers import AccountSerializer, AccountTypeSerializer
-from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMultipleChoiceFilter
+from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMultipleChoiceFilter, AttributeFilter
 from poms.common.pagination import CustomPaginationMixin
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, GenericClassifierViewSet
@@ -131,6 +131,8 @@ class AccountFilterSet(FilterSet):
     member = ObjectPermissionMemberFilter(object_permission_model=Account)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Account)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Account)
+    attribute_types = AttributeFilter()
+    attribute_values = AttributeFilter()
 
     class Meta:
         model = Account
@@ -165,6 +167,7 @@ class AccountViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = AccountSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        AttributeFilter
         # TagFilterBackend,
     ]
     filter_class = AccountFilterSet

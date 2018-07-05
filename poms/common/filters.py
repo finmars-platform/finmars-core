@@ -108,6 +108,8 @@ class AttributeFilter(BaseFilterBackend):
         groups_types = request.query_params.getlist('groups_types')
         groups_values = request.query_params.getlist('groups_values')
 
+        print('AttributeFilter init')
+
         print(groups_types)
         print(groups_values)
 
@@ -129,31 +131,28 @@ class AttributeFilter(BaseFilterBackend):
 
                         if groups_values[i] == '-':
 
-                            qs = qs.filter(attributes__value_float__exact=0, attributes__attribute_type__id=attr)
+                            qs = qs.filter(attributes__value_float__isnull=True)
                         else:
                             qs = qs.filter(attributes__value_float=groups_values[i])
 
                     if attribute_type.value_type == 10 and len(groups_values) > i:
+
                         if groups_values[i] == '-':
-                            qs = qs.filter(attributes__value_string__isnull=True).exclude(
-                                attributes__value_string__gt='')
+                            qs = qs.filter(attributes__value_string__isnull=True)
                         else:
                             qs = qs.filter(attributes__value_string=groups_values[i])
 
                     if attribute_type.value_type == 30 and len(groups_values) > i:
+
                         if groups_values[i] == '-':
-
-                            print('isnull')
-                            print(groups_values[i])
-
-                            qs = qs.filter(attributes__classifier__isnull=True).exclude(attributes__classifier__gt=0)
+                            qs = qs.filter(attributes__classifier__isnull=True)
                         else:
                             qs = qs.filter(attributes__classifier=groups_values[i])
 
                     if attribute_type.value_type == 40 and len(groups_values) > i:
+
                         if groups_values[i] == '-':
-                            qs = qs.filter(attributes__value_date__isnull=True).exclude(
-                                attributes__value_date__gt='')
+                            qs = qs.filter(attributes__value_date__isnull=True)
                         else:
                             qs = qs.filter(attributes__value_date=groups_values[i])
 
@@ -162,6 +161,8 @@ class AttributeFilter(BaseFilterBackend):
                     params = {}
 
                     params[attr] = groups_values[i]
+
+                    print(params)
 
                     qs = qs.filter(**params)
 

@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import django_filters
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Prefetch, FieldDoesNotExist
 from rest_framework.filters import FilterSet
 from rest_framework.viewsets import ModelViewSet
@@ -149,9 +150,29 @@ class PortfolioViewSet(AbstractWithObjectPermissionViewSet):
         'user_code', 'name', 'short_name', 'public_name',
     ]
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+
+        content_type = ContentType.objects.get_for_model(Portfolio)
+
+        attribute_types = GenericAttributeType.objects.filter(content_type=content_type,
+                                                              master_user=request.user.master_user)
+
+        for attribute_type in attribute_types:
+            print(attribute_type)
+
+            GenericAttribute.objects.create(attribute_type=attribute_type, content_type=content_type,
+                                            object_id=serializer.data['id'])
+
+        print('Create portfolio')
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 
 class PortfolioEvGroupViewSet(AbstractWithObjectPermissionViewSet, CustomPaginationMixin):
-
     queryset = Portfolio.objects.select_related(
         'master_user',
     ).prefetch_related(
