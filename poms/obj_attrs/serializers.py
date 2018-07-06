@@ -309,7 +309,11 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                     oattr.content_object = instance
                     oattr.attribute_type = attribute_type
                 if 'value_string' in attr:
-                    oattr.value_string = attr['value_string']
+
+                    if attr['value_string'] == '':
+                        oattr.value_string = None
+                    else:
+                        oattr.value_string = attr['value_string']
                 if 'value_float' in attr:
                     oattr.value_float = attr['value_float']
                 if 'value_date' in attr:

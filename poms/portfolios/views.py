@@ -171,6 +171,17 @@ class PortfolioViewSet(AbstractWithObjectPermissionViewSet):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        print(serializer.data['attributes'])
+
+        return Response(serializer.data)
+
 
 class PortfolioEvGroupViewSet(AbstractWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Portfolio.objects.select_related(
