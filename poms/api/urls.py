@@ -45,6 +45,7 @@ router.register(r'accounts/account-attribute-type', accounts.AccountAttributeTyp
 # router.register(r'accounts/account-classifier', accounts.AccountClassifierViewSet)
 router.register(r'accounts/account-classifier', accounts.AccountClassifierViewSet, 'accountclassifier')
 router.register(r'accounts/account', accounts.AccountViewSet)
+router.register(r'accounts/account-ev-group', accounts.AccountEvGroupViewSet, 'accountevgroup')
 
 # router.register(r'counterparties/counterparty-attribute-type', counterparties.CounterpartyAttributeTypeViewSet)
 router.register(r'counterparties/counterparty-attribute-type', counterparties.CounterpartyAttributeTypeViewSet,

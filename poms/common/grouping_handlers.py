@@ -1,15 +1,17 @@
+from poms.common.utils import force_qs_evaluation
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 
-from django.db.models import Count, Sum, F, Value
+from django.db.models import Count, Sum, F, Value, Aggregate
 from django.db.models.functions import Lower
+
+from django.db.models import CharField, Case, When
+from django.db.models.functions import Coalesce
 
 
 def get_root_dynamic_attr_group(qs, root_group, groups_order):
     attribute_type = GenericAttributeType.objects.get(id=root_group)
 
     attr_qs = GenericAttribute.objects.filter(attribute_type=attribute_type)
-
-    print(attribute_type.value_type)
 
     qs = qs.filter(attributes__in=attr_qs)
 
@@ -25,19 +27,18 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
             .annotate(group_name=F('attributes__value_string')) \
             .values('group_name')
 
-    # if attribute_type.value_type == 30:
-    #     qs = qs.order_by('attributes__classifier') \
-    #         .distinct('attributes__classifier', 'attributes__attribute_type__name') \
-    #         .annotate(group_name=F('attributes__classifier')) \
-    #         .values('group_name')
+    if attribute_type.value_type == 30:
+        qs = qs.values('attributes__classifier') \
+            .annotate(group_id=F('attributes__classifier')) \
+            .distinct() \
+            .annotate(group_name=F('attributes__classifier__name')) \
+            .values('group_name', 'group_id')
 
     if attribute_type.value_type == 40:
         qs = qs.distinct('attributes__value_date') \
             .order_by('-attributes__value_date') \
             .annotate(group_name=F('attributes__value_date')) \
             .values('group_name')
-
-    print(qs)
 
     if groups_order == 'asc':
         qs = qs.order_by(F('group_name').asc())
@@ -48,10 +49,19 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
 
 
 def get_root_system_attr_group(qs, root_group, groups_order):
-    qs = qs.distinct(root_group) \
-        .annotate(group_name=F(root_group)) \
-        .values('group_name') \
-        .order_by(root_group)
+    if root_group == 'type':
+
+        qs = qs.values('type') \
+            .annotate(group_id=F('type')) \
+            .distinct() \
+            .annotate(group_name=F('type__user_code')) \
+            .values('group_name', 'group_id')
+    else:
+
+        qs = qs.distinct(root_group) \
+            .annotate(group_name=F(root_group)) \
+            .values('group_name') \
+            .order_by(root_group)
 
     if groups_order == 'asc':
         qs = qs.order_by(F('group_name').asc())
@@ -64,9 +74,9 @@ def get_root_system_attr_group(qs, root_group, groups_order):
 def get_last_dynamic_attr_group(qs, last_group, groups_order):
     attribute_type = GenericAttributeType.objects.get(id=last_group)
 
-    # print('get_last_dynamic_attr_group %s' % attribute_type.name)
+    attr_qs = GenericAttribute.objects.filter(attribute_type=attribute_type)
 
-    qs = qs.filter(attributes__attribute_type=attribute_type)
+    qs = qs.filter(attributes__in=attr_qs)
 
     if attribute_type.value_type == 20:
         qs = qs.distinct('attributes__value_float') \
@@ -80,11 +90,12 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
             .annotate(group_name=F('attributes__value_string')) \
             .values('group_name')
 
-    # if attribute_type.value_type == 30:
-    #     qs = qs.order_by('attributes__classifier') \
-    #         .distinct('attributes__classifier', 'attributes__attribute_type__name') \
-    #         .annotate(group_name=F('attributes__classifier')) \
-    #         .values('group_name')
+    if attribute_type.value_type == 30:
+        qs = qs.values('attributes__classifier') \
+            .annotate(group_id=F('attributes__classifier')) \
+            .distinct() \
+            .annotate(group_name=F('attributes__classifier__name')) \
+            .values('group_name', 'group_id')
 
     if attribute_type.value_type == 40:
         qs = qs.distinct('attributes__value_date') \
@@ -101,67 +112,94 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
 
 
 def get_last_system_attr_group(qs, last_group, groups_order):
-    print('last group %s' % last_group)
-    print(qs)
+    if last_group == 'type':
 
-    qs = qs.distinct(last_group) \
-        .annotate(group_name=F(last_group)) \
-        .values('group_name')
+        qs = qs.values('type') \
+            .annotate(group_id=F('type')) \
+            .distinct() \
+            .annotate(group_name=F('type__user_code')) \
+            .values('group_name', 'group_id')
+    else:
+
+        qs = qs.distinct(last_group) \
+            .annotate(group_name=F(last_group)) \
+            .values('group_name')
 
     if groups_order == 'desc':
         qs = qs.order_by(F('group_name').desc())
-    else :
+    else:
         qs = qs.order_by(F('group_name').asc())
 
     return qs
 
 
 def get_queryset_filters(qs, groups_types, groups_values):
-    print('groups_values %s ' % groups_values)
-
     i = 0
+
+    groups_values_count = len(groups_values)
 
     for attr in groups_types:
 
         if attr.isdigit():
 
-            attribute_type = GenericAttributeType.objects.get(id=attr)
+            if groups_values_count > i:
 
-            print('attribute_type.value_type %s' % attribute_type.value_type)
+                attribute_type = GenericAttributeType.objects.get(id=attr)
 
-            qs = qs.filter(attributes__attribute_type=attribute_type)
+                if attribute_type.value_type == 20:
 
-            # print(attribute_type.value_type)
-            # print('i %s' % i)
-            # print('groups_values %s' % len(groups_values))
+                    if groups_values[i] == '-':
+                        qs = qs.filter(attributes__value_float__isnull=True,
+                                       attributes__attribute_type=attribute_type)
+                    else:
+                        qs = qs.filter(attributes__value_float=groups_values[i],
+                                       attributes__attribute_type=attribute_type)
 
-            if attribute_type.value_type == 20 and len(groups_values) > i:
-                qs = qs.filter(attributes__value_float=groups_values[i])
+                if attribute_type.value_type == 10:
 
-            if attribute_type.value_type == 10 and len(groups_values) > i:
-                qs = qs.filter(attributes__value_string=groups_values[i])
+                    if groups_values[i] == '-':
+                        qs = qs.filter(attributes__value_string__isnull=True,
+                                       attributes__attribute_type=attribute_type)
+                    else:
+                        qs = qs.filter(attributes__value_string=groups_values[i],
+                                       attributes__attribute_type=attribute_type)
 
-            if attribute_type.value_type == 30 and len(groups_values) > i:
-                qs = qs.filter(attributes__classifier=groups_values[i])
+                if attribute_type.value_type == 30:
 
-            if attribute_type.value_type == 40 and len(groups_values) > i:
-                print(groups_values[i])
-                qs = qs.filter(attributes__value_date=groups_values[i])
+                    if groups_values[i] == '-':
+                        qs = qs.filter(attributes__classifier__isnull=True,
+                                       attributes__attribute_type=attribute_type)
+                    else:
+                        qs = qs.filter(attributes__classifier=groups_values[i],
+                                       attributes__attribute_type=attribute_type)
+
+                if attribute_type.value_type == 40:
+
+                    if groups_values[i] == '-':
+                        qs = qs.filter(attributes__value_date__isnull=True,
+                                       attributes__attribute_type=attribute_type)
+                    else:
+                        qs = qs.filter(attributes__value_date=groups_values[i],
+                                       attributes__attribute_type=attribute_type)
+
+                force_qs_evaluation(qs)
 
         else:
 
-            if len(groups_values) > i:
-
+            if groups_values_count > i:
+                
                 params = {}
 
-                params[attr] = groups_values[i]
+                if groups_values[i] == '-':
+                    params[attr + '_isnull'] = True
+                else:
+                    params[attr] = groups_values[i]
 
                 qs = qs.filter(**params)
 
-        i = i + 1
+                force_qs_evaluation(qs)
 
-    print('i %s' % i)
-    print('qs11 %s' % qs)
+        i = i + 1
 
     return qs
 
@@ -194,10 +232,6 @@ def handle_groups(qs, request):
             qs = get_root_system_attr_group(qs, root_group=groups_types[0], groups_order=groups_order)
 
     else:
-
-        print(qs)
-
-        print('here ')
 
         qs = get_queryset_filters(qs, groups_types, groups_values)
 

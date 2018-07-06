@@ -225,10 +225,10 @@ class GenericAttribute(models.Model):
     object_id = models.BigIntegerField(db_index=True, verbose_name=ugettext_lazy('object id'))
     content_object = GenericForeignKey('content_type', 'object_id')
 
-    value_string = models.CharField(max_length=255, default='', blank=True,
+    value_string = models.CharField(max_length=255, null=True, blank=True,
                                     verbose_name=ugettext_lazy('value (String)'))
-    value_float = models.FloatField(default=0.0, verbose_name=ugettext_lazy('value (Float)'))
-    value_date = models.DateField(default=date.min, verbose_name=ugettext_lazy('value (Date)'))
+    value_float = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('value (Float)'))
+    value_date = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('value (Date)'))
     classifier = models.ForeignKey(GenericClassifier, on_delete=models.SET_NULL, null=True, blank=True,
                                    verbose_name=ugettext_lazy('classifier'))
 

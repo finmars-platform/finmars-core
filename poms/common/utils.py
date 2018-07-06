@@ -3,6 +3,11 @@ import math
 from django.views.generic.dates import timezone_today
 
 
+def force_qs_evaluation(qs):
+    for item in qs:
+        pass
+
+
 def db_class_check_data(model, verbosity, using):
     from django.db import IntegrityError, ProgrammingError
 
@@ -40,9 +45,11 @@ try:
 except AttributeError:
     try:
         import numpy
+
         isclose = numpy.isclose
     except ImportError:
         numpy = None
+
 
         def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
             # TODO: maybe incorrect!
