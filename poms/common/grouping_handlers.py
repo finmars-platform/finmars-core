@@ -187,9 +187,13 @@ def get_queryset_filters(qs, groups_types, groups_values):
         else:
 
             if groups_values_count > i:
+                
                 params = {}
 
-                params[attr] = groups_values[i]
+                if groups_values[i] == '-':
+                    params[attr + '_isnull'] = True
+                else:
+                    params[attr] = groups_values[i]
 
                 qs = qs.filter(**params)
 

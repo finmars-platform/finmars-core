@@ -167,7 +167,12 @@ class AttributeFilter(BaseFilterBackend):
 
                     params = {}
 
-                    params[attr] = groups_values[i]
+                    if groups_values[i] == '-':
+                        params[attr + '_isnull'] = True
+                    else:
+                        params[attr] = groups_values[i]
+
+                    print('params')
 
                     print(params)
 
