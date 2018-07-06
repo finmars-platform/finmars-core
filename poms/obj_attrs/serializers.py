@@ -315,11 +315,20 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                     else:
                         oattr.value_string = attr['value_string']
                 if 'value_float' in attr:
-                    oattr.value_float = attr['value_float']
+                    if attr['value_float'] == '':
+                        oattr.value_float = None
+                    else:
+                        oattr.value_float = attr['value_float']
                 if 'value_date' in attr:
-                    oattr.value_date = attr['value_date']
+                    if attr['value_date'] == '':
+                        oattr.value_date = None
+                    else:
+                        oattr.value_date = attr['value_date']
                 if 'classifier' in attr:
-                    oattr.classifier = attr['classifier']
+                    if attr['classifier'] == '':
+                        oattr.classifier = None
+                    else:
+                        oattr.classifier = attr['classifier']
                 oattr.save()
             else:
                 # perms error...
