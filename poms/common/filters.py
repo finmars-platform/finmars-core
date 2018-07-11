@@ -9,6 +9,8 @@ from poms.common.utils import force_qs_evaluation
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.obj_perms.utils import obj_perms_filter_objects_for_view
 
+from django.db.models import Q
+
 
 # class ClassifierFilter(BaseFilterBackend):
 #     def filter_queryset(self, request, queryset, view):
@@ -168,15 +170,13 @@ class AttributeFilter(BaseFilterBackend):
                     params = {}
 
                     if groups_values[i] == '-':
-                        params[attr + '_isnull'] = True
+
+                        qs = qs.filter(Q(**{attr + '__isnull': True}) | Q(**{attr: '-'}))
+
                     else:
                         params[attr] = groups_values[i]
 
-                    print('params')
-
-                    print(params)
-
-                    qs = qs.filter(**params)
+                        qs = qs.filter(**params)
 
                 i = i + 1
 

@@ -7,6 +7,9 @@ from django.db.models.functions import Lower
 from django.db.models import CharField, Case, When
 from django.db.models.functions import Coalesce
 
+from django.db.models import Q
+
+
 
 def get_root_dynamic_attr_group(qs, root_group, groups_order):
     attribute_type = GenericAttributeType.objects.get(id=root_group)
@@ -187,15 +190,17 @@ def get_queryset_filters(qs, groups_types, groups_values):
         else:
 
             if groups_values_count > i:
-                
+
                 params = {}
 
                 if groups_values[i] == '-':
-                    params[attr + '_isnull'] = True
+
+                    qs = qs.filter(Q(**{attr + '__isnull': True}) | Q(**{attr: '-'}))
+
                 else:
                     params[attr] = groups_values[i]
 
-                qs = qs.filter(**params)
+                    qs = qs.filter(**params)
 
                 force_qs_evaluation(qs)
 
