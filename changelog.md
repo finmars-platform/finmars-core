@@ -1,5 +1,9 @@
 # Changelog
 
+## 11.07.2018
+
+- Filter is_deleted objects in group handler
+
 ## 06.07.2018
 
 - First version of Entity Viewer 2.0
