@@ -223,6 +223,8 @@ class PortfolioEvGroupViewSet(AbstractWithObjectPermissionViewSet, CustomPaginat
 
         qs = self.filter_queryset(qs)
 
+        qs = qs.filter(is_deleted=False)
+
         qs = handle_groups(qs, request)
 
         page = self.paginate_queryset(qs)
