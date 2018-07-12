@@ -104,7 +104,7 @@ class CharFilter(django_filters.CharFilter):
         super(CharFilter, self).__init__(*args, **kwargs)
 
 
-class AttributeFilter(BaseFilterBackend):
+class GroupsAttributeFilter(BaseFilterBackend):
 
     def filter_queryset(self, request, queryset, view):
 
@@ -126,7 +126,100 @@ class AttributeFilter(BaseFilterBackend):
 
                 if attr.isdigit():
 
-                    attribute_type = GenericAttributeType.objects.get(id=attr)
+                    attribute_type = GenericAttributeType.objects.get(id__exact=attr)
+
+                    if attribute_type.value_type == 20 and len(groups_values) > i:
+
+                        if groups_values[i] == '-':
+
+                            qs = qs.filter(attributes__value_float__isnull=True,
+                                           attributes__attribute_type=attribute_type)
+                        else:
+                            qs = qs.filter(attributes__value_float=groups_values[i],
+                                           attributes__attribute_type=attribute_type)
+
+                    if attribute_type.value_type == 10 and len(groups_values) > i:
+
+                        if groups_values[i] == '-':
+                            qs = qs.filter(attributes__value_string__isnull=True,
+                                           attributes__attribute_type=attribute_type)
+                        else:
+                            qs = qs.filter(attributes__value_string=groups_values[i],
+                                           attributes__attribute_type=attribute_type)
+
+                    if attribute_type.value_type == 30 and len(groups_values) > i:
+
+                        if groups_values[i] == '-':
+                            qs = qs.filter(attributes__classifier__isnull=True,
+                                           attributes__attribute_type=attribute_type)
+                        else:
+                            qs = qs.filter(attributes__classifier=groups_values[i],
+                                           attributes__attribute_type=attribute_type)
+
+                    if attribute_type.value_type == 40 and len(groups_values) > i:
+
+                        if groups_values[i] == '-':
+                            qs = qs.filter(attributes__value_date__isnull=True,
+                                           attributes__attribute_type=attribute_type)
+                        else:
+                            qs = qs.filter(attributes__value_date=groups_values[i],
+                                           attributes__attribute_type=attribute_type)
+
+                else:
+
+                    params = {}
+
+                    if groups_values[i] == '-':
+
+                        qs = qs.filter(Q(**{attr + '__isnull': True}) | Q(**{attr: '-'}))
+
+                    else:
+                        params[attr] = groups_values[i]
+
+                        qs = qs.filter(**params)
+
+                i = i + 1
+
+                force_qs_evaluation(qs)
+
+            return qs
+
+        return queryset
+
+
+class AttributeFilter(BaseFilterBackend):
+
+    def filter_queryset(self, request, queryset, view):
+
+        groups_types = []
+        groups_values = []
+
+        for key in list(request.GET.keys()):
+
+            key_formatted = key.split('___da_')
+
+            if len(key_formatted) == 2:
+                groups_types.append(key_formatted[1])
+                groups_values.append(request.GET.getlist(key)[0])
+
+        print('AttributeFilter init')
+
+        print('groups_types %s' % groups_types)
+        print('groups_values %s' % groups_values)
+
+        if len(groups_types) and len(groups_values):
+
+            i = 0
+
+            qs = queryset
+
+            for attr in groups_types:
+
+                if attr.isdigit():
+
+                    attribute_type = GenericAttributeType.objects.get(id__exact=attr)
+
+                    print('attribute_type %s' % attribute_type)
 
                     if attribute_type.value_type == 20 and len(groups_values) > i:
 

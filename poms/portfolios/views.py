@@ -8,7 +8,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from poms.accounts.models import Account, AccountType
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
-    ModelExtMultipleChoiceFilter, AttributeFilter
+    ModelExtMultipleChoiceFilter, GroupsAttributeFilter, AttributeFilter
 from poms.common.grouping_handlers import handle_groups
 from poms.common.mixins import DestroyModelFakeMixin
 from poms.common.pagination import CustomPaginationMixin
@@ -103,8 +103,8 @@ class PortfolioFilterSet(FilterSet):
     member = ObjectPermissionMemberFilter(object_permission_model=Portfolio)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Portfolio)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Portfolio)
-    attribute_types = AttributeFilter()
-    attribute_values = AttributeFilter()
+    attribute_types = GroupsAttributeFilter()
+    attribute_values = GroupsAttributeFilter()
 
     class Meta:
         model = Portfolio
@@ -143,7 +143,8 @@ class PortfolioViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = PortfolioSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
-        AttributeFilter
+        AttributeFilter,
+        GroupsAttributeFilter,
     ]
     filter_class = PortfolioFilterSet
     ordering_fields = [
@@ -166,8 +167,6 @@ class PortfolioViewSet(AbstractWithObjectPermissionViewSet):
 
             GenericAttribute.objects.create(attribute_type=attribute_type, content_type=content_type,
                                             object_id=serializer.data['id'])
-
-        print('Create portfolio')
 
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
@@ -209,6 +208,10 @@ class PortfolioEvGroupViewSet(AbstractWithObjectPermissionViewSet, CustomPaginat
     serializer_class = PortfolioGroupSerializer
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
     filter_class = PortfolioFilterSet
+
+    filter_backends = [
+        AttributeFilter
+    ]
 
     def list(self, request):
 

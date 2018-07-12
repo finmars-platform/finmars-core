@@ -11,11 +11,11 @@ from django.db.models import Q
 
 
 def get_root_dynamic_attr_group(qs, root_group, groups_order):
-    attribute_type = GenericAttributeType.objects.get(id=root_group)
+    attribute_type = GenericAttributeType.objects.get(id__exact=root_group)
 
-    attr_qs = GenericAttribute.objects.filter(attribute_type=attribute_type)
+    # attr_qs = GenericAttribute.objects.filter(attribute_type=attribute_type)
 
-    qs = qs.filter(attributes__in=attr_qs)
+    qs = qs.filter(attributes__attribute_type=attribute_type)
 
     if attribute_type.value_type == 20:
         qs = qs.distinct('attributes__value_float') \
@@ -74,13 +74,18 @@ def get_root_system_attr_group(qs, root_group, groups_order):
 
 
 def get_last_dynamic_attr_group(qs, last_group, groups_order):
-    print("get_last_dynamic_attr_group")
+    print("get_last_dynamic_attr_group %s " % last_group)
 
-    attribute_type = GenericAttributeType.objects.get(id=last_group)
+    attribute_type = GenericAttributeType.objects.get(id__exact=last_group)
 
-    attr_qs = GenericAttribute.objects.filter(attribute_type=attribute_type)
+    # attr_qs = GenericAttribute.objects.filter(attribute_type=attribute_type)
 
-    qs = qs.filter(attributes__in=attr_qs)
+    print('attribute_type %s ' % attribute_type)
+    print('attribute_type.value_type %s ' % attribute_type.value_type)
+
+    # print('attr_qs %s' % attr_qs)
+
+    qs = qs.filter(attributes__attribute_type=attribute_type)
 
     force_qs_evaluation(qs)
 
@@ -104,10 +109,18 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
             .values('group_name', 'group_id')
 
     if attribute_type.value_type == 40:
+        print('distinct by attributes__value_date')
+
+        print('qs before1 %s' % qs)
+
         qs = qs.distinct('attributes__value_date') \
             .order_by('-attributes__value_date') \
             .annotate(group_name=F('attributes__value_date')) \
             .values('group_name')
+
+        print('qs %s' % qs)
+
+    force_qs_evaluation(qs)
 
     if groups_order == 'asc':
         qs = qs.order_by(F('group_name').asc())
@@ -150,7 +163,7 @@ def get_queryset_filters(qs, groups_types, groups_values):
 
             if groups_values_count > i:
 
-                attribute_type = GenericAttributeType.objects.get(id=attr)
+                attribute_type = GenericAttributeType.objects.get(id__exact=attr)
 
                 if attribute_type.value_type == 20:
 
@@ -225,9 +238,9 @@ def handle_groups(qs, request):
     groups_values = request.query_params.getlist('groups_values')
     groups_order = request.query_params.get('groups_order')
 
-    print(groups_types)
-    print(groups_values)
-    print(groups_order)
+    print('handle_groups.group_types %s' % groups_types)
+    print('handle_groups.groups_values %s' % groups_values)
+    print('handle_groups.groups_order %s' % groups_order)
 
     if is_root_groups_configuration(groups_types, groups_values):
 
