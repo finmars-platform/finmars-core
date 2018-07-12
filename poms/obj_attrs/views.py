@@ -6,7 +6,7 @@ from rest_framework.filters import FilterSet
 from poms.common.filters import NoOpFilter, CharFilter, ModelExtWithPermissionMultipleChoiceFilter
 from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet
 from poms.obj_attrs.filters import OwnerByAttributeTypeFilter, AttributeTypeValueTypeFilter
-from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
+from poms.obj_attrs.models import GenericAttributeType, GenericClassifier, GenericAttribute
 from poms.obj_attrs.serializers import GenericAttributeTypeSerializer, GenericClassifierSerializer, \
     GenericClassifierNodeSerializer
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
@@ -14,6 +14,10 @@ from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissio
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet
 from poms.users.filters import OwnerByMasterUserFilter
+
+from rest_framework.response import Response
+
+from rest_framework import viewsets, status
 
 
 class AbstractAttributeTypeViewSet(AbstractWithObjectPermissionViewSet):
@@ -133,7 +137,8 @@ class GenericAttributeTypeViewSet(AbstractWithObjectPermissionViewSet):
             content_type=self.target_model_content_type)
 
     def get_serializer(self, *args, **kwargs):
-        kwargs.setdefault('show_classifiers', (self.action != 'list') or self.request.query_params.get('show_classifiers', None))
+        kwargs.setdefault('show_classifiers',
+                          (self.action != 'list') or self.request.query_params.get('show_classifiers', None))
         kwargs['read_only_value_type'] = (self.action != 'create')
         return super(GenericAttributeTypeViewSet, self).get_serializer(*args, **kwargs)
 
@@ -143,3 +148,30 @@ class GenericAttributeTypeViewSet(AbstractWithObjectPermissionViewSet):
 
     def perform_create(self, serializer):
         serializer.save(content_type=self.target_model_content_type)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+
+        print('Create attribute type for %s' % self.target_model)
+
+        attrs = []
+
+        content_type = ContentType.objects.get_for_model(self.target_model)
+
+        items = self.target_model.objects.all()
+
+        print('items len %s' % len(items))
+
+        attr_type = GenericAttributeType.objects.get(pk=serializer.data['id'])
+
+        for item in items:
+            attrs.append(GenericAttribute(attribute_type=attr_type, content_type=content_type, object_id=item.pk))
+
+        print('attrs len %s' % len(attrs))
+
+        GenericAttribute.objects.bulk_create(attrs)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
