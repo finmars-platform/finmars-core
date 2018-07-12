@@ -10,7 +10,6 @@ from django.db.models.functions import Coalesce
 from django.db.models import Q
 
 
-
 def get_root_dynamic_attr_group(qs, root_group, groups_order):
     attribute_type = GenericAttributeType.objects.get(id=root_group)
 
@@ -75,11 +74,15 @@ def get_root_system_attr_group(qs, root_group, groups_order):
 
 
 def get_last_dynamic_attr_group(qs, last_group, groups_order):
+    print("get_last_dynamic_attr_group")
+
     attribute_type = GenericAttributeType.objects.get(id=last_group)
 
     attr_qs = GenericAttribute.objects.filter(attribute_type=attribute_type)
 
     qs = qs.filter(attributes__in=attr_qs)
+
+    force_qs_evaluation(qs)
 
     if attribute_type.value_type == 20:
         qs = qs.distinct('attributes__value_float') \
