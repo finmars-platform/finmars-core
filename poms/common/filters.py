@@ -277,6 +277,49 @@ class AttributeFilter(BaseFilterBackend):
 
             return qs
 
+        ordering = request.GET.get('ordering')
+
+        if ordering:
+
+            print('ordering %s' % ordering)
+
+            parts = ordering.split('___da_')
+            order = parts[0]
+            key = parts[1]
+
+            print('order %s' % order)
+            print('key %s' % key)
+
+            attribute_type = GenericAttributeType.objects.get(id__exact=key)
+
+            if order == '-':
+
+                if attribute_type.value_type == 10:
+                    queryset = queryset.filter(attributes__attribute_type=attribute_type).order_by(
+                        F('attributes__value_string').desc())
+
+                if attribute_type.value_type == 20:
+                    queryset = queryset.filter(attributes__attribute_type=attribute_type).order_by(
+                        F('attributes__value_float').desc())
+
+                if attribute_type.value_type == 40:
+                    queryset = queryset.filter(attributes__attribute_type=attribute_type).order_by(
+                        F('attributes__value_date').desc())
+
+            else:
+
+                if attribute_type.value_type == 10:
+                    queryset = queryset.filter(attributes__attribute_type=attribute_type).order_by(
+                        F('attributes__value_string').asc())
+
+                if attribute_type.value_type == 20:
+                    queryset = queryset.filter(attributes__attribute_type=attribute_type).order_by(
+                        F('attributes__value_float').asc())
+
+                if attribute_type.value_type == 40:
+                    queryset = queryset.filter(attributes__attribute_type=attribute_type).order_by(
+                        F('attributes__value_date').asc())
+
         return queryset
 
 
