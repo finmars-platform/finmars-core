@@ -186,23 +186,8 @@ class PortfolioEvGroupViewSet(AbstractWithObjectPermissionViewSet, CustomPaginat
     queryset = Portfolio.objects.select_related(
         'master_user',
     ).prefetch_related(
-        Prefetch('accounts', queryset=Account.objects.select_related('type')),
-        Prefetch('responsibles', queryset=Responsible.objects.select_related('group')),
-        Prefetch('counterparties', queryset=Counterparty.objects.select_related('group')),
-        Prefetch('transaction_types', queryset=TransactionType.objects.select_related('group')),
         get_attributes_prefetch(),
-        get_tag_prefetch(),
-        *get_permissions_prefetch_lookups(
-            (None, Portfolio),
-            ('accounts', Account),
-            ('accounts__type', AccountType),
-            ('counterparties', Counterparty),
-            ('counterparties__group', CounterpartyGroup),
-            ('responsibles', Responsible),
-            ('responsibles__group', ResponsibleGroup),
-            ('transaction_types', TransactionType),
-            ('transaction_types__group', TransactionTypeGroup),
-        )
+        get_tag_prefetch()
     )
 
     serializer_class = PortfolioGroupSerializer
