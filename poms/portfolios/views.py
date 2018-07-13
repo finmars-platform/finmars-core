@@ -209,7 +209,8 @@ class PortfolioEvGroupViewSet(AbstractWithObjectPermissionViewSet, CustomPaginat
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
     filter_class = PortfolioFilterSet
 
-    filter_backends = [
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
         AttributeFilter
     ]
 
@@ -224,7 +225,13 @@ class PortfolioEvGroupViewSet(AbstractWithObjectPermissionViewSet, CustomPaginat
 
         qs = self.get_queryset()
 
+        print('default qs len %s ' % len(qs))
+
+        # print('filter_queryset %s' % self.filter_queryset)
+
         qs = self.filter_queryset(qs)
+
+        print('sidebar filters qs len %s' % len(qs))
 
         qs = qs.filter(is_deleted=False)
 

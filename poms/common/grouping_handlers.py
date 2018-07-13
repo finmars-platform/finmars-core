@@ -17,6 +17,8 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
 
     qs = qs.filter(attributes__attribute_type=attribute_type)
 
+    print('get_root_dynamic_attr_group len qs %s' % len(qs))
+
     if attribute_type.value_type == 20:
         qs = qs.distinct('attributes__value_float') \
             .order_by('-attributes__value_float') \
@@ -111,14 +113,14 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
     if attribute_type.value_type == 40:
         print('distinct by attributes__value_date')
 
-        print('qs before1 %s' % qs)
+        print('qs before1 len %s' % len(qs))
 
         qs = qs.distinct('attributes__value_date') \
             .order_by('-attributes__value_date') \
             .annotate(group_name=F('attributes__value_date')) \
             .values('group_name')
 
-        print('qs %s' % qs)
+        print('qs %s' % len(qs))
 
     force_qs_evaluation(qs)
 

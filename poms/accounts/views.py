@@ -6,7 +6,8 @@ from rest_framework.settings import api_settings
 
 from poms.accounts.models import Account, AccountType
 from poms.accounts.serializers import AccountSerializer, AccountTypeSerializer
-from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMultipleChoiceFilter, GroupsAttributeFilter
+from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMultipleChoiceFilter, \
+    GroupsAttributeFilter, AttributeFilter
 from poms.common.pagination import CustomPaginationMixin
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, GenericClassifierViewSet
@@ -167,7 +168,8 @@ class AccountViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = AccountSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
-        GroupsAttributeFilter
+        GroupsAttributeFilter,
+        AttributeFilter
         # TagFilterBackend,
     ]
     filter_class = AccountFilterSet
@@ -200,6 +202,11 @@ class AccountEvGroupViewSet(AbstractWithObjectPermissionViewSet, CustomPaginatio
     serializer_class = AccountSerializer
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
     filter_class = AccountFilterSet
+
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter
+    ]
 
     def list(self, request):
 
