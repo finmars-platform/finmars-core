@@ -1,5 +1,9 @@
 # Changelog
 
+## 17.07.2018
+
+- **BUGFIX** dynamic attributes sorting
+
 ## 11.07.2018
 
 - Filter is_deleted objects in group handler

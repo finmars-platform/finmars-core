@@ -284,41 +284,52 @@ class AttributeFilter(BaseFilterBackend):
             print('ordering %s' % ordering)
 
             parts = ordering.split('___da_')
-            order = parts[0]
-            key = parts[1]
 
-            print('order %s' % order)
-            print('key %s' % key)
+            if parts and len(parts) == 2:
 
-            attribute_type = GenericAttributeType.objects.get(id__exact=key)
+                order = parts[0]
+                key = parts[1]
 
-            if order == '-':
+                print('order %s' % order)
+                print('key %s' % key)
 
-                if attribute_type.value_type == 10:
-                    queryset = queryset.filter(attributes__attribute_type=attribute_type).order_by(
-                        F('attributes__value_string').desc())
+                attribute_type = GenericAttributeType.objects.get(id__exact=key)
 
-                if attribute_type.value_type == 20:
-                    queryset = queryset.filter(attributes__attribute_type=attribute_type).order_by(
-                        F('attributes__value_float').desc())
+                if order == '-':
 
-                if attribute_type.value_type == 40:
-                    queryset = queryset.filter(attributes__attribute_type=attribute_type).order_by(
-                        F('attributes__value_date').desc())
+                    if attribute_type.value_type == 10:
+                        queryset = queryset.filter(attributes__attribute_type=attribute_type).order_by(
+                            F('attributes__value_string').desc())
 
-            else:
+                    if attribute_type.value_type == 20:
+                        queryset = queryset.filter(attributes__attribute_type=attribute_type).order_by(
+                            F('attributes__value_float').desc())
 
-                if attribute_type.value_type == 10:
-                    queryset = queryset.filter(attributes__attribute_type=attribute_type).order_by(
-                        F('attributes__value_string').asc())
+                    if attribute_type.value_type == 30:
+                        queryset = queryset.filter(attributes__attribute_type=attribute_type).order_by(
+                            F('attributes__classifier__name').desc())
 
-                if attribute_type.value_type == 20:
-                    queryset = queryset.filter(attributes__attribute_type=attribute_type).order_by(
-                        F('attributes__value_float').asc())
+                    if attribute_type.value_type == 40:
+                        queryset = queryset.filter(attributes__attribute_type=attribute_type).order_by(
+                            F('attributes__value_date').desc())
 
-                if attribute_type.value_type == 40:
-                    queryset = queryset.filter(attributes__attribute_type=attribute_type).order_by(
-                        F('attributes__value_date').asc())
+                else:
+
+                    if attribute_type.value_type == 10:
+                        queryset = queryset.filter(attributes__attribute_type=attribute_type).order_by(
+                            F('attributes__value_string').asc())
+
+                    if attribute_type.value_type == 20:
+                        queryset = queryset.filter(attributes__attribute_type=attribute_type).order_by(
+                            F('attributes__value_float').asc())
+
+                    if attribute_type.value_type == 30:
+                        queryset = queryset.filter(attributes__attribute_type=attribute_type).order_by(
+                            F('attributes__classifier__name').asc())
+
+                    if attribute_type.value_type == 40:
+                        queryset = queryset.filter(attributes__attribute_type=attribute_type).order_by(
+                            F('attributes__value_date').asc())
 
         return queryset
 
