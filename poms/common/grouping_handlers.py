@@ -7,17 +7,23 @@ from django.db.models.functions import Lower
 from django.db.models import CharField, Case, When
 from django.db.models.functions import Coalesce
 
+
 from django.db.models import Q
+
+import time
 
 
 def get_root_dynamic_attr_group(qs, root_group, groups_order):
+
+    start_time = time.time()
+
     attribute_type = GenericAttributeType.objects.get(id__exact=root_group)
 
     # attr_qs = GenericAttribute.objects.filter(attribute_type=attribute_type)
 
     qs = qs.filter(attributes__attribute_type=attribute_type)
 
-    print('get_root_dynamic_attr_group len qs %s' % len(qs))
+    # print('get_root_dynamic_attr_group len qs %s' % len(qs))
 
     if attribute_type.value_type == 20:
         qs = qs.distinct('attributes__value_float') \
@@ -49,6 +55,8 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
     if groups_order == 'desc':
         qs = qs.order_by(F('group_name').desc())
 
+    print("get_root_dynamic_attr_group %s seconds " % (time.time() - start_time))
+
     return qs
 
 
@@ -76,6 +84,9 @@ def get_root_system_attr_group(qs, root_group, groups_order):
 
 
 def get_last_dynamic_attr_group(qs, last_group, groups_order):
+
+    start_time = time.time()
+
     print('get_last_dynamic_attr_group qs len %s' % len(qs))
     print("get_last_dynamic_attr_group dynamic attr id %s " % last_group)
 
@@ -126,6 +137,8 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
     if groups_order == 'desc':
         qs = qs.order_by(F('group_name').desc())
 
+    print("get_last_dynamic_attr_group %s seconds " % (time.time() - start_time))
+
     return qs
 
 
@@ -152,6 +165,9 @@ def get_last_system_attr_group(qs, last_group, groups_order):
 
 
 def get_queryset_filters(qs, groups_types, groups_values):
+
+    start_time = time.time()
+
     i = 0
 
     groups_values_count = len(groups_values)
@@ -225,6 +241,8 @@ def get_queryset_filters(qs, groups_types, groups_values):
 
         qs = qs.filter(id__in=ids)
 
+    print("get_queryset_filters %s seconds " % (time.time() - start_time))
+
     return qs
 
 
@@ -237,20 +255,24 @@ def is_root_groups_configuration(groups_types, groups_values):
 
 
 def handle_groups(qs, request):
+
+    start_time = time.time()
+
     groups_types = request.query_params.getlist('groups_types')
     groups_values = request.query_params.getlist('groups_values')
     groups_order = request.query_params.get('groups_order')
 
-    print('handle_groups.group_types %s' % groups_types)
-    print('handle_groups.groups_values %s' % groups_values)
-    print('handle_groups.groups_order %s' % groups_order)
-    print('handle_groups.queryset len %s' % len(qs))
+    # print('handle_groups.group_types %s' % groups_types)
+    # print('handle_groups.groups_values %s' % groups_values)
+    # print('handle_groups.groups_order %s' % groups_order)
+    # print('handle_groups.queryset len %s' % len(qs))
 
     if is_root_groups_configuration(groups_types, groups_values):
 
         if is_dynamic_attribute(groups_types[0]):
 
             qs = get_root_dynamic_attr_group(qs, root_group=groups_types[0], groups_order=groups_order)
+
 
         else:
 
@@ -260,7 +282,7 @@ def handle_groups(qs, request):
 
         qs = get_queryset_filters(qs, groups_types, groups_values)
 
-        print('handle groups after filters qs len %s' % len(qs))
+        # print('handle groups after filters qs len %s' % len(qs))
 
         if is_dynamic_attribute(groups_types[-1]):
 
@@ -270,6 +292,6 @@ def handle_groups(qs, request):
 
             qs = get_last_system_attr_group(qs, last_group=groups_types[-1], groups_order=groups_order)
 
-    print('handle_groups qs len %s' % len(qs))
+    print("handle_groups %s seconds " % (time.time() - start_time))
 
     return qs

@@ -33,6 +33,8 @@ from rest_framework.response import Response
 from rest_framework import viewsets, status
 from rest_framework.settings import api_settings
 
+import time
+
 
 # class PortfolioAttributeTypeFilterSet(FilterSet):
 #     id = NoOpFilter()
@@ -207,13 +209,15 @@ class PortfolioEvGroupViewSet(AbstractWithObjectPermissionViewSet, CustomPaginat
                 "data": []
             })
 
+        start_time = time.time()
+
         qs = self.get_queryset()
 
-        print('default qs len %s ' % len(qs))
+        # print('default qs len %s ' % len(qs))
 
         qs = self.filter_queryset(qs)
 
-        print('sidebar filters qs len %s' % len(qs))
+        # print('sidebar filters qs len %s' % len(qs))
 
         qs = qs.filter(is_deleted=False)
 
@@ -222,6 +226,9 @@ class PortfolioEvGroupViewSet(AbstractWithObjectPermissionViewSet, CustomPaginat
         # return Response([])
 
         page = self.paginate_queryset(qs)
+
+        print("PortfolioEvGroupViewSet.list %s seconds " % (time.time() - start_time))
+
         if page is not None:
             return self.get_paginated_response(page)
 
