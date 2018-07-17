@@ -76,7 +76,8 @@ def get_root_system_attr_group(qs, root_group, groups_order):
 
 
 def get_last_dynamic_attr_group(qs, last_group, groups_order):
-    print("get_last_dynamic_attr_group %s " % last_group)
+    print('get_last_dynamic_attr_group qs len %s' % len(qs))
+    print("get_last_dynamic_attr_group dynamic attr id %s " % last_group)
 
     attribute_type = GenericAttributeType.objects.get(id__exact=last_group)
 
@@ -84,12 +85,16 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
     print('get_last_dynamic_attr_group.attribute_type.value_type %s ' % attribute_type.value_type)
 
     if attribute_type.value_type == 20:
+        print('before %s' % qs)
+
         qs = qs.filter(attributes__attribute_type__id__exact=attribute_type.id,
                        attributes__attribute_type__value_type=20) \
             .distinct('attributes__value_float') \
             .order_by('attributes__value_float') \
             .annotate(group_name=F('attributes__value_float')) \
             .values('group_name')
+
+        print('after %s' % qs)
 
     if attribute_type.value_type == 10:
         qs = qs.filter(attributes__attribute_type__id__exact=attribute_type.id,
