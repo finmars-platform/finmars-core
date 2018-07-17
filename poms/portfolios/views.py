@@ -186,8 +186,7 @@ class PortfolioEvGroupViewSet(AbstractWithObjectPermissionViewSet, CustomPaginat
     queryset = Portfolio.objects.select_related(
         'master_user',
     ).prefetch_related(
-        get_attributes_prefetch(),
-        get_tag_prefetch()
+        get_attributes_prefetch()
     )
 
     serializer_class = PortfolioGroupSerializer
@@ -212,8 +211,6 @@ class PortfolioEvGroupViewSet(AbstractWithObjectPermissionViewSet, CustomPaginat
 
         print('default qs len %s ' % len(qs))
 
-        # print('filter_queryset %s' % self.filter_queryset)
-
         qs = self.filter_queryset(qs)
 
         print('sidebar filters qs len %s' % len(qs))
@@ -221,6 +218,8 @@ class PortfolioEvGroupViewSet(AbstractWithObjectPermissionViewSet, CustomPaginat
         qs = qs.filter(is_deleted=False)
 
         qs = handle_groups(qs, request)
+
+        # return Response([])
 
         page = self.paginate_queryset(qs)
         if page is not None:
