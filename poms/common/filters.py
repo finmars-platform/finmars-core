@@ -11,7 +11,6 @@ from poms.obj_perms.utils import obj_perms_filter_objects_for_view
 
 from django.db.models import Q
 
-
 import time
 
 
@@ -111,6 +110,8 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
     def filter_queryset(self, request, queryset, view):
 
+        start_time = time.time()
+
         groups_types = request.query_params.getlist('groups_types')
         groups_values = request.query_params.getlist('groups_values')
 
@@ -123,50 +124,49 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
             i = 0
 
-            attributes_queryset = GenericAttribute.objects.all()
-
             for attr in groups_types:
 
                 if attr.isdigit():
 
                     attribute_type = GenericAttributeType.objects.get(id__exact=attr)
 
-                    if attribute_type.value_type == 20 and len(groups_values) > i:
+                    if attribute_type.value_type == 20:
 
                         if groups_values[i] == '-':
 
-                            attributes_queryset = attributes_queryset.filter(value_float__isnull=True,
-                                                                             attribute_type=attribute_type)
+                            queryset = queryset.filter(attributes__value_float__isnull=True,
+                                                       attributes__attribute_type=attribute_type)
                         else:
-                            attributes_queryset = attributes_queryset.filter(value_float=groups_values[i],
-                                                                             attribute_type=attribute_type)
+                            queryset = queryset.filter(attributes__value_float=groups_values[i],
+                                                       attributes__attribute_type=attribute_type)
 
-                    if attribute_type.value_type == 10 and len(groups_values) > i:
+                    if attribute_type.value_type == 10:
 
                         if groups_values[i] == '-':
-                            attributes_queryset = attributes_queryset.filter(value_string__isnull=True,
-                                                                             attribute_type=attribute_type)
+                            queryset = queryset.filter(attributes__value_string__isnull=True,
+                                                       attributes__attribute_type=attribute_type)
                         else:
-                            attributes_queryset = attributes_queryset.filter(value_string=groups_values[i],
-                                                                             attribute_type=attribute_type)
 
-                    if attribute_type.value_type == 30 and len(groups_values) > i:
+                            queryset = queryset.filter(attributes__value_string=groups_values[i],
+                                                       attributes__attribute_type=attribute_type)
+
+                    if attribute_type.value_type == 30:
 
                         if groups_values[i] == '-':
-                            attributes_queryset = attributes_queryset.filter(classifier__isnull=True,
-                                                                             attribute_type=attribute_type)
+                            queryset = queryset.filter(attributes__classifier__isnull=True,
+                                                       attributes__attribute_type=attribute_type)
                         else:
-                            attributes_queryset = attributes_queryset.filter(classifier=groups_values[i],
-                                                                             attribute_type=attribute_type)
+                            queryset = queryset.filter(attributes__classifier=groups_values[i],
+                                                       attributes__attribute_type=attribute_type)
 
-                    if attribute_type.value_type == 40 and len(groups_values) > i:
+                    if attribute_type.value_type == 40:
 
                         if groups_values[i] == '-':
-                            attributes_queryset = attributes_queryset.filter(value_date__isnull=True,
-                                                                             attribute_type=attribute_type)
+                            queryset = queryset.filter(attributes__value_date__isnull=True,
+                                                       attributes__attribute_type=attribute_type)
                         else:
-                            attributes_queryset = attributes_queryset.filter(value_date=groups_values[i],
-                                                                             attribute_type=attribute_type)
+                            queryset = queryset.filter(attributes__value_date=groups_values[i],
+                                                       attributes__attribute_type=attribute_type)
 
                 else:
 
@@ -185,14 +185,7 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
                 force_qs_evaluation(queryset)
 
-            print('GroupAttributeFilter qs len %s' % len(queryset))
-
-            print('attributes_queryset %s' % attributes_queryset)
-
-            if len(attributes_queryset):
-                ids = attributes_queryset.values_list('object_id', flat=True)
-
-                queryset = queryset.filter(id__in=ids)
+        print("GroupsAttributeFilter.filter_queryset %s seconds " % (time.time() - start_time))
 
         return queryset
 

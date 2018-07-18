@@ -172,8 +172,6 @@ def get_queryset_filters(qs, groups_types, groups_values):
 
     groups_values_count = len(groups_values)
 
-    attributes_queryset = GenericAttribute.objects.all()
-
     for attr in groups_types:
 
         if attr.isdigit():
@@ -185,38 +183,38 @@ def get_queryset_filters(qs, groups_types, groups_values):
                 if attribute_type.value_type == 20:
 
                     if groups_values[i] == '-':
-                        attributes_queryset = attributes_queryset.filter(value_float__isnull=True,
-                                                                         attribute_type=attribute_type)
+                        qs = qs.filter(attributes__value_float__isnull=True,
+                                       attributes__attribute_type=attribute_type)
                     else:
-                        attributes_queryset = attributes_queryset.filter(value_float=groups_values[i],
-                                                                         attribute_type=attribute_type)
+                        qs = qs.filter(attributes__value_float=groups_values[i],
+                                       attributes__attribute_type=attribute_type)
 
                 if attribute_type.value_type == 10:
 
                     if groups_values[i] == '-':
-                        attributes_queryset = attributes_queryset.filter(value_string__isnull=True,
-                                                                         attribute_type=attribute_type)
+                        qs = qs.filter(attributes__value_string__isnull=True,
+                                       attributes__attribute_type=attribute_type)
                     else:
-                        attributes_queryset = attributes_queryset.filter(value_string=groups_values[i],
-                                                                         attribute_type=attribute_type)
+                        qs = qs.filter(attributes__value_string=groups_values[i],
+                                       attributes__attribute_type=attribute_type)
 
                 if attribute_type.value_type == 30:
 
                     if groups_values[i] == '-':
-                        attributes_queryset = attributes_queryset.filter(classifier__isnull=True,
-                                                                         attribute_type=attribute_type)
+                        qs = qs.filter(attributes__classifier__isnull=True,
+                                       attributes__attribute_type=attribute_type)
                     else:
-                        attributes_queryset = attributes_queryset.filter(classifier=groups_values[i],
-                                                                         attribute_type=attribute_type)
+                        qs = qs.filter(attributes__classifier=groups_values[i],
+                                       attributes__attribute_type=attribute_type)
 
                 if attribute_type.value_type == 40:
 
                     if groups_values[i] == '-':
-                        attributes_queryset = attributes_queryset.filter(value_date__isnull=True,
-                                                                         attribute_type=attribute_type)
+                        qs = qs.filter(attributes__value_date__isnull=True,
+                                       attributes__attribute_type=attribute_type)
                     else:
-                        attributes_queryset = attributes_queryset.filter(value_date=groups_values[i],
-                                                                         attribute_type=attribute_type)
+                        qs = qs.filter(attributes__value_date=groups_values[i],
+                                       attributes__attribute_type=attribute_type)
 
         else:
 
@@ -234,12 +232,6 @@ def get_queryset_filters(qs, groups_types, groups_values):
                     qs = qs.filter(**params)
 
         i = i + 1
-
-    if len(attributes_queryset):
-
-        ids = attributes_queryset.values_list('object_id', flat=True)
-
-        qs = qs.filter(id__in=ids)
 
     print("get_queryset_filters %s seconds " % (time.time() - start_time))
 
