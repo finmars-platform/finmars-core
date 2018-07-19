@@ -1,5 +1,8 @@
 # Changelog
 
+## 18.07.2018
+- **BUGFIX** filtering in subgroups
+
 ## 17.07.2018
 
 - **BUGFIX** dynamic attributes sorting
