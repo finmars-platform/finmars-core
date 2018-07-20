@@ -89,12 +89,25 @@ class PricingPolicyViewSet(AbstractModelViewSet):
     serializer_class = PricingPolicySerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
     ]
     permission_classes = AbstractModelViewSet.permission_classes + [
         SuperUserOrReadOnly,
     ]
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name'
+    ]
+
+class PricingPolicyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
+    queryset = PricingPolicy.objects
+    serializer_class = PricingPolicySerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter
     ]
 
 
@@ -154,10 +167,52 @@ class InstrumentTypeViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = InstrumentTypeSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
     ]
     filter_class = InstrumentTypeFilterSet
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
+    ]
+
+class InstrumentTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
+    queryset = InstrumentType.objects.select_related(
+        'master_user',
+        'instrument_class',
+        'one_off_event',
+        'one_off_event__group',
+        'regular_event',
+        'regular_event__group',
+        'factor_same',
+        'factor_same__group',
+        'factor_up',
+        'factor_up__group',
+        'factor_down',
+        'factor_down__group',
+    ).prefetch_related(
+        get_tag_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, InstrumentType),
+            ('one_off_event', TransactionType),
+            ('one_off_event__group', TransactionTypeGroup),
+            ('regular_event', TransactionType),
+            ('regular_event__group', TransactionTypeGroup),
+            ('factor_same', TransactionType),
+            ('factor_same__group', TransactionTypeGroup),
+            ('factor_up', TransactionType),
+            ('factor_up__group', TransactionTypeGroup),
+            ('factor_down', TransactionType),
+            ('factor_down__group', TransactionTypeGroup),
+        )
+    )
+    serializer_class = InstrumentTypeSerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = InstrumentTypeFilterSet
+
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter
     ]
 
 
@@ -255,6 +310,8 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = InstrumentSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
     ]
     filter_class = InstrumentFilterSet
     ordering_fields = [
@@ -415,6 +472,8 @@ class PriceHistoryViewSet(AbstractModelViewSet):
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByInstrumentFilter,
         PriceHistoryObjectPermissionFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
     ]
     filter_class = PriceHistoryFilterSet
     ordering_fields = [
@@ -424,6 +483,27 @@ class PriceHistoryViewSet(AbstractModelViewSet):
         'date', 'principal_price', 'accrued_price',
     ]
 
+class PriceHistoryEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
+    queryset = PriceHistory.objects.select_related(
+        'instrument',
+        'instrument__instrument_type',
+        'instrument__instrument_type__instrument_class',
+        'pricing_policy'
+    ).prefetch_related(
+        *get_permissions_prefetch_lookups(
+            ('instrument', Instrument),
+            ('instrument__instrument_type', InstrumentType),
+        )
+    )
+    serializer_class = PriceHistorySerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = PriceHistoryFilterSet
+
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter
+    ]
 
 class GeneratedEventFilterSet(FilterSet):
     id = NoOpFilter()

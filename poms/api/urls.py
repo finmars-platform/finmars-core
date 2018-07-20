@@ -40,6 +40,7 @@ router.register(r'users/language', api.LanguageViewSet, 'language')
 router.register(r'users/timezone', api.TimezoneViewSet, 'timezone')
 
 router.register(r'accounts/account-type', accounts.AccountTypeViewSet)
+router.register(r'accounts/account-type-ev-group', accounts.AccountTypeEvGroupViewSet)
 # router.register(r'accounts/account-attribute-type', accounts.AccountAttributeTypeViewSet)
 router.register(r'accounts/account-attribute-type', accounts.AccountAttributeTypeViewSet, 'accountattributetype')
 # router.register(r'accounts/account-classifier', accounts.AccountClassifierViewSet)
@@ -54,6 +55,7 @@ router.register(r'counterparties/counterparty-attribute-type', counterparties.Co
 router.register(r'counterparties/counterparty-classifier', counterparties.CounterpartyClassifierViewSet,
                 'counterpartyclassifier')
 router.register(r'counterparties/counterparty-group', counterparties.CounterpartyGroupViewSet)
+router.register(r'counterparties/counterparty-group-ev-group', counterparties.CounterpartyGroupEvGroupViewSet)
 router.register(r'counterparties/counterparty', counterparties.CounterpartyViewSet)
 router.register(r'counterparties/counterparty-ev-group', counterparties.CounterpartyEvGroupViewSet,
                 'counterpartyevgroup')
@@ -65,6 +67,7 @@ router.register(r'counterparties/responsible-attribute-type', counterparties.Res
 router.register(r'counterparties/responsible-classifier', counterparties.ResponsibleClassifierViewSet,
                 'responsibleclassifier')
 router.register(r'counterparties/responsible-group', counterparties.ResponsibleGroupViewSet)
+router.register(r'counterparties/responsible-group-ev-group', counterparties.ResponsibleGroupEvGroupViewSet)
 router.register(r'counterparties/responsible', counterparties.ResponsibleViewSet)
 router.register(r'counterparties/responsible-ev-group', counterparties.ResponsibleEvGroupViewSet, 'responsibleevgroup')
 
@@ -72,6 +75,7 @@ router.register(r'currencies/currency', currencies.CurrencyViewSet)
 router.register(r'currencies/currency-ev-group', currencies.CurrencyEvGroupViewSet, 'currencyevgroup')
 router.register(r'currencies/currency-attribute-type', currencies.CurrencyAttributeTypeViewSet, 'currencyattributetype')
 router.register(r'currencies/currency-history', currencies.CurrencyHistoryViewSet)
+router.register(r'currencies/currency-history-ev-group', currencies.CurrencyHistoryEvGroupViewSet)
 
 router.register(r'instruments/instrument-class', instruments.InstrumentClassViewSet)
 router.register(r'instruments/daily-pricing-model', instruments.DailyPricingModelViewSet)
@@ -80,10 +84,12 @@ router.register(r'instruments/payment-size-detail', instruments.PaymentSizeDetai
 router.register(r'instruments/periodicity', instruments.PeriodicityViewSet)
 router.register(r'instruments/cost-method', instruments.CostMethodViewSet)
 router.register(r'instruments/pricing-policy', instruments.PricingPolicyViewSet)
+router.register(r'instruments/pricing-policy-ev-group', instruments.PricingPolicyEvGroupViewSet)
 
 router.register(r'instruments/event-schedule-config', instruments.EventScheduleConfigViewSet)
 
 router.register(r'instruments/instrument-type', instruments.InstrumentTypeViewSet)
+router.register(r'instruments/instrument-type-ev-group', instruments.InstrumentTypeEvGroupViewSet)
 # router.register(r'instruments/instrument-attribute-type', instruments.InstrumentAttributeTypeViewSet)
 router.register(r'instruments/instrument-attribute-type', instruments.InstrumentAttributeTypeViewSet,
                 'instrumentattributetype')
@@ -92,6 +98,7 @@ router.register(r'instruments/instrument-classifier', instruments.InstrumentClas
 router.register(r'instruments/instrument', instruments.InstrumentViewSet)
 router.register(r'instruments/instrument-ev-group', instruments.InstrumentEvGroupViewSet)
 router.register(r'instruments/price-history', instruments.PriceHistoryViewSet)
+router.register(r'instruments/price-history-ev-group', instruments.PriceHistoryEvGroupViewSet)
 router.register(r'instruments/generated-event', instruments.GeneratedEventViewSet)
 
 # router.register(r'portfolios/portfolio-attribute-type', portfolios.PortfolioAttributeTypeViewSet)
@@ -103,16 +110,25 @@ router.register(r'portfolios/portfolio', portfolios.PortfolioViewSet)
 router.register(r'portfolios/portfolio-ev-group', portfolios.PortfolioEvGroupViewSet, 'portfolioevgroup')
 
 router.register(r'strategies/1/group', strategies.Strategy1GroupViewSet)
+router.register(r'strategies/1/group-ev-group', strategies.Strategy1GroupEvGroupViewSet)
 router.register(r'strategies/1/subgroup', strategies.Strategy1SubgroupViewSet)
+router.register(r'strategies/1/subgroup-ev-group', strategies.Strategy1SubgroupEvGroupViewSet)
 router.register(r'strategies/1/strategy', strategies.Strategy1ViewSet)
+router.register(r'strategies/1/strategy-ev-group', strategies.Strategy1EvGroupViewSet)
 
 router.register(r'strategies/2/group', strategies.Strategy2GroupViewSet)
+router.register(r'strategies/2/group-ev-group', strategies.Strategy2GroupEvGroupViewSet)
 router.register(r'strategies/2/subgroup', strategies.Strategy2SubgroupViewSet)
+router.register(r'strategies/2/subgroup-ev-group', strategies.Strategy2SubgroupEvGroupViewSet)
 router.register(r'strategies/2/strategy', strategies.Strategy2ViewSet)
+router.register(r'strategies/2/strategy-ev-group', strategies.Strategy2EvGroupViewSet)
 
 router.register(r'strategies/3/group', strategies.Strategy3GroupViewSet)
+router.register(r'strategies/3/group-ev-group', strategies.Strategy3GroupEvGroupViewSet)
 router.register(r'strategies/3/subgroup', strategies.Strategy3SubgroupViewSet)
+router.register(r'strategies/3/subgroup-ev-group', strategies.Strategy3SubgroupEvGroupViewSet)
 router.register(r'strategies/3/strategy', strategies.Strategy3ViewSet)
+router.register(r'strategies/3/strategy-ev-group', strategies.Strategy3EvGroupViewSet)
 
 router.register(r'tags/tag', tags.TagViewSet)
 
@@ -122,6 +138,7 @@ router.register(r'transactions/transaction-class', transactions.TransactionClass
 
 router.register(r'transactions/transaction-type-group', transactions.TransactionTypeGroupViewSet)
 router.register(r'transactions/transaction-type', transactions.TransactionTypeViewSet)
+router.register(r'transactions/transaction-type-ev-group', transactions.TransactionTypeEvGroupViewSet)
 # router.register(r'transactions/transaction-attribute-type', transactions.TransactionAttributeTypeViewSet)
 router.register(r'transactions/transaction-attribute-type', transactions.TransactionAttributeTypeViewSet,
                 'transactionattributetype')
@@ -129,10 +146,12 @@ router.register(r'transactions/transaction-attribute-type', transactions.Transac
 router.register(r'transactions/transaction-classifier', transactions.TransactionClassifierViewSet,
                 'transactionclassifier')
 router.register(r'transactions/transaction', transactions.TransactionViewSet)
+router.register(r'transactions/transaction-ev-group', transactions.TransactionEvGroupViewSet)
 
 router.register(r'transactions/complex-transaction-attribute-type', transactions.ComplexTransactionAttributeTypeViewSet,
                 'complextransactionattributetype')
 router.register(r'transactions/complex-transaction', transactions.ComplexTransactionViewSet)
+router.register(r'transactions/complex-transaction-ev-group', transactions.ComplexTransactionEvGroupViewSet)
 
 router.register(r'ui/list-layout', ui.ListLayoutViewSet)
 router.register(r'ui/edit-layout', ui.EditLayoutViewSet)

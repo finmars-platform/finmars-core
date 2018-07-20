@@ -113,6 +113,8 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
     ]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByCurrencyFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
     ]
     filter_class = CurrencyHistoryFilterSet
     ordering_fields = [
@@ -120,4 +122,20 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
         'currency', 'currency__user_code', 'currency__name', 'currency__short_name', 'currency__public_name',
         'pricing_policy', 'pricing_policy__user_code', 'pricing_policy__name', 'pricing_policy__short_name',
         'pricing_policy__public_name',
+    ]
+
+class CurrencyHistoryEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
+    queryset = CurrencyHistory.objects.select_related(
+        'currency',
+        'pricing_policy'
+    ).prefetch_related(
+
+    )
+    serializer_class = CurrencyHistorySerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = CurrencyHistoryFilterSet
+
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter
     ]

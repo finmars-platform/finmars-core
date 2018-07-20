@@ -55,11 +55,31 @@ class AccountTypeViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = AccountTypeSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
         # TagFilterBackend,
     ]
     filter_class = AccountTypeFilterSet
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name', 'show_transaction_details'
+    ]
+
+class AccountTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
+    queryset = AccountType.objects.select_related(
+        'master_user'
+    ).prefetch_related(
+        get_tag_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, AccountType),
+        )
+    )
+    serializer_class = AccountTypeSerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = AccountTypeFilterSet
+
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter
     ]
 
 

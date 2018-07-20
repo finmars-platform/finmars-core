@@ -114,6 +114,23 @@ class CounterpartyGroupViewSet(AbstractWithObjectPermissionViewSet):
         'user_code', 'name', 'short_name', 'public_name',
     ]
 
+class CounterpartyGroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
+    queryset = CounterpartyGroup.objects.select_related(
+        'master_user'
+    ).prefetch_related(
+        get_tag_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, CounterpartyGroup),
+        )
+    )
+    serializer_class = CounterpartyGroupSerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = CounterpartyGroupFilterSet
+
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter
+    ]
 
 class CounterpartyFilterSet(FilterSet):
     id = NoOpFilter()
@@ -278,6 +295,24 @@ class ResponsibleGroupViewSet(AbstractWithObjectPermissionViewSet):
     filter_class = ResponsibleGroupFilterSet
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
+    ]
+
+class ResponsibleGroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
+    queryset = ResponsibleGroup.objects.select_related(
+        'master_user'
+    ).prefetch_related(
+        get_tag_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, ResponsibleGroup),
+        )
+    )
+    serializer_class = ResponsibleGroupSerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = ResponsibleGroupFilterSet
+
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter
     ]
 
 

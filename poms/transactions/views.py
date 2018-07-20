@@ -7,11 +7,13 @@ from rest_framework.decorators import detail_route
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import FilterSet
 from rest_framework.response import Response
+from rest_framework.settings import api_settings
 
 from poms.accounts.models import Account, AccountType
 from poms.audit import history
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, ModelExtMultipleChoiceFilter, \
-    NoOpFilter
+    NoOpFilter, AttributeFilter, GroupsAttributeFilter
+from poms.common.pagination import CustomPaginationMixin
 from poms.common.views import AbstractClassModelViewSet, AbstractModelViewSet
 from poms.counterparties.models import Responsible, Counterparty, ResponsibleGroup, CounterpartyGroup
 from poms.currencies.models import Currency
@@ -22,7 +24,7 @@ from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
     ObjectPermissionPermissionFilter
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
-from poms.obj_perms.views import AbstractWithObjectPermissionViewSet
+from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3, Strategy1Subgroup, Strategy1Group, \
     Strategy2Subgroup, Strategy2Group, Strategy3Subgroup, Strategy3Group
@@ -345,6 +347,8 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = TransactionTypeSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
     ]
     filter_class = TransactionTypeFilterSet
     ordering_fields = [
@@ -379,6 +383,215 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
             finally:
                 if instance.has_errors:
                     transaction.set_rollback(True)
+
+
+class TransactionTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
+    queryset = TransactionType.objects.select_related(
+        'group'
+    ).prefetch_related(
+        'portfolios',
+        get_tag_prefetch(),
+        Prefetch(
+            'instrument_types',
+            queryset=InstrumentType.objects.select_related('instrument_class')
+        ),
+        Prefetch(
+            'inputs',
+            queryset=TransactionTypeInput.objects.select_related(
+                'content_type',
+                'account',
+                'account__type',
+                'instrument_type',
+                'instrument_type__instrument_class',
+                'instrument',
+                'instrument__instrument_type',
+                'instrument__instrument_type__instrument_class',
+                'currency',
+                'counterparty',
+                'counterparty__group',
+                'responsible',
+                'responsible__group',
+                'portfolio',
+                'strategy1',
+                'strategy1__subgroup',
+                'strategy1__subgroup__group',
+                'strategy2',
+                'strategy2__subgroup',
+                'strategy2__subgroup__group',
+                'strategy3',
+                'strategy3__subgroup',
+                'strategy3__subgroup__group',
+                'daily_pricing_model',
+                'payment_size_detail',
+                'price_download_scheme',
+            ).prefetch_related(
+                *get_permissions_prefetch_lookups(
+                    ('account', Account),
+                    ('account__type', AccountType),
+                    ('instrument_type', InstrumentType),
+                    ('instrument', Instrument),
+                    ('instrument__instrument_type', InstrumentType),
+                    ('counterparty', Counterparty),
+                    ('counterparty__group', CounterpartyGroup),
+                    ('responsible', Responsible),
+                    ('responsible__group', ResponsibleGroup),
+                    ('portfolio', Portfolio),
+                    ('strategy1', Strategy1),
+                    ('strategy1__subgroup', Strategy1Subgroup),
+                    ('strategy1__subgroup__group', Strategy1Group),
+                    ('strategy2', Strategy2),
+                    ('strategy2__subgroup', Strategy2Subgroup),
+                    ('strategy2__subgroup__group', Strategy2Group),
+                    ('strategy3', Strategy3),
+                    ('strategy3__subgroup', Strategy3Subgroup),
+                    ('strategy3__subgroup__group', Strategy3Group),
+                )
+            )
+        ),
+        Prefetch(
+            'actions',
+            queryset=TransactionTypeAction.objects.select_related(
+                'transactiontypeactioninstrument',
+                'transactiontypeactioninstrument__instrument_type',
+                'transactiontypeactioninstrument__instrument_type_input',
+                'transactiontypeactioninstrument__instrument_type__instrument_class',
+                'transactiontypeactioninstrument__pricing_currency',
+                'transactiontypeactioninstrument__pricing_currency_input',
+                'transactiontypeactioninstrument__accrued_currency',
+                'transactiontypeactioninstrument__accrued_currency_input',
+                'transactiontypeactioninstrument__daily_pricing_model',
+                'transactiontypeactioninstrument__daily_pricing_model_input',
+                'transactiontypeactioninstrument__payment_size_detail',
+                'transactiontypeactioninstrument__payment_size_detail_input',
+                'transactiontypeactioninstrument__price_download_scheme',
+                'transactiontypeactioninstrument__price_download_scheme_input',
+
+                'transactiontypeactiontransaction',
+                'transactiontypeactiontransaction__transaction_class',
+                'transactiontypeactiontransaction__portfolio',
+                'transactiontypeactiontransaction__portfolio_input',
+                'transactiontypeactiontransaction__instrument',
+                'transactiontypeactiontransaction__instrument_input',
+                'transactiontypeactiontransaction__instrument_phantom',
+                'transactiontypeactiontransaction__instrument__instrument_type',
+                'transactiontypeactiontransaction__instrument__instrument_type__instrument_class',
+                'transactiontypeactiontransaction__transaction_currency',
+                'transactiontypeactiontransaction__transaction_currency_input',
+                'transactiontypeactiontransaction__settlement_currency',
+                'transactiontypeactiontransaction__settlement_currency_input',
+                'transactiontypeactiontransaction__account_position',
+                'transactiontypeactiontransaction__account_position_input',
+                'transactiontypeactiontransaction__account_position__type',
+                'transactiontypeactiontransaction__account_cash',
+                'transactiontypeactiontransaction__account_cash_input',
+                'transactiontypeactiontransaction__account_cash__type',
+                'transactiontypeactiontransaction__account_interim',
+                'transactiontypeactiontransaction__account_interim_input',
+                'transactiontypeactiontransaction__account_interim__type',
+                'transactiontypeactiontransaction__strategy1_position',
+                'transactiontypeactiontransaction__strategy1_position_input',
+                'transactiontypeactiontransaction__strategy1_position__subgroup',
+                'transactiontypeactiontransaction__strategy1_position__subgroup__group',
+                'transactiontypeactiontransaction__strategy1_cash',
+                'transactiontypeactiontransaction__strategy1_cash_input',
+                'transactiontypeactiontransaction__strategy1_cash__subgroup',
+                'transactiontypeactiontransaction__strategy1_cash__subgroup__group',
+                'transactiontypeactiontransaction__strategy2_position',
+                'transactiontypeactiontransaction__strategy2_position_input',
+                'transactiontypeactiontransaction__strategy2_position__subgroup',
+                'transactiontypeactiontransaction__strategy2_position__subgroup__group',
+                'transactiontypeactiontransaction__strategy2_cash',
+                'transactiontypeactiontransaction__strategy2_cash_input',
+                'transactiontypeactiontransaction__strategy2_cash__subgroup',
+                'transactiontypeactiontransaction__strategy2_cash__subgroup__group',
+                'transactiontypeactiontransaction__strategy3_position',
+                'transactiontypeactiontransaction__strategy3_position_input',
+                'transactiontypeactiontransaction__strategy3_position__subgroup',
+                'transactiontypeactiontransaction__strategy3_position__subgroup__group',
+                'transactiontypeactiontransaction__strategy3_cash',
+                'transactiontypeactiontransaction__strategy3_cash_input',
+                'transactiontypeactiontransaction__strategy3_cash__subgroup',
+                'transactiontypeactiontransaction__strategy3_cash__subgroup__group',
+                'transactiontypeactiontransaction__responsible',
+                'transactiontypeactiontransaction__responsible_input',
+                'transactiontypeactiontransaction__responsible__group',
+                'transactiontypeactiontransaction__counterparty',
+                'transactiontypeactiontransaction__counterparty_input',
+                'transactiontypeactiontransaction__counterparty__group',
+                'transactiontypeactiontransaction__linked_instrument',
+                'transactiontypeactiontransaction__linked_instrument_input',
+                'transactiontypeactiontransaction__linked_instrument_phantom',
+                'transactiontypeactiontransaction__linked_instrument__instrument_type',
+                'transactiontypeactiontransaction__linked_instrument__instrument_type__instrument_class',
+                'transactiontypeactiontransaction__allocation_balance',
+                'transactiontypeactiontransaction__allocation_balance_input',
+                'transactiontypeactiontransaction__allocation_balance_phantom',
+                'transactiontypeactiontransaction__allocation_balance__instrument_type',
+                'transactiontypeactiontransaction__allocation_balance__instrument_type__instrument_class',
+                'transactiontypeactiontransaction__allocation_pl',
+                'transactiontypeactiontransaction__allocation_pl_input',
+                'transactiontypeactiontransaction__allocation_pl_phantom',
+                'transactiontypeactiontransaction__allocation_pl__instrument_type',
+                'transactiontypeactiontransaction__allocation_pl__instrument_type__instrument_class',
+            ).prefetch_related(
+                *get_permissions_prefetch_lookups(
+                    ('transactiontypeactioninstrument__instrument_type', InstrumentType),
+
+                    ('transactiontypeactiontransaction__portfolio', Portfolio),
+                    ('transactiontypeactiontransaction__instrument', Instrument),
+                    ('transactiontypeactiontransaction__instrument__instrument_type', InstrumentType),
+                    ('transactiontypeactiontransaction__account_position', Account),
+                    ('transactiontypeactiontransaction__account_position__type', AccountType),
+                    ('transactiontypeactiontransaction__account_cash', Account),
+                    ('transactiontypeactiontransaction__account_cash__type', AccountType),
+                    ('transactiontypeactiontransaction__account_interim', Account),
+                    ('transactiontypeactiontransaction__account_interim__type', AccountType),
+                    ('transactiontypeactiontransaction__strategy1_position', Strategy1),
+                    ('transactiontypeactiontransaction__strategy1_position__subgroup', Strategy1Subgroup),
+                    ('transactiontypeactiontransaction__strategy1_position__subgroup__group', Strategy1Group),
+                    ('transactiontypeactiontransaction__strategy1_cash', Strategy1),
+                    ('transactiontypeactiontransaction__strategy1_cash__subgroup', Strategy1Subgroup),
+                    ('transactiontypeactiontransaction__strategy1_cash__subgroup__group', Strategy1Group),
+                    ('transactiontypeactiontransaction__strategy2_position', Strategy2),
+                    ('transactiontypeactiontransaction__strategy2_position__subgroup', Strategy2Subgroup),
+                    ('transactiontypeactiontransaction__strategy2_position__subgroup__group', Strategy2Group),
+                    ('transactiontypeactiontransaction__strategy2_cash', Strategy2),
+                    ('transactiontypeactiontransaction__strategy2_cash__subgroup', Strategy2Subgroup),
+                    ('transactiontypeactiontransaction__strategy2_cash__subgroup__group', Strategy2Group),
+                    ('transactiontypeactiontransaction__strategy3_position', Strategy3),
+                    ('transactiontypeactiontransaction__strategy3_position__subgroup', Strategy3Subgroup),
+                    ('transactiontypeactiontransaction__strategy3_position__subgroup__group', Strategy3Group),
+                    ('transactiontypeactiontransaction__strategy3_cash', Strategy3),
+                    ('transactiontypeactiontransaction__strategy3_cash__subgroup', Strategy3Subgroup),
+                    ('transactiontypeactiontransaction__strategy3_cash__subgroup__group', Strategy3Group),
+                    ('transactiontypeactiontransaction__counterparty', Counterparty),
+                    ('transactiontypeactiontransaction__counterparty__group', CounterpartyGroup),
+                    ('transactiontypeactiontransaction__responsible__group', ResponsibleGroup),
+                    ('transactiontypeactiontransaction__responsible', Responsible),
+                    ('transactiontypeactiontransaction__linked_instrument', Instrument),
+                    ('transactiontypeactiontransaction__linked_instrument__instrument_type', InstrumentType),
+                    ('transactiontypeactiontransaction__allocation_balance', Instrument),
+                    ('transactiontypeactiontransaction__allocation_balance__instrument_type', InstrumentType),
+                    ('transactiontypeactiontransaction__allocation_pl', Instrument),
+                    ('transactiontypeactiontransaction__allocation_pl__instrument_type', InstrumentType),
+                )
+            )
+        ),
+        *get_permissions_prefetch_lookups(
+            (None, TransactionType),
+            ('group', TransactionTypeGroup),
+            ('portfolios', Portfolio),
+            ('instrument_types', InstrumentType),
+        )
+    )
+    serializer_class = TransactionTypeSerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = TransactionTypeFilterSet
+
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter
+    ]
 
 
 class TransactionAttributeTypeViewSet(GenericAttributeTypeViewSet):
@@ -691,6 +904,8 @@ class TransactionViewSet(AbstractModelViewSet):
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         TransactionObjectPermissionFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
     ]
     permission_classes = AbstractModelViewSet.permission_classes + [
         TransactionObjectPermission,
@@ -817,6 +1032,17 @@ class TransactionViewSet(AbstractModelViewSet):
     def perform_destroy(self, instance):
         super(TransactionViewSet, self).perform_destroy(instance)
         instance.calc_cash_by_formulas()
+
+class TransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
+    queryset = get_transaction_queryset(select_related=False, complex_transaction_transactions=True)
+    serializer_class = TransactionSerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = TransactionFilterSet
+
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter
+    ]
 
 
 class ComplexTransactionAttributeTypeViewSet(GenericAttributeTypeViewSet):
@@ -945,6 +1171,8 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
     ]
     filter_backends = AbstractModelViewSet.filter_backends + [
         ComplexTransactionPermissionFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
     ]
     filter_class = ComplexTransactionFilterSet
     ordering_fields = [
@@ -989,3 +1217,14 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
             finally:
                 if instance.has_errors:
                     transaction.set_rollback(True)
+
+class ComplexTransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
+    queryset = get_complex_transaction_queryset(select_related=False, transactions=True)
+    serializer_class = ComplexTransactionSerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = ComplexTransactionFilterSet
+
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter
+    ]
