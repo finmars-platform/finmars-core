@@ -206,8 +206,8 @@ class GroupsAttributeFilter(BaseFilterBackend):
                 if order == '-':
 
                     if attribute_type.value_type == 10:
-                        queryset = queryset.filter(attributes__attribute_type=attribute_type,
-                                                   attributes__value_string__isnull=True).order_by(
+                        queryset = queryset.filter(Q(attributes__attribute_type=attribute_type) | Q(
+                            attributes__value_string__isnull=True)).order_by(
                             F('attributes__value_string').desc())
 
                     if attribute_type.value_type == 20:
@@ -228,8 +228,8 @@ class GroupsAttributeFilter(BaseFilterBackend):
                 else:
 
                     if attribute_type.value_type == 10:
-                        queryset = queryset.filter(attributes__attribute_type=attribute_type,
-                                                   attributes__value_string__isnull=True).order_by(
+                        queryset = queryset.filter(Q(attributes__attribute_type=attribute_type) |
+                                                   Q(attributes__value_string__isnull=True)).order_by(
                             F('attributes__value_string').asc())
 
                     if attribute_type.value_type == 20:
