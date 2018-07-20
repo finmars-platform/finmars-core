@@ -353,45 +353,37 @@ class AttributeFilter(BaseFilterBackend):
                 if order == '-':
 
                     if attribute_type.value_type == 10:
-                        queryset = queryset.filter(attributes__attribute_type=attribute_type,
-                                                   attributes__value_string__isnull=True).order_by(
+                        queryset = queryset.order_by(
                             F('attributes__value_string').desc())
 
                     if attribute_type.value_type == 20:
-                        queryset = queryset.filter(attributes__attribute_type=attribute_type,
-                                                   attributes__value_float__isnull=True).order_by(
+                        queryset = queryset.order_by(
                             F('attributes__value_float').desc())
 
                     if attribute_type.value_type == 30:
-                        queryset = queryset.filter(attributes__attribute_type=attribute_type,
-                                                   attributes__classifier__isnull=True).order_by(
+                        queryset = queryset.order_by(
                             F('attributes__classifier__name').desc())
 
                     if attribute_type.value_type == 40:
-                        queryset = queryset.filter(attributes__attribute_type=attribute_type,
-                                                   attributes__value_date__isnull=True).order_by(
+                        queryset = queryset.order_by(
                             F('attributes__value_date').desc())
 
                 else:
 
                     if attribute_type.value_type == 10:
-                        queryset = queryset.filter(attributes__attribute_type=attribute_type,
-                                                   attributes__value_string__isnull=True).order_by(
+                        queryset = queryset.order_by(
                             F('attributes__value_string').asc())
 
                     if attribute_type.value_type == 20:
-                        queryset = queryset.filter(attributes__attribute_type=attribute_type,
-                                                   attributes__value_float__isnull=True).order_by(
+                        queryset = queryset.order_by(
                             F('attributes__value_float').asc())
 
                     if attribute_type.value_type == 30:
-                        queryset = queryset.filter(attributes__attribute_type=attribute_type,
-                                                   attributes__classifier__isnull=True).order_by(
+                        queryset = queryset.order_by(
                             F('attributes__classifier__name').asc())
 
                     if attribute_type.value_type == 40:
-                        queryset = queryset.filter(attributes__attribute_type=attribute_type,
-                                                   attributes__value_date__isnull=True).order_by(
+                        queryset = queryset.order_by(
                             F('attributes__value_date').asc())
 
         print("AttributeFilter.filter_queryset %s seconds " % (time.time() - start_time))
