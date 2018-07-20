@@ -19,8 +19,13 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
 from poms.audit.mixins import HistoricalModelMixin
 from poms.common.filters import ByIdFilterBackend, ByIsDeletedFilterBackend
 from poms.common.mixins import BulkModelMixin, DestroyModelFakeMixin, UpdateModelMixinExt
+from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.users.utils import get_master_user_and_member
 
+from django.contrib.contenttypes.models import ContentType
+
+from poms.common.grouping_handlers import handle_groups
+import time
 
 _l = logging.getLogger('poms.common')
 
@@ -88,6 +93,47 @@ class AbstractViewSet(AbstractApiView, ViewSet):
             'view': self
         }
 
+class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMixinExt, DestroyModelFakeMixin,
+                             BulkModelMixin, ModelViewSet):
+
+    permission_classes = [
+        IsAuthenticated
+    ]
+    filter_backends = [
+        ByIdFilterBackend,
+        ByIsDeletedFilterBackend,
+        DjangoFilterBackend,
+        OrderingFilter,
+    ]
+
+    def list(self, request):
+
+        if len(request.query_params.getlist('groups_types')) == 0:
+            return Response({
+                "status": status.HTTP_404_NOT_FOUND,
+                "message": 'No groups provided.',
+                "data": []
+            })
+
+        start_time = time.time()
+
+        qs = self.get_queryset()
+
+        qs = self.filter_queryset(qs)
+
+        qs = qs.filter(is_deleted=False)
+
+        qs = handle_groups(qs, request)
+
+        page = self.paginate_queryset(qs)
+
+        print("List %s seconds " % (time.time() - start_time))
+
+        if page is not None:
+            return self.get_paginated_response(page)
+
+        return Response(qs)
+
 
 class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMixinExt, DestroyModelFakeMixin,
                            BulkModelMixin, ModelViewSet):
@@ -100,6 +146,33 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         DjangoFilterBackend,
         OrderingFilter,
     ]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+
+        content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
+
+        attribute_types = GenericAttributeType.objects.filter(content_type=content_type,
+                                                              master_user=request.user.master_user)
+
+        for attribute_type in attribute_types:
+
+            GenericAttribute.objects.create(attribute_type=attribute_type, content_type=content_type,
+                                            object_id=serializer.data['id'])
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
 
 
 class AbstractReadOnlyModelViewSet(AbstractApiView, HistoricalModelMixin, ReadOnlyModelViewSet):

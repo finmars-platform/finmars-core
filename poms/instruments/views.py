@@ -10,13 +10,15 @@ from rest_framework.decorators import list_route, detail_route
 from rest_framework.exceptions import MethodNotAllowed, PermissionDenied, ValidationError
 from rest_framework.filters import FilterSet
 from rest_framework.response import Response
+from rest_framework.settings import api_settings
 
 from poms.accounts.models import Account
 from poms.accounts.models import AccountType
 from poms.audit import history
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
-    ModelExtMultipleChoiceFilter
+    ModelExtMultipleChoiceFilter, AttributeFilter
 from poms.common.mixins import UpdateModelMixinExt
+from poms.common.pagination import CustomPaginationMixin
 from poms.common.utils import date_now
 from poms.common.views import AbstractClassModelViewSet, AbstractModelViewSet, AbstractReadOnlyModelViewSet
 from poms.currencies.models import Currency
@@ -40,7 +42,7 @@ from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
     ObjectPermissionPermissionFilter
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
-from poms.obj_perms.views import AbstractWithObjectPermissionViewSet
+from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy1Group, Strategy2, Strategy2Subgroup, \
     Strategy2Group, Strategy3, Strategy3Subgroup, Strategy3Group
@@ -324,6 +326,64 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
 
         return Response(serializer.data)
 
+class InstrumentEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
+    queryset = Instrument.objects.select_related(
+        'instrument_type',
+        'instrument_type__instrument_class',
+        'pricing_currency',
+        'accrued_currency',
+        'payment_size_detail',
+        'daily_pricing_model',
+        'price_download_scheme',
+        'price_download_scheme__provider',
+    ).prefetch_related(
+        # Prefetch(
+        #     'attributes',
+        #     queryset=InstrumentAttribute.objects.select_related('attribute_type', 'classifier')
+        # ),
+        Prefetch(
+            'manual_pricing_formulas',
+            queryset=ManualPricingFormula.objects.select_related('pricing_policy')
+        ),
+        Prefetch(
+            'accrual_calculation_schedules',
+            queryset=AccrualCalculationSchedule.objects.select_related('accrual_calculation_model', 'periodicity')
+        ),
+        'factor_schedules',
+        Prefetch(
+            'event_schedules',
+            queryset=EventSchedule.objects.select_related(
+                'event_class', 'notification_class', 'periodicity'
+            ).prefetch_related(
+                Prefetch(
+                    'actions',
+                    queryset=EventScheduleAction.objects.select_related(
+                        'transaction_type',
+                        'transaction_type__group'
+                    ).prefetch_related(
+                        *get_permissions_prefetch_lookups(
+                            ('transaction_type', TransactionType),
+                            ('transaction_type__group', TransactionTypeGroup)
+                        )
+                    )
+                ),
+            )),
+        get_attributes_prefetch(),
+        get_tag_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, Instrument),
+            ('instrument_type', InstrumentType),
+            # ('attributes__attribute_type', InstrumentAttributeType),
+        )
+    )
+    serializer_class = InstrumentSerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = InstrumentFilterSet
+
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter
+    ]
 
 class PriceHistoryFilterSet(FilterSet):
     id = NoOpFilter()

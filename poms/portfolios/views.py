@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 import django_filters
-from django.contrib.contenttypes.models import ContentType
+
 from django.db.models import Prefetch, FieldDoesNotExist
 from rest_framework.filters import FilterSet
 from rest_framework.viewsets import ModelViewSet
@@ -9,7 +9,7 @@ from rest_framework.viewsets import ModelViewSet
 from poms.accounts.models import Account, AccountType
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
     ModelExtMultipleChoiceFilter, GroupsAttributeFilter, AttributeFilter
-from poms.common.grouping_handlers import handle_groups
+
 from poms.common.mixins import DestroyModelFakeMixin
 from poms.common.pagination import CustomPaginationMixin
 from poms.counterparties.models import Responsible, Counterparty, CounterpartyGroup, ResponsibleGroup
@@ -20,7 +20,7 @@ from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
     ObjectPermissionPermissionFilter
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
-from poms.obj_perms.views import AbstractWithObjectPermissionViewSet
+from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
 from poms.portfolios.models import Portfolio
 from poms.portfolios.serializers import PortfolioSerializer, PortfolioGroupSerializer
 from poms.tags.filters import TagFilter
@@ -33,7 +33,7 @@ from rest_framework.response import Response
 from rest_framework import viewsets, status
 from rest_framework.settings import api_settings
 
-import time
+
 
 
 # class PortfolioAttributeTypeFilterSet(FilterSet):
@@ -153,38 +153,8 @@ class PortfolioViewSet(AbstractWithObjectPermissionViewSet):
         'user_code', 'name', 'short_name', 'public_name',
     ]
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
 
-        content_type = ContentType.objects.get_for_model(Portfolio)
-
-        attribute_types = GenericAttributeType.objects.filter(content_type=content_type,
-                                                              master_user=request.user.master_user)
-
-        for attribute_type in attribute_types:
-            print(attribute_type)
-
-            GenericAttribute.objects.create(attribute_type=attribute_type, content_type=content_type,
-                                            object_id=serializer.data['id'])
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-
-        print(serializer.data['attributes'])
-
-        return Response(serializer.data)
-
-
-class PortfolioEvGroupViewSet(AbstractWithObjectPermissionViewSet, CustomPaginationMixin):
+class PortfolioEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Portfolio.objects.select_related(
         'master_user',
     ).prefetch_related(
@@ -199,37 +169,3 @@ class PortfolioEvGroupViewSet(AbstractWithObjectPermissionViewSet, CustomPaginat
         OwnerByMasterUserFilter,
         AttributeFilter
     ]
-
-    def list(self, request):
-
-        if len(request.query_params.getlist('groups_types')) == 0:
-            return Response({
-                "status": status.HTTP_404_NOT_FOUND,
-                "message": 'No groups provided.',
-                "data": []
-            })
-
-        start_time = time.time()
-
-        qs = self.get_queryset()
-
-        # print('default qs len %s ' % len(qs))
-
-        qs = self.filter_queryset(qs)
-
-        # print('sidebar filters qs len %s' % len(qs))
-
-        qs = qs.filter(is_deleted=False)
-
-        qs = handle_groups(qs, request)
-
-        # return Response([])
-
-        page = self.paginate_queryset(qs)
-
-        print("PortfolioEvGroupViewSet.list %s seconds " % (time.time() - start_time))
-
-        if page is not None:
-            return self.get_paginated_response(page)
-
-        return Response(qs)

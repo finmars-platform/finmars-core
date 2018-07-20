@@ -2,8 +2,10 @@ from __future__ import unicode_literals
 
 import django_filters
 from rest_framework.filters import FilterSet
+from rest_framework.settings import api_settings
 
-from poms.common.filters import CharFilter, ModelExtMultipleChoiceFilter, NoOpFilter
+from poms.common.filters import CharFilter, ModelExtMultipleChoiceFilter, NoOpFilter, AttributeFilter
+from poms.common.pagination import CustomPaginationMixin
 from poms.common.views import AbstractModelViewSet
 from poms.currencies.filters import OwnerByCurrencyFilter
 from poms.currencies.models import Currency, CurrencyHistory
@@ -12,6 +14,7 @@ from poms.instruments.models import PricingPolicy, DailyPricingModel
 from poms.integrations.models import PriceDownloadScheme
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet
+from poms.obj_perms.views import AbstractEvGroupWithObjectPermissionViewSet
 from poms.tags.filters import TagFilter
 from poms.tags.utils import get_tag_prefetch
 from poms.users.filters import OwnerByMasterUserFilter
@@ -60,6 +63,25 @@ class CurrencyViewSet(AbstractModelViewSet):
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name', 'reference_for_pricing',
         'price_download_scheme', 'price_download_scheme__scheme_name',
+    ]
+
+class CurrencyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
+    queryset = Currency.objects.select_related(
+        'master_user',
+        'daily_pricing_model',
+        'price_download_scheme',
+        'price_download_scheme__provider',
+    ).prefetch_related(
+        get_attributes_prefetch(),
+        get_tag_prefetch()
+    )
+    serializer_class = CurrencySerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = CurrencyFilterSet
+
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter
     ]
 
 

@@ -55,6 +55,8 @@ router.register(r'counterparties/counterparty-classifier', counterparties.Counte
                 'counterpartyclassifier')
 router.register(r'counterparties/counterparty-group', counterparties.CounterpartyGroupViewSet)
 router.register(r'counterparties/counterparty', counterparties.CounterpartyViewSet)
+router.register(r'counterparties/counterparty-ev-group', counterparties.CounterpartyEvGroupViewSet,
+                'counterpartyevgroup')
 
 # router.register(r'counterparties/responsible-attribute-type', counterparties.ResponsibleAttributeTypeViewSet)
 router.register(r'counterparties/responsible-attribute-type', counterparties.ResponsibleAttributeTypeViewSet,
@@ -64,8 +66,10 @@ router.register(r'counterparties/responsible-classifier', counterparties.Respons
                 'responsibleclassifier')
 router.register(r'counterparties/responsible-group', counterparties.ResponsibleGroupViewSet)
 router.register(r'counterparties/responsible', counterparties.ResponsibleViewSet)
+router.register(r'counterparties/responsible-ev-group', counterparties.ResponsibleEvGroupViewSet, 'responsibleevgroup')
 
 router.register(r'currencies/currency', currencies.CurrencyViewSet)
+router.register(r'currencies/currency-ev-group', currencies.CurrencyEvGroupViewSet, 'currencyevgroup')
 router.register(r'currencies/currency-attribute-type', currencies.CurrencyAttributeTypeViewSet, 'currencyattributetype')
 router.register(r'currencies/currency-history', currencies.CurrencyHistoryViewSet)
 
@@ -86,6 +90,7 @@ router.register(r'instruments/instrument-attribute-type', instruments.Instrument
 # router.register(r'instruments/instrument-classifier', instruments.InstrumentClassifierViewSet)
 router.register(r'instruments/instrument-classifier', instruments.InstrumentClassifierViewSet, 'instrumentclassifier')
 router.register(r'instruments/instrument', instruments.InstrumentViewSet)
+router.register(r'instruments/instrument-ev-group', instruments.InstrumentEvGroupViewSet)
 router.register(r'instruments/price-history', instruments.PriceHistoryViewSet)
 router.register(r'instruments/generated-event', instruments.GeneratedEventViewSet)
 

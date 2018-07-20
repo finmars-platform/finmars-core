@@ -14,7 +14,7 @@ from poms.obj_attrs.views import GenericAttributeTypeViewSet, GenericClassifierV
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
     ObjectPermissionPermissionFilter
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
-from poms.obj_perms.views import AbstractWithObjectPermissionViewSet
+from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
 from poms.portfolios.models import Portfolio
 from poms.tags.filters import TagFilter
 from poms.tags.utils import get_tag_prefetch
@@ -178,18 +178,13 @@ class AccountViewSet(AbstractWithObjectPermissionViewSet):
         'type', 'type__user_code', 'type__name', 'type__short_name', 'type__public_name',
     ]
 
-class AccountEvGroupViewSet(AbstractWithObjectPermissionViewSet, CustomPaginationMixin):
 
+class AccountEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Account.objects.select_related(
         'master_user',
         'type',
     ).prefetch_related(
         'portfolios',
-        # Prefetch('attributes', queryset=AccountAttribute.objects.select_related(
-        #     'attribute_type', 'classifier'
-        # ).prefetch_related(
-        #     'attribute_type__options'
-        # )),
         get_attributes_prefetch(),
         get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
@@ -207,26 +202,3 @@ class AccountEvGroupViewSet(AbstractWithObjectPermissionViewSet, CustomPaginatio
         OwnerByMasterUserFilter,
         AttributeFilter
     ]
-
-    def list(self, request):
-
-        if len(request.query_params.getlist('groups_types')) == 0:
-            return Response({
-                "status": status.HTTP_404_NOT_FOUND,
-                "message": 'No groups provided.',
-                "data": []
-            })
-
-        qs = self.get_queryset()
-
-        qs = self.filter_queryset(qs)
-
-        qs = qs.filter(is_deleted=False)
-
-        qs = handle_groups(qs, request)
-
-        page = self.paginate_queryset(qs)
-        if page is not None:
-            return self.get_paginated_response(page)
-
-        return Response(qs)

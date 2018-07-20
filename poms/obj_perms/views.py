@@ -3,7 +3,7 @@ from logging import getLogger
 from rest_framework.decorators import list_route
 from rest_framework.response import Response
 
-from poms.common.views import AbstractModelViewSet
+from poms.common.views import AbstractModelViewSet, AbstractEvGroupViewSet
 from poms.obj_perms.filters import ObjectPermissionBackend
 from poms.obj_perms.permissions import PomsObjectPermission
 from poms.obj_perms.utils import obj_perms_prefetch
@@ -43,3 +43,12 @@ class AbstractWithObjectPermissionViewSet(AbstractModelViewSet):
     #     serializer.is_valid(raise_exception=True)
     #     serializer.save()
     #     return Response(serializer.data)
+
+
+class AbstractEvGroupWithObjectPermissionViewSet(AbstractEvGroupViewSet):
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        ObjectPermissionBackend,
+    ]
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        PomsObjectPermission,
+    ]

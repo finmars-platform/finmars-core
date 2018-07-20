@@ -3,8 +3,10 @@ from __future__ import unicode_literals
 import django_filters
 from django.db.models import Prefetch
 from rest_framework.filters import FilterSet
+from rest_framework.settings import api_settings
 
-from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMultipleChoiceFilter
+from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMultipleChoiceFilter, AttributeFilter
+from poms.common.pagination import CustomPaginationMixin
 from poms.counterparties.models import Counterparty, Responsible, CounterpartyGroup, ResponsibleGroup
 from poms.counterparties.serializers import CounterpartySerializer, ResponsibleSerializer, CounterpartyGroupSerializer, \
     ResponsibleGroupSerializer
@@ -15,7 +17,7 @@ from poms.obj_attrs.views import AbstractAttributeTypeViewSet, AbstractClassifie
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
     ObjectPermissionPermissionFilter
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
-from poms.obj_perms.views import AbstractWithObjectPermissionViewSet
+from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
 from poms.portfolios.models import Portfolio
 from poms.tags.filters import TagFilter
 from poms.tags.utils import get_tag_prefetch
@@ -156,6 +158,32 @@ class CounterpartyViewSet(AbstractWithObjectPermissionViewSet):
         'user_code', 'name', 'short_name', 'public_name',
         'group', 'group__user_code', 'group__name', 'group__short_name', 'group__public_name',
     ]
+
+class CounterpartyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
+    queryset = Counterparty.objects.select_related(
+        'master_user',
+        'group',
+    ).prefetch_related(
+        'portfolios',
+        # Prefetch('attributes', queryset=CounterpartyAttribute.objects.select_related('attribute_type', 'classifier')),
+        get_attributes_prefetch(),
+        get_tag_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, Counterparty),
+            ('group', CounterpartyGroup),
+            ('portfolios', Portfolio),
+            # ('attributes__attribute_type', CounterpartyAttributeType),
+        )
+    )
+    serializer_class = CounterpartySerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = CounterpartyFilterSet
+
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter
+    ]
+
 
 
 # Responsible ----
@@ -299,4 +327,29 @@ class ResponsibleViewSet(AbstractWithObjectPermissionViewSet):
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
         'group', 'group__user_code', 'group__name', 'group__short_name', 'group__public_name',
+    ]
+
+class ResponsibleEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
+    queryset = Responsible.objects.select_related(
+        'master_user',
+        'group',
+    ).prefetch_related(
+        'portfolios',
+        get_attributes_prefetch(),
+        get_tag_prefetch(),
+        # Prefetch('attributes', queryset=ResponsibleAttribute.objects.select_related('attribute_type', 'classifier')),
+        *get_permissions_prefetch_lookups(
+            (None, Responsible),
+            ('group', ResponsibleGroup),
+            ('portfolios', Portfolio),
+            # ('attributes__attribute_type', ResponsibleAttributeType),
+        )
+    )
+    serializer_class = ResponsibleSerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = ResponsibleFilterSet
+
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter
     ]
