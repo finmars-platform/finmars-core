@@ -183,7 +183,7 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
                 i = i + 1
 
-                force_qs_evaluation(queryset)
+        force_qs_evaluation(queryset)
 
         ordering = request.GET.get('ordering')
 
@@ -230,6 +230,8 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
                     if attribute_type.value_type == 40:
                         queryset = queryset.order_by('attributes__value_date')
+
+        force_qs_evaluation(queryset)
 
         print("GroupsAttributeFilter.filter_queryset %s seconds " % (time.time() - start_time))
 
@@ -369,6 +371,8 @@ class AttributeFilter(BaseFilterBackend):
 
                     if attribute_type.value_type == 40:
                         queryset = queryset.order_by('attributes__value_date')
+
+        force_qs_evaluation(queryset)
 
         print("AttributeFilter.filter_queryset %s seconds " % (time.time() - start_time))
 
