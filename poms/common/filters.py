@@ -183,56 +183,6 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
                 i = i + 1
 
-        force_qs_evaluation(queryset)
-
-        ordering = request.GET.get('ordering')
-
-        if ordering:
-
-            print('AttributeFilter.ordering %s' % ordering)
-
-            parts = ordering.split('___da_')
-
-            if parts and len(parts) == 2:
-
-                order = parts[0]
-                key = parts[1]
-
-                print('order %s' % order)
-                print('key %s' % key)
-
-                attribute_type = GenericAttributeType.objects.get(id__exact=key)
-
-                if order == '-':
-
-                    if attribute_type.value_type == 10:
-                        queryset = queryset.order_by('-attributes__value_string')
-
-                    if attribute_type.value_type == 20:
-                        queryset = queryset.order_by('-attributes__value_float')
-
-                    if attribute_type.value_type == 30:
-                        queryset = queryset.order_by('-attributes__classifier__name')
-
-                    if attribute_type.value_type == 40:
-                        queryset = queryset.order_by('-attributes__value_date')
-
-                else:
-
-                    if attribute_type.value_type == 10:
-                        queryset = queryset.order_by('attributes__value_string')
-
-                    if attribute_type.value_type == 20:
-                        queryset = queryset.order_by('attributes__value_float')
-
-                    if attribute_type.value_type == 30:
-                        queryset = queryset.order_by('attributes__classifier__name')
-
-                    if attribute_type.value_type == 40:
-                        queryset = queryset.order_by('attributes__value_date')
-
-        force_qs_evaluation(queryset)
-
         print("GroupsAttributeFilter.filter_queryset %s seconds " % (time.time() - start_time))
 
         return queryset
@@ -325,52 +275,6 @@ class AttributeFilter(BaseFilterBackend):
                 i = i + 1
 
         # print('AttributeFilter qs len %s' % len(queryset))
-
-        ordering = request.GET.get('ordering')
-
-        if ordering:
-
-            print('AttributeFilter.ordering %s' % ordering)
-
-            parts = ordering.split('___da_')
-
-            if parts and len(parts) == 2:
-
-                order = parts[0]
-                key = parts[1]
-
-                print('order %s' % order)
-                print('key %s' % key)
-
-                attribute_type = GenericAttributeType.objects.get(id__exact=key)
-
-                if order == '-':
-
-                    if attribute_type.value_type == 10:
-                        queryset = queryset.order_by('-attributes__value_string')
-
-                    if attribute_type.value_type == 20:
-                        queryset = queryset.order_by('-attributes__value_float')
-
-                    if attribute_type.value_type == 30:
-                        queryset = queryset.order_by('-attributes__classifier__name')
-
-                    if attribute_type.value_type == 40:
-                        queryset = queryset.order_by('-attributes__value_date')
-
-                else:
-
-                    if attribute_type.value_type == 10:
-                        queryset = queryset.order_by('attributes__value_string')
-
-                    if attribute_type.value_type == 20:
-                        queryset = queryset.order_by('attributes__value_float')
-
-                    if attribute_type.value_type == 30:
-                        queryset = queryset.order_by('attributes__classifier__name')
-
-                    if attribute_type.value_type == 40:
-                        queryset = queryset.order_by('attributes__value_date')
 
         print("AttributeFilter.filter_queryset %s seconds " % (time.time() - start_time))
 

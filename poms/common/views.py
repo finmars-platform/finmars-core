@@ -19,6 +19,7 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
 from poms.audit.mixins import HistoricalModelMixin
 from poms.common.filters import ByIdFilterBackend, ByIsDeletedFilterBackend
 from poms.common.mixins import BulkModelMixin, DestroyModelFakeMixin, UpdateModelMixinExt
+from poms.common.sorting import sort_by_dynamic_attrs
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.users.utils import get_master_user_and_member
 
@@ -93,9 +94,9 @@ class AbstractViewSet(AbstractApiView, ViewSet):
             'view': self
         }
 
+
 class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMixinExt, DestroyModelFakeMixin,
                              BulkModelMixin, ModelViewSet):
-
     permission_classes = [
         IsAuthenticated
     ]
@@ -147,6 +148,19 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         OrderingFilter,
     ]
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        queryset = sort_by_dynamic_attrs(request, queryset)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -159,7 +173,6 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
                                                               master_user=request.user.master_user)
 
         for attribute_type in attribute_types:
-
             GenericAttribute.objects.create(attribute_type=attribute_type, content_type=content_type,
                                             object_id=serializer.data['id'])
 
