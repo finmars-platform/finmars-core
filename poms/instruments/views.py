@@ -16,7 +16,7 @@ from poms.accounts.models import Account
 from poms.accounts.models import AccountType
 from poms.audit import history
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
-    ModelExtMultipleChoiceFilter, AttributeFilter
+    ModelExtMultipleChoiceFilter, AttributeFilter, GroupsAttributeFilter
 from poms.common.mixins import UpdateModelMixinExt
 from poms.common.pagination import CustomPaginationMixin
 from poms.common.utils import date_now
@@ -382,7 +382,8 @@ class InstrumentEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Custo
 
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
-        AttributeFilter
+        AttributeFilter,
+        GroupsAttributeFilter
     ]
 
 class PriceHistoryFilterSet(FilterSet):

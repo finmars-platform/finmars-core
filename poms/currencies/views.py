@@ -4,7 +4,8 @@ import django_filters
 from rest_framework.filters import FilterSet
 from rest_framework.settings import api_settings
 
-from poms.common.filters import CharFilter, ModelExtMultipleChoiceFilter, NoOpFilter, AttributeFilter
+from poms.common.filters import CharFilter, ModelExtMultipleChoiceFilter, NoOpFilter, AttributeFilter, \
+    GroupsAttributeFilter
 from poms.common.pagination import CustomPaginationMixin
 from poms.common.views import AbstractModelViewSet
 from poms.currencies.filters import OwnerByCurrencyFilter
@@ -58,6 +59,8 @@ class CurrencyViewSet(AbstractModelViewSet):
     ]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
     ]
     filter_class = CurrencyFilterSet
     ordering_fields = [

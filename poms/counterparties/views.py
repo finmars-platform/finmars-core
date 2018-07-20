@@ -5,7 +5,8 @@ from django.db.models import Prefetch
 from rest_framework.filters import FilterSet
 from rest_framework.settings import api_settings
 
-from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMultipleChoiceFilter, AttributeFilter
+from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMultipleChoiceFilter, AttributeFilter, \
+    GroupsAttributeFilter
 from poms.common.pagination import CustomPaginationMixin
 from poms.counterparties.models import Counterparty, Responsible, CounterpartyGroup, ResponsibleGroup
 from poms.counterparties.serializers import CounterpartySerializer, ResponsibleSerializer, CounterpartyGroupSerializer, \
@@ -152,12 +153,15 @@ class CounterpartyViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = CounterpartySerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
     ]
     filter_class = CounterpartyFilterSet
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
         'group', 'group__user_code', 'group__name', 'group__short_name', 'group__public_name',
     ]
+
 
 class CounterpartyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Counterparty.objects.select_related(
@@ -183,7 +187,6 @@ class CounterpartyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cus
         OwnerByMasterUserFilter,
         AttributeFilter
     ]
-
 
 
 # Responsible ----
@@ -322,12 +325,15 @@ class ResponsibleViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = ResponsibleSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
     ]
     filter_class = ResponsibleFilterSet
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
         'group', 'group__user_code', 'group__name', 'group__short_name', 'group__public_name',
     ]
+
 
 class ResponsibleEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Responsible.objects.select_related(
