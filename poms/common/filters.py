@@ -372,8 +372,6 @@ class AttributeFilter(BaseFilterBackend):
                     if attribute_type.value_type == 40:
                         queryset = queryset.order_by('attributes__value_date')
 
-        force_qs_evaluation(queryset)
-
         print("AttributeFilter.filter_queryset %s seconds " % (time.time() - start_time))
 
         return queryset
