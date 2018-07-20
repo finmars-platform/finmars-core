@@ -60,11 +60,26 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
 
 def get_root_system_attr_group(qs, root_group, groups_order):
     if root_group == 'type':
-
         qs = qs.values('type') \
             .annotate(group_id=F('type')) \
             .distinct() \
             .annotate(group_name=F('type__user_code')) \
+            .values('group_name', 'group_id')
+
+    if root_group == 'instrument_type':
+
+        qs = qs.values('instrument_type') \
+            .annotate(group_id=F('instrument_type')) \
+            .distinct() \
+            .annotate(group_name=F('instrument_type__user_code')) \
+            .values('group_name', 'group_id')
+
+    if root_group == 'group':
+
+        qs = qs.values('group') \
+            .annotate(group_id=F('group')) \
+            .distinct() \
+            .annotate(group_name=F('group__user_code')) \
             .values('group_name', 'group_id')
     else:
 
