@@ -98,7 +98,7 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
         qs = qs.filter(attributes__attribute_type__id__exact=attribute_type.id,
                        attributes__attribute_type__value_type=20) \
             .distinct('attributes__value_float') \
-            .order_by('attributes__value_float') \
+            .order_by('-attributes__value_float') \
             .annotate(group_name=F('attributes__value_float')) \
             .values('group_name')
 
@@ -108,7 +108,7 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
         qs = qs.filter(attributes__attribute_type__id__exact=attribute_type.id,
                        attributes__attribute_type__value_type=10) \
             .distinct('attributes__value_string') \
-            .order_by('attributes__value_string') \
+            .order_by('-attributes__value_string') \
             .annotate(group_name=F('attributes__value_string')) \
             .values('group_name')
 
@@ -125,7 +125,7 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
         qs = qs.filter(attributes__attribute_type__id__exact=attribute_type.id,
                        attributes__attribute_type__value_type=40) \
             .distinct('attributes__value_date') \
-            .order_by('attributes__value_date') \
+            .order_by('-attributes__value_date') \
             .annotate(group_name=F('attributes__value_date')) \
             .values('group_name')
 
