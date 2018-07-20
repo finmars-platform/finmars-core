@@ -7,14 +7,12 @@ from django.db.models.functions import Lower
 from django.db.models import CharField, Case, When
 from django.db.models.functions import Coalesce
 
-
 from django.db.models import Q
 
 import time
 
 
 def get_root_dynamic_attr_group(qs, root_group, groups_order):
-
     start_time = time.time()
 
     attribute_type = GenericAttributeType.objects.get(id__exact=root_group)
@@ -84,7 +82,6 @@ def get_root_system_attr_group(qs, root_group, groups_order):
 
 
 def get_last_dynamic_attr_group(qs, last_group, groups_order):
-
     start_time = time.time()
 
     print('get_last_dynamic_attr_group qs len %s' % len(qs))
@@ -144,12 +141,28 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
 
 def get_last_system_attr_group(qs, last_group, groups_order):
     if last_group == 'type':
-
         qs = qs.values('type') \
             .annotate(group_id=F('type')) \
             .distinct() \
             .annotate(group_name=F('type__user_code')) \
             .values('group_name', 'group_id')
+
+    if last_group == 'instrument_type':
+
+        qs = qs.values('instrument_type') \
+            .annotate(group_id=F('instrument_type')) \
+            .distinct() \
+            .annotate(group_name=F('instrument_type__user_code')) \
+            .values('group_name', 'group_id')
+
+    if last_group == 'group':
+
+        qs = qs.values('group') \
+            .annotate(group_id=F('group')) \
+            .distinct() \
+            .annotate(group_name=F('group__user_code')) \
+            .values('group_name', 'group_id')
+
     else:
 
         qs = qs.distinct(last_group) \
@@ -165,7 +178,6 @@ def get_last_system_attr_group(qs, last_group, groups_order):
 
 
 def get_queryset_filters(qs, groups_types, groups_values):
-
     start_time = time.time()
 
     i = 0
@@ -247,7 +259,6 @@ def is_root_groups_configuration(groups_types, groups_values):
 
 
 def handle_groups(qs, request):
-
     start_time = time.time()
 
     groups_types = request.query_params.getlist('groups_types')
