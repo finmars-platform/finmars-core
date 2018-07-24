@@ -120,6 +120,8 @@ class GroupsAttributeFilter(BaseFilterBackend):
         print('GroupsAttributeFilter.group_types %s' % groups_types)
         print('GroupsAttributeFilter.groups_values %s' % groups_values)
 
+        # print('queryset len %s' % len(queryset))
+
         if len(groups_types) and len(groups_values):
 
             i = 0
@@ -130,12 +132,16 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
                     attribute_type = GenericAttributeType.objects.get(id__exact=attr)
 
+                    # print('attribute_type %s ' % attribute_type)
+                    # print('attribute_type value_type %s' % attribute_type.value_type)
+
                     if attribute_type.value_type == 20:
 
                         if groups_values[i] == '-':
 
                             queryset = queryset.filter(attributes__value_float__isnull=True,
                                                        attributes__attribute_type=attribute_type)
+
                         else:
                             queryset = queryset.filter(attributes__value_float=groups_values[i],
                                                        attributes__attribute_type=attribute_type)
@@ -167,6 +173,9 @@ class GroupsAttributeFilter(BaseFilterBackend):
                         else:
                             queryset = queryset.filter(attributes__value_date=groups_values[i],
                                                        attributes__attribute_type=attribute_type)
+
+                    # print('iteration i %s' % i)
+                    # print('iteration len %s' % len(queryset))
 
                 else:
 

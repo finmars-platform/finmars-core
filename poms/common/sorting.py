@@ -71,6 +71,8 @@ def sort_by_dynamic_attrs(request, queryset):
                     if a.object_id == i.id:
                         result.append(i)
 
+
+
             print(result)
 
             queryset = result

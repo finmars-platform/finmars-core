@@ -1,5 +1,9 @@
 # Changelog
 
+## 24.07.2018
+- New entities (Groups, Types, Transaction, Instrument etc)
+- New algorithm for grouping and filtering
+
 ## 18.07.2018
 - **BUGFIX** filtering in subgroups
 

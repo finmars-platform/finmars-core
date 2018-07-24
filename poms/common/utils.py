@@ -4,8 +4,13 @@ from django.views.generic.dates import timezone_today
 
 
 def force_qs_evaluation(qs):
-    for item in qs:
-        pass
+
+    list(qs)
+
+    pass
+
+    # for item in qs:
+    #     pass
 
 
 def db_class_check_data(model, verbosity, using):

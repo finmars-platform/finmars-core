@@ -108,6 +108,10 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
     print('get_last_dynamic_attr_group.attribute_type %s ' % attribute_type)
     print('get_last_dynamic_attr_group.attribute_type.value_type %s ' % attribute_type.value_type)
 
+    # print('get_last_dynamic_attr_group len %s' % len(qs))
+
+    force_qs_evaluation(qs)
+
     if attribute_type.value_type == 20:
         qs = qs.filter(attributes__attribute_type__id__exact=attribute_type.id,
                        attributes__attribute_type__value_type=20) \
