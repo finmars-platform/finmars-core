@@ -215,29 +215,52 @@ class AbstractAsyncViewSet(AbstractViewSet):
         return context
 
     def create(self, request, *args, **kwargs):
+
+        print('AbstractAsyncViewSet create')
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
+
+        print('instance %s ' % instance)
+        print('instance.task_id %s ' % instance.task_id)
+
         task_id = instance.task_id
 
         signer = TimestampSigner()
 
         if task_id:
+
             res = AsyncResult(signer.unsign(task_id))
 
+            print('TASK ID EXISTS %s ' % res)
+
             if res.ready():
+                print('TASK ID EXISTS READY')
+
                 res.maybe_reraise()
                 instance = res.result
 
             if instance.master_user.id != request.user.master_user.id:
                 raise PermissionDenied()
+
+            print('TASK ID EXISTS %s' % res.status)
+
             instance.task_id = task_id
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
+
         else:
+
+            print('self.celery_task %s ' % self.celery_task)
+
             res = self.celery_task.apply_async(kwargs={'instance': instance})
             instance.task_id = signer.sign('%s' % res.id)
+
+            print('res.id %s' % res.id)
+            print('res.status %s' % res.status)
+
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)

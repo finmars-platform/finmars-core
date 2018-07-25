@@ -197,6 +197,10 @@ def get_queryset_filters(qs, groups_types, groups_values):
 
     i = 0
 
+    # print('get_queryset_filters len %s' % len(qs    ))
+
+    force_qs_evaluation(qs)
+
     groups_values_count = len(groups_values)
 
     for attr in groups_types:
@@ -257,6 +261,8 @@ def get_queryset_filters(qs, groups_types, groups_values):
                     params[attr] = groups_values[i]
 
                     qs = qs.filter(**params)
+
+        force_qs_evaluation(qs)
 
         i = i + 1
 

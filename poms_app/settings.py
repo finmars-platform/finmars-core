@@ -252,11 +252,10 @@ if not LOCAL:
 STATIC_URL = '/api/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
-REDIS_HOST = os.environ.get('REDIS_HOST', '127.0.0.1:6379')
+# REDIS_HOST = os.environ.get('REDIS_HOST', '127.0.0.1:6379')
+REDIS_HOST = os.environ.get('REDIS_HOST', '0.0.0.0:6379')
 # if DEBUG and REDIS_HOST == '127.0.0.1:6379':
 #     REDIS_HOST = '192.168.57.2:6379'
-
-print('REDIS_HOST %s' % os.environ.get('REDIS_HOST'))
 
 CACHE_VERSION = 1
 CACHE_SERIALIZER = "django_redis.serializers.json.JSONSerializer"
@@ -508,6 +507,8 @@ AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', None)
 
 # CELERY ------------------------------------------------
 
+
+print('REDIS_HOST  111 %s' % REDIS_HOST)
 
 CELERY_BROKER_URL = 'redis://%s/1' % REDIS_HOST
 # CELERY_RESULT_BACKEND = 'redis://%s/1' % REDIS_HOST

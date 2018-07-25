@@ -1018,7 +1018,9 @@ class ReportItem(YTMMixin, BaseReportItem):
     #         self.pos_size += o.pos_size
 
     def get_instr_ytm_data_d0_v0(self):
-        return self.report.report_date, -(self.instr_price_cur_principal_price * self.instr.price_multiplier * self.instr.get_factor(self.report.report_date))
+        return self.report.report_date, -(
+                    self.instr_price_cur_principal_price * self.instr.price_multiplier * self.instr.get_factor(
+                self.report.report_date))
 
     def get_instr_ytm_x0(self):
         try:
@@ -1166,13 +1168,13 @@ class ReportItem(YTMMixin, BaseReportItem):
 
             try:
                 self.net_pos_return_res = (
-                                              self.principal_opened_res + self.carry_opened_res + self.overheads_opened_res) \
+                                                  self.principal_opened_res + self.carry_opened_res + self.overheads_opened_res) \
                                           / -self.principal_invested_res
             except ArithmeticError:
                 self.net_pos_return_res = 0.0
             try:
                 self.net_pos_return_loc = (
-                                              self.principal_opened_loc + self.carry_opened_loc + self.overheads_opened_loc) \
+                                                  self.principal_opened_loc + self.carry_opened_loc + self.overheads_opened_loc) \
                                           / -self.principal_invested_loc
             except ArithmeticError:
                 self.net_pos_return_loc = 0.0
@@ -2156,6 +2158,8 @@ class Report(BaseReport):
                  items=None):
         super(Report, self).__init__(id=id, master_user=master_user, member=member,
                                      task_id=task_id, task_status=task_status)
+
+        print('REPORT!!!!!!!!!!!!!!')
 
         # self.id = id
         # self.task_id = task_id

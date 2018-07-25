@@ -21,8 +21,12 @@ class FakeRequest:
         self.user.master_user = master_user
 
 
+print('Celery')
+
 @shared_task(name='reports.balance_report')
 def balance_report(instance):
+    print('Celery balance report task')
+
     _l.debug('balance_report: %s', instance)
     with transaction.atomic():
         try:
