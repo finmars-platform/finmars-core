@@ -1096,24 +1096,26 @@ class ReportBuilder(BaseReportBuilder):
 
         print('settings.DEBUG %s' % settings.DEBUG)
 
-        if not settings.DEBUG:
-            return
+        return
 
-        _l.debug('aggregate summary')
-        # total = ReportItem(self.instance, self.pricing_provider, self.fx_rate_provider, ReportItem.TYPE_SUMMARY)
-        total = ReportItem.from_trn(self.instance, self.pricing_provider, self.fx_rate_provider,
-                                    ReportItem.TYPE_SUMMARY, trn)
+        # if not settings.DEBUG:
+        #     return
 
-        _l.debug('items len %s' % len(self._items))
-        _l.debug(repr(self._items[0]))
-
-        for item in self._items:
-            if item.type in [ReportItem.TYPE_INSTRUMENT, ReportItem.TYPE_CURRENCY, ReportItem.TYPE_TRANSACTION_PL,
-                             ReportItem.TYPE_FX_TRADE, ReportItem.TYPE_CASH_IN_OUT]:
-                total.add(item)
-        total.pricing()
-        total.close()
-        self._summaries.append(total)
+        # _l.debug('aggregate summary')
+        # # total = ReportItem(self.instance, self.pricing_provider, self.fx_rate_provider, ReportItem.TYPE_SUMMARY)
+        # total = ReportItem.from_trn(self.instance, self.pricing_provider, self.fx_rate_provider,
+        #                             ReportItem.TYPE_SUMMARY, trn)
+        #
+        # _l.debug('items len %s' % len(self._items))
+        # _l.debug(repr(self._items[0]))
+        #
+        # for item in self._items:
+        #     if item.type in [ReportItem.TYPE_INSTRUMENT, ReportItem.TYPE_CURRENCY, ReportItem.TYPE_TRANSACTION_PL,
+        #                      ReportItem.TYPE_FX_TRADE, ReportItem.TYPE_CASH_IN_OUT]:
+        #         total.add(item)
+        # total.pricing()
+        # total.close()
+        # self._summaries.append(total)
 
     def _detect_mismatches(self):
         _l.debug('mismatches - detect')

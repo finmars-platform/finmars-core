@@ -99,6 +99,7 @@ class PricingPolicyViewSet(AbstractModelViewSet):
         'user_code', 'name', 'short_name', 'public_name'
     ]
 
+
 class PricingPolicyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = PricingPolicy.objects
     serializer_class = PricingPolicySerializer
@@ -174,6 +175,7 @@ class InstrumentTypeViewSet(AbstractWithObjectPermissionViewSet):
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
     ]
+
 
 class InstrumentTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = InstrumentType.objects.select_related(
@@ -383,6 +385,7 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
 
         return Response(serializer.data)
 
+
 class InstrumentEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Instrument.objects.select_related(
         'instrument_type',
@@ -443,6 +446,7 @@ class InstrumentEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Custo
         GroupsAttributeFilter
     ]
 
+
 class PriceHistoryFilterSet(FilterSet):
     id = NoOpFilter()
     instrument = ModelExtWithPermissionMultipleChoiceFilter(model=Instrument)
@@ -483,6 +487,7 @@ class PriceHistoryViewSet(AbstractModelViewSet):
         'date', 'principal_price', 'accrued_price',
     ]
 
+
 class PriceHistoryEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = PriceHistory.objects.select_related(
         'instrument',
@@ -500,10 +505,12 @@ class PriceHistoryEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cus
     filter_class = PriceHistoryFilterSet
 
     filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
+        OwnerByInstrumentFilter,
+        PriceHistoryObjectPermissionFilter,
         AttributeFilter,
         GroupsAttributeFilter
     ]
+
 
 class GeneratedEventFilterSet(FilterSet):
     id = NoOpFilter()
@@ -613,10 +620,10 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
             is_need_reaction=Case(
                 When(
                     Q(status=GeneratedEvent.NEW, action__isnull=True) & (
-                        Q(notification_date__lte=now,
-                          event_schedule__notification_class__in=NotificationClass.get_need_reaction_on_notification_date_classes())
-                        | Q(effective_date__lte=now,
-                            event_schedule__notification_class__in=NotificationClass.get_need_reaction_on_effective_date_classes())
+                            Q(notification_date__lte=now,
+                              event_schedule__notification_class__in=NotificationClass.get_need_reaction_on_notification_date_classes())
+                            | Q(effective_date__lte=now,
+                                event_schedule__notification_class__in=NotificationClass.get_need_reaction_on_effective_date_classes())
                     ),
                     then=Value(True)
                 ),

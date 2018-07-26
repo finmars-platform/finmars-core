@@ -122,7 +122,13 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
 
         qs = self.filter_queryset(qs)
 
-        qs = qs.filter(is_deleted=False)
+        content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
+
+        print(content_type.model)
+        # print(content_type.app_label)
+
+        if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy']:
+            qs = qs.filter(is_deleted=False)
 
         qs = handle_groups(qs, request)
 

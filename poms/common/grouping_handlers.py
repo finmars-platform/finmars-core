@@ -60,27 +60,16 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
     return qs
 
 
+def is_relation(item):
+    return item in ['type', 'currency', 'instrument', 'instrument_type', 'group', 'pricing_policy']
+
+
 def get_root_system_attr_group(qs, root_group, groups_order):
-    if root_group == 'type':
-        qs = qs.values('type') \
-            .annotate(group_id=F('type')) \
+    if is_relation(root_group):
+        qs = qs.values(root_group) \
+            .annotate(group_id=F(root_group)) \
             .distinct() \
-            .annotate(group_name=F('type__user_code')) \
-            .values('group_name', 'group_id')
-
-    if root_group == 'instrument_type':
-        qs = qs.values('instrument_type') \
-            .annotate(group_id=F('instrument_type')) \
-            .distinct() \
-            .annotate(group_name=F('instrument_type__user_code')) \
-            .values('group_name', 'group_id')
-
-    if root_group == 'group':
-
-        qs = qs.values('group') \
-            .annotate(group_id=F('group')) \
-            .distinct() \
-            .annotate(group_name=F('group__user_code')) \
+            .annotate(group_name=F(root_group + '__user_code')) \
             .values('group_name', 'group_id')
     else:
 
@@ -156,26 +145,13 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
 
 
 def get_last_system_attr_group(qs, last_group, groups_order):
-    if last_group == 'type':
-        qs = qs.values('type') \
-            .annotate(group_id=F('type')) \
-            .distinct() \
-            .annotate(group_name=F('type__user_code')) \
-            .values('group_name', 'group_id')
+    print('last_group %s ' % last_group)
 
-    if last_group == 'instrument_type':
-        qs = qs.values('instrument_type') \
-            .annotate(group_id=F('instrument_type')) \
+    if is_relation(last_group):
+        qs = qs.values(last_group) \
+            .annotate(group_id=F(last_group)) \
             .distinct() \
-            .annotate(group_name=F('instrument_type__user_code')) \
-            .values('group_name', 'group_id')
-
-    if last_group == 'group':
-
-        qs = qs.values('group') \
-            .annotate(group_id=F('group')) \
-            .distinct() \
-            .annotate(group_name=F('group__user_code')) \
+            .annotate(group_name=F(last_group + '__user_code')) \
             .values('group_name', 'group_id')
 
     else:

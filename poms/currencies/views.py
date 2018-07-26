@@ -136,6 +136,6 @@ class CurrencyHistoryEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, 
     filter_class = CurrencyHistoryFilterSet
 
     filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
+        OwnerByCurrencyFilter,
         AttributeFilter
     ]

@@ -5,3 +5,4 @@ __pycache__
 .idea
 local-development
 tests.log
+celery-schedule
