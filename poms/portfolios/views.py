@@ -161,7 +161,7 @@ class PortfolioEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Custom
         get_attributes_prefetch()
     )
 
-    serializer_class = PortfolioGroupSerializer
+    serializer_class = PortfolioSerializer
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
     filter_class = PortfolioFilterSet
 
