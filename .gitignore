@@ -6,3 +6,4 @@ __pycache__
 local-development
 tests.log
 celery-schedule
+celerybeat-schedule
