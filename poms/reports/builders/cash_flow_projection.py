@@ -186,7 +186,7 @@ class CashFlowProjectionReportBuilder(TransactionReportBuilder):
                     ritem = self._rolling(t)
                     ritem.add_balance(t)
                 elif t.transaction_class_id in [TransactionClass.TRANSFER]:
-                    raise RuntimeError('implement me please')
+            # raise RuntimeError('implement me please')
 
         # remove items with position_size_with_sign close to zero
         rolling_items_to_remove = set()
