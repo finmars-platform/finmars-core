@@ -24,13 +24,16 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
     # print('get_root_dynamic_attr_group len qs %s' % len(qs))
 
     if attribute_type.value_type == 20:
-        qs = qs.distinct('attributes__value_float') \
+        qs = qs \
+            .order_by('-attributes__value_float') \
+            .distinct('attributes__value_float') \
             .order_by('-attributes__value_float') \
             .annotate(group_name=F('attributes__value_float')) \
             .values('group_name')
 
     if attribute_type.value_type == 10:
-        qs = qs.distinct('attributes__value_string') \
+        qs = qs.order_by('-attributes__value_string') \
+            .distinct('attributes__value_string') \
             .order_by('-attributes__value_string') \
             .annotate(group_name=F('attributes__value_string')) \
             .values('group_name')
@@ -43,7 +46,8 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
             .values('group_name', 'group_id')
 
     if attribute_type.value_type == 40:
-        qs = qs.distinct('attributes__value_date') \
+        qs = qs.order_by('-attributes__value_date') \
+            .distinct('attributes__value_date') \
             .order_by('-attributes__value_date') \
             .annotate(group_name=F('attributes__value_date')) \
             .values('group_name')
@@ -104,6 +108,7 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
     if attribute_type.value_type == 20:
         qs = qs.filter(attributes__attribute_type__id__exact=attribute_type.id,
                        attributes__attribute_type__value_type=20) \
+            .order_by('-attributes__value_float') \
             .distinct('attributes__value_float') \
             .order_by('-attributes__value_float') \
             .annotate(group_name=F('attributes__value_float')) \
@@ -112,6 +117,7 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
     if attribute_type.value_type == 10:
         qs = qs.filter(attributes__attribute_type__id__exact=attribute_type.id,
                        attributes__attribute_type__value_type=10) \
+            .order_by('-attributes__value_string') \
             .distinct('attributes__value_string') \
             .order_by('-attributes__value_string') \
             .annotate(group_name=F('attributes__value_string')) \
@@ -129,6 +135,7 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
     if attribute_type.value_type == 40:
         qs = qs.filter(attributes__attribute_type__id__exact=attribute_type.id,
                        attributes__attribute_type__value_type=40) \
+            .order_by('-attributes__value_date') \
             .distinct('attributes__value_date') \
             .order_by('-attributes__value_date') \
             .annotate(group_name=F('attributes__value_date')) \

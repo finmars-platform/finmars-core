@@ -192,6 +192,8 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
                             queryset = queryset.filter(**params)
 
+                    force_qs_evaluation(queryset)
+
                 i = i + 1
 
         print("GroupsAttributeFilter.filter_queryset %s seconds " % (time.time() - start_time))
@@ -218,8 +220,8 @@ class AttributeFilter(BaseFilterBackend):
 
         # print('AttributeFilter init')
         #
-        # print('AttributeFilter.groups_types %s' % groups_types)
-        # print('AttributeFilter.groups_values %s' % groups_values)
+        print('AttributeFilter.groups_types %s' % groups_types)
+        print('AttributeFilter.groups_values %s' % groups_values)
 
         if len(groups_types) and len(groups_values):
 
@@ -284,6 +286,8 @@ class AttributeFilter(BaseFilterBackend):
                             params[attr] = groups_values[i]
 
                             queryset = queryset.filter(**params)
+
+                    force_qs_evaluation(queryset)
 
                 i = i + 1
 
