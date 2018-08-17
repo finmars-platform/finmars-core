@@ -19,34 +19,40 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
 
     # attr_qs = GenericAttribute.objects.filter(attribute_type=attribute_type)
 
+    force_qs_evaluation(qs)
+
     qs = qs.filter(attributes__attribute_type=attribute_type)
+
+    force_qs_evaluation(qs)
 
     # print('get_root_dynamic_attr_group len qs %s' % len(qs))
 
+    # print('attribute_type.value_type %s' % attribute_type.value_type)
+
     if attribute_type.value_type == 20:
         qs = qs \
-            .order_by('-attributes__value_float') \
             .distinct('attributes__value_float') \
             .order_by('-attributes__value_float') \
             .annotate(group_name=F('attributes__value_float')) \
             .values('group_name')
 
     if attribute_type.value_type == 10:
-        qs = qs.order_by('-attributes__value_string') \
+        qs = qs \
             .distinct('attributes__value_string') \
             .order_by('-attributes__value_string') \
             .annotate(group_name=F('attributes__value_string')) \
             .values('group_name')
 
     if attribute_type.value_type == 30:
-        qs = qs.values('attributes__classifier') \
+        qs = qs \
+            .values('attributes__classifier') \
             .annotate(group_id=F('attributes__classifier')) \
             .distinct() \
             .annotate(group_name=F('attributes__classifier__name')) \
             .values('group_name', 'group_id')
 
     if attribute_type.value_type == 40:
-        qs = qs.order_by('-attributes__value_date') \
+        qs = qs \
             .distinct('attributes__value_date') \
             .order_by('-attributes__value_date') \
             .annotate(group_name=F('attributes__value_date')) \
@@ -126,6 +132,7 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
     if attribute_type.value_type == 30:
         qs = qs.filter(attributes__attribute_type__id__exact=attribute_type.id,
                        attributes__attribute_type__value_type=30) \
+            .order_by('-attributes__classifier') \
             .values('attributes__classifier') \
             .annotate(group_id=F('attributes__classifier')) \
             .distinct() \
