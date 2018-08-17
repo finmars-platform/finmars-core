@@ -72,11 +72,6 @@ def sort_by_dynamic_attrs(request, queryset):
                         result.append(i)
 
 
-
-            print(result)
-
             queryset = result
-
-    print(queryset)
 
     return queryset

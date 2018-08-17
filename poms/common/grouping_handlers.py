@@ -19,7 +19,7 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
 
     # attr_qs = GenericAttribute.objects.filter(attribute_type=attribute_type)
 
-    force_qs_evaluation(qs)
+    # force_qs_evaluation(qs)
 
     qs = qs.filter(attributes__attribute_type=attribute_type)
 
@@ -38,6 +38,7 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
 
     if attribute_type.value_type == 10:
         qs = qs \
+            .order_by('attributes__value_string') \
             .distinct('attributes__value_string') \
             .order_by('-attributes__value_string') \
             .annotate(group_name=F('attributes__value_string')) \
@@ -99,10 +100,14 @@ def get_root_system_attr_group(qs, root_group, groups_order):
 def get_last_dynamic_attr_group(qs, last_group, groups_order):
     start_time = time.time()
 
-    print('get_last_dynamic_attr_group qs len %s' % len(qs))
+    # print('get_last_dynamic_attr_group qs len %s' % len(qs))
     print("get_last_dynamic_attr_group dynamic attr id %s " % last_group)
 
+    # force_qs_evaluation(qs)
+
     attribute_type = GenericAttributeType.objects.get(id__exact=last_group)
+
+    qs = qs.filter(attributes__attribute_type=attribute_type)
 
     print('get_last_dynamic_attr_group.attribute_type %s ' % attribute_type)
     print('get_last_dynamic_attr_group.attribute_type.value_type %s ' % attribute_type.value_type)
@@ -112,27 +117,21 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
     force_qs_evaluation(qs)
 
     if attribute_type.value_type == 20:
-        qs = qs.filter(attributes__attribute_type__id__exact=attribute_type.id,
-                       attributes__attribute_type__value_type=20) \
-            .order_by('-attributes__value_float') \
+        qs = qs \
             .distinct('attributes__value_float') \
             .order_by('-attributes__value_float') \
             .annotate(group_name=F('attributes__value_float')) \
             .values('group_name')
 
     if attribute_type.value_type == 10:
-        qs = qs.filter(attributes__attribute_type__id__exact=attribute_type.id,
-                       attributes__attribute_type__value_type=10) \
-            .order_by('-attributes__value_string') \
+        qs = qs \
             .distinct('attributes__value_string') \
             .order_by('-attributes__value_string') \
             .annotate(group_name=F('attributes__value_string')) \
             .values('group_name')
 
     if attribute_type.value_type == 30:
-        qs = qs.filter(attributes__attribute_type__id__exact=attribute_type.id,
-                       attributes__attribute_type__value_type=30) \
-            .order_by('-attributes__classifier') \
+        qs = qs \
             .values('attributes__classifier') \
             .annotate(group_id=F('attributes__classifier')) \
             .distinct() \
@@ -140,13 +139,13 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
             .values('group_name', 'group_id')
 
     if attribute_type.value_type == 40:
-        qs = qs.filter(attributes__attribute_type__id__exact=attribute_type.id,
-                       attributes__attribute_type__value_type=40) \
-            .order_by('-attributes__value_date') \
+        qs = qs \
             .distinct('attributes__value_date') \
             .order_by('-attributes__value_date') \
             .annotate(group_name=F('attributes__value_date')) \
             .values('group_name')
+
+    force_qs_evaluation(qs)
 
     if groups_order == 'asc':
         qs = qs.order_by(F('group_name').asc())
@@ -182,7 +181,7 @@ def get_last_system_attr_group(qs, last_group, groups_order):
     return qs
 
 
-def get_queryset_filters(qs, groups_types, groups_values):
+def get_queryset_filters(qs, groups_types, groups_values, original_qs):
     start_time = time.time()
 
     i = 0
@@ -258,7 +257,9 @@ def get_queryset_filters(qs, groups_types, groups_values):
 
     print("get_queryset_filters %s seconds " % (time.time() - start_time))
 
-    return qs
+    original_qs = original_qs.filter(id__in=qs)
+
+    return original_qs
 
 
 def is_dynamic_attribute(item):
@@ -269,7 +270,7 @@ def is_root_groups_configuration(groups_types, groups_values):
     return len(groups_types) == 1 and not len(groups_values)
 
 
-def handle_groups(qs, request):
+def handle_groups(qs, request, original_qs):
     start_time = time.time()
 
     groups_types = request.query_params.getlist('groups_types')
@@ -294,7 +295,7 @@ def handle_groups(qs, request):
 
     else:
 
-        qs = get_queryset_filters(qs, groups_types, groups_values)
+        qs = get_queryset_filters(qs, groups_types, groups_values, original_qs)
 
         # print('handle groups after filters qs len %s' % len(qs))
 

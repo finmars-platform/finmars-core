@@ -122,24 +122,25 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
 
         qs = self.filter_queryset(qs)
 
+        filtered_qs = self.get_queryset()
+
+        filtered_qs = filtered_qs.filter(id__in=qs)
+
         content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
 
-        print(content_type.model)
-        # print(content_type.app_label)
-
         if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy']:
-            qs = qs.filter(is_deleted=False)
+            filtered_qs = filtered_qs.filter(is_deleted=False)
 
-        qs = handle_groups(qs, request)
+        filtered_qs = handle_groups(filtered_qs, request, self.get_queryset())
 
-        page = self.paginate_queryset(qs)
+        page = self.paginate_queryset(filtered_qs)
 
         print("List %s seconds " % (time.time() - start_time))
 
         if page is not None:
             return self.get_paginated_response(page)
 
-        return Response(qs)
+        return Response(filtered_qs)
 
 
 class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMixinExt, DestroyModelFakeMixin,
