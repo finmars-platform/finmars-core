@@ -1,5 +1,13 @@
 # Changelog
 
+## 21.08.2018
+- Configuration Import / Export (Transaction Type)
+
+## 10.08.2018
+- Report Viewer
+- Cash-flow Report Bugfixes
+- Entity Viewer Bugfixes
+
 ## 24.07.2018
 - New entities (Groups, Types, Transaction, Instrument etc)
 - New algorithm for grouping and filtering

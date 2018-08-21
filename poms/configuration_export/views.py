@@ -128,49 +128,6 @@ def get_transaction_types():
 
         results.append(result_item)
 
-    # transaction_types = to_json_objects(TransactionType.objects.filter(is_deleted=False))
-    #
-    # for transaction_type in transaction_types:
-    #
-    #     transaction_type["inputs"] = to_json_objects(
-    #         TransactionTypeInput.objects.filter(transaction_type__id=transaction_type["pk"]))
-    #     transaction_type["actions_order"] = to_json_objects(
-    #         TransactionTypeAction.objects.filter(transaction_type__id=transaction_type["pk"]))
-    #     transaction_type["actions_instrument"] = to_json_objects(
-    #         TransactionTypeActionInstrument.objects.filter(transaction_type__id=transaction_type["pk"]))
-    #     transaction_type["actions_transaction"] = to_json_objects(
-    #         TransactionTypeActionTransaction.objects.filter(transaction_type__id=transaction_type["pk"]))
-    #
-    #     for input in TransactionTypeInput.objects.filter(transaction_type__id=transaction_type["pk"]):
-    #         if input.content_type:
-    #             for input_json in transaction_type['inputs']:
-    #
-    #                 input_json["fields"].pop('transaction_type', None)
-    #
-    #                 if input.pk == input_json['pk']:
-    #                     input_json["fields"]["content_type"] = '%s.%s' % (
-    #                         input.content_type.app_label, input.content_type.model)
-    #
-    #     for transaction in TransactionTypeActionTransaction.objects.filter(transaction_type__id=transaction_type["pk"]):
-    #         for transaction_json in transaction_type["actions_transaction"]:
-    #             if transaction.pk == transaction_json["pk"]:
-    #                 transaction_json["fields"]["action_notes"] = transaction.action_notes
-    #
-    #     for instrument in TransactionTypeActionInstrument.objects.filter(transaction_type__id=transaction_type["pk"]):
-    #         for instrument_json in transaction_type["actions_instrument"]:
-    #             if instrument.pk == instrument_json["pk"]:
-    #                 instrument_json["fields"]["action_notes"] = instrument.action_notes
-    #
-    #
-    #     delete_prop(transaction_type["inputs"], 'pk')
-    #     delete_prop(transaction_type["actions_order"], 'pk')
-    #     delete_prop(transaction_type["actions_instrument"], 'pk')
-    #     delete_prop(transaction_type["actions_transaction"], 'pk')
-    #
-    #     transaction_type["fields"].pop('master_user', None)
-    #
-    # delete_prop(transaction_types, 'pk')
-
     result = {
         "entity": "transactions.transactiontype",
         "count": len(results),
@@ -181,6 +138,7 @@ def get_transaction_types():
 
 
 def createConfiguration():
+
     configuration = {}
     configuration["head"] = {}
     configuration["head"]["date"] = str(datetime.now().date())
