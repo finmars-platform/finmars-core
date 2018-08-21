@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     'poms.api',
     'poms.data_import',
     'poms.csv_import',
+    'poms.configuration_export',
 
     'django.contrib.admin',
     'django.contrib.admindocs',

@@ -315,6 +315,8 @@ class TransactionTypeActionInstrumentSerializer(serializers.ModelSerializer):
             'maturity_date',
             'maturity_price',
 
+            'action_notes'
+
             # 'instrument_type_object',
             # 'pricing_currency_object',
             # 'accrued_currency_object',
@@ -480,6 +482,8 @@ class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
             'overheads',
             'notes',
 
+            'action_notes'
+
             # 'transaction_class_object',
             # 'portfolio_object',
             # 'instrument_object',
@@ -551,6 +555,7 @@ class TransactionTypeActionSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         # TODO: transaction or instrument present
         return attrs
+
 
 
 class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
@@ -685,12 +690,28 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             action = existed_actions.get(pk, None)
             action_transaction_data = action_data.get('transaction',
                                                       action_data.get('transactiontypeactiontransaction'))
+
+            print('action_transaction_data')
+            print(action_transaction_data)
+
+            print('inputs ')
+            print(inputs)
+
             if action_transaction_data:
                 for attr, value in action_transaction_data.items():
                     if attr.endswith('_input') and value:
                         try:
+
+                            print('attr %s' % attr)
+                            print(attr)
+                            print(inputs[value])
+
                             action_transaction_data[attr] = inputs[value]
                         except KeyError:
+
+                            print('ValidationError %s' % value)
+                            print('ValidationError KeyError %s' % KeyError)
+
                             raise ValidationError('Invalid input "%s"' % value)
                     if attr == 'instrument_phantom' and value is not None:
                         try:
@@ -736,7 +757,6 @@ class TransactionTypeViewSerializer(ModelWithObjectPermissionSerializer):
 #
 #     class Meta:
 #         model = TransactionType
-
 
 
 # class TransactionClassifierSerializer(AbstractClassifierSerializer):
