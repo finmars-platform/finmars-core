@@ -57,7 +57,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
     def list(self, request):
 
         self._master_user = request.user.master_user
-        self._member = request.user
+        self._member = request.user.member
 
         response = HttpResponse(content_type='application/json')
         response['Content-Disposition'] = 'attachment; filename="data-%s.json"' % str(datetime.now().date())
