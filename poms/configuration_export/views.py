@@ -252,6 +252,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         for scheme in schemes:
             result_item = scheme["fields"]
+            result_item["pk"] = scheme["pk"]
 
             result_item.pop("master_user", None)
 
@@ -261,6 +262,17 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             clear_none_attrs(result_item)
 
             results.append(result_item)
+
+        for scheme_model in Scheme.objects.filter(master_user=self._master_user):
+
+            if scheme_model.content_type:
+                for scheme_json in results:
+
+                    if scheme_model.pk == scheme_json['pk']:
+                        scheme_json["content_type"] = '%s.%s' % (
+                            scheme_model.content_type.app_label, scheme_model.content_type.model)
+
+        delete_prop(results, 'pk')
 
         result = {
             "entity": "csv_import.scheme",
