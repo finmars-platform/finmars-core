@@ -57,6 +57,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
     def list(self, request):
 
         self._master_user = request.user.master_user
+        self._member = request.user
 
         response = HttpResponse(content_type='application/json')
         response['Content-Disposition'] = 'attachment; filename="data-%s.json"' % str(datetime.now().date())
@@ -111,13 +112,13 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return results
 
-
-    def get_transaction_type_actions(self,  transaction_type):
+    def get_transaction_type_actions(self, transaction_type):
         results = []
 
         actions_order = TransactionTypeAction.objects.filter(transaction_type__id=transaction_type["pk"])
         actions_instrument = TransactionTypeActionInstrument.objects.filter(transaction_type__id=transaction_type["pk"])
-        actions_transaction = TransactionTypeActionTransaction.objects.filter(transaction_type__id=transaction_type["pk"])
+        actions_transaction = TransactionTypeActionTransaction.objects.filter(
+            transaction_type__id=transaction_type["pk"])
 
         for order in actions_order:
 
@@ -153,9 +154,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return results
 
-
     def get_transaction_types(self):
-        transaction_types = to_json_objects(TransactionType.objects.filter(master_user=self._master_user, is_deleted=False))
+        transaction_types = to_json_objects(
+            TransactionType.objects.filter(master_user=self._master_user, is_deleted=False))
         results = []
 
         for transaction_type in transaction_types:
@@ -179,11 +180,10 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
-
     def get_edit_layouts(self):
-        results = to_json_objects(EditLayout.objects.all())
+        results = to_json_objects(EditLayout.objects.filter(member=self._member))
 
-        for edit_layout_model in EditLayout.objects.all():
+        for edit_layout_model in EditLayout.objects.filter(member=self._member):
 
             if edit_layout_model.content_type:
                 for edit_layout_json in results:
@@ -204,11 +204,10 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
-
     def get_list_layouts(self):
-        results = to_json_objects(ListLayout.objects.all())
+        results = to_json_objects(ListLayout.objects.filter(member=self._member))
 
-        for list_layout_model in ListLayout.objects.all():
+        for list_layout_model in ListLayout.objects.filter(member=self._member):
 
             if list_layout_model.content_type:
                 for list_layout_json in results:
@@ -229,7 +228,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
-
     def get_csv_fields(self, scheme):
         fields = to_json_objects(CsvField.objects.filter(scheme=scheme["pk"]))
 
@@ -239,7 +237,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return results
 
-
     def get_entity_fields(self, scheme):
         fields = to_json_objects(EntityField.objects.filter(scheme=scheme["pk"]))
 
@@ -248,7 +245,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         delete_prop(results, 'scheme')
 
         return results
-
 
     def get_csv_import_schemes(self):
         schemes = to_json_objects(Scheme.objects.filter(master_user=self._master_user))
@@ -274,7 +270,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
-
     def get_instrument_download_scheme_inputs(self, scheme):
         fields = to_json_objects(InstrumentDownloadSchemeInput.objects.filter(scheme=scheme["pk"]))
 
@@ -284,7 +279,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return results
 
-
     def get_instrument_download_scheme_attributes(self, scheme):
         fields = to_json_objects(InstrumentDownloadSchemeAttribute.objects.filter(scheme=scheme["pk"]))
 
@@ -293,7 +287,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         delete_prop(results, 'scheme')
 
         return results
-
 
     def get_instrument_download_schemes(self):
         schemes = to_json_objects(InstrumentDownloadScheme.objects.filter(master_user=self._master_user))
@@ -319,7 +312,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
-
     def get_price_download_schemes(self):
         schemes = to_json_objects(PriceDownloadScheme.objects.filter(master_user=self._master_user))
 
@@ -341,5 +333,3 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         }
 
         return result
-
-
