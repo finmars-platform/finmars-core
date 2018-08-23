@@ -354,7 +354,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             result_item.pop("master_user", None)
 
             result_item["inputs"] = self.get_instrument_download_scheme_inputs(scheme)
-            result_item["attributes"] = self.get_instrument_download_scheme_attributes(scheme)
+            # result_item["attributes"] = self.get_instrument_download_scheme_attributes(scheme)
+            result_item["attributes"] = []
 
             clear_none_attrs(result_item)
 
