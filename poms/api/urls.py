@@ -139,6 +139,7 @@ router.register(r'transactions/notification-class', transactions.NotificationCla
 router.register(r'transactions/transaction-class', transactions.TransactionClassViewSet)
 
 router.register(r'transactions/transaction-type-group', transactions.TransactionTypeGroupViewSet)
+router.register(r'transactions/transaction-type-group-ev-group', transactions.TransactionTypeGroupEvGroupViewSet)
 router.register(r'transactions/transaction-type', transactions.TransactionTypeViewSet)
 router.register(r'transactions/transaction-type-ev-group', transactions.TransactionTypeEvGroupViewSet)
 # router.register(r'transactions/transaction-attribute-type', transactions.TransactionAttributeTypeViewSet)

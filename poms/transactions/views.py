@@ -92,6 +92,24 @@ class TransactionTypeGroupViewSet(AbstractWithObjectPermissionViewSet):
     ]
 
 
+class TransactionTypeGroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
+    queryset = TransactionTypeGroup.objects.prefetch_related(
+        get_tag_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, TransactionTypeGroup),
+        )
+    )
+
+    serializer_class = TransactionTypeGroupSerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = TransactionTypeGroupFilterSet
+
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter
+    ]
+
+
 class ModelExtWithAllWithPermissionMultipleChoiceFilter(ModelExtWithPermissionMultipleChoiceFilter):
     all_field_name = None
     def __init__(self, *args, **kwargs):

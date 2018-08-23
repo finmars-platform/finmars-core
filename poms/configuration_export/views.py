@@ -15,7 +15,7 @@ from poms.integrations.models import InstrumentDownloadScheme, InstrumentDownloa
     InstrumentDownloadSchemeAttribute, PriceDownloadScheme
 from poms.tags.utils import get_tag_prefetch
 from poms.transactions.models import TransactionType, TransactionTypeInput, TransactionTypeAction, \
-    TransactionTypeActionInstrument, TransactionTypeActionTransaction
+    TransactionTypeActionInstrument, TransactionTypeActionTransaction, TransactionTypeGroup
 
 from django.core import serializers
 import json
@@ -154,6 +154,27 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return results
 
+    def get_transaction_types_groups(self):
+
+        transaction_types_groups = to_json_objects(
+            TransactionTypeGroup.objects.filter(master_user=self._master_user, is_deleted=False))
+
+        results = []
+
+        for transaction_type_group in transaction_types_groups:
+            result_item = transaction_type_group["fields"]
+
+            result_item.pop("master_user", None)
+            result_item.pop("is_deleted", None)
+
+            results.append(result_item)
+
+        return {
+            "entity": "transactions.transactiontypegroup",
+            "count": len(results),
+            "content": results,
+        }
+
     def get_transaction_types(self):
         transaction_types = to_json_objects(
             TransactionType.objects.filter(master_user=self._master_user, is_deleted=False))
@@ -161,6 +182,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         for transaction_type in transaction_types:
             result_item = transaction_type["fields"]
+
+            result_item["pk"] = transaction_type["pk"]
 
             result_item.pop("master_user", None)
             result_item.pop("is_deleted", None)
@@ -172,11 +195,25 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
             results.append(result_item)
 
+        for transaction_type_model in TransactionType.objects.filter(master_user=self._master_user, is_deleted=False):
+            if transaction_type_model.group:
+                for transaction_type_json in results:
+                    if transaction_type_json["pk"] == transaction_type_model.pk:
+                        transaction_type_json["___group_user_code"] = transaction_type_model.group.user_code
+
+        delete_prop(results, 'pk')
+
         result = {
             "entity": "transactions.transactiontype",
             "count": len(results),
-            "content": results
+            "content": results,
+            "dependencies": []
         }
+
+        groups_dependencies = self.get_transaction_types_groups()
+
+        if groups_dependencies["count"]:
+            result["dependencies"].append(groups_dependencies)
 
         return result
 
