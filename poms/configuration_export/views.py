@@ -184,16 +184,18 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         results = to_json_objects(EditLayout.objects.filter(member=self._member))
 
         for edit_layout_model in EditLayout.objects.filter(member=self._member):
-
             if edit_layout_model.content_type:
                 for edit_layout_json in results:
-
                     if edit_layout_model.pk == edit_layout_json['pk']:
                         edit_layout_json["fields"]["content_type"] = '%s.%s' % (
                             edit_layout_model.content_type.app_label, edit_layout_model.content_type.model)
 
         results = unwrap_items(results)
 
+        for edit_layout_json in results:
+            edit_layout_json["data"] = json.dumps(edit_layout_json["json_data"])
+
+        delete_prop(results, 'json_data')
         delete_prop(results, 'member')
 
         result = {
@@ -217,6 +219,11 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                             list_layout_model.content_type.app_label, list_layout_model.content_type.model)
 
         results = unwrap_items(results)
+
+        for list_layout_json in results:
+            list_layout_json["data"] = json.dumps(list_layout_json["json_data"])
+
+        delete_prop(results, 'json_data')
 
         delete_prop(results, 'member')
 
