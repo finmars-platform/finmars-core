@@ -186,6 +186,8 @@ class TransactionReportBuilder(BaseReportBuilder):
 
             qs = qs.filter(complex_transaction__date__gte=self.instance.begin_date)
 
+        _l.debug('< base begin date filter: %s', len(list(qs)))
+
         force_qs_evaluation(qs)
 
         if self.instance.end_date:
@@ -194,6 +196,8 @@ class TransactionReportBuilder(BaseReportBuilder):
             qs = qs.filter(complex_transaction__date__lte=self.instance.end_date)
 
             # qs = qs.filter(filters)
+
+        _l.debug('< base end date filter: %s', len(list(qs)))
 
         _l.debug('< filters %s', filters)
 
