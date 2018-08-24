@@ -12,7 +12,8 @@ from poms.common.views import AbstractModelViewSet
 from poms.csv_import.models import Scheme, CsvField, EntityField
 from poms.instruments.models import InstrumentType
 from poms.integrations.models import InstrumentDownloadScheme, InstrumentDownloadSchemeInput, \
-    InstrumentDownloadSchemeAttribute, PriceDownloadScheme
+    InstrumentDownloadSchemeAttribute, PriceDownloadScheme, ComplexTransactionImportScheme, \
+    ComplexTransactionImportSchemeInput, ComplexTransactionImportSchemeRule, ComplexTransactionImportSchemeField
 from poms.tags.utils import get_tag_prefetch
 from poms.transactions.models import TransactionType, TransactionTypeInput, TransactionTypeAction, \
     TransactionTypeActionInstrument, TransactionTypeActionTransaction, TransactionTypeGroup
@@ -80,6 +81,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         csv_import_schemes = self.get_csv_import_schemes()
         instrument_download_schemes = self.get_instrument_download_schemes()
         price_download_schemes = self.get_price_download_schemes()
+        complex_transaction_import_scheme = self.get_complex_transaction_import_scheme()
 
         configuration["body"].append(transaction_types)
         configuration["body"].append(edit_layouts)
@@ -87,6 +89,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration["body"].append(csv_import_schemes)
         configuration["body"].append(instrument_download_schemes)
         configuration["body"].append(price_download_schemes)
+        configuration["body"].append(complex_transaction_import_scheme)
 
         return configuration
 
@@ -388,5 +391,77 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             "count": len(results),
             "content": results
         }
+
+        return result
+
+    def get_complex_transaction_import_scheme_rule_fields(self, rule):
+
+        fields = to_json_objects(ComplexTransactionImportSchemeField.objects.filter(rule=rule["pk"]))
+
+        results = unwrap_items(fields)
+
+        delete_prop(results, 'rule')
+
+        return results
+
+    def get_complex_transaction_import_scheme_inputs(self, scheme):
+
+        fields = to_json_objects(ComplexTransactionImportSchemeInput.objects.filter(scheme=scheme["pk"]))
+
+        results = unwrap_items(fields)
+
+        delete_prop(results, 'scheme')
+
+        return results
+
+    def get_complex_transaction_import_scheme_rules(self, scheme):
+
+        rules = to_json_objects(ComplexTransactionImportSchemeRule.objects.filter(scheme=scheme["pk"]))
+
+        # results = unwrap_items(rules)
+
+        results = []
+
+        for rule in rules:
+
+            result_item = rule["fields"]
+
+            rule["fields"]["fields"] = self.get_complex_transaction_import_scheme_rule_fields(rule)
+
+            results.append(result_item)
+
+        delete_prop(results, 'scheme')
+
+        return results
+
+    def get_complex_transaction_import_scheme(self):
+
+        schemes = to_json_objects(ComplexTransactionImportScheme.objects.filter(master_user=self._master_user))
+
+        results = []
+
+        for scheme in schemes:
+            result_item = scheme["fields"]
+
+            clear_none_attrs(result_item)
+
+            result_item.pop("master_user", None)
+
+            result_item["inputs"] = self.get_complex_transaction_import_scheme_inputs(scheme)
+            result_item["rules"] = self.get_complex_transaction_import_scheme_rules(scheme)
+
+            results.append(result_item)
+
+        result = {
+            "entity": "integrations.complextransactionimportscheme",
+            "count": len(results),
+            "content": results,
+            "dependencies": []
+        }
+
+        transaction_type_dependencies = self.get_transaction_types()
+
+        if transaction_type_dependencies["count"]:
+            result["dependencies"].append(transaction_type_dependencies)
 
         return result
