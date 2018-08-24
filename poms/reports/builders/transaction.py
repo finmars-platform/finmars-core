@@ -173,20 +173,26 @@ class TransactionReportBuilder(BaseReportBuilder):
 
         qs = super(TransactionReportBuilder, self)._trn_qs()
 
-        _l.debug('< base _trn_qs:', len(list(qs)))
+        _l.debug('< base _trn_qs: %s', len(list(qs)))
 
-        _l.debug('self.instance.end_date', self.instance.end_date)
-        _l.debug('self.instance.end_date:', self.instance.end_date)
+        _l.debug('self.instance.begin_date %s', str(self.instance.begin_date))
+        _l.debug('self.instance.end_date: %s', str(self.instance.end_date))
 
         filters = Q()
 
         if self.instance.begin_date:
-            filters &= Q(complex_transaction__date__gte=self.instance.begin_date)
+            # filters &= Q(complex_transaction__date__gte=self.instance.begin_date)
+
+            qs = qs.filter(complex_transaction__date__gte=self.instance.begin_date)
 
         if self.instance.end_date:
-            filters &= Q(complex_transaction__date__lte=self.instance.end_date)
+            # filters &= Q(complex_transaction__date__lte=self.instance.end_date)
 
-        _l.debug('< filters', filters)
+            qs = qs.filter(complex_transaction__date__lte=self.instance.begin_date)
+
+            # qs = qs.filter(filters)
+
+        _l.debug('< filters %s', filters)
 
         # if self.instance.begin_date:
         #     # a_filters.append(Q(complex_transaction__date__gte=self.instance.begin_date))
@@ -224,9 +230,9 @@ class TransactionReportBuilder(BaseReportBuilder):
         #
         # qs = qs.filter(*a_filters, **kw_filters)
 
-        qs = qs.filter(filters)
+        # qs = qs.filter(filters)
 
-        _l.debug('< base after_filters:', len(list(qs)))
+        _l.debug('< base after_filters: %s', len(list(qs)))
 
         qs = qs.order_by('complex_transaction__date', 'complex_transaction__code', 'transaction_code')
 

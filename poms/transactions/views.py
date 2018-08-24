@@ -1243,6 +1243,6 @@ class ComplexTransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSe
     filter_class = ComplexTransactionFilterSet
 
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
+        ComplexTransactionPermissionFilter,
         AttributeFilter
     ]
