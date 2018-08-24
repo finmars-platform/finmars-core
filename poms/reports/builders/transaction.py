@@ -5,6 +5,7 @@ from collections import defaultdict
 from django.db import transaction
 from django.db.models import Q
 
+from poms.common.utils import force_qs_evaluation
 from poms.obj_attrs.models import GenericAttributeType
 from poms.reports.builders.base_builder import BaseReportBuilder
 from poms.reports.builders.transaction_item import TransactionReportItem
@@ -185,10 +186,12 @@ class TransactionReportBuilder(BaseReportBuilder):
 
             qs = qs.filter(complex_transaction__date__gte=self.instance.begin_date)
 
+        force_qs_evaluation(qs)
+
         if self.instance.end_date:
             # filters &= Q(complex_transaction__date__lte=self.instance.end_date)
 
-            qs = qs.filter(complex_transaction__date__lte=self.instance.begin_date)
+            qs = qs.filter(complex_transaction__date__lte=self.instance.end_date)
 
             # qs = qs.filter(filters)
 
