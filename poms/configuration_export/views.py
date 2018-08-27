@@ -400,6 +400,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         results = unwrap_items(fields)
 
+        for item in results:
+            item["___input_name"] = TransactionTypeInput.objects.get(pk=item["transaction_type_input"]).name
+
         delete_prop(results, 'rule')
 
         return results
@@ -423,10 +426,12 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         results = []
 
         for rule in rules:
-
             result_item = rule["fields"]
 
             rule["fields"]["fields"] = self.get_complex_transaction_import_scheme_rule_fields(rule)
+
+            rule["fields"]["___transaction_type_user_code"] = TransactionType.objects.get(
+                pk=rule["fields"]["transaction_type"]).user_code
 
             results.append(result_item)
 
