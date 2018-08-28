@@ -87,8 +87,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration["body"].append(edit_layouts)
         configuration["body"].append(list_layouts)
         configuration["body"].append(csv_import_schemes)
-        configuration["body"].append(instrument_download_schemes)
         configuration["body"].append(price_download_schemes)
+        configuration["body"].append(instrument_download_schemes)
         configuration["body"].append(complex_transaction_import_scheme)
 
         return configuration
@@ -202,7 +202,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             if transaction_type_model.group:
                 for transaction_type_json in results:
                     if transaction_type_json["pk"] == transaction_type_model.pk:
-                        transaction_type_json["___group_user_code"] = transaction_type_model.group.user_code
+                        transaction_type_json["___group__user_code"] = transaction_type_model.group.user_code
 
         delete_prop(results, 'pk')
 
@@ -360,6 +360,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             # result_item["attributes"] = self.get_instrument_download_scheme_attributes(scheme)
             result_item["attributes"] = []
 
+            result_item["___price_download_scheme__scheme_name"] = PriceDownloadScheme.objects.get(
+                pk=result_item["price_download_scheme"]).scheme_name
+
             clear_none_attrs(result_item)
 
             results.append(result_item)
@@ -367,8 +370,14 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         result = {
             "entity": "integrations.instrumentdownloadscheme",
             "count": len(results),
-            "content": results
+            "content": results,
+            "dependencies": []
         }
+
+        price_download_scheme_dependencies = self.get_price_download_schemes()
+
+        if price_download_scheme_dependencies["count"]:
+            result["dependencies"].append(price_download_scheme_dependencies)
 
         return result
 
@@ -401,7 +410,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         results = unwrap_items(fields)
 
         for item in results:
-            item["___input_name"] = TransactionTypeInput.objects.get(pk=item["transaction_type_input"]).name
+            item["___input__name"] = TransactionTypeInput.objects.get(pk=item["transaction_type_input"]).name
 
         delete_prop(results, 'rule')
 
@@ -430,7 +439,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
             rule["fields"]["fields"] = self.get_complex_transaction_import_scheme_rule_fields(rule)
 
-            rule["fields"]["___transaction_type_user_code"] = TransactionType.objects.get(
+            rule["fields"]["___transaction_type__user_code"] = TransactionType.objects.get(
                 pk=rule["fields"]["transaction_type"]).user_code
 
             results.append(result_item)
