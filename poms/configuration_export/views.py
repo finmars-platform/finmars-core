@@ -111,7 +111,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         for item in results:
 
-            if item.value_type == 100:
+            if item["value_type"] == 100:
                 item.pop("account")
                 item.pop("counterparty")
                 item.pop("currency")
@@ -209,7 +209,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             result_item.pop("master_user", None)
             result_item.pop("is_deleted", None)
             result_item.pop("instrument_types")
-            result_item.pop("portfolios")
 
             result_item["inputs"] = self.get_transaction_type_inputs(transaction_type)
             result_item["actions"] = self.get_transaction_type_actions(transaction_type)
