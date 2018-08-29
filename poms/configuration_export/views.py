@@ -94,6 +94,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         return configuration
 
     def get_transaction_type_inputs(self, transaction_type):
+
         inputs = to_json_objects(
             TransactionTypeInput.objects.filter(transaction_type__id=transaction_type["pk"]))
 
@@ -107,6 +108,23 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                             input_model.content_type.app_label, input_model.content_type.model)
 
         results = unwrap_items(inputs)
+
+        for item in results:
+
+            if item.value_type == 100:
+                item.pop("account")
+                item.pop("counterparty")
+                item.pop("currency")
+                item.pop("instrument")
+                item.pop("instrument_type")
+                item.pop("portfolio")
+                item.pop("responsible")
+                item.pop("strategy1")
+                item.pop("strategy2")
+                item.pop("strategy3")
+                item.pop("price_download_scheme")
+                item.pop("payment_size_detail")
+                item.pop("daily_pricing_model")
 
         delete_prop(results, 'transaction_type')
 
@@ -190,6 +208,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
             result_item.pop("master_user", None)
             result_item.pop("is_deleted", None)
+            result_item.pop("instrument_types")
+            result_item.pop("portfolios")
 
             result_item["inputs"] = self.get_transaction_type_inputs(transaction_type)
             result_item["actions"] = self.get_transaction_type_actions(transaction_type)

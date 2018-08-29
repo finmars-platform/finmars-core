@@ -10,6 +10,11 @@ class Scheme(models.Model):
     content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'))
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'))
 
+    class Meta:
+        unique_together = (
+            ('content_type', 'name')
+        )
+
     def __str__(self):
         return self.name
 
