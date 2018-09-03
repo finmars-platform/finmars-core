@@ -9,14 +9,19 @@ from django.http import HttpResponse
 from django.utils.datetime_safe import datetime
 from rest_framework.renderers import JSONRenderer
 
-from poms.accounts.models import AccountType
+from poms.accounts.models import AccountType, Account
 from poms.common.views import AbstractModelViewSet
+from poms.counterparties.models import Counterparty, Responsible
 from poms.csv_import.models import Scheme, CsvField, EntityField
-from poms.instruments.models import InstrumentType
+from poms.currencies.models import Currency
+from poms.instruments.models import InstrumentType, Instrument
 from poms.integrations.models import InstrumentDownloadScheme, InstrumentDownloadSchemeInput, \
     InstrumentDownloadSchemeAttribute, PriceDownloadScheme, ComplexTransactionImportScheme, \
     ComplexTransactionImportSchemeInput, ComplexTransactionImportSchemeRule, ComplexTransactionImportSchemeField, \
-    PricingAutomatedSchedule
+    PricingAutomatedSchedule, PortfolioMapping, CurrencyMapping, InstrumentTypeMapping, AccountMapping, \
+    InstrumentMapping, CounterpartyMapping, ResponsibleMapping, Strategy1Mapping, Strategy2Mapping, Strategy3Mapping
+from poms.portfolios.models import Portfolio
+from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.tags.utils import get_tag_prefetch
 from poms.transactions.models import TransactionType, TransactionTypeInput, TransactionTypeAction, \
     TransactionTypeActionInstrument, TransactionTypeActionTransaction, TransactionTypeGroup
@@ -622,5 +627,358 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         if transaction_type_dependencies["count"]:
             result["dependencies"].append(transaction_type_dependencies)
+
+        return result
+
+
+class MappingExportViewSet(AbstractModelViewSet):
+
+    def list(self, request):
+        self._master_user = request.user.master_user
+        self._member = request.user.member
+
+        response = HttpResponse(content_type='application/json')
+        response['Content-Disposition'] = 'attachment; filename="mapping-%s.json"' % str(datetime.now().date())
+
+        configuration = self.createConfiguration()
+
+        response.write(json.dumps(configuration))
+
+        return response
+
+    def createConfiguration(self):
+        configuration = {}
+        configuration["head"] = {}
+        configuration["head"]["date"] = str(datetime.now().date())
+        configuration["body"] = []
+
+        portfolio_mapping = self.get_portfolio_mapping()
+        currency_mapping = self.get_currency_mapping()
+        instrument_type_mapping = self.get_instrument_type_mapping()
+        account_mapping = self.get_account_mapping()
+        instrument_mapping = self.get_instrument_mapping()
+        counterparty_mapping = self.get_counterparty_mapping()
+        responsible_mapping = self.get_responsible_mapping()
+        strategy1_mapping = self.get_strategy1_mapping()
+
+        configuration["body"].append(portfolio_mapping)
+        configuration["body"].append(currency_mapping)
+        configuration["body"].append(instrument_type_mapping)
+        configuration["body"].append(account_mapping)
+        configuration["body"].append(instrument_mapping)
+        configuration["body"].append(counterparty_mapping)
+        configuration["body"].append(responsible_mapping)
+        configuration["body"].append(strategy1_mapping)
+
+
+        return configuration
+
+    def get_portfolio_mapping(self):
+        items = to_json_objects(
+            PortfolioMapping.objects.filter(master_user=self._master_user))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item["pk"] = item["pk"]
+
+            result_item.pop("master_user", None)
+            # result_item.pop("provider", None)
+
+            result_item["___user_code"] = Portfolio.objects.get(pk=result_item["content_object"]).user_code
+
+            result_item.pop("content_object", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "integrations.portfoliomapping",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_currency_mapping(self):
+        items = to_json_objects(
+            CurrencyMapping.objects.filter(master_user=self._master_user))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item["pk"] = item["pk"]
+
+            result_item.pop("master_user", None)
+            # result_item.pop("provider", None)
+
+            result_item["___user_code"] = Currency.objects.get(pk=result_item["content_object"]).user_code
+
+            result_item.pop("content_object", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "integrations.currencymapping",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_instrument_type_mapping(self):
+        items = to_json_objects(
+            InstrumentTypeMapping.objects.filter(master_user=self._master_user))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item["pk"] = item["pk"]
+
+            result_item.pop("master_user", None)
+            # result_item.pop("provider", None)
+
+            result_item["___user_code"] = InstrumentType.objects.get(pk=result_item["content_object"]).user_code
+
+            result_item.pop("content_object", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "integrations.instrumenttypemapping",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_account_mapping(self):
+        items = to_json_objects(
+            AccountMapping.objects.filter(master_user=self._master_user))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item["pk"] = item["pk"]
+
+            result_item.pop("master_user", None)
+            # result_item.pop("provider", None)
+
+            result_item["___user_code"] = Account.objects.get(pk=result_item["content_object"]).user_code
+
+            result_item.pop("content_object", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "integrations.accountmapping",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_instrument_mapping(self):
+        items = to_json_objects(
+            InstrumentMapping.objects.filter(master_user=self._master_user))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item["pk"] = item["pk"]
+
+            result_item.pop("master_user", None)
+            # result_item.pop("provider", None)
+
+            result_item["___user_code"] = Instrument.objects.get(pk=result_item["content_object"]).user_code
+
+            result_item.pop("content_object", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "integrations.instrumentmapping",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_counterparty_mapping(self):
+        items = to_json_objects(
+            CounterpartyMapping.objects.filter(master_user=self._master_user))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item["pk"] = item["pk"]
+
+            result_item.pop("master_user", None)
+            # result_item.pop("provider", None)
+
+            result_item["___user_code"] = Counterparty.objects.get(pk=result_item["content_object"]).user_code
+
+            result_item.pop("content_object", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "integrations.counterpartymapping",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_responsible_mapping(self):
+        items = to_json_objects(
+            ResponsibleMapping.objects.filter(master_user=self._master_user))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item["pk"] = item["pk"]
+
+            result_item.pop("master_user", None)
+            # result_item.pop("provider", None)
+
+            result_item["___user_code"] = Responsible.objects.get(pk=result_item["content_object"]).user_code
+
+            result_item.pop("content_object", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "integrations.responsiblemapping",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_strategy1_mapping(self):
+        items = to_json_objects(
+            Strategy1Mapping.objects.filter(master_user=self._master_user))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item["pk"] = item["pk"]
+
+            result_item.pop("master_user", None)
+            # result_item.pop("provider", None)
+
+            result_item["___user_code"] = Strategy1.objects.get(pk=result_item["content_object"]).user_code
+
+            result_item.pop("content_object", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "integrations.strategy1mapping",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_strategy2_mapping(self):
+        items = to_json_objects(
+            Strategy2Mapping.objects.filter(master_user=self._master_user))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item["pk"] = item["pk"]
+
+            result_item.pop("master_user", None)
+            # result_item.pop("provider", None)
+
+            result_item["___user_code"] = Strategy2.objects.get(pk=result_item["content_object"]).user_code
+
+            result_item.pop("content_object", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "integrations.strategy2mapping",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_strategy3_mapping(self):
+        items = to_json_objects(
+            Strategy3Mapping.objects.filter(master_user=self._master_user))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item["pk"] = item["pk"]
+
+            result_item.pop("master_user", None)
+            # result_item.pop("provider", None)
+
+            result_item["___user_code"] = Strategy3.objects.get(pk=result_item["content_object"]).user_code
+
+            result_item.pop("content_object", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "integrations.strategy3mapping",
+            "count": len(results),
+            "content": results
+        }
 
         return result

@@ -36,7 +36,7 @@ class PerformancePeriod:
     def items(self):
         return self._items.values()
 
-    def get(self, portfolio=None, account=None, strategy1=None, strategy2=None, strategy3=None, create=None):
+    def get(self, portfolio: object = None, account: object = None, strategy1: object = None, strategy2: object = None, strategy3: object = None, create: object = None) -> object:
         if create is None:
             create = True
         key = PerformanceReportItem.make_item_key(

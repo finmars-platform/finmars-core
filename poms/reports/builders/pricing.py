@@ -22,7 +22,7 @@ class AbstractProvider:
         self._vid -= 1
         return self._vid
 
-    def get(self, item, d=None):
+    def get(self, item: object, d: object = None) -> object:
         d = d or self._report_date
         key = (item.id, d)
         try:

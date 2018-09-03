@@ -236,6 +236,7 @@ router.register(r'import/csv/scheme', csv_import.SchemeViewSet, 'import_csv_sche
 router.register(r'import/csv', csv_import.CsvDataImportViewSet, 'import_csv')
 
 router.register(r'export/configuration', configuration_export.ConfigurationExportViewSet, 'configuration_export')
+router.register(r'export/mapping', configuration_export.MappingExportViewSet, 'mapping_export')
 
 urlpatterns = [
     url(r'^v1/', include(router.urls, namespace='v1')),
