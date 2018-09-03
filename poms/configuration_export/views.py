@@ -226,6 +226,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             result_item.pop("is_deleted", None)
             result_item.pop("instrument_types")
 
+            result_item["is_valid_for_all_portfolios"] = True
+            result_item["is_valid_for_all_instruments"] = True
+
             result_item["inputs"] = self.get_transaction_type_inputs(transaction_type)
             result_item["actions"] = self.get_transaction_type_actions(transaction_type)
 
