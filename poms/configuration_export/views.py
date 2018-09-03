@@ -1,5 +1,6 @@
 import csv
 
+from django.contrib.contenttypes.models import ContentType
 from django.db.models import Prefetch
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -8,12 +9,14 @@ from django.http import HttpResponse
 from django.utils.datetime_safe import datetime
 from rest_framework.renderers import JSONRenderer
 
+from poms.accounts.models import AccountType
 from poms.common.views import AbstractModelViewSet
 from poms.csv_import.models import Scheme, CsvField, EntityField
 from poms.instruments.models import InstrumentType
 from poms.integrations.models import InstrumentDownloadScheme, InstrumentDownloadSchemeInput, \
     InstrumentDownloadSchemeAttribute, PriceDownloadScheme, ComplexTransactionImportScheme, \
-    ComplexTransactionImportSchemeInput, ComplexTransactionImportSchemeRule, ComplexTransactionImportSchemeField
+    ComplexTransactionImportSchemeInput, ComplexTransactionImportSchemeRule, ComplexTransactionImportSchemeField, \
+    PricingAutomatedSchedule
 from poms.tags.utils import get_tag_prefetch
 from poms.transactions.models import TransactionType, TransactionTypeInput, TransactionTypeAction, \
     TransactionTypeActionInstrument, TransactionTypeActionTransaction, TransactionTypeGroup
@@ -78,18 +81,26 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         transaction_types = self.get_transaction_types()
         edit_layouts = self.get_edit_layouts()
         list_layouts = self.get_list_layouts()
+        report_layouts = self.get_report_layouts()
         csv_import_schemes = self.get_csv_import_schemes()
         instrument_download_schemes = self.get_instrument_download_schemes()
         price_download_schemes = self.get_price_download_schemes()
         complex_transaction_import_scheme = self.get_complex_transaction_import_scheme()
+        account_types = self.get_account_types()
+        instrument_types = self.get_instrument_types()
+        pricing_automated_schedule = self.get_pricing_automated_schedule()
 
         configuration["body"].append(transaction_types)
         configuration["body"].append(edit_layouts)
         configuration["body"].append(list_layouts)
+        configuration["body"].append(report_layouts)
         configuration["body"].append(csv_import_schemes)
         configuration["body"].append(price_download_schemes)
         configuration["body"].append(instrument_download_schemes)
         configuration["body"].append(complex_transaction_import_scheme)
+        configuration["body"].append(account_types)
+        configuration["body"].append(instrument_types)
+        configuration["body"].append(pricing_automated_schedule)
 
         return configuration
 
@@ -239,6 +250,86 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
+    def get_account_types(self):
+        account_types = to_json_objects(
+            AccountType.objects.filter(master_user=self._master_user, is_deleted=False))
+        results = []
+
+        for account_type in account_types:
+            result_item = account_type["fields"]
+
+            result_item["pk"] = account_type["pk"]
+
+            result_item.pop("master_user", None)
+            result_item.pop("is_deleted", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "accounts.accounttype",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_instrument_types(self):
+        instrument_types = to_json_objects(
+            InstrumentType.objects.filter(master_user=self._master_user, is_deleted=False))
+        results = []
+
+        for instrument_type in instrument_types:
+            result_item = instrument_type["fields"]
+
+            result_item["pk"] = instrument_type["pk"]
+
+            result_item.pop("master_user", None)
+            result_item.pop("is_deleted", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "instruments.instrumenttype",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_pricing_automated_schedule(self):
+        schedules = to_json_objects(
+            PricingAutomatedSchedule.objects.filter(master_user=self._master_user))
+        results = []
+
+        for schedule in schedules:
+            result_item = schedule["fields"]
+
+            result_item["pk"] = schedule["pk"]
+
+            result_item.pop("master_user", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "import.pricingautomatedschedule",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
     def get_edit_layouts(self):
         results = to_json_objects(EditLayout.objects.filter(member=self._member))
 
@@ -266,9 +357,12 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         return result
 
     def get_list_layouts(self):
-        results = to_json_objects(ListLayout.objects.filter(member=self._member))
 
-        for list_layout_model in ListLayout.objects.filter(member=self._member):
+        content_types = ContentType.objects.exclude(app_label='reports')
+
+        results = to_json_objects(ListLayout.objects.filter(member=self._member, content_type__in=content_types))
+
+        for list_layout_model in ListLayout.objects.filter(member=self._member, content_type__in=content_types):
 
             if list_layout_model.content_type:
                 for list_layout_json in results:
@@ -288,6 +382,38 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         result = {
             "entity": "ui.listlayout",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_report_layouts(self):
+
+        content_types = ContentType.objects.filter(app_label='reports')
+
+        results = to_json_objects(ListLayout.objects.filter(member=self._member, content_type__in=content_types))
+
+        for list_layout_model in ListLayout.objects.filter(member=self._member, content_type__in=content_types):
+
+            if list_layout_model.content_type:
+                for list_layout_json in results:
+
+                    if list_layout_model.pk == list_layout_json['pk']:
+                        list_layout_json["fields"]["content_type"] = '%s.%s' % (
+                            list_layout_model.content_type.app_label, list_layout_model.content_type.model)
+
+        for list_layout_json in results:
+            list_layout_json["fields"]["data"] = ListLayout.objects.get(pk=list_layout_json["pk"]).data
+
+        results = unwrap_items(results)
+
+        delete_prop(results, 'json_data')
+
+        delete_prop(results, 'member')
+
+        result = {
+            "entity": "ui.reportlayout",
             "count": len(results),
             "content": results
         }
