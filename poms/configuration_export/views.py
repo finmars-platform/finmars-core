@@ -14,12 +14,14 @@ from poms.common.views import AbstractModelViewSet
 from poms.counterparties.models import Counterparty, Responsible
 from poms.csv_import.models import Scheme, CsvField, EntityField
 from poms.currencies.models import Currency
-from poms.instruments.models import InstrumentType, Instrument
+from poms.instruments.models import InstrumentType, Instrument, Periodicity, DailyPricingModel, PaymentSizeDetail, \
+    AccrualCalculationModel
 from poms.integrations.models import InstrumentDownloadScheme, InstrumentDownloadSchemeInput, \
     InstrumentDownloadSchemeAttribute, PriceDownloadScheme, ComplexTransactionImportScheme, \
     ComplexTransactionImportSchemeInput, ComplexTransactionImportSchemeRule, ComplexTransactionImportSchemeField, \
     PricingAutomatedSchedule, PortfolioMapping, CurrencyMapping, InstrumentTypeMapping, AccountMapping, \
-    InstrumentMapping, CounterpartyMapping, ResponsibleMapping, Strategy1Mapping, Strategy2Mapping, Strategy3Mapping
+    InstrumentMapping, CounterpartyMapping, ResponsibleMapping, Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, \
+    PeriodicityMapping, DailyPricingModelMapping, PaymentSizeDetailMapping, AccrualCalculationModelMapping
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.tags.utils import get_tag_prefetch
@@ -232,6 +234,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             result_item["inputs"] = self.get_transaction_type_inputs(transaction_type)
             result_item["actions"] = self.get_transaction_type_actions(transaction_type)
 
+            result_item["book_transaction_layout"] = TransactionType.objects.get(pk=result_item["pk"]).book_transaction_layout
+
             clear_none_attrs(result_item)
 
             results.append(result_item)
@@ -298,6 +302,26 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             result_item.pop("master_user", None)
             result_item.pop("is_deleted", None)
 
+            if result_item["one_off_event"]:
+                result_item["___one_off_event__user_code"] = TransactionType.objects.get(
+                    pk=result_item["one_off_event"]).user_code
+
+            if result_item["regular_event"]:
+                result_item["___regular_event__user_code"] = TransactionType.objects.get(
+                    pk=result_item["regular_event"]).user_code
+
+            if result_item["factor_same"]:
+                result_item["___factor_same__user_code"] = TransactionType.objects.get(
+                    pk=result_item["factor_same"]).user_code
+
+            if result_item["factor_up"]:
+                result_item["___factor_up__user_code"] = TransactionType.objects.get(
+                    pk=result_item["factor_up"]).user_code
+
+            if result_item["factor_down"]:
+                result_item["___factor_down__user_code"] = TransactionType.objects.get(
+                    pk=result_item["factor_down"]).user_code
+
             clear_none_attrs(result_item)
 
             results.append(result_item)
@@ -307,8 +331,14 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         result = {
             "entity": "instruments.instrumenttype",
             "count": len(results),
-            "content": results
+            "content": results,
+            "dependencies": []
         }
+
+        transaction_type_dependencies = self.get_transaction_types()
+
+        if transaction_type_dependencies["count"]:
+            result["dependencies"].append(transaction_type_dependencies)
 
         return result
 
@@ -664,6 +694,11 @@ class MappingExportViewSet(AbstractModelViewSet):
         responsible_mapping = self.get_responsible_mapping()
         strategy1_mapping = self.get_strategy1_mapping()
 
+        periodicity_mapping = self.get_periodicity_mapping()
+        daily_pricing_model_mapping = self.get_daily_pricing_model_mapping()
+        payment_size_detail_mapping = self.get_payment_size_detail_mapping()
+        accrual_calculation_model_mapping = self.get_accrual_calculation_model_mapping()
+
         configuration["body"].append(portfolio_mapping)
         configuration["body"].append(currency_mapping)
         configuration["body"].append(instrument_type_mapping)
@@ -673,6 +708,10 @@ class MappingExportViewSet(AbstractModelViewSet):
         configuration["body"].append(responsible_mapping)
         configuration["body"].append(strategy1_mapping)
 
+        configuration["body"].append(periodicity_mapping)
+        configuration["body"].append(daily_pricing_model_mapping)
+        configuration["body"].append(payment_size_detail_mapping)
+        configuration["body"].append(accrual_calculation_model_mapping)
 
         return configuration
 
@@ -980,6 +1019,131 @@ class MappingExportViewSet(AbstractModelViewSet):
 
         result = {
             "entity": "integrations.strategy3mapping",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_periodicity_mapping(self):
+        items = to_json_objects(
+            PeriodicityMapping.objects.filter(master_user=self._master_user))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item["pk"] = item["pk"]
+
+            result_item.pop("master_user", None)
+            # result_item.pop("provider", None)
+
+            result_item["___system_code"] = Periodicity.objects.get(pk=result_item["content_object"]).system_code
+
+            result_item.pop("content_object", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "integrations.periodicitymapping",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_daily_pricing_model_mapping(self):
+        items = to_json_objects(
+            DailyPricingModelMapping.objects.filter(master_user=self._master_user))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item["pk"] = item["pk"]
+
+            result_item.pop("master_user", None)
+            # result_item.pop("provider", None)
+
+            result_item["___system_code"] = DailyPricingModel.objects.get(pk=result_item["content_object"]).system_code
+
+            result_item.pop("content_object", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "integrations.dailypricingmodelmapping",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_payment_size_detail_mapping(self):
+        items = to_json_objects(
+            PaymentSizeDetailMapping.objects.filter(master_user=self._master_user))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item["pk"] = item["pk"]
+
+            result_item.pop("master_user", None)
+            # result_item.pop("provider", None)
+
+            result_item["___system_code"] = PaymentSizeDetail.objects.get(pk=result_item["content_object"]).system_code
+
+            result_item.pop("content_object", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "integrations.paymentsizedetailmapping",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_accrual_calculation_model_mapping(self):
+        items = to_json_objects(
+            AccrualCalculationModelMapping.objects.filter(master_user=self._master_user))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item["pk"] = item["pk"]
+
+            result_item.pop("master_user", None)
+            # result_item.pop("provider", None)
+
+            result_item["___system_code"] = AccrualCalculationModel.objects.get(
+                pk=result_item["content_object"]).system_code
+
+            result_item.pop("content_object", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "integrations.accrualcalculationmodelmapping",
             "count": len(results),
             "content": results
         }

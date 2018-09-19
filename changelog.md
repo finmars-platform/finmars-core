@@ -1,5 +1,12 @@
 # Changelog
 
+## 19.09.2018
+- Configuration Import / Export
+- Mapping Import / Export
+- Mapping Import / Export overwrite option
+- **BUGFIX** Transaction Type Edit Form layout property import/export
+- **BUGFIX** Instrument Parameters Mappings import/export
+
 ## 21.08.2018
 - Configuration Import / Export (Transaction Type)
 
