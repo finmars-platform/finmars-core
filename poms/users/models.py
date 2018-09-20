@@ -419,7 +419,7 @@ class FakeSequence(models.Model):
     def next_value(cls, master_user, name, d=1):
         # seq = SimpleSequence.objects.select_for_update().get_or_create(master_user=master_user, name=name)
         # seq = SimpleSequence.objects.select_for_update().get(master_user=master_user, name=name)
-        seq, created = cls.objects.get_or_create(master_user=master_user, name=name)
+        seq, created = cls.objects.update_or_create(master_user=master_user, name=name)
         if not d:
             d = 1
         if d == 1:
