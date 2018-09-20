@@ -7,7 +7,9 @@ from django.http import HttpResponse
 
 # Create your views here.
 from django.utils.datetime_safe import datetime
+from rest_framework import status
 from rest_framework.renderers import JSONRenderer
+from rest_framework.response import Response
 
 from poms.accounts.models import AccountType, Account
 from poms.common.views import AbstractModelViewSet
@@ -71,12 +73,12 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         self._member = request.user.member
 
         response = HttpResponse(content_type='application/json')
-        response['Content-Disposition'] = 'attachment; filename="data-%s.json"' % str(datetime.now().date())
+        # response['Content-Disposition'] = 'attachment; filename="data-%s.json"' % str(datetime.now().date())
 
         configuration = self.createConfiguration()
 
         response.write(json.dumps(configuration))
-
+        
         return response
 
     def createConfiguration(self):
@@ -234,7 +236,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             result_item["inputs"] = self.get_transaction_type_inputs(transaction_type)
             result_item["actions"] = self.get_transaction_type_actions(transaction_type)
 
-            result_item["book_transaction_layout"] = TransactionType.objects.get(pk=result_item["pk"]).book_transaction_layout
+            result_item["book_transaction_layout"] = TransactionType.objects.get(
+                pk=result_item["pk"]).book_transaction_layout
 
             clear_none_attrs(result_item)
 
