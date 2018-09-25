@@ -1,5 +1,9 @@
 # Changelog
 
+
+## 25.09.2018
+- **BUGFIX** Creating instrument in complex transaction booking process 
+
 ## 19.09.2018
 - Configuration Import / Export
 - Mapping Import / Export

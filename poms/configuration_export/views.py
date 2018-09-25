@@ -666,6 +666,38 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
+    def get_portfolio_attribute_types(self):
+
+        schemes = to_json_objects(ComplexTransactionImportScheme.objects.filter(master_user=self._master_user))
+
+        results = []
+
+        for scheme in schemes:
+            result_item = scheme["fields"]
+
+            clear_none_attrs(result_item)
+
+            result_item.pop("master_user", None)
+
+            result_item["inputs"] = self.get_complex_transaction_import_scheme_inputs(scheme)
+            result_item["rules"] = self.get_complex_transaction_import_scheme_rules(scheme)
+
+            results.append(result_item)
+
+        result = {
+            "entity": "obj_attrs.portfolioattributetype",
+            "count": len(results),
+            "content": results,
+            "dependencies": []
+        }
+
+        transaction_type_dependencies = self.get_transaction_types()
+
+        if transaction_type_dependencies["count"]:
+            result["dependencies"].append(transaction_type_dependencies)
+
+        return result
+
 
 class MappingExportViewSet(AbstractModelViewSet):
 

@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import pytz
 from django.conf import settings
 from django.contrib.auth.models import User, Permission
-from django.db import models, transaction, IntegrityError
+from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy
@@ -421,24 +421,19 @@ class FakeSequence(models.Model):
         # seq = SimpleSequence.objects.select_for_update().get_or_create(master_user=master_user, name=name)
         # seq = SimpleSequence.objects.select_for_update().get(master_user=master_user, name=name)
 
-        try:
-            with transaction.atomic():
+        seq, created = cls.objects.update_or_create(master_user=master_user, name=name)
 
-                seq, created = cls.objects.update_or_create(master_user=master_user, name=name)
+        if not d:
+            d = 1
+        if d == 1:
+            seq.value += 1
+        else:
+            seq.value = ((seq.value + d) // d) * d
 
-                if not d:
-                    d = 1
-                if d == 1:
-                    seq.value += 1
-                else:
-                    seq.value = ((seq.value + d) // d) * d
+        seq.save(update_fields=['value'])
 
-                seq.save(update_fields=['value'])
+        return seq.value
 
-                return seq.value
-
-        except IntegrityError:
-            pass
 
 @receiver(post_save, dispatch_uid='create_profile', sender=settings.AUTH_USER_MODEL)
 def create_profile(sender, instance=None, created=None, **kwargs):

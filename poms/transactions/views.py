@@ -112,6 +112,7 @@ class TransactionTypeGroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionView
 
 class ModelExtWithAllWithPermissionMultipleChoiceFilter(ModelExtWithPermissionMultipleChoiceFilter):
     all_field_name = None
+
     def __init__(self, *args, **kwargs):
         self.all_field_name = kwargs.pop('all_field_name')
         super(ModelExtWithAllWithPermissionMultipleChoiceFilter, self).__init__(*args, **kwargs)
@@ -383,6 +384,11 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
 
     @detail_route(methods=['get', 'put'], url_path='book', serializer_class=TransactionTypeProcessSerializer)
     def book(self, request, pk=None):
+
+        print('book complex pk %s' % pk)
+        print('book complex request %s ' % request)
+        print('self.get_object() %s' % self.get_object())
+
         instance = TransactionTypeProcess(transaction_type=self.get_object(), context=self.get_serializer_context())
         if request.method == 'GET':
             serializer = self.get_serializer(instance=instance)
@@ -1051,6 +1057,7 @@ class TransactionViewSet(AbstractModelViewSet):
         super(TransactionViewSet, self).perform_destroy(instance)
         instance.calc_cash_by_formulas()
 
+
 class TransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = get_transaction_queryset(select_related=False, complex_transaction_transactions=True)
     serializer_class = TransactionSerializer
@@ -1235,6 +1242,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
             finally:
                 if instance.has_errors:
                     transaction.set_rollback(True)
+
 
 class ComplexTransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = get_complex_transaction_queryset(select_related=False, transactions=True)

@@ -189,9 +189,14 @@ class TransactionTypeProcess(object):
             return self.process_recalculate()
         _l.debug('process: %s, values=%s', self.transaction_type, self.values)
 
+        print('Book transaction process values %s' % self.values)
+        print('Book transaction process transaction_type %s' % self.transaction_type)
+
         master_user = self.transaction_type.master_user
         object_permissions = self.transaction_type.object_permissions.select_related('permission').all()
         daily_pricing_model = DailyPricingModel.objects.get(pk=DailyPricingModel.SKIP)
+
+        print('Book transaction process object_permissions %s' % object_permissions)
 
         instrument_map = {}
         actions = self.transaction_type.actions.order_by('order').all()
@@ -203,6 +208,9 @@ class TransactionTypeProcess(object):
                 action_instrument = None
 
             if action_instrument:
+
+                print('Book transaction process action_instrument %s' % action_instrument)
+
                 _l.debug('process instrument: %s', action_instrument)
                 errors = {}
                 try:
@@ -220,6 +228,8 @@ class TransactionTypeProcess(object):
                         continue
                     except ObjectDoesNotExist:
                         pass
+
+                print('Book transaction process master_user %s' % master_user)
 
                 instrument = Instrument(master_user=master_user)
                 # results[action_instr.order] = instr
@@ -288,8 +298,28 @@ class TransactionTypeProcess(object):
                               source=action_instrument, source_attr_name='maturity_price')
 
                 try:
+
                     instrument.save()
+
+                    print('Book transaction process instrument %s ' % instrument)
+                    print('Book transaction process instrument master_userr %s ' % instrument.master_user)
+                    print('Book transaction process instrument master_userr %s ' % object_permissions)
+
+                    self._instrument_assign_permission(instrument, object_permissions)
+
+                    print("Book transaction process instrument success save")
+                    print("Book transaction process instrument pk %s" % instrument.pk)
+                    print("Book transaction process instrument user_code %s" % instrument.user_code)
+
+                    print(
+                        "Book transaction process instrument object_permissions %s" % instrument.object_permissions.select_related(
+                            'permission').all())
+
+
                 except (ValueError, TypeError, IntegrityError):
+
+                    print("Book transaction process instrument errors")
+
                     self._add_err_msg(errors, 'non_field_errors',
                                       ugettext('Invalid instrument action fields (please, use type convertion).'))
                 except DatabaseError:
@@ -299,7 +329,12 @@ class TransactionTypeProcess(object):
                     instrument_map[action.id] = instrument
                     self.instruments.append(instrument)
                 finally:
-                    self.instruments_errors.append(errors)
+
+                    if bool(errors):
+                        self.instruments_errors.append(errors)
+
+        print('self.instruments_errors %s' % self.instruments_errors)
+        print('1 self.instruments len  %s' % len(Instrument.objects.all()))
 
         # complex_transaction
         complex_transaction_errors = {}
@@ -308,9 +343,14 @@ class TransactionTypeProcess(object):
                           target=self.complex_transaction, target_attr_name='date',
                           source=self.transaction_type, source_attr_name='date_expr',
                           validator=formula.validate_date)
-            self.complex_transaction_errors.append(complex_transaction_errors)
+            if bool(complex_transaction_errors):
+                self.complex_transaction_errors.append(complex_transaction_errors)
             self.complex_transaction.save()
-        self.complex_transaction.transactions.all().delete()
+
+        print('self.complex_transaction.transactions %s' % self.complex_transaction.transactions.all())
+        print(len(self.complex_transaction.transactions.all()))
+
+        # self.complex_transaction.transactions.all().delete()
 
         for order, action in enumerate(actions):
             try:
@@ -462,11 +502,16 @@ class TransactionTypeProcess(object):
                 else:
                     self.transactions.append(transaction)
                 finally:
-                    self.transactions_errors.append(errors)
+                    if bool(errors):
+                        self.transactions_errors.append(errors)
+
+        print('2 self.instruments len  %s' % len(Instrument.objects.all()))
 
         if not self.has_errors and self.transactions:
             for trn in self.transactions:
                 trn.calc_cash_by_formulas()
+
+        print('3 self.instruments len  %s' % len(Instrument.objects.all()))
 
     def process_recalculate(self):
         if not self.recalculate_inputs:

@@ -115,10 +115,10 @@ class GroupsAttributeFilter(BaseFilterBackend):
         groups_types = request.query_params.getlist('groups_types')
         groups_values = request.query_params.getlist('groups_values')
 
-        print('GroupsAttributeFilter init')
+        # print('GroupsAttributeFilter init')
 
-        print('GroupsAttributeFilter.group_types %s' % groups_types)
-        print('GroupsAttributeFilter.groups_values %s' % groups_values)
+        # print('GroupsAttributeFilter.group_types %s' % groups_types)
+        # print('GroupsAttributeFilter.groups_values %s' % groups_values)
 
         # print('queryset len %s' % len(queryset))
 
@@ -196,7 +196,7 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
                 i = i + 1
 
-        print("GroupsAttributeFilter.filter_queryset %s seconds " % (time.time() - start_time))
+        # print("GroupsAttributeFilter.filter_queryset %s seconds " % (time.time() - start_time))
 
         return queryset
 
@@ -219,9 +219,9 @@ class AttributeFilter(BaseFilterBackend):
                 groups_values.append(request.GET.getlist(key)[0])
 
         # print('AttributeFilter init')
-        #
-        print('AttributeFilter.groups_types %s' % groups_types)
-        print('AttributeFilter.groups_values %s' % groups_values)
+
+        # print('AttributeFilter.groups_types %s' % groups_types)
+        # print('AttributeFilter.groups_values %s' % groups_values)
 
         if len(groups_types) and len(groups_values):
 
@@ -293,7 +293,7 @@ class AttributeFilter(BaseFilterBackend):
 
         # print('AttributeFilter qs len %s' % len(queryset))
 
-        print("AttributeFilter.filter_queryset %s seconds " % (time.time() - start_time))
+        # print("AttributeFilter.filter_queryset %s seconds " % (time.time() - start_time))
 
         return queryset
 
