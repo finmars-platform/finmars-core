@@ -511,10 +511,6 @@ class GenericAttributeTypeSerializer(ModelWithObjectPermissionSerializer, ModelW
 
     def save_classifier(self, instance, node, parent, processed):
 
-        print('Save classifier instance content_type %s' % instance.content_type)
-        print('Save classifier instance value_type %s' % instance.value_type)
-        print('Save classifier node %s' % node)
-
         is_new_node = False
 
         if 'id' in node:

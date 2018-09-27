@@ -1,10 +1,10 @@
 import math
+from collections import OrderedDict
 
 from django.views.generic.dates import timezone_today
 
 
 def force_qs_evaluation(qs):
-
     list(qs)
 
     pass
@@ -139,3 +139,31 @@ def add_view_and_manage_permissions():
                     'name': 'Can manage %s' % content_type.name
                 }
             )
+
+
+def delete_keys_from_dict(dict_del, the_keys):
+    """
+    Delete the keys present in the lst_keys from the dictionary.
+    Loops recursively over nested dictionaries.
+    """
+    # make sure the_keys is a set to get O(1) lookups
+    if type(the_keys) is not set:
+        the_keys = set(the_keys)
+    for k, v in dict_del.items():
+
+        if k in the_keys:
+            del dict_del[k]
+
+        if isinstance(v, dict):
+            delete_keys_from_dict(v, the_keys)
+    return dict_del
+
+
+def recursive_callback(dict, callback, prop="children"):
+    callback(dict)
+
+    print(dict)
+
+    if prop in dict:
+        for item in dict[prop]:
+            recursive_callback(item, callback)

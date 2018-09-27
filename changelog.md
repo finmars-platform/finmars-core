@@ -1,6 +1,9 @@
 # Changelog
 
 
+## 27.09.2018
+- Dynamic Attributes export
+
 ## 25.09.2018
 - **BUGFIX** Creating instrument in complex transaction booking process 
 

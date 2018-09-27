@@ -12,6 +12,7 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
 from poms.accounts.models import AccountType, Account
+from poms.common.utils import delete_keys_from_dict, recursive_callback
 from poms.common.views import AbstractModelViewSet
 from poms.counterparties.models import Counterparty, Responsible
 from poms.csv_import.models import Scheme, CsvField, EntityField
@@ -24,6 +25,9 @@ from poms.integrations.models import InstrumentDownloadScheme, InstrumentDownloa
     PricingAutomatedSchedule, PortfolioMapping, CurrencyMapping, InstrumentTypeMapping, AccountMapping, \
     InstrumentMapping, CounterpartyMapping, ResponsibleMapping, Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, \
     PeriodicityMapping, DailyPricingModelMapping, PaymentSizeDetailMapping, AccrualCalculationModelMapping
+from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
+from poms.obj_attrs.serializers import GenericClassifierViewSerializer, GenericClassifierNodeSerializer, \
+    GenericAttributeTypeSerializer
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.tags.utils import get_tag_prefetch
@@ -35,6 +39,8 @@ import json
 
 from poms.transactions.serializers import TransactionTypeSerializer
 from poms.ui.models import EditLayout, ListLayout, Bookmark
+
+from django.forms.models import model_to_dict
 
 
 def to_json_objects(items):
@@ -71,6 +77,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         self._master_user = request.user.master_user
         self._member = request.user.member
+        self._request = request
 
         response = HttpResponse(content_type='application/json')
         # response['Content-Disposition'] = 'attachment; filename="data-%s.json"' % str(datetime.now().date())
@@ -78,7 +85,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration = self.createConfiguration()
 
         response.write(json.dumps(configuration))
-        
+
         return response
 
     def createConfiguration(self):
@@ -99,6 +106,16 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         instrument_types = self.get_instrument_types()
         pricing_automated_schedule = self.get_pricing_automated_schedule()
 
+        portfolio_attribute_types = self.get_entity_attribute_types('portfolios', 'portfolio')
+        account_attribute_types = self.get_entity_attribute_types('accounts', 'account')
+        account_type_attribute_types = self.get_entity_attribute_types('accounts', 'accounttype')
+
+        responsible_attribute_types = self.get_entity_attribute_types('counterparties', 'responsible')
+        counterparty_attribute_types = self.get_entity_attribute_types('counterparties', 'counterparty')
+
+        instrument_attribute_types = self.get_entity_attribute_types('instruments', 'instrument')
+        instrument_type_attribute_types = self.get_entity_attribute_types('instruments', 'instrumenttype')
+
         configuration["body"].append(transaction_types)
         configuration["body"].append(edit_layouts)
         configuration["body"].append(list_layouts)
@@ -110,6 +127,14 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration["body"].append(account_types)
         configuration["body"].append(instrument_types)
         configuration["body"].append(pricing_automated_schedule)
+
+        configuration["body"].append(portfolio_attribute_types)
+        configuration["body"].append(account_attribute_types)
+        configuration["body"].append(account_type_attribute_types)
+        configuration["body"].append(responsible_attribute_types)
+        configuration["body"].append(counterparty_attribute_types)
+        configuration["body"].append(instrument_attribute_types)
+        configuration["body"].append(instrument_type_attribute_types)
 
         return configuration
 
@@ -666,35 +691,67 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
-    def get_portfolio_attribute_types(self):
+    def get_attribute_classifiers(self, attribute_type):
 
-        schemes = to_json_objects(ComplexTransactionImportScheme.objects.filter(master_user=self._master_user))
+        result = []
+
+        attr = GenericAttributeType.objects.get(pk=attribute_type["pk"])
+
+        serializer = GenericAttributeTypeSerializer([attr], many=True, show_classifiers=True,
+                                                    context={"member": self._member, "request": self._request})
+
+        classifiers = serializer.data[0]["classifiers"]
+
+        data = {"children": []}
+
+        for item in classifiers:
+            data["children"].append(dict(item))
+
+        def delete_ids(item):
+            if "pk" in item:
+                del item["pk"]
+            if "id" in item:
+                del item["id"]
+
+        recursive_callback(data, delete_ids)
+
+        result = data["children"]
+
+        return result
+
+    def get_entity_attribute_types(self, app_label, model):
+
+        content_type = ContentType.objects.get(app_label=app_label, model=model)
+
+        items = to_json_objects(
+            GenericAttributeType.objects.filter(master_user=self._master_user, content_type=content_type))
 
         results = []
 
-        for scheme in schemes:
-            result_item = scheme["fields"]
+        for item in items:
+            result_item = item["fields"]
+
+            result_item["pk"] = item["pk"]
 
             clear_none_attrs(result_item)
 
-            result_item.pop("master_user", None)
+            if result_item["value_type"] == 30:
+                result_item["classifiers"] = self.get_attribute_classifiers(result_item)
 
-            result_item["inputs"] = self.get_complex_transaction_import_scheme_inputs(scheme)
-            result_item["rules"] = self.get_complex_transaction_import_scheme_rules(scheme)
+            attr_model = GenericAttributeType.objects.get(pk=result_item["pk"])
+
+            result_item["content_type"] = '%s.%s' % (attr_model.content_type.app_label, attr_model.content_type.model)
 
             results.append(result_item)
 
+        delete_prop(results, 'pk')
+        delete_prop(results, 'master_user')
+
         result = {
-            "entity": "obj_attrs.portfolioattributetype",
+            "entity": "obj_attrs." + model + "attributetype",
             "count": len(results),
-            "content": results,
-            "dependencies": []
+            "content": results
         }
-
-        transaction_type_dependencies = self.get_transaction_types()
-
-        if transaction_type_dependencies["count"]:
-            result["dependencies"].append(transaction_type_dependencies)
 
         return result
 
