@@ -156,12 +156,7 @@ WSGI_APPLICATION = 'poms_app.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.9/ref/settings/#databases
 
-print('RDS_DB_NAME %s' % os.environ.get('RDS_DB_NAME'))
-print('RDS_HOSTNAME %s' % os.environ.get('RDS_HOSTNAME'))
-
 db_password = ''
-
-print('RDS_PASSWORD %s' % os.environ.get('RDS_PASSWORD'))
 
 if "/run/secrets/" in os.environ.get('RDS_PASSWORD', None):
     db_password = open(os.environ.get('RDS_PASSWORD', None), 'r')
@@ -517,8 +512,6 @@ AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', None)
 
 # CELERY ------------------------------------------------
 
-
-print('REDIS_HOST  111 %s' % REDIS_HOST)
 
 CELERY_BROKER_URL = 'redis://%s/1' % REDIS_HOST
 # CELERY_RESULT_BACKEND = 'redis://%s/1' % REDIS_HOST
