@@ -159,13 +159,22 @@ WSGI_APPLICATION = 'poms_app.wsgi.application'
 print('RDS_DB_NAME %s' % os.environ.get('RDS_DB_NAME'))
 print('RDS_HOSTNAME %s' % os.environ.get('RDS_HOSTNAME'))
 
+db_password = ''
+
+print('RDS_PASSWORD %s' % os.environ.get('RDS_PASSWORD'))
+
+if "/run/secrets/" in os.environ.get('RDS_PASSWORD', None):
+    db_password = open(os.environ.get('RDS_PASSWORD', None), 'r')
+else:
+    db_password = os.environ.get('RDS_PASSWORD', None)
+
 DATABASES = {
     'default': {
         # 'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('RDS_DB_NAME', None),
         'USER': os.environ.get('RDS_USERNAME', None),
-        'PASSWORD': os.environ.get('RDS_PASSWORD', None),
+        'PASSWORD': db_password,
         'HOST': os.environ.get('RDS_HOSTNAME', None),
         'PORT': os.environ.get('RDS_PORT', None),
         # 'ATOMIC_REQUESTS': True,
