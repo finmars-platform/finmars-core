@@ -138,6 +138,29 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return configuration
 
+    def clear_relations_from_instrument(self, instrument):
+
+        if instrument.instrument_type:
+            instrument.___instrument_type__user_code = instrument.instrument_type.user_code
+            instrument.instrument_type = None
+
+        if instrument.price_download_scheme:
+            instrument.___price_download_scheme__scheme_name = instrument.price_download_scheme.scheme_name
+            instrument.price_download_scheme = None
+
+        if instrument.pricing_currency:
+            instrument.___pricing_currency__user_code = instrument.pricing_currency.user_code
+            instrument.pricing_currency = None
+
+        if instrument.accrued_currency:
+            instrument.___accrued_currency__user_code = instrument.accrued_currency.user_code
+            instrument.accrued_currency = None
+
+        return instrument
+
+    def clear_relations_from_transaction(self, transaction):
+        return transaction
+
     def get_transaction_type_inputs(self, transaction_type):
 
         inputs = to_json_objects(
@@ -199,11 +222,11 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
             for instrument in actions_instrument:
                 if instrument.action_notes == order.action_notes:
-                    result = instrument
+                    result = self.clear_relations_from_instrument(instrument)
 
             for transaction in actions_transaction:
                 if transaction.action_notes == order.action_notes:
-                    result = transaction
+                    result = self.clear_relations_from_transaction(transaction)
 
             result_json = to_json_single(result)["fields"]
 

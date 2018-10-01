@@ -186,9 +186,9 @@ class InstrumentDownloadScheme(models.Model):
     class Meta:
         verbose_name = ugettext_lazy('instrument download scheme')
         verbose_name_plural = ugettext_lazy('instrument download schemes')
-        # index_together = (
-        #     ('master_user', 'scheme_name')
-        # )
+        index_together = (
+            ('master_user', 'scheme_name')
+        )
         ordering = ['scheme_name', ]
         # permissions = [
         #     ('view_instrumentdownloadscheme', 'Can view instrument download scheme'),
