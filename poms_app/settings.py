@@ -159,7 +159,8 @@ WSGI_APPLICATION = 'poms_app.wsgi.application'
 db_password = ''
 
 if "/run/secrets/" in os.environ.get('RDS_PASSWORD', None):
-    db_password = open(os.environ.get('RDS_PASSWORD', None), 'r')
+    f = open(os.environ.get('RDS_PASSWORD', None), 'r')
+    db_password = f.read()
 else:
     db_password = os.environ.get('RDS_PASSWORD', None)
 
