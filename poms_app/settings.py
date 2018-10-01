@@ -164,8 +164,6 @@ if "/run/secrets/" in os.environ.get('RDS_PASSWORD', None):
 else:
     db_password = os.environ.get('RDS_PASSWORD', None)
 
-print('db_password %s' % db_password)
-
 DATABASES = {
     'default': {
         # 'ENGINE': 'django.contrib.gis.db.backends.postgis',
