@@ -4,8 +4,8 @@ appdirs==1.4.3
 Babel==2.3.4
 billiard==3.5.0.2
 boto==2.46.1
-boto3==1.4.4
-botocore==1.5.22
+boto3==1.9.15
+botocore==1.12.16
 celery==4.0.2
 cffi==1.9.1
 coreapi==2.3.0
