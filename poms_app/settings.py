@@ -156,13 +156,13 @@ WSGI_APPLICATION = 'poms_app.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.9/ref/settings/#databases
 
-db_password = ''
+db_password = os.environ.get('RDS_PASSWORD', None)
 
-if "/run/secrets/" in os.environ.get('RDS_PASSWORD', None):
-    f = open(os.environ.get('RDS_PASSWORD', None), 'r')
-    db_password = f.read()
-else:
-    db_password = os.environ.get('RDS_PASSWORD', None)
+# if "/run/secrets/" in os.environ.get('RDS_PASSWORD', None):
+#     f = open(os.environ.get('RDS_PASSWORD', None), 'r')
+#     db_password = f.read()
+# else:
+#     db_password = os.environ.get('RDS_PASSWORD', None)
 
 # Use this code snippet in your app.
 # If you need more information about configurations or implementing the sample code, visit the AWS docs:
