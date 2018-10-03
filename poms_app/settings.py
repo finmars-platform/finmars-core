@@ -18,6 +18,10 @@ import os
 from celery.schedules import crontab
 from django.utils.translation import ugettext_lazy
 
+import boto3
+import base64
+from botocore.exceptions import ClientError
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Quick-start development settings - unsuitable for production
@@ -156,7 +160,10 @@ WSGI_APPLICATION = 'poms_app.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.9/ref/settings/#databases
 
-db_password = os.environ.get('RDS_PASSWORD', None)
+AWS_SECRETS_ACCESS_KEY_ID = os.environ.get('AWS_SECRETS_ACCESS_KEY_ID', None)
+AWS_SECRETS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRETS_SECRET_ACCESS_KEY', None)
+
+db_password = ''
 
 # if "/run/secrets/" in os.environ.get('RDS_PASSWORD', None):
 #     f = open(os.environ.get('RDS_PASSWORD', None), 'r')
@@ -164,23 +171,16 @@ db_password = os.environ.get('RDS_PASSWORD', None)
 # else:
 #     db_password = os.environ.get('RDS_PASSWORD', None)
 
-# Use this code snippet in your app.
-# If you need more information about configurations or implementing the sample code, visit the AWS docs:
-# https://aws.amazon.com/developers/getting-started/python/
-
-import boto3
-import base64
-from botocore.exceptions import ClientError
-
 
 def get_secret():
-
     secret_name = "dev/backend/Postgresql"
     region_name = "eu-central-1"
 
     # Create a Secrets Manager client
     session = boto3.session.Session()
     client = session.client(
+        aws_access_key_id=AWS_SECRETS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRETS_SECRET_ACCESS_KEY,
         service_name='secretsmanager',
         region_name=region_name
     )
@@ -232,7 +232,12 @@ def get_secret():
 
     return ''
 
-secret = get_secret()
+
+if os.environ.get('RDS_PASSWORD', None):
+    db_password = os.environ.get('RDS_PASSWORD', None)
+else:
+    db_password = get_secret()
+
 
 DATABASES = {
     'default': {
