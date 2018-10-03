@@ -165,6 +165,7 @@ AWS_SECRETS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRETS_SECRET_ACCESS_KEY', 
 
 db_password = ''
 
+
 # if "/run/secrets/" in os.environ.get('RDS_PASSWORD', None):
 #     f = open(os.environ.get('RDS_PASSWORD', None), 'r')
 #     db_password = f.read()
@@ -185,9 +186,8 @@ def get_secret():
         region_name=region_name
     )
 
-    # In this sample we only handle the specific exceptions for the 'GetSecretValue' API.
-    # See https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-    # We rethrow the exception by default.
+    secret = None
+    decoded_binary_secret = None
 
     try:
         get_secret_value_response = client.get_secret_value(
@@ -218,6 +218,9 @@ def get_secret():
     else:
         # Decrypts secret using the associated KMS CMK.
         # Depending on whether the secret is a string or binary, one of these fields will be populated.
+
+        print('get_secret_value_response %s' % get_secret_value_response)
+
         if 'SecretString' in get_secret_value_response:
             secret = get_secret_value_response['SecretString']
         else:
@@ -230,14 +233,13 @@ def get_secret():
 
     # Your code goes here.
 
-    return ''
+    return secret
 
 
 if os.environ.get('RDS_PASSWORD', None):
     db_password = os.environ.get('RDS_PASSWORD', None)
 else:
     db_password = get_secret()
-
 
 DATABASES = {
     'default': {
