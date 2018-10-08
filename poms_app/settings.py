@@ -412,6 +412,8 @@ CACHES = {
 SESSION_ENGINE = "poms.http_sessions.backends.cached_db"
 SESSION_CACHE_ALIAS = 'http_session'
 
+LOGSTASH_HOST = os.environ.get('LOGSTASH_HOST', None)
+
 LOGGING = {
     'version': 1,
     'formatters': {
@@ -439,20 +441,35 @@ LOGGING = {
         #     'class': 'django.utils.log.AdminEmailHandler',
         #     'filters': ['require_debug_false']
         # },
+        'logstash': {
+            'level': 'WARNING',
+            'class': 'logstash.TCPLogstashHandler',
+            'host': LOGSTASH_HOST,
+            'port': 5000,
+            'version': 1, # Version of logstash event schema. Default value: 0 (for backward compatibility of the library)
+            'message_type': 'django',  # 'type' field in logstash message. Default value: 'logstash'.
+            'fqdn': False, # Fully qualified domain name. Default value: false.
+            'tags': ['django.request'], # list of tags. Default: None.
+        },
     },
     'loggers': {
         'py.warnings': {
-            'handlers': ['console'],
+            'handlers': ['console', 'logstash'],
             'propagate': False,
         },
         'django': {
             'level': 'INFO',
-            'handlers': ['console'],
+            'handlers': ['console', 'logstash'],
             'propagate': False,
         },
         'django_test': {
-            'handlers': ['console'],
+            'handlers': ['console', 'logstash'],
             'level': 'DEBUG',
+        },
+        'django.request': {
+            'handlers': ['logstash'],
+            'level': 'WARNING',
+            'propagate': True,
         },
         # 'django.request': {
         #     'handlers': ['console', 'mail_admins'],
@@ -464,12 +481,12 @@ LOGGING = {
         # },
         'poms': {
             'level': 'DEBUG',
-            'handlers': ['console'],
+            'handlers': ['console', 'logstash'],
             'propagate': False,
         },
         'celery': {
             'level': 'INFO',
-            'handlers': ['console'],
+            'handlers': ['console', 'logstash'],
         },
         'suds': {
             'level': 'INFO',
