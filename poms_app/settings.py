@@ -218,25 +218,26 @@ def get_secret():
 
     return secret_result
 
+secret = get_secret()
 
-def get_password_from_secret():
-
-    secret = get_secret()
-
-    return secret["password"]
-
+if os.environ.get('RDS_USERNAME', None):
+    db_username = os.environ.get('RDS_USER', None)
+else:
+    db_username = secret["username"]
 
 if os.environ.get('RDS_PASSWORD', None):
     db_password = os.environ.get('RDS_PASSWORD', None)
 else:
-    db_password = get_password_from_secret()
+    db_password = secret["password"]
+
+
 
 DATABASES = {
     'default': {
         # 'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('RDS_DB_NAME', None),
-        'USER': os.environ.get('RDS_USERNAME', None),
+        'USER': db_username,
         'PASSWORD': db_password,
         'HOST': os.environ.get('RDS_HOSTNAME', None),
         'PORT': os.environ.get('RDS_PORT', None),
