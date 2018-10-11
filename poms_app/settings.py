@@ -221,7 +221,7 @@ def get_secret():
 secret = get_secret()
 
 if os.environ.get('RDS_USERNAME', None):
-    db_username = os.environ.get('RDS_USER', None)
+    db_username = os.environ.get('RDS_USERNAME', None)
 else:
     db_username = secret["username"]
 
@@ -229,8 +229,6 @@ if os.environ.get('RDS_PASSWORD', None):
     db_password = os.environ.get('RDS_PASSWORD', None)
 else:
     db_password = secret["password"]
-
-
 
 DATABASES = {
     'default': {
