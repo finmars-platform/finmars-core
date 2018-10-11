@@ -677,7 +677,7 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
             (p.instrument_id, p.pricing_policy_id, p.date): p
             for p in PriceHistory.objects.filter(instrument__in=instruments_pk,
                                                  date__range=(date_from, date_to + timedelta(days=fill_days)))
-            }
+        }
         _l.debug('existed_instrument_prices: %s', existed_instrument_prices)
         for p in instruments_prices:
             op = existed_instrument_prices.get((p.instrument_id, p.pricing_policy_id, p.date), None)
@@ -694,7 +694,7 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
             (p.currency_id, p.pricing_policy_id, p.date): p
             for p in CurrencyHistory.objects.filter(currency__in=currencies_pk,
                                                     date__range=(date_from, date_to + timedelta(days=fill_days)))
-            }
+        }
         _l.debug('existed_currency_prices: %s', existed_currency_prices)
         for p in currencies_prices:
             op = existed_currency_prices.get((p.currency_id, p.pricing_policy_id, p.date), None)
@@ -1082,8 +1082,9 @@ def complex_transaction_csv_file_import(instance):
                     else:
                         continue
                 finally:
-                    if settings.DEBUG:
-                        transaction.set_rollback(True)
+                    _l.info("final")
+                    # if settings.DEBUG:
+                    #     transaction.set_rollback(True)
 
     instance.error_rows = []
     try:
