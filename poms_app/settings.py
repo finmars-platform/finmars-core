@@ -218,7 +218,10 @@ def get_secret():
 
     return secret_result
 
-secret = get_secret()
+secret = None
+
+if os.environ.get('AWS_SECRET_NAME', None):
+    secret = get_secret()
 
 if os.environ.get('RDS_USERNAME', None):
     db_username = os.environ.get('RDS_USERNAME', None)
