@@ -1,5 +1,8 @@
 # Changelog
 
+## 12.10.2018
+
+- AWS secrets module
 
 ## 27.09.2018
 - Dynamic Attributes export

@@ -1388,8 +1388,10 @@ class ComplexTransactionImportSchemeSerializer(serializers.ModelSerializer):
             for name, value in field_values.items():
                 setattr(field0, name, value)
 
-            if field0.transaction_type_input.transaction_type_id != rule.transaction_type_id:
-                raise serializers.ValidationError(ugettext('Invalid transaction type input. (Hacker has detected!)'))
+
+            # TODO check why is that?
+            # if field0.transaction_type_input.transaction_type_id != rule.transaction_type_id:
+            #     raise serializers.ValidationError(ugettext('Invalid transaction type input. (Hacker has detected!)'))
 
             field0.save()
             pk_set.add(field0.id)
