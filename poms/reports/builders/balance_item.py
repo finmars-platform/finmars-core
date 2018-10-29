@@ -2159,7 +2159,7 @@ class Report(BaseReport):
         super(Report, self).__init__(id=id, master_user=master_user, member=member,
                                      task_id=task_id, task_status=task_status)
 
-        print('REPORT!!!!!!!!!!!!!!')
+        # print('REPORT!!!!!!!!!!!!!!')
 
         # self.id = id
         # self.task_id = task_id

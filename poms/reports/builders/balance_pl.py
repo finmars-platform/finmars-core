@@ -121,23 +121,44 @@ class ReportBuilder(BaseReportBuilder):
 
     def build_position_only(self):
         st = time.perf_counter()
+
         _l.debug('build position only report: %s', self.instance)
 
         self.instance.report_type = Report.TYPE_BALANCE
         self.instance.pl_first_date = None
 
+        load_transactions_st = time.perf_counter()
+
         self._load_transactions()
+
+        _l.debug('load_transactions_st done: %s', (time.perf_counter() - load_transactions_st))
+
+        clone_transactions_st = time.perf_counter()
+
         self._clone_transactions_if_need()
+
+        _l.debug('clone_transactions_st done: %s', (time.perf_counter() - clone_transactions_st))
 
         # self.instance.transactions = self._transactions
         if not self._transactions:
             return
 
+        generate_items_st = time.perf_counter()
+
         self._generate_items()
+
+        _l.debug('generate_items_st done: %s', (time.perf_counter() - generate_items_st))
+
+        sorted_items_st = time.perf_counter()
 
         sorted_items = sorted(self._items, key=lambda item: self._item_group_key(item))
 
+        _l.debug('sorted_items_st done: %s', (time.perf_counter() - sorted_items_st))
+
         _l.debug('aggregate items')
+
+        last_action_st = time.perf_counter()
+
         res_items = []
         for k, g in groupby(sorted_items, key=lambda item: self._item_group_key(item)):
             res_item = None
@@ -154,7 +175,10 @@ class ReportBuilder(BaseReportBuilder):
 
         self.instance.items = res_items
 
+        _l.debug('last_action_st done: %s', (time.perf_counter() - last_action_st))
+
         _l.debug('done: %s', (time.perf_counter() - st))
+
         return self.instance
 
     @property

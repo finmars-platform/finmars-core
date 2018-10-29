@@ -110,13 +110,13 @@ def generate_events0(master_user):
             continue
 
         for event_schedule in event_schedules:
-            _l.debug('event_schedule=%s, event_class=%s, notification_class=%s, periodicity=%s, n=%s',
-                     event_schedule.id, event_schedule.event_class, event_schedule.notification_class,
-                     event_schedule.periodicity, event_schedule.periodicity_n)
+            # _l.debug('event_schedule=%s, event_class=%s, notification_class=%s, periodicity=%s, n=%s',
+            #          event_schedule.id, event_schedule.event_class, event_schedule.notification_class,
+            #          event_schedule.periodicity, event_schedule.periodicity_n)
 
             is_complies, effective_date, notification_date = event_schedule.check_date(now)
 
-            _l.debug('is_complies=%s', is_complies)
+            # _l.debug('is_complies=%s', is_complies)
             if is_complies:
                 ge_dup_qs = GeneratedEvent.objects.filter(
                     master_user=master_user,
