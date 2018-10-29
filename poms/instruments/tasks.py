@@ -19,16 +19,16 @@ _l = logging.getLogger('poms.instruments')
 
 @transaction.atomic()
 def calculate_prices_accrued_price(master_user=None, begin_date=None, end_date=None, instruments=None):
-    _l.debug('process_events: master_user=%s, begin_date=%s, end_date=%s, instruments=%s',
-             master_user, begin_date, end_date, instruments)
+    # _l.debug('process_events: master_user=%s, begin_date=%s, end_date=%s, instruments=%s',
+    #          master_user, begin_date, end_date, instruments)
     instruments_qs = Instrument.objects.all()
     if master_user:
         instruments_qs = instruments_qs.filter(master_user=master_user)
     if instruments:
         instruments_qs = instruments_qs.filter(pk__in=instruments)
-    _l.debug('instruments: count=%s', instruments_qs.count())
+    # _l.debug('instruments: count=%s', instruments_qs.count())
     for instrument in instruments_qs:
-        _l.debug('calculate_prices_accrued_price: instrument=%s', instrument.id)
+        # _l.debug('calculate_prices_accrued_price: instrument=%s', instrument.id)
         instrument.calculate_prices_accrued_price(begin_date, end_date)
 
 
@@ -45,7 +45,7 @@ def calculate_prices_accrued_price_async(master_user=None, begin_date=None, end_
 
 @shared_task(name='instruments.generate_events0', ignore_result=True)
 def generate_events0(master_user):
-    _l.debug('generate_events0: master_user=%s', master_user.id)
+    # _l.debug('generate_events0: master_user=%s', master_user.id)
 
     opened_instrument_items = []
 
@@ -63,7 +63,7 @@ def generate_events0(master_user):
         if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
             opened_instrument_items.append(i)
 
-    _l.debug('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
+    # _l.debug('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
     if not opened_instrument_items:
         return
 
@@ -84,7 +84,7 @@ def generate_events0(master_user):
     )
 
     if not event_schedule_qs.exists():
-        _l.debug('event schedules not found')
+        # _l.debug('event schedules not found')
         return
 
     event_schedules_cache = defaultdict(list)
@@ -132,7 +132,7 @@ def generate_events0(master_user):
                     position=position
                 )
                 if ge_dup_qs.exists():
-                    _l.debug('generated event already exist')
+                    # _l.debug('generated event already exist')
                     continue
 
                 generated_event = GeneratedEvent()
@@ -156,7 +156,7 @@ def generate_events0(master_user):
 
 @shared_task(name='instruments.generate_events', ignore_result=True)
 def generate_events(master_users=None):
-    _l.debug('generate_events: master_users=%s', master_users)
+    # _l.debug('generate_events: master_users=%s', master_users)
 
     # now = date_now()
 
@@ -286,7 +286,7 @@ def generate_events(master_users=None):
 def process_events0(master_user):
     from poms.instruments.handlers import GeneratedEventProcess
 
-    _l.debug('process_events0: master_user=%s', master_user.id)
+    # _l.debug('process_events0: master_user=%s', master_user.id)
 
     now = date_now()
 
@@ -316,30 +316,30 @@ def process_events0(master_user):
         is_need_reaction_on_notification_date = gevent.is_need_reaction_on_notification_date(now)
         is_need_reaction_on_effective_date = gevent.is_need_reaction_on_effective_date(now)
 
-        _l.debug(
-            'process:'
-            ' notification_class=%s,'
-            ' notification_date=%s,'
-            ' notification_date_notified=%s'
-            ' effective_date=%s,'
-            ' effective_date_notified=%s,'
-            ' is_notify_on_notification_date=%s,'
-            ' is_notify_on_effective_date=%s,'
-            ' is_apply_default_on_notification_date=%s,'
-            ' is_apply_default_on_effective_date=%s,'
-            ' is_need_reaction_on_notification_date=%s,'
-            ' is_need_reaction_on_effective_date=%s',
-            gevent.event_schedule.notification_class.system_code,
-            gevent.notification_date,
-            gevent.notification_date_notified,
-            gevent.effective_date,
-            gevent.effective_date_notified,
-            is_notify_on_notification_date,
-            is_notify_on_effective_date,
-            is_apply_default_on_notification_date,
-            is_apply_default_on_effective_date,
-            is_need_reaction_on_notification_date,
-            is_need_reaction_on_effective_date)
+        # _l.debug(
+        #     'process:'
+        #     ' notification_class=%s,'
+        #     ' notification_date=%s,'
+        #     ' notification_date_notified=%s'
+        #     ' effective_date=%s,'
+        #     ' effective_date_notified=%s,'
+        #     ' is_notify_on_notification_date=%s,'
+        #     ' is_notify_on_effective_date=%s,'
+        #     ' is_apply_default_on_notification_date=%s,'
+        #     ' is_apply_default_on_effective_date=%s,'
+        #     ' is_need_reaction_on_notification_date=%s,'
+        #     ' is_need_reaction_on_effective_date=%s',
+        #     gevent.event_schedule.notification_class.system_code,
+        #     gevent.notification_date,
+        #     gevent.notification_date_notified,
+        #     gevent.effective_date,
+        #     gevent.effective_date_notified,
+        #     is_notify_on_notification_date,
+        #     is_notify_on_effective_date,
+        #     is_apply_default_on_notification_date,
+        #     is_apply_default_on_effective_date,
+        #     is_need_reaction_on_notification_date,
+        #     is_need_reaction_on_effective_date)
 
         owner = next(iter([m for m in gevent.master_user.members.all() if m.is_owner]))
 
@@ -397,7 +397,7 @@ def process_events0(master_user):
 def process_events(master_users=None):
     # from poms.instruments.handlers import GeneratedEventProcess
 
-    _l.debug('process_events: master_users=%s', master_users)
+    # _l.debug('process_events: master_users=%s', master_users)
 
     # now = date_now()
 

@@ -85,6 +85,7 @@ class BaseReportItem:
 
     @classmethod
     def dumps(cls, items, columns=None, trn_filter=None, in_csv=None):
+        # pass
         _l.debug('\n%s', cls.sdumps(items, columns=columns, filter=trn_filter, in_csv=in_csv))
 
 
@@ -106,10 +107,10 @@ class YTMMixin:
         instr = self.instr
 
         if instr.maturity_date is None or instr.maturity_date == date.max:
-            _l.debug('get_instr_ytm_data: [], maturity_date rule')
+            # _l.debug('get_instr_ytm_data: [], maturity_date rule')
             return []
         if instr.maturity_price is None or isnan(instr.maturity_price) or isclose(instr.maturity_price, 0.0):
-            _l.debug('get_instr_ytm_data: [], maturity_price rule')
+            # _l.debug('get_instr_ytm_data: [], maturity_price rule')
             return []
 
         d0, v0 = self.get_instr_ytm_data_d0_v0()
@@ -176,7 +177,7 @@ class YTMMixin:
         data.sort()
         self._instr_ytm_data = data
 
-        _l.debug('get_instr_ytm_data: data=%s', [(str(d), v) for d, v in data])
+        # _l.debug('get_instr_ytm_data: data=%s', [(str(d), v) for d, v in data])
 
         return data
 
@@ -185,7 +186,7 @@ class YTMMixin:
         return 0
 
     def get_instr_ytm(self):
-        _l.debug('get_instr_ytm: %s', self.__class__.__name__)
+        # _l.debug('get_instr_ytm: %s', self.__class__.__name__)
 
         if self.instr.maturity_date is None or self.instr.maturity_date == date.max:
             try:
@@ -195,18 +196,18 @@ class YTMMixin:
                       (self.instr_price_cur_principal_price * self.instr.price_multiplier)
             except ArithmeticError:
                 ytm = 0
-            _l.debug('get_instr_ytm.1: %s', ytm)
+            # _l.debug('get_instr_ytm.1: %s', ytm)
             return ytm
 
         x0 = self.get_instr_ytm_x0()
-        _l.debug('get_instr_ytm: x0=%s', x0)
+        # _l.debug('get_instr_ytm: x0=%s', x0)
 
         data = self.get_instr_ytm_data()
         if data:
             ytm = f_xirr(data, x0=x0)
         else:
             ytm = 0.0
-        _l.debug('get_instr_ytm: %s', ytm)
+        # _l.debug('get_instr_ytm: %s', ytm)
         return ytm
 
     def get_instr_duration(self):
@@ -215,14 +216,14 @@ class YTMMixin:
                 duration = 1 / self.ytm
             except ArithmeticError:
                 duration = 0
-            _l.debug('get_instr_duration.1: %s', duration)
+            # _l.debug('get_instr_duration.1: %s', duration)
             return duration
         data = self.get_instr_ytm_data()
         if data:
             duration = f_duration(data, ytm=self.ytm)
         else:
             duration = 0
-        _l.debug('get_instr_duration: %s', duration)
+        # _l.debug('get_instr_duration: %s', duration)
         return duration
 
 

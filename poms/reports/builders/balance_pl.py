@@ -47,7 +47,10 @@ class ReportBuilder(BaseReportBuilder):
 
         self.instance.report_type = Report.TYPE_BALANCE
         self.instance.pl_first_date = None
+
+        build_st = time.perf_counter()
         self.build(full=full)
+        _l.debug('build_st done: %s', (time.perf_counter() - build_st))
 
         def _accepted(item):
             return item.type in [ReportItem.TYPE_INSTRUMENT, ReportItem.TYPE_CURRENCY] and \
@@ -57,7 +60,7 @@ class ReportBuilder(BaseReportBuilder):
 
         self._alloc_aggregation()
 
-        _l.debug('done: %s', (time.perf_counter() - st))
+        _l.debug('build_balance done: %s', (time.perf_counter() - st))
         return self.instance
 
     def build_balance_for_tests(self, full=True):
