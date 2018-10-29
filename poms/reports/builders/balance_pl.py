@@ -107,13 +107,13 @@ class ReportBuilder(BaseReportBuilder):
 
         self._transaction_pricing()
 
-        _l.debug('build transactions_pricing_st done: %s', (time.perf_counter() - load_transactions_st))
+        _l.debug('build transactions_pricing_st done: %s', (time.perf_counter() - transactions_pricing_st))
 
         transactions_multipliers_st = time.perf_counter()
 
         self._transaction_multipliers()
 
-        _l.debug('build transactions_multipliers_st done: %s', (time.perf_counter() - load_transactions_st))
+        _l.debug('build transactions_multipliers_st done: %s', (time.perf_counter() - transactions_multipliers_st))
 
         clone_transactions_if_need_st = time.perf_counter()
 
