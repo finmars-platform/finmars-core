@@ -494,7 +494,8 @@ class ReportBuilder(BaseReportBuilder):
 
         iteration_st = time.perf_counter()
 
-        for t in trn_qs:
+        for t in trn_qs.iterator():
+
             overrides = {}
 
             if self.instance.portfolio_mode == Report.MODE_IGNORE:
