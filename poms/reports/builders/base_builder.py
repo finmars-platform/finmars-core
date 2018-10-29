@@ -239,7 +239,7 @@ class BaseReportBuilder:
         return ret
 
     def _refresh_attrs(self, items, attrs, queryset, objects=None):
-        _l.debug('refresh: %s -> %s', attrs, queryset.model)
+        # _l.debug('refresh: %s -> %s', attrs, queryset.model)
 
         # return self._refresh_attrs_simple(items=items, attrs=attrs, objects=objects)
 
@@ -259,7 +259,7 @@ class BaseReportBuilder:
                         pks.add(obj.id)
 
         objs = queryset.in_bulk(pks)
-        _l.debug('objs: %s', objs.keys())
+        # _l.debug('objs: %s', objs.keys())
 
         if objects is not None:
             objects.clear()
@@ -274,7 +274,7 @@ class BaseReportBuilder:
         return list(objs.values())
 
     def _refresh_attrs_simple(self, items, attrs, objects=None):
-        _l.debug('refresh: %s', attrs)
+        # _l.debug('refresh: %s', attrs)
 
         if not items or not attrs:
             return []
@@ -291,7 +291,7 @@ class BaseReportBuilder:
                     if obj:
                         objs[obj.id] = obj
 
-        _l.debug('objs: %s', objs.keys())
+        # _l.debug('objs: %s', objs.keys())
 
         return list(objs.values())
 

@@ -1,4 +1,5 @@
 import logging
+import time
 
 from celery import shared_task
 from django.db import transaction
@@ -28,6 +29,9 @@ def balance_report(instance):
     print('Celery balance report task')
 
     _l.debug('balance_report: %s', instance)
+
+    st = time.perf_counter()
+
     with transaction.atomic():
         try:
             builder = ReportBuilder(instance=instance)
@@ -39,7 +43,8 @@ def balance_report(instance):
             raise
         finally:
             transaction.set_rollback(True)
-            _l.debug('finished')
+            # _l.debug('finished')
+            _l.debug('balance_report finished: %s', (time.perf_counter() - st))
 
 
 @shared_task(name='reports.pl_report')

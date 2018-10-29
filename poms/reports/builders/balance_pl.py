@@ -97,17 +97,64 @@ class ReportBuilder(BaseReportBuilder):
         st = time.perf_counter()
         _l.debug('build report: %s', self.instance)
 
+        load_transactions_st = time.perf_counter()
+
         self._load_transactions()
+
+        _l.debug('build load_transactions_st done: %s', (time.perf_counter() - load_transactions_st))
+
+        transactions_pricing_st = time.perf_counter()
+
         self._transaction_pricing()
+
+        _l.debug('build transactions_pricing_st done: %s', (time.perf_counter() - load_transactions_st))
+
+        transactions_multipliers_st = time.perf_counter()
+
         self._transaction_multipliers()
+
+        _l.debug('build transactions_multipliers_st done: %s', (time.perf_counter() - load_transactions_st))
+
+        clone_transactions_if_need_st = time.perf_counter()
+
         self._clone_transactions_if_need()
+
+        _l.debug('build clone_transactions_if_need_st done: %s', (time.perf_counter() - clone_transactions_if_need_st))
+
+        transaction_calc_st = time.perf_counter()
+
         self._transaction_calc()
+
+        _l.debug('build transaction_calc_st done: %s', (time.perf_counter() - transaction_calc_st))
+
         # self.instance.transactions = self._transactions
+
+        _generate_items_st = time.perf_counter()
+
         self._generate_items()
+
+        _l.debug('build _generate_items_st done: %s', (time.perf_counter() - _generate_items_st))
+
+        _aggregate_items = time.perf_counter()
+
         self._aggregate_items()
+
+        _l.debug('build _aggregate_items done: %s', (time.perf_counter() - _aggregate_items))
+
         # self._calc_pass2()
+
+        _aggregate_summary = time.perf_counter()
+
         self._aggregate_summary()
+
+        _l.debug('build _aggregate_summary done: %s', (time.perf_counter() - _aggregate_summary))
+
+        _detect_mismatches = time.perf_counter()
+
         self._detect_mismatches()
+
+        _l.debug('build _detect_mismatches done: %s', (time.perf_counter() - _detect_mismatches))
+
         self.instance.items = self._items + self._mismatch_items + self._summaries
 
         if self.instance.pl_first_date and self.instance.pl_first_date != date.min:
@@ -134,13 +181,13 @@ class ReportBuilder(BaseReportBuilder):
 
         self._load_transactions()
 
-        _l.debug('load_transactions_st done: %s', (time.perf_counter() - load_transactions_st))
+        _l.debug('build_position_only load_transactions_st done: %s', (time.perf_counter() - load_transactions_st))
 
         clone_transactions_st = time.perf_counter()
 
         self._clone_transactions_if_need()
 
-        _l.debug('clone_transactions_st done: %s', (time.perf_counter() - clone_transactions_st))
+        _l.debug('build_position_only clone_transactions_st done: %s', (time.perf_counter() - clone_transactions_st))
 
         # self.instance.transactions = self._transactions
         if not self._transactions:
@@ -150,15 +197,15 @@ class ReportBuilder(BaseReportBuilder):
 
         self._generate_items()
 
-        _l.debug('generate_items_st done: %s', (time.perf_counter() - generate_items_st))
+        _l.debug('build_position_only generate_items_st done: %s', (time.perf_counter() - generate_items_st))
 
         sorted_items_st = time.perf_counter()
 
         sorted_items = sorted(self._items, key=lambda item: self._item_group_key(item))
 
-        _l.debug('sorted_items_st done: %s', (time.perf_counter() - sorted_items_st))
+        _l.debug('build_position_only sorted_items_st done: %s', (time.perf_counter() - sorted_items_st))
 
-        _l.debug('aggregate items')
+        _l.debug('build_position_only aggregate items')
 
         last_action_st = time.perf_counter()
 
@@ -178,9 +225,9 @@ class ReportBuilder(BaseReportBuilder):
 
         self.instance.items = res_items
 
-        _l.debug('last_action_st done: %s', (time.perf_counter() - last_action_st))
+        _l.debug('build_position_only last_action_st done: %s', (time.perf_counter() - last_action_st))
 
-        _l.debug('done: %s', (time.perf_counter() - st))
+        _l.debug('build_position_only done: %s', (time.perf_counter() - st))
 
         return self.instance
 
