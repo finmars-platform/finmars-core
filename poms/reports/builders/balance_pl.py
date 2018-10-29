@@ -547,7 +547,7 @@ class ReportBuilder(BaseReportBuilder):
             self._original_transactions.append(otrn)
 
             if i < 5:
-                _l.debug('t trn_qs_st done: %s', (time.perf_counter() - t))
+                _l.debug('t trn_qs_st done: %s', (time.perf_counter() - t_st))
 
         _l.debug('_load_transactions iteration_st done: %s', (time.perf_counter() - iteration_st))
 
