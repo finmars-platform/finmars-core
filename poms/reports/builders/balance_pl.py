@@ -528,6 +528,8 @@ class ReportBuilder(BaseReportBuilder):
 
             t_st = time.perf_counter()
 
+            trn_st = time.perf_counter()
+
             trn = self.trn_cls(
                 report=self.instance,
                 pricing_provider=self.pricing_provider,
@@ -535,6 +537,9 @@ class ReportBuilder(BaseReportBuilder):
                 trn=t,
                 overrides=overrides
             )
+
+            _l.debug('t trn_qs_st done: %s', format((time.perf_counter() - trn_st), 'f'))
+
             # trn.key = self._get_trn_group_key(trn)
             self._transactions.append(trn)
 
@@ -548,7 +553,7 @@ class ReportBuilder(BaseReportBuilder):
 
             diff = (time.perf_counter() - t_st)
 
-            _l.debug('t trn_qs_st done: %s', diff)
+            _l.debug('t trn_qs_st done: %s', format(diff, 'f'))
 
             total_st = total_st + diff
 
