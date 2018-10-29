@@ -496,7 +496,7 @@ class ReportBuilder(BaseReportBuilder):
 
         i = 0
 
-        for t in trn_qs():
+        for t in trn_qs:
 
             i = i + 1
 
