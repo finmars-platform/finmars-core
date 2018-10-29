@@ -552,6 +552,7 @@ class ReportBuilder(BaseReportBuilder):
 
             total_st = total_st + diff
 
+        _l.debug('_load_transactions total_st done: %s', total_st)
         _l.debug('_load_transactions iteration_st done: %s', (time.perf_counter() - iteration_st))
 
         # _l.debug('transactions - len=%s', len(self._transactions))
