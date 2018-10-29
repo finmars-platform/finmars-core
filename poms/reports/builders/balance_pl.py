@@ -494,7 +494,13 @@ class ReportBuilder(BaseReportBuilder):
 
         iteration_st = time.perf_counter()
 
-        for t in trn_qs.iterator():
+        i = 0
+
+        for t in trn_qs():
+
+            i = i + 1
+
+            t_st = time.perf_counter()
 
             overrides = {}
 
@@ -539,6 +545,9 @@ class ReportBuilder(BaseReportBuilder):
                 trn=t,
             )
             self._original_transactions.append(otrn)
+
+            if i < 5:
+                _l.debug('t trn_qs_st done: %s', (time.perf_counter() - t))
 
         _l.debug('_load_transactions iteration_st done: %s', (time.perf_counter() - iteration_st))
 
