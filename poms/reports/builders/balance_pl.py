@@ -483,9 +483,16 @@ class ReportBuilder(BaseReportBuilder):
         self._transactions = []
         self._original_transactions = []
 
+        trn_qs_st = time.perf_counter()
+
         trn_qs = self._trn_qs()
+
+        _l.debug('_load_transactions trn_qs_st done: %s', (time.perf_counter() - trn_qs_st))
+
         if not trn_qs.exists():
             return
+
+        iteration_st = time.perf_counter()
 
         for t in trn_qs:
             overrides = {}
@@ -532,7 +539,9 @@ class ReportBuilder(BaseReportBuilder):
             )
             self._original_transactions.append(otrn)
 
-        _l.debug('transactions - len=%s', len(self._transactions))
+        _l.debug('_load_transactions iteration_st done: %s', (time.perf_counter() - iteration_st))
+
+        # _l.debug('transactions - len=%s', len(self._transactions))
 
     def _transaction_pricing(self):
         _l.debug('transactions - add pricing')
