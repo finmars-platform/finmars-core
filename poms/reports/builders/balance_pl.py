@@ -522,6 +522,8 @@ class ReportBuilder(BaseReportBuilder):
 
         iteration_st = time.perf_counter()
 
+        total_st = 0
+
         for t in trn_qs:
 
             t_st = time.perf_counter()
@@ -544,10 +546,11 @@ class ReportBuilder(BaseReportBuilder):
             )
             self._original_transactions.append(otrn)
 
-            _l.debug('t size " %s', sys.getsizeof(t))
-            _l.debug('trn size " %s', sys.getsizeof(trn))
-            _l.debug('otrn size " %s', sys.getsizeof(otrn))
-            _l.debug('t trn_qs_st done: %s', (time.perf_counter() - t_st))
+            diff = (time.perf_counter() - t_st)
+
+            _l.debug('t trn_qs_st done: %s', diff)
+
+            total_st = total_st + diff
 
         _l.debug('_load_transactions iteration_st done: %s', (time.perf_counter() - iteration_st))
 
