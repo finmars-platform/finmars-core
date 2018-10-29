@@ -494,36 +494,35 @@ class ReportBuilder(BaseReportBuilder):
 
         iteration_st = time.perf_counter()
 
+        overrides = {}
+
+        if self.instance.portfolio_mode == Report.MODE_IGNORE:
+            overrides['portfolio'] = self.instance.master_user.portfolio
+
+        if self.instance.account_mode == Report.MODE_IGNORE:
+            overrides['account_position'] = self.instance.master_user.account
+            overrides['account_cash'] = self.instance.master_user.account
+            overrides['account_interim'] = self.instance.master_user.account
+
+        if self.instance.strategy1_mode == Report.MODE_IGNORE:
+            overrides['strategy1_position'] = self.instance.master_user.strategy1
+            overrides['strategy1_cash'] = self.instance.master_user.strategy1
+
+        if self.instance.strategy2_mode == Report.MODE_IGNORE:
+            overrides['strategy2_position'] = self.instance.master_user.strategy2
+            overrides['strategy2_cash'] = self.instance.master_user.strategy2
+
+        if self.instance.strategy3_mode == Report.MODE_IGNORE:
+            overrides['strategy3_position'] = self.instance.master_user.strategy3
+            overrides['strategy3_cash'] = self.instance.master_user.strategy3
+
+        if self.instance.allocation_mode == Report.MODE_IGNORE:
+            overrides['allocation_balance'] = self.instance.master_user.instrument
+            overrides['allocation_pl'] = self.instance.master_user.instrument
 
         for t in trn_qs:
 
             t_st = time.perf_counter()
-
-            overrides = {}
-
-            if self.instance.portfolio_mode == Report.MODE_IGNORE:
-                overrides['portfolio'] = self.instance.master_user.portfolio
-
-            if self.instance.account_mode == Report.MODE_IGNORE:
-                overrides['account_position'] = self.instance.master_user.account
-                overrides['account_cash'] = self.instance.master_user.account
-                overrides['account_interim'] = self.instance.master_user.account
-
-            if self.instance.strategy1_mode == Report.MODE_IGNORE:
-                overrides['strategy1_position'] = self.instance.master_user.strategy1
-                overrides['strategy1_cash'] = self.instance.master_user.strategy1
-
-            if self.instance.strategy2_mode == Report.MODE_IGNORE:
-                overrides['strategy2_position'] = self.instance.master_user.strategy2
-                overrides['strategy2_cash'] = self.instance.master_user.strategy2
-
-            if self.instance.strategy3_mode == Report.MODE_IGNORE:
-                overrides['strategy3_position'] = self.instance.master_user.strategy3
-                overrides['strategy3_cash'] = self.instance.master_user.strategy3
-
-            if self.instance.allocation_mode == Report.MODE_IGNORE:
-                overrides['allocation_balance'] = self.instance.master_user.instrument
-                overrides['allocation_pl'] = self.instance.master_user.instrument
 
             trn = self.trn_cls(
                 report=self.instance,
