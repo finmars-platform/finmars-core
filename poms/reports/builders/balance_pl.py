@@ -492,7 +492,7 @@ class ReportBuilder(BaseReportBuilder):
         if not trn_qs.exists():
             return
 
-        iteration_st = time.perf_counter()
+
 
         overrides = {}
 
@@ -520,6 +520,8 @@ class ReportBuilder(BaseReportBuilder):
             overrides['allocation_balance'] = self.instance.master_user.instrument
             overrides['allocation_pl'] = self.instance.master_user.instrument
 
+        iteration_st = time.perf_counter()
+
         for t in trn_qs:
 
             t_st = time.perf_counter()
@@ -542,6 +544,9 @@ class ReportBuilder(BaseReportBuilder):
             )
             self._original_transactions.append(otrn)
 
+            _l.debug('t size " %s', sys.getsizeof(t))
+            _l.debug('trn size " %s', sys.getsizeof(trn))
+            _l.debug('otrn size " %s', sys.getsizeof(otrn))
             _l.debug('t trn_qs_st done: %s', (time.perf_counter() - t_st))
 
         _l.debug('_load_transactions iteration_st done: %s', (time.perf_counter() - iteration_st))
