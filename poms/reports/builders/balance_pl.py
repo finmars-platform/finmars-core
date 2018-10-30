@@ -538,10 +538,12 @@ class ReportBuilder(BaseReportBuilder):
                 overrides=overrides
             )
 
-            _l.debug('t trn_qs_st done: %s', format((time.perf_counter() - trn_st), 'f'))
+            _l.debug('t trn_st done: %s', format((time.perf_counter() - trn_st), 'f'))
 
             # trn.key = self._get_trn_group_key(trn)
             self._transactions.append(trn)
+
+            otrn_st = time.perf_counter()
 
             otrn = self.trn_cls(
                 report=self.instance,
@@ -549,6 +551,9 @@ class ReportBuilder(BaseReportBuilder):
                 fx_rate_provider=self.fx_rate_provider,
                 trn=t,
             )
+
+            _l.debug('t otrn_st done: %s', format((time.perf_counter() - otrn_st), 'f'))
+
             self._original_transactions.append(otrn)
 
             diff = (time.perf_counter() - t_st)
