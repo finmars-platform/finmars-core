@@ -529,45 +529,47 @@ class ReportBuilder(BaseReportBuilder):
         _pricing_provider = self.pricing_provider
         _fx_rate_provider = self.fx_rate_provider
 
+        trn_qs_list_st = time.perf_counter()
+
+        trn_qs_list = list(trn_qs)
+
+        _l.debug('t trn_qs_list_st evaluation done: %s', (time.perf_counter() - trn_qs_list_st))
+
         iteration_st = time.perf_counter()
 
-        _l.debug(len(trn_qs))
-
-        force_qs_evaluation(trn_qs)
-
-        for t in trn_qs:
+        for t in trn_qs_list:
 
             total_items = total_items + 1
 
             t_st = time.perf_counter()
 
-            # trn_st = time.perf_counter()
+            trn_st = time.perf_counter()
 
-            # trn = _trn_cls_create(
-            #     report=_instance,
-            #     pricing_provider=_pricing_provider,
-            #     fx_rate_provider=_fx_rate_provider,
-            #     trn=t,
-            #     overrides=overrides
-            # )
-            #
-            # # _l.debug('t trn_st done: %s', format((time.perf_counter() - trn_st), 'f'))
-            #
-            # # trn.key = self._get_trn_group_key(trn)
-            # _transactions_append(trn)
-            #
-            # # otrn_st = time.perf_counter()
-            #
-            # otrn = _trn_cls_create(
-            #     report=_instance,
-            #     pricing_provider=_pricing_provider,
-            #     fx_rate_provider=_fx_rate_provider,
-            #     trn=t,
-            # )
-            #
-            # # _l.debug('t otrn_st done: %s', format((time.perf_counter() - otrn_st), 'f'))
-            #
-            # _original_transactions_append(otrn)
+            trn = _trn_cls_create(
+                report=_instance,
+                pricing_provider=_pricing_provider,
+                fx_rate_provider=_fx_rate_provider,
+                trn=t,
+                overrides=overrides
+            )
+
+            # _l.debug('t trn_st done: %s', format((time.perf_counter() - trn_st), 'f'))
+
+            # trn.key = self._get_trn_group_key(trn)
+            _transactions_append(trn)
+
+            # otrn_st = time.perf_counter()
+
+            otrn = _trn_cls_create(
+                report=_instance,
+                pricing_provider=_pricing_provider,
+                fx_rate_provider=_fx_rate_provider,
+                trn=t,
+            )
+
+            # _l.debug('t otrn_st done: %s', format((time.perf_counter() - otrn_st), 'f'))
+
+            _original_transactions_append(otrn)
 
             diff = (time.perf_counter() - t_st)
 
