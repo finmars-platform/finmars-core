@@ -517,9 +517,8 @@ class ReportBuilder(BaseReportBuilder):
             overrides['allocation_balance'] = self.instance.master_user.instrument
             overrides['allocation_pl'] = self.instance.master_user.instrument
 
-        iteration_st = time.perf_counter()
-
         total_st = 0
+        total_items = 0
 
         _transactions_append = self._transactions.append
         _original_transactions_append = self._original_transactions.append
@@ -530,7 +529,11 @@ class ReportBuilder(BaseReportBuilder):
         _pricing_provider = self.pricing_provider
         _fx_rate_provider = self.fx_rate_provider
 
+        iteration_st = time.perf_counter()
+
         for t in trn_qs:
+
+            total_items = total_items + 1
 
             t_st = time.perf_counter()
 
@@ -569,6 +572,7 @@ class ReportBuilder(BaseReportBuilder):
             total_st = total_st + diff
 
         _l.debug('_load_transactions total_st done: %s', total_st)
+        _l.debug('_load_transactions total_items done: %s', total_items)
         _l.debug('_load_transactions iteration_st done: %s', (time.perf_counter() - iteration_st))
 
         # _l.debug('transactions - len=%s', len(self._transactions))
