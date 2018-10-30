@@ -491,9 +491,6 @@ class ReportBuilder(BaseReportBuilder):
 
         if not trn_qs.exists():
             return
-
-
-
         overrides = {}
 
         if self.instance.portfolio_mode == Report.MODE_IGNORE:
@@ -524,13 +521,18 @@ class ReportBuilder(BaseReportBuilder):
 
         total_st = 0
 
+        _transactions_append = self._transactions.append
+        _original_transactions_append = self._original_transactions.append
+
+        _trn_cls_create = self.trn_cls
+
         for t in trn_qs:
 
             t_st = time.perf_counter()
 
             trn_st = time.perf_counter()
 
-            trn = self.trn_cls(
+            trn = _trn_cls_create(
                 report=self.instance,
                 pricing_provider=self.pricing_provider,
                 fx_rate_provider=self.fx_rate_provider,
@@ -541,11 +543,11 @@ class ReportBuilder(BaseReportBuilder):
             _l.debug('t trn_st done: %s', format((time.perf_counter() - trn_st), 'f'))
 
             # trn.key = self._get_trn_group_key(trn)
-            self._transactions.append(trn)
+            _transactions_append(trn)
 
             otrn_st = time.perf_counter()
 
-            otrn = self.trn_cls(
+            otrn = _trn_cls_create(
                 report=self.instance,
                 pricing_provider=self.pricing_provider,
                 fx_rate_provider=self.fx_rate_provider,
@@ -554,7 +556,7 @@ class ReportBuilder(BaseReportBuilder):
 
             _l.debug('t otrn_st done: %s', format((time.perf_counter() - otrn_st), 'f'))
 
-            self._original_transactions.append(otrn)
+            _original_transactions_append(otrn)
 
             diff = (time.perf_counter() - t_st)
 
