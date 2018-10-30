@@ -8,7 +8,7 @@ from itertools import groupby
 from django.conf import settings
 from django.db.models import Q
 
-from poms.common.utils import isclose
+from poms.common.utils import isclose, force_qs_evaluation
 from poms.instruments.models import CostMethod, InstrumentClass
 from poms.reports.builders.balance_item import ReportItem, Report
 from poms.reports.builders.balance_virt_trn import VirtualTransaction
@@ -530,6 +530,10 @@ class ReportBuilder(BaseReportBuilder):
         _fx_rate_provider = self.fx_rate_provider
 
         iteration_st = time.perf_counter()
+
+        _l.debug(len(trn_qs))
+
+        force_qs_evaluation(trn_qs)
 
         for t in trn_qs:
 
