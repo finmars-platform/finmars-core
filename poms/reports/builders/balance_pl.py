@@ -517,8 +517,8 @@ class ReportBuilder(BaseReportBuilder):
             overrides['allocation_balance'] = self.instance.master_user.instrument
             overrides['allocation_pl'] = self.instance.master_user.instrument
 
-        total_st = 0
-        total_items = 0
+        # total_st = 0
+        # total_items = 0
 
         _transactions_append = self._transactions.append
         _original_transactions_append = self._original_transactions.append
@@ -535,15 +535,15 @@ class ReportBuilder(BaseReportBuilder):
 
         _l.debug('t trn_qs_list_st evaluation done: %s', (time.perf_counter() - trn_qs_list_st))
 
-        iteration_st = time.perf_counter()
+        # iteration_st = time.perf_counter()
 
         for t in trn_qs_list:
 
-            total_items = total_items + 1
-
-            t_st = time.perf_counter()
-
-            trn_st = time.perf_counter()
+            # total_items = total_items + 1
+            #
+            # t_st = time.perf_counter()
+            #
+            # trn_st = time.perf_counter()
 
             trn = _trn_cls_create(
                 report=_instance,
@@ -571,15 +571,15 @@ class ReportBuilder(BaseReportBuilder):
 
             _original_transactions_append(otrn)
 
-            diff = (time.perf_counter() - t_st)
+            # diff = (time.perf_counter() - t_st)
 
-            _l.debug('t trn_qs_st done: %s', format(diff, 'f'))
+            # _l.debug('t trn_qs_st done: %s', format(diff, 'f'))
 
-            total_st = total_st + diff
+            # total_st = total_st + diff
 
-        _l.debug('_load_transactions total_st done: %s', total_st)
-        _l.debug('_load_transactions total_items done: %s', total_items)
-        _l.debug('_load_transactions iteration_st done: %s', (time.perf_counter() - iteration_st))
+        # _l.debug('_load_transactions total_st done: %s', total_st)
+        # _l.debug('_load_transactions total_items done: %s', total_items)
+        # _l.debug('_load_transactions iteration_st done: %s', (time.perf_counter() - iteration_st))
 
         # _l.debug('transactions - len=%s', len(self._transactions))
 
