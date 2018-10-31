@@ -724,17 +724,8 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                 for attr, value in action_transaction_data.items():
                     if attr.endswith('_input') and value:
                         try:
-
-                            print('attr %s' % attr)
-                            print(attr)
-                            print(inputs[value])
-
                             action_transaction_data[attr] = inputs[value]
                         except KeyError:
-
-                            print('ValidationError %s' % value)
-                            print('ValidationError KeyError %s' % KeyError)
-
                             raise ValidationError('Invalid input "%s"' % value)
                     if attr == 'instrument_phantom' and value is not None:
                         try:
@@ -771,6 +762,13 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                             action_instrument_factor_schedule_data[attr] = inputs[value]
                         except KeyError:
                             raise ValidationError('Invalid input "%s"' % value)
+
+                    if attr == 'instrument_phantom' and value is not None:
+                        try:
+                            action_instrument_factor_schedule_data[attr] = actions[value]
+                        except IndexError:
+                            raise ValidationError('Invalid action order "%s"' % value)
+
 
                 action_instrument_factor_schedule = None
                 if action:
