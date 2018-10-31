@@ -791,6 +791,29 @@ class TransactionTypeActionTransaction(TransactionTypeAction):
         return 'Transaction action #%s' % self.order
 
 
+class TransactionTypeActionInstrumentFactorSchedule(TransactionTypeAction):
+    instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+                                   verbose_name=ugettext_lazy('instrument'))
+    instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+                                         related_name='+', verbose_name=ugettext_lazy('instrument input'))
+    instrument_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
+                                           on_delete=models.PROTECT, related_name='+',
+                                           verbose_name=ugettext_lazy('instrument phantom'))
+
+    effective_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                       verbose_name=ugettext_lazy('effective date'))
+
+    factor_value = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.0',
+                                    verbose_name=ugettext_lazy('factor_value'))
+
+    class Meta:
+        verbose_name = ugettext_lazy('transaction type action instrument factor schedule')
+        verbose_name_plural = ugettext_lazy('transaction type action instrument factor schedules')
+
+    def __str__(self):
+        return 'InstrumentFactor action #%s' % self.order
+
+
 class EventToHandle(NamedModel):
     master_user = models.ForeignKey(MasterUser, related_name='events_to_handle',
                                     verbose_name=ugettext_lazy('master user'))

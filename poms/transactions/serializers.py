@@ -34,7 +34,8 @@ from poms.transactions.fields import TransactionTypeInputContentTypeField, \
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import TransactionClass, Transaction, TransactionType, TransactionTypeAction, \
     TransactionTypeActionTransaction, TransactionTypeActionInstrument, TransactionTypeInput, TransactionTypeGroup, \
-    ComplexTransaction, EventClass, NotificationClass, ComplexTransactionInput
+    ComplexTransaction, EventClass, NotificationClass, ComplexTransactionInput, \
+    TransactionTypeActionInstrumentFactorSchedule
 from poms.users.fields import MasterUserField
 
 
@@ -541,21 +542,49 @@ class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
         self.fields['allocation_pl_object'] = InstrumentViewSerializer(source='allocation_pl', read_only=True)
 
 
+class TransactionTypeActionInstrumentFactorScheduleSerializer(serializers.ModelSerializer):
+    instrument = InstrumentField(required=False, allow_null=True)
+    instrument_input = TransactionInputField(required=False, allow_null=True)
+    instrument_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
+
+    effective_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+    factor_value = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
+
+    class Meta:
+        model = TransactionTypeActionInstrumentFactorSchedule
+        fields = [
+            'instrument',
+            'instrument_input',
+            'instrument_phantom',
+
+            'effective_date',
+            'factor_value'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(TransactionTypeActionInstrumentFactorScheduleSerializer, self).__init__(*args, **kwargs)
+
+        from poms.instruments.serializers import InstrumentViewSerializer
+
+        self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
+
+
 class TransactionTypeActionSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, allow_null=True)
     transaction = TransactionTypeActionTransactionSerializer(source='transactiontypeactiontransaction', required=False,
                                                              allow_null=True)
     instrument = TransactionTypeActionInstrumentSerializer(source='transactiontypeactioninstrument', required=False,
                                                            allow_null=True)
+    instrument_factor_schedule = TransactionTypeActionInstrumentFactorScheduleSerializer(source='transactiontypeactioninstrumentfactorschedule', required=False,
+                                                           allow_null=True)
 
     class Meta:
         model = TransactionTypeAction
-        fields = ['id', 'order', 'action_notes', 'transaction', 'instrument']
+        fields = ['id', 'order', 'action_notes', 'transaction', 'instrument', 'instrument_factor_schedule']
 
     def validate(self, attrs):
         # TODO: transaction or instrument present
         return attrs
-
 
 
 class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
@@ -646,7 +675,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
 
     def save_actions(self, instance, actions_data, inputs):
         actions_qs = instance.actions.select_related(
-            'transactiontypeactioninstrument', 'transactiontypeactiontransaction').order_by('order', 'id')
+            'transactiontypeactioninstrument', 'transactiontypeactiontransaction', 'transactiontypeactioninstrumentfactorschedule').order_by('order', 'id')
         existed_actions = {a.id: a for a in actions_qs}
 
         if inputs is None or inputs is empty:
@@ -691,12 +720,6 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             action_transaction_data = action_data.get('transaction',
                                                       action_data.get('transactiontypeactiontransaction'))
 
-            print('action_transaction_data')
-            print(action_transaction_data)
-
-            print('inputs ')
-            print(inputs)
-
             if action_transaction_data:
                 for attr, value in action_transaction_data.items():
                     if attr.endswith('_input') and value:
@@ -735,6 +758,36 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
 
                 action_transaction.save()
                 actions[order] = action_transaction
+
+        for order, action_data in enumerate(actions_data):
+            pk = action_data.pop('id', None)
+            action = existed_actions.get(pk, None)
+
+            action_instrument_factor_schedule_data = action_data.get('instrument_factor_schedule', action_data.get('transactiontypeactioninstrumentfactorschedule'))
+            if action_instrument_factor_schedule_data:
+                for attr, value in action_instrument_factor_schedule_data.items():
+                    if attr.endswith('_input') and value:
+                        try:
+                            action_instrument_factor_schedule_data[attr] = inputs[value]
+                        except KeyError:
+                            raise ValidationError('Invalid input "%s"' % value)
+
+                action_instrument_factor_schedule = None
+                if action:
+                    try:
+                        action_instrument_factor_schedule = action.transactiontypeactioninstrument
+                    except ObjectDoesNotExist:
+                        pass
+                if action_instrument_factor_schedule is None:
+                    action_instrument_factor_schedule = TransactionTypeActionInstrumentFactorSchedule(transaction_type=instance)
+
+                action_instrument_factor_schedule.order = order
+                action_instrument_factor_schedule.action_notes = action_data.get('action_notes', action_instrument_factor_schedule.action_notes)
+                for attr, value in action_instrument_factor_schedule_data.items():
+                    setattr(action_instrument_factor_schedule, attr, value)
+
+                action_instrument_factor_schedule.save()
+                actions[order] = action_instrument_factor_schedule
 
         return actions
 

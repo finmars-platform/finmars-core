@@ -307,6 +307,12 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
                 'transactiontypeactiontransaction__allocation_pl_phantom',
                 'transactiontypeactiontransaction__allocation_pl__instrument_type',
                 'transactiontypeactiontransaction__allocation_pl__instrument_type__instrument_class',
+
+
+                'transactiontypeactioninstrumentfactorschedule__instrument',
+                'transactiontypeactioninstrumentfactorschedule__instrument_input',
+                'transactiontypeactioninstrumentfactorschedule__instrument_phantom'
+
             ).prefetch_related(
                 *get_permissions_prefetch_lookups(
                     ('transactiontypeactioninstrument__instrument_type', InstrumentType),
@@ -348,6 +354,10 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
                     ('transactiontypeactiontransaction__allocation_balance__instrument_type', InstrumentType),
                     ('transactiontypeactiontransaction__allocation_pl', Instrument),
                     ('transactiontypeactiontransaction__allocation_pl__instrument_type', InstrumentType),
+
+                    ('transactiontypeactioninstrumentfactorschedule__instrument', Instrument),
+                    ('transactiontypeactioninstrumentfactorschedule__instrument__instrument_type', InstrumentType)
+
                 )
             )
         ),

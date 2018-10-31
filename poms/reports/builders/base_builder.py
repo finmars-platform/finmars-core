@@ -184,6 +184,7 @@ class BaseReportBuilder:
         return qs
 
     def _trn_qs(self):
+
         qs = self._queryset if self._queryset is not None else Transaction.objects
         qs = qs.filter(
             master_user=self.instance.master_user,
