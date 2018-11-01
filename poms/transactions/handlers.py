@@ -11,7 +11,7 @@ from poms.common.utils import date_now
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDetail, PricingPolicy, Periodicity, \
-    AccrualCalculationModel, InstrumentFactorSchedule
+    AccrualCalculationModel, InstrumentFactorSchedule, ManualPricingFormula, AccrualCalculationSchedule
 from poms.instruments.models import InstrumentType
 from poms.integrations.models import PriceDownloadScheme
 from poms.obj_perms.utils import assign_perms3
@@ -358,6 +358,120 @@ class TransactionTypeProcess(object):
                         _l.debug(errors)
                         # self.instruments_errors.append(errors)
 
+    def create_manual_pricing_formulas(self, actions, instrument_map):
+
+        for order, action in enumerate(actions):
+            try:
+                action_instrument_manual_pricing_formula = action.transactiontypeactioninstrumentmanualpricingformula
+            except ObjectDoesNotExist:
+                action_instrument_manual_pricing_formula = None
+
+            if action_instrument_manual_pricing_formula:
+
+                errors = {}
+
+                manual_pricing_formula = ManualPricingFormula()
+
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=manual_pricing_formula, target_attr_name='instrument',
+                              source=action_instrument_manual_pricing_formula, source_attr_name='instrument')
+                if action_instrument_manual_pricing_formula.instrument_phantom is not None:
+                    manual_pricing_formula.instrument = instrument_map[
+                        action_instrument_manual_pricing_formula.instrument_phantom_id]
+
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=manual_pricing_formula, target_attr_name='pricing_policy',
+                              source=action_instrument_manual_pricing_formula, source_attr_name='pricing_policy')
+
+                self._set_val(errors=errors, values=self.values, default_value='',
+                              target=manual_pricing_formula, target_attr_name='expr',
+                              source=action_instrument_manual_pricing_formula, source_attr_name='expr')
+
+                self._set_val(errors=errors, values=self.values, default_value='',
+                              target=manual_pricing_formula, target_attr_name='notes',
+                              source=action_instrument_manual_pricing_formula, source_attr_name='notes')
+
+                try:
+
+                    manual_pricing_formula.save()
+
+                except (ValueError, TypeError, IntegrityError):
+
+                    self._add_err_msg(errors, 'non_field_errors',
+                                      ugettext(
+                                          'Invalid instrument manual pricing formula action fields (please, use type convertion).'))
+                except DatabaseError:
+                    self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
+                finally:
+                    if bool(errors):
+                        _l.debug(errors)
+                        # self.instruments_errors.append(errors)
+
+    def create_accrual_calculation_schedules(self, actions, instrument_map):
+
+        for order, action in enumerate(actions):
+            try:
+                action_instrument_accrual_calculation_schedule = action.transactiontypeactioninstrumentaccrualcalculationschedules
+            except ObjectDoesNotExist:
+                action_instrument_accrual_calculation_schedule = None
+
+            if action_instrument_accrual_calculation_schedule:
+
+                errors = {}
+
+                accrual_calculation_schedule = AccrualCalculationSchedule()
+
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=accrual_calculation_schedule, target_attr_name='instrument',
+                              source=action_instrument_accrual_calculation_schedule, source_attr_name='instrument')
+                if action_instrument_accrual_calculation_schedule.instrument_phantom is not None:
+                    accrual_calculation_schedule.instrument = instrument_map[
+                        action_instrument_accrual_calculation_schedule.instrument_phantom_id]
+
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=accrual_calculation_schedule, target_attr_name='accrual_calculation_model',
+                              source=action_instrument_accrual_calculation_schedule, source_attr_name='accrual_calculation_model')
+
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=accrual_calculation_schedule, target_attr_name='periodicity',
+                              source=action_instrument_accrual_calculation_schedule, source_attr_name='periodicity')
+
+                self._set_val(errors=errors, values=self.values, default_value='', validator=formula.validate_date,
+                              target=accrual_calculation_schedule, target_attr_name='accrual_start_date',
+                              source=action_instrument_accrual_calculation_schedule, source_attr_name='accrual_start_date')
+
+                self._set_val(errors=errors, values=self.values, default_value='', validator=formula.validate_date,
+                              target=accrual_calculation_schedule, target_attr_name='first_payment_date',
+                              source=action_instrument_accrual_calculation_schedule, source_attr_name='first_payment_date')
+
+                self._set_val(errors=errors, values=self.values, default_value='',
+                              target=accrual_calculation_schedule, target_attr_name='accrual_size',
+                              source=action_instrument_accrual_calculation_schedule, source_attr_name='accrual_size')
+
+                self._set_val(errors=errors, values=self.values, default_value='',
+                              target=accrual_calculation_schedule, target_attr_name='periodicity_n',
+                              source=action_instrument_accrual_calculation_schedule, source_attr_name='periodicity_n')
+
+                self._set_val(errors=errors, values=self.values, default_value='',
+                              target=accrual_calculation_schedule, target_attr_name='notes',
+                              source=action_instrument_accrual_calculation_schedule, source_attr_name='notes')
+
+                try:
+
+                    accrual_calculation_schedule.save()
+
+                except (ValueError, TypeError, IntegrityError):
+
+                    self._add_err_msg(errors, 'non_field_errors',
+                                      ugettext(
+                                          'Invalid instrument accrual calculation schedule action fields (please, use type convertion).'))
+                except DatabaseError:
+                    self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
+                finally:
+                    if bool(errors):
+                        _l.debug(errors)
+                        # self.instruments_errors.append(errors)
+
     def create_transactions(self, actions, master_user, instrument_map):
 
         for order, action in enumerate(actions):
@@ -526,6 +640,8 @@ class TransactionTypeProcess(object):
         instrument_map = self.create_instruments(actions, master_user, instrument_map)
 
         self.create_factor_schedules(actions, instrument_map)
+        self.create_manual_pricing_formulas(actions, instrument_map)
+        self.create_accrual_calculation_schedules(actions, instrument_map)
 
         # complex_transaction
         complex_transaction_errors = {}
