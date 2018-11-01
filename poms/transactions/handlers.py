@@ -10,7 +10,8 @@ from poms.common import formula
 from poms.common.utils import date_now
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
-from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDetail
+from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDetail, PricingPolicy, Periodicity, \
+    AccrualCalculationModel, InstrumentFactorSchedule
 from poms.instruments.models import InstrumentType
 from poms.integrations.models import PriceDownloadScheme
 from poms.obj_perms.utils import assign_perms3
@@ -133,6 +134,12 @@ class TransactionTypeProcess(object):
                 return obj.portfolio
             elif issubclass(model_class, PriceDownloadScheme):
                 return obj.price_download_scheme
+            elif issubclass(model_class, PricingPolicy):
+                return obj.pricing_policy
+            elif issubclass(model_class, Periodicity):
+                return obj.periodicity
+            elif issubclass(model_class, AccrualCalculationModel):
+                return obj.accrual_calculation_model
             return None
 
         self.values = {}
@@ -184,17 +191,10 @@ class TransactionTypeProcess(object):
                             value = None
             self.values[i.name] = value
 
-    def process(self):
-        if self.process_mode == self.MODE_RECALCULATE:
-            return self.process_recalculate()
-        _l.debug('process: %s, values=%s', self.transaction_type, self.values)
+    def create_instruments(self, actions, master_user, instrument_map):
 
-        master_user = self.transaction_type.master_user
         object_permissions = self.transaction_type.object_permissions.select_related('permission').all()
         daily_pricing_model = DailyPricingModel.objects.get(pk=DailyPricingModel.SKIP)
-
-        instrument_map = {}
-        actions = self.transaction_type.actions.order_by('order').all()
 
         for order, action in enumerate(actions):
             try:
@@ -221,7 +221,6 @@ class TransactionTypeProcess(object):
                         continue
                     except ObjectDoesNotExist:
                         pass
-
 
                 instrument = Instrument(master_user=master_user)
                 # results[action_instr.order] = instr
@@ -310,18 +309,56 @@ class TransactionTypeProcess(object):
                     if bool(errors):
                         self.instruments_errors.append(errors)
 
-        # complex_transaction
-        complex_transaction_errors = {}
-        if self.complex_transaction.date is None:
-            self._set_val(errors=complex_transaction_errors, values=self.values, default_value=self._now,
-                          target=self.complex_transaction, target_attr_name='date',
-                          source=self.transaction_type, source_attr_name='date_expr',
-                          validator=formula.validate_date)
-            if bool(complex_transaction_errors):
-                self.complex_transaction_errors.append(complex_transaction_errors)
-            self.complex_transaction.save()
+        return instrument_map
 
-        # self.complex_transaction.transactions.all().delete()
+    def create_factor_schedules(self, actions, instrument_map):
+
+        for order, action in enumerate(actions):
+            try:
+                action_instrument_factor_schedule = action.transactiontypeactioninstrumentfactorschedule
+            except ObjectDoesNotExist:
+                action_instrument_factor_schedule = None
+
+            if action_instrument_factor_schedule:
+
+                errors = {}
+
+                factor = InstrumentFactorSchedule()
+
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=factor, target_attr_name='instrument',
+                              source=action_instrument_factor_schedule, source_attr_name='instrument')
+                if action_instrument_factor_schedule.instrument_phantom is not None:
+                    factor.instrument = instrument_map[
+                        action_instrument_factor_schedule.instrument_phantom_id]
+
+                self._set_val(errors=errors, values=self.values, default_value=self._now,
+                              target=factor, target_attr_name='effective_date', validator=formula.validate_date,
+                              source=action_instrument_factor_schedule, source_attr_name='effective_date')
+
+                self._set_val(errors=errors, values=self.values, default_value=0.0,
+                              target=factor, target_attr_name='factor_value',
+                              source=action_instrument_factor_schedule, source_attr_name='factor_value')
+
+                try:
+
+                    factor.save()
+
+                    # instrument.save()
+
+                except (ValueError, TypeError, IntegrityError):
+
+                    self._add_err_msg(errors, 'non_field_errors',
+                                      ugettext(
+                                          'Invalid instrument factor schedule action fields (please, use type convertion).'))
+                except DatabaseError:
+                    self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
+                finally:
+                    if bool(errors):
+                        _l.debug(errors)
+                        # self.instruments_errors.append(errors)
+
+    def create_transactions(self, actions, master_user, instrument_map):
 
         for order, action in enumerate(actions):
             try:
@@ -475,6 +512,35 @@ class TransactionTypeProcess(object):
                 finally:
                     if bool(errors):
                         self.transactions_errors.append(errors)
+
+    def process(self):
+        if self.process_mode == self.MODE_RECALCULATE:
+            return self.process_recalculate()
+        _l.debug('process: %s, values=%s', self.transaction_type, self.values)
+
+        master_user = self.transaction_type.master_user
+
+        instrument_map = {}
+        actions = self.transaction_type.actions.order_by('order').all()
+
+        instrument_map = self.create_instruments(actions, master_user, instrument_map)
+
+        self.create_factor_schedules(actions, instrument_map)
+
+        # complex_transaction
+        complex_transaction_errors = {}
+        if self.complex_transaction.date is None:
+            self._set_val(errors=complex_transaction_errors, values=self.values, default_value=self._now,
+                          target=self.complex_transaction, target_attr_name='date',
+                          source=self.transaction_type, source_attr_name='date_expr',
+                          validator=formula.validate_date)
+            if bool(complex_transaction_errors):
+                self.complex_transaction_errors.append(complex_transaction_errors)
+            self.complex_transaction.save()
+
+        # self.complex_transaction.transactions.all().delete()
+
+        self.create_transactions(actions, master_user, instrument_map)
 
         if not self.has_errors and self.transactions:
             for trn in self.transactions:

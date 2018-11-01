@@ -68,8 +68,11 @@ class TransactionTypeInputContentTypeField(SlugRelatedFilteredField):
 
     def to_internal_value(self, data):
         try:
+
             app_label, model = data.split('.')
+
             return self.get_queryset().get(app_label=app_label, model=model)
+
         except ObjectDoesNotExist:
             self.fail('does_not_exist', slug_name=self.slug_field, value=smart_text(data))
         except (TypeError, ValueError):

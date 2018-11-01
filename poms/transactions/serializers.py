@@ -17,8 +17,12 @@ from poms.counterparties.fields import ResponsibleField, CounterpartyField, Resp
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.fields import CurrencyField, CurrencyDefault, SystemCurrencyDefault
 from poms.currencies.models import Currency
-from poms.instruments.fields import InstrumentField, InstrumentTypeField, InstrumentDefault
-from poms.instruments.models import Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail
+from poms.instruments.fields import InstrumentField, InstrumentTypeField, InstrumentDefault, PricingPolicyField, \
+    AccrualCalculationModelField, PeriodicityField
+from poms.instruments.models import Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail, PricingPolicy, \
+    Periodicity, AccrualCalculationModel
+from poms.instruments.serializers import PricingPolicyViewSerializer, PeriodicitySerializer, \
+    AccrualCalculationModelSerializer
 from poms.integrations.fields import PriceDownloadSchemeField
 from poms.integrations.models import PriceDownloadScheme
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
@@ -35,7 +39,8 @@ from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import TransactionClass, Transaction, TransactionType, TransactionTypeAction, \
     TransactionTypeActionTransaction, TransactionTypeActionInstrument, TransactionTypeInput, TransactionTypeGroup, \
     ComplexTransaction, EventClass, NotificationClass, ComplexTransactionInput, \
-    TransactionTypeActionInstrumentFactorSchedule
+    TransactionTypeActionInstrumentFactorSchedule, TransactionTypeActionInstrumentManualPricingFormula, \
+    TransactionTypeActionInstrumentAccrualCalculationSchedules
 from poms.users.fields import MasterUserField
 
 
@@ -121,6 +126,10 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
     strategy2 = Strategy2Field(required=False, allow_null=True)
     strategy3 = Strategy3Field(required=False, allow_null=True)
     price_download_scheme = PriceDownloadSchemeField(required=False, allow_null=True)
+    pricing_policy = PricingPolicyField(required=False, allow_null=True)
+
+    periodicity = PeriodicityField(required=False, allow_null=True)
+    accrual_calculation_model = AccrualCalculationModelField(required=False, allow_null=True)
 
     # account_object = serializers.PrimaryKeyRelatedField(source='account', read_only=True)
     # instrument_type_object = serializers.PrimaryKeyRelatedField(source='instrument_type', read_only=True)
@@ -142,7 +151,7 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
             'id', 'name', 'verbose_name', 'value_type', 'content_type', 'order', 'can_recalculate', 'value_expr',
             'is_fill_from_context', 'value', 'account', 'instrument_type', 'instrument', 'currency', 'counterparty',
             'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3', 'daily_pricing_model',
-            'payment_size_detail', 'price_download_scheme',
+            'payment_size_detail', 'price_download_scheme', 'pricing_policy', 'periodicity', 'accrual_calculation_model'
             # 'account_object',
             # 'instrument_type_object',
             # 'instrument_object',
@@ -164,7 +173,7 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
 
         from poms.accounts.serializers import AccountViewSerializer
         from poms.instruments.serializers import InstrumentTypeViewSerializer, DailyPricingModelSerializer, \
-            PaymentSizeDetailSerializer
+            PaymentSizeDetailSerializer, PricingPolicySerializer
         from poms.currencies.serializers import CurrencyViewSerializer
         from poms.counterparties.serializers import CounterpartyViewSerializer, ResponsibleViewSerializer
         from poms.portfolios.serializers import PortfolioViewSerializer
@@ -193,6 +202,11 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
 
         self.fields['price_download_scheme_object'] = PriceDownloadSchemeViewSerializer(source='price_download_scheme',
                                                                                         read_only=True)
+        self.fields['pricing_policy_object'] = PricingPolicySerializer(source="pricing_policy", read_only=True)
+
+        self.fields['periodicity_object'] = PeriodicitySerializer(source="periodicity", read_only=True)
+        self.fields['accrual_calculation_model_object'] = AccrualCalculationModelSerializer(source="accrual_calculation_model",
+                                                                                  read_only=True)
 
     def validate(self, data):
         value_type = data['value_type']
@@ -228,12 +242,20 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
                     target_attr = 'portfolio'
                 elif issubclass(model_class, PriceDownloadScheme):
                     target_attr = 'price_download_scheme'
+                elif issubclass(model_class, PricingPolicy):
+                    target_attr = 'pricing_policy'
+                elif issubclass(model_class, Periodicity):
+                    target_attr = 'periodicity'
+                elif issubclass(model_class, AccrualCalculationModel):
+                    target_attr = 'accrual_calculation_model'
                 else:
                     raise ValidationError('Unknown content_type')
 
                 attrs = ['account', 'instrument_type', 'instrument', 'currency', 'counterparty', 'responsible',
                          'portfolio', 'strategy1', 'strategy2', 'strategy3', 'daily_pricing_model',
-                         'payment_size_detail', 'price_download_scheme', ]
+                         'payment_size_detail', 'price_download_scheme', 'pricing_policy', 'periodicity',
+                         'accrual_calculation_model']
+
                 for attr in attrs:
                     if attr != target_attr:
                         data[attr] = None
@@ -569,18 +591,111 @@ class TransactionTypeActionInstrumentFactorScheduleSerializer(serializers.ModelS
         self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
 
 
+class TransactionTypeActionInstrumentManualPricingFormulaSerializer(serializers.ModelSerializer):
+    instrument = InstrumentField(required=False, allow_null=True)
+    instrument_input = TransactionInputField(required=False, allow_null=True)
+    instrument_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
+
+    pricing_policy = PricingPolicyField(required=False, allow_null=True)
+    pricing_policy_input = TransactionInputField(required=False, allow_null=True)
+
+    expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False)
+    notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="")
+
+    class Meta:
+        model = TransactionTypeActionInstrumentFactorSchedule
+        fields = [
+            'instrument',
+            'instrument_input',
+            'instrument_phantom',
+
+            'pricing_policy',
+            'pricing_policy_input',
+
+            'expr',
+            'notes'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(TransactionTypeActionInstrumentManualPricingFormulaSerializer, self).__init__(*args, **kwargs)
+
+        from poms.instruments.serializers import InstrumentViewSerializer, PricingPolicySerializer
+
+        self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
+        self.fields['pricing_policy_object'] = PricingPolicySerializer(source='pricing_policy', read_only=True)
+
+
+class TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer(serializers.ModelSerializer):
+    instrument = InstrumentField(required=False, allow_null=True)
+    instrument_input = TransactionInputField(required=False, allow_null=True)
+    instrument_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
+
+    accrual_calculation_model = AccrualCalculationModelField(required=False, allow_null=True)
+    accrual_calculation_model_input = TransactionInputField(required=False, allow_null=True)
+
+    periodicity = PeriodicityField(required=False, allow_null=True)
+    periodicity_input = TransactionInputField(required=False, allow_null=True)
+
+    accrual_start_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+    first_payment_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+    accrual_size = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
+    periodicity_n = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+    notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+
+    class Meta:
+        model = TransactionTypeActionInstrumentFactorSchedule
+        fields = [
+            'instrument',
+            'instrument_input',
+            'instrument_phantom',
+
+            'accrual_calculation_model',
+            'accrual_calculation_model_input',
+
+            'periodicity',
+            'periodicity_input',
+
+            'accrual_start_date',
+            'first_payment_date',
+            'accrual_size',
+            'periodicity_n',
+            'notes'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer, self).__init__(*args, **kwargs)
+
+        from poms.instruments.serializers import InstrumentViewSerializer
+
+        self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
+
+        self.fields['periodicity_object'] = PeriodicitySerializer(source='periodicity', read_only=True)
+        self.fields['accrual_calculation_model_object'] = AccrualCalculationModelSerializer(
+            source='accrual_calculation_model', read_only=True)
+
+
 class TransactionTypeActionSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, allow_null=True)
     transaction = TransactionTypeActionTransactionSerializer(source='transactiontypeactiontransaction', required=False,
                                                              allow_null=True)
     instrument = TransactionTypeActionInstrumentSerializer(source='transactiontypeactioninstrument', required=False,
                                                            allow_null=True)
-    instrument_factor_schedule = TransactionTypeActionInstrumentFactorScheduleSerializer(source='transactiontypeactioninstrumentfactorschedule', required=False,
-                                                           allow_null=True)
+    instrument_factor_schedule = TransactionTypeActionInstrumentFactorScheduleSerializer(
+        source='transactiontypeactioninstrumentfactorschedule', required=False,
+        allow_null=True)
+
+    instrument_manual_pricing_formula = TransactionTypeActionInstrumentManualPricingFormulaSerializer(
+        source='transactiontypeactioninstrumentmanualpricingformula', required=False,
+        allow_null=True)
+
+    instrument_accrual_calculation_schedules = TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer(
+        source='transactiontypeactioninstrumentaccrualcalculationschedules', required=False, allow_null=True
+    )
 
     class Meta:
         model = TransactionTypeAction
-        fields = ['id', 'order', 'action_notes', 'transaction', 'instrument', 'instrument_factor_schedule']
+        fields = ['id', 'order', 'action_notes', 'transaction', 'instrument', 'instrument_factor_schedule',
+                  'instrument_manual_pricing_formula', 'instrument_accrual_calculation_schedules']
 
     def validate(self, attrs):
         # TODO: transaction or instrument present
@@ -660,6 +775,9 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
     def save_inputs(self, instance, inputs_data):
         cur_inputs = {i.id: i for i in instance.inputs.all()}
         new_inputs = []
+
+        print('instance %s' % instance)
+
         for order, inp_data in enumerate(inputs_data):
             # name = inp_data['name']
             pk = inp_data.pop('id', None)
@@ -675,7 +793,10 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
 
     def save_actions(self, instance, actions_data, inputs):
         actions_qs = instance.actions.select_related(
-            'transactiontypeactioninstrument', 'transactiontypeactiontransaction', 'transactiontypeactioninstrumentfactorschedule').order_by('order', 'id')
+            'transactiontypeactioninstrument', 'transactiontypeactiontransaction',
+            'transactiontypeactioninstrumentfactorschedule',
+            'transactiontypeactioninstrumentmanualpricingformula',
+            'transactiontypeactioninstrumentaccrualcalculationschedules').order_by('order', 'id')
         existed_actions = {a.id: a for a in actions_qs}
 
         if inputs is None or inputs is empty:
@@ -684,6 +805,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             inputs = {i.name: i for i in inputs}
 
         actions = [None for a in actions_data]
+
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop('id', None)
             action = existed_actions.get(pk, None)
@@ -754,7 +876,8 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             pk = action_data.pop('id', None)
             action = existed_actions.get(pk, None)
 
-            action_instrument_factor_schedule_data = action_data.get('instrument_factor_schedule', action_data.get('transactiontypeactioninstrumentfactorschedule'))
+            action_instrument_factor_schedule_data = action_data.get('instrument_factor_schedule', action_data.get(
+                'transactiontypeactioninstrumentfactorschedule'))
             if action_instrument_factor_schedule_data:
                 for attr, value in action_instrument_factor_schedule_data.items():
                     if attr.endswith('_input') and value:
@@ -769,23 +892,104 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                         except IndexError:
                             raise ValidationError('Invalid action order "%s"' % value)
 
-
                 action_instrument_factor_schedule = None
                 if action:
                     try:
-                        action_instrument_factor_schedule = action.transactiontypeactioninstrument
+                        action_instrument_factor_schedule = action.transactiontypeactioninstrumentfactorschedule
                     except ObjectDoesNotExist:
                         pass
                 if action_instrument_factor_schedule is None:
-                    action_instrument_factor_schedule = TransactionTypeActionInstrumentFactorSchedule(transaction_type=instance)
+                    action_instrument_factor_schedule = TransactionTypeActionInstrumentFactorSchedule(
+                        transaction_type=instance)
 
                 action_instrument_factor_schedule.order = order
-                action_instrument_factor_schedule.action_notes = action_data.get('action_notes', action_instrument_factor_schedule.action_notes)
+                action_instrument_factor_schedule.action_notes = action_data.get('action_notes',
+                                                                                 action_instrument_factor_schedule.action_notes)
                 for attr, value in action_instrument_factor_schedule_data.items():
                     setattr(action_instrument_factor_schedule, attr, value)
 
                 action_instrument_factor_schedule.save()
                 actions[order] = action_instrument_factor_schedule
+
+        for order, action_data in enumerate(actions_data):
+            pk = action_data.pop('id', None)
+            action = existed_actions.get(pk, None)
+
+            action_instrument_manual_pricing_formula_data = action_data.get('instrument_manual_pricing_formula',
+                                                                            action_data.get(
+                                                                                'transactiontypeactioninstrumentmanualpricingformula'))
+            if action_instrument_manual_pricing_formula_data:
+                for attr, value in action_instrument_manual_pricing_formula_data.items():
+                    if attr.endswith('_input') and value:
+                        try:
+                            action_instrument_manual_pricing_formula_data[attr] = inputs[value]
+                        except KeyError:
+                            raise ValidationError('Invalid input "%s"' % value)
+
+                    if attr == 'instrument_phantom' and value is not None:
+                        try:
+                            action_instrument_manual_pricing_formula_data[attr] = actions[value]
+                        except IndexError:
+                            raise ValidationError('Invalid action order "%s"' % value)
+
+                action_instrument_manual_pricing_formula = None
+                if action:
+                    try:
+                        action_instrument_manual_pricing_formula = action.transactiontypeactioninstrumentmanualpricingformula
+                    except ObjectDoesNotExist:
+                        pass
+                if action_instrument_manual_pricing_formula is None:
+                    action_instrument_manual_pricing_formula = TransactionTypeActionInstrumentManualPricingFormula(
+                        transaction_type=instance)
+
+                action_instrument_manual_pricing_formula.order = order
+                action_instrument_manual_pricing_formula.action_notes = action_data.get('action_notes',
+                                                                                        action_instrument_manual_pricing_formula.action_notes)
+                for attr, value in action_instrument_manual_pricing_formula_data.items():
+                    setattr(action_instrument_manual_pricing_formula, attr, value)
+
+                action_instrument_manual_pricing_formula.save()
+                actions[order] = action_instrument_manual_pricing_formula
+
+        for order, action_data in enumerate(actions_data):
+            pk = action_data.pop('id', None)
+            action = existed_actions.get(pk, None)
+
+            instrument_accrual_calculation_schedules_data = action_data.get('instrument_accrual_calculation_schedules',
+                                                                            action_data.get(
+                                                                                'transactiontypeactioninstrumentaccrualcalculationschedules'))
+            if instrument_accrual_calculation_schedules_data:
+                for attr, value in instrument_accrual_calculation_schedules_data.items():
+                    if attr.endswith('_input') and value:
+                        try:
+                            instrument_accrual_calculation_schedules_data[attr] = inputs[value]
+                        except KeyError:
+                            raise ValidationError('Invalid input "%s"' % value)
+
+                    if attr == 'instrument_phantom' and value is not None:
+                        try:
+                            instrument_accrual_calculation_schedules_data[attr] = actions[value]
+                        except IndexError:
+                            raise ValidationError('Invalid action order "%s"' % value)
+
+                instrument_accrual_calculation_schedules = None
+                if action:
+                    try:
+                        instrument_accrual_calculation_schedules = action.transactiontypeactioninstrumentaccrualcalculationschedules
+                    except ObjectDoesNotExist:
+                        pass
+                if instrument_accrual_calculation_schedules is None:
+                    instrument_accrual_calculation_schedules = TransactionTypeActionInstrumentAccrualCalculationSchedules(
+                        transaction_type=instance)
+
+                instrument_accrual_calculation_schedules.order = order
+                instrument_accrual_calculation_schedules.action_notes = action_data.get('action_notes',
+                                                                                        instrument_accrual_calculation_schedules.action_notes)
+                for attr, value in instrument_accrual_calculation_schedules_data.items():
+                    setattr(instrument_accrual_calculation_schedules, attr, value)
+
+                instrument_accrual_calculation_schedules.save()
+                actions[order] = instrument_accrual_calculation_schedules
 
         return actions
 
@@ -1138,6 +1342,7 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
         from poms.instruments.serializers import PaymentSizeDetailSerializer
         from poms.portfolios.serializers import PortfolioViewSerializer
         from poms.integrations.serializers import PriceDownloadSchemeViewSerializer
+        from poms.instruments.serializers import PricingPolicyViewSerializer
 
         # now = timezone.now().date()
         # master_user = get_master_user_from_context(self.context)
@@ -1163,6 +1368,8 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
 
             elif i.value_type == TransactionTypeInput.RELATION:
                 model_class = i.content_type.model_class()
+
+                print('model_class %s' % model_class)
 
                 if issubclass(model_class, Account):
                     field = AccountField(required=False, allow_null=True,
@@ -1230,6 +1437,21 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
                     field = PriceDownloadSchemeField(required=False, allow_null=True,
                                                      label=i.name, help_text=i.verbose_name)
                     field_object = PriceDownloadSchemeViewSerializer(source=name, read_only=True)
+
+                elif issubclass(model_class, PricingPolicy):
+                    field = PricingPolicyField(required=False, allow_null=True,
+                                               label=i.name, help_text=i.verbose_name)
+                    field_object = PricingPolicyViewSerializer(source=name, read_only=True)
+
+                elif issubclass(model_class, Periodicity):
+                    field = PeriodicityField(required=False, allow_null=True,
+                                             label=i.name, help_text=i.verbose_name)
+                    field_object = PeriodicitySerializer(source=name, read_only=True)
+
+                elif issubclass(model_class, AccrualCalculationModel):
+                    field = AccrualCalculationModelField(required=False, allow_null=True,
+                                                         label=i.name, help_text=i.verbose_name)
+                    field_object = AccrualCalculationModelSerializer(source=name, read_only=True)
 
             if field:
                 self.fields[name] = field
@@ -1481,6 +1703,8 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
             elif ti.value_type == TransactionTypeInput.RELATION:
                 model_class = ti.content_type.model_class()
 
+                print('model_class %s' % model_class)
+
                 if issubclass(model_class, Account):
                     ci.account = val
                 elif issubclass(model_class, Currency):
@@ -1507,5 +1731,11 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
                     ci.portfolio = val
                 elif issubclass(model_class, PriceDownloadScheme):
                     ci.price_download_scheme = val
+                elif issubclass(model_class, PricingPolicy):
+                    ci.pricing_policy = val
+                elif issubclass(model_class, Periodicity):
+                    ci.periodicity = val
+                elif issubclass(model_class, AccrualCalculationModel):
+                    ci.accrual_calculation_model = val
 
             ci.save()

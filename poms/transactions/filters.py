@@ -6,7 +6,8 @@ from poms.accounts.models import Account
 from poms.counterparties.models import Counterparty
 from poms.counterparties.models import Responsible
 from poms.currencies.models import Currency
-from poms.instruments.models import InstrumentType, Instrument, DailyPricingModel, PaymentSizeDetail
+from poms.instruments.models import InstrumentType, Instrument, DailyPricingModel, PaymentSizeDetail, PricingPolicy, \
+    Periodicity, AccrualCalculationModel
 from poms.integrations.models import PriceDownloadScheme
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
     ObjectPermissionPermissionFilter
@@ -57,7 +58,8 @@ class TransactionObjectPermissionFilter(BaseFilterBackend):
 class TransactionTypeInputContentTypeFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         models = [Account, Instrument, InstrumentType, Currency, Counterparty, Responsible, Portfolio,
-                  Strategy1, Strategy2, Strategy3, DailyPricingModel, PaymentSizeDetail, PriceDownloadScheme]
+                  Strategy1, Strategy2, Strategy3, DailyPricingModel, PaymentSizeDetail, PriceDownloadScheme,
+                  PricingPolicy, Periodicity, AccrualCalculationModel]
         ctypes = [ContentType.objects.get_for_model(model).pk for model in models]
         return queryset.filter(pk__in=ctypes)
 

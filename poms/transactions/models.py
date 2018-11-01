@@ -15,7 +15,7 @@ from poms.common.models import NamedModel, AbstractClassModel, FakeDeletableMode
 from poms.common.utils import date_now
 from poms.counterparties.models import Responsible, Counterparty
 from poms.currencies.models import Currency
-from poms.instruments.models import Instrument, InstrumentClass
+from poms.instruments.models import Instrument, InstrumentClass, PricingPolicy, AccrualCalculationModel, Periodicity
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
 from poms.portfolios.models import Portfolio
@@ -506,6 +506,17 @@ class TransactionTypeInput(models.Model):
     price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', null=True, blank=True,
                                               on_delete=models.PROTECT, related_name='+',
                                               verbose_name=ugettext_lazy('price download scheme'))
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', null=True, blank=True,
+                                       on_delete=models.PROTECT, related_name='+',
+                                       verbose_name=ugettext_lazy('pricing policy'))
+
+    periodicity = models.ForeignKey('instruments.Periodicity', null=True, blank=True,
+                                       on_delete=models.PROTECT, related_name='+',
+                                       verbose_name=ugettext_lazy('periodicity'))
+
+    accrual_calculation_model = models.ForeignKey('instruments.AccrualCalculationModel', null=True, blank=True,
+                                       on_delete=models.PROTECT, related_name='+',
+                                       verbose_name=ugettext_lazy('accrual calculation model'))
 
     class Meta:
         verbose_name = ugettext_lazy('transaction type input')
@@ -801,10 +812,10 @@ class TransactionTypeActionInstrumentFactorSchedule(TransactionTypeAction):
                                            verbose_name=ugettext_lazy('instrument phantom'))
 
     effective_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                       verbose_name=ugettext_lazy('effective date'))
+                                      verbose_name=ugettext_lazy('effective date'))
 
     factor_value = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.0',
-                                    verbose_name=ugettext_lazy('factor_value'))
+                                    verbose_name=ugettext_lazy('factor value'))
 
     class Meta:
         verbose_name = ugettext_lazy('transaction type action instrument factor schedule')
@@ -812,6 +823,81 @@ class TransactionTypeActionInstrumentFactorSchedule(TransactionTypeAction):
 
     def __str__(self):
         return 'InstrumentFactor action #%s' % self.order
+
+
+class TransactionTypeActionInstrumentManualPricingFormula(TransactionTypeAction):
+    instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+                                   verbose_name=ugettext_lazy('instrument'))
+    instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+                                         related_name='+', verbose_name=ugettext_lazy('instrument input'))
+    instrument_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
+                                           on_delete=models.PROTECT, related_name='+',
+                                           verbose_name=ugettext_lazy('instrument phantom'))
+
+    pricing_policy = models.ForeignKey(PricingPolicy, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+                                       verbose_name=ugettext_lazy('pricing policy'))
+    pricing_policy_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+                                             related_name='+', verbose_name=ugettext_lazy('pricing policy input'))
+
+    expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                            verbose_name=ugettext_lazy('expr'))
+
+    notes = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='',
+                             verbose_name=ugettext_lazy('notes'))
+
+    class Meta:
+        verbose_name = ugettext_lazy('transaction type action instrument manual pricing formula')
+        verbose_name_plural = ugettext_lazy('transaction type action instrument manual pricing formula')
+
+    def __str__(self):
+        return 'InstrumentManualPricingFormula action #%s' % self.order
+
+
+class TransactionTypeActionInstrumentAccrualCalculationSchedules(TransactionTypeAction):
+
+    instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+                                   verbose_name=ugettext_lazy('instrument'))
+    instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+                                         related_name='+', verbose_name=ugettext_lazy('instrument input'))
+    instrument_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
+                                           on_delete=models.PROTECT, related_name='+',
+                                           verbose_name=ugettext_lazy('instrument phantom'))
+
+    accrual_calculation_model = models.ForeignKey(AccrualCalculationModel, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+                                                  verbose_name=ugettext_lazy('accrual calculation model'))
+
+    accrual_calculation_model_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+                                                  related_name='+',
+                                                  verbose_name=ugettext_lazy('accrual calculation model input'))
+
+    periodicity = models.ForeignKey(Periodicity, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+                                                  verbose_name=ugettext_lazy('periodicity'))
+
+    periodicity_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+                                                        related_name='+',
+                                                        verbose_name=ugettext_lazy('periodicity input'))
+
+    accrual_start_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                      verbose_name=ugettext_lazy('accrual start date'))
+
+    first_payment_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                          verbose_name=ugettext_lazy('first payment date'))
+
+    accrual_size = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.0',
+                                    verbose_name=ugettext_lazy('accrual size'))
+
+    periodicity_n = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                    verbose_name=ugettext_lazy('periodicity n'))
+
+    notes = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='',
+                             verbose_name=ugettext_lazy('notes'))
+
+    class Meta:
+        verbose_name = ugettext_lazy('transaction type action instrument accrual calculation schedules')
+        verbose_name_plural = ugettext_lazy('transaction type action instrument accrual calculation schedules')
+
+    def __str__(self):
+        return 'InstrumentAccrualCalculationSchedules action #%s' % self.order
 
 
 class EventToHandle(NamedModel):
@@ -902,6 +988,10 @@ class ComplexTransactionInput(models.Model):
     price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', null=True, blank=True,
                                               on_delete=models.SET_NULL, related_name='+',
                                               verbose_name=ugettext_lazy('price download scheme'))
+
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', null=True, blank=True,
+                                              on_delete=models.SET_NULL, related_name='+',
+                                              verbose_name=ugettext_lazy('pricing policy'))
 
     class Meta:
         verbose_name = ugettext_lazy('complex transaction input')

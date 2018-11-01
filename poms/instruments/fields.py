@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from poms.common.fields import PrimaryKeyRelatedFilteredField
-from poms.instruments.models import Instrument, InstrumentType, PricingPolicy
+from poms.instruments.models import Instrument, InstrumentType, PricingPolicy, AccrualCalculationModel, Periodicity
 from poms.obj_perms.fields import PrimaryKeyRelatedFilteredWithObjectPermissionField
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -55,3 +55,11 @@ class PricingPolicyField(PrimaryKeyRelatedFilteredField):
     filter_backends = [
         OwnerByMasterUserFilter,
     ]
+
+
+class AccrualCalculationModelField(PrimaryKeyRelatedFilteredField):
+    queryset = AccrualCalculationModel.objects
+
+
+class PeriodicityField(PrimaryKeyRelatedFilteredField):
+    queryset = Periodicity.objects
