@@ -1,8 +1,10 @@
 from __future__ import unicode_literals
 
 from poms.common.fields import PrimaryKeyRelatedFilteredField
-from poms.instruments.models import Instrument, InstrumentType, PricingPolicy, AccrualCalculationModel, Periodicity
+from poms.instruments.models import Instrument, InstrumentType, PricingPolicy, AccrualCalculationModel, Periodicity, \
+    EventSchedule
 from poms.obj_perms.fields import PrimaryKeyRelatedFilteredWithObjectPermissionField
+from poms.transactions.models import NotificationClass, EventClass
 from poms.users.filters import OwnerByMasterUserFilter
 
 
@@ -63,3 +65,14 @@ class AccrualCalculationModelField(PrimaryKeyRelatedFilteredField):
 
 class PeriodicityField(PrimaryKeyRelatedFilteredField):
     queryset = Periodicity.objects
+
+
+class NotificationClassField(PrimaryKeyRelatedFilteredField):
+    queryset = NotificationClass.objects
+
+class EventClassField(PrimaryKeyRelatedFilteredField):
+    queryset = EventClass.objects
+
+
+class EventScheduleField(PrimaryKeyRelatedFilteredField):
+    queryset = EventSchedule.objects

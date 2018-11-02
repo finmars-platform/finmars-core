@@ -18,7 +18,7 @@ from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.fields import CurrencyField, CurrencyDefault, SystemCurrencyDefault
 from poms.currencies.models import Currency
 from poms.instruments.fields import InstrumentField, InstrumentTypeField, InstrumentDefault, PricingPolicyField, \
-    AccrualCalculationModelField, PeriodicityField
+    AccrualCalculationModelField, PeriodicityField, NotificationClassField, EventClassField, EventScheduleField
 from poms.instruments.models import Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail, PricingPolicy, \
     Periodicity, AccrualCalculationModel
 from poms.instruments.serializers import PricingPolicyViewSerializer, PeriodicitySerializer, \
@@ -34,13 +34,13 @@ from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Fiel
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeInputContentTypeField, \
-    TransactionTypeGroupField, ReadOnlyContentTypeField
+    TransactionTypeGroupField, ReadOnlyContentTypeField, TransactionTypeField
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import TransactionClass, Transaction, TransactionType, TransactionTypeAction, \
     TransactionTypeActionTransaction, TransactionTypeActionInstrument, TransactionTypeInput, TransactionTypeGroup, \
     ComplexTransaction, EventClass, NotificationClass, ComplexTransactionInput, \
     TransactionTypeActionInstrumentFactorSchedule, TransactionTypeActionInstrumentManualPricingFormula, \
-    TransactionTypeActionInstrumentAccrualCalculationSchedules
+    TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentEventSchedule
 from poms.users.fields import MasterUserField
 
 
@@ -98,6 +98,11 @@ class TransactionInputField(serializers.CharField):
 
 
 class TransactionTypeActionInstrumentPhantomField(serializers.IntegerField):
+    def to_representation(self, value):
+        return value.order if value else None
+
+
+class TransactionTypeActionInstrumentActionPhantomField(serializers.IntegerField):
     def to_representation(self, value):
         return value.order if value else None
 
@@ -205,8 +210,9 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
         self.fields['pricing_policy_object'] = PricingPolicySerializer(source="pricing_policy", read_only=True)
 
         self.fields['periodicity_object'] = PeriodicitySerializer(source="periodicity", read_only=True)
-        self.fields['accrual_calculation_model_object'] = AccrualCalculationModelSerializer(source="accrual_calculation_model",
-                                                                                  read_only=True)
+        self.fields['accrual_calculation_model_object'] = AccrualCalculationModelSerializer(
+            source="accrual_calculation_model",
+            read_only=True)
 
     def validate(self, data):
         value_type = data['value_type']
@@ -248,6 +254,10 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
                     target_attr = 'periodicity'
                 elif issubclass(model_class, AccrualCalculationModel):
                     target_attr = 'accrual_calculation_model'
+                elif issubclass(model_class, EventClass):
+                    target_attr = 'event_class'
+                elif issubclass(model_class, NotificationClass):
+                    target_attr = 'notification_class'
                 else:
                     raise ValidationError('Unknown content_type')
 
@@ -674,6 +684,100 @@ class TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer(seria
             source='accrual_calculation_model', read_only=True)
 
 
+class TransactionTypeActionInstrumentEventScheduleSerializer(serializers.ModelSerializer):
+    instrument = InstrumentField(required=False, allow_null=True)
+    instrument_input = TransactionInputField(required=False, allow_null=True)
+    instrument_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
+
+    periodicity = PeriodicityField(required=False, allow_null=True)
+    periodicity_input = TransactionInputField(required=False, allow_null=True)
+
+    notification_class = NotificationClassField(required=False, allow_null=True)
+    notification_class_input = TransactionInputField(required=False, allow_null=True)
+
+    event_class = EventClassField(required=False, allow_null=True)
+    event_class_input = TransactionInputField(required=False, allow_null=True)
+
+    effective_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+    final_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+    notify_in_n_days = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+    periodicity_n = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+    name = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+    description = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+
+    class Meta:
+        model = TransactionTypeActionInstrumentEventSchedule
+        fields = [
+            'instrument',
+            'instrument_input',
+            'instrument_phantom',
+
+            'periodicity',
+            'periodicity_input',
+
+            'notification_class',
+            'notification_class_input',
+
+            'event_class',
+            'event_class_input',
+
+            'effective_date',
+            'final_date',
+            'notify_in_n_days',
+            'periodicity_n',
+            'name',
+            'description'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(TransactionTypeActionInstrumentEventScheduleSerializer, self).__init__(*args, **kwargs)
+
+        from poms.instruments.serializers import InstrumentViewSerializer
+
+        self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
+        self.fields['periodicity_object'] = PeriodicitySerializer(source='periodicity', read_only=True)
+        self.fields['notification_class_object'] = NotificationClassSerializer(source='notification_class',
+                                                                               read_only=True)
+        self.fields['event_class_object'] = EventClassSerializer(source='event_class', read_only=True)
+
+
+class TransactionTypeActionInstrumentEventActionSerializer(serializers.ModelSerializer):
+    event_schedule = EventScheduleField(required=False, allow_null=True)
+    event_schedule_input = TransactionInputField(required=False, allow_null=True)
+    event_schedule_phantom = TransactionTypeActionInstrumentActionPhantomField(required=False, allow_null=True)
+
+    action_transaction_type = TransactionTypeField(required=False, allow_null=True)
+    action_transaction_type_input = TransactionInputField(required=False, allow_null=True)
+
+    is_book_automatic = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+    is_sent_to_pending = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+
+    button_position = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+
+    text = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+
+    class Meta:
+        model = TransactionTypeActionInstrumentEventSchedule
+        fields = [
+            'event_schedule',
+            'event_schedule_input',
+            'event_schedule_phantom',
+
+            'action_transaction_type',
+            'action_transaction_type_input',
+
+            'is_book_automatic',
+            'is_sent_to_pending',
+
+            'button_position',
+
+            'text'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(TransactionTypeActionInstrumentEventActionSerializer, self).__init__(*args, **kwargs)
+
+
 class TransactionTypeActionSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, allow_null=True)
     transaction = TransactionTypeActionTransactionSerializer(source='transactiontypeactiontransaction', required=False,
@@ -692,10 +796,19 @@ class TransactionTypeActionSerializer(serializers.ModelSerializer):
         source='transactiontypeactioninstrumentaccrualcalculationschedules', required=False, allow_null=True
     )
 
+    instrument_event_schedule = TransactionTypeActionInstrumentEventScheduleSerializer(
+        source='transactiontypeactioninstrumenteventschedule', required=False, allow_null=True
+    )
+
+    instrument_event_action = TransactionTypeActionInstrumentEventActionSerializer(
+        source='transactiontypeactioninstrumenteventaction', required=False, allow_null=True
+    )
+
     class Meta:
         model = TransactionTypeAction
         fields = ['id', 'order', 'action_notes', 'transaction', 'instrument', 'instrument_factor_schedule',
-                  'instrument_manual_pricing_formula', 'instrument_accrual_calculation_schedules']
+                  'instrument_manual_pricing_formula', 'instrument_accrual_calculation_schedules',
+                  'instrument_event_schedule', 'instrument_event_action']
 
     def validate(self, attrs):
         # TODO: transaction or instrument present
@@ -791,20 +904,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             new_inputs.append(inp)
         return new_inputs
 
-    def save_actions(self, instance, actions_data, inputs):
-        actions_qs = instance.actions.select_related(
-            'transactiontypeactioninstrument', 'transactiontypeactiontransaction',
-            'transactiontypeactioninstrumentfactorschedule',
-            'transactiontypeactioninstrumentmanualpricingformula',
-            'transactiontypeactioninstrumentaccrualcalculationschedules').order_by('order', 'id')
-        existed_actions = {a.id: a for a in actions_qs}
-
-        if inputs is None or inputs is empty:
-            inputs = {i.name: i for i in instance.inputs.all()}
-        else:
-            inputs = {i.name: i for i in inputs}
-
-        actions = [None for a in actions_data]
+    def save_actions_instrument(self, instance, inputs, actions, existed_actions, actions_data):
 
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop('id', None)
@@ -835,6 +935,8 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
 
                 action_instrument.save()
                 actions[order] = action_instrument
+
+    def save_actions_transaction(self, instance, inputs, actions, existed_actions, actions_data):
 
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop('id', None)
@@ -872,124 +974,204 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                 action_transaction.save()
                 actions[order] = action_transaction
 
+    def save_actions_instrument_factor_schedule(self, instance, inputs, actions, existed_actions, actions_data):
+
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop('id', None)
             action = existed_actions.get(pk, None)
 
-            action_instrument_factor_schedule_data = action_data.get('instrument_factor_schedule', action_data.get(
+            item_data = action_data.get('instrument_factor_schedule', action_data.get(
                 'transactiontypeactioninstrumentfactorschedule'))
-            if action_instrument_factor_schedule_data:
-                for attr, value in action_instrument_factor_schedule_data.items():
+            if item_data:
+                for attr, value in item_data.items():
                     if attr.endswith('_input') and value:
                         try:
-                            action_instrument_factor_schedule_data[attr] = inputs[value]
+                            item_data[attr] = inputs[value]
                         except KeyError:
                             raise ValidationError('Invalid input "%s"' % value)
 
                     if attr == 'instrument_phantom' and value is not None:
                         try:
-                            action_instrument_factor_schedule_data[attr] = actions[value]
+                            item_data[attr] = actions[value]
                         except IndexError:
                             raise ValidationError('Invalid action order "%s"' % value)
 
-                action_instrument_factor_schedule = None
+                item = None
                 if action:
                     try:
-                        action_instrument_factor_schedule = action.transactiontypeactioninstrumentfactorschedule
+                        item = action.transactiontypeactioninstrumentfactorschedule
                     except ObjectDoesNotExist:
                         pass
-                if action_instrument_factor_schedule is None:
-                    action_instrument_factor_schedule = TransactionTypeActionInstrumentFactorSchedule(
+                if item is None:
+                    item = TransactionTypeActionInstrumentFactorSchedule(
                         transaction_type=instance)
 
-                action_instrument_factor_schedule.order = order
-                action_instrument_factor_schedule.action_notes = action_data.get('action_notes',
-                                                                                 action_instrument_factor_schedule.action_notes)
-                for attr, value in action_instrument_factor_schedule_data.items():
-                    setattr(action_instrument_factor_schedule, attr, value)
+                item.order = order
+                item.action_notes = action_data.get('action_notes',
+                                                    item.action_notes)
+                for attr, value in item_data.items():
+                    setattr(item, attr, value)
 
-                action_instrument_factor_schedule.save()
-                actions[order] = action_instrument_factor_schedule
+                item.save()
+                actions[order] = item
+
+    def save_actions_instrument_manual_pricing_formula(self, instance, inputs, actions, existed_actions, actions_data):
 
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop('id', None)
             action = existed_actions.get(pk, None)
 
-            action_instrument_manual_pricing_formula_data = action_data.get('instrument_manual_pricing_formula',
-                                                                            action_data.get(
-                                                                                'transactiontypeactioninstrumentmanualpricingformula'))
-            if action_instrument_manual_pricing_formula_data:
-                for attr, value in action_instrument_manual_pricing_formula_data.items():
+            item_data = action_data.get('instrument_manual_pricing_formula',
+                                        action_data.get(
+                                            'transactiontypeactioninstrumentmanualpricingformula'))
+            if item_data:
+                for attr, value in item_data.items():
                     if attr.endswith('_input') and value:
                         try:
-                            action_instrument_manual_pricing_formula_data[attr] = inputs[value]
+                            item_data[attr] = inputs[value]
                         except KeyError:
                             raise ValidationError('Invalid input "%s"' % value)
 
                     if attr == 'instrument_phantom' and value is not None:
                         try:
-                            action_instrument_manual_pricing_formula_data[attr] = actions[value]
+                            item_data[attr] = actions[value]
                         except IndexError:
                             raise ValidationError('Invalid action order "%s"' % value)
 
-                action_instrument_manual_pricing_formula = None
+                item = None
                 if action:
                     try:
-                        action_instrument_manual_pricing_formula = action.transactiontypeactioninstrumentmanualpricingformula
+                        item = action.transactiontypeactioninstrumentmanualpricingformula
                     except ObjectDoesNotExist:
                         pass
-                if action_instrument_manual_pricing_formula is None:
-                    action_instrument_manual_pricing_formula = TransactionTypeActionInstrumentManualPricingFormula(
+                if item is None:
+                    item = TransactionTypeActionInstrumentManualPricingFormula(
                         transaction_type=instance)
 
-                action_instrument_manual_pricing_formula.order = order
-                action_instrument_manual_pricing_formula.action_notes = action_data.get('action_notes',
-                                                                                        action_instrument_manual_pricing_formula.action_notes)
-                for attr, value in action_instrument_manual_pricing_formula_data.items():
-                    setattr(action_instrument_manual_pricing_formula, attr, value)
+                item.order = order
+                item.action_notes = action_data.get('action_notes',
+                                                    item.action_notes)
+                for attr, value in item_data.items():
+                    setattr(item, attr, value)
 
-                action_instrument_manual_pricing_formula.save()
-                actions[order] = action_instrument_manual_pricing_formula
+                item.save()
+                actions[order] = item
+
+    def save_actions_instrument_accrual_calculation_schedule(self, instance, inputs, actions, existed_actions,
+                                                             actions_data):
 
         for order, action_data in enumerate(actions_data):
             pk = action_data.pop('id', None)
             action = existed_actions.get(pk, None)
 
-            instrument_accrual_calculation_schedules_data = action_data.get('instrument_accrual_calculation_schedules',
-                                                                            action_data.get(
-                                                                                'transactiontypeactioninstrumentaccrualcalculationschedules'))
-            if instrument_accrual_calculation_schedules_data:
-                for attr, value in instrument_accrual_calculation_schedules_data.items():
+            item_data = action_data.get('instrument_accrual_calculation_schedules',
+                                        action_data.get(
+                                            'transactiontypeactioninstrumentaccrualcalculationschedules'))
+            if item_data:
+                for attr, value in item_data.items():
                     if attr.endswith('_input') and value:
                         try:
-                            instrument_accrual_calculation_schedules_data[attr] = inputs[value]
+                            item_data[attr] = inputs[value]
                         except KeyError:
                             raise ValidationError('Invalid input "%s"' % value)
 
                     if attr == 'instrument_phantom' and value is not None:
                         try:
-                            instrument_accrual_calculation_schedules_data[attr] = actions[value]
+                            item_data[attr] = actions[value]
                         except IndexError:
                             raise ValidationError('Invalid action order "%s"' % value)
 
-                instrument_accrual_calculation_schedules = None
+                item = None
                 if action:
                     try:
-                        instrument_accrual_calculation_schedules = action.transactiontypeactioninstrumentaccrualcalculationschedules
+                        item = action.transactiontypeactioninstrumentaccrualcalculationschedules
                     except ObjectDoesNotExist:
                         pass
-                if instrument_accrual_calculation_schedules is None:
-                    instrument_accrual_calculation_schedules = TransactionTypeActionInstrumentAccrualCalculationSchedules(
+                if item is None:
+                    item = TransactionTypeActionInstrumentAccrualCalculationSchedules(
                         transaction_type=instance)
 
-                instrument_accrual_calculation_schedules.order = order
-                instrument_accrual_calculation_schedules.action_notes = action_data.get('action_notes',
-                                                                                        instrument_accrual_calculation_schedules.action_notes)
-                for attr, value in instrument_accrual_calculation_schedules_data.items():
-                    setattr(instrument_accrual_calculation_schedules, attr, value)
+                item.order = order
+                item.action_notes = action_data.get('action_notes',
+                                                    item.action_notes)
+                for attr, value in item_data.items():
+                    setattr(item, attr, value)
 
-                instrument_accrual_calculation_schedules.save()
-                actions[order] = instrument_accrual_calculation_schedules
+                item.save()
+                actions[order] = item
+
+    def save_actions_instrument_event_schedule(self, instance, inputs, actions, existed_actions,
+                                               actions_data):
+
+        for order, action_data in enumerate(actions_data):
+            pk = action_data.pop('id', None)
+            action = existed_actions.get(pk, None)
+
+            item_data = action_data.get('instrument_event_schedule',
+                                        action_data.get(
+                                            'transactiontypeactioninstrumenteventschedule'))
+            if item_data:
+                for attr, value in item_data.items():
+                    if attr.endswith('_input') and value:
+                        try:
+                            item_data[attr] = inputs[value]
+                        except KeyError:
+                            raise ValidationError('Invalid input "%s"' % value)
+
+                    if attr == 'instrument_phantom' and value is not None:
+                        try:
+                            item_data[attr] = actions[value]
+                        except IndexError:
+                            raise ValidationError('Invalid action order "%s"' % value)
+
+                item = None
+                if action:
+                    try:
+                        item = action.transactiontypeactioninstrumenteventschedule
+                    except ObjectDoesNotExist:
+                        pass
+                if item is None:
+                    item = TransactionTypeActionInstrumentEventSchedule(
+                        transaction_type=instance)
+
+                item.order = order
+                item.action_notes = action_data.get('action_notes', item.action_notes)
+                for attr, value in item_data.items():
+                    setattr(item, attr, value)
+
+                item.save()
+                actions[order] = item
+
+    def save_actions(self, instance, actions_data, inputs):
+        actions_qs = instance.actions.select_related(
+            'transactiontypeactioninstrument',
+            'transactiontypeactiontransaction',
+            'transactiontypeactioninstrumentfactorschedule',
+            'transactiontypeactioninstrumentmanualpricingformula',
+            'transactiontypeactioninstrumentaccrualcalculationschedules',
+            'transactiontypeactioninstrumenteventschedule',
+            'transactiontypeactioninstrumenteventaction').order_by('order', 'id')
+        existed_actions = {a.id: a for a in actions_qs}
+
+        if inputs is None or inputs is empty:
+            inputs = {i.name: i for i in instance.inputs.all()}
+        else:
+            inputs = {i.name: i for i in inputs}
+
+        actions = [None for a in actions_data]
+
+        self.save_actions_instrument(instance, inputs, actions, existed_actions, actions_data)
+
+        self.save_actions_transaction(instance, inputs, actions, existed_actions, actions_data)
+
+        self.save_actions_instrument_factor_schedule(instance, inputs, actions, existed_actions, actions_data)
+
+        self.save_actions_instrument_manual_pricing_formula(instance, inputs, actions, existed_actions, actions_data)
+
+        self.save_actions_instrument_accrual_calculation_schedule(instance, inputs, actions, existed_actions,
+                                                                  actions_data)
+
+        self.save_actions_instrument_event_schedule(instance, inputs, actions, existed_actions, actions_data)
 
         return actions
 
@@ -1453,6 +1635,16 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
                                                          label=i.name, help_text=i.verbose_name)
                     field_object = AccrualCalculationModelSerializer(source=name, read_only=True)
 
+                elif issubclass(model_class, EventClass):
+                    field = EventClassField(required=False, allow_null=True,
+                                            label=i.name, help_text=i.verbose_name)
+                    field_object = EventClassSerializer(source=name, read_only=True)
+
+                elif issubclass(model_class, NotificationClass):
+                    field = NotificationClassField(required=False, allow_null=True,
+                                                   label=i.name, help_text=i.verbose_name)
+                    field_object = NotificationClassSerializer(source=name, read_only=True)
+
             if field:
                 self.fields[name] = field
                 if field_object:
@@ -1737,5 +1929,9 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
                     ci.periodicity = val
                 elif issubclass(model_class, AccrualCalculationModel):
                     ci.accrual_calculation_model = val
+                elif issubclass(model_class, EventClass):
+                    ci.event_class = val
+                elif issubclass(model_class, NotificationClass):
+                    ci.notification_class = val
 
             ci.save()

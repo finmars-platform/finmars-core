@@ -15,7 +15,8 @@ from poms.common.models import NamedModel, AbstractClassModel, FakeDeletableMode
 from poms.common.utils import date_now
 from poms.counterparties.models import Responsible, Counterparty
 from poms.currencies.models import Currency
-from poms.instruments.models import Instrument, InstrumentClass, PricingPolicy, AccrualCalculationModel, Periodicity
+from poms.instruments.models import Instrument, InstrumentClass, PricingPolicy, AccrualCalculationModel, Periodicity, \
+    EventSchedule
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
 from poms.portfolios.models import Portfolio
@@ -898,6 +899,100 @@ class TransactionTypeActionInstrumentAccrualCalculationSchedules(TransactionType
 
     def __str__(self):
         return 'InstrumentAccrualCalculationSchedules action #%s' % self.order
+
+
+class TransactionTypeActionInstrumentEventSchedule(TransactionTypeAction):
+
+    instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+                                   verbose_name=ugettext_lazy('instrument'))
+    instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+                                         related_name='+', verbose_name=ugettext_lazy('instrument input'))
+    instrument_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
+                                           on_delete=models.PROTECT, related_name='+',
+                                           verbose_name=ugettext_lazy('instrument phantom'))
+
+    periodicity = models.ForeignKey(Periodicity, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+                                    verbose_name=ugettext_lazy('periodicity'))
+
+    periodicity_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+                                          related_name='+',
+                                          verbose_name=ugettext_lazy('periodicity input'))
+
+    notification_class = models.ForeignKey(NotificationClass, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+                                    verbose_name=ugettext_lazy('notification class'))
+
+    notification_class_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+                                          related_name='+',
+                                          verbose_name=ugettext_lazy('notification class input'))
+
+    event_class = models.ForeignKey(EventClass, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+                                           verbose_name=ugettext_lazy('event class'))
+
+    event_class_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+                                                 related_name='+',
+                                                 verbose_name=ugettext_lazy('event class input'))
+
+    effective_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                          verbose_name=ugettext_lazy('effective date'))
+
+    final_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                          verbose_name=ugettext_lazy('final date'))
+
+    notify_in_n_days = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                     verbose_name=ugettext_lazy('notify in n days'))
+
+    periodicity_n = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                     verbose_name=ugettext_lazy('periodicity n'))
+
+    name = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='',
+                             verbose_name=ugettext_lazy('name'))
+
+    description = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='',
+                             verbose_name=ugettext_lazy('description'))
+
+    class Meta:
+        verbose_name = ugettext_lazy('transaction type action instrument event schedules')
+        verbose_name_plural = ugettext_lazy('transaction type action instrument event schedules')
+
+    def __str__(self):
+        return 'TransactionTypeActionInstrumentEventSchedules action #%s' % self.order
+
+
+class TransactionTypeActionInstrumentEventAction(TransactionTypeAction):
+
+    event_schedule = models.ForeignKey(EventSchedule, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+                                   verbose_name=ugettext_lazy('instrument'))
+    event_schedule_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+                                         related_name='+', verbose_name=ugettext_lazy('event schedule input'))
+    event_schedule_phantom = models.ForeignKey(TransactionTypeActionInstrumentEventSchedule, null=True, blank=True,
+                                           on_delete=models.PROTECT, related_name='+',
+                                           verbose_name=ugettext_lazy('event schedule phantom'))
+
+    action_transaction_type = models.ForeignKey(TransactionType, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+                                    verbose_name=ugettext_lazy('action transaction type'))
+
+    action_transaction_type_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+                                          related_name='+',
+                                          verbose_name=ugettext_lazy('action transaction type input'))
+
+    is_book_automatic = models.BooleanField(default=False, verbose_name=ugettext_lazy("is book automatic"),
+                                    help_text=ugettext_lazy('If checked - is book automatic'))
+
+    is_sent_to_pending = models.BooleanField(default=False, verbose_name=ugettext_lazy("is sent to pending"),
+                                    help_text=ugettext_lazy('If checked - is sent to pending'))
+
+    button_position = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0',
+                                    verbose_name=ugettext_lazy('button position'))
+
+    text = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='',
+                                   verbose_name=ugettext_lazy('text'))
+
+    class Meta:
+        verbose_name = ugettext_lazy('transaction type action instrument event action')
+        verbose_name_plural = ugettext_lazy('transaction type action instrument event actions')
+
+    def __str__(self):
+        return 'TransactionTypeActionInstrumentEventAction action #%s' % self.order
 
 
 class EventToHandle(NamedModel):

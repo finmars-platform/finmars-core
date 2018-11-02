@@ -15,7 +15,7 @@ from poms.obj_perms.models import GenericObjectPermission
 from poms.obj_perms.utils import obj_perms_filter_objects_for_view
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
-from poms.transactions.models import Transaction
+from poms.transactions.models import Transaction, EventClass, NotificationClass
 
 
 class TransactionObjectPermissionFilter(BaseFilterBackend):
@@ -59,7 +59,7 @@ class TransactionTypeInputContentTypeFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         models = [Account, Instrument, InstrumentType, Currency, Counterparty, Responsible, Portfolio,
                   Strategy1, Strategy2, Strategy3, DailyPricingModel, PaymentSizeDetail, PriceDownloadScheme,
-                  PricingPolicy, Periodicity, AccrualCalculationModel]
+                  PricingPolicy, Periodicity, AccrualCalculationModel, EventClass, NotificationClass]
         ctypes = [ContentType.objects.get_for_model(model).pk for model in models]
         return queryset.filter(pk__in=ctypes)
 

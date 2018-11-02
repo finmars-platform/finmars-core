@@ -11,7 +11,7 @@ from poms.common.utils import date_now
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDetail, PricingPolicy, Periodicity, \
-    AccrualCalculationModel, InstrumentFactorSchedule, ManualPricingFormula, AccrualCalculationSchedule
+    AccrualCalculationModel, InstrumentFactorSchedule, ManualPricingFormula, AccrualCalculationSchedule, EventSchedule
 from poms.instruments.models import InstrumentType
 from poms.integrations.models import PriceDownloadScheme
 from poms.obj_perms.utils import assign_perms3
@@ -191,7 +191,7 @@ class TransactionTypeProcess(object):
                             value = None
             self.values[i.name] = value
 
-    def create_instruments(self, actions, master_user, instrument_map):
+    def book_create_instruments(self, actions, master_user, instrument_map):
 
         object_permissions = self.transaction_type.object_permissions.select_related('permission').all()
         daily_pricing_model = DailyPricingModel.objects.get(pk=DailyPricingModel.SKIP)
@@ -311,7 +311,7 @@ class TransactionTypeProcess(object):
 
         return instrument_map
 
-    def create_factor_schedules(self, actions, instrument_map):
+    def book_create_factor_schedules(self, actions, instrument_map):
 
         for order, action in enumerate(actions):
             try:
@@ -358,7 +358,7 @@ class TransactionTypeProcess(object):
                         _l.debug(errors)
                         # self.instruments_errors.append(errors)
 
-    def create_manual_pricing_formulas(self, actions, instrument_map):
+    def book_create_manual_pricing_formulas(self, actions, instrument_map):
 
         for order, action in enumerate(actions):
             try:
@@ -407,7 +407,7 @@ class TransactionTypeProcess(object):
                         _l.debug(errors)
                         # self.instruments_errors.append(errors)
 
-    def create_accrual_calculation_schedules(self, actions, instrument_map):
+    def book_create_accrual_calculation_schedules(self, actions, instrument_map):
 
         for order, action in enumerate(actions):
             try:
@@ -472,7 +472,80 @@ class TransactionTypeProcess(object):
                         _l.debug(errors)
                         # self.instruments_errors.append(errors)
 
-    def create_transactions(self, actions, master_user, instrument_map):
+    def book_create_event_schedules(self, actions, instrument_map):
+
+        for order, action in enumerate(actions):
+            try:
+                action_instrument_event_schedule = action.transactiontypeactioninstrumenteventschedule
+            except ObjectDoesNotExist:
+                action_instrument_event_schedule = None
+
+            if action_instrument_event_schedule:
+
+                errors = {}
+
+                event_schedule = EventSchedule()
+
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=event_schedule, target_attr_name='instrument',
+                              source=action_instrument_event_schedule, source_attr_name='instrument')
+                if action_instrument_event_schedule.instrument_phantom is not None:
+                    event_schedule.instrument = instrument_map[
+                        action_instrument_event_schedule.instrument_phantom_id]
+
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=event_schedule, target_attr_name='notification_class',
+                              source=action_instrument_event_schedule, source_attr_name='notification_class')
+
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=event_schedule, target_attr_name='periodicity',
+                              source=action_instrument_event_schedule, source_attr_name='periodicity')
+
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=event_schedule, target_attr_name='event_class',
+                              source=action_instrument_event_schedule, source_attr_name='event_class')
+
+                self._set_val(errors=errors, values=self.values, default_value='', validator=formula.validate_date,
+                              target=event_schedule, target_attr_name='effective_date',
+                              source=action_instrument_event_schedule, source_attr_name='effective_date')
+
+                self._set_val(errors=errors, values=self.values, default_value='', validator=formula.validate_date,
+                              target=event_schedule, target_attr_name='final_date',
+                              source=action_instrument_event_schedule, source_attr_name='final_date')
+
+                self._set_val(errors=errors, values=self.values, default_value='',
+                              target=event_schedule, target_attr_name='notify_in_n_days',
+                              source=action_instrument_event_schedule, source_attr_name='notify_in_n_days')
+
+                self._set_val(errors=errors, values=self.values, default_value='',
+                              target=event_schedule, target_attr_name='periodicity_n',
+                              source=action_instrument_event_schedule, source_attr_name='periodicity_n')
+
+                self._set_val(errors=errors, values=self.values, default_value='',
+                              target=event_schedule, target_attr_name='name',
+                              source=action_instrument_event_schedule, source_attr_name='name')
+
+                self._set_val(errors=errors, values=self.values, default_value='',
+                              target=event_schedule, target_attr_name='description',
+                              source=action_instrument_event_schedule, source_attr_name='description')
+
+                try:
+
+                    event_schedule.save()
+
+                except (ValueError, TypeError, IntegrityError):
+
+                    self._add_err_msg(errors, 'non_field_errors',
+                                      ugettext(
+                                          'Invalid instrument event schedule action fields (please, use type convertion).'))
+                except DatabaseError:
+                    self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
+                finally:
+                    if bool(errors):
+                        _l.debug(errors)
+                        # self.instruments_errors.append(errors)
+
+    def book_create_transactions(self, actions, master_user, instrument_map):
 
         for order, action in enumerate(actions):
             try:
@@ -637,11 +710,12 @@ class TransactionTypeProcess(object):
         instrument_map = {}
         actions = self.transaction_type.actions.order_by('order').all()
 
-        instrument_map = self.create_instruments(actions, master_user, instrument_map)
+        instrument_map = self.book_create_instruments(actions, master_user, instrument_map)
 
-        self.create_factor_schedules(actions, instrument_map)
-        self.create_manual_pricing_formulas(actions, instrument_map)
-        self.create_accrual_calculation_schedules(actions, instrument_map)
+        self.book_create_factor_schedules(actions, instrument_map)
+        self.book_create_manual_pricing_formulas(actions, instrument_map)
+        self.book_create_accrual_calculation_schedules(actions, instrument_map)
+        self.book_create_event_schedules(actions, instrument_map)
 
         # complex_transaction
         complex_transaction_errors = {}
@@ -656,7 +730,7 @@ class TransactionTypeProcess(object):
 
         # self.complex_transaction.transactions.all().delete()
 
-        self.create_transactions(actions, master_user, instrument_map)
+        self.book_create_transactions(actions, master_user, instrument_map)
 
         if not self.has_errors and self.transactions:
             for trn in self.transactions:
