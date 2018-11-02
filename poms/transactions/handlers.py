@@ -11,7 +11,8 @@ from poms.common.utils import date_now
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDetail, PricingPolicy, Periodicity, \
-    AccrualCalculationModel, InstrumentFactorSchedule, ManualPricingFormula, AccrualCalculationSchedule, EventSchedule
+    AccrualCalculationModel, InstrumentFactorSchedule, ManualPricingFormula, AccrualCalculationSchedule, EventSchedule, \
+    EventScheduleAction
 from poms.instruments.models import InstrumentType
 from poms.integrations.models import PriceDownloadScheme
 from poms.obj_perms.utils import assign_perms3
@@ -430,7 +431,8 @@ class TransactionTypeProcess(object):
 
                 self._set_rel(errors=errors, values=self.values, default_value=None,
                               target=accrual_calculation_schedule, target_attr_name='accrual_calculation_model',
-                              source=action_instrument_accrual_calculation_schedule, source_attr_name='accrual_calculation_model')
+                              source=action_instrument_accrual_calculation_schedule,
+                              source_attr_name='accrual_calculation_model')
 
                 self._set_rel(errors=errors, values=self.values, default_value=None,
                               target=accrual_calculation_schedule, target_attr_name='periodicity',
@@ -438,11 +440,13 @@ class TransactionTypeProcess(object):
 
                 self._set_val(errors=errors, values=self.values, default_value='', validator=formula.validate_date,
                               target=accrual_calculation_schedule, target_attr_name='accrual_start_date',
-                              source=action_instrument_accrual_calculation_schedule, source_attr_name='accrual_start_date')
+                              source=action_instrument_accrual_calculation_schedule,
+                              source_attr_name='accrual_start_date')
 
                 self._set_val(errors=errors, values=self.values, default_value='', validator=formula.validate_date,
                               target=accrual_calculation_schedule, target_attr_name='first_payment_date',
-                              source=action_instrument_accrual_calculation_schedule, source_attr_name='first_payment_date')
+                              source=action_instrument_accrual_calculation_schedule,
+                              source_attr_name='first_payment_date')
 
                 self._set_val(errors=errors, values=self.values, default_value='',
                               target=accrual_calculation_schedule, target_attr_name='accrual_size',
@@ -472,7 +476,7 @@ class TransactionTypeProcess(object):
                         _l.debug(errors)
                         # self.instruments_errors.append(errors)
 
-    def book_create_event_schedules(self, actions, instrument_map):
+    def book_create_event_schedules(self, actions, instrument_map, event_schedules_map):
 
         for order, action in enumerate(actions):
             try:
@@ -538,6 +542,69 @@ class TransactionTypeProcess(object):
                     self._add_err_msg(errors, 'non_field_errors',
                                       ugettext(
                                           'Invalid instrument event schedule action fields (please, use type convertion).'))
+                except DatabaseError:
+                    self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
+                else:
+                    event_schedules_map[action.id] = event_schedule
+                finally:
+                    if bool(errors):
+                        _l.debug(errors)
+                        # self.instruments_errors.append(errors)
+
+        return event_schedules_map
+
+    def book_create_event_actions(self, actions, event_schedules_map):
+
+        for order, action in enumerate(actions):
+            try:
+                action_instrument_event_schedule_action = action.transactiontypeactioninstrumenteventscheduleaction
+            except ObjectDoesNotExist:
+                action_instrument_event_schedule_action = None
+
+            if action_instrument_event_schedule_action:
+
+                errors = {}
+
+                event_schedule_action = EventScheduleAction()
+
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=event_schedule_action, target_attr_name='event_schedule',
+                              source=action_instrument_event_schedule_action, source_attr_name='event_schedule')
+
+                if action_instrument_event_schedule_action.event_schedule_phantom is not None:
+                    event_schedule_action.event_schedule = event_schedules_map[
+                        action_instrument_event_schedule_action.event_schedule_phantom_id]
+
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=event_schedule_action, target_attr_name='transaction_type',
+                              source=event_schedule_action.event_schedule.instrument.instrument_type,
+                              source_attr_name=action_instrument_event_schedule_action.transaction_type_from_instrument_type)
+
+                self._set_val(errors=errors, values=self.values, default_value=False, validator=formula.validate_bool,
+                              target=event_schedule_action, target_attr_name='is_sent_to_pending',
+                              source=action_instrument_event_schedule_action, source_attr_name='is_sent_to_pending')
+
+                self._set_val(errors=errors, values=self.values, default_value=False, validator=formula.validate_bool,
+                              target=event_schedule_action, target_attr_name='is_book_automatic',
+                              source=action_instrument_event_schedule_action, source_attr_name='is_book_automatic')
+
+                self._set_val(errors=errors, values=self.values, default_value=0,
+                              target=event_schedule_action, target_attr_name='button_position',
+                              source=action_instrument_event_schedule_action, source_attr_name='button_position')
+
+                self._set_val(errors=errors, values=self.values, default_value='',
+                              target=event_schedule_action, target_attr_name='text',
+                              source=action_instrument_event_schedule_action, source_attr_name='text')
+
+                try:
+
+                    event_schedule_action.save()
+
+                except (ValueError, TypeError, IntegrityError):
+
+                    self._add_err_msg(errors, 'non_field_errors',
+                                      ugettext(
+                                          'Invalid instrument event schedule action action fields (please, use type convertion).'))
                 except DatabaseError:
                     self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
                 finally:
@@ -708,6 +775,7 @@ class TransactionTypeProcess(object):
         master_user = self.transaction_type.master_user
 
         instrument_map = {}
+        event_schedules_map = {}
         actions = self.transaction_type.actions.order_by('order').all()
 
         instrument_map = self.book_create_instruments(actions, master_user, instrument_map)
@@ -715,7 +783,9 @@ class TransactionTypeProcess(object):
         self.book_create_factor_schedules(actions, instrument_map)
         self.book_create_manual_pricing_formulas(actions, instrument_map)
         self.book_create_accrual_calculation_schedules(actions, instrument_map)
-        self.book_create_event_schedules(actions, instrument_map)
+        event_schedules_map = self.book_create_event_schedules(actions, instrument_map, event_schedules_map)
+
+        self.book_create_event_actions(actions, event_schedules_map)
 
         # complex_transaction
         complex_transaction_errors = {}

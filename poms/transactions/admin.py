@@ -16,7 +16,9 @@ from poms.strategies.models import Strategy3, Strategy2, Strategy1
 from poms.transactions.models import TransactionClass, Transaction, TransactionType, TransactionTypeInput, \
     ActionClass, EventToHandle, ExternalCashFlow, ExternalCashFlowStrategy, NotificationClass, \
     EventClass, PeriodicityGroup, TransactionTypeActionInstrument, TransactionTypeActionTransaction, ComplexTransaction, \
-    TransactionTypeGroup, ComplexTransactionInput
+    TransactionTypeGroup, ComplexTransactionInput, TransactionTypeActionInstrumentFactorSchedule, \
+    TransactionTypeActionInstrumentManualPricingFormula, TransactionTypeActionInstrumentAccrualCalculationSchedules, \
+    TransactionTypeActionInstrumentEventSchedule, TransactionTypeActionInstrumentEventScheduleAction
 
 admin.site.register(TransactionClass, ClassModelAdmin)
 admin.site.register(ActionClass, ClassModelAdmin)
@@ -93,6 +95,90 @@ class TransactionTypeActionTransactionAdmin(AbstractModelAdmin):
 
 admin.site.register(TransactionTypeActionTransaction, TransactionTypeActionTransactionAdmin)
 
+
+class TransactionTypeActionInstrumentFactorScheduleAdmin(AbstractModelAdmin):
+    model = TransactionTypeActionInstrumentFactorSchedule
+    master_user_path = 'transaction_type__master_user'
+    list_display = ['id', 'master_user', 'transaction_type', 'order', 'action_notes']
+    list_select_related = ['transaction_type', 'transaction_type__master_user']
+    search_fields = ['id']
+    raw_id_fields = ['transaction_type']
+
+    def master_user(self, obj):
+        return obj.transaction_type.master_user
+
+    master_user.admin_order_field = 'transaction_type__master_user'
+
+
+admin.site.register(TransactionTypeActionInstrumentFactorSchedule, TransactionTypeActionInstrumentFactorScheduleAdmin)
+
+
+class TransactionTypeActionInstrumentManualPricingFormulaAdmin(AbstractModelAdmin):
+    model = TransactionTypeActionInstrumentManualPricingFormula
+    master_user_path = 'transaction_type__master_user'
+    list_display = ['id', 'master_user', 'transaction_type', 'order', 'action_notes']
+    list_select_related = ['transaction_type', 'transaction_type__master_user']
+    search_fields = ['id']
+    raw_id_fields = ['transaction_type']
+
+    def master_user(self, obj):
+        return obj.transaction_type.master_user
+
+    master_user.admin_order_field = 'transaction_type__master_user'
+
+
+admin.site.register(TransactionTypeActionInstrumentManualPricingFormula, TransactionTypeActionInstrumentManualPricingFormulaAdmin)
+
+
+class TransactionTypeActionInstrumentAccrualCalculationSchedulesAdmin(AbstractModelAdmin):
+    model = TransactionTypeActionInstrumentAccrualCalculationSchedules
+    master_user_path = 'transaction_type__master_user'
+    list_display = ['id', 'master_user', 'transaction_type', 'order', 'action_notes']
+    list_select_related = ['transaction_type', 'transaction_type__master_user']
+    search_fields = ['id']
+    raw_id_fields = ['transaction_type']
+
+    def master_user(self, obj):
+        return obj.transaction_type.master_user
+
+    master_user.admin_order_field = 'transaction_type__master_user'
+
+
+admin.site.register(TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentAccrualCalculationSchedulesAdmin)
+
+
+class TransactionTypeActionInstrumentEventScheduleAdmin(AbstractModelAdmin):
+    model = TransactionTypeActionInstrumentEventSchedule
+    master_user_path = 'transaction_type__master_user'
+    list_display = ['id', 'master_user', 'transaction_type', 'order', 'action_notes']
+    list_select_related = ['transaction_type', 'transaction_type__master_user']
+    search_fields = ['id']
+    raw_id_fields = ['transaction_type']
+
+    def master_user(self, obj):
+        return obj.transaction_type.master_user
+
+    master_user.admin_order_field = 'transaction_type__master_user'
+
+
+admin.site.register(TransactionTypeActionInstrumentEventSchedule, TransactionTypeActionInstrumentEventScheduleAdmin)
+
+
+class TransactionTypeActionInstrumentEventScheduleActionAdmin(AbstractModelAdmin):
+    model = TransactionTypeActionInstrumentEventScheduleAction
+    master_user_path = 'transaction_type__master_user'
+    list_display = ['id', 'master_user', 'transaction_type', 'order', 'action_notes']
+    list_select_related = ['transaction_type', 'transaction_type__master_user']
+    search_fields = ['id']
+    raw_id_fields = ['transaction_type']
+
+    def master_user(self, obj):
+        return obj.transaction_type.master_user
+
+    master_user.admin_order_field = 'transaction_type__master_user'
+
+
+admin.site.register(TransactionTypeActionInstrumentEventScheduleAction, TransactionTypeActionInstrumentEventScheduleActionAdmin)
 
 class TransactionTypeInputInline(admin.TabularInline):
     model = TransactionTypeInput

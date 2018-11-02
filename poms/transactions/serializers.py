@@ -20,8 +20,8 @@ from poms.currencies.models import Currency
 from poms.instruments.fields import InstrumentField, InstrumentTypeField, InstrumentDefault, PricingPolicyField, \
     AccrualCalculationModelField, PeriodicityField, NotificationClassField, EventClassField, EventScheduleField
 from poms.instruments.models import Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail, PricingPolicy, \
-    Periodicity, AccrualCalculationModel
-from poms.instruments.serializers import PricingPolicyViewSerializer, PeriodicitySerializer, \
+    Periodicity, AccrualCalculationModel, EventSchedule
+from poms.instruments.serializers import PeriodicitySerializer, \
     AccrualCalculationModelSerializer
 from poms.integrations.fields import PriceDownloadSchemeField
 from poms.integrations.models import PriceDownloadScheme
@@ -40,7 +40,8 @@ from poms.transactions.models import TransactionClass, Transaction, TransactionT
     TransactionTypeActionTransaction, TransactionTypeActionInstrument, TransactionTypeInput, TransactionTypeGroup, \
     ComplexTransaction, EventClass, NotificationClass, ComplexTransactionInput, \
     TransactionTypeActionInstrumentFactorSchedule, TransactionTypeActionInstrumentManualPricingFormula, \
-    TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentEventSchedule
+    TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentEventSchedule, \
+    TransactionTypeActionInstrumentEventScheduleAction
 from poms.users.fields import MasterUserField
 
 
@@ -102,7 +103,7 @@ class TransactionTypeActionInstrumentPhantomField(serializers.IntegerField):
         return value.order if value else None
 
 
-class TransactionTypeActionInstrumentActionPhantomField(serializers.IntegerField):
+class TransactionTypeActionInstrumentEventSchedulePhantomField(serializers.IntegerField):
     def to_representation(self, value):
         return value.order if value else None
 
@@ -741,13 +742,13 @@ class TransactionTypeActionInstrumentEventScheduleSerializer(serializers.ModelSe
         self.fields['event_class_object'] = EventClassSerializer(source='event_class', read_only=True)
 
 
-class TransactionTypeActionInstrumentEventActionSerializer(serializers.ModelSerializer):
+class TransactionTypeActionInstrumentEventScheduleActionSerializer(serializers.ModelSerializer):
     event_schedule = EventScheduleField(required=False, allow_null=True)
     event_schedule_input = TransactionInputField(required=False, allow_null=True)
-    event_schedule_phantom = TransactionTypeActionInstrumentActionPhantomField(required=False, allow_null=True)
+    event_schedule_phantom = TransactionTypeActionInstrumentEventSchedulePhantomField(required=False, allow_null=True)
 
-    action_transaction_type = TransactionTypeField(required=False, allow_null=True)
-    action_transaction_type_input = TransactionInputField(required=False, allow_null=True)
+    transaction_type_from_instrument_type = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False,
+                                                            allow_blank=True)
 
     is_book_automatic = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
     is_sent_to_pending = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
@@ -757,14 +758,13 @@ class TransactionTypeActionInstrumentEventActionSerializer(serializers.ModelSeri
     text = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
 
     class Meta:
-        model = TransactionTypeActionInstrumentEventSchedule
+        model = TransactionTypeActionInstrumentEventScheduleAction
         fields = [
             'event_schedule',
             'event_schedule_input',
             'event_schedule_phantom',
 
-            'action_transaction_type',
-            'action_transaction_type_input',
+            'transaction_type_from_instrument_type',
 
             'is_book_automatic',
             'is_sent_to_pending',
@@ -775,7 +775,7 @@ class TransactionTypeActionInstrumentEventActionSerializer(serializers.ModelSeri
         ]
 
     def __init__(self, *args, **kwargs):
-        super(TransactionTypeActionInstrumentEventActionSerializer, self).__init__(*args, **kwargs)
+        super(TransactionTypeActionInstrumentEventScheduleActionSerializer, self).__init__(*args, **kwargs)
 
 
 class TransactionTypeActionSerializer(serializers.ModelSerializer):
@@ -800,15 +800,15 @@ class TransactionTypeActionSerializer(serializers.ModelSerializer):
         source='transactiontypeactioninstrumenteventschedule', required=False, allow_null=True
     )
 
-    instrument_event_action = TransactionTypeActionInstrumentEventActionSerializer(
-        source='transactiontypeactioninstrumenteventaction', required=False, allow_null=True
+    instrument_event_schedule_action = TransactionTypeActionInstrumentEventScheduleActionSerializer(
+        source='transactiontypeactioninstrumenteventscheduleaction', required=False, allow_null=True
     )
 
     class Meta:
         model = TransactionTypeAction
         fields = ['id', 'order', 'action_notes', 'transaction', 'instrument', 'instrument_factor_schedule',
                   'instrument_manual_pricing_formula', 'instrument_accrual_calculation_schedules',
-                  'instrument_event_schedule', 'instrument_event_action']
+                  'instrument_event_schedule', 'instrument_event_schedule_action']
 
     def validate(self, attrs):
         # TODO: transaction or instrument present
@@ -1142,6 +1142,48 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                 item.save()
                 actions[order] = item
 
+    def save_actions_instrument_event_schedule_action(self, instance, inputs, actions, existed_actions,
+                                                      actions_data):
+
+        for order, action_data in enumerate(actions_data):
+            pk = action_data.pop('id', None)
+            action = existed_actions.get(pk, None)
+
+            item_data = action_data.get('instrument_event_schedule_action',
+                                        action_data.get(
+                                            'transactiontypeactioninstrumenteventscheduleaction'))
+            if item_data:
+                for attr, value in item_data.items():
+                    if attr.endswith('_input') and value:
+                        try:
+                            item_data[attr] = inputs[value]
+                        except KeyError:
+                            raise ValidationError('Invalid input "%s"' % value)
+
+                    if attr == 'event_schedule_phantom' and value is not None:
+                        try:
+                            item_data[attr] = actions[value]
+                        except IndexError:
+                            raise ValidationError('Invalid action order "%s"' % value)
+
+                item = None
+                if action:
+                    try:
+                        item = action.transactiontypeactioninstrumenteventscheduleaction
+                    except ObjectDoesNotExist:
+                        pass
+                if item is None:
+                    item = TransactionTypeActionInstrumentEventScheduleAction(
+                        transaction_type=instance)
+
+                item.order = order
+                item.action_notes = action_data.get('action_notes', item.action_notes)
+                for attr, value in item_data.items():
+                    setattr(item, attr, value)
+
+                item.save()
+                actions[order] = item
+
     def save_actions(self, instance, actions_data, inputs):
         actions_qs = instance.actions.select_related(
             'transactiontypeactioninstrument',
@@ -1150,7 +1192,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             'transactiontypeactioninstrumentmanualpricingformula',
             'transactiontypeactioninstrumentaccrualcalculationschedules',
             'transactiontypeactioninstrumenteventschedule',
-            'transactiontypeactioninstrumenteventaction').order_by('order', 'id')
+            'transactiontypeactioninstrumenteventscheduleaction').order_by('order', 'id')
         existed_actions = {a.id: a for a in actions_qs}
 
         if inputs is None or inputs is empty:
@@ -1172,6 +1214,8 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                                                                   actions_data)
 
         self.save_actions_instrument_event_schedule(instance, inputs, actions, existed_actions, actions_data)
+
+        self.save_actions_instrument_event_schedule_action(instance, inputs, actions, existed_actions, actions_data)
 
         return actions
 
@@ -1525,6 +1569,7 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
         from poms.portfolios.serializers import PortfolioViewSerializer
         from poms.integrations.serializers import PriceDownloadSchemeViewSerializer
         from poms.instruments.serializers import PricingPolicyViewSerializer
+        from poms.instruments.serializers import EventScheduleSerializer
 
         # now = timezone.now().date()
         # master_user = get_master_user_from_context(self.context)
@@ -1644,6 +1689,11 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
                     field = NotificationClassField(required=False, allow_null=True,
                                                    label=i.name, help_text=i.verbose_name)
                     field_object = NotificationClassSerializer(source=name, read_only=True)
+
+                elif issubclass(model_class, EventSchedule):
+                    field = EventScheduleField(required=False, allow_null=True,
+                                            label=i.name, help_text=i.verbose_name)
+                    field_object = EventScheduleSerializer(source=name, read_only=True)
 
             if field:
                 self.fields[name] = field

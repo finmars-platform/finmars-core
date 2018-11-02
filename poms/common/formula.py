@@ -294,6 +294,12 @@ def _parse_number(a):
     return float(a)
 
 
+def _parse_bool(a):
+    if isinstance(a, (bool)):
+        return a
+    return bool(a)
+
+
 def _simple_price(date, date1, value1, date2, value2):
     if isinstance(date, str):
         date = _parse_date(date)
@@ -1142,6 +1148,10 @@ def validate_num(val):
     return _parse_number(val)
 
 
+def validate_bool(val):
+    return _parse_bool(val)
+
+
 def register_fun(name, callback):
     if not callable(callback):
         raise InvalidExpression('Bad function callback')
@@ -1463,7 +1473,6 @@ if __name__ == "__main__":
     # _l.info(safe_eval('{1,}'))
     # _l.info(safe_eval('[1, 1.0, "str", None, True, False]'))
 
-
     # _l.info(safe_eval('parse_date("2000-01-01") + days(100)'))
     # _l.info(safe_eval(
     #     'simple_price(parse_date("2000-01-05"), parse_date("2000-01-01"), 0, parse_date("2000-04-10"), 100)'))
@@ -1473,7 +1482,6 @@ if __name__ == "__main__":
     # _l.info(safe_eval('globals()["v0"] * 10', names=names))
     # _l.info(safe_eval('v2.id', names=names))
     # _l.info(safe_eval('v4.id', names=names))
-
 
     # _l.info(safe_eval('func1()'))
     # _l.info(safe_eval('name1'))
@@ -1486,7 +1494,6 @@ if __name__ == "__main__":
     # _l.info(safe_eval('eval("2+eval(\\\"2+2\\\")")'))
     # _l.info(ast.literal_eval('2+2'))
     # _l.info(safe_eval("globals()['now']()"))
-
 
     def test_eval(expr, names=None):
         # _l.info('-' * 79)
@@ -1564,10 +1571,8 @@ if __name__ == "__main__":
     # date(2016)
     # ''')
 
-
     def demo():
         # from poms.common.formula_serializers import EvalInstrumentSerializer, EvalTransactionSerializer
-
 
         from rest_framework.test import APIRequestFactory
         factory = APIRequestFactory()
