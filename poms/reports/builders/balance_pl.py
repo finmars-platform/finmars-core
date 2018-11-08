@@ -485,7 +485,7 @@ class ReportBuilder(BaseReportBuilder):
 
         trn_qs_st = time.perf_counter()
 
-        trn_qs = self._trn_qs()
+        trn_qs = self._get_only_transactions()
 
         _l.debug('_load_transactions trn_qs_st done: %s', (time.perf_counter() - trn_qs_st))
 

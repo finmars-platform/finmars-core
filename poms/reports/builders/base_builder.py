@@ -1,6 +1,7 @@
 import copy
 import logging
 
+import time
 from django.db.models import Q
 from django.utils.functional import cached_property
 
@@ -26,6 +27,8 @@ from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy1Group, Strategy2, Strategy2Subgroup, \
     Strategy2Group, Strategy3, Strategy3Subgroup, Strategy3Group
 from poms.transactions.models import Transaction, ComplexTransaction, TransactionType
+
+from poms.common.utils import force_qs_evaluation
 
 _l = logging.getLogger('poms.reports')
 
@@ -183,6 +186,69 @@ class BaseReportBuilder:
     def _trn_qs_filter(self, qs):
         return qs
 
+    def _get_only_transactions(self):
+
+        qs = self._queryset if self._queryset is not None else Transaction.objects
+
+        base_qs_st = time.perf_counter()
+
+        qs = qs.filter(
+            master_user=self.instance.master_user,
+            is_deleted=False,
+        )
+
+        force_qs_evaluation(qs)
+
+        _l.debug('_get_only_transactions base_qs_st done: %s', (time.perf_counter() - base_qs_st))
+
+        production_only_qs_st = time.perf_counter()
+
+        qs = qs.filter(
+            Q(complex_transaction__isnull=True) | Q(complex_transaction__status=ComplexTransaction.PRODUCTION)
+        )
+
+        force_qs_evaluation(qs)
+
+        _l.debug('_get_only_transactions production_only_qs_st done: %s', (time.perf_counter() - production_only_qs_st))
+
+        relation_filter_qs_st = time.perf_counter()
+
+        filters = Q()
+
+        if self.instance.portfolios:
+            filters &= Q(portfolio__in=self.instance.portfolios)
+
+        if self.instance.accounts:
+            filters &= Q(account_position__in=self.instance.accounts,
+                         account_cash__in=self.instance.accounts,
+                         account_interim__in=self.instance.accounts)
+
+        if self.instance.accounts_position:
+            filters &= Q(account_position__in=self.instance.accounts_position)
+
+        if self.instance.accounts_cash:
+            filters &= Q(account_cash__in=self.instance.accounts_cash)
+
+        if self.instance.strategies1:
+            filters &= Q(strategy1_position__in=self.instance.strategies1,
+                         strategy1_cash__in=self.instance.strategies1)
+
+        if self.instance.strategies2:
+            filters &= Q(strategy2_position__in=self.instance.strategies2,
+                         strategy2_cash__in=self.instance.strategies2)
+
+        if self.instance.strategies3:
+            filters &= Q(strategy3_position__in=self.instance.strategies3,
+                         strategy3_cash__in=self.instance.strategies3)
+
+        qs = qs.filter(filters)
+
+        force_qs_evaluation(qs)
+
+        _l.debug('_get_only_transactions relation_filter_qs_st done: %s', (time.perf_counter() - relation_filter_qs_st))
+
+        return qs
+
     def _trn_qs(self):
 
         qs = self._queryset if self._queryset is not None else Transaction.objects
@@ -194,7 +260,7 @@ class BaseReportBuilder:
             Q(complex_transaction__isnull=True) | Q(complex_transaction__status=ComplexTransaction.PRODUCTION,
                                                     complex_transaction__is_deleted=False)
         )
-        # qs = self._trn_qs_prefetch(qs)
+        qs = self._trn_qs_prefetch(qs)
 
         filters = Q()
 
