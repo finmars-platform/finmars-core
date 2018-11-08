@@ -219,9 +219,7 @@ class BaseReportBuilder:
 
         production_only_qs_st = time.perf_counter()
 
-        qs = qs.filter(
-            Q(complex_transaction__isnull=True) | Q(complex_transaction__status=ComplexTransaction.PRODUCTION)
-        )
+        qs = qs.filter(complex_transaction__status=ComplexTransaction.PRODUCTION)
 
         force_qs_evaluation(qs)
 
@@ -229,37 +227,39 @@ class BaseReportBuilder:
 
         relation_filter_qs_st = time.perf_counter()
 
-        filters = Q()
-
         if self.instance.portfolios:
-            filters &= Q(portfolio__in=self.instance.portfolios)
+            qs = qs.filter(portfolio__in=self.instance.portfolios)
+            force_qs_evaluation(qs)
 
         if self.instance.accounts:
-            filters &= Q(account_position__in=self.instance.accounts,
-                         account_cash__in=self.instance.accounts,
-                         account_interim__in=self.instance.accounts)
+            qs = qs.filter(account_position__in=self.instance.accounts,
+                           account_cash__in=self.instance.accounts,
+                           account_interim__in=self.instance.accounts)
+            force_qs_evaluation(qs)
+
 
         if self.instance.accounts_position:
-            filters &= Q(account_position__in=self.instance.accounts_position)
+            qs = qs.filter(account_position__in=self.instance.accounts_position)
+            force_qs_evaluation(qs)
 
         if self.instance.accounts_cash:
-            filters &= Q(account_cash__in=self.instance.accounts_cash)
+            qs = qs.filter(account_cash__in=self.instance.accounts_cash)
+            force_qs_evaluation(qs)
 
         if self.instance.strategies1:
-            filters &= Q(strategy1_position__in=self.instance.strategies1,
-                         strategy1_cash__in=self.instance.strategies1)
+            qs = qs.filter(strategy1_position__in=self.instance.strategies1,
+                           strategy1_cash__in=self.instance.strategies1)
+            force_qs_evaluation(qs)
 
         if self.instance.strategies2:
-            filters &= Q(strategy2_position__in=self.instance.strategies2,
-                         strategy2_cash__in=self.instance.strategies2)
+            qs = qs.filter(strategy2_position__in=self.instance.strategies2,
+                           strategy2_cash__in=self.instance.strategies2)
+            force_qs_evaluation(qs)
 
         if self.instance.strategies3:
-            filters &= Q(strategy3_position__in=self.instance.strategies3,
-                         strategy3_cash__in=self.instance.strategies3)
-
-        qs = qs.filter(filters)
-
-        force_qs_evaluation(qs)
+            qs = qs.filter(strategy3_position__in=self.instance.strategies3,
+                           strategy3_cash__in=self.instance.strategies3)
+            force_qs_evaluation(qs)
 
         _l.debug('_get_only_transactions relation_filter_qs_st done: %s', (time.perf_counter() - relation_filter_qs_st))
 
