@@ -186,7 +186,17 @@ class BaseReportBuilder:
     def _trn_qs_filter(self, qs):
         return qs
 
-    def _get_only_transactions(self):
+    def _trn_qs(self):
+
+        # qs = self._queryset if self._queryset is not None else Transaction.objects
+        # qs = qs.filter(
+        #     master_user=self.instance.master_user,
+        #     is_deleted=False,
+        # ).filter(
+        #     Q(master_user=self.instance.master_user, is_deleted=False),
+        #     Q(complex_transaction__isnull=True) | Q(complex_transaction__status=ComplexTransaction.PRODUCTION,
+        #                                             complex_transaction__is_deleted=False)
+        # )
 
         qs = self._queryset if self._queryset is not None else Transaction.objects
 
@@ -200,6 +210,12 @@ class BaseReportBuilder:
         force_qs_evaluation(qs)
 
         _l.debug('_get_only_transactions base_qs_st done: %s', (time.perf_counter() - base_qs_st))
+
+        prefetch_qs_st = time.perf_counter()
+
+        qs = self._trn_qs_prefetch(qs)
+
+        _l.debug('_get_only_transactions prefetch_qs_st done: %s', (time.perf_counter() - prefetch_qs_st))
 
         production_only_qs_st = time.perf_counter()
 
@@ -247,70 +263,19 @@ class BaseReportBuilder:
 
         _l.debug('_get_only_transactions relation_filter_qs_st done: %s', (time.perf_counter() - relation_filter_qs_st))
 
-        permission_filter_qs_st = time.perf_counter()
-
-        if self.instance.member is not None:
-            from poms.transactions.filters import TransactionObjectPermissionFilter
-            qs = TransactionObjectPermissionFilter.filter_qs(qs, self.instance.master_user, self.instance.member)
-
-        _l.debug('_get_only_transactions permission_filter_qs_st done: %s', (time.perf_counter() - permission_filter_qs_st))
+        # permission_filter_qs_st = time.perf_counter()
+        #
+        # if self.instance.member is not None:
+        #     from poms.transactions.filters import TransactionObjectPermissionFilter
+        #     qs = TransactionObjectPermissionFilter.filter_qs(qs, self.instance.master_user, self.instance.member)
+        #
+        # _l.debug('_get_only_transactions permission_filter_qs_st done: %s', (time.perf_counter() - permission_filter_qs_st))
 
         specific_filter_qs_st = time.perf_counter()
 
         qs = self._trn_qs_filter(qs)
 
         _l.debug('_get_only_transactions specific_filter_qs_st done: %s', (time.perf_counter() - specific_filter_qs_st))
-
-        return qs
-
-    def _trn_qs(self):
-
-        qs = self._queryset if self._queryset is not None else Transaction.objects
-        qs = qs.filter(
-            master_user=self.instance.master_user,
-            is_deleted=False,
-        ).filter(
-            Q(master_user=self.instance.master_user, is_deleted=False),
-            Q(complex_transaction__isnull=True) | Q(complex_transaction__status=ComplexTransaction.PRODUCTION,
-                                                    complex_transaction__is_deleted=False)
-        )
-        qs = self._trn_qs_prefetch(qs)
-
-        filters = Q()
-
-        if self.instance.portfolios:
-            filters &= Q(portfolio__in=self.instance.portfolios)
-
-        if self.instance.accounts:
-            filters &= Q(account_position__in=self.instance.accounts,
-                         account_cash__in=self.instance.accounts,
-                         account_interim__in=self.instance.accounts)
-
-        if self.instance.accounts_position:
-            filters &= Q(account_position__in=self.instance.accounts_position)
-
-        if self.instance.accounts_cash:
-            filters &= Q(account_cash__in=self.instance.accounts_cash)
-
-        if self.instance.strategies1:
-            filters &= Q(strategy1_position__in=self.instance.strategies1,
-                         strategy1_cash__in=self.instance.strategies1)
-
-        if self.instance.strategies2:
-            filters &= Q(strategy2_position__in=self.instance.strategies2,
-                         strategy2_cash__in=self.instance.strategies2)
-
-        if self.instance.strategies3:
-            filters &= Q(strategy3_position__in=self.instance.strategies3,
-                         strategy3_cash__in=self.instance.strategies3)
-
-        qs = qs.filter(filters)
-
-        if self.instance.member is not None:
-            from poms.transactions.filters import TransactionObjectPermissionFilter
-            qs = TransactionObjectPermissionFilter.filter_qs(qs, self.instance.master_user, self.instance.member)
-
-        qs = self._trn_qs_filter(qs)
 
         return qs
 
