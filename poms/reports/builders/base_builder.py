@@ -247,6 +247,20 @@ class BaseReportBuilder:
 
         _l.debug('_get_only_transactions relation_filter_qs_st done: %s', (time.perf_counter() - relation_filter_qs_st))
 
+        permission_filter_qs_st = time.perf_counter()
+
+        if self.instance.member is not None:
+            from poms.transactions.filters import TransactionObjectPermissionFilter
+            qs = TransactionObjectPermissionFilter.filter_qs(qs, self.instance.master_user, self.instance.member)
+
+        _l.debug('_get_only_transactions permission_filter_qs_st done: %s', (time.perf_counter() - permission_filter_qs_st))
+
+        specific_filter_qs_st = time.perf_counter()
+
+        qs = self._trn_qs_filter(qs)
+
+        _l.debug('_get_only_transactions specific_filter_qs_st done: %s', (time.perf_counter() - specific_filter_qs_st))
+
         return qs
 
     def _trn_qs(self):
