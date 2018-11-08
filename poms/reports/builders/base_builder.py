@@ -194,7 +194,7 @@ class BaseReportBuilder:
             Q(complex_transaction__isnull=True) | Q(complex_transaction__status=ComplexTransaction.PRODUCTION,
                                                     complex_transaction__is_deleted=False)
         )
-        qs = self._trn_qs_prefetch(qs)
+        # qs = self._trn_qs_prefetch(qs)
 
         filters = Q()
 
