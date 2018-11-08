@@ -519,6 +519,14 @@ class TransactionTypeInput(models.Model):
                                                   on_delete=models.PROTECT, related_name='+',
                                                   verbose_name=ugettext_lazy('accrual calculation model'))
 
+    event_class = models.ForeignKey(EventClass, null=True, blank=True,
+                                    on_delete=models.PROTECT, related_name='+',
+                                    verbose_name=ugettext_lazy('event class'))
+
+    notification_class = models.ForeignKey(NotificationClass, null=True, blank=True,
+                                           on_delete=models.PROTECT, related_name='+',
+                                           verbose_name=ugettext_lazy('notification class'))
+
     class Meta:
         verbose_name = ugettext_lazy('transaction type input')
         verbose_name_plural = ugettext_lazy('transaction type inputs')
@@ -548,11 +556,31 @@ class TransactionTypeInput(models.Model):
                                                              TransactionTypeInput.NUMBER]
 
 
+class RebookReactionChoice():
+    CREATE = 0
+    SKIP = 1
+    OVERWRITE = 2
+    CLEAR_AND_WRITE = 3
+
+    CREATE_IF_NOT_EXIST = 4
+
+    choices = ((CREATE, 'Create'),  # simple entity create
+               (SKIP, 'Skip'),  # skip creating of entity
+               (OVERWRITE, 'Overwrite'),  # rewrite entity if the same user_code already exists, if not -> create
+               (CLEAR_AND_WRITE, 'Clear all & Create'),
+               # Special rewrite for entities without user_code (e.g.  Accruals schedule in Instrument)
+               (CREATE_IF_NOT_EXIST, 'Create if not exist'),
+               # Create if there is no entity with same user_code, otherwise skip
+               )
+
+
 class TransactionTypeAction(models.Model):
     transaction_type = models.ForeignKey(TransactionType, related_name='actions', on_delete=models.PROTECT,
                                          verbose_name=ugettext_lazy('transaction type'))
     order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
     action_notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('action notes'))
+
+    rebook_reaction = models.IntegerField(default=0, choices=RebookReactionChoice.choices)
 
     class Meta:
         verbose_name = ugettext_lazy('action')
@@ -973,11 +1001,13 @@ class TransactionTypeActionInstrumentEventScheduleAction(TransactionTypeAction):
     transaction_type_from_instrument_type = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='',
                                                              verbose_name=ugettext_lazy('text'))
 
-    is_book_automatic = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default=False, verbose_name=ugettext_lazy("is book automatic"),
-                                            help_text=ugettext_lazy('If checked - is book automatic'))
+    is_book_automatic = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default=False,
+                                         verbose_name=ugettext_lazy("is book automatic"),
+                                         help_text=ugettext_lazy('If checked - is book automatic'))
 
-    is_sent_to_pending = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default=False, verbose_name=ugettext_lazy("is sent to pending"),
-                                             help_text=ugettext_lazy('If checked - is sent to pending'))
+    is_sent_to_pending = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default=False,
+                                          verbose_name=ugettext_lazy("is sent to pending"),
+                                          help_text=ugettext_lazy('If checked - is sent to pending'))
 
     button_position = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0',
                                        verbose_name=ugettext_lazy('button position'))
@@ -1085,6 +1115,22 @@ class ComplexTransactionInput(models.Model):
     pricing_policy = models.ForeignKey('instruments.PricingPolicy', null=True, blank=True,
                                        on_delete=models.SET_NULL, related_name='+',
                                        verbose_name=ugettext_lazy('pricing policy'))
+
+    periodicity = models.ForeignKey('instruments.Periodicity', null=True, blank=True,
+                                    on_delete=models.PROTECT, related_name='+',
+                                    verbose_name=ugettext_lazy('periodicity'))
+
+    accrual_calculation_model = models.ForeignKey('instruments.AccrualCalculationModel', null=True, blank=True,
+                                                  on_delete=models.PROTECT, related_name='+',
+                                                  verbose_name=ugettext_lazy('accrual calculation model'))
+
+    event_class = models.ForeignKey(EventClass, null=True, blank=True,
+                                    on_delete=models.PROTECT, related_name='+',
+                                    verbose_name=ugettext_lazy('event class'))
+
+    notification_class = models.ForeignKey(NotificationClass, null=True, blank=True,
+                                           on_delete=models.PROTECT, related_name='+',
+                                           verbose_name=ugettext_lazy('notification class'))
 
     class Meta:
         verbose_name = ugettext_lazy('complex transaction input')

@@ -780,6 +780,9 @@ class TransactionTypeActionInstrumentEventScheduleActionSerializer(serializers.M
 
 class TransactionTypeActionSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, allow_null=True)
+
+    rebook_reaction = serializers.IntegerField(required=False, allow_null=True)
+
     transaction = TransactionTypeActionTransactionSerializer(source='transactiontypeactiontransaction', required=False,
                                                              allow_null=True)
     instrument = TransactionTypeActionInstrumentSerializer(source='transactiontypeactioninstrument', required=False,
@@ -806,7 +809,7 @@ class TransactionTypeActionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TransactionTypeAction
-        fields = ['id', 'order', 'action_notes', 'transaction', 'instrument', 'instrument_factor_schedule',
+        fields = ['id', 'order', 'rebook_reaction', 'action_notes', 'transaction', 'instrument', 'instrument_factor_schedule',
                   'instrument_manual_pricing_formula', 'instrument_accrual_calculation_schedules',
                   'instrument_event_schedule', 'instrument_event_schedule_action']
 
@@ -929,6 +932,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                     action_instrument = TransactionTypeActionInstrument(transaction_type=instance)
 
                 action_instrument.order = order
+                action_instrument.rebook_reaction = action_data.get('rebook_reaction', action_instrument.rebook_reaction)
                 action_instrument.action_notes = action_data.get('action_notes', action_instrument.action_notes)
                 for attr, value in action_instrument_data.items():
                     setattr(action_instrument, attr, value)
@@ -967,6 +971,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                     action_transaction = TransactionTypeActionTransaction(transaction_type=instance)
 
                 action_transaction.order = order
+                action_transaction.rebook_reaction = action_data.get('rebook_reaction', action_transaction.rebook_reaction)
                 action_transaction.action_notes = action_data.get('action_notes', action_transaction.action_notes)
                 for attr, value in action_transaction_data.items():
                     setattr(action_transaction, attr, value)
@@ -1007,6 +1012,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                         transaction_type=instance)
 
                 item.order = order
+                item.rebook_reaction = action_data.get('rebook_reaction', item.rebook_reaction)
                 item.action_notes = action_data.get('action_notes',
                                                     item.action_notes)
                 for attr, value in item_data.items():
@@ -1049,6 +1055,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                         transaction_type=instance)
 
                 item.order = order
+                item.rebook_reaction = action_data.get('rebook_reaction', item.rebook_reaction)
                 item.action_notes = action_data.get('action_notes',
                                                     item.action_notes)
                 for attr, value in item_data.items():
@@ -1092,6 +1099,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                         transaction_type=instance)
 
                 item.order = order
+                item.rebook_reaction = action_data.get('rebook_reaction', item.rebook_reaction)
                 item.action_notes = action_data.get('action_notes',
                                                     item.action_notes)
                 for attr, value in item_data.items():
@@ -1135,6 +1143,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                         transaction_type=instance)
 
                 item.order = order
+                item.rebook_reaction = action_data.get('rebook_reaction', item.rebook_reaction)
                 item.action_notes = action_data.get('action_notes', item.action_notes)
                 for attr, value in item_data.items():
                     setattr(item, attr, value)
@@ -1177,6 +1186,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                         transaction_type=instance)
 
                 item.order = order
+                item.rebook_reaction = action_data.get('rebook_reaction', item.rebook_reaction)
                 item.action_notes = action_data.get('action_notes', item.action_notes)
                 for attr, value in item_data.items():
                     setattr(item, attr, value)

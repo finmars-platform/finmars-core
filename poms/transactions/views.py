@@ -199,8 +199,8 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
                 'payment_size_detail',
                 'price_download_scheme',
                 'pricing_policy',
-                # 'periodicity',
-                # 'accrual_calculation_model'
+                'periodicity',
+                'accrual_calculation_model'
             ).prefetch_related(
                 *get_permissions_prefetch_lookups(
                     ('account', Account),
@@ -320,7 +320,7 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
                 # 'transactiontypeactioninstrumentmanualpricingformula__instrument_phantom',
                 # 'transactiontypeactioninstrumentmanualpricingformula__pricing_policy',
                 # 'transactiontypeactioninstrumentmanualpricingformula__pricing_policy_input',
-                #
+
                 # 'transactiontypeactioninstrumentaccrualcalculationschedules__instrument',
                 # 'transactiontypeactioninstrumentaccrualcalculationschedules__instrument_input',
                 # 'transactiontypeactioninstrumentaccrualcalculationschedules__instrument_phantom',
