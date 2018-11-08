@@ -61,6 +61,8 @@ class TransactionTypeProcess(object):
 
         self.inputs = list(self.transaction_type.inputs.all())
 
+        print("init complex_transaction %s" % complex_transaction)
+
         self.complex_transaction = complex_transaction
         if self.complex_transaction is None:
             self.complex_transaction = ComplexTransaction(transaction_type=self.transaction_type, date=None)
@@ -232,10 +234,6 @@ class TransactionTypeProcess(object):
                 if instrument is None:
                     instrument = Instrument(master_user=master_user)
 
-                rebook_reaction = action_instrument.rebook_reaction
-
-                print('rebook_reaction %s ' % rebook_reaction)
-
                 instrument.user_code = user_code
                 self._set_val(errors=errors, values=self.values, default_value='',
                               target=instrument, target_attr_name='name',
@@ -302,11 +300,21 @@ class TransactionTypeProcess(object):
 
                 try:
 
-                    if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.OVERWRITE,
-                                           RebookReactionChoice.CREATE_IF_NOT_EXIST]:
+                    if self.complex_transaction and self.complex_transaction.date is not None:
 
-                        if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST and instrument.pk is not None:
-                            return
+                        rebook_reaction = action_instrument.rebook_reaction
+
+                        if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.OVERWRITE,
+                                               RebookReactionChoice.CREATE_IF_NOT_EXIST]:
+
+                            if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST and instrument.pk is not None:
+                                return
+
+                            instrument.save()
+
+                            self._instrument_assign_permission(instrument, object_permissions)
+
+                    else:
 
                         instrument.save()
 
@@ -337,49 +345,54 @@ class TransactionTypeProcess(object):
 
             if action_instrument_factor_schedule:
 
-                rebook_reaction = action_instrument_factor_schedule.rebook_reaction
+                errors = {}
 
-                if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
+                factor = InstrumentFactorSchedule()
 
-                    errors = {}
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=factor, target_attr_name='instrument',
+                              source=action_instrument_factor_schedule, source_attr_name='instrument')
+                if action_instrument_factor_schedule.instrument_phantom is not None:
+                    factor.instrument = instrument_map[
+                        action_instrument_factor_schedule.instrument_phantom_id]
 
-                    factor = InstrumentFactorSchedule()
+                self._set_val(errors=errors, values=self.values, default_value=self._now,
+                              target=factor, target_attr_name='effective_date', validator=formula.validate_date,
+                              source=action_instrument_factor_schedule, source_attr_name='effective_date')
 
-                    self._set_rel(errors=errors, values=self.values, default_value=None,
-                                  target=factor, target_attr_name='instrument',
-                                  source=action_instrument_factor_schedule, source_attr_name='instrument')
-                    if action_instrument_factor_schedule.instrument_phantom is not None:
-                        factor.instrument = instrument_map[
-                            action_instrument_factor_schedule.instrument_phantom_id]
+                self._set_val(errors=errors, values=self.values, default_value=0.0,
+                              target=factor, target_attr_name='factor_value',
+                              source=action_instrument_factor_schedule, source_attr_name='factor_value')
 
-                    if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-                        InstrumentFactorSchedule.filter(instrument=factor.instrument).delete()
+                try:
 
-                    self._set_val(errors=errors, values=self.values, default_value=self._now,
-                                  target=factor, target_attr_name='effective_date', validator=formula.validate_date,
-                                  source=action_instrument_factor_schedule, source_attr_name='effective_date')
+                    if self.complex_transaction and self.complex_transaction.date is not None:
 
-                    self._set_val(errors=errors, values=self.values, default_value=0.0,
-                                  target=factor, target_attr_name='factor_value',
-                                  source=action_instrument_factor_schedule, source_attr_name='factor_value')
+                        rebook_reaction = action_instrument_factor_schedule.rebook_reaction
 
-                    try:
+                        if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
+
+                            if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
+                                InstrumentFactorSchedule.filter(instrument=factor.instrument).delete()
+
+                            factor.save()
+
+                    else:
 
                         factor.save()
 
-                        # instrument.save()
 
-                    except (ValueError, TypeError, IntegrityError):
+                except (ValueError, TypeError, IntegrityError):
 
-                        self._add_err_msg(errors, 'non_field_errors',
-                                          ugettext(
-                                              'Invalid instrument factor schedule action fields (please, use type convertion).'))
-                    except DatabaseError:
-                        self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
-                    finally:
-                        if bool(errors):
-                            _l.debug(errors)
-                            # self.instruments_errors.append(errors)
+                    self._add_err_msg(errors, 'non_field_errors',
+                                      ugettext(
+                                          'Invalid instrument factor schedule action fields (please, use type convertion).'))
+                except DatabaseError:
+                    self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
+                finally:
+                    if bool(errors):
+                        _l.debug(errors)
+                        # self.instruments_errors.append(errors)
 
     def book_create_manual_pricing_formulas(self, actions, instrument_map):
 
@@ -391,51 +404,57 @@ class TransactionTypeProcess(object):
 
             if action_instrument_manual_pricing_formula:
 
-                rebook_reaction = action_instrument_manual_pricing_formula.rebook_reaction
+                errors = {}
 
-                if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
+                manual_pricing_formula = ManualPricingFormula()
 
-                    errors = {}
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=manual_pricing_formula, target_attr_name='instrument',
+                              source=action_instrument_manual_pricing_formula, source_attr_name='instrument')
+                if action_instrument_manual_pricing_formula.instrument_phantom is not None:
+                    manual_pricing_formula.instrument = instrument_map[
+                        action_instrument_manual_pricing_formula.instrument_phantom_id]
 
-                    manual_pricing_formula = ManualPricingFormula()
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=manual_pricing_formula, target_attr_name='pricing_policy',
+                              source=action_instrument_manual_pricing_formula, source_attr_name='pricing_policy')
 
-                    self._set_rel(errors=errors, values=self.values, default_value=None,
-                                  target=manual_pricing_formula, target_attr_name='instrument',
-                                  source=action_instrument_manual_pricing_formula, source_attr_name='instrument')
-                    if action_instrument_manual_pricing_formula.instrument_phantom is not None:
-                        manual_pricing_formula.instrument = instrument_map[
-                            action_instrument_manual_pricing_formula.instrument_phantom_id]
+                self._set_val(errors=errors, values=self.values, default_value='',
+                              target=manual_pricing_formula, target_attr_name='expr',
+                              source=action_instrument_manual_pricing_formula, source_attr_name='expr')
 
-                    if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-                        ManualPricingFormula.filter(instrument=manual_pricing_formula.instrument).delete()
+                self._set_val(errors=errors, values=self.values, default_value='',
+                              target=manual_pricing_formula, target_attr_name='notes',
+                              source=action_instrument_manual_pricing_formula, source_attr_name='notes')
 
-                    self._set_rel(errors=errors, values=self.values, default_value=None,
-                                  target=manual_pricing_formula, target_attr_name='pricing_policy',
-                                  source=action_instrument_manual_pricing_formula, source_attr_name='pricing_policy')
+                try:
 
-                    self._set_val(errors=errors, values=self.values, default_value='',
-                                  target=manual_pricing_formula, target_attr_name='expr',
-                                  source=action_instrument_manual_pricing_formula, source_attr_name='expr')
+                    if self.complex_transaction and self.complex_transaction.date is not None:
 
-                    self._set_val(errors=errors, values=self.values, default_value='',
-                                  target=manual_pricing_formula, target_attr_name='notes',
-                                  source=action_instrument_manual_pricing_formula, source_attr_name='notes')
+                        rebook_reaction = action_instrument_manual_pricing_formula.rebook_reaction
 
-                    try:
+                        if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
+
+                            if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
+                                ManualPricingFormula.filter(instrument=manual_pricing_formula.instrument).delete()
+
+                            manual_pricing_formula.save()
+
+                    else:
 
                         manual_pricing_formula.save()
 
-                    except (ValueError, TypeError, IntegrityError):
+                except (ValueError, TypeError, IntegrityError):
 
-                        self._add_err_msg(errors, 'non_field_errors',
-                                          ugettext(
-                                              'Invalid instrument manual pricing formula action fields (please, use type convertion).'))
-                    except DatabaseError:
-                        self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
-                    finally:
-                        if bool(errors):
-                            _l.debug(errors)
-                            # self.instruments_errors.append(errors)
+                    self._add_err_msg(errors, 'non_field_errors',
+                                      ugettext(
+                                          'Invalid instrument manual pricing formula action fields (please, use type convertion).'))
+                except DatabaseError:
+                    self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
+                finally:
+                    if bool(errors):
+                        _l.debug(errors)
+                        # self.instruments_errors.append(errors)
 
     def book_create_accrual_calculation_schedules(self, actions, instrument_map):
 
@@ -447,72 +466,79 @@ class TransactionTypeProcess(object):
 
             if action_instrument_accrual_calculation_schedule:
 
-                rebook_reaction = action_instrument_accrual_calculation_schedule.rebook_reaction
+                errors = {}
 
-                if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
+                accrual_calculation_schedule = AccrualCalculationSchedule()
 
-                    errors = {}
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=accrual_calculation_schedule, target_attr_name='instrument',
+                              source=action_instrument_accrual_calculation_schedule, source_attr_name='instrument')
+                if action_instrument_accrual_calculation_schedule.instrument_phantom is not None:
+                    accrual_calculation_schedule.instrument = instrument_map[
+                        action_instrument_accrual_calculation_schedule.instrument_phantom_id]
 
-                    accrual_calculation_schedule = AccrualCalculationSchedule()
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=accrual_calculation_schedule, target_attr_name='accrual_calculation_model',
+                              source=action_instrument_accrual_calculation_schedule,
+                              source_attr_name='accrual_calculation_model')
 
-                    self._set_rel(errors=errors, values=self.values, default_value=None,
-                                  target=accrual_calculation_schedule, target_attr_name='instrument',
-                                  source=action_instrument_accrual_calculation_schedule, source_attr_name='instrument')
-                    if action_instrument_accrual_calculation_schedule.instrument_phantom is not None:
-                        accrual_calculation_schedule.instrument = instrument_map[
-                            action_instrument_accrual_calculation_schedule.instrument_phantom_id]
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=accrual_calculation_schedule, target_attr_name='periodicity',
+                              source=action_instrument_accrual_calculation_schedule, source_attr_name='periodicity')
 
-                    if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-                        AccrualCalculationSchedule.filter(instrument=accrual_calculation_schedule.instrument).delete()
+                self._set_val(errors=errors, values=self.values, default_value='', validator=formula.validate_date,
+                              target=accrual_calculation_schedule, target_attr_name='accrual_start_date',
+                              source=action_instrument_accrual_calculation_schedule,
+                              source_attr_name='accrual_start_date')
 
-                    self._set_rel(errors=errors, values=self.values, default_value=None,
-                                  target=accrual_calculation_schedule, target_attr_name='accrual_calculation_model',
-                                  source=action_instrument_accrual_calculation_schedule,
-                                  source_attr_name='accrual_calculation_model')
+                self._set_val(errors=errors, values=self.values, default_value='', validator=formula.validate_date,
+                              target=accrual_calculation_schedule, target_attr_name='first_payment_date',
+                              source=action_instrument_accrual_calculation_schedule,
+                              source_attr_name='first_payment_date')
 
-                    self._set_rel(errors=errors, values=self.values, default_value=None,
-                                  target=accrual_calculation_schedule, target_attr_name='periodicity',
-                                  source=action_instrument_accrual_calculation_schedule, source_attr_name='periodicity')
+                self._set_val(errors=errors, values=self.values, default_value='',
+                              target=accrual_calculation_schedule, target_attr_name='accrual_size',
+                              source=action_instrument_accrual_calculation_schedule,
+                              source_attr_name='accrual_size')
 
-                    self._set_val(errors=errors, values=self.values, default_value='', validator=formula.validate_date,
-                                  target=accrual_calculation_schedule, target_attr_name='accrual_start_date',
-                                  source=action_instrument_accrual_calculation_schedule,
-                                  source_attr_name='accrual_start_date')
+                self._set_val(errors=errors, values=self.values, default_value='',
+                              target=accrual_calculation_schedule, target_attr_name='periodicity_n',
+                              source=action_instrument_accrual_calculation_schedule,
+                              source_attr_name='periodicity_n')
 
-                    self._set_val(errors=errors, values=self.values, default_value='', validator=formula.validate_date,
-                                  target=accrual_calculation_schedule, target_attr_name='first_payment_date',
-                                  source=action_instrument_accrual_calculation_schedule,
-                                  source_attr_name='first_payment_date')
+                self._set_val(errors=errors, values=self.values, default_value='',
+                              target=accrual_calculation_schedule, target_attr_name='notes',
+                              source=action_instrument_accrual_calculation_schedule, source_attr_name='notes')
 
-                    self._set_val(errors=errors, values=self.values, default_value='',
-                                  target=accrual_calculation_schedule, target_attr_name='accrual_size',
-                                  source=action_instrument_accrual_calculation_schedule,
-                                  source_attr_name='accrual_size')
+                try:
 
-                    self._set_val(errors=errors, values=self.values, default_value='',
-                                  target=accrual_calculation_schedule, target_attr_name='periodicity_n',
-                                  source=action_instrument_accrual_calculation_schedule,
-                                  source_attr_name='periodicity_n')
+                    if self.complex_transaction and self.complex_transaction.date is not None:
 
-                    self._set_val(errors=errors, values=self.values, default_value='',
-                                  target=accrual_calculation_schedule, target_attr_name='notes',
-                                  source=action_instrument_accrual_calculation_schedule, source_attr_name='notes')
+                        rebook_reaction = action_instrument_accrual_calculation_schedule.rebook_reaction
 
-                    try:
+                        if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
+
+                            if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
+                                AccrualCalculationSchedule.filter(
+                                    instrument=accrual_calculation_schedule.instrument).delete()
+
+                            accrual_calculation_schedule.save()
+
+                    else:
 
                         accrual_calculation_schedule.save()
 
-                    except (ValueError, TypeError, IntegrityError):
+                except (ValueError, TypeError, IntegrityError):
 
-                        self._add_err_msg(errors, 'non_field_errors',
-                                          ugettext(
-                                              'Invalid instrument accrual calculation schedule action fields (please, use type convertion).'))
-                    except DatabaseError:
-                        self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
-                    finally:
-                        if bool(errors):
-                            _l.debug(errors)
-                            # self.instruments_errors.append(errors)
+                    self._add_err_msg(errors, 'non_field_errors',
+                                      ugettext(
+                                          'Invalid instrument accrual calculation schedule action fields (please, use type convertion).'))
+                except DatabaseError:
+                    self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
+                finally:
+                    if bool(errors):
+                        _l.debug(errors)
+                        # self.instruments_errors.append(errors)
 
     def book_create_event_schedules(self, actions, instrument_map, event_schedules_map):
 
@@ -524,81 +550,99 @@ class TransactionTypeProcess(object):
 
             if action_instrument_event_schedule:
 
-                rebook_reaction = action_instrument_event_schedule.rebook_reaction
+                instrument = instrument_map[
+                    action_instrument_event_schedule.instrument_phantom_id]
 
-                if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
+                event_schedule = None
 
-                    errors = {}
+                if instrument.pk:
+                    try:
+                        event_schedule = EventSchedule.objects.get(instrument=instrument)
+                    except ObjectDoesNotExist:
+                        pass
 
+                errors = {}
+
+                if event_schedule is None:
                     event_schedule = EventSchedule()
 
-                    self._set_rel(errors=errors, values=self.values, default_value=None,
-                                  target=event_schedule, target_attr_name='instrument',
-                                  source=action_instrument_event_schedule, source_attr_name='instrument')
-                    if action_instrument_event_schedule.instrument_phantom is not None:
-                        event_schedule.instrument = instrument_map[
-                            action_instrument_event_schedule.instrument_phantom_id]
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=event_schedule, target_attr_name='instrument',
+                              source=action_instrument_event_schedule, source_attr_name='instrument')
+                if action_instrument_event_schedule.instrument_phantom is not None:
+                    event_schedule.instrument = instrument_map[
+                        action_instrument_event_schedule.instrument_phantom_id]
 
-                    if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-                        EventSchedule.filter(instrument=event_schedule.instrument).delete()
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=event_schedule, target_attr_name='notification_class',
+                              source=action_instrument_event_schedule, source_attr_name='notification_class')
 
-                    self._set_rel(errors=errors, values=self.values, default_value=None,
-                                  target=event_schedule, target_attr_name='notification_class',
-                                  source=action_instrument_event_schedule, source_attr_name='notification_class')
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=event_schedule, target_attr_name='periodicity',
+                              source=action_instrument_event_schedule, source_attr_name='periodicity')
 
-                    self._set_rel(errors=errors, values=self.values, default_value=None,
-                                  target=event_schedule, target_attr_name='periodicity',
-                                  source=action_instrument_event_schedule, source_attr_name='periodicity')
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=event_schedule, target_attr_name='event_class',
+                              source=action_instrument_event_schedule, source_attr_name='event_class')
 
-                    self._set_rel(errors=errors, values=self.values, default_value=None,
-                                  target=event_schedule, target_attr_name='event_class',
-                                  source=action_instrument_event_schedule, source_attr_name='event_class')
+                self._set_val(errors=errors, values=self.values, default_value='', validator=formula.validate_date,
+                              target=event_schedule, target_attr_name='effective_date',
+                              source=action_instrument_event_schedule, source_attr_name='effective_date')
 
-                    self._set_val(errors=errors, values=self.values, default_value='', validator=formula.validate_date,
-                                  target=event_schedule, target_attr_name='effective_date',
-                                  source=action_instrument_event_schedule, source_attr_name='effective_date')
+                self._set_val(errors=errors, values=self.values, default_value='', validator=formula.validate_date,
+                              target=event_schedule, target_attr_name='final_date',
+                              source=action_instrument_event_schedule, source_attr_name='final_date')
 
-                    self._set_val(errors=errors, values=self.values, default_value='', validator=formula.validate_date,
-                                  target=event_schedule, target_attr_name='final_date',
-                                  source=action_instrument_event_schedule, source_attr_name='final_date')
+                self._set_val(errors=errors, values=self.values, default_value='',
+                              target=event_schedule, target_attr_name='notify_in_n_days',
+                              source=action_instrument_event_schedule, source_attr_name='notify_in_n_days')
 
-                    self._set_val(errors=errors, values=self.values, default_value='',
-                                  target=event_schedule, target_attr_name='notify_in_n_days',
-                                  source=action_instrument_event_schedule, source_attr_name='notify_in_n_days')
+                self._set_val(errors=errors, values=self.values, default_value='',
+                              target=event_schedule, target_attr_name='periodicity_n',
+                              source=action_instrument_event_schedule, source_attr_name='periodicity_n')
 
-                    self._set_val(errors=errors, values=self.values, default_value='',
-                                  target=event_schedule, target_attr_name='periodicity_n',
-                                  source=action_instrument_event_schedule, source_attr_name='periodicity_n')
+                self._set_val(errors=errors, values=self.values, default_value='',
+                              target=event_schedule, target_attr_name='name',
+                              source=action_instrument_event_schedule, source_attr_name='name')
 
-                    self._set_val(errors=errors, values=self.values, default_value='',
-                                  target=event_schedule, target_attr_name='name',
-                                  source=action_instrument_event_schedule, source_attr_name='name')
+                self._set_val(errors=errors, values=self.values, default_value='',
+                              target=event_schedule, target_attr_name='description',
+                              source=action_instrument_event_schedule, source_attr_name='description')
 
-                    self._set_val(errors=errors, values=self.values, default_value='',
-                                  target=event_schedule, target_attr_name='description',
-                                  source=action_instrument_event_schedule, source_attr_name='description')
+                try:
 
-                    try:
+                    if self.complex_transaction and self.complex_transaction.date is not None:
+
+                        rebook_reaction = action_instrument_event_schedule.rebook_reaction
+
+                        if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
+
+                            if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
+                                EventSchedule.filter(instrument=event_schedule.instrument).delete()
+
+                            event_schedule.save()
+
+                    else:
 
                         event_schedule.save()
 
-                    except (ValueError, TypeError, IntegrityError):
+                except (ValueError, TypeError, IntegrityError):
 
-                        self._add_err_msg(errors, 'non_field_errors',
-                                          ugettext(
-                                              'Invalid instrument event schedule action fields (please, use type convertion).'))
-                    except DatabaseError:
-                        self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
-                    else:
-                        event_schedules_map[action.id] = event_schedule
-                    finally:
-                        if bool(errors):
-                            _l.debug(errors)
-                            # self.instruments_errors.append(errors)
+                    self._add_err_msg(errors, 'non_field_errors',
+                                      ugettext(
+                                          'Invalid instrument event schedule action fields (please, use type convertion).'))
+                except DatabaseError:
+                    self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
+                else:
+                    event_schedules_map[action.id] = event_schedule
+                finally:
+                    if bool(errors):
+                        _l.debug(errors)
+                        # self.instruments_errors.append(errors)
 
         return event_schedules_map
 
-    def book_create_event_actions(self, actions, event_schedules_map):
+    def book_create_event_actions(self, actions, instrument_map, event_schedules_map):
 
         for order, action in enumerate(actions):
             try:
@@ -608,63 +652,79 @@ class TransactionTypeProcess(object):
 
             if action_instrument_event_schedule_action:
 
-                rebook_reaction = action_instrument_event_schedule_action.rebook_reaction
+                errors = {}
 
-                if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
+                event_schedule_action = EventScheduleAction()
 
-                    errors = {}
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=event_schedule_action, target_attr_name='event_schedule',
+                              source=action_instrument_event_schedule_action, source_attr_name='event_schedule')
 
-                    event_schedule_action = EventScheduleAction()
+                if action_instrument_event_schedule_action.event_schedule_phantom is not None:
+                    event_schedule = event_schedules_map[
+                        action_instrument_event_schedule_action.event_schedule_phantom_id]
 
-                    self._set_rel(errors=errors, values=self.values, default_value=None,
-                                  target=event_schedule_action, target_attr_name='event_schedule',
-                                  source=action_instrument_event_schedule_action, source_attr_name='event_schedule')
+                    event_schedule_action.event_schedule = event_schedule
 
-                    if action_instrument_event_schedule_action.event_schedule_phantom is not None:
-                        event_schedule_action.event_schedule = event_schedules_map[
-                            action_instrument_event_schedule_action.event_schedule_phantom_id]
+                self._set_rel(errors=errors, values=self.values, default_value=None,
+                              target=event_schedule_action, target_attr_name='transaction_type',
+                              source=event_schedule_action.event_schedule.instrument.instrument_type,
+                              source_attr_name=action_instrument_event_schedule_action.transaction_type_from_instrument_type)
 
-                    if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-                        EventScheduleAction.filter(event_schedule=event_schedule_action.event_schedule).delete()
+                self._set_val(errors=errors, values=self.values, default_value=False,
+                              validator=formula.validate_bool,
+                              target=event_schedule_action, target_attr_name='is_sent_to_pending',
+                              source=action_instrument_event_schedule_action, source_attr_name='is_sent_to_pending')
 
-                    self._set_rel(errors=errors, values=self.values, default_value=None,
-                                  target=event_schedule_action, target_attr_name='transaction_type',
-                                  source=event_schedule_action.event_schedule.instrument.instrument_type,
-                                  source_attr_name=action_instrument_event_schedule_action.transaction_type_from_instrument_type)
+                self._set_val(errors=errors, values=self.values, default_value=False,
+                              validator=formula.validate_bool,
+                              target=event_schedule_action, target_attr_name='is_book_automatic',
+                              source=action_instrument_event_schedule_action, source_attr_name='is_book_automatic')
 
-                    self._set_val(errors=errors, values=self.values, default_value=False,
-                                  validator=formula.validate_bool,
-                                  target=event_schedule_action, target_attr_name='is_sent_to_pending',
-                                  source=action_instrument_event_schedule_action, source_attr_name='is_sent_to_pending')
+                self._set_val(errors=errors, values=self.values, default_value=0,
+                              target=event_schedule_action, target_attr_name='button_position',
+                              source=action_instrument_event_schedule_action, source_attr_name='button_position')
 
-                    self._set_val(errors=errors, values=self.values, default_value=False,
-                                  validator=formula.validate_bool,
-                                  target=event_schedule_action, target_attr_name='is_book_automatic',
-                                  source=action_instrument_event_schedule_action, source_attr_name='is_book_automatic')
+                self._set_val(errors=errors, values=self.values, default_value='',
+                              target=event_schedule_action, target_attr_name='text',
+                              source=action_instrument_event_schedule_action, source_attr_name='text')
 
-                    self._set_val(errors=errors, values=self.values, default_value=0,
-                                  target=event_schedule_action, target_attr_name='button_position',
-                                  source=action_instrument_event_schedule_action, source_attr_name='button_position')
+                print('event_schedule_action.event_schedule %s ' % event_schedule_action.event_schedule)
+                print('event_schedule_action.is_book_automatic %s ' % event_schedule_action.is_book_automatic)
+                print('event_schedule_action.is_book_automatic type %s ' % type(
+                    event_schedule_action.is_book_automatic))
+                print('event_schedule_action.is_sent_to_pending %s ' % event_schedule_action.is_sent_to_pending)
+                print('event_schedule_action.is_sent_to_pending type%s ' % type(
+                    event_schedule_action.is_sent_to_pending))
 
-                    self._set_val(errors=errors, values=self.values, default_value='',
-                                  target=event_schedule_action, target_attr_name='text',
-                                  source=action_instrument_event_schedule_action, source_attr_name='text')
+                try:
 
-                    try:
+                    if self.complex_transaction and self.complex_transaction.date is not None:
+
+                        rebook_reaction = action_instrument_event_schedule_action.rebook_reaction
+
+                        if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
+
+                            if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
+                                EventScheduleAction.filter(event_schedule=event_schedule_action.event_schedule).delete()
+
+                            event_schedule_action.save()
+
+                    else:
 
                         event_schedule_action.save()
 
-                    except (ValueError, TypeError, IntegrityError):
+                except (ValueError, TypeError, IntegrityError) as e:
 
-                        self._add_err_msg(errors, 'non_field_errors',
-                                          ugettext(
-                                              'Invalid instrument event schedule action action fields (please, use type convertion).'))
-                    except DatabaseError:
-                        self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
-                    finally:
-                        if bool(errors):
-                            _l.debug(errors)
-                            # self.instruments_errors.append(errors)
+                    self._add_err_msg(errors, 'non_field_errors',
+                                      ugettext(
+                                          'Invalid instrument event schedule action action fields (please, use type convertion).'))
+                except DatabaseError:
+                    self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
+                finally:
+                    if bool(errors):
+                        _l.debug(errors)
+                        # self.instruments_errors.append(errors)
 
     def book_create_transactions(self, actions, master_user, instrument_map):
 
@@ -839,7 +899,7 @@ class TransactionTypeProcess(object):
         self.book_create_accrual_calculation_schedules(actions, instrument_map)
         event_schedules_map = self.book_create_event_schedules(actions, instrument_map, event_schedules_map)
 
-        self.book_create_event_actions(actions, event_schedules_map)
+        self.book_create_event_actions(actions, instrument_map, event_schedules_map)
 
         # complex_transaction
         complex_transaction_errors = {}

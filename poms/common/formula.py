@@ -1149,6 +1149,9 @@ def validate_num(val):
 
 
 def validate_bool(val):
+
+    print('validate_bool val %s' % val)
+
     return _parse_bool(val)
 
 
