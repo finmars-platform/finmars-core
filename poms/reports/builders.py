@@ -2450,7 +2450,7 @@ class ReportBuilder(object):
         self._summaries = []
 
     def build(self, full=True):
-        _l.debug('build report: %s', self.instance)
+        # _l.debug('build report: %s', self.instance)
 
         self._load_transactions()
         self._transaction_pricing()
@@ -2816,22 +2816,22 @@ class ReportBuilder(object):
             # trn.key = self._get_trn_group_key(trn)
             self._transactions.append(trn)
 
-        _l.debug('transactions - len=%s', len(self._transactions))
+        # _l.debug('transactions - len=%s', len(self._transactions))
 
     def _transaction_pricing(self):
-        _l.debug('transactions - add pricing')
+        # _l.debug('transactions - add pricing')
 
         for trn in self._transactions:
             trn.pricing()
 
     def _transaction_calc(self):
-        _l.debug('transactions - calculate')
+        # _l.debug('transactions - calculate')
 
         for trn in self._transactions:
             trn.calc()
 
     def _clone_transactions_if_need(self):
-        _l.debug('transactions - clone if need')
+        # _l.debug('transactions - clone if need')
 
         res = []
         for trn in self._transactions:
@@ -2939,7 +2939,7 @@ class ReportBuilder(object):
                     t.multiplier = 0.0
 
     def _calc_avco_multipliers(self):
-        _l.debug('transactions - calculate multipliers - avco')
+        # _l.debug('transactions - calculate multipliers - avco')
 
         items = defaultdict(list)
 
@@ -3008,7 +3008,7 @@ class ReportBuilder(object):
             t.avco_rolling_pos_size = rolling_pos
 
     def _calc_fifo_multipliers(self):
-        _l.debug('transactions - calculate multipliers - fifo')
+        # _l.debug('transactions - calculate multipliers - fifo')
 
         items = defaultdict(list)
 
@@ -3461,7 +3461,7 @@ class ReportBuilder(object):
             raise RuntimeError('Invalid transaction case: %s' % trn.case)
 
     def _refresh_with_perms(self):
-        _l.debug('items - refresh all objects with permissions')
+        # _l.debug('items - refresh all objects with permissions')
 
         instrs = set()
         ccys = set()

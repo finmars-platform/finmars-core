@@ -480,6 +480,8 @@ class ReportBuilder(BaseReportBuilder):
     def _load_transactions(self):
         _l.debug('transactions - load')
 
+        _load_transactions_st = time.perf_counter()
+
         self._transactions = []
         self._original_transactions = []
 
@@ -489,8 +491,9 @@ class ReportBuilder(BaseReportBuilder):
 
         _l.debug('_load_transactions trn_qs_st done: %s', (time.perf_counter() - trn_qs_st))
 
-        if not trn_qs.exists():
+        if len(trn_qs) == 0:
             return
+
         overrides = {}
 
         if self.instance.portfolio_mode == Report.MODE_IGNORE:
@@ -529,16 +532,9 @@ class ReportBuilder(BaseReportBuilder):
         _pricing_provider = self.pricing_provider
         _fx_rate_provider = self.fx_rate_provider
 
-        trn_qs_list_st = time.perf_counter()
+        iteration_st = time.perf_counter()
 
-        trn_qs_list = list(trn_qs)
-
-        _l.debug('t trn_qs_list_st evaluation done: %s', (time.perf_counter() - trn_qs_list_st))
-
-        # iteration_st = time.perf_counter()
-
-        for t in trn_qs_list:
-
+        for t in trn_qs:
             # total_items = total_items + 1
             #
             # t_st = time.perf_counter()
@@ -579,24 +575,26 @@ class ReportBuilder(BaseReportBuilder):
 
         # _l.debug('_load_transactions total_st done: %s', total_st)
         # _l.debug('_load_transactions total_items done: %s', total_items)
-        # _l.debug('_load_transactions iteration_st done: %s', (time.perf_counter() - iteration_st))
+        _l.debug('_load_transactions iteration_st done: %s', (time.perf_counter() - iteration_st))
 
         # _l.debug('transactions - len=%s', len(self._transactions))
 
+        _l.debug('_load_transactions done: %s', (time.perf_counter() - _load_transactions_st))
+
     def _transaction_pricing(self):
-        _l.debug('transactions - add pricing')
+        # _l.debug('transactions - add pricing')
 
         for trn in self._transactions:
             trn.pricing()
 
     def _transaction_calc(self):
-        _l.debug('transactions - calculate')
+        # _l.debug('transactions - calculate')
 
         for trn in self._transactions:
             trn.calc()
 
     def _clone_transactions_if_need(self):
-        _l.debug('transactions - clone if need')
+        # _l.debug('transactions - clone if need')
 
         res = []
         for trn in self._transactions:
@@ -648,7 +646,7 @@ class ReportBuilder(BaseReportBuilder):
         _l.debug('transactions - len=%s', len(self._transactions))
 
     def _transaction_multipliers(self):
-        _l.debug('transactions - calculate multipliers')
+        # _l.debug('transactions - calculate multipliers')
 
         self._calc_avco_multipliers()
         self._calc_fifo_multipliers()
@@ -740,7 +738,7 @@ class ReportBuilder(BaseReportBuilder):
         pass
 
     def _calc_avco_multipliers(self):
-        _l.debug('transactions - calculate multipliers - avco')
+        # _l.debug('transactions - calculate multipliers - avco')
 
         items = defaultdict(list)
 
@@ -809,7 +807,7 @@ class ReportBuilder(BaseReportBuilder):
             t.avco_rolling_pos_size = rolling_pos
 
     def _calc_fifo_multipliers(self):
-        _l.debug('transactions - calculate multipliers - fifo')
+        # _l.debug('transactions - calculate multipliers - fifo')
 
         items = defaultdict(list)
 
@@ -1321,7 +1319,7 @@ class ReportBuilder(BaseReportBuilder):
             raise RuntimeError('Invalid transaction case: %s' % trn.case)
 
     def _refresh_with_perms(self):
-        _l.debug('items - refresh all objects with permissions')
+        # _l.debug('items - refresh all objects with permissions')
 
         self.instance.portfolios = self._refresh_portfolios(
             master_user=self.instance.master_user,

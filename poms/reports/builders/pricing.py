@@ -83,7 +83,7 @@ class InstrumentPricingProvider(AbstractProvider):
         #     self._cache[(h.instrument_id, h.date)] = h
         self._cache = {(h.instrument_id, h.date): h for h in qs}
 
-        _l.debug('instrument pricing: len=%s', len(self._cache))
+        # _l.debug('instrument pricing: len=%s', len(self._cache))
 
     def fill_using_instruments_and_dates(self, instruments, dates):
         # self._cache = {}
@@ -95,7 +95,7 @@ class InstrumentPricingProvider(AbstractProvider):
         #     self._cache[(h.instrument_id, h.date)] = h
         self._cache = {(h.instrument_id, h.date): h for h in qs}
 
-        _l.debug('instrument pricing: len=%s', len(self._cache))
+        # _l.debug('instrument pricing: len=%s', len(self._cache))
 
     def _on_missed(self, item, d):
         if self.lazy:
@@ -159,7 +159,7 @@ class CurrencyFxRateProvider(AbstractProvider):
         #     self._cache[(h.currency_id, h.date)] = h
         self._cache = {(h.currency_id, h.date): h for h in qs}
 
-        _l.debug('currency fx rates: len=%s', len(self._cache))
+        # _l.debug('currency fx rates: len=%s', len(self._cache))
 
     def fill_using_currencies_and_dates(self, currencies, dates):
         # self._cache = {}
@@ -172,7 +172,7 @@ class CurrencyFxRateProvider(AbstractProvider):
         #     self._cache[(h.currency_id, h.date)] = h
         self._cache = {(h.currency_id, h.date): h for h in qs}
 
-        _l.debug('currency fx rates: len=%s', len(self._cache))
+        # _l.debug('currency fx rates: len=%s', len(self._cache))
 
     def _on_missed(self, item, d):
         if self.lazy:

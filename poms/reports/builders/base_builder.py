@@ -30,6 +30,8 @@ from poms.transactions.models import Transaction, ComplexTransaction, Transactio
 
 from poms.common.utils import force_qs_evaluation
 
+from django.db.models import F
+
 _l = logging.getLogger('poms.reports')
 
 
@@ -188,6 +190,8 @@ class BaseReportBuilder:
 
     def _trn_qs(self):
 
+        _trn_qs_st = time.perf_counter()
+
         # qs = self._queryset if self._queryset is not None else Transaction.objects
         # qs = qs.filter(
         #     master_user=self.instance.master_user,
@@ -209,21 +213,27 @@ class BaseReportBuilder:
 
         force_qs_evaluation(qs)
 
+        _l.debug("_get_only_transactions base len %s" % len(qs))
+
         _l.debug('_get_only_transactions base_qs_st done: %s', (time.perf_counter() - base_qs_st))
 
         prefetch_qs_st = time.perf_counter()
 
         qs = self._trn_qs_prefetch(qs)
 
+        force_qs_evaluation(qs)
+
         _l.debug('_get_only_transactions prefetch_qs_st done: %s', (time.perf_counter() - prefetch_qs_st))
 
         production_only_qs_st = time.perf_counter()
 
-        qs = qs.filter(complex_transaction__status=ComplexTransaction.PRODUCTION)
+        qs = qs.annotate(ct_status=F('complex_transaction__status')).filter(ct_status=ComplexTransaction.PRODUCTION)
 
         force_qs_evaluation(qs)
 
         _l.debug('_get_only_transactions production_only_qs_st done: %s', (time.perf_counter() - production_only_qs_st))
+
+        _l.debug("_get_only_transactions after production filter len %s" % len(qs))
 
         relation_filter_qs_st = time.perf_counter()
 
@@ -236,7 +246,6 @@ class BaseReportBuilder:
                            account_cash__in=self.instance.accounts,
                            account_interim__in=self.instance.accounts)
             force_qs_evaluation(qs)
-
 
         if self.instance.accounts_position:
             qs = qs.filter(account_position__in=self.instance.accounts_position)
@@ -275,9 +284,16 @@ class BaseReportBuilder:
 
         qs = self._trn_qs_filter(qs)
 
+        # result = list(qs)
+        result = qs
+
         _l.debug('_get_only_transactions specific_filter_qs_st done: %s', (time.perf_counter() - specific_filter_qs_st))
 
-        return qs
+        _l.debug('_get_only_transactions _trn_qs_st done: %s', (time.perf_counter() - _trn_qs_st))
+
+        _l.debug("_get_only_transactions end len %s" % len(qs))
+
+        return result
 
     def _clone(self, obj):
         ret = copy.copy(obj)
