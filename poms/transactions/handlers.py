@@ -550,21 +550,9 @@ class TransactionTypeProcess(object):
 
             if action_instrument_event_schedule:
 
-                instrument = instrument_map[
-                    action_instrument_event_schedule.instrument_phantom_id]
-
-                event_schedule = None
-
-                if instrument.pk:
-                    try:
-                        event_schedule = EventSchedule.objects.get(instrument=instrument)
-                    except ObjectDoesNotExist:
-                        pass
-
                 errors = {}
 
-                if event_schedule is None:
-                    event_schedule = EventSchedule()
+                event_schedule = EventSchedule()
 
                 self._set_rel(errors=errors, values=self.values, default_value=None,
                               target=event_schedule, target_attr_name='instrument',
