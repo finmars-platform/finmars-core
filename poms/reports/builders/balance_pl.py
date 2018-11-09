@@ -167,8 +167,8 @@ class ReportBuilder(BaseReportBuilder):
 
         if self.instance.pl_first_date and self.instance.pl_first_date != date.min:
             self._build_on_pl_first_date()
-        # if full:
-            # self._refresh_with_perms()
+        if full:
+            self._refresh_with_perms()
 
         _l.debug('build _refresh_st done: %s', (time.perf_counter() - _refresh_st))
 
