@@ -227,7 +227,7 @@ class BaseReportBuilder:
 
         production_only_qs_st = time.perf_counter()
 
-        qs = qs.annotate(ct_status=F('complex_transaction__status')).filter(ct_status=ComplexTransaction.PRODUCTION)
+        qs = qs.filter(complex_transaction__status=ComplexTransaction.PRODUCTION)
 
         force_qs_evaluation(qs)
 
@@ -272,13 +272,13 @@ class BaseReportBuilder:
 
         _l.debug('_get_only_transactions relation_filter_qs_st done: %s', (time.perf_counter() - relation_filter_qs_st))
 
-        # permission_filter_qs_st = time.perf_counter()
-        #
-        # if self.instance.member is not None:
-        #     from poms.transactions.filters import TransactionObjectPermissionFilter
-        #     qs = TransactionObjectPermissionFilter.filter_qs(qs, self.instance.master_user, self.instance.member)
-        #
-        # _l.debug('_get_only_transactions permission_filter_qs_st done: %s', (time.perf_counter() - permission_filter_qs_st))
+        permission_filter_qs_st = time.perf_counter()
+
+        if self.instance.member is not None:
+            from poms.transactions.filters import TransactionObjectPermissionFilter
+            qs = TransactionObjectPermissionFilter.filter_qs(qs, self.instance.master_user, self.instance.member)
+
+        _l.debug('_get_only_transactions permission_filter_qs_st done: %s', (time.perf_counter() - permission_filter_qs_st))
 
         specific_filter_qs_st = time.perf_counter()
 
