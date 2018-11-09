@@ -24,6 +24,8 @@ _l = logging.getLogger('poms.reports')
 class ReportBuilder(BaseReportBuilder):
     trn_cls = VirtualTransaction
 
+    transaction_qs = []
+
     def __init__(self, instance=None, queryset=None, transactions=None, pricing_provider=None, fx_rate_provider=None):
         super(ReportBuilder, self).__init__(instance, queryset=queryset)
 
@@ -155,13 +157,20 @@ class ReportBuilder(BaseReportBuilder):
 
         _l.debug('build _detect_mismatches done: %s', (time.perf_counter() - _detect_mismatches))
 
+        _concat_st = time.perf_counter()
+
         self.instance.items = self._items + self._mismatch_items + self._summaries
+
+        _l.debug('build _concat_st done: %s', (time.perf_counter() - _concat_st))
+
+        _refresh_st = time.perf_counter()
 
         if self.instance.pl_first_date and self.instance.pl_first_date != date.min:
             self._build_on_pl_first_date()
+        # if full:
+            # self._refresh_with_perms()
 
-        if full:
-            self._refresh_with_perms()
+        _l.debug('build _refresh_st done: %s', (time.perf_counter() - _refresh_st))
 
         _l.debug('finalize report')
         self.instance.close()
@@ -461,7 +470,8 @@ class ReportBuilder(BaseReportBuilder):
             else:
                 p = InstrumentPricingProvider(self.instance.master_user, self.instance.pricing_policy,
                                               self.instance.report_date)
-                p.fill_using_transactions(self._trn_qs())
+                # p.fill_using_transactions(self._trn_qs())
+                p.fill_using_transactions(self.transaction_qs)
             self._pricing_provider = p
         return self._pricing_provider
 
@@ -473,7 +483,8 @@ class ReportBuilder(BaseReportBuilder):
             else:
                 p = CurrencyFxRateProvider(self.instance.master_user, self.instance.pricing_policy,
                                            self.instance.report_date)
-                p.fill_using_transactions(self._trn_qs(), currencies=[self.instance.report_currency])
+                # p.fill_using_transactions(self._trn_qs(), currencies=[self.instance.report_currency])
+                p.fill_using_transactions(self.transaction_qs, currencies=[self.instance.report_currency])
             self._fx_rate_provider = p
         return self._fx_rate_provider
 
@@ -487,7 +498,9 @@ class ReportBuilder(BaseReportBuilder):
 
         trn_qs_st = time.perf_counter()
 
-        trn_qs = self._trn_qs()
+        self.transaction_qs = self._trn_qs()
+
+        trn_qs = self.transaction_qs
 
         _l.debug('_load_transactions trn_qs_st done: %s', (time.perf_counter() - trn_qs_st))
 

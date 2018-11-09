@@ -217,13 +217,13 @@ class BaseReportBuilder:
 
         _l.debug('_get_only_transactions base_qs_st done: %s', (time.perf_counter() - base_qs_st))
 
-        prefetch_qs_st = time.perf_counter()
-
-        qs = self._trn_qs_prefetch(qs)
-
-        force_qs_evaluation(qs)
-
-        _l.debug('_get_only_transactions prefetch_qs_st done: %s', (time.perf_counter() - prefetch_qs_st))
+        # prefetch_qs_st = time.perf_counter()
+        #
+        # qs = self._trn_qs_prefetch(qs)
+        #
+        # force_qs_evaluation(qs)
+        #
+        # _l.debug('_get_only_transactions prefetch_qs_st done: %s', (time.perf_counter() - prefetch_qs_st))
 
         production_only_qs_st = time.perf_counter()
 
