@@ -270,6 +270,8 @@ DATABASES = {
 #     # }
 #     pass
 
+REGISTER_ACCESS_KEY = os.environ.get('REGISTER_ACCESS_KEY', None)
+
 # Password validation
 # https://docs.djangoproject.com/en/1.9/ref/settings/#auth-password-validators
 

@@ -24,6 +24,10 @@ class MasterUserManager(models.Manager):
         obj = MasterUser(**kwargs)
         obj.save()
         obj.create_defaults()
+
+        if user:
+            Member.objects.create(master_user=obj, user=user, is_owner=True, is_admin=True)
+
         return obj
 
 

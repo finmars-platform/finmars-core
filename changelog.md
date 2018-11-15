@@ -1,5 +1,9 @@
 # Changelog
 
+## 15.11.2018
+
+- New logic for user registration
+
 ## 12.10.2018
 
 - AWS secrets module

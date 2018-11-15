@@ -42,17 +42,31 @@ class LoginSerializer(AuthTokenSerializer):
 class UserRegisterSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=30, required=True)
     password = serializers.CharField(max_length=128, required=True, style={'input_type': 'password'})
-    first_name = serializers.CharField(max_length=30, required=False, allow_blank=True)
-    last_name = serializers.CharField(max_length=30, required=False, allow_blank=True)
-    name = serializers.CharField(max_length=30, required=False, allow_blank=True)
+    account_type = serializers.CharField(max_length=30, required=True)
+    # first_name = serializers.CharField(max_length=30, required=False, allow_blank=True)
+    # last_name = serializers.CharField(max_length=30, required=False, allow_blank=True)
+    # name = serializers.CharField(max_length=30, required=False, allow_blank=True)
+    email = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    access_key = serializers.CharField(max_length=8, required=False, allow_blank=True)
 
     def create(self, validated_data):
         username = validated_data.get('username')
         password = validated_data.get('password')
-        first_name = validated_data.get('first_name', '')
-        last_name = validated_data.get('last_name', '')
-        name = validated_data.get('last_name', '')
-        name = name or ('%s %s' % (last_name, first_name))
+        email = validated_data.get('email')
+        account_type = validated_data.get('account_type')
+        access_key = validated_data.get('access_key')
+        # first_name = validated_data.get('first_name', '')
+        # last_name = validated_data.get('last_name', '')
+        # name = validated_data.get('last_name', '')
+        # name = name or ('%s %s' % (last_name, first_name))
+
+        print('settings.REGISTER_ACCESS_KEY %s' % settings.REGISTER_ACCESS_KEY)
+        print('access_key %s' % access_key)
+        print('account_type %s' % account_type)
+
+        if settings.REGISTER_ACCESS_KEY != access_key:
+            msg = ugettext_lazy('Access key is invalid.')
+            raise serializers.ValidationError(msg)
 
         user_model = get_user_model()
 
@@ -60,9 +74,15 @@ class UserRegisterSerializer(serializers.Serializer):
             msg = ugettext_lazy('User already exist.')
             raise serializers.ValidationError(msg)
 
-        user = user_model.objects.create_user(username=username, password=password,
-                                              first_name=first_name, last_name=last_name)
-        MasterUser.objects.create_master_user(user=user, name=name, language=translation.get_language())
+        if user_model.objects.filter(email=email).exists():
+            msg = ugettext_lazy('Email already exist.')
+            raise serializers.ValidationError(msg)
+
+        user = user_model.objects.create_user(username=username, password=password, email=email)
+
+        if account_type == 'database':
+            MasterUser.objects.create_master_user(user=user, language=translation.get_language(), name=username)
+
 
         user = authenticate(username=username, password=password)
 
