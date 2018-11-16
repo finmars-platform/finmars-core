@@ -60,29 +60,28 @@ class UserRegisterSerializer(serializers.Serializer):
         # name = validated_data.get('last_name', '')
         # name = name or ('%s %s' % (last_name, first_name))
 
-        print('settings.REGISTER_ACCESS_KEY %s' % settings.REGISTER_ACCESS_KEY)
-        print('access_key %s' % access_key)
-        print('account_type %s' % account_type)
+        # print('settings.REGISTER_ACCESS_KEY %s' % settings.REGISTER_ACCESS_KEY)
+        # print('access_key %s' % access_key)
+        # print('account_type %s' % account_type)
 
         if settings.REGISTER_ACCESS_KEY != access_key:
-            msg = ugettext_lazy('Access key is invalid.')
-            raise serializers.ValidationError(msg)
+            error = {"access_key": [ugettext_lazy('Access key is invalid.')]}
+            raise serializers.ValidationError(error)
 
         user_model = get_user_model()
 
         if user_model.objects.filter(username=username).exists():
-            msg = ugettext_lazy('User already exist.')
-            raise serializers.ValidationError(msg)
+            error = {"username": [ugettext_lazy('User already exist.')]}
+            raise serializers.ValidationError(error)
 
         if user_model.objects.filter(email=email).exists():
-            msg = ugettext_lazy('Email already exist.')
-            raise serializers.ValidationError(msg)
+            error = {"email": [ugettext_lazy('Email already exist.')]}
+            raise serializers.ValidationError(error)
 
         user = user_model.objects.create_user(username=username, password=password, email=email)
 
         if account_type == 'database':
             MasterUser.objects.create_master_user(user=user, language=translation.get_language(), name=username)
-
 
         user = authenticate(username=username, password=password)
 
