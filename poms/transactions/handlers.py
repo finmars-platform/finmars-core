@@ -373,7 +373,7 @@ class TransactionTypeProcess(object):
                         if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
 
                             if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-                                InstrumentFactorSchedule.filter(instrument=factor.instrument).delete()
+                                InstrumentFactorSchedule.objects.filter(instrument=factor.instrument).delete()
 
                             factor.save()
 
@@ -436,7 +436,7 @@ class TransactionTypeProcess(object):
                         if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
 
                             if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-                                ManualPricingFormula.filter(instrument=manual_pricing_formula.instrument).delete()
+                                ManualPricingFormula.objects.filter(instrument=manual_pricing_formula.instrument).delete()
 
                             manual_pricing_formula.save()
 
@@ -519,7 +519,7 @@ class TransactionTypeProcess(object):
                         if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
 
                             if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-                                AccrualCalculationSchedule.filter(
+                                AccrualCalculationSchedule.objects.filter(
                                     instrument=accrual_calculation_schedule.instrument).delete()
 
                             accrual_calculation_schedule.save()
@@ -606,7 +606,7 @@ class TransactionTypeProcess(object):
                         if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
 
                             if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-                                EventSchedule.filter(instrument=event_schedule.instrument).delete()
+                                EventSchedule.objects.filter(instrument=event_schedule.instrument).delete()
 
                             event_schedule.save()
 
@@ -694,7 +694,7 @@ class TransactionTypeProcess(object):
                         if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
 
                             if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-                                EventScheduleAction.filter(event_schedule=event_schedule_action.event_schedule).delete()
+                                EventScheduleAction.objects.filter(event_schedule=event_schedule_action.event_schedule).delete()
 
                             event_schedule_action.save()
 
