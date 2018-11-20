@@ -146,8 +146,8 @@ class TransactionTypeProcess(object):
                 return obj.accrual_calculation_model
             elif issubclass(model_class, EventClass):
                 return obj.event_class
-            elif issubclass(model_class, NotificationClass):
-                return obj.notification_class
+            # elif issubclass(model_class, NotificationClass):
+            #     return obj.notification_class
             return None
 
         self.values = {}
