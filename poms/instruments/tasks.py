@@ -101,18 +101,18 @@ def generate_events0(master_user):
         position = item.pos_size
 
         event_schedules = event_schedules_cache.get(instrument.id, None)
-        # _l.debug('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
-        #          'instrument=%s, position=%s, event_schedules=%s',
-        #          portfolio.id, account.id, strategy1.id, strategy2.id, strategy3.id,
-        #          instrument.id, position, [e.id for e in event_schedules] if event_schedules else [])
+        _l.debug('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
+                 'instrument=%s, position=%s, event_schedules=%s',
+                 portfolio.id, account.id, strategy1.id, strategy2.id, strategy3.id,
+                 instrument.id, position, [e.id for e in event_schedules] if event_schedules else [])
 
         if not event_schedules:
             continue
 
         for event_schedule in event_schedules:
-            # _l.debug('event_schedule=%s, event_class=%s, notification_class=%s, periodicity=%s, n=%s',
-            #          event_schedule.id, event_schedule.event_class, event_schedule.notification_class,
-            #          event_schedule.periodicity, event_schedule.periodicity_n)
+            _l.debug('event_schedule=%s, event_class=%s, notification_class=%s, periodicity=%s, n=%s',
+                     event_schedule.id, event_schedule.event_class, event_schedule.notification_class,
+                     event_schedule.periodicity, event_schedule.periodicity_n)
 
             is_complies, effective_date, notification_date = event_schedule.check_date(now)
 
@@ -132,7 +132,7 @@ def generate_events0(master_user):
                     position=position
                 )
                 if ge_dup_qs.exists():
-                    # _l.debug('generated event already exist')
+                    _l.debug('generated event already exist')
                     continue
 
                 generated_event = GeneratedEvent()
