@@ -1113,7 +1113,8 @@ class GeneratedEvent(models.Model):
         if not self.effective_date_notified:
             now = now or date_now()
 
-            print('self.event_schedule %s ' % self.event_schedule)
+            print('self %s 1231232 ' % self)
+            print('self.event_schedule %s 1231232 ' % self.event_schedule)
 
             notification_class = self.event_schedule.notification_class
 
