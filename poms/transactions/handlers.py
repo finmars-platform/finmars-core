@@ -146,8 +146,8 @@ class TransactionTypeProcess(object):
                 return obj.accrual_calculation_model
             elif issubclass(model_class, EventClass):
                 return obj.event_class
-            # elif issubclass(model_class, NotificationClass):
-            #     return obj.notification_class
+            elif issubclass(model_class, NotificationClass):
+                return obj.notification_class
             return None
 
         self.values = {}
@@ -345,6 +345,8 @@ class TransactionTypeProcess(object):
 
             if action_instrument_factor_schedule:
 
+                _l.debug('process factor schedule: %s', action_instrument_factor_schedule)
+
                 errors = {}
 
                 factor = InstrumentFactorSchedule()
@@ -403,6 +405,8 @@ class TransactionTypeProcess(object):
                 action_instrument_manual_pricing_formula = None
 
             if action_instrument_manual_pricing_formula:
+
+                _l.debug('process manual pricing formula: %s', action_instrument_manual_pricing_formula)
 
                 errors = {}
 
@@ -465,6 +469,8 @@ class TransactionTypeProcess(object):
                 action_instrument_accrual_calculation_schedule = None
 
             if action_instrument_accrual_calculation_schedule:
+
+                _l.debug('process accrual calculation schedule: %s', action_instrument_accrual_calculation_schedule)
 
                 errors = {}
 
@@ -549,6 +555,8 @@ class TransactionTypeProcess(object):
                 action_instrument_event_schedule = None
 
             if action_instrument_event_schedule:
+
+                _l.debug('process event schedule: %s', action_instrument_event_schedule)
 
                 errors = {}
 
