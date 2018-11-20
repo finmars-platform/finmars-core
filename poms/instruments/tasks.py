@@ -135,6 +135,8 @@ def generate_events0(master_user):
                     _l.debug('generated event already exist')
                     continue
 
+                print('event_schedule %s' % event_schedule)
+
                 generated_event = GeneratedEvent()
                 generated_event.master_user = master_user
                 generated_event.event_schedule = event_schedule
