@@ -464,7 +464,7 @@ class Instrument(NamedModel, FakeDeletableModel):
                 eold = None
                 for e0 in events:
                     if e0.is_auto_generated and e0.event_class_id == EventClass.ONE_OFF and \
-                                    e0.accrual_calculation_schedule_id is None and e0.factor_schedule_id is None:
+                            e0.accrual_calculation_schedule_id is None and e0.factor_schedule_id is None:
                         eold = e0
                         break
                 self._event_save(processed, e, a, eold)
@@ -820,7 +820,7 @@ class AccrualCalculationSchedule(models.Model):
     instrument = models.ForeignKey(Instrument, related_name='accrual_calculation_schedules',
                                    verbose_name=ugettext_lazy('instrument'))
     accrual_start_date = models.DateField(default=date_now, verbose_name=ugettext_lazy('accrual start date'))
-    accrual_end_date = None # excluded date
+    accrual_end_date = None  # excluded date
     first_payment_date = models.DateField(default=date_now, verbose_name=ugettext_lazy('first payment date'))
     # TODO: is %
     accrual_size = models.FloatField(default=0.0, verbose_name=ugettext_lazy('accrual size'))
@@ -880,7 +880,7 @@ class EventSchedule(models.Model):
                                     verbose_name=ugettext_lazy('periodicity'))
     periodicity_n = models.IntegerField(default=0, verbose_name=ugettext_lazy('N'))
     # TODO: =see next accrual_calculation_schedule.accrual_start_date or instrument.maturity_date (if last)
-    final_date = models.DateField(default=date.max, verbose_name=ugettext_lazy('final date')) # excluded date
+    final_date = models.DateField(default=date.max, verbose_name=ugettext_lazy('final date'))  # excluded date
 
     is_auto_generated = models.BooleanField(default=False, verbose_name=ugettext_lazy('is auto generated'))
     accrual_calculation_schedule = models.ForeignKey(AccrualCalculationSchedule, null=True, blank=True, editable=False,
@@ -1112,7 +1112,11 @@ class GeneratedEvent(models.Model):
         from poms.transactions.models import NotificationClass
         if not self.effective_date_notified:
             now = now or date_now()
+
+            print('self.event_schedule %s ' % self.event_schedule)
+
             notification_class = self.event_schedule.notification_class
+
             return self.notification_date == now and notification_class.is_notify_on_notification_date
         return False
 

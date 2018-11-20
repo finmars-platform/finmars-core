@@ -37,7 +37,7 @@ def get_master_user_and_member(request):
         request.session['master_user_id'] = member.master_user.id
         return member, member.master_user
 
-    raise NotFound()
+    # raise NotFound()
 
 
 # def get_master_user(request):
@@ -102,5 +102,9 @@ def get_member_from_context(context):
     context = context or {}
     request = context.get('request', None)
     if request:
-        return request.user.member
+
+        if hasattr(request.user, 'member'):
+            return request.user.member
+        return None
+
     return context.get('member', None)

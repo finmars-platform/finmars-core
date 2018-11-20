@@ -35,16 +35,22 @@ class AbstractApiView(APIView):
     def perform_authentication(self, request):
         super(AbstractApiView, self).perform_authentication(request)
         if request.user.is_authenticated():
-            request.user.member, request.user.master_user = get_master_user_and_member(request)
+            try:
+                request.user.member, request.user.master_user = get_master_user_and_member(request)
+            except TypeError:
+                print("No master user and member created")
 
     def initial(self, request, *args, **kwargs):
         super(AbstractApiView, self).initial(request, *args, **kwargs)
 
         timezone.activate(settings.TIME_ZONE)
         if request.user.is_authenticated():
-            master_user = request.user.master_user
-            if master_user and master_user.timezone:
-                timezone.activate(master_user.timezone)
+
+            if hasattr(request.user, 'master_user'):
+
+                master_user = request.user.master_user
+                if master_user and master_user.timezone:
+                    timezone.activate(master_user.timezone)
 
     def dispatch(self, request, *args, **kwargs):
         if request.method.upper() in permissions.SAFE_METHODS:
@@ -162,6 +168,8 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         queryset = self.filter_queryset(self.get_queryset())
 
         queryset = sort_by_dynamic_attrs(request, queryset)
+
+        print('queryset')
 
         page = self.paginate_queryset(queryset)
         if page is not None:
