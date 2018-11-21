@@ -660,6 +660,8 @@ class TransactionTypeProcess(object):
                     event_schedule = event_schedules_map[
                         action_instrument_event_schedule_action.event_schedule_phantom_id]
 
+                    print('book_create_event_actions: event_schedule %s' % event_schedule)
+
                     event_schedule_action.event_schedule = event_schedule
 
                 self._set_rel(errors=errors, values=self.values, default_value=None,
@@ -684,14 +686,6 @@ class TransactionTypeProcess(object):
                 self._set_val(errors=errors, values=self.values, default_value='',
                               target=event_schedule_action, target_attr_name='text',
                               source=action_instrument_event_schedule_action, source_attr_name='text')
-
-                print('event_schedule_action.event_schedule %s ' % event_schedule_action.event_schedule)
-                print('event_schedule_action.is_book_automatic %s ' % event_schedule_action.is_book_automatic)
-                print('event_schedule_action.is_book_automatic type %s ' % type(
-                    event_schedule_action.is_book_automatic))
-                print('event_schedule_action.is_sent_to_pending %s ' % event_schedule_action.is_sent_to_pending)
-                print('event_schedule_action.is_sent_to_pending type%s ' % type(
-                    event_schedule_action.is_sent_to_pending))
 
                 try:
 

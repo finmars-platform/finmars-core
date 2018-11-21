@@ -318,30 +318,30 @@ def process_events0(master_user):
         is_need_reaction_on_notification_date = gevent.is_need_reaction_on_notification_date(now)
         is_need_reaction_on_effective_date = gevent.is_need_reaction_on_effective_date(now)
 
-        # _l.debug(
-        #     'process:'
-        #     ' notification_class=%s,'
-        #     ' notification_date=%s,'
-        #     ' notification_date_notified=%s'
-        #     ' effective_date=%s,'
-        #     ' effective_date_notified=%s,'
-        #     ' is_notify_on_notification_date=%s,'
-        #     ' is_notify_on_effective_date=%s,'
-        #     ' is_apply_default_on_notification_date=%s,'
-        #     ' is_apply_default_on_effective_date=%s,'
-        #     ' is_need_reaction_on_notification_date=%s,'
-        #     ' is_need_reaction_on_effective_date=%s',
-        #     gevent.event_schedule.notification_class.system_code,
-        #     gevent.notification_date,
-        #     gevent.notification_date_notified,
-        #     gevent.effective_date,
-        #     gevent.effective_date_notified,
-        #     is_notify_on_notification_date,
-        #     is_notify_on_effective_date,
-        #     is_apply_default_on_notification_date,
-        #     is_apply_default_on_effective_date,
-        #     is_need_reaction_on_notification_date,
-        #     is_need_reaction_on_effective_date)
+        _l.debug(
+            'process:'
+            ' notification_class=%s,'
+            ' notification_date=%s,'
+            ' notification_date_notified=%s'
+            ' effective_date=%s,'
+            ' effective_date_notified=%s,'
+            ' is_notify_on_notification_date=%s,'
+            ' is_notify_on_effective_date=%s,'
+            ' is_apply_default_on_notification_date=%s,'
+            ' is_apply_default_on_effective_date=%s,'
+            ' is_need_reaction_on_notification_date=%s,'
+            ' is_need_reaction_on_effective_date=%s',
+            gevent.event_schedule.notification_class.system_code,
+            gevent.notification_date,
+            gevent.notification_date_notified,
+            gevent.effective_date,
+            gevent.effective_date_notified,
+            is_notify_on_notification_date,
+            is_notify_on_effective_date,
+            is_apply_default_on_notification_date,
+            is_apply_default_on_effective_date,
+            is_need_reaction_on_notification_date,
+            is_need_reaction_on_effective_date)
 
         owner = next(iter([m for m in gevent.master_user.members.all() if m.is_owner]))
 
