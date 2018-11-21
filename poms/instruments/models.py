@@ -1109,7 +1109,7 @@ class GeneratedEvent(models.Model):
             print('self event %s ' % self)
             print('self.event_schedule %s ' % self.event_schedule)
             print('self.now %s ' % now)
-            print('self.notification_date %s ' % self.notification_date)
+            print('self.effective_date %s ' % self.effective_date)
             print('self.notification_class.is_notify_on_effective_date %s ' % notification_class.is_notify_on_effective_date)
 
             return self.effective_date == now and notification_class.is_notify_on_effective_date
