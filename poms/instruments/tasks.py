@@ -45,7 +45,7 @@ def calculate_prices_accrued_price_async(master_user=None, begin_date=None, end_
 
 @shared_task(name='instruments.generate_events0', ignore_result=True)
 def generate_events0(master_user):
-    # _l.debug('generate_events0: master_user=%s', master_user.id)
+    _l.debug('generate_events0: master_user=%s', master_user.id)
 
     opened_instrument_items = []
 
@@ -63,7 +63,7 @@ def generate_events0(master_user):
         if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
             opened_instrument_items.append(i)
 
-    # _l.debug('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
+    _l.debug('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
     if not opened_instrument_items:
         return
 
@@ -84,7 +84,7 @@ def generate_events0(master_user):
     )
 
     if not event_schedule_qs.exists():
-        # _l.debug('event schedules not found')
+        _l.debug('event schedules not found')
         return
 
     event_schedules_cache = defaultdict(list)
@@ -116,7 +116,7 @@ def generate_events0(master_user):
 
             is_complies, effective_date, notification_date = event_schedule.check_date(now)
 
-            # _l.debug('is_complies=%s', is_complies)
+            _l.debug('is_complies=%s', is_complies)
             if is_complies:
                 ge_dup_qs = GeneratedEvent.objects.filter(
                     master_user=master_user,
@@ -158,7 +158,7 @@ def generate_events0(master_user):
 
 @shared_task(name='instruments.generate_events', ignore_result=True)
 def generate_events(master_users=None):
-    # _l.debug('generate_events: master_users=%s', master_users)
+    _l.debug('generate_events: master_users=%s', master_users)
 
     # now = date_now()
 
@@ -288,7 +288,7 @@ def generate_events(master_users=None):
 def process_events0(master_user):
     from poms.instruments.handlers import GeneratedEventProcess
 
-    # _l.debug('process_events0: master_user=%s', master_user.id)
+    _l.debug('process_events0: master_user=%s', master_user.id)
 
     now = date_now()
 
@@ -399,7 +399,7 @@ def process_events0(master_user):
 def process_events(master_users=None):
     # from poms.instruments.handlers import GeneratedEventProcess
 
-    # _l.debug('process_events: master_users=%s', master_users)
+    _l.debug('process_events: master_users=%s', master_users)
 
     # now = date_now()
 
@@ -410,7 +410,7 @@ def process_events(master_users=None):
         master_user_qs = master_user_qs.filter(pk__in=master_users)
 
     for master_user in master_user_qs:
-        # _l.debug('process_events: master_user=%s', master_user.id)
+        _l.debug('process_events: master_user=%s', master_user.id)
         # with transaction.atomic():
         #     generated_event_qs = GeneratedEvent.objects.prefetch_related(
         #         'event_schedule',
