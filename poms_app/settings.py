@@ -579,7 +579,8 @@ ADMINS = [
 MANAGERS = [
     ['Site Managers', 'site-managers@finmars.com'],
 ]
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'backends.smtp.SSLEmailBackend'
 
 # MESSAGE_STORAGE = 'poms.notifications.message_storage.FallbackStorage'
 
