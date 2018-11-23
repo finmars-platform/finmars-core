@@ -330,6 +330,8 @@ class TransactionTypeProcess(object):
                     instrument_map[action.id] = instrument
                 finally:
 
+                    _l.debug("Instrument action errors %s " % errors)
+
                     if bool(errors):
                         self.instruments_errors.append(errors)
 
@@ -440,7 +442,8 @@ class TransactionTypeProcess(object):
                         if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
 
                             if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-                                ManualPricingFormula.objects.filter(instrument=manual_pricing_formula.instrument).delete()
+                                ManualPricingFormula.objects.filter(
+                                    instrument=manual_pricing_formula.instrument).delete()
 
                             manual_pricing_formula.save()
 
@@ -696,7 +699,8 @@ class TransactionTypeProcess(object):
                         if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
 
                             if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-                                EventScheduleAction.objects.filter(event_schedule=event_schedule_action.event_schedule).delete()
+                                EventScheduleAction.objects.filter(
+                                    event_schedule=event_schedule_action.event_schedule).delete()
 
                             event_schedule_action.save()
 
@@ -725,6 +729,7 @@ class TransactionTypeProcess(object):
                 action_transaction = None
 
             if action_transaction:
+
                 _l.debug('process transaction: %s', action_transaction)
                 errors = {}
                 transaction = Transaction(master_user=master_user)
@@ -860,7 +865,9 @@ class TransactionTypeProcess(object):
                 try:
                     transaction.transaction_date = min(transaction.accounting_date, transaction.cash_date)
                     transaction.save()
+
                 except (ValueError, TypeError, IntegrityError):
+
                     self._add_err_msg(errors, 'non_field_errors',
                                       ugettext('Invalid transaction action fields (please, use type convertion).'))
                 except DatabaseError:
@@ -868,6 +875,9 @@ class TransactionTypeProcess(object):
                 else:
                     self.transactions.append(transaction)
                 finally:
+
+                    _l.debug("Transaction action errors %s " % errors)
+
                     if bool(errors):
                         self.transactions_errors.append(errors)
 
