@@ -39,6 +39,19 @@ class LoginSerializer(AuthTokenSerializer):
     pass
 
 
+class MasterUserCreateSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=255, required=True)
+
+    def create(self, validated_data):
+        name = validated_data.get('name')
+
+        if MasterUser.objects.filter(name=name).exists():
+            error = {"name": [ugettext_lazy('Name already in use.')]}
+            raise serializers.ValidationError(error)
+
+        return validated_data
+
+
 class UserRegisterSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=30, required=True)
     password = serializers.CharField(max_length=128, required=True, style={'input_type': 'password'})

@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+from django.utils import translation
+
 import django_filters
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
@@ -32,7 +34,7 @@ from poms.users.models import MasterUser, Member, Group
 from poms.users.permissions import SuperUserOrReadOnly, IsCurrentMasterUser, IsCurrentUser
 from poms.users.serializers import GroupSerializer, UserSerializer, MasterUserSerializer, MemberSerializer, \
     PingSerializer, UserSetPasswordSerializer, MasterUserSetCurrentSerializer, UserUnsubscribeSerializer, \
-    UserRegisterSerializer
+    UserRegisterSerializer, MasterUserCreateSerializer
 from poms.users.utils import set_master_user
 
 
@@ -101,6 +103,27 @@ class UserRegisterViewSet(AbstractApiView, ViewSet):
         return Response({'success': True})
 
 
+class MasterUserCreateViewSet(ViewSet):
+    serializer_class = MasterUserCreateSerializer
+    authentication_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.save()
+        name = validated_data['name']
+
+        print(request.user)
+
+        master_user = MasterUser.objects.create_master_user(
+            user=request.user,
+            language=translation.get_language(), name=name)
+
+        member = Member.objects.create(user=request.user, master_user=master_user, is_owner=True, is_admin=True)
+
+        return Response({'success': True})
+
+
 class UserViewSet(AbstractModelViewSet):
     queryset = User.objects
     serializer_class = UserSerializer
@@ -150,7 +173,6 @@ class UserViewSet(AbstractModelViewSet):
 
 
 class MasterUserViewSet(AbstractModelViewSet):
-
     queryset = MasterUser.objects.select_related(
         'currency',
         'system_currency',

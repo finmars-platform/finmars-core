@@ -34,6 +34,7 @@ router.register(r'users/ping', users.PingViewSet, "ping")
 router.register(r'users/protected-ping', users.ProtectedPingViewSet, "protectedping")
 
 router.register(r'users/user-register', users.UserRegisterViewSet, 'userregister')
+router.register(r'users/master-user-create', users.MasterUserCreateViewSet, 'masterusercreate')
 router.register(r'users/user', users.UserViewSet)
 router.register(r'users/master-user', users.MasterUserViewSet)
 router.register(r'users/member', users.MemberViewSet)
