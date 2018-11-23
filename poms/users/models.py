@@ -50,7 +50,7 @@ class ResetPasswordToken(models.Model):
 
     # Key field, though it is not the primary key of the model
     key = models.CharField(
-        _("Key"),
+        ugettext_lazy("Key"),
         max_length=64,
         db_index=True,
         unique=True
