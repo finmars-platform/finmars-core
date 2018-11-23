@@ -40,12 +40,12 @@ class ResetPasswordToken(models.Model):
         settings.AUTH_USER_MODEL,
         related_name='password_reset_tokens',
         on_delete=models.CASCADE,
-        verbose_name=_("The User which is associated to this password reset token")
+        verbose_name=ugettext_lazy("The User which is associated to this password reset token")
     )
 
     created_at = models.DateTimeField(
         auto_now_add=True,
-        verbose_name=_("When was this token generated")
+        verbose_name=ugettext_lazy("When was this token generated")
     )
 
     # Key field, though it is not the primary key of the model
@@ -57,7 +57,7 @@ class ResetPasswordToken(models.Model):
     )
 
     ip_address = models.GenericIPAddressField(
-        _("The IP address of this session"),
+        ugettext_lazy("The IP address of this session"),
         default="127.0.0.1"
     )
     user_agent = models.CharField(
