@@ -39,6 +39,15 @@ class LoginSerializer(AuthTokenSerializer):
     pass
 
 
+class EmailSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class PasswordTokenSerializer(serializers.Serializer):
+    password = serializers.CharField(label=ugettext_lazy("Password"), style={'input_type': 'password'})
+    token = serializers.CharField()
+
+
 class MasterUserCreateSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255, required=True)
 
@@ -55,7 +64,7 @@ class MasterUserCreateSerializer(serializers.Serializer):
 class UserRegisterSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=30, required=True)
     password = serializers.CharField(max_length=128, required=True, style={'input_type': 'password'})
-    account_type = serializers.CharField(max_length=30, required=True)
+    # account_type = serializers.CharField(max_length=30, required=True)
     # first_name = serializers.CharField(max_length=30, required=False, allow_blank=True)
     # last_name = serializers.CharField(max_length=30, required=False, allow_blank=True)
     # name = serializers.CharField(max_length=30, required=False, allow_blank=True)
