@@ -24,8 +24,8 @@ TIMEZONE_COMMON_CHOICES = sorted(list((k, k) for k in pytz.common_timezones))
 
 class ResetPasswordToken(models.Model):
     class Meta:
-        verbose_name = _("Password Reset Token")
-        verbose_name_plural = _("Password Reset Tokens")
+        verbose_name = ugettext_lazy("Password Reset Token")
+        verbose_name_plural = ugettext_lazy("Password Reset Tokens")
 
     @staticmethod
     def generate_key():
@@ -62,7 +62,7 @@ class ResetPasswordToken(models.Model):
     )
     user_agent = models.CharField(
         max_length=256,
-        verbose_name=_("HTTP User Agent"),
+        verbose_name=ugettext_lazy("HTTP User Agent"),
         default=""
     )
 
