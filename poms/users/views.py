@@ -237,7 +237,14 @@ class ResetPasswordRequestTokenViewSet(AbstractApiView, ViewSet):
 
         # last but not least: iterate over all users that are active and can change their password
         # and create a Reset Password Token and send a signal with the created token
+
+
+
         for user in users:
+
+            print("user active %s" % user.is_active)
+            print("user has_usable_password %s" % user.has_usable_password())
+
             if user.is_active and user.has_usable_password():
                 # define the token as none for now
                 token = None
@@ -254,14 +261,14 @@ class ResetPasswordRequestTokenViewSet(AbstractApiView, ViewSet):
                         ip_address=request.META['REMOTE_ADDR']
                     )
 
-                    link = "https://finmars.com/forgot-password-confirm.html?token=%s" % token.key
+                link = "https://finmars.com/forgot-password-confirm.html?token=%s" % token.key
 
-                    message = "Your password reset link is: %s" % link
+                message = "Your password reset link is: %s" % link
 
-                    subject = "Password reset"
-                    recipient_list = [user.email]
+                subject = "Password reset"
+                recipient_list = [user.email]
 
-                    send_mail(subject, message, None, recipient_list, html_message=message)
+                send_mail(subject, message, None, recipient_list, html_message=message)
 
                 print("token %s " % token.key)
 
