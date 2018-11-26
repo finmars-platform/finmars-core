@@ -571,16 +571,17 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', None)
 EMAIL_USE_TLS = True
 EMAIL_TIMEOUT = 10
 
-if DEV:
+if DEBUG:
     DEFAULT_FROM_EMAIL = '"DEV: Finmars Notifications" <no-reply@finmars.com>'
     SERVER_EMAIL = '"DEV-ADMIN: FinMars" <no-reply@finmars.com>'
+
 ADMINS = [
     ['Site Admins', 'site-admins@finmars.com'],
 ]
 MANAGERS = [
     ['Site Managers', 'site-managers@finmars.com'],
 ]
-if DEV:
+if DEBUG:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 else:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
