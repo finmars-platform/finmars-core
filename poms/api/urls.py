@@ -33,6 +33,9 @@ router.register(r'users/logout', users.LogoutViewSet, 'logout')
 router.register(r'users/ping', users.PingViewSet, "ping")
 router.register(r'users/protected-ping', users.ProtectedPingViewSet, "protectedping")
 
+router.register(r'users/reset-password/confirm', users.ResetPasswordConfirmViewSet, "resetpasswordconfirm"),
+router.register(r'users/reset-password', users.ResetPasswordRequestTokenViewSet, "resetpasswordrequest"),
+
 router.register(r'users/user-register', users.UserRegisterViewSet, 'userregister')
 router.register(r'users/master-user-create', users.MasterUserCreateViewSet, 'masterusercreate')
 router.register(r'users/user', users.UserViewSet)

@@ -176,7 +176,6 @@ db_password = ''
 
 
 def get_secret():
-
     secret_name = AWS_SECRET_NAME
     region_name = "eu-central-1"
 
@@ -217,6 +216,7 @@ def get_secret():
     secret_result = json.loads(secret)
 
     return secret_result
+
 
 secret = None
 
@@ -450,10 +450,11 @@ LOGGING = {
             'class': 'logstash.TCPLogstashHandler',
             'host': LOGSTASH_HOST,
             'port': 5000,
-            'version': 1, # Version of logstash event schema. Default value: 0 (for backward compatibility of the library)
+            'version': 1,
+        # Version of logstash event schema. Default value: 0 (for backward compatibility of the library)
             'message_type': 'django',  # 'type' field in logstash message. Default value: 'logstash'.
-            'fqdn': False, # Fully qualified domain name. Default value: false.
-            'tags': ['django.request'], # list of tags. Default: None.
+            'fqdn': False,  # Fully qualified domain name. Default value: false.
+            'tags': ['django.request'],  # list of tags. Default: None.
         },
     },
     'loggers': {
@@ -579,8 +580,12 @@ ADMINS = [
 MANAGERS = [
     ['Site Managers', 'site-managers@finmars.com'],
 ]
+if DEV:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 # EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
 # EMAIL_BACKEND = 'backends.smtp.SSLEmailBackend'
 
 # MESSAGE_STORAGE = 'poms.notifications.message_storage.FallbackStorage'

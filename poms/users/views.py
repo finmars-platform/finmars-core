@@ -44,6 +44,8 @@ from rest_framework.response import Response
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy
 
+from django.core.mail import send_mail
+
 
 class ObtainAuthTokenViewSet(AbstractApiView, ViewSet):
     parser_classes = (FormParser, MultiPartParser, JSONParser,)
@@ -141,17 +143,17 @@ def get_password_reset_token_expiry_time():
     return getattr(settings, 'DJANGO_REST_MULTITOKENAUTH_RESET_TOKEN_EXPIRY_TIME', 24)
 
 
-class ResetPasswordConfirm(APIView):
+class ResetPasswordConfirmViewSet(AbstractApiView, ViewSet):
     """
     An Api View which provides a method to reset a password based on a unique token
     """
     throttle_classes = ()
-    permission_classes = ()
+    permission_classes = []
     parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)
     renderer_classes = (renderers.JSONRenderer,)
     serializer_class = PasswordTokenSerializer
 
-    def post(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         password = serializer.validated_data['password']
@@ -175,10 +177,10 @@ class ResetPasswordConfirm(APIView):
             return Response({'status': 'expired'}, status=status.HTTP_404_NOT_FOUND)
 
         # change users password
-        # if reset_password_token.user.has_usable_password():
+        if reset_password_token.user.has_usable_password():
             # pre_password_reset.send(sender=self.__class__, user=reset_password_token.user)
-            # reset_password_token.user.set_password(password)
-            # reset_password_token.user.save()
+            reset_password_token.user.set_password(password)
+            reset_password_token.user.save()
             # post_password_reset.send(sender=self.__class__, user=reset_password_token.user)
 
         # Delete all password reset tokens for this user
@@ -187,18 +189,18 @@ class ResetPasswordConfirm(APIView):
         return Response({'status': 'OK'})
 
 
-class ResetPasswordRequestToken(APIView):
+class ResetPasswordRequestTokenViewSet(AbstractApiView, ViewSet):
     """
     An Api View which provides a method to request a password reset token based on an e-mail address
     Sends a signal reset_password_token_created when a reset token was created
     """
     throttle_classes = ()
-    permission_classes = ()
+    permission_classes = []
     parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)
     renderer_classes = (renderers.JSONRenderer,)
     serializer_class = EmailSerializer
 
-    def post(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data['email']
@@ -228,7 +230,8 @@ class ResetPasswordRequestToken(APIView):
         if not active_user_found:
             raise ValidationError({
                 'email': ValidationError(
-                    ugettext_lazy("There is no active user associated with this e-mail address or the password can not be changed"),
+                    ugettext_lazy(
+                        "There is no active user associated with this e-mail address or the password can not be changed"),
                     code='invalid')}
             )
 
@@ -251,9 +254,19 @@ class ResetPasswordRequestToken(APIView):
                         ip_address=request.META['REMOTE_ADDR']
                     )
 
-                print("token %s " % token)
+                    link = "https://finmars.com/forgot-password-confirm.html?token=%s" % token.key
+
+                    message = "Your password reset link is: %s" % link
+
+                    subject = "Password reset"
+                    recipient_list = [user.email]
+
+                    send_mail(subject, message, None, recipient_list, html_message=message)
+
+                print("token %s " % token.key)
 
         return Response({'status': 'OK'})
+
 
 class UserViewSet(AbstractModelViewSet):
     queryset = User.objects
