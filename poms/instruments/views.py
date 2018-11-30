@@ -33,7 +33,7 @@ from poms.instruments.serializers import InstrumentSerializer, PriceHistorySeria
     InstrumentClassSerializer, DailyPricingModelSerializer, AccrualCalculationModelSerializer, \
     PaymentSizeDetailSerializer, PeriodicitySerializer, CostMethodSerializer, InstrumentTypeSerializer, \
     PricingPolicySerializer, EventScheduleConfigSerializer, InstrumentCalculatePricesAccruedPriceSerializer, \
-    GeneratedEventSerializer
+    GeneratedEventSerializer, EventScheduleActionSerializer
 from poms.instruments.tasks import calculate_prices_accrued_price, generate_events, process_events
 from poms.integrations.models import PriceDownloadScheme
 from poms.obj_attrs.utils import get_attributes_prefetch
@@ -718,3 +718,5 @@ class EventScheduleConfigViewSet(AbstractModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         raise MethodNotAllowed(method=request.method)
+
+

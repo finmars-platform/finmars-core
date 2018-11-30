@@ -23,7 +23,8 @@ from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Fiel
     Strategy1GroupField, Strategy2GroupField, Strategy2SubgroupField, Strategy3GroupField, Strategy3SubgroupField
 from poms.ui.models import ListLayout, EditLayout
 from poms.users.fields import MasterUserField, MemberField, GroupField
-from poms.users.models import MasterUser, UserProfile, Group, Member, TIMEZONE_CHOICES
+from poms.users.models import MasterUser, UserProfile, Group, Member, TIMEZONE_CHOICES, InviteToMasterUser, \
+    InviteStatusChoice
 from poms.users.utils import get_user_from_context, get_master_user_from_context, get_member_from_context
 
 
@@ -223,6 +224,8 @@ class MasterUserSerializer(serializers.ModelSerializer):
     language = serializers.ChoiceField(choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE)
     timezone = serializers.ChoiceField(choices=TIMEZONE_CHOICES)
     is_current = serializers.SerializerMethodField()
+    is_admin = serializers.SerializerMethodField()
+    is_owner = serializers.SerializerMethodField()
     system_currency = CurrencyField()
     currency = CurrencyField()
     account_type = AccountTypeField()
@@ -250,7 +253,7 @@ class MasterUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = MasterUser
         fields = [
-            'id', 'name', 'is_current', 'language', 'timezone',
+            'id', 'name', 'description', 'is_current', 'is_admin', 'is_owner', 'language', 'timezone',
             'notification_business_days',
             'system_currency',
             'currency',
@@ -320,15 +323,33 @@ class MasterUserSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         ret = super(MasterUserSerializer, self).to_representation(instance)
         is_current = self.get_is_current(instance)
+        is_admin = self.get_is_admin(instance)
+        is_owner = self.get_is_owner(instance)
         if not is_current:
             for k in list(ret.keys()):
-                if k not in ['id', 'name', 'is_current']:
+                if k not in ['id', 'name', 'is_current', 'description', 'is_admin', 'is_owner']:
                     ret.pop(k)
         return ret
 
     def get_is_current(self, obj):
         master_user = get_master_user_from_context(self.context)
         return obj.id == master_user.id
+
+    def get_is_admin(self, obj):
+
+        user = get_user_from_context(self.context)
+
+        member = Member.objects.get(master_user=obj.id, user=user.id)
+
+        return member.is_admin
+
+    def get_is_owner(self, obj):
+
+        user = get_user_from_context(self.context)
+
+        member = Member.objects.get(master_user=obj.id, user=user.id)
+
+        return member.is_owner
 
 
 class MasterUserSetCurrentSerializer(serializers.Serializer):
@@ -463,3 +484,52 @@ class GroupViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = ['id', 'name']
+
+
+class InviteToMasterUserSerializer(serializers.ModelSerializer):
+    status = serializers.ChoiceField(choices=InviteStatusChoice.choices, default=InviteStatusChoice.SENT)
+    from_member = serializers.SerializerMethodField()
+    to_master_user = serializers.SerializerMethodField()
+
+    def update(self, instance, validated_data):
+        if validated_data['status'] == InviteStatusChoice.ACCEPTED:
+            user = get_user_from_context(self.context)
+            Member.objects.create(user=user, master_user=instance.from_member.master_user)
+
+        return super(InviteToMasterUserSerializer, self).update(instance, validated_data)
+
+    class Meta:
+        model = InviteToMasterUser
+        fields = ['id', 'from_member', 'status', 'to_master_user']
+
+    def get_from_member(self, obj):
+        return obj.from_member.username
+
+    def get_to_master_user(self, obj):
+        return {
+            'name': obj.from_member.master_user.name,
+            'description': obj.from_member.master_user.description
+        }
+
+    def get_status(self, obj):
+        return obj.get_status_display()
+
+
+class InviteCreateSerializer(serializers.Serializer):
+
+    username = serializers.CharField(max_length=30, required=True)
+
+    def create(self, validated_data):
+        username = validated_data.get('username')
+
+        member = get_member_from_context(self.context)
+        user_to = User.objects.get(username=username)
+
+        print('member 1231232 %s' % member)
+
+        if not user_to:
+            raise serializers.ValidationError({'user_to': "User with this username does not exist"})
+
+        invite = InviteToMasterUser.objects.create(user=user_to, from_member=member,)
+
+        return validated_data

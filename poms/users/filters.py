@@ -1,5 +1,7 @@
 from rest_framework.filters import BaseFilterBackend
 
+from poms.users.models import InviteStatusChoice
+
 
 class OwnerByUserFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
@@ -43,3 +45,8 @@ class MasterUserFilter(BaseFilterBackend):
         user = request.user
 
         return queryset.filter(members__user=user)
+
+
+class InviteToMasterUserFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        return queryset.filter(status=InviteStatusChoice.SENT)

@@ -17,7 +17,7 @@ from django.utils.translation import ugettext_lazy
 from poms.common.admin import AbstractModelAdmin
 from poms.instruments.models import EventScheduleConfig
 from poms.integrations.models import PricingAutomatedSchedule
-from poms.users.models import MasterUser, UserProfile, Member, Group, TIMEZONE_CHOICES, FakeSequence
+from poms.users.models import MasterUser, UserProfile, Member, Group, TIMEZONE_CHOICES, FakeSequence, InviteToMasterUser
 
 
 class MemberInline(admin.TabularInline):
@@ -206,9 +206,6 @@ class MemberAdmin(AbstractModelAdmin):
     #     return super(MemberAdmin, self).formfield_for_manytomany(db_field, request=request, **kwargs)
 
 
-admin.site.register(Member, MemberAdmin)
-
-
 class UserProfileForm(forms.ModelForm):
     language = forms.ChoiceField(choices=settings.LANGUAGES, initial=settings.LANGUAGE_CODE)
     timezone = forms.ChoiceField(choices=TIMEZONE_CHOICES)
@@ -318,3 +315,14 @@ class FakeSequenceAdmin(AbstractModelAdmin):
 
 
 admin.site.register(FakeSequence, FakeSequenceAdmin)
+
+
+class InviteToMasterUserAdmin(AbstractModelAdmin):
+    model = InviteToMasterUser
+    list_display = ['id', 'user', 'from_member', 'status', ]
+    list_select_related = ['user', 'from_member']
+    list_filter = ['status', ]
+    raw_id_fields = ['user', ]
+
+
+admin.site.register(InviteToMasterUser, InviteToMasterUserAdmin)

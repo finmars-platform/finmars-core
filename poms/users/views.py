@@ -15,7 +15,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import FilterSet
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.viewsets import ViewSet
+from rest_framework.viewsets import ViewSet, ModelViewSet
 
 from poms.accounts.models import AccountType, Account
 from poms.chats.models import ThreadGroup
@@ -28,12 +28,13 @@ from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy1Group, Strategy2Subgroup, Strategy2Group, \
     Strategy2, Strategy3, Strategy3Subgroup, Strategy3Group
-from poms.users.filters import OwnerByMasterUserFilter, MasterUserFilter
-from poms.users.models import MasterUser, Member, Group, ResetPasswordToken
+from poms.users.filters import OwnerByMasterUserFilter, MasterUserFilter, OwnerByUserFilter, InviteToMasterUserFilter
+from poms.users.models import MasterUser, Member, Group, ResetPasswordToken, InviteToMasterUser
 from poms.users.permissions import SuperUserOrReadOnly, IsCurrentMasterUser, IsCurrentUser
 from poms.users.serializers import GroupSerializer, UserSerializer, MasterUserSerializer, MemberSerializer, \
     PingSerializer, UserSetPasswordSerializer, MasterUserSetCurrentSerializer, UserUnsubscribeSerializer, \
-    UserRegisterSerializer, MasterUserCreateSerializer, EmailSerializer, PasswordTokenSerializer
+    UserRegisterSerializer, MasterUserCreateSerializer, EmailSerializer, PasswordTokenSerializer, \
+    InviteToMasterUserSerializer, InviteCreateSerializer
 from poms.users.utils import set_master_user
 
 from datetime import timedelta
@@ -121,8 +122,6 @@ class MasterUserCreateViewSet(ViewSet):
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.save()
         name = validated_data['name']
-
-        print(request.user)
 
         master_user = MasterUser.objects.create_master_user(
             user=request.user,
@@ -237,8 +236,6 @@ class ResetPasswordRequestTokenViewSet(AbstractApiView, ViewSet):
 
         # last but not least: iterate over all users that are active and can change their password
         # and create a Reset Password Token and send a signal with the created token
-
-
 
         for user in users:
 
@@ -502,3 +499,56 @@ class GroupViewSet(AbstractModelViewSet):
         'name',
     ]
     pagination_class = BigPagination
+
+
+class InviteToMasterUserFilterSet(FilterSet):
+    id = NoOpFilter()
+    to_user = ModelExtMultipleChoiceFilter(model=User, field_name='to_user', name='users')
+    from_member = ModelExtMultipleChoiceFilter(model=Member, field_name='from_member', name='members')
+
+    class Meta:
+        model = InviteToMasterUser
+        fields = []
+
+
+class InviteToMasterUserViewSet(AbstractModelViewSet):
+    queryset = InviteToMasterUser.objects.select_related(
+        'from_member'
+    )
+    serializer_class = InviteToMasterUserSerializer
+    permission_classes = AbstractModelViewSet.permission_classes + []
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByUserFilter,
+        InviteToMasterUserFilter
+    ]
+    # filter_class = InviteToMasterUserFilterSet
+    ordering_fields = [
+        'user',
+    ]
+    pagination_class = BigPagination
+
+
+class CreateInviteViewSet(AbstractApiView, ModelViewSet):
+    serializer_class = InviteCreateSerializer
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+
+class LeaveMasterUserViewSet(AbstractApiView, ViewSet):
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+    @method_decorator(ensure_csrf_cookie)
+    def retrieve(self, request, pk=None, *args, **kwargs):
+
+        if not request.user.member:
+            raise PermissionDenied()
+
+        if request.user.member.is_owner:
+            raise PermissionDenied()
+
+        Member.objects.get(user=request.user.id, master_user=pk).delete()
+
+        return Response("You left from %s master user" % request.user.master_user.name)

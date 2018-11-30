@@ -1,5 +1,10 @@
 # Changelog
 
+## 30.11.2018
+
+- Profile API
+- Member invite system
+
 ## 15.11.2018
 
 - New logic for user registration

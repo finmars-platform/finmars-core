@@ -90,6 +90,9 @@ class MasterUserManager(models.Manager):
 class MasterUser(models.Model):
     name = models.CharField(max_length=255, null=True, blank=True,
                             verbose_name=ugettext_lazy('name'))
+
+    description = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('description'))
+
     language = models.CharField(max_length=LANGUAGE_MAX_LENGTH, default=settings.LANGUAGE_CODE,
                                 verbose_name=ugettext_lazy('language'))
     timezone = models.CharField(max_length=TIMEZONE_MAX_LENGTH, default=settings.TIME_ZONE,
@@ -405,6 +408,33 @@ class Member(FakeDeletableModel):
             return ' '.join([self.first_name, self.last_name])
         else:
             return self.username
+
+
+class InviteStatusChoice():
+    SENT = 0
+    ACCEPTED = 1
+    DECLINED = 2
+
+    choices = ((SENT, 'Sent'),
+               (ACCEPTED, 'Accepted'),
+               (DECLINED, 'Declined'),
+               )
+
+
+class InviteToMasterUser(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='invites_to_master_user',
+                                verbose_name=ugettext_lazy('user'))
+    from_member = models.ForeignKey(Member, related_name="invites_to_users",
+    verbose_name = ugettext_lazy('from_member'))
+
+    status = models.IntegerField(default=0, choices=InviteStatusChoice.choices)
+
+    class Meta:
+        verbose_name = ugettext_lazy('invite to master user')
+        verbose_name_plural = ugettext_lazy('invites to master user')
+
+    def __str__(self):
+        return 'status: %s' % self.status
 
 
 class UserProfile(models.Model):
