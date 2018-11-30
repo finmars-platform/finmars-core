@@ -20,6 +20,7 @@ from rest_framework.viewsets import ViewSet, ModelViewSet
 from poms.accounts.models import AccountType, Account
 from poms.chats.models import ThreadGroup
 from poms.common.filters import CharFilter, NoOpFilter, ModelExtMultipleChoiceFilter
+from poms.common.mixins import UpdateModelMixinExt
 from poms.common.pagination import BigPagination
 from poms.common.views import AbstractModelViewSet, AbstractApiView
 from poms.counterparties.models import CounterpartyGroup, Counterparty, ResponsibleGroup, Responsible
@@ -511,7 +512,7 @@ class InviteToMasterUserFilterSet(FilterSet):
         fields = []
 
 
-class InviteToMasterUserViewSet(AbstractModelViewSet):
+class InviteToMasterUserViewSet(AbstractApiView, UpdateModelMixinExt, ModelViewSet):
     queryset = InviteToMasterUser.objects.select_related(
         'from_member'
     )
