@@ -84,6 +84,16 @@ class CostMethodViewSet(AbstractClassModelViewSet):
     serializer_class = CostMethodSerializer
 
 
+class PricingPolicyFilterSet(FilterSet):
+    id = NoOpFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+
+    class Meta:
+        model = PricingPolicy
+        fields = []
+
+
 class PricingPolicyViewSet(AbstractModelViewSet):
     queryset = PricingPolicy.objects
     serializer_class = PricingPolicySerializer
@@ -98,6 +108,7 @@ class PricingPolicyViewSet(AbstractModelViewSet):
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name'
     ]
+    filter_class = PricingPolicyFilterSet
 
 
 class PricingPolicyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
@@ -110,6 +121,7 @@ class PricingPolicyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cu
         AttributeFilter,
         GroupsAttributeFilter
     ]
+
 
 
 class InstrumentTypeFilterSet(FilterSet):

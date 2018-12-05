@@ -494,7 +494,8 @@ class InviteToMasterUserSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         if validated_data['status'] == InviteStatusChoice.ACCEPTED:
             user = get_user_from_context(self.context)
-            Member.objects.create(user=user, master_user=instance.from_member.master_user, is_admin=True) # TODO permission logic?
+            Member.objects.create(user=user, master_user=instance.from_member.master_user,
+                                  is_admin=True)  # TODO permission logic?
 
         return super(InviteToMasterUserSerializer, self).update(instance, validated_data)
 
@@ -516,7 +517,6 @@ class InviteToMasterUserSerializer(serializers.ModelSerializer):
 
 
 class InviteCreateSerializer(serializers.Serializer):
-
     username = serializers.CharField(max_length=30, required=True)
 
     def create(self, validated_data):
@@ -525,11 +525,12 @@ class InviteCreateSerializer(serializers.Serializer):
         member = get_member_from_context(self.context)
         user_to = User.objects.get(username=username)
 
-        print('member 1231232 %s' % member)
-
         if not user_to:
             raise serializers.ValidationError({'user_to': "User with this username does not exist"})
 
-        invite = InviteToMasterUser.objects.create(user=user_to, from_member=member,)
+        if InviteToMasterUser.objects.filter(user=user_to, from_member=member).exists():
+            raise serializers.ValidationError({'user_to': "User with this username already received invitation"})
+
+        invite = InviteToMasterUser.objects.create(user=user_to, from_member=member, )
 
         return validated_data

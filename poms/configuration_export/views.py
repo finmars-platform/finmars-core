@@ -228,18 +228,19 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 if transaction.action_notes == order.action_notes:
                     result = self.clear_relations_from_transaction(transaction)
 
-            result_json = to_json_single(result)["fields"]
+            if result:
+                result_json = to_json_single(result)["fields"]
 
-            for key in result_json:
-                if key.endswith('_input') and result_json[key]:
-                    result_json[key] = TransactionTypeInput.objects.get(pk=result_json[key]).name
+                for key in result_json:
+                    if key.endswith('_input') and result_json[key]:
+                        result_json[key] = TransactionTypeInput.objects.get(pk=result_json[key]).name
 
-            if hasattr(result, "transaction_class"):
-                action["transaction"] = result_json
-            else:
-                action["instrument"] = result_json
+                if hasattr(result, "transaction_class"):
+                    action["transaction"] = result_json
+                else:
+                    action["instrument"] = result_json
 
-            results.append(action)
+                results.append(action)
 
         return results
 
