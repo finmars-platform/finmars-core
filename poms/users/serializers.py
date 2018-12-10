@@ -27,6 +27,8 @@ from poms.users.models import MasterUser, UserProfile, Group, Member, TIMEZONE_C
     InviteStatusChoice
 from poms.users.utils import get_user_from_context, get_master_user_from_context, get_member_from_context
 
+from django.core.mail import send_mail
+
 
 class PingSerializer(serializers.Serializer):
     message = serializers.CharField(read_only=True)
@@ -532,5 +534,12 @@ class InviteCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError({'user_to': "User with this username already received invitation"})
 
         invite = InviteToMasterUser.objects.create(user=user_to, from_member=member, )
+
+        message = "You have been invited to %s database. Check all your invitations at https://finmars.com/#!/profile" % member.master_user.name
+
+        subject = "Invitation to %s database" % member.master_user.name
+        recipient_list = [user_to.email]
+
+        send_mail(subject, message, None, recipient_list, html_message=message)
 
         return validated_data

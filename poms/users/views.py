@@ -240,9 +240,6 @@ class ResetPasswordRequestTokenViewSet(AbstractApiView, ViewSet):
 
         for user in users:
 
-            print("user active %s" % user.is_active)
-            print("user has_usable_password %s" % user.has_usable_password())
-
             if user.is_active and user.has_usable_password():
                 # define the token as none for now
                 token = None

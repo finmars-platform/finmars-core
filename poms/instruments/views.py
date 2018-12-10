@@ -34,7 +34,8 @@ from poms.instruments.serializers import InstrumentSerializer, PriceHistorySeria
     PaymentSizeDetailSerializer, PeriodicitySerializer, CostMethodSerializer, InstrumentTypeSerializer, \
     PricingPolicySerializer, EventScheduleConfigSerializer, InstrumentCalculatePricesAccruedPriceSerializer, \
     GeneratedEventSerializer, EventScheduleActionSerializer
-from poms.instruments.tasks import calculate_prices_accrued_price, generate_events, process_events
+from poms.instruments.tasks import calculate_prices_accrued_price, generate_events, process_events, \
+    only_generate_events_at_date
 from poms.integrations.models import PriceDownloadScheme
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
@@ -53,6 +54,7 @@ from poms.transactions.serializers import TransactionTypeProcessSerializer
 from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.permissions import SuperUserOrReadOnly
 
+import datetime
 
 class InstrumentClassViewSet(AbstractClassModelViewSet):
     queryset = InstrumentClass.objects
@@ -121,7 +123,6 @@ class PricingPolicyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cu
         AttributeFilter,
         GroupsAttributeFilter
     ]
-
 
 
 class InstrumentTypeFilterSet(FilterSet):
@@ -368,6 +369,32 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
         return Response({
             'success': True,
             'task_id': ret.id,
+        })
+
+    @list_route(methods=['post'], url_path='generate-events-range', serializer_class=serializers.Serializer)
+    def generate_events_range(self, request):
+
+        date_from_string = request.query_params.get('effective_date_0', None)
+        date_to_string = request.query_params.get('effective_date_1', None)
+
+        if date_from_string is None or date_to_string is None:
+            raise ValidationError('Date range is incorrect')
+
+        date_from = datetime.datetime.strptime(date_from_string, '%Y-%m-%d').date()
+        date_to = datetime.datetime.strptime(date_to_string, '%Y-%m-%d').date()
+
+        dates = [date_from + datetime.timedelta(days=i) for i in range((date_from - date_to).days + 1)]
+
+        tasks_ids = []
+
+        for dte in dates:
+            id = only_generate_events_at_date.apply_async(
+                kwargs={'master_user': request.user.master_user.pk, 'date': dte})
+            tasks_ids.append(id)
+
+        return Response({
+            'success': True,
+            'tasks_ids': tasks_ids
         })
 
     @list_route(methods=['post'], url_path='process-events', serializer_class=serializers.Serializer)
@@ -730,5 +757,3 @@ class EventScheduleConfigViewSet(AbstractModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         raise MethodNotAllowed(method=request.method)
-
-
