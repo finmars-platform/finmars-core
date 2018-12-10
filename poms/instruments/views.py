@@ -56,6 +56,7 @@ from poms.users.permissions import SuperUserOrReadOnly
 
 import datetime
 
+
 class InstrumentClassViewSet(AbstractClassModelViewSet):
     queryset = InstrumentClass.objects
     serializer_class = InstrumentClassSerializer
@@ -388,9 +389,9 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
         tasks_ids = []
 
         for dte in dates:
-            id = only_generate_events_at_date.apply_async(
+            res = only_generate_events_at_date.apply_async(
                 kwargs={'master_user': request.user.master_user.pk, 'date': dte})
-            tasks_ids.append(id)
+            tasks_ids.append(res.id)
 
         return Response({
             'success': True,
