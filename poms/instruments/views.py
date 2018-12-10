@@ -384,9 +384,14 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
         date_from = datetime.datetime.strptime(date_from_string, '%Y-%m-%d').date()
         date_to = datetime.datetime.strptime(date_to_string, '%Y-%m-%d').date()
 
-        dates = [date_from + datetime.timedelta(days=i) for i in range((date_from - date_to).days + 1)]
+        # print('date_from %s' % date_from)
+        # print('date_to %s' % date_to)
+
+        dates = [date_from + datetime.timedelta(days=i) for i in range((date_to - date_from).days + 1)]
 
         tasks_ids = []
+
+        # print('dates %s' % dates)
 
         for dte in dates:
             res = only_generate_events_at_date.apply_async(
