@@ -336,10 +336,16 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 {
                     'key': 'responsible',
                     'model': Responsible
-                }, {
+                },
+                {
+                    'key': 'counterparty',
+                    'model': Counterparty
+                },
+                {
                     'key': 'settlement_currency',
                     'model': Currency
-                }, {
+                },
+                {
                     'key': 'strategy1_cash',
                     'model': Strategy1
                 },
@@ -416,12 +422,12 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         }
 
-        print('relation_keys %s' % relation_keys)
+        # print('relation_keys %s' % relation_keys)
 
         if transaction_type_action_key not in relation_keys:
             return
 
-        print('transaction_type_action_key %s' % transaction_type_action_key)
+        # print('transaction_type_action_key %s' % transaction_type_action_key)
 
         for attr in relation_keys[transaction_type_action_key]:
 
