@@ -320,7 +320,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         }
 
         if not hasattr(relation_keys, transaction_type_action_key):
-            pass
+            return
 
         for attr in relation_keys[transaction_type_action_key]:
 
