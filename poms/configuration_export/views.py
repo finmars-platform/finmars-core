@@ -238,7 +238,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 },
                 {
                     'key': 'responsible',
-                    'model': Response
+                    'model': Responsible
                 }, {
                     'key': 'settlement_currency',
                     'model': Currency
@@ -326,7 +326,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
             if json_obj[attr['key']] is not None:
 
-                obj = getattr(attr, 'model').objects.get(pk=json_obj[attr['key']])
+                obj = attr['model'].objects.get(pk=json_obj[attr['key']])
 
                 if hasattr(obj, 'user_code'):
                     json_obj['___%s__user_code' % attr['key']] = obj.user_code
