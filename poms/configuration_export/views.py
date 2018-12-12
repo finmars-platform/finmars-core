@@ -1,5 +1,6 @@
 import csv
 
+from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Prefetch
 from django.shortcuts import render
@@ -18,7 +19,7 @@ from poms.counterparties.models import Counterparty, Responsible
 from poms.csv_import.models import Scheme, CsvField, EntityField
 from poms.currencies.models import Currency
 from poms.instruments.models import InstrumentType, Instrument, Periodicity, DailyPricingModel, PaymentSizeDetail, \
-    AccrualCalculationModel
+    AccrualCalculationModel, PricingPolicy
 from poms.integrations.models import InstrumentDownloadScheme, InstrumentDownloadSchemeInput, \
     InstrumentDownloadSchemeAttribute, PriceDownloadScheme, ComplexTransactionImportScheme, \
     ComplexTransactionImportSchemeInput, ComplexTransactionImportSchemeRule, ComplexTransactionImportSchemeField, \
@@ -32,7 +33,10 @@ from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.tags.utils import get_tag_prefetch
 from poms.transactions.models import TransactionType, TransactionTypeInput, TransactionTypeAction, \
-    TransactionTypeActionInstrument, TransactionTypeActionTransaction, TransactionTypeGroup
+    TransactionTypeActionInstrument, TransactionTypeActionTransaction, TransactionTypeGroup, \
+    TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentEventSchedule, \
+    TransactionTypeActionInstrumentEventScheduleAction, TransactionTypeActionInstrumentFactorSchedule, \
+    TransactionTypeActionInstrumentManualPricingFormula, NotificationClass, EventClass, TransactionClass
 
 from django.core import serializers
 import json
@@ -138,29 +142,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return configuration
 
-    def clear_relations_from_instrument(self, instrument):
-
-        if instrument.instrument_type:
-            instrument.___instrument_type__user_code = instrument.instrument_type.user_code
-            instrument.instrument_type = None
-
-        if instrument.price_download_scheme:
-            instrument.___price_download_scheme__scheme_name = instrument.price_download_scheme.scheme_name
-            instrument.price_download_scheme = None
-
-        if instrument.pricing_currency:
-            instrument.___pricing_currency__user_code = instrument.pricing_currency.user_code
-            instrument.pricing_currency = None
-
-        if instrument.accrued_currency:
-            instrument.___accrued_currency__user_code = instrument.accrued_currency.user_code
-            instrument.accrued_currency = None
-
-        return instrument
-
-    def clear_relations_from_transaction(self, transaction):
-        return transaction
-
     def get_transaction_type_inputs(self, transaction_type):
 
         inputs = to_json_objects(
@@ -180,19 +161,12 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         for item in results:
 
             if item["value_type"] == 100:
-                item.pop("account")
-                item.pop("counterparty")
-                item.pop("currency")
-                item.pop("instrument")
-                item.pop("instrument_type")
-                item.pop("portfolio")
-                item.pop("responsible")
-                item.pop("strategy1")
-                item.pop("strategy2")
-                item.pop("strategy3")
-                item.pop("price_download_scheme")
-                item.pop("payment_size_detail")
-                item.pop("daily_pricing_model")
+                if item[input_model.content_type.model] is not None:
+                    model = apps.get_model(app_label=input_model.content_type.app_label,
+                                           model_name=input_model.content_type.model)
+
+                    item['___%s__user_code' % input_model.content_type.model] = model.objects.get(
+                        pk=item[input_model.content_type.model]).user_code
 
         delete_prop(results, 'transaction_type')
 
@@ -201,12 +175,186 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return results
 
+    def add_user_code_to_relation(self, json_obj, transaction_type_action_key):
+
+        relation_keys = {
+            'instrument': [
+                {
+                    'key': 'accrued_currency',
+                    'model': Currency
+                },
+                {
+                    'key': 'daily_pricing_model',
+                    'model': DailyPricingModel
+                },
+                {
+                    'key': 'instrument_type',
+                    'model': InstrumentType
+                },
+                {
+                    'key': 'payment_size_detail',
+                    'model': PaymentSizeDetail
+                },
+                {
+                    'key': 'price_download_scheme',
+                    'model': PriceDownloadScheme
+                }, {
+                    'key': 'pricing_currency',
+                    'model': Currency
+                }],
+            'transaction': [
+                {
+                    'key': 'account_cash',
+                    'model': Account
+                },
+                {
+                    'key': 'account_interim',
+                    'model': Account
+                },
+                {
+                    'key': 'account_position',
+                    'model': Account
+                },
+                {
+                    'key': 'allocation_balance',
+                    'model': Instrument
+                },
+                {
+                    'key': 'allocation_pl',
+                    'model': Instrument
+                },
+                {
+                    'key': 'instrument',
+                    'model': Instrument
+                },
+                {
+                    'key': 'linked_instrument',
+                    'model': Instrument
+                },
+                {
+                    'key': 'portfolio',
+                    'model': Portfolio
+                },
+                {
+                    'key': 'responsible',
+                    'model': Response
+                }, {
+                    'key': 'settlement_currency',
+                    'model': Currency
+                }, {
+                    'key': 'strategy1_cash',
+                    'model': Strategy1
+                },
+                {
+                    'key': 'strategy1_position',
+                    'model': Strategy1
+                },
+                {
+                    'key': 'strategy2_cash',
+                    'model': Strategy2
+                },
+                {
+                    'key': 'strategy2_position',
+                    'model': Strategy2
+                },
+                {
+                    'key': 'strategy3_cash',
+                    'model': Strategy3
+                },
+                {
+                    'key': 'strategy3_position',
+                    'model': Strategy3
+                },
+                {
+                    'key': 'transaction_class',
+                    'model': TransactionClass
+                },
+                {
+                    'key': 'transaction_currency',
+                    'model': Currency
+                }
+            ],
+            'instrument_factor_schedule': [{
+                'key': 'instrument',
+                'model': Instrument
+            }],
+            'instrument_manual_pricing_formula': [{
+                'key': 'instrument',
+                'model': Instrument
+            }, {
+                'key': 'pricing_policy',
+                'model': PricingPolicy
+            }],
+            'instrument_accrual_calculation_schedules': [
+                {
+                    'key': 'instrument',
+                    'model': Instrument
+                },
+                {
+                    'key': 'periodicity',
+                    'model': Periodicity
+                },
+                {
+                    'key': 'accrual_calculation_model',
+                    'model': AccrualCalculationModel
+                }],
+            'instrument_event_schedule': [
+                {
+                    'key': 'instrument',
+                    'model': Instrument
+                },
+                {
+                    'key': 'periodicity',
+                    'model': Periodicity
+                },
+                {
+                    'key': 'notification_class',
+                    'model': NotificationClass
+                },
+                {
+                    'key': 'event_class',
+                    'model': EventClass
+                }]
+
+        }
+
+        if not hasattr(relation_keys, transaction_type_action_key):
+            pass
+
+        for attr in relation_keys[transaction_type_action_key]:
+
+            if json_obj[attr['key']] is not None:
+
+                obj = attr['model'].objects.get(pk=json_obj[attr['key']])
+
+                if hasattr(obj, 'user_code'):
+                    json_obj['___%s__user_code' % attr['key']] = obj.user_code
+
+                if hasattr(obj, 'system_code'):
+                    json_obj['___%s__system_code' % attr['key']] = obj.system_code
+
     def get_transaction_type_actions(self, transaction_type):
         results = []
 
         actions_order = TransactionTypeAction.objects.filter(transaction_type__id=transaction_type["pk"])
+
         actions_instrument = TransactionTypeActionInstrument.objects.filter(transaction_type__id=transaction_type["pk"])
         actions_transaction = TransactionTypeActionTransaction.objects.filter(
+            transaction_type__id=transaction_type["pk"])
+
+        actions_instrument_accrual_calculation_schedule = TransactionTypeActionInstrumentAccrualCalculationSchedules.objects.filter(
+            transaction_type__id=transaction_type["pk"])
+
+        actions_instrument_event_schedule = TransactionTypeActionInstrumentEventSchedule.objects.filter(
+            transaction_type__id=transaction_type["pk"])
+
+        actions_instrument_event_schedule_action = TransactionTypeActionInstrumentEventScheduleAction.objects.filter(
+            transaction_type__id=transaction_type["pk"])
+
+        actions_instrument_factor_schedule = TransactionTypeActionInstrumentFactorSchedule.objects.filter(
+            transaction_type__id=transaction_type["pk"])
+
+        actions_instrument_manual_pricing_formula = TransactionTypeActionInstrumentManualPricingFormula.objects.filter(
             transaction_type__id=transaction_type["pk"])
 
         for order in actions_order:
@@ -217,53 +365,66 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 "action_notes": order.action_notes,
                 "order": order.order,
                 "instrument": None,
+                "instrument_accrual_calculation_schedules": None,
+                "instrument_event_schedule": None,
+                "instrument_event_schedule_action": None,
+                "instrument_factor_schedule": None,
+                "instrument_manual_pricing_formula": None,
                 "transaction": None
             }
 
-            for instrument in actions_instrument:
-                if instrument.action_notes == order.action_notes:
-                    result = self.clear_relations_from_instrument(instrument)
+            action_key = None
 
-            for transaction in actions_transaction:
-                if transaction.action_notes == order.action_notes:
-                    result = self.clear_relations_from_transaction(transaction)
+            for item in actions_instrument:
+                if item.action_notes == order.action_notes:
+                    action_key = 'instrument'
+                    result = item
+
+            for item in actions_transaction:
+                if item.action_notes == order.action_notes:
+                    action_key = 'transaction'
+                    result = item
+
+            for item in actions_instrument_accrual_calculation_schedule:
+                if item.action_notes == order.action_notes:
+                    action_key = 'instrument_accrual_calculation_schedules'
+                    result = item
+
+            for item in actions_instrument_event_schedule:
+                if item.action_notes == order.action_notes:
+                    action_key = 'instrument_event_schedule'
+                    result = item
+
+            for item in actions_instrument_event_schedule_action:
+                if item.action_notes == order.action_notes:
+                    action_key = 'instrument_event_schedule_action'
+                    result = item
+
+            for item in actions_instrument_factor_schedule:
+                if item.action_notes == order.action_notes:
+                    action_key = 'instrument_factor_schedule'
+                    result = item
+
+            for item in actions_instrument_manual_pricing_formula:
+                if item.action_notes == order.action_notes:
+                    action_key = 'instrument_manual_pricing_formula'
+                    result = item
 
             if result:
+
                 result_json = to_json_single(result)["fields"]
 
                 for key in result_json:
                     if key.endswith('_input') and result_json[key]:
                         result_json[key] = TransactionTypeInput.objects.get(pk=result_json[key]).name
 
-                if hasattr(result, "transaction_class"):
-                    action["transaction"] = result_json
-                else:
-                    action["instrument"] = result_json
+                self.add_user_code_to_relation(result_json, action_key)
+
+                action[action_key] = result_json
 
                 results.append(action)
 
         return results
-
-    def get_transaction_types_groups(self):
-
-        transaction_types_groups = to_json_objects(
-            TransactionTypeGroup.objects.filter(master_user=self._master_user, is_deleted=False))
-
-        results = []
-
-        for transaction_type_group in transaction_types_groups:
-            result_item = transaction_type_group["fields"]
-
-            result_item.pop("master_user", None)
-            result_item.pop("is_deleted", None)
-
-            results.append(result_item)
-
-        return {
-            "entity": "transactions.transactiontypegroup",
-            "count": len(results),
-            "content": results,
-        }
 
     def get_transaction_types(self):
         transaction_types = to_json_objects(
@@ -278,6 +439,10 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             result_item.pop("master_user", None)
             result_item.pop("is_deleted", None)
             result_item.pop("instrument_types")
+
+            if result_item["group"]:
+                result_item["___group__user_code"] = TransactionTypeGroup.objects.get(
+                    pk=result_item["group"]).user_code
 
             result_item["is_valid_for_all_portfolios"] = True
             result_item["is_valid_for_all_instruments"] = True
@@ -303,14 +468,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         result = {
             "entity": "transactions.transactiontype",
             "count": len(results),
-            "content": results,
-            "dependencies": []
+            "content": results
         }
-
-        groups_dependencies = self.get_transaction_types_groups()
-
-        if groups_dependencies["count"]:
-            result["dependencies"].append(groups_dependencies)
 
         return result
 
@@ -383,14 +542,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         result = {
             "entity": "instruments.instrumenttype",
             "count": len(results),
-            "content": results,
-            "dependencies": []
+            "content": results
         }
-
-        transaction_type_dependencies = self.get_transaction_types()
-
-        if transaction_type_dependencies["count"]:
-            result["dependencies"].append(transaction_type_dependencies)
 
         return result
 
@@ -605,14 +758,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         result = {
             "entity": "integrations.instrumentdownloadscheme",
             "count": len(results),
-            "content": results,
-            "dependencies": []
+            "content": results
         }
-
-        price_download_scheme_dependencies = self.get_price_download_schemes()
-
-        if price_download_scheme_dependencies["count"]:
-            result["dependencies"].append(price_download_scheme_dependencies)
 
         return result
 
@@ -704,14 +851,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         result = {
             "entity": "integrations.complextransactionimportscheme",
             "count": len(results),
-            "content": results,
-            "dependencies": []
+            "content": results
         }
-
-        transaction_type_dependencies = self.get_transaction_types()
-
-        if transaction_type_dependencies["count"]:
-            result["dependencies"].append(transaction_type_dependencies)
 
         return result
 
