@@ -156,17 +156,20 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                         input_json["fields"]["content_type"] = '%s.%s' % (
                             input_model.content_type.app_label, input_model.content_type.model)
 
-        results = unwrap_items(inputs)
+        for item in inputs:
 
-        for item in results:
+            if item["fields"]["value_type"] == 100:
 
-            if item["value_type"] == 100:
+                input_model = TransactionTypeInput.objects.get(pk=item["pk"])
+
                 if item[input_model.content_type.model] is not None:
                     model = apps.get_model(app_label=input_model.content_type.app_label,
                                            model_name=input_model.content_type.model)
 
-                    item['___%s__user_code' % input_model.content_type.model] = model.objects.get(
+                    item["fields"]['___%s__user_code' % input_model.content_type.model] = model.objects.get(
                         pk=item[input_model.content_type.model]).user_code
+
+        results = unwrap_items(inputs)
 
         delete_prop(results, 'transaction_type')
 
