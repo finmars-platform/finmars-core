@@ -165,7 +165,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                                                        model_name=input_model.content_type.model)
 
                                 input_json["fields"]['___%s__user_code' % input_model.content_type.model] = model.objects.get(
-                                    pk=getattr(input_model, input_model.content_type.model)).user_code
+                                    pk=getattr(input_model, input_model.content_type.model).pk).user_code
 
         results = unwrap_items(inputs)
 
