@@ -162,7 +162,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
                 input_model = TransactionTypeInput.objects.get(pk=item["pk"])
 
-                if item[input_model.content_type.model] is not None:
+                if item["fields"][input_model.content_type.model]:
+
                     model = apps.get_model(app_label=input_model.content_type.app_label,
                                            model_name=input_model.content_type.model)
 
