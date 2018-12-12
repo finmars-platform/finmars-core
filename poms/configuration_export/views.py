@@ -142,6 +142,99 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return configuration
 
+    def get_input_prop_by_content_type(self, input):
+
+        if input.content_type.model == 'account':
+            return {
+                'prop': 'account',
+                'code': 'user_code'
+            }
+        if input.content_type.model == 'instrumenttype':
+            return {
+                'prop': 'instrument_type',
+                'code': 'user_code'
+            }
+        if input.content_type.model == 'instrument':
+            return {
+                'prop': 'instrument',
+                'code': 'user_code'
+            }
+        if input.content_type.model == 'currency':
+            return {
+                'prop': 'currency',
+                'code': 'user_code'
+            }
+        if input.content_type.model == 'counterparty':
+            return {
+                'prop': 'counterparty',
+                'code': 'user_code'
+            }
+        if input.content_type.model == 'responsible':
+            return {
+                'prop': 'responsible',
+                'code': 'user_code'
+            }
+        if input.content_type.model == 'portfolio':
+            return {
+                'prop': 'portfolio',
+                'code': 'user_code'
+            }
+        if input.content_type.model == 'strategy1':
+            return {
+                'prop': 'strategy1',
+                'code': 'user_code'
+            }
+        if input.content_type.model == 'strategy2':
+            return {
+                'prop': 'strategy2',
+                'code': 'user_code'
+            }
+        if input.content_type.model == 'strategy3':
+            return {
+                'prop': 'strategy3',
+                'code': 'user_code'
+            }
+        if input.content_type.model == 'dailypricingmodel':
+            return {
+                'prop': 'daily_pricing_model',
+                'code': 'system_code'
+            }
+        if input.content_type.model == 'paymentsizedetail':
+            return {
+                'prop': 'payment_size_detail',
+                'code': 'system_code'
+            }
+        if input.content_type.model == 'pricedownloadscheme':
+            return {
+                'prop': 'payment_size_detail',
+                'code': 'scheme_name'
+            }
+        if input.content_type.model == 'pricingpolicy':
+            return {
+                'prop': 'pricing_policy',
+                'code': 'user_code'
+            }
+        if input.content_type.model == 'periodicity':
+            return {
+                'prop': 'periodicity',
+                'code': 'system_code'
+            }
+        if input.content_type.model == 'accrualcalculationmodel':
+            return {
+                'prop': 'accrual_calculation_model',
+                'code': 'system_code'
+            }
+        if input.content_type.model == 'eventclass':
+            return {
+                'prop': 'event_class',
+                'code': 'system_code'
+            }
+        if input.content_type.model == 'notificationclass':
+            return {
+                'prop': 'notification_class',
+                'code': 'system_code'
+            }
+
     def get_transaction_type_inputs(self, transaction_type):
 
         inputs = to_json_objects(
@@ -159,12 +252,16 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
                         if input_model.value_type == 100:
 
-                            if input_json["fields"][input_model.content_type.model]:
+                            input_prop = self.get_input_prop_by_content_type(input_model)
+
+                            if input_json["fields"][input_prop['prop']]:
                                 model = apps.get_model(app_label=input_model.content_type.app_label,
                                                        model_name=input_model.content_type.model)
 
-                                input_json["fields"][
-                                    '___%s__user_code' % input_model.content_type.model] = model.objects.get(
+                                key = '___{}__{}'
+                                key = key.format(input_prop['prop'], input_prop['code'])
+
+                                input_json["fields"][key] = model.objects.get(
                                     pk=getattr(input_model, input_model.content_type.model).pk).user_code
 
         results = unwrap_items(inputs)
