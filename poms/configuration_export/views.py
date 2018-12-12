@@ -153,22 +153,19 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 for input_json in inputs:
 
                     if input_model.pk == input_json['pk']:
+
                         input_json["fields"]["content_type"] = '%s.%s' % (
                             input_model.content_type.app_label, input_model.content_type.model)
 
-        for item in inputs:
+                        if input_model.value_type == 100:
 
-            if item["fields"]["value_type"] == 100:
+                            if input_model[input_model.content_type.model]:
 
-                input_model = TransactionTypeInput.objects.get(pk=item["pk"])
+                                model = apps.get_model(app_label=input_model.content_type.app_label,
+                                                       model_name=input_model.content_type.model)
 
-                if item["fields"][input_model.content_type.model]:
-
-                    model = apps.get_model(app_label=input_model.content_type.app_label,
-                                           model_name=input_model.content_type.model)
-
-                    item["fields"]['___%s__user_code' % input_model.content_type.model] = model.objects.get(
-                        pk=item[input_model.content_type.model]).user_code
+                                input_json["fields"]['___%s__user_code' % input_model.content_type.model] = model.objects.get(
+                                    pk=input_model[input_model.content_type.model]).user_code
 
         results = unwrap_items(inputs)
 
