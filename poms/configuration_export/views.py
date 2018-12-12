@@ -160,11 +160,11 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                         if input_model.value_type == 100:
 
                             if input_json["fields"][input_model.content_type.model]:
-
                                 model = apps.get_model(app_label=input_model.content_type.app_label,
                                                        model_name=input_model.content_type.model)
 
-                                input_json["fields"]['___%s__user_code' % input_model.content_type.model] = model.objects.get(
+                                input_json["fields"][
+                                    '___%s__user_code' % input_model.content_type.model] = model.objects.get(
                                     pk=getattr(input_model, input_model.content_type.model).pk).user_code
 
         results = unwrap_items(inputs)
@@ -326,7 +326,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
             if json_obj[attr['key']] is not None:
 
-                obj = attr['model'].objects.get(pk=json_obj[attr['key']])
+                obj = getattr(attr, 'model').objects.get(pk=json_obj[attr['key']])
 
                 if hasattr(obj, 'user_code'):
                     json_obj['___%s__user_code' % attr['key']] = obj.user_code
