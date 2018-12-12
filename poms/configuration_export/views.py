@@ -159,13 +159,13 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
                         if input_model.value_type == 100:
 
-                            if input_model[input_model.content_type.model]:
+                            if input_json["fields"][input_model.content_type.model]:
 
                                 model = apps.get_model(app_label=input_model.content_type.app_label,
                                                        model_name=input_model.content_type.model)
 
                                 input_json["fields"]['___%s__user_code' % input_model.content_type.model] = model.objects.get(
-                                    pk=input_model[input_model.content_type.model]).user_code
+                                    pk=getattr(input_model, input_model.content_type.model)).user_code
 
         results = unwrap_items(inputs)
 
