@@ -451,7 +451,7 @@ LOGGING = {
             'host': LOGSTASH_HOST,
             'port': 5000,
             'version': 1,
-        # Version of logstash event schema. Default value: 0 (for backward compatibility of the library)
+            # Version of logstash event schema. Default value: 0 (for backward compatibility of the library)
             'message_type': 'django',  # 'type' field in logstash message. Default value: 'logstash'.
             'fqdn': False,  # Fully qualified domain name. Default value: false.
             'tags': ['django.request'],  # list of tags. Default: None.
@@ -524,7 +524,8 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_RENDERER_CLASSES': (
-        'rest_framework.renderers.JSONRenderer',
+        # 'rest_framework.renderers.JSONRenderer',
+        'poms.common.renderers.CustomJSONRenderer',
     ),
     'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.NamespaceVersioning',
     # 'DEFAULT_PARSER_CLASSES': (
