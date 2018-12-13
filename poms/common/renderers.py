@@ -31,7 +31,8 @@ class CustomJSONEncoder(JSONEncoder):
         else:
             _encoder = encode_basestring
 
-        def floatstr(o, allow_nan=self.allow_nan, _repr=lambda o: format(o, '.2f'), _inf=INFINITY, _neginf=-INFINITY):
+        def floatstr(o, allow_nan=self.allow_nan,
+                     _repr=float.__repr__, _inf=INFINITY, _neginf=-INFINITY):
             # Check for specials.  Note that this type of test is processor
             # and/or platform-specific, so do tests which don't depend on the
             # internals.
@@ -39,9 +40,9 @@ class CustomJSONEncoder(JSONEncoder):
             if o != o:
                 text = 'NaN'
             elif o == _inf:
-                text = 'Infinity'
+                text = 'null'
             elif o == _neginf:
-                text = '-Infinity'
+                text = 'null'
             else:
                 return _repr(o)
 
