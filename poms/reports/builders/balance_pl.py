@@ -43,7 +43,7 @@ class ReportBuilder(BaseReportBuilder):
         self._items = []
         self._summaries = []
 
-        self._trn_list = self._trn_qs()
+        self._trn_list = []
 
     def build_balance(self, full=True):
         st = time.perf_counter()
@@ -505,6 +505,8 @@ class ReportBuilder(BaseReportBuilder):
         # self.transaction_qs = self._trn_qs()
 
         trn_qs = self._trn_qs()
+
+        self._trn_list = trn_qs
 
         _l.debug('_load_transactions trn_qs_st done: %s', (time.perf_counter() - trn_qs_st))
 
