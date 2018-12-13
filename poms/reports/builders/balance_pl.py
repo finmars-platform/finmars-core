@@ -43,6 +43,8 @@ class ReportBuilder(BaseReportBuilder):
         self._items = []
         self._summaries = []
 
+        self._trn_list = self._trn_qs()
+
     def build_balance(self, full=True):
         st = time.perf_counter()
         _l.debug('build balance report: %s', self.instance)
@@ -470,7 +472,8 @@ class ReportBuilder(BaseReportBuilder):
             else:
                 p = InstrumentPricingProvider(self.instance.master_user, self.instance.pricing_policy,
                                               self.instance.report_date)
-                p.fill_using_transactions(self._trn_qs())
+                # p.fill_using_transactions(self._trn_qs())
+                p.fill_using_transactions(self._trn_list)
                 # p.fill_using_transactions(self.transaction_qs)
             self._pricing_provider = p
         return self._pricing_provider
@@ -483,7 +486,8 @@ class ReportBuilder(BaseReportBuilder):
             else:
                 p = CurrencyFxRateProvider(self.instance.master_user, self.instance.pricing_policy,
                                            self.instance.report_date)
-                p.fill_using_transactions(self._trn_qs(), currencies=[self.instance.report_currency])
+                # p.fill_using_transactions(self._trn_qs(), currencies=[self.instance.report_currency])
+                p.fill_using_transactions(self._trn_list, currencies=[self.instance.report_currency])
                 # p.fill_using_transactions(self.transaction_qs, currencies=[self.instance.report_currency])
             self._fx_rate_provider = p
         return self._fx_rate_provider
