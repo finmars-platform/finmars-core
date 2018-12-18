@@ -6,7 +6,7 @@ from mptt.utils import get_cached_trees
 from rest_framework import serializers
 
 from poms.ui.fields import LayoutContentTypeField, ListLayoutField
-from poms.ui.models import TemplateListLayout, TemplateEditLayout, ListLayout, EditLayout, Bookmark
+from poms.ui.models import TemplateListLayout, TemplateEditLayout, ListLayout, EditLayout, Bookmark, Configuration
 from poms.users.fields import MasterUserField, HiddenMemberField
 
 
@@ -138,3 +138,12 @@ class BookmarkSerializer(serializers.ModelSerializer):
 
         for c in children:
             self.save_child(instance, c, o, processed)
+
+
+class ConfigurationSerializer(serializers.ModelSerializer):
+    master_user = MasterUserField()
+    data = serializers.JSONField(allow_null=False)
+
+    class Meta:
+        model = Configuration
+        fields = ['id', 'master_user', 'name', 'description', 'data']

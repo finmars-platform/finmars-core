@@ -561,6 +561,8 @@ AUTHENTICATION_BACKENDS = (
     # 'poms.obj_perms.backends.PomsPermissionBackend',
 )
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880 # 5mb
+
 # email config
 
 DEFAULT_FROM_EMAIL = '"Finmars Notifications" <no-reply@finmars.com>'

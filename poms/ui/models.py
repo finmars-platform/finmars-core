@@ -133,3 +133,16 @@ class Dashboard(models.Model):
     class Meta:
         verbose_name = ugettext_lazy('dashboard')
         verbose_name_plural = ugettext_lazy('dashboard')
+
+
+class Configuration(BaseUIModel):
+    master_user = models.ForeignKey(MasterUser, related_name='configuration_files',
+                                    verbose_name=ugettext_lazy('master user'))
+    name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
+    description = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('description'))
+
+    class Meta(BaseLayout.Meta):
+        unique_together = [
+            ['master_user', 'name'],
+        ]
+    ordering = ['name']

@@ -112,7 +112,7 @@ def only_generate_events_at_date(master_user, date):
                      event_schedule.id, event_schedule.event_class, event_schedule.notification_class,
                      event_schedule.periodicity, event_schedule.periodicity_n)
 
-            is_complies, effective_date, notification_date = event_schedule.check_date(now)
+            is_complies, effective_date, notification_date = event_schedule.check_date(date)
 
             _l.debug('is_complies=%s', is_complies)
             if is_complies:
