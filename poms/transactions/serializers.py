@@ -1816,6 +1816,10 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
         return validated_data
 
     def update(self, instance, validated_data):
+
+        print("Event book here? instance %s" % instance)
+        print("Event book here? validated_data %s" % validated_data)
+
         for key, value in validated_data.items():
             if key not in ['complex_transaction', ]:
                 setattr(instance, key, value)

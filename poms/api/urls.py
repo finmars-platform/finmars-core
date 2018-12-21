@@ -225,6 +225,7 @@ router.register(r'import/instrument-scheme', integrations.InstrumentDownloadSche
 router.register(r'import/price-download-scheme', integrations.PriceDownloadSchemeViewSet)
 
 router.register(r'import/currency-mapping', integrations.CurrencyMappingViewSet)
+router.register(r'import/pricing-policy-mapping', integrations.PricingPolicyMappingViewSet)
 router.register(r'import/instrument-type-mapping', integrations.InstrumentTypeMappingViewSet)
 router.register(r'import/instrument-attribute-value-mapping', integrations.InstrumentAttributeValueMappingViewSet)
 router.register(r'import/accrual-calculation-model-mapping', integrations.AccrualCalculationModelMappingViewSet)

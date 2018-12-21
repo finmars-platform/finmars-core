@@ -1,5 +1,10 @@
 # Changelog
 
+## 21.12.2018
+
+- Simple Entity Import add Price History, Currency History
+- **BUGFIX** Configuration Export phantom exports
+
 ## 30.11.2018
 
 - Profile API

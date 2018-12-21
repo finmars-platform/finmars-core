@@ -23,7 +23,7 @@ from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerial
 from poms.counterparties.fields import CounterpartyField, ResponsibleField
 from poms.currencies.fields import CurrencyField, CurrencyDefault
 from poms.currencies.models import CurrencyHistory
-from poms.instruments.fields import InstrumentTypeField, InstrumentTypeDefault, InstrumentField
+from poms.instruments.fields import InstrumentTypeField, InstrumentTypeDefault, InstrumentField, PricingPolicyField
 from poms.instruments.models import PriceHistory, Instrument, AccrualCalculationModel, Periodicity, DailyPricingModel, \
     PaymentSizeDetail
 from poms.integrations.fields import InstrumentDownloadSchemeField, PriceDownloadSchemeField, \
@@ -36,7 +36,7 @@ from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDo
     Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, DailyPricingModelMapping, PaymentSizeDetailMapping, \
     PriceDownloadSchemeMapping, ComplexTransactionImportScheme, ComplexTransactionImportSchemeInput, \
     ComplexTransactionImportSchemeRule, ComplexTransactionImportSchemeField, PortfolioClassifierMapping, \
-    AccountClassifierMapping, CounterpartyClassifierMapping, ResponsibleClassifierMapping
+    AccountClassifierMapping, CounterpartyClassifierMapping, ResponsibleClassifierMapping, PricingPolicyMapping
 from poms.integrations.providers.base import get_provider, ProviderException
 from poms.integrations.storage import import_file_storage
 from poms.integrations.tasks import download_pricing, download_instrument
@@ -515,6 +515,19 @@ class CurrencyMappingSerializer(AbstractMappingSerializer):
     def get_content_object_view_serializer(self):
         from poms.currencies.serializers import CurrencyViewSerializer
         return CurrencyViewSerializer
+
+class PricingPolicyMappingSerializer(AbstractMappingSerializer):
+    content_object = PricingPolicyField()
+
+    class Meta(AbstractMappingSerializer.Meta):
+        model = PricingPolicyMapping
+
+    def __init__(self, *args, **kwargs):
+        super(PricingPolicyMappingSerializer, self).__init__(*args, **kwargs)
+
+    def get_content_object_view_serializer(self):
+        from poms.instruments.serializers import PricingPolicyViewSerializer
+        return PricingPolicyViewSerializer
 
 
 class InstrumentTypeMappingSerializer(AbstractMappingSerializer):

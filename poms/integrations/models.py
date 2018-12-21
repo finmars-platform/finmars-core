@@ -348,6 +348,20 @@ class CurrencyMapping(AbstractMapping):
         return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
 
 
+class PricingPolicyMapping(AbstractMapping):
+    content_object = models.ForeignKey('instruments.PricingPolicy', verbose_name=ugettext_lazy('pricing policy'))
+
+    class Meta(AbstractMapping.Meta):
+        verbose_name = ugettext_lazy('pricing policy mapping')
+        verbose_name_plural = ugettext_lazy('pricing policy mappings')
+        unique_together = [
+            ['master_user', 'provider', 'value'],
+        ]
+
+    def __str__(self):
+        return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
+
+
 class InstrumentTypeMapping(AbstractMapping):
     content_object = models.ForeignKey('instruments.InstrumentType', verbose_name=ugettext_lazy('instrument type'))
 

@@ -14,7 +14,8 @@ from poms.common.views import AbstractViewSet, AbstractModelViewSet, AbstractRea
     AbstractClassModelViewSet, AbstractAsyncViewSet
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
-from poms.instruments.models import InstrumentType, AccrualCalculationModel, Periodicity, Instrument, PaymentSizeDetail
+from poms.instruments.models import InstrumentType, AccrualCalculationModel, Periodicity, Instrument, PaymentSizeDetail, \
+    PricingPolicy
 from poms.integrations.filters import TaskFilter, InstrumentAttributeValueMappingObjectPermissionFilter, \
     InstrumentTypeMappingObjectPermissionFilter, AccountMappingObjectPermissionFilter, \
     InstrumentMappingObjectPermissionFilter, CounterpartyMappingObjectPermissionFilter, \
@@ -28,7 +29,7 @@ from poms.integrations.models import ImportConfig, Task, InstrumentDownloadSchem
     ResponsibleMapping, PortfolioMapping, Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, \
     DailyPricingModelMapping, \
     PaymentSizeDetailMapping, PriceDownloadSchemeMapping, ComplexTransactionImportScheme, PortfolioClassifierMapping, \
-    AccountClassifierMapping, CounterpartyClassifierMapping, ResponsibleClassifierMapping
+    AccountClassifierMapping, CounterpartyClassifierMapping, ResponsibleClassifierMapping, PricingPolicyMapping
 from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer, ImportInstrumentSerializer, \
     ImportPricingSerializer, InstrumentDownloadSchemeSerializer, ProviderClassSerializer, \
     FactorScheduleDownloadMethodSerializer, AccrualScheduleDownloadMethodSerializer, PriceDownloadSchemeSerializer, \
@@ -40,7 +41,7 @@ from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer
     Strategy1MappingSerializer, Strategy2MappingSerializer, Strategy3MappingSerializer, \
     DailyPricingModelMappingSerializer, PaymentSizeDetailMappingSerializer, PriceDownloadSchemeMappingSerializer, \
     ComplexTransactionImportSchemeSerializer, PortfolioClassifierMappingSerializer, AccountClassifierMappingSerializer, \
-    CounterpartyClassifierMappingSerializer, ResponsibleClassifierMappingSerializer
+    CounterpartyClassifierMappingSerializer, ResponsibleClassifierMappingSerializer, PricingPolicyMappingSerializer
 from poms.integrations.tasks import complex_transaction_csv_file_import
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
@@ -364,6 +365,21 @@ class CurrencyMappingViewSet(AbstractMappingViewSet):
     )
     serializer_class = CurrencyMappingSerializer
     filter_class = CurrencyMappingFilterSet
+
+
+class PricingPolicyMappingFilterSet(AbstractMappingFilterSet):
+    content_object = ModelExtMultipleChoiceFilter(model=PricingPolicy)
+
+    class Meta(AbstractMappingFilterSet.Meta):
+        model = PricingPolicyMapping
+
+
+class PricingPolicyMappingViewSet(AbstractMappingViewSet):
+    queryset = PricingPolicyMapping.objects.select_related(
+        'master_user', 'provider', 'content_object'
+    )
+    serializer_class = PricingPolicyMappingSerializer
+    filter_class = PricingPolicyMappingFilterSet
 
 
 class InstrumentTypeMappingFilterSet(AbstractMappingFilterSet):

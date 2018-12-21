@@ -526,6 +526,14 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                     if key.endswith('_input') and result_json[key]:
                         result_json[key] = TransactionTypeInput.objects.get(pk=result_json[key]).name
 
+                    if key.endswith('_phantom') and result_json[key]:
+
+                        print("Phantom!")
+
+                        result_json[key] = TransactionTypeAction.objects.get(pk=result_json[key]).order
+
+                        print("Phantom! %s" % result_json[key])
+
                 self.add_user_code_to_relation(result_json, action_key)
 
                 action[action_key] = result_json

@@ -9,8 +9,8 @@ from poms.accounts.models import AccountType
 from poms.chats.models import ThreadGroup, Thread
 from poms.counterparties.models import Counterparty, CounterpartyGroup, ResponsibleGroup
 from poms.counterparties.models import Responsible
-from poms.currencies.models import Currency
-from poms.instruments.models import Instrument
+from poms.currencies.models import Currency, CurrencyHistory
+from poms.instruments.models import Instrument, PriceHistory
 from poms.instruments.models import InstrumentType
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, Strategy2Subgroup, \
@@ -23,7 +23,7 @@ def get_scheme_content_types():
               CounterpartyGroup, Counterparty, ResponsibleGroup, Responsible,
               Strategy1Group, Strategy1Subgroup, Strategy1,
               Strategy2Group, Strategy2Subgroup, Strategy2,
-              Strategy3Group, Strategy3Subgroup, Strategy3,
+              Strategy3Group, Strategy3Subgroup, Strategy3, PriceHistory, CurrencyHistory,
               TransactionTypeGroup, TransactionType, ThreadGroup, Thread]
     return [ContentType.objects.get_for_model(model).pk for model in models]
 
