@@ -1825,6 +1825,8 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
                 setattr(instance, key, value)
         instance.value_errors = []
 
+        print('instance.is_book %s' % instance.is_book)
+
         if instance.is_book:
             ctrn_values = validated_data.get('complex_transaction', None)
             if ctrn_values:
@@ -1935,6 +1937,9 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
     #         obj.save()
 
     def _save_inputs(self, instance):
+
+        print('_save_unputs instance.values %s' % instance.values)
+
         instance.complex_transaction.inputs.all().delete()
 
         for ti in instance.transaction_type.inputs.all():
@@ -1957,9 +1962,8 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
                     val = datetime.date.min
                 ci.value_date = val
             elif ti.value_type == TransactionTypeInput.RELATION:
-                model_class = ti.content_type.model_class()
 
-                print('model_class %s' % model_class)
+                model_class = ti.content_type.model_class()
 
                 if issubclass(model_class, Account):
                     ci.account = val
