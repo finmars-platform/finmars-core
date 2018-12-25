@@ -1,5 +1,9 @@
 # Changelog
 
+## 25.12.2018
+- New API Limits
+- Update models
+
 ## 21.12.2018
 
 - Simple Entity Import add Price History, Currency History

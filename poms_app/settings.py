@@ -541,7 +541,7 @@ REST_FRAMEWORK = {
         # 'anon': '5/second',
         # 'user': '50/second',
         'anon': '20/min',
-        'user': '200/min',
+        'user': '500/min',
     },
 
     # 'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S %Z',

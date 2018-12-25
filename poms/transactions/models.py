@@ -141,13 +141,7 @@ class NotificationClass(AbstractClassModel):
     @staticmethod
     def get_notify_on_effective_date_classes():
         return [
-            # NotificationClass.DONT_REACT,
-            # NotificationClass.APPLY_DEF_ON_EDATE,
-            # NotificationClass.APPLY_DEF_ON_NDATE,
 
-            # NotificationClass.INFORM_ON_NDATE_WITH_REACT,
-            # NotificationClass.INFORM_ON_NDATE_APPLY_DEF,
-            # NotificationClass.INFORM_ON_NDATE_DONT_REACT,
             NotificationClass.INFORM_ON_EDATE_WITH_REACT,
             NotificationClass.INFORM_ON_EDATE_APPLY_DEF,
             NotificationClass.INFORM_ON_EDATE_DONT_REACT,
@@ -166,16 +160,10 @@ class NotificationClass(AbstractClassModel):
     @staticmethod
     def get_notify_on_notification_date_classes():
         return [
-            # NotificationClass.DONT_REACT,
-            # NotificationClass.APPLY_DEF_ON_EDATE,
-            # NotificationClass.APPLY_DEF_ON_NDATE,
 
             NotificationClass.INFORM_ON_NDATE_WITH_REACT,
             NotificationClass.INFORM_ON_NDATE_APPLY_DEF,
             NotificationClass.INFORM_ON_NDATE_DONT_REACT,
-            # NotificationClass.INFORM_ON_EDATE_WITH_REACT,
-            # NotificationClass.INFORM_ON_EDATE_APPLY_DEF,
-            # NotificationClass.INFORM_ON_EDATE_DONT_REACT,
 
             NotificationClass.INFORM_ON_NDATE_AND_EDATE_WITH_REACT_ON_EDATE,
             NotificationClass.INFORM_ON_NDATE_AND_EDATE_WITH_REACT_ON_NDATE,
@@ -191,22 +179,9 @@ class NotificationClass(AbstractClassModel):
     @staticmethod
     def get_apply_default_on_effective_date_classes():
         return [
-            # NotificationClass.DONT_REACT,
             NotificationClass.APPLY_DEF_ON_EDATE,
-            # NotificationClass.APPLY_DEF_ON_NDATE,
-
-            # NotificationClass.INFORM_ON_NDATE_WITH_REACT,
-            # NotificationClass.INFORM_ON_NDATE_APPLY_DEF,
-            # NotificationClass.INFORM_ON_NDATE_DONT_REACT,
-            # NotificationClass.INFORM_ON_EDATE_WITH_REACT,
             NotificationClass.INFORM_ON_EDATE_APPLY_DEF,
-            # NotificationClass.INFORM_ON_EDATE_DONT_REACT,
-
-            # NotificationClass.INFORM_ON_NDATE_AND_EDATE_WITH_REACT_ON_EDATE,
-            # NotificationClass.INFORM_ON_NDATE_AND_EDATE_WITH_REACT_ON_NDATE,
             NotificationClass.INFORM_ON_NDATE_AND_EDATE_APPLY_DEF_ON_EDATE,
-            # NotificationClass.INFORM_ON_NDATE_AND_EDATE_APPLY_DEF_ON_NDATE,
-            # NotificationClass.INFORM_ON_NDATE_AND_EDATE_DONT_REACT,
         ]
 
     @property
@@ -216,22 +191,11 @@ class NotificationClass(AbstractClassModel):
     @staticmethod
     def get_apply_default_on_notification_date_classes():
         return [
-            # NotificationClass.DONT_REACT,
-            # NotificationClass.APPLY_DEF_ON_EDATE,
+
             NotificationClass.APPLY_DEF_ON_NDATE,
-
-            # NotificationClass.INFORM_ON_NDATE_WITH_REACT,
             NotificationClass.INFORM_ON_NDATE_APPLY_DEF,
-            # NotificationClass.INFORM_ON_NDATE_DONT_REACT,
-            # NotificationClass.INFORM_ON_EDATE_WITH_REACT,
-            # NotificationClass.INFORM_ON_EDATE_APPLY_DEF,
-            # NotificationClass.INFORM_ON_EDATE_DONT_REACT,
-
-            # NotificationClass.INFORM_ON_NDATE_AND_EDATE_WITH_REACT_ON_EDATE,
-            # NotificationClass.INFORM_ON_NDATE_AND_EDATE_WITH_REACT_ON_NDATE,
-            # NotificationClass.INFORM_ON_NDATE_AND_EDATE_APPLY_DEF_ON_EDATE,
             NotificationClass.INFORM_ON_NDATE_AND_EDATE_APPLY_DEF_ON_NDATE,
-            # NotificationClass.INFORM_ON_NDATE_AND_EDATE_DONT_REACT,
+
         ]
 
     @property
@@ -241,22 +205,8 @@ class NotificationClass(AbstractClassModel):
     @staticmethod
     def get_need_reaction_on_effective_date_classes():
         return [
-            # NotificationClass.DONT_REACT,
-            # NotificationClass.APPLY_DEF_ON_EDATE,
-            # NotificationClass.APPLY_DEF_ON_NDATE,
-
-            # NotificationClass.INFORM_ON_NDATE_WITH_REACT,
-            # NotificationClass.INFORM_ON_NDATE_APPLY_DEF,
-            # NotificationClass.INFORM_ON_NDATE_DONT_REACT,
             NotificationClass.INFORM_ON_EDATE_WITH_REACT,
-            # NotificationClass.INFORM_ON_EDATE_APPLY_DEF,
-            # NotificationClass.INFORM_ON_EDATE_DONT_REACT,
-
             NotificationClass.INFORM_ON_NDATE_AND_EDATE_WITH_REACT_ON_EDATE,
-            # NotificationClass.INFORM_ON_NDATE_AND_EDATE_WITH_REACT_ON_NDATE,
-            # NotificationClass.INFORM_ON_NDATE_AND_EDATE_APPLY_DEF_ON_EDATE,
-            # NotificationClass.INFORM_ON_NDATE_AND_EDATE_APPLY_DEF_ON_NDATE,
-            # NotificationClass.INFORM_ON_NDATE_AND_EDATE_DONT_REACT,
         ]
 
     @property
@@ -266,22 +216,8 @@ class NotificationClass(AbstractClassModel):
     @staticmethod
     def get_need_reaction_on_notification_date_classes():
         return [
-            # NotificationClass.DONT_REACT,
-            # NotificationClass.APPLY_DEF_ON_EDATE,
-            # NotificationClass.APPLY_DEF_ON_NDATE,
-
             NotificationClass.INFORM_ON_NDATE_WITH_REACT,
-            # NotificationClass.INFORM_ON_NDATE_APPLY_DEF,
-            # NotificationClass.INFORM_ON_NDATE_DONT_REACT,
-            # NotificationClass.INFORM_ON_EDATE_WITH_REACT,
-            # NotificationClass.INFORM_ON_EDATE_APPLY_DEF,
-            # NotificationClass.INFORM_ON_EDATE_DONT_REACT,
-
-            # NotificationClass.INFORM_ON_NDATE_AND_EDATE_WITH_REACT_ON_EDATE,
             NotificationClass.INFORM_ON_NDATE_AND_EDATE_WITH_REACT_ON_NDATE,
-            # NotificationClass.INFORM_ON_NDATE_AND_EDATE_APPLY_DEF_ON_EDATE,
-            # NotificationClass.INFORM_ON_NDATE_AND_EDATE_APPLY_DEF_ON_NDATE,
-            # NotificationClass.INFORM_ON_NDATE_AND_EDATE_DONT_REACT,
         ]
 
     @property

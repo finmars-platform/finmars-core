@@ -1034,11 +1034,13 @@ class GeneratedEvent(models.Model):
     IGNORED = 2
     BOOK_PENDING = 3
     BOOKED = 4
+    BOOK_DEFAULT = 5
     STATUS_CHOICES = (
         (NEW, ugettext_lazy('New')),
         (IGNORED, ugettext_lazy('Ignored')),
         (BOOK_PENDING, ugettext_lazy('Book pending')),
         (BOOKED, ugettext_lazy('Booked')),
+        (BOOK_DEFAULT, ugettext_lazy('Book (default)')),
     )
 
     master_user = models.ForeignKey(MasterUser, related_name='generated_events',
@@ -1096,6 +1098,12 @@ class GeneratedEvent(models.Model):
         self.member = member
         self.action = action
         self.status = GeneratedEvent.BOOK_PENDING if action.is_sent_to_pending else GeneratedEvent.BOOKED
+
+        print('action.event_schedule.notification_class %s' % action.event_schedule.notification_class)
+
+        if action.event_schedule.notification_class in [5, 8, 12, 13]:
+            self.status = GeneratedEvent.BOOK_DEFAULT
+
         self.status_date = timezone.now()
         self.transaction_type = action.transaction_type
         self.complex_transaction = complex_transaction
@@ -1110,7 +1118,8 @@ class GeneratedEvent(models.Model):
             print('self.event_schedule %s ' % self.event_schedule)
             print('self.now %s ' % now)
             print('self.effective_date %s ' % self.effective_date)
-            print('self.notification_class.is_notify_on_effective_date %s ' % notification_class.is_notify_on_effective_date)
+            print(
+                'self.notification_class.is_notify_on_effective_date %s ' % notification_class.is_notify_on_effective_date)
 
             return self.effective_date == now and notification_class.is_notify_on_effective_date
         return False
@@ -1126,7 +1135,8 @@ class GeneratedEvent(models.Model):
             print('self.event_schedule %s ' % self.event_schedule)
             print('self.now %s ' % now)
             print('self.notification_date %s ' % self.notification_date)
-            print('self.notification_class.is_notify_on_notification_date %s ' % notification_class.is_notify_on_notification_date)
+            print(
+                'self.notification_class.is_notify_on_notification_date %s ' % notification_class.is_notify_on_notification_date)
 
             return self.notification_date == now and notification_class.is_notify_on_notification_date
         return False
