@@ -13,6 +13,8 @@ from poms.common.models import NamedModel, FakeDeletableModel
 import binascii
 import os
 
+
+
 AVAILABLE_APPS = ['accounts', 'counterparties', 'currencies', 'instruments', 'portfolios', 'strategies', 'transactions',
                   'reports', 'users']
 
@@ -156,6 +158,10 @@ class MasterUser(models.Model):
                                      related_name='master_user_thread_group',
                                      verbose_name=ugettext_lazy('thread group'))
 
+    transaction_type = models.ForeignKey('transactions.TransactionType', null=True, blank=True,
+                                         on_delete=models.PROTECT,
+                                         verbose_name=ugettext_lazy('transaction type'))
+
     transaction_type_group = models.ForeignKey('transactions.TransactionTypeGroup', null=True, blank=True,
                                                on_delete=models.PROTECT,
                                                verbose_name=ugettext_lazy('transaction type group'))
@@ -166,6 +172,12 @@ class MasterUser(models.Model):
     mismatch_account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.PROTECT,
                                          related_name='master_user_mismatch_account',
                                          verbose_name=ugettext_lazy('mismatch account'))
+
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', null=True, blank=True, on_delete=models.PROTECT,
+                                       verbose_name=ugettext_lazy('pricing policy'))
+
+    price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', null=True, blank=True, on_delete=models.PROTECT,
+                                              verbose_name=ugettext_lazy('price download scheme'))
 
     # TODO: what is notification_business_days
     notification_business_days = models.IntegerField(default=0)
@@ -190,8 +202,10 @@ class MasterUser(models.Model):
         from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, \
             Strategy2Subgroup, Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
         from poms.chats.models import ThreadGroup
-        from poms.transactions.models import NotificationClass, TransactionTypeGroup
+        from poms.transactions.models import NotificationClass, TransactionTypeGroup, TransactionType
         from poms.obj_perms.utils import get_change_perms, assign_perms3
+        from poms.instruments.models import PricingPolicy
+        from poms.integrations.models import PriceDownloadScheme
 
         if not EventScheduleConfig.objects.filter(master_user=self).exists():
             EventScheduleConfig.create_default(master_user=self)
@@ -246,7 +260,11 @@ class MasterUser(models.Model):
 
         thread_group = ThreadGroup.objects.create(master_user=self, name='-')
 
+        transaction_type = TransactionType.objects.create(master_user=self, name='-')
         transaction_type_group = TransactionTypeGroup.objects.create(master_user=self, name='-')
+
+        pricing_policy = PricingPolicy.objects.create(master_user=self, name='')
+        price_download_scheme = PriceDownloadScheme.objects.create(master_user=self, scheme_name='')
 
         if user:
             Member.objects.create(user=user, master_user=self, is_owner=True, is_admin=True)
@@ -286,6 +304,9 @@ class MasterUser(models.Model):
         self.transaction_type_group = transaction_type_group
         self.mismatch_portfolio = portfolio
         self.mismatch_account = account
+        self.pricing_policy = pricing_policy
+        self.transaction_type = transaction_type
+        self.price_download_scheme = price_download_scheme
         self.save()
 
         for c in [account_type, account, counterparty_group, counterparty, responsible_group, responsible, portfolio,

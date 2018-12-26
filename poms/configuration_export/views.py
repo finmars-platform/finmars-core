@@ -441,6 +441,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 if hasattr(obj, 'system_code'):
                     json_obj['___%s__system_code' % attr['key']] = obj.system_code
 
+                if hasattr(obj, 'scheme_name'):
+                    json_obj['___%s__scheme_name' % attr['key']] = obj.scheme_name
+
     def get_transaction_type_actions(self, transaction_type):
         results = []
 

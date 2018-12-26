@@ -17,10 +17,13 @@ from poms.common.fields import DateTimeTzAwareField
 from poms.counterparties.fields import CounterpartyField, ResponsibleField, CounterpartyGroupField, \
     ResponsibleGroupField
 from poms.currencies.fields import CurrencyField
-from poms.instruments.fields import InstrumentTypeField, InstrumentField
+from poms.instruments.fields import InstrumentTypeField, InstrumentField, PricingPolicyField
+
 from poms.portfolios.fields import PortfolioField
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field, Strategy1SubgroupField, \
     Strategy1GroupField, Strategy2GroupField, Strategy2SubgroupField, Strategy3GroupField, Strategy3SubgroupField
+from poms.transactions.fields import TransactionTypeField
+
 from poms.ui.models import ListLayout, EditLayout
 from poms.users.fields import MasterUserField, MemberField, GroupField
 from poms.users.models import MasterUser, UserProfile, Group, Member, TIMEZONE_CHOICES, InviteToMasterUser, \
@@ -251,6 +254,8 @@ class MasterUserSerializer(serializers.ModelSerializer):
     thread_group = ThreadGroupField()
     mismatch_portfolio = PortfolioField()
     mismatch_account = AccountField()
+    pricing_policy = PricingPolicyField()
+    transaction_type = TransactionTypeField()
 
     class Meta:
         model = MasterUser
@@ -264,11 +269,13 @@ class MasterUserSerializer(serializers.ModelSerializer):
             'responsible_group', 'responsible',
             'instrument_type', 'instrument',
             'portfolio',
+            'price_download_scheme',
             'strategy1_group', 'strategy1_subgroup', 'strategy1',
             'strategy2_group', 'strategy2_subgroup', 'strategy2',
             'strategy3_group', 'strategy3_subgroup', 'strategy3',
             'thread_group',
             'mismatch_portfolio', 'mismatch_account',
+            'pricing_policy', 'transaction_type'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -285,6 +292,9 @@ class MasterUserSerializer(serializers.ModelSerializer):
             Strategy2ViewSerializer, Strategy3GroupViewSerializer, Strategy3SubgroupViewSerializer, \
             Strategy3ViewSerializer
         from poms.chats.serializers import ThreadGroupViewSerializer
+        from poms.transactions.serializers import TransactionTypeViewSerializer
+        from poms.instruments.serializers import PricingPolicyViewSerializer
+
 
         self.fields['system_currency_object'] = CurrencyViewSerializer(source='system_currency', read_only=True)
         self.fields['currency_object'] = CurrencyViewSerializer(source='currency', read_only=True)
@@ -321,6 +331,9 @@ class MasterUserSerializer(serializers.ModelSerializer):
 
         self.fields['mismatch_portfolio_object'] = PortfolioViewSerializer(source='mismatch_portfolio', read_only=True)
         self.fields['mismatch_account_object'] = AccountViewSerializer(source='mismatch_account', read_only=True)
+
+        self.fields['pricing_policy_object'] = PricingPolicyViewSerializer(source='pricing_policy', read_only=True)
+        self.fields['transaction_type_object'] = TransactionTypeViewSerializer(source='transaction_type', read_only=True)
 
     def to_representation(self, instance):
         ret = super(MasterUserSerializer, self).to_representation(instance)
