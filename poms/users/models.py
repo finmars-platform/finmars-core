@@ -263,8 +263,8 @@ class MasterUser(models.Model):
         transaction_type = TransactionType.objects.create(master_user=self, name='-')
         transaction_type_group = TransactionTypeGroup.objects.create(master_user=self, name='-')
 
-        pricing_policy = PricingPolicy.objects.create(master_user=self, name='')
-        price_download_scheme = PriceDownloadScheme.objects.create(master_user=self, scheme_name='',
+        pricing_policy = PricingPolicy.objects.create(master_user=self, name='-')
+        price_download_scheme = PriceDownloadScheme.objects.create(master_user=self, scheme_name='-',
                                                                    provider=ProviderClass.objects.get(pk=ProviderClass.BLOOMBERG))
 
         if user:
