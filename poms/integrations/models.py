@@ -189,6 +189,9 @@ class InstrumentDownloadScheme(models.Model):
         index_together = (
             ('master_user', 'scheme_name')
         )
+        unique_together = (
+            ('master_user', 'scheme_name')
+        )
         ordering = ['scheme_name', ]
         # permissions = [
         #     ('view_instrumentdownloadscheme', 'Can view instrument download scheme'),
