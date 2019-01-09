@@ -13,8 +13,6 @@ from poms.common.models import NamedModel, FakeDeletableModel
 import binascii
 import os
 
-
-
 AVAILABLE_APPS = ['accounts', 'counterparties', 'currencies', 'instruments', 'portfolios', 'strategies', 'transactions',
                   'reports', 'users']
 
@@ -176,7 +174,8 @@ class MasterUser(models.Model):
     pricing_policy = models.ForeignKey('instruments.PricingPolicy', null=True, blank=True, on_delete=models.PROTECT,
                                        verbose_name=ugettext_lazy('pricing policy'))
 
-    price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', null=True, blank=True, on_delete=models.PROTECT,
+    price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', null=True, blank=True,
+                                              on_delete=models.PROTECT,
                                               verbose_name=ugettext_lazy('price download scheme'))
 
     # TODO: what is notification_business_days
@@ -263,9 +262,10 @@ class MasterUser(models.Model):
         transaction_type = TransactionType.objects.create(master_user=self, name='-')
         transaction_type_group = TransactionTypeGroup.objects.create(master_user=self, name='-')
 
-        pricing_policy = PricingPolicy.objects.create(master_user=self, name='-')
+        pricing_policy = PricingPolicy.objects.create(master_user=self, name='-', expr='(ask+bid)/2')
         price_download_scheme = PriceDownloadScheme.objects.create(master_user=self, scheme_name='-',
-                                                                   provider=ProviderClass.objects.get(pk=ProviderClass.BLOOMBERG))
+                                                                   provider=ProviderClass.objects.get(
+                                                                       pk=ProviderClass.BLOOMBERG))
 
         if user:
             Member.objects.create(user=user, master_user=self, is_owner=True, is_admin=True)
@@ -445,9 +445,9 @@ class InviteStatusChoice():
 
 class InviteToMasterUser(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='invites_to_master_user',
-                                verbose_name=ugettext_lazy('user'))
+                             verbose_name=ugettext_lazy('user'))
     from_member = models.ForeignKey(Member, related_name="invites_to_users",
-    verbose_name = ugettext_lazy('from_member'))
+                                    verbose_name=ugettext_lazy('from_member'))
 
     status = models.IntegerField(default=0, choices=InviteStatusChoice.choices)
 
