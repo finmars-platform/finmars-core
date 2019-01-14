@@ -961,6 +961,24 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                         except IndexError:
                             raise ValidationError('Invalid action order "%s"' % value)
 
+                    if attr == 'linked_instrument_phantom' and value is not None:
+                        try:
+                            action_transaction_data[attr] = actions[value]
+                        except IndexError:
+                            raise ValidationError('Invalid action order "%s"' % value)
+
+                    if attr == 'allocation_balance_phantom' and value is not None:
+                        try:
+                            action_transaction_data[attr] = actions[value]
+                        except IndexError:
+                            raise ValidationError('Invalid action order "%s"' % value)
+
+                    if attr == 'allocation_pl_phantom' and value is not None:
+                        try:
+                            action_transaction_data[attr] = actions[value]
+                        except IndexError:
+                            raise ValidationError('Invalid action order "%s"' % value)
+
                 action_transaction = None
                 if action:
                     try:

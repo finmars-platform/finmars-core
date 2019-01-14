@@ -109,6 +109,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         account_types = self.get_account_types()
         instrument_types = self.get_instrument_types()
         pricing_automated_schedule = self.get_pricing_automated_schedule()
+        pricing_policies = self.get_pricing_policies()
 
         portfolio_attribute_types = self.get_entity_attribute_types('portfolios', 'portfolio')
         account_attribute_types = self.get_entity_attribute_types('accounts', 'account')
@@ -129,6 +130,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration["body"].append(instrument_download_schemes)
         configuration["body"].append(complex_transaction_import_scheme)
         configuration["body"].append(account_types)
+        configuration["body"].append(pricing_policies)
         configuration["body"].append(instrument_types)
         configuration["body"].append(pricing_automated_schedule)
 
@@ -530,7 +532,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                         result_json[key] = TransactionTypeInput.objects.get(pk=result_json[key]).name
 
                     if key.endswith('_phantom') and result_json[key]:
-
                         result_json[key] = TransactionTypeAction.objects.get(pk=result_json[key]).order
 
                 self.add_user_code_to_relation(result_json, action_key)
@@ -543,7 +544,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
     def get_transaction_types(self):
         transaction_types = to_json_objects(
-            TransactionType.objects.filter(master_user=self._master_user, is_deleted=False))
+            TransactionType.objects.filter(master_user=self._master_user, is_deleted=False).exclude(user_code='-'))
         results = []
 
         for transaction_type in transaction_types:
@@ -590,7 +591,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
     def get_account_types(self):
         account_types = to_json_objects(
-            AccountType.objects.filter(master_user=self._master_user, is_deleted=False))
+            AccountType.objects.filter(master_user=self._master_user, is_deleted=False).exclude(user_code='-'))
         results = []
 
         for account_type in account_types:
@@ -615,9 +616,35 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
+    def get_pricing_policies(self):
+        pricing_polices = to_json_objects(
+            PricingPolicy.objects.filter(master_user=self._master_user).exclude(user_code='-'))
+        results = []
+
+        for pricing_policy in pricing_polices:
+            result_item = pricing_policy["fields"]
+
+            result_item["pk"] = pricing_policy["pk"]
+
+            result_item.pop("master_user", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "instruments.pricingpolicy",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
     def get_instrument_types(self):
         instrument_types = to_json_objects(
-            InstrumentType.objects.filter(master_user=self._master_user, is_deleted=False))
+            InstrumentType.objects.filter(master_user=self._master_user, is_deleted=False).exclude(user_code='-'))
         results = []
 
         for instrument_type in instrument_types:
