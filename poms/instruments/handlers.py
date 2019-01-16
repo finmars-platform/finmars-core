@@ -2,6 +2,8 @@ from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import ComplexTransaction
 
 
+# Context variables here
+
 class GeneratedEventProcess(TransactionTypeProcess):
     def __init__(self, generated_event=None, action=None, **kwargs):
         self.generated_event = generated_event
@@ -20,7 +22,7 @@ class GeneratedEventProcess(TransactionTypeProcess):
             'strategy3': generated_event.strategy3,
             'position': generated_event.position,
             'effective_date': generated_event.effective_date,
-            'notification_date': generated_event.notification_date,
+            'notification_date': generated_event.notification_date, # not in context variables
             # 'final_date': generated_event.event_schedule.final_date,
             # 'maturity_date': generated_event.instrument.maturity_date
         })

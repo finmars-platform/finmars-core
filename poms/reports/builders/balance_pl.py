@@ -43,7 +43,6 @@ class ReportBuilder(BaseReportBuilder):
         self._items = []
         self._summaries = []
 
-
     def build_balance(self, full=True):
         st = time.perf_counter()
         _l.debug('build balance report: %s', self.instance)
@@ -393,7 +392,10 @@ class ReportBuilder(BaseReportBuilder):
         # }
         # qs = super(ReportBuilder, self)._trn_qs()
 
+        # filters = Q(**{'%s__lte' % self.instance.date_field: self.instance.report_date})
         filters = Q(**{'%s__lt' % self.instance.date_field: self.instance.report_date})
+
+        _l.debug('here? %s' % self.instance.date_field)
 
         if self.instance.instruments:
             # kw_filters['instrument__in'] = self.instance.instruments
