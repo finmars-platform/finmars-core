@@ -477,6 +477,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             action = {
                 "action_notes": order.action_notes,
                 "order": order.order,
+                "rebook_reaction": order.rebook_reaction,
                 "instrument": None,
                 "instrument_accrual_calculation_schedules": None,
                 "instrument_event_schedule": None,
