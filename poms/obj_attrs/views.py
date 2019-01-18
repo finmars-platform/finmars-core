@@ -161,7 +161,9 @@ class GenericAttributeTypeViewSet(AbstractWithObjectPermissionViewSet):
 
         content_type = ContentType.objects.get_for_model(self.target_model)
 
-        items = self.target_model.objects.all()
+        master_user = request.user.master_user
+
+        items = self.target_model.objects.filter(master_user=master_user)
 
         print('items len %s' % len(items))
 

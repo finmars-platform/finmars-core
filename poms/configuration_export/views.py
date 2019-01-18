@@ -560,6 +560,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 result_item["___group__user_code"] = TransactionTypeGroup.objects.get(
                     pk=result_item["group"]).user_code
 
+                result_item.pop('group')
+
             result_item["is_valid_for_all_portfolios"] = True
             result_item["is_valid_for_all_instruments"] = True
 
@@ -658,22 +660,27 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             if result_item["one_off_event"]:
                 result_item["___one_off_event__user_code"] = TransactionType.objects.get(
                     pk=result_item["one_off_event"]).user_code
+                result_item.pop("one_off_event", None)
 
             if result_item["regular_event"]:
                 result_item["___regular_event__user_code"] = TransactionType.objects.get(
                     pk=result_item["regular_event"]).user_code
+                result_item.pop("regular_event", None)
 
             if result_item["factor_same"]:
                 result_item["___factor_same__user_code"] = TransactionType.objects.get(
                     pk=result_item["factor_same"]).user_code
+                result_item.pop("factor_same", None)
 
             if result_item["factor_up"]:
                 result_item["___factor_up__user_code"] = TransactionType.objects.get(
                     pk=result_item["factor_up"]).user_code
+                result_item.pop("factor_up", None)
 
             if result_item["factor_down"]:
                 result_item["___factor_down__user_code"] = TransactionType.objects.get(
                     pk=result_item["factor_down"]).user_code
+                result_item.pop("factor_down", None)
 
             clear_none_attrs(result_item)
 
@@ -965,6 +972,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
             rule["fields"]["___transaction_type__user_code"] = TransactionType.objects.get(
                 pk=rule["fields"]["transaction_type"]).user_code
+            rule["fields"].pop("transaction_type", None)
 
             results.append(result_item)
 

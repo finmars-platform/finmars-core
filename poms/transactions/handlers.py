@@ -922,6 +922,11 @@ class TransactionTypeProcess(object):
             for trn in self.transactions:
                 trn.calc_cash_by_formulas()
 
+        _l.debug('self.complex_transaction.status', self.complex_transaction.status)
+
+        if self.complex_transaction.status == ComplexTransaction.PENDING:
+            self.complex_transaction.transactions.all().delete()
+
     def process_recalculate(self):
         if not self.recalculate_inputs:
             return
