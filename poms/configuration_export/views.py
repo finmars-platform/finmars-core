@@ -99,6 +99,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration["body"] = []
 
         transaction_types = self.get_transaction_types()
+        transaction_type_groups = self.get_transaction_type_groups()
         edit_layouts = self.get_edit_layouts()
         list_layouts = self.get_list_layouts()
         report_layouts = self.get_report_layouts()
@@ -122,6 +123,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         instrument_type_attribute_types = self.get_entity_attribute_types('instruments', 'instrumenttype')
 
         configuration["body"].append(transaction_types)
+        configuration["body"].append(transaction_type_groups)
         configuration["body"].append(edit_layouts)
         configuration["body"].append(list_layouts)
         configuration["body"].append(report_layouts)
@@ -586,6 +588,33 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         result = {
             "entity": "transactions.transactiontype",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_transaction_type_groups(self):
+        items = to_json_objects(
+            TransactionTypeGroup.objects.filter(master_user=self._master_user, is_deleted=False).exclude(user_code='-'))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item["pk"] = item["pk"]
+
+            result_item.pop("master_user", None)
+            result_item.pop("is_deleted", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "transactions.transactiontypegroup",
             "count": len(results),
             "content": results
         }
