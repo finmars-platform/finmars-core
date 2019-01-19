@@ -1,4 +1,6 @@
-# Getting started (Local)
+# Getting started (Local) 
+
+**Works for python 3.5.0**
 
 * Install NPM
 * Install Python 3
@@ -11,9 +13,21 @@
 
 `source venv/bin/activate`
 
+* Install Dependencies
+
+`pip install -r requirements.txt`
+
+* Install Celery
+
+`pip install celery`
+
 * Start Postgres Database and Redis in docker
 
 `docker-compose -f docker-compose-dev.yml up`
+
+* Run Migrations
+
+`./local-develoment/run_migrate.sh`
 
 * Start Celery Server
 
