@@ -32,6 +32,7 @@ class InstrumentClass(AbstractClassModel):
     REGULAR_EVENT_AT_MATURITY = 3
     PERPETUAL_REGULAR_EVENT = 4
     CONTRACT_FOR_DIFFERENCE = 5
+    DEFAULT = 6
 
     CLASSES = (
         (GENERAL, 'GENERAL', ugettext_lazy("General Class")),
@@ -39,6 +40,7 @@ class InstrumentClass(AbstractClassModel):
         (REGULAR_EVENT_AT_MATURITY, 'REGULAR_EVENT_AT_MATURITY', ugettext_lazy("Regular Event with Maturity")),
         (PERPETUAL_REGULAR_EVENT, 'PERPETUAL_REGULAR_EVENT', ugettext_lazy("Perpetual Regular Event")),
         (CONTRACT_FOR_DIFFERENCE, 'CONTRACT_FOR_DIFFERENCE', ugettext_lazy("Contract for Difference")),
+        (DEFAULT, '-', ugettext_lazy("Default"))
     )
 
     class Meta(AbstractClassModel.Meta):
@@ -60,12 +62,14 @@ class DailyPricingModel(AbstractClassModel):
     FORMULA_IF_OPEN = 3
     PROVIDER_ALWAYS = 4
     PROVIDER_IF_OPEN = 5
+    DEFAULT = 6
     CLASSES = (
         (SKIP, 'SKIP', ugettext_lazy("Skip")),
         (FORMULA_ALWAYS, 'FORMULA_ALWAYS', ugettext_lazy("Formula (always)")),
         (FORMULA_IF_OPEN, 'FORMULA_IF_OPEN', ugettext_lazy("Formula (if open)")),
         (PROVIDER_ALWAYS, 'PROVIDER_ALWAYS', ugettext_lazy("Provider (always)")),
         (PROVIDER_IF_OPEN, 'PROVIDER_IF_OPEN', ugettext_lazy("Provider (if open)")),
+        (DEFAULT, '-', ugettext_lazy("Default"))
     )
 
     class Meta(AbstractClassModel.Meta):
@@ -99,6 +103,8 @@ class AccrualCalculationModel(AbstractClassModel):
     GERMAN_30_360_NO_EOM = 22
     REVERSED_ACT_365 = 23
 
+    DEFAULT = 25
+
     CLASSES = (
         (NONE, 'NONE', ugettext_lazy("none")),
         (ACT_ACT, 'ACT_ACT', ugettext_lazy("ACT/ACT")),
@@ -123,7 +129,8 @@ class AccrualCalculationModel(AbstractClassModel):
         (GERMAN_30_360_EOM, 'GERMAN_30_360_EOM', ugettext_lazy("GERMAN-30/360 (EOM)")),
         (GERMAN_30_360_NO_EOM, 'GERMAN_30_360_NO_EOM', ugettext_lazy("GERMAN-30/360 (NO EOM)")),
         (REVERSED_ACT_365, 'REVERSED_ACT_365', ugettext_lazy("Reversed ACT/365")),
-        (C_30E_P_360, 'C_30E_P_360', ugettext_lazy('30E+/360'))
+        (C_30E_P_360, 'C_30E_P_360', ugettext_lazy('30E+/360')),
+        (DEFAULT, '-', ugettext_lazy('Default'))
     )
 
     class Meta(AbstractClassModel.Meta):
@@ -138,6 +145,7 @@ class PaymentSizeDetail(AbstractClassModel):
     PER_MONTH = 4
     PER_WEEK = 5
     PER_DAY = 6
+    DEFAULT = 7
     CLASSES = (
         (PERCENT, 'PERCENT', ugettext_lazy("% per annum")),
         (PER_ANNUM, 'PER_ANNUM', ugettext_lazy("per annum")),
@@ -145,6 +153,7 @@ class PaymentSizeDetail(AbstractClassModel):
         (PER_MONTH, 'PER_MONTH', ugettext_lazy("per month")),
         (PER_WEEK, 'PER_WEEK', ugettext_lazy("per week")),
         (PER_DAY, 'PER_DAY', ugettext_lazy("per day")),
+        (DEFAULT, '-', ugettext_lazy("Default")),
     )
 
     class Meta(AbstractClassModel.Meta):
@@ -167,6 +176,8 @@ class Periodicity(AbstractClassModel):
     ANNUALLY = 11
     BIMONTHLY = 12
 
+    DEFAULT = 13
+
     CLASSES = (
         (N_DAY, 'N_DAY', ugettext_lazy("N Days")),
         (N_WEEK_EOBW, 'N_WEEK_EOBW', ugettext_lazy("N Weeks (eobw)")),
@@ -181,6 +192,8 @@ class Periodicity(AbstractClassModel):
         (QUARTERLY, 'QUARTERLY', ugettext_lazy('Quarterly')),
         (SEMI_ANNUALLY, 'SEMI_ANNUALLY', ugettext_lazy('Semi-annually')),
         (ANNUALLY, 'ANNUALLY', ugettext_lazy('Annually')),
+
+        (DEFAULT, '-', ugettext_lazy('Default')),
     )
 
     class Meta(AbstractClassModel.Meta):

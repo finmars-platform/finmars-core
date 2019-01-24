@@ -25,7 +25,7 @@ from poms.integrations.models import InstrumentDownloadScheme, InstrumentDownloa
     ComplexTransactionImportSchemeInput, ComplexTransactionImportSchemeRule, ComplexTransactionImportSchemeField, \
     PricingAutomatedSchedule, PortfolioMapping, CurrencyMapping, InstrumentTypeMapping, AccountMapping, \
     InstrumentMapping, CounterpartyMapping, ResponsibleMapping, Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, \
-    PeriodicityMapping, DailyPricingModelMapping, PaymentSizeDetailMapping, AccrualCalculationModelMapping
+    PeriodicityMapping, DailyPricingModelMapping, PaymentSizeDetailMapping, AccrualCalculationModelMapping, PriceDownloadSchemeMapping
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_attrs.serializers import GenericClassifierViewSerializer, GenericClassifierNodeSerializer, \
     GenericAttributeTypeSerializer
@@ -1135,6 +1135,7 @@ class MappingExportViewSet(AbstractModelViewSet):
         daily_pricing_model_mapping = self.get_daily_pricing_model_mapping()
         payment_size_detail_mapping = self.get_payment_size_detail_mapping()
         accrual_calculation_model_mapping = self.get_accrual_calculation_model_mapping()
+        price_download_scheme_mapping = self.get_price_download_scheme_mapping()
 
         configuration["body"].append(portfolio_mapping)
         configuration["body"].append(currency_mapping)
@@ -1149,6 +1150,7 @@ class MappingExportViewSet(AbstractModelViewSet):
         configuration["body"].append(daily_pricing_model_mapping)
         configuration["body"].append(payment_size_detail_mapping)
         configuration["body"].append(accrual_calculation_model_mapping)
+        configuration["body"].append(price_download_scheme_mapping)
 
         return configuration
 
@@ -1581,6 +1583,38 @@ class MappingExportViewSet(AbstractModelViewSet):
 
         result = {
             "entity": "integrations.accrualcalculationmodelmapping",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_price_download_scheme_mapping(self):
+        items = to_json_objects(
+            PriceDownloadSchemeMapping.objects.filter(master_user=self._master_user))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item["pk"] = item["pk"]
+
+            result_item.pop("master_user", None)
+            # result_item.pop("provider", None)
+
+            result_item["___scheme_name"] = PriceDownloadScheme.objects.get(
+                pk=result_item["content_object"]).scheme_name
+
+            result_item.pop("content_object", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "integrations.pricedownloadschememapping",
             "count": len(results),
             "content": results
         }

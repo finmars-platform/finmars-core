@@ -37,6 +37,8 @@ class TransactionClass(AbstractClassModel):
     CASH_INFLOW = 8
     CASH_OUTFLOW = 9
 
+    DEFAULT = 10
+
     CLASSES = (
         (BUY, 'BUY', ugettext_lazy("Buy")),
         (SELL, 'SELL', ugettext_lazy("Sell")),
@@ -47,6 +49,7 @@ class TransactionClass(AbstractClassModel):
         (FX_TRANSFER, 'FX_TRANSFER', ugettext_lazy("FX Transfer")),
         (CASH_INFLOW, 'CASH_INFLOW', ugettext_lazy("Cash-Inflow")),
         (CASH_OUTFLOW, 'CASH_OUTFLOW', ugettext_lazy("Cash-Outflow")),
+        (DEFAULT, '-', ugettext_lazy("Default")),
     )
 
     class Meta(AbstractClassModel.Meta):
