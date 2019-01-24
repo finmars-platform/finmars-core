@@ -20,4 +20,5 @@ def notification_post_save(sender, instance=None, created=None, **kwargs):
         recipient_list = [
             instance.recipient.email
         ]
-        send_mail(subject, message, None, recipient_list, html_message=html_message)
+        # TODO activate it later
+        # send_mail(subject, message, None, recipient_list, html_message=html_message)
