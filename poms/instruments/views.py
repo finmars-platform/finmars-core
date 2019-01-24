@@ -395,7 +395,7 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
 
         for dte in dates:
             res = only_generate_events_at_date.apply_async(
-                kwargs={'master_user': request.user.master_user.pk, 'date': dte})
+                kwargs={'master_user': request.user.master_user, 'date': dte})
             tasks_ids.append(res.id)
 
         return Response({
