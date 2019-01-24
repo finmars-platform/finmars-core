@@ -384,6 +384,18 @@ class MasterUser(models.Model):
 
 
 class Member(FakeDeletableModel):
+
+    DO_NOT_NOTIFY = 1
+    SHOW_AND_EMAIL = 2
+    EMAIL_ONLY = 3
+    SHOW_ONLY = 4
+    STATUS_CHOICES = (
+        (DO_NOT_NOTIFY, ugettext_lazy('Do not notify')),
+        (SHOW_AND_EMAIL, ugettext_lazy('Show & Email notifications')),
+        (EMAIL_ONLY, ugettext_lazy('Email notifications')),
+        (SHOW_ONLY, ugettext_lazy('Show notifications')),
+    )
+
     master_user = models.ForeignKey(MasterUser, related_name='members', verbose_name=ugettext_lazy('master user'))
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
                              related_name='members', verbose_name=ugettext_lazy('user'))
@@ -395,6 +407,9 @@ class Member(FakeDeletableModel):
     last_name = models.CharField(max_length=30, blank=True, default='', editable=False,
                                  verbose_name=ugettext_lazy('last name'))
     email = models.EmailField(blank=True, default='', editable=False, verbose_name=ugettext_lazy('email'))
+
+    notification_level = models.PositiveSmallIntegerField(default=SHOW_ONLY, choices=STATUS_CHOICES, db_index=True,
+                                                          verbose_name=ugettext_lazy('notification level'))
 
     join_date = models.DateTimeField(auto_now_add=True, verbose_name=ugettext_lazy('join date'))
     is_owner = models.BooleanField(default=False, verbose_name=ugettext_lazy('is owner'))

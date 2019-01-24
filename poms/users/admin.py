@@ -205,6 +205,7 @@ class MemberAdmin(AbstractModelAdmin):
     #         kwargs['queryset'] = qs.select_related('content_type')
     #     return super(MemberAdmin, self).formfield_for_manytomany(db_field, request=request, **kwargs)
 
+admin.site.register(Member, MemberAdmin)
 
 class UserProfileForm(forms.ModelForm):
     language = forms.ChoiceField(choices=settings.LANGUAGES, initial=settings.LANGUAGE_CODE)
