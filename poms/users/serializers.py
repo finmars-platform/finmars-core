@@ -399,7 +399,7 @@ class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
         fields = [
-            'id', 'master_user', 'join_date', 'is_owner', 'is_admin', 'is_superuser', 'is_current', 'notification_level'
+            'id', 'master_user', 'join_date', 'is_owner', 'is_admin', 'is_superuser', 'is_current', 'notification_level',
             'is_deleted', 'username', 'first_name', 'last_name', 'display_name', 'groups', 'groups_object'
         ]
         read_only_fields = [
