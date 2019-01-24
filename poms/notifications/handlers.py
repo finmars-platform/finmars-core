@@ -12,9 +12,9 @@ from poms.users.models import Member
 
 @receiver(post_save, dispatch_uid='notification_post_save', sender=Notification)
 def notification_post_save(sender, instance=None, created=None, **kwargs):
-    if created and instance.recipient.email:
+    if created and instance.recipient.email and instance.recipient.member:
 
-        if instance.recipient.notification_level == Member.EMAIL_ONLY or instance.recipient.notification_level == Member.SHOW_AND_EMAIL:
+        if instance.recipient.member.notification_level == Member.EMAIL_ONLY or instance.recipient.member.notification_level == Member.SHOW_AND_EMAIL:
             context = {
                 'notification': instance,
             }
