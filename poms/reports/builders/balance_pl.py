@@ -395,8 +395,6 @@ class ReportBuilder(BaseReportBuilder):
         # filters = Q(**{'%s__lte' % self.instance.date_field: self.instance.report_date})
         filters = Q(**{'%s__lt' % self.instance.date_field: self.instance.report_date})
 
-        _l.debug('here? %s' % self.instance.date_field)
-
         if self.instance.instruments:
             # kw_filters['instrument__in'] = self.instance.instruments
             filters &= Q(instrument__in=self.instance.instruments)
@@ -659,7 +657,7 @@ class ReportBuilder(BaseReportBuilder):
                 # res.append(trn22)
 
         self._transactions = res
-        _l.debug('transactions - len=%s', len(self._transactions))
+        # _l.debug('transactions - len=%s', len(self._transactions))
 
     def _transaction_multipliers(self):
         # _l.debug('transactions - calculate multipliers')
@@ -1023,7 +1021,7 @@ class ReportBuilder(BaseReportBuilder):
             else:
                 raise RuntimeError('Invalid transaction class: %s' % trn.trn_cls.id)
 
-        _l.debug('items - raw.len=%s', len(self._items))
+        # _l.debug('items - raw.len=%s', len(self._items))
 
     def _aggregate_items(self):
         _l.debug('items - aggregate')
@@ -1052,7 +1050,7 @@ class ReportBuilder(BaseReportBuilder):
 
         self._items = aggr_items
 
-        _l.debug('items - len=%s', len(self._items))
+        # _l.debug('items - len=%s', len(self._items))
 
     def _item_group_key(self, item):
         return (
@@ -1264,7 +1262,7 @@ class ReportBuilder(BaseReportBuilder):
                                            ReportItem.TYPE_MISMATCH, trn)
                 l.append(item)
 
-        _l.debug('mismatches - raw.len=%s', len(l))
+        # _l.debug('mismatches - raw.len=%s', len(l))
 
         if not l:
             return
@@ -1284,7 +1282,7 @@ class ReportBuilder(BaseReportBuilder):
                 mismatch_item.close()
                 self._mismatch_items.append(mismatch_item)
 
-        _l.debug('mismatches - len=%s', len(self._mismatch_items))
+        # _l.debug('mismatches - len=%s', len(self._mismatch_items))
 
     def _add_instr(self, trn, val=None):
         if trn.case == 0:
