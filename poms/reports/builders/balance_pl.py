@@ -1229,7 +1229,7 @@ class ReportBuilder(BaseReportBuilder):
 
     def _aggregate_summary(self):
 
-        print('settings.DEBUG %s' % settings.DEBUG)
+        # print('settings.DEBUG %s' % settings.DEBUG)
 
         return
 

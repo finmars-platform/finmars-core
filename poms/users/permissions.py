@@ -33,7 +33,6 @@ class IsCurrentMasterUser(BasePermission):
     #     return False
 
     def has_object_permission(self, request, view, obj):
-
         if request.method in SAFE_METHODS:
             return True
         return request.user.master_user.id == obj.id
@@ -44,4 +43,5 @@ class IsCurrentUser(BasePermission):
         if request.method.upper() in SAFE_METHODS:
             return True
         user = request.user
+
         return user.id == obj.id
