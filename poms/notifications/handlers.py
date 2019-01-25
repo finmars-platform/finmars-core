@@ -15,9 +15,9 @@ def notification_post_save(sender, instance=None, created=None, **kwargs):
 
     print("Notification recipient %s" % instance.recipient)
 
-    if created and instance.recipient.email and instance.recipient.member:
+    if created and instance.recipient.email and instance.recipient_member:
 
-        if instance.recipient.member.notification_level == Member.EMAIL_ONLY or instance.recipient.member.notification_level == Member.SHOW_AND_EMAIL:
+        if instance.recipient_member.notification_level == Member.EMAIL_ONLY or instance.recipient_member.notification_level == Member.SHOW_AND_EMAIL:
             context = {
                 'notification': instance,
             }
