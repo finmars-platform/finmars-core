@@ -96,6 +96,28 @@ class ListLayout(BaseLayout):
         return self.name
 
 
+class ConfigurationExportLayout(BaseUIModel):
+    member = models.ForeignKey(Member, related_name='configuration_export_layouts', verbose_name=ugettext_lazy('member'))
+    name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
+    is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
+
+    class Meta(BaseUIModel.Meta):
+        unique_together = [
+            ['member', 'name'],
+        ]
+        ordering = ['name']
+
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            qs = ConfigurationExportLayout.objects.filter(member=self.member, is_default=True)
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            qs.update(is_default=False)
+        return super(ConfigurationExportLayout, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
 class EditLayout(BaseLayout):
     member = models.ForeignKey(Member, related_name='edit_layouts', verbose_name=ugettext_lazy('member'))
 
