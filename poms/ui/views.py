@@ -4,9 +4,10 @@ from rest_framework.filters import FilterSet
 
 from poms.common.filters import NoOpFilter, CharFilter
 from poms.common.views import AbstractModelViewSet
-from poms.ui.models import TemplateListLayout, TemplateEditLayout, ListLayout, EditLayout, Bookmark, Configuration
+from poms.ui.models import TemplateListLayout, TemplateEditLayout, ListLayout, EditLayout, Bookmark, Configuration, \
+    ConfigurationExportLayout
 from poms.ui.serializers import TemplateListLayoutSerializer, ListLayoutSerializer, TemplateEditLayoutSerializer, \
-    EditLayoutSerializer, BookmarkSerializer, ConfigurationSerializer
+    EditLayoutSerializer, BookmarkSerializer, ConfigurationSerializer, ConfigurationExportLayoutSerializer
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 from poms.users.permissions import SuperUserOnly
 
@@ -113,6 +114,30 @@ class ListLayoutViewSet(AbstractModelViewSet):
     filter_class = ListLayoutFilterSet
     ordering_fields = [
         'content_type', 'name', 'is_default'
+    ]
+
+
+class ConfigurationExportLayoutFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_default = django_filters.BooleanFilter()
+    name = CharFilter()
+
+    class Meta:
+        model = ConfigurationExportLayout
+        fields = []
+
+
+class ConfigurationExportLayoutViewSet(AbstractModelViewSet):
+    queryset = ConfigurationExportLayout.objects.select_related(
+        'member',
+    )
+    serializer_class = ConfigurationExportLayoutSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMemberFilter,
+    ]
+    filter_class = ConfigurationExportLayoutFilterSet
+    ordering_fields = [
+        'name', 'is_default'
     ]
 
 

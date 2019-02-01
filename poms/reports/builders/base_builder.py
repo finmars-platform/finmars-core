@@ -213,7 +213,7 @@ class BaseReportBuilder:
 
         force_qs_evaluation(qs)
 
-        _l.debug("_get_only_transactions base len %s" % len(qs))
+        # _l.debug("_get_only_transactions base len %s" % len(qs))
 
         _l.debug('_get_only_transactions base_qs_st done: %s', (time.perf_counter() - base_qs_st))
 
@@ -233,7 +233,7 @@ class BaseReportBuilder:
 
         _l.debug('_get_only_transactions production_only_qs_st done: %s', (time.perf_counter() - production_only_qs_st))
 
-        _l.debug("_get_only_transactions after production filter len %s" % len(qs))
+        # _l.debug("_get_only_transactions after production filter len %s" % len(qs))
 
         relation_filter_qs_st = time.perf_counter()
 
@@ -291,7 +291,7 @@ class BaseReportBuilder:
 
         _l.debug('_get_only_transactions _trn_qs_st done: %s', (time.perf_counter() - _trn_qs_st))
 
-        _l.debug("_get_only_transactions end len %s" % len(qs))
+        # _l.debug("_get_only_transactions end len %s" % len(qs))
 
         return result
 

@@ -14,18 +14,19 @@ from poms.users.models import Member
 def notification_post_save(sender, instance=None, created=None, **kwargs):
 
     print("Notification recipient %s" % instance.recipient)
-    #
-    # if created and instance.recipient.email and instance.recipient.member:
-    #
-    #     if instance.recipient.member.notification_level == Member.EMAIL_ONLY or instance.recipient.member.notification_level == Member.SHOW_AND_EMAIL:
-    #         context = {
-    #             'notification': instance,
-    #         }
-    #         subject = get_template('poms/notifications/mail/subject.txt').render(context)
-    #         message = get_template('poms/notifications/mail/message.txt').render(context)
-    #         html_message = get_template('poms/notifications/mail/message.html').render(context)
-    #         recipient_list = [
-    #             instance.recipient.email
-    #         ]
-    #
-    #         send_mail(subject, message, None, recipient_list, html_message=html_message)
+
+    if created and instance.recipient.email and instance.recipient_member:
+
+        if instance.recipient_member.notification_level == Member.EMAIL_ONLY or instance.recipient_member.notification_level == Member.SHOW_AND_EMAIL:
+            context = {
+                'notification': instance,
+            }
+            subject = get_template('poms/notifications/mail/subject.txt').render(context)
+            message = get_template('poms/notifications/mail/message.txt').render(context)
+            html_message = get_template('poms/notifications/mail/message.html').render(context)
+            recipient_list = [
+                instance.recipient.email
+            ]
+
+            send_mail(subject, message, None, recipient_list, html_message=html_message)
+

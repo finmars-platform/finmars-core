@@ -284,9 +284,9 @@ class PriceDownloadScheme(models.Model):
     class Meta:
         verbose_name = ugettext_lazy('price download scheme')
         verbose_name_plural = ugettext_lazy('price download schemes')
-        # unique_together = [
-        #     ['master_user', 'scheme_name']
-        # ]
+        unique_together = [
+            ['master_user', 'scheme_name']
+        ]
         ordering = ['scheme_name', ]
 
     def __str__(self):

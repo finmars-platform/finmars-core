@@ -624,6 +624,12 @@ CELERY_TIMEZONE = 'UTC'
 CELERY_ACCEPT_CONTENT = ['json', 'pickle-signed']
 CELERY_TASK_SERIALIZER = 'pickle-signed'
 CELERY_RESULT_SERIALIZER = 'pickle-signed'
+
+CELERYD_CONCURRENCY = 8 # Defaults to the number of available CPUs, but I prefer doubling it.
+CELERYD_TASK_SOFT_TIME_LIMIT = 60 * 20
+CELERYD_TASK_TIME_LIMIT = 60 * 30  # The worker processing the task will be killed and replaced with a new one when this is exceeded.
+CELERY_SEND_TASK_SENT_EVENT = True
+
 if CELERY_RESULT_BACKEND in ['django-db', ]:
     CELERY_RESULT_EXPIRES = 2 * 24 * 60 * 60
     CELERY_TASK_STORE_ERRORS_EVEN_IF_IGNORED = CELERY_RESULT_BACKEND in ['django-db', ]

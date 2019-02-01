@@ -25,7 +25,8 @@ from poms.integrations.models import InstrumentDownloadScheme, InstrumentDownloa
     ComplexTransactionImportSchemeInput, ComplexTransactionImportSchemeRule, ComplexTransactionImportSchemeField, \
     PricingAutomatedSchedule, PortfolioMapping, CurrencyMapping, InstrumentTypeMapping, AccountMapping, \
     InstrumentMapping, CounterpartyMapping, ResponsibleMapping, Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, \
-    PeriodicityMapping, DailyPricingModelMapping, PaymentSizeDetailMapping, AccrualCalculationModelMapping, PriceDownloadSchemeMapping
+    PeriodicityMapping, DailyPricingModelMapping, PaymentSizeDetailMapping, AccrualCalculationModelMapping, \
+    PriceDownloadSchemeMapping
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_attrs.serializers import GenericClassifierViewSerializer, GenericClassifierNodeSerializer, \
     GenericAttributeTypeSerializer
@@ -103,6 +104,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         edit_layouts = self.get_edit_layouts()
         list_layouts = self.get_list_layouts()
         report_layouts = self.get_report_layouts()
+        bookmarks = self.get_bookmarks()
         csv_import_schemes = self.get_csv_import_schemes()
         instrument_download_schemes = self.get_instrument_download_schemes()
         price_download_schemes = self.get_price_download_schemes()
@@ -127,6 +129,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration["body"].append(edit_layouts)
         configuration["body"].append(list_layouts)
         configuration["body"].append(report_layouts)
+        configuration["body"].append(bookmarks)
         configuration["body"].append(csv_import_schemes)
         configuration["body"].append(price_download_schemes)
         configuration["body"].append(instrument_download_schemes)
@@ -836,6 +839,35 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         result = {
             "entity": "ui.reportlayout",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_bookmarks(self):
+
+        results = to_json_objects(Bookmark.objects.filter(member=self._member))
+
+        for bookmark_model in Bookmark.objects.filter(member=self._member):
+
+            for bookmark_json in results:
+
+                if bookmark_model.pk == bookmark_json['pk']:
+                    bookmark_json["fields"]["data"] = bookmark_model.data
+                    bookmark_json["fields"]["___layout_name"] = bookmark_model.list_layout.name
+                    bookmark_json["fields"]["___content_type"] = '%s.%s' % (
+                        bookmark_model.list_layout.content_type.app_label,
+                        bookmark_model.list_layout.content_type.model)
+
+        results = unwrap_items(results)
+
+        delete_prop(results, 'json_data')
+        delete_prop(results, 'member')
+        delete_prop(results, 'list_layout')
+
+        result = {
+            "entity": "ui.bookmark",
             "count": len(results),
             "content": results
         }
