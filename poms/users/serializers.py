@@ -543,7 +543,7 @@ class InviteCreateSerializer(serializers.Serializer):
         if not user_to:
             raise serializers.ValidationError({'user_to': "User with this username does not exist"})
 
-        if InviteToMasterUser.objects.filter(user=user_to, from_member=member).exists():
+        if InviteToMasterUser.objects.filter(user=user_to, from_member=member, status=InviteStatusChoice.SENT).exists():
             raise serializers.ValidationError({'user_to': "User with this username already received invitation"})
 
         invite = InviteToMasterUser.objects.create(user=user_to, from_member=member, )
