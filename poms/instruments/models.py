@@ -1044,16 +1044,19 @@ class EventScheduleAction(models.Model):
 
 class GeneratedEvent(models.Model):
     NEW = 1
-    IGNORED = 2
-    BOOK_PENDING = 3
-    BOOKED = 4
-    BOOK_DEFAULT = 5
+    INFORMED = 2
+    BOOKED_SYSTEM = 3
+    BOOKED_USER = 4
+    BOOKED_PENDING_SYSTEM = 5
+    BOOKED_PENDING_USER = 6
+
     STATUS_CHOICES = (
         (NEW, ugettext_lazy('New')),
-        (IGNORED, ugettext_lazy('Ignored')),
-        (BOOK_PENDING, ugettext_lazy('Book pending')),
-        (BOOKED, ugettext_lazy('Booked')),
-        (BOOK_DEFAULT, ugettext_lazy('Book (default)')),
+        (INFORMED, ugettext_lazy('Informed')),
+        (BOOKED_SYSTEM, ugettext_lazy('Booked (system)')),
+        (BOOKED_USER, ugettext_lazy('Booked (user)')),
+        (BOOKED_PENDING_SYSTEM, ugettext_lazy('Booked, pending (system)')),
+        (BOOKED_PENDING_USER, ugettext_lazy('Booked, pending (user)')),
     )
 
     master_user = models.ForeignKey(MasterUser, related_name='generated_events',
@@ -1110,12 +1113,12 @@ class GeneratedEvent(models.Model):
     def processed(self, member, action, complex_transaction):
         self.member = member
         self.action = action
-        self.status = GeneratedEvent.BOOK_PENDING if action.is_sent_to_pending else GeneratedEvent.BOOKED
+        self.status = GeneratedEvent.BOOKED_PENDING_SYSTEM if action.is_sent_to_pending else GeneratedEvent.BOOKED_USER
 
         print('action.event_schedule.notification_class %s' % action.event_schedule.notification_class)
 
         if action.event_schedule.notification_class in [5, 8, 12, 13]:
-            self.status = GeneratedEvent.BOOK_DEFAULT
+            self.status = GeneratedEvent.BOOKED_SYSTEM
 
         self.status_date = timezone.now()
         self.transaction_type = action.transaction_type

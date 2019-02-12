@@ -496,7 +496,7 @@ def process_events0(master_user):
                 ttp.process()
                 gevent.processed(None, action, ttp.complex_transaction)
             else:
-                gevent.status = GeneratedEvent.BOOKED
+                gevent.status = GeneratedEvent.BOOKED_USER
                 gevent.status_date = timezone.now()
 
         if is_notify_on_notification_date or is_notify_on_effective_date or \

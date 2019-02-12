@@ -732,14 +732,14 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
                 if instance.has_errors:
                     transaction.set_rollback(True)
 
-    @detail_route(methods=['put'], url_path='ignore')
+    @detail_route(methods=['put'], url_path='informed')
     def ignore(self, request, pk=None):
         generated_event = self.get_object()
 
         if generated_event.status != GeneratedEvent.NEW:
             raise PermissionDenied()
 
-        generated_event.status = GeneratedEvent.IGNORED
+        generated_event.status = GeneratedEvent.INFORMED
         generated_event.status_date = timezone.now()
         generated_event.member = self.request.user.member
         generated_event.save()
