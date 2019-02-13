@@ -649,18 +649,18 @@ except (ValueError, TypeError):
 # CELERY_TASK_SEND_SENT_EVENT = True
 
 CELERY_BEAT_SCHEDULE = {
-    'integrations.download_pricing_auto_scheduler': {
-        'task': 'integrations.download_pricing_auto_scheduler',
-        'schedule': crontab(minute='0,10,20,30,40,50'),
-    },
+    # 'integrations.download_pricing_auto_scheduler': {
+    #     'task': 'integrations.download_pricing_auto_scheduler',
+    #     'schedule': crontab(minute='0,10,20,30,40,50'),
+    # },
     'instruments.generate_events': {
-        'task': 'instruments.generate_events',
-        'schedule': crontab(minute='1,16,31,46'),
+        'task': 'instruments.generate_events_do_not_inform_apply_default',
+        'schedule': crontab(minute=0, hour=0),
     },
-    'instruments.process_events': {
-        'task': 'instruments.process_events',
-        'schedule': crontab(minute='2,32'),
-    },
+    # 'instruments.process_events': {
+    #     'task': 'instruments.process_events',
+    #     'schedule': crontab(minute='2,32'),
+    # },
 }
 
 # INTEGRATIONS ------------------------------------------------

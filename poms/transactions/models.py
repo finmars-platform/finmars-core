@@ -187,6 +187,8 @@ class NotificationClass(AbstractClassModel):
             NotificationClass.INFORM_ON_NDATE_AND_EDATE_APPLY_DEF_ON_EDATE,
         ]
 
+
+
     @property
     def is_apply_default_on_effective_date(self):
         return self.id in NotificationClass.get_apply_default_on_effective_date_classes()
