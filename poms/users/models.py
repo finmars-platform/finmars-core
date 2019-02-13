@@ -196,7 +196,7 @@ class MasterUser(models.Model):
         from poms.accounts.models import AccountType, Account
         from poms.counterparties.models import Counterparty, CounterpartyGroup, Responsible, ResponsibleGroup
         from poms.portfolios.models import Portfolio
-        from poms.instruments.models import InstrumentClass, InstrumentType, EventScheduleConfig, Instrument
+        from poms.instruments.models import InstrumentClass, InstrumentType, EventScheduleConfig, Instrument, DailyPricingModel
         from poms.integrations.models import PricingAutomatedSchedule, CurrencyMapping, ProviderClass
         from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, \
             Strategy2Subgroup, Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
@@ -223,10 +223,16 @@ class MasterUser(models.Model):
             if dc_user_code == '-':
                 pass
             else:
-                c = Currency.objects.create(master_user=self, user_code=dc_user_code, short_name=dc_name, name=dc_name,
-                                            reference_for_pricing=dc_reference_for_pricing)
+
                 if dc_user_code == 'USD':
+                    c = Currency.objects.create(master_user=self, user_code=dc_user_code, short_name=dc_name,
+                                                name=dc_name, daily_pricing_model=DailyPricingModel.objects.get(pk=DailyPricingModel.SKIP),
+                                                reference_for_pricing=dc_reference_for_pricing)
                     ccy_usd = c
+                else:
+                    c = Currency.objects.create(master_user=self, user_code=dc_user_code, short_name=dc_name,
+                                                name=dc_name, daily_pricing_model=DailyPricingModel.objects.get(pk=DailyPricingModel.PROVIDER_IF_OPEN),
+                                                reference_for_pricing=dc_reference_for_pricing)
                 ccys[c.user_code] = c
 
         account_type = AccountType.objects.create(master_user=self, name='-')
@@ -263,6 +269,7 @@ class MasterUser(models.Model):
         transaction_type_group = TransactionTypeGroup.objects.create(master_user=self, name='-')
 
         pricing_policy = PricingPolicy.objects.create(master_user=self, name='-', expr='(ask+bid)/2')
+        pricing_policy_dft = PricingPolicy.objects.create(master_user=self, name='DFT', expr='(ask+bid)/2')
         price_download_scheme = PriceDownloadScheme.objects.create(master_user=self, scheme_name='-',
                                                                    provider=ProviderClass.objects.get(
                                                                        pk=ProviderClass.BLOOMBERG))

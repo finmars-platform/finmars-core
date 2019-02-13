@@ -29,7 +29,7 @@ class CurrencySerializer(ModelWithUserCodeSerializer, ModelWithAttributesSeriali
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'notes',
             'reference_for_pricing', 'daily_pricing_model',
-            'price_download_scheme',
+            'price_download_scheme', 'default_fx_rate',
             'is_default', 'is_deleted',
             # 'tags', 'tags_object',
             # 'daily_pricing_model_object', 'price_download_scheme_object',

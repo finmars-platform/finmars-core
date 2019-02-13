@@ -41,6 +41,8 @@ class Currency(NamedModel, FakeDeletableModel):
     attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
 
+    default_fx_rate = models.FloatField(default=1, verbose_name=ugettext_lazy('default fx rate'))
+
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = ugettext_lazy('currency')
         verbose_name_plural = ugettext_lazy('currencies')
