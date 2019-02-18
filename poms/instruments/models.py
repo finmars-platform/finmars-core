@@ -193,7 +193,7 @@ class Periodicity(AbstractClassModel):
         (SEMI_ANNUALLY, 'SEMI_ANNUALLY', ugettext_lazy('Semi-annually')),
         (ANNUALLY, 'ANNUALLY', ugettext_lazy('Annually')),
 
-        (DEFAULT, '-', ugettext_lazy('Default')),
+        (DEFAULT, '-', ugettext_lazy('-')),
     )
 
     class Meta(AbstractClassModel.Meta):

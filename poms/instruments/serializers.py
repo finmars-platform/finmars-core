@@ -245,7 +245,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
         self.save_factor_schedules(instance, True, factor_schedules)
         self.save_event_schedules(instance, True, event_schedules)
 
-        self.rebuild_event_schedules(instance, True)
+        # self.rebuild_event_schedules(instance, True)
 
         return instance
 
@@ -267,7 +267,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
             self.save_event_schedules(instance, False, event_schedules)
 
         self.calculate_prices_accrued_price(instance, False)
-        self.rebuild_event_schedules(instance, False)
+        # self.rebuild_event_schedules(instance, False)
 
         return instance
 

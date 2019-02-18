@@ -682,8 +682,8 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
     def process(self, request, pk=None):
         generated_event = self.get_object()
 
-        if not generated_event.is_need_reaction:
-            raise ValidationError('event already processed or future event')
+        # if not generated_event.is_need_reaction:
+        #     raise ValidationError('event already processed or future event')
 
 
         # if generated_event.status != GeneratedEvent.NEW:

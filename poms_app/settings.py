@@ -653,7 +653,7 @@ CELERY_BEAT_SCHEDULE = {
     #     'task': 'integrations.download_pricing_auto_scheduler',
     #     'schedule': crontab(minute='0,10,20,30,40,50'),
     # },
-    'instruments.generate_events': {
+    'instruments.generate_events_do_not_inform_apply_default': {
         'task': 'instruments.generate_events_do_not_inform_apply_default',
         'schedule': crontab(minute=0, hour=0),
     },
