@@ -282,3 +282,31 @@ class AbstractAsyncViewSet(AbstractViewSet):
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class AbstractSyncViewSet(AbstractViewSet):
+    serializer_class = None
+    task = None
+
+    def get_serializer_context(self):
+        context = super(AbstractSyncViewSet, self).get_serializer_context()
+        context['show_object_permissions'] = False
+        return context
+
+    def create(self, request, *args, **kwargs):
+        print('AbstractSyncViewSet create')
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        res = self.task(instance)
+
+        res.task_id = 1
+        res.task_status = "SUCCESS"
+
+        print('res.task_id %s' % res.task_id)
+        print('res.task_status %s' % res.task_status)
+
+        serializer = self.get_serializer(instance=res, many=False)
+        return Response(serializer.data, status=status.HTTP_200_OK)
