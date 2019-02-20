@@ -577,12 +577,7 @@ class GeneratedEventSerializer(serializers.ModelSerializer):
             'is_need_reaction',
             'action', 'transaction_type', 'member',
         ]
-        read_only_fields = [
-            'id', 'effective_date', 'notification_date', 'status_date', 'event_schedule',
-            'instrument', 'portfolio', 'account', 'strategy1', 'strategy2', 'strategy3', 'position',
-            'is_need_reaction',
-            'action', 'transaction_type', 'member',
-        ]
+        read_only_fields = fields
 
     def __init__(self, *args, **kwargs):
         super(GeneratedEventSerializer, self).__init__(*args, **kwargs)

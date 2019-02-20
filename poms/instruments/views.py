@@ -689,6 +689,7 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
         #     raise PermissionDenied()
 
         action_pk = request.query_params.get('action', None)
+        status = request.query_params.get('status', None)
 
         action = None
         if action_pk:
@@ -718,12 +719,12 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
                 serializer.save()
 
                 print('generated_event.id %s ' % generated_event.id)
-                print('generated_event.status %s ' % generated_event.status)
+                print('status %s ' % status)
                 print('instance.has_errors %s ' % instance.has_errors)
 
                 if not instance.has_errors:
                     generated_event.processed(self.request.user.member, action, instance.complex_transaction,
-                                              generated_event.status)
+                                              status)
                     generated_event.save()
 
                 history.set_actor_content_object(instance.complex_transaction)
