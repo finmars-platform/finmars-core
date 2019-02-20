@@ -689,7 +689,7 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
         #     raise PermissionDenied()
 
         action_pk = request.query_params.get('action', None)
-        status = request.query_params.get('status', None)
+        status = request.data['status']
 
         action = None
         if action_pk:
