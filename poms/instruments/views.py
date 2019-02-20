@@ -685,12 +685,10 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
         # if not generated_event.is_need_reaction:
         #     raise ValidationError('event already processed or future event')
 
-
         # if generated_event.status != GeneratedEvent.NEW:
         #     raise PermissionDenied()
 
         action_pk = request.query_params.get('action', None)
-
 
         action = None
         if action_pk:
@@ -701,13 +699,11 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
         if action is None:
             raise ValidationError('Require "action" query parameter')
 
-
         instance = GeneratedEventProcess(
             generated_event=generated_event,
             action=action,
             context=self.get_serializer_context()
         )
-
 
         if request.method == 'GET':
             serializer = self.get_serializer(instance=instance)
@@ -722,7 +718,8 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
                 serializer.save()
 
                 if not instance.has_errors:
-                    generated_event.processed(self.request.user.member, action, instance.complex_transaction)
+                    generated_event.processed(self.request.user.member, action, instance.complex_transaction,
+                                              generated_event.status)
                     generated_event.save()
 
                 history.set_actor_content_object(instance.complex_transaction)

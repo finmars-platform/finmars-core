@@ -586,7 +586,7 @@ def process_events_do_not_inform_apply_default0(master_user):
                 ttp.process()
                 gevent.processed(None, action, ttp.complex_transaction)
             else:
-                gevent.status = GeneratedEvent.BOOKED_USER
+                gevent.status = GeneratedEvent.BOOKED_SYSTEM_DEFAULT
                 gevent.status_date = timezone.now()
 
         if is_apply_default_on_notification_date or is_apply_default_on_effective_date:
@@ -696,7 +696,7 @@ def process_events0(master_user):
                 ttp.process()
                 gevent.processed(None, action, ttp.complex_transaction)
             else:
-                gevent.status = GeneratedEvent.BOOKED_USER
+                gevent.status = GeneratedEvent.BOOKED_SYSTEM_DEFAULT
                 gevent.status_date = timezone.now()
 
         if is_notify_on_notification_date or is_notify_on_effective_date or \
@@ -706,11 +706,8 @@ def process_events0(master_user):
 
 @shared_task(name='instruments.process_events', ignore_result=True)
 def process_events(master_users=None):
-    # from poms.instruments.handlers import GeneratedEventProcess
 
     _l.debug('process_events: master_users=%s', master_users)
-
-    # now = date_now()
 
     master_user_qs = MasterUser.objects.prefetch_related(
         'members'
@@ -719,108 +716,7 @@ def process_events(master_users=None):
         master_user_qs = master_user_qs.filter(pk__in=master_users)
 
     for master_user in master_user_qs:
+
         _l.debug('process_events: master_user=%s', master_user.id)
-        # with transaction.atomic():
-        #     generated_event_qs = GeneratedEvent.objects.prefetch_related(
-        #         'event_schedule',
-        #         'event_schedule__notification_class',
-        #         'instrument',
-        #         'instrument__pricing_currency',
-        #         'instrument__accrued_currency',
-        #         'portfolio',
-        #         'account',
-        #         'strategy1',
-        #         'strategy2',
-        #         'strategy3',
-        #     ).filter(
-        #         master_user=master_user,
-        #         status=GeneratedEvent.NEW,
-        #     ).filter(
-        #         Q(effective_date=now) | Q(notification_date=now),
-        #     )
-        #
-        #     for gevent in generated_event_qs:
-        #         is_notify_on_notification_date = gevent.is_notify_on_notification_date(now)
-        #         is_notify_on_effective_date = gevent.is_notify_on_effective_date(now)
-        #         is_apply_default_on_notification_date = gevent.is_apply_default_on_notification_date(now)
-        #         is_apply_default_on_effective_date = gevent.is_apply_default_on_effective_date(now)
-        #         is_need_reaction_on_notification_date = gevent.is_need_reaction_on_notification_date(now)
-        #         is_need_reaction_on_effective_date = gevent.is_need_reaction_on_effective_date(now)
-        #
-        #         _l.debug(
-        #             'process:'
-        #             ' notification_class=%s,'
-        #             ' notification_date=%s,'
-        #             ' notification_date_notified=%s'
-        #             ' effective_date=%s,'
-        #             ' effective_date_notified=%s,'
-        #             ' is_notify_on_notification_date=%s,'
-        #             ' is_notify_on_effective_date=%s,'
-        #             ' is_apply_default_on_notification_date=%s,'
-        #             ' is_apply_default_on_effective_date=%s,'
-        #             ' is_need_reaction_on_notification_date=%s,'
-        #             ' is_need_reaction_on_effective_date=%s',
-        #             gevent.event_schedule.notification_class.system_code,
-        #             gevent.notification_date,
-        #             gevent.notification_date_notified,
-        #             gevent.effective_date,
-        #             gevent.effective_date_notified,
-        #             is_notify_on_notification_date,
-        #             is_notify_on_effective_date,
-        #             is_apply_default_on_notification_date,
-        #             is_apply_default_on_effective_date,
-        #             is_need_reaction_on_notification_date,
-        #             is_need_reaction_on_effective_date)
-        #
-        #         owner = next(iter([m for m in gevent.master_user.members.all() if m.is_owner]))
-        #
-        #         if is_notify_on_notification_date or is_notify_on_effective_date:
-        #             if is_notify_on_notification_date:
-        #                 gevent.notification_date_notified = True
-        #             if is_notify_on_effective_date:
-        #                 gevent.effective_date_notified = True
-        #
-        #             recipients = [m for m in gevent.master_user.members.all() if not m.is_deleted]
-        #
-        #             expr = gevent.event_schedule.description or gevent.event_schedule.name
-        #             if expr:
-        #                 for member in recipients:
-        #                     message = gevent.generate_text(
-        #                         exr=expr,
-        #                         context={
-        #                             'master_user': master_user,
-        #                             'member': member
-        #                         })
-        #                     notifications.send(recipients=[member],
-        #                                        message=message,
-        #                                        actor=gevent.event_schedule,
-        #                                        verb='event occurred',
-        #                                        action_object=gevent.instrument)
-        #             else:
-        #                 notifications.send(recipients=recipients,
-        #                                    actor=gevent.event_schedule,
-        #                                    verb='event occurred',
-        #                                    action_object=gevent.instrument)
-        #
-        #         if is_apply_default_on_notification_date or is_apply_default_on_effective_date:
-        #             action = next((a for a in gevent.event_schedule.actions.all() if a.is_book_automatic),
-        #                           None)
-        #             if action:
-        #                 ttp = GeneratedEventProcess(
-        #                     generated_event=gevent,
-        #                     action=action,
-        #                     context={
-        #                         'master_user': master_user,
-        #                         'member': owner,
-        #                     }
-        #                 )
-        #                 ttp.process()
-        #                 gevent.processed(None, action, ttp.complex_transaction)
-        #             else:
-        #                 gevent.status = GeneratedEvent.BOOKED
-        #                 gevent.status_date = timezone.now()
-        #
-        #         if is_notify_on_notification_date or is_notify_on_effective_date or \
-        #                 is_apply_default_on_notification_date or is_apply_default_on_effective_date:
-        #             gevent.save()
+
         process_events0.apply_async(kwargs={'master_user': master_user})

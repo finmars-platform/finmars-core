@@ -330,7 +330,8 @@ STATIC_URL = '/api/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 # REDIS_HOST = os.environ.get('REDIS_HOST', '127.0.0.1:6379')
-REDIS_HOST = os.environ.get('REDIS_HOST', '0.0.0.0:6379')
+# REDIS_HOST = os.environ.get('REDIS_HOST', '0.0.0.0:6379')
+REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost:6379')
 # if DEBUG and REDIS_HOST == '127.0.0.1:6379':
 #     REDIS_HOST = '192.168.57.2:6379'
 
@@ -612,6 +613,7 @@ AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', None)
 
 # CELERY ------------------------------------------------
 
+print(REDIS_HOST)
 
 CELERY_BROKER_URL = 'redis://%s/1' % REDIS_HOST
 # CELERY_RESULT_BACKEND = 'redis://%s/1' % REDIS_HOST
@@ -684,22 +686,23 @@ IMPORT_CONFIG_STORAGE = {
 # }
 
 
-IMPORT_FILE_STORAGE = {
-    'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
-    'KWARGS': {
-        'acl': 'private',
-        'bucket': os.environ.get('AWS_STORAGE_IMPORT_FILE_BUCKET_NAME', None),
-        'querystring_expire': 10,
-        'custom_domain': None
-    }
-}
 # IMPORT_FILE_STORAGE = {
-#     'BACKEND': 'django.core.files.storage.FileSystemStorage',
+#     'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
 #     'KWARGS': {
-#         'location': '/opt/finmars-import/files',
-#         'base_url': '/api/import/'
+#         'acl': 'private',
+#         'bucket': os.environ.get('AWS_STORAGE_IMPORT_FILE_BUCKET_NAME', None),
+#         'querystring_expire': 10,
+#         'custom_domain': None
 #     }
 # }
+
+IMPORT_FILE_STORAGE = {
+    'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    'KWARGS': {
+        'location': '/home/szhitenev/projects/finmars/files',
+        'base_url': '/api/import/'
+    }
+}
 PRICING_AUTO_DOWNLOAD_DISABLED = True
 if os.environ.get('POMS_PRICING_AUTO_DOWNLOAD_DISABLED') == 'False':
     PRICING_AUTO_DOWNLOAD_DISABLED = False
