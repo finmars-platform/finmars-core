@@ -689,10 +689,7 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
         #     raise PermissionDenied()
 
         action_pk = request.query_params.get('action', None)
-        status = request.query_params.get('status', None)
 
-        if status is None:
-            raise ValidationError('Require "status" query parameter')
 
         action = None
         if action_pk:
@@ -715,6 +712,11 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
         else:
             try:
                 history.set_flag_addition()
+
+                status = request.query_params.get('status', None)
+
+                if status is None:
+                    raise ValidationError('Require "status" query parameter')
 
                 serializer = self.get_serializer(instance=instance, data=request.data)
 
