@@ -713,10 +713,10 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
             try:
                 history.set_flag_addition()
 
-                status = request.query_params.get('status', None)
+                status = request.query_params.get('event_status', None)
 
                 if status is None:
-                    raise ValidationError('Require "status" query parameter')
+                    raise ValidationError('Require "event_status" query parameter')
 
                 serializer = self.get_serializer(instance=instance, data=request.data)
 
