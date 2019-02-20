@@ -717,6 +717,10 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
 
+                print('generated_event.id %s ' % generated_event.id)
+                print('generated_event.status %s ' % generated_event.status)
+                print('instance.has_errors %s ' % instance.has_errors)
+
                 if not instance.has_errors:
                     generated_event.processed(self.request.user.member, action, instance.complex_transaction,
                                               generated_event.status)
