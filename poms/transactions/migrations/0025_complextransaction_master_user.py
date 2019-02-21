@@ -5,37 +5,21 @@ from __future__ import unicode_literals
 from django.db import migrations, models
 import django.db.models.deletion
 
-
-def fix_transactions(apps, schema_editor):
-
-    ComplexTransaction = apps.get_model("transactions", "ComplexTransaction")
-
-    print('work?')
-
-    for complexTransaction in ComplexTransaction.objects.filter(master_user=None):
-        complexTransaction.master_user = complexTransaction.transaction_type.master_user
-        print('complexTransaction.transaction_type.master_user %s ' % complexTransaction.transaction_type.master_user )
-        complexTransaction.save()
-
-
-def rev(apps, schema_editor):
-    # the reverse goes here if you want to copy company names into customer again if you migrate backwards.
-    pass
-
 class Migration(migrations.Migration):
-
     dependencies = [
         ('users', '0013_member_notification_level'),
         ('transactions', '0024_auto_20181107_1607'),
     ]
 
     operations = [
+
         migrations.AddField(
             model_name='complextransaction',
             name='master_user',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, related_name='complex_transactions', to='users.MasterUser', verbose_name='master user'),
+            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE,
+                                    related_name='complex_transactions', to='users.MasterUser',
+                                    verbose_name='master user'),
             preserve_default=False,
-        ),
+        )
 
-        migrations.RunPython(fix_transactions, rev),
     ]
