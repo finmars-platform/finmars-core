@@ -809,7 +809,8 @@ class TransactionTypeActionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TransactionTypeAction
-        fields = ['id', 'order', 'rebook_reaction', 'action_notes', 'transaction', 'instrument', 'instrument_factor_schedule',
+        fields = ['id', 'order', 'rebook_reaction', 'action_notes', 'transaction', 'instrument',
+                  'instrument_factor_schedule',
                   'instrument_manual_pricing_formula', 'instrument_accrual_calculation_schedules',
                   'instrument_event_schedule', 'instrument_event_schedule_action']
 
@@ -932,7 +933,8 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                     action_instrument = TransactionTypeActionInstrument(transaction_type=instance)
 
                 action_instrument.order = order
-                action_instrument.rebook_reaction = action_data.get('rebook_reaction', action_instrument.rebook_reaction)
+                action_instrument.rebook_reaction = action_data.get('rebook_reaction',
+                                                                    action_instrument.rebook_reaction)
                 action_instrument.action_notes = action_data.get('action_notes', action_instrument.action_notes)
                 for attr, value in action_instrument_data.items():
                     setattr(action_instrument, attr, value)
@@ -989,7 +991,8 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                     action_transaction = TransactionTypeActionTransaction(transaction_type=instance)
 
                 action_transaction.order = order
-                action_transaction.rebook_reaction = action_data.get('rebook_reaction', action_transaction.rebook_reaction)
+                action_transaction.rebook_reaction = action_data.get('rebook_reaction',
+                                                                     action_transaction.rebook_reaction)
                 action_transaction.action_notes = action_data.get('action_notes', action_transaction.action_notes)
                 for attr, value in action_transaction_data.items():
                     setattr(action_transaction, attr, value)
@@ -1526,6 +1529,7 @@ class ComplexTransactionMixin:
 
 class ComplexTransactionSerializer(ComplexTransactionMixin, ModelWithAttributesSerializer):
     text = serializers.SerializerMethodField()
+    master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
     transactions = serializers.PrimaryKeyRelatedField(read_only=True, many=True)
 
@@ -1541,7 +1545,7 @@ class ComplexTransactionSerializer(ComplexTransactionMixin, ModelWithAttributesS
     class Meta:
         model = ComplexTransaction
         fields = [
-            'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'transactions',
+            'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'transactions', 'master_user'
         ]
 
 
@@ -1720,7 +1724,7 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
 
                 elif issubclass(model_class, EventSchedule):
                     field = EventScheduleField(required=False, allow_null=True,
-                                            label=i.name, help_text=i.verbose_name)
+                                               label=i.name, help_text=i.verbose_name)
                     field_object = EventScheduleSerializer(source=name, read_only=True)
 
             if field:

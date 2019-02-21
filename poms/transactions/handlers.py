@@ -51,6 +51,8 @@ class TransactionTypeProcess(object):
 
         self.transaction_type = transaction_type
 
+        master_user = self.transaction_type.master_user
+
         self.process_mode = process_mode or TransactionTypeProcess.MODE_BOOK
 
         self.default_values = default_values or {}
@@ -65,7 +67,8 @@ class TransactionTypeProcess(object):
 
         self.complex_transaction = complex_transaction
         if self.complex_transaction is None:
-            self.complex_transaction = ComplexTransaction(transaction_type=self.transaction_type, date=None)
+            self.complex_transaction = ComplexTransaction(transaction_type=self.transaction_type, date=None,
+                                                          master_user=master_user)
         if complex_transaction_status is not None:
             self.complex_transaction.status = complex_transaction_status
         # if complex_transaction_date is not None:
