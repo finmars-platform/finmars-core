@@ -1049,12 +1049,20 @@ class GeneratedEvent(models.Model):
     BOOKED_USER_ACTIONS = 4
     BOOKED_USER_DEFAULT = 5
 
+    BOOKED_PENDING_SYSTEM_DEFAULT = 6
+    BOOKED_PENDING_USER_ACTIONS = 7
+    BOOKED_PENDING_USER_DEFAULT = 8
+
     STATUS_CHOICES = (
         (NEW, ugettext_lazy('New')),
         (INFORMED, ugettext_lazy('Informed')),
         (BOOKED_SYSTEM_DEFAULT, ugettext_lazy('Booked (system, default)')),
         (BOOKED_USER_ACTIONS, ugettext_lazy('Booked (user, actions)')),
         (BOOKED_USER_DEFAULT, ugettext_lazy('Booked (user, default)')),
+
+        (BOOKED_PENDING_SYSTEM_DEFAULT, ugettext_lazy('Booked, pending (system, default)')),
+        (BOOKED_PENDING_USER_ACTIONS, ugettext_lazy('Booked, pending (user, actions)')),
+        (BOOKED_PENDING_USER_DEFAULT, ugettext_lazy('Booked, pending (user, default)')),
     )
 
     master_user = models.ForeignKey(MasterUser, related_name='generated_events',

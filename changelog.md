@@ -1,5 +1,9 @@
 # Changelog
 
+## 21.02.2019
+- Update Complex Transaction Model
+- Update Generated Event Model
+
 ## 25.12.2018
 - New API Limits
 - Update models
