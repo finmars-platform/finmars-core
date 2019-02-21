@@ -199,8 +199,8 @@ router.register(r'ui/configuration-export-layout', ui.ConfigurationExportLayoutV
 
 router.register(r'reports/custom-field', reports.CustomFieldViewSet)
 router.register(r'reports/report', reports.BalanceReportViewSet, "report")
-# router.register(r'reports/balance-report', reports.BalanceReportViewSet, "balance-report")
-router.register(r'reports/balance-report', reports.BalanceReportSyncViewSet, "balance-report-sync")
+router.register(r'reports/balance-report', reports.BalanceReportViewSet, "balance-report")
+# router.register(r'reports/balance-report', reports.BalanceReportSyncViewSet, "balance-report-sync")
 router.register(r'reports/pl-report', reports.PLReportViewSet, "pl-report")
 router.register(r'reports/transaction-report', reports.TransactionReportViewSet, "transaction-report")
 router.register(r'reports/cash-flow-projection-report', reports.CashFlowProjectionReportViewSet,
