@@ -15,7 +15,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import FilterSet
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.viewsets import ViewSet, ModelViewSet
+from rest_framework.viewsets import ViewSet, ModelViewSet, ViewSetMixin
 
 from poms.accounts.models import AccountType, Account
 from poms.chats.models import ThreadGroup
@@ -517,7 +517,7 @@ class InviteToMasterUserFilterSet(FilterSet):
         fields = []
 
 
-class InviteToMasterUserViewSet(AbstractApiView, UpdateModelMixinExt, ModelViewSet):
+class InviteToMasterUserViewSet(AbstractApiView, UpdateModelMixinExt, ModelViewSet, ViewSetMixin):
     queryset = InviteToMasterUser.objects.select_related(
         'from_member'
     )

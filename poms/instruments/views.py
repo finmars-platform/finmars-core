@@ -682,9 +682,8 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
     def process(self, request, pk=None):
         generated_event = self.get_object()
 
-        if not generated_event.is_need_reaction:
-            raise ValidationError('event already processed or future event')
-
+        # if not generated_event.is_need_reaction:
+        #     raise ValidationError('event already processed or future event')
 
         # if generated_event.status != GeneratedEvent.NEW:
         #     raise PermissionDenied()
@@ -701,13 +700,11 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
         if action is None:
             raise ValidationError('Require "action" query parameter')
 
-
         instance = GeneratedEventProcess(
             generated_event=generated_event,
             action=action,
             context=self.get_serializer_context()
         )
-
 
         if request.method == 'GET':
             serializer = self.get_serializer(instance=instance)
@@ -716,13 +713,23 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
             try:
                 history.set_flag_addition()
 
+                status = request.query_params.get('event_status', None)
+
+                if status is None:
+                    raise ValidationError('Require "event_status" query parameter')
+
                 serializer = self.get_serializer(instance=instance, data=request.data)
 
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
 
+                print('generated_event.id %s ' % generated_event.id)
+                print('status %s ' % status)
+                print('instance.has_errors %s ' % instance.has_errors)
+
                 if not instance.has_errors:
-                    generated_event.processed(self.request.user.member, action, instance.complex_transaction)
+                    generated_event.processed(self.request.user.member, action, instance.complex_transaction,
+                                              status)
                     generated_event.save()
 
                 history.set_actor_content_object(instance.complex_transaction)
@@ -732,14 +739,14 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
                 if instance.has_errors:
                     transaction.set_rollback(True)
 
-    @detail_route(methods=['put'], url_path='ignore')
+    @detail_route(methods=['put'], url_path='informed')
     def ignore(self, request, pk=None):
         generated_event = self.get_object()
 
         if generated_event.status != GeneratedEvent.NEW:
             raise PermissionDenied()
 
-        generated_event.status = GeneratedEvent.IGNORED
+        generated_event.status = GeneratedEvent.INFORMED
         generated_event.status_date = timezone.now()
         generated_event.member = self.request.user.member
         generated_event.save()

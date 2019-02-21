@@ -193,7 +193,7 @@ class Periodicity(AbstractClassModel):
         (SEMI_ANNUALLY, 'SEMI_ANNUALLY', ugettext_lazy('Semi-annually')),
         (ANNUALLY, 'ANNUALLY', ugettext_lazy('Annually')),
 
-        (DEFAULT, '-', ugettext_lazy('Default')),
+        (DEFAULT, '-', ugettext_lazy('-')),
     )
 
     class Meta(AbstractClassModel.Meta):
@@ -1044,16 +1044,17 @@ class EventScheduleAction(models.Model):
 
 class GeneratedEvent(models.Model):
     NEW = 1
-    IGNORED = 2
-    BOOK_PENDING = 3
-    BOOKED = 4
-    BOOK_DEFAULT = 5
+    INFORMED = 2
+    BOOKED_SYSTEM_DEFAULT = 3
+    BOOKED_USER_ACTIONS = 4
+    BOOKED_USER_DEFAULT = 5
+
     STATUS_CHOICES = (
         (NEW, ugettext_lazy('New')),
-        (IGNORED, ugettext_lazy('Ignored')),
-        (BOOK_PENDING, ugettext_lazy('Book pending')),
-        (BOOKED, ugettext_lazy('Booked')),
-        (BOOK_DEFAULT, ugettext_lazy('Book (default)')),
+        (INFORMED, ugettext_lazy('Informed')),
+        (BOOKED_SYSTEM_DEFAULT, ugettext_lazy('Booked (system, default)')),
+        (BOOKED_USER_ACTIONS, ugettext_lazy('Booked (user, actions)')),
+        (BOOKED_USER_DEFAULT, ugettext_lazy('Booked (user, default)')),
     )
 
     master_user = models.ForeignKey(MasterUser, related_name='generated_events',
@@ -1107,15 +1108,11 @@ class GeneratedEvent(models.Model):
     def __str__(self):
         return 'Event #%s' % self.id
 
-    def processed(self, member, action, complex_transaction):
+    def processed(self, member, action, complex_transaction, status=BOOKED_SYSTEM_DEFAULT):
         self.member = member
         self.action = action
-        self.status = GeneratedEvent.BOOK_PENDING if action.is_sent_to_pending else GeneratedEvent.BOOKED
 
-        print('action.event_schedule.notification_class %s' % action.event_schedule.notification_class)
-
-        if action.event_schedule.notification_class in [5, 8, 12, 13]:
-            self.status = GeneratedEvent.BOOK_DEFAULT
+        self.status = status
 
         self.status_date = timezone.now()
         self.transaction_type = action.transaction_type

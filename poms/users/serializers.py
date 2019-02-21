@@ -523,6 +523,7 @@ class InviteToMasterUserSerializer(serializers.ModelSerializer):
 
     def get_to_master_user(self, obj):
         return {
+            'id': obj.from_member.master_user.id,
             'name': obj.from_member.master_user.name,
             'description': obj.from_member.master_user.description
         }

@@ -5,7 +5,8 @@ import logging
 from rest_framework.filters import FilterSet
 
 from poms.common.filters import NoOpFilter, CharFilter
-from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet
+from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet, AbstractReadOnlyModelViewSet, \
+    AbstractSyncViewSet
 from poms.reports.builders.balance_serializers import BalanceReportSerializer, PLReportSerializer
 from poms.reports.builders.cash_flow_projection_serializers import CashFlowProjectionReportSerializer
 from poms.reports.builders.performance_serializers import PerformanceReportSerializer
@@ -45,6 +46,11 @@ class CustomFieldViewSet(AbstractModelViewSet):
 class BalanceReportViewSet(AbstractAsyncViewSet):
     serializer_class = BalanceReportSerializer
     celery_task = balance_report
+
+
+class BalanceReportSyncViewSet(AbstractSyncViewSet):
+    serializer_class = BalanceReportSerializer
+    task = balance_report
 
 
 class PLReportViewSet(AbstractAsyncViewSet):
