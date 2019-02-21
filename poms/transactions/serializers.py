@@ -1824,7 +1824,11 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
             for k, v in values.items():
                 if v is None or v == '':
                     try:
-                        fvalues.fields[k].fail('required')
+
+                        if fvalues.fields[k].label != 'notes':
+
+                            fvalues.fields[k].fail('required')
+
                     except ValidationError as e:
                         errors[k] = e.detail
             if errors:

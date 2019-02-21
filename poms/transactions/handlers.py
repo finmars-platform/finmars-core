@@ -63,8 +63,6 @@ class TransactionTypeProcess(object):
 
         self.inputs = list(self.transaction_type.inputs.all())
 
-        print("init complex_transaction %s" % complex_transaction)
-
         self.complex_transaction = complex_transaction
         if self.complex_transaction is None:
             self.complex_transaction = ComplexTransaction(transaction_type=self.transaction_type, date=None,
@@ -91,6 +89,8 @@ class TransactionTypeProcess(object):
 
         self.next_fake_id = fake_id_gen or self._next_fake_id_default
         self.next_transaction_order = transaction_order_gen or self._next_transaction_order_default
+
+        print('values %s' % values)
 
         if values is None:
             self._set_values()
@@ -176,6 +176,7 @@ class TransactionTypeProcess(object):
                     self.values[i.name] = value
 
         for i in self.inputs:
+
             if i.name in self.values:
                 continue
             value = None
@@ -192,6 +193,7 @@ class TransactionTypeProcess(object):
                 if i.is_fill_from_context and i.name in self.default_values:
                     value = self.default_values[i.name]
                 if value is None:
+
                     if i.value:
                         errors = {}
                         try:
@@ -200,6 +202,7 @@ class TransactionTypeProcess(object):
                             self._set_eval_error(errors, i.name, i.value, e)
                             self.value_errors.append(errors)
                             value = None
+
             self.values[i.name] = value
 
     def book_create_instruments(self, actions, master_user, instrument_map):
@@ -247,9 +250,13 @@ class TransactionTypeProcess(object):
                 self._set_val(errors=errors, values=self.values, default_value='',
                               target=instrument, target_attr_name='public_name',
                               source=action_instrument, source_attr_name='public_name')
-                self._set_val(errors=errors, values=self.values, default_value='',
-                              target=instrument, target_attr_name='notes',
-                              source=action_instrument, source_attr_name='notes')
+
+                if getattr(action_instrument, 'notes'):
+
+                    self._set_val(errors=errors, values=self.values, default_value='',
+                                  target=instrument, target_attr_name='notes',
+                                  source=action_instrument, source_attr_name='notes')
+
                 self._set_rel(errors=errors,
                               target=instrument, target_attr_name='instrument_type',
                               source=action_instrument, source_attr_name='instrument_type',
@@ -432,9 +439,11 @@ class TransactionTypeProcess(object):
                               target=manual_pricing_formula, target_attr_name='expr',
                               source=action_instrument_manual_pricing_formula, source_attr_name='expr')
 
-                self._set_val(errors=errors, values=self.values, default_value='',
-                              target=manual_pricing_formula, target_attr_name='notes',
-                              source=action_instrument_manual_pricing_formula, source_attr_name='notes')
+                if getattr(action_instrument_manual_pricing_formula, 'notes'):
+
+                    self._set_val(errors=errors, values=self.values, default_value='',
+                                  target=manual_pricing_formula, target_attr_name='notes',
+                                  source=action_instrument_manual_pricing_formula, source_attr_name='notes')
 
                 try:
 
@@ -518,9 +527,11 @@ class TransactionTypeProcess(object):
                               source=action_instrument_accrual_calculation_schedule,
                               source_attr_name='periodicity_n')
 
-                self._set_val(errors=errors, values=self.values, default_value='',
-                              target=accrual_calculation_schedule, target_attr_name='notes',
-                              source=action_instrument_accrual_calculation_schedule, source_attr_name='notes')
+                if getattr(action_instrument_accrual_calculation_schedule, 'notes'):
+
+                    self._set_val(errors=errors, values=self.values, default_value='',
+                                  target=accrual_calculation_schedule, target_attr_name='notes',
+                                  source=action_instrument_accrual_calculation_schedule, source_attr_name='notes')
 
                 try:
 
@@ -856,9 +867,14 @@ class TransactionTypeProcess(object):
                               target=transaction, target_attr_name='overheads',
                               source=action_transaction, source_attr_name='overheads')
 
-                self._set_val(errors=errors, values=self.values, default_value='',
-                              target=transaction, target_attr_name='notes',
-                              source=action_transaction, source_attr_name='notes')
+                print('action_transaction.notes')
+                print(action_transaction.notes)
+
+                if action_transaction.notes is not None:
+
+                    self._set_val(errors=errors, values=self.values, default_value='',
+                                  target=transaction, target_attr_name='notes',
+                                  source=action_transaction, source_attr_name='notes')
 
                 if transaction.accounting_date is None:
                     transaction.accounting_date = self._now
