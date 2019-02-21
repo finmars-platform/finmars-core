@@ -661,6 +661,9 @@ def get_complex_transaction_queryset(select_related=True, transactions=False):
         'transaction_type__group',
     )
     qs = ComplexTransaction.objects
+
+
+
     if select_related:
         qs = qs.select_related(*fields1)
     else:
@@ -673,6 +676,7 @@ def get_complex_transaction_queryset(select_related=True, transactions=False):
             ('transaction_type__group', TransactionTypeGroup),
         )
     )
+
     if transactions:
         qs = qs.prefetch_related(
             Prefetch(
@@ -682,6 +686,10 @@ def get_complex_transaction_queryset(select_related=True, transactions=False):
                 )
             )
         )
+
+    print("get_complex_transaction_queryset get complex")
+    print(len(qs))
+
     return qs
 
 

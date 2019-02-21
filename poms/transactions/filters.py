@@ -66,12 +66,19 @@ class TransactionTypeInputContentTypeFilter(BaseFilterBackend):
 
 class ComplexTransactionPermissionFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        trn_qs = Transaction.objects.filter(master_user=request.user.master_user)
-        trn_qs = TransactionObjectPermissionFilter().filter_queryset(request, trn_qs, view)
-        return queryset.filter(
-            transaction_type__master_user=request.user.master_user,
-            pk__in=trn_qs.values_list('complex_transaction', flat=True)
-        )
+
+        print('ComplexTransactionPermissionFilter')
+
+        return queryset.filter(master_user=request.user.master_user)
+
+        # trn_qs = Transaction.objects.filter(master_user=request.user.master_user)
+        # trn_qs = TransactionObjectPermissionFilter().filter_queryset(request, trn_qs, view)
+        #
+        #
+        # return queryset.filter(
+        #     transaction_type__master_user=request.user.master_user,
+        #     pk__in=trn_qs.values_list('complex_transaction', flat=True)
+        # )
 
 
 class TransactionObjectPermissionMemberFilter(ObjectPermissionMemberFilter):
