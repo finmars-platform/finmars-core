@@ -686,23 +686,23 @@ IMPORT_CONFIG_STORAGE = {
 # }
 
 
-# IMPORT_FILE_STORAGE = {
-#     'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
-#     'KWARGS': {
-#         'acl': 'private',
-#         'bucket': os.environ.get('AWS_STORAGE_IMPORT_FILE_BUCKET_NAME', None),
-#         'querystring_expire': 10,
-#         'custom_domain': None
-#     }
-# }
-
 IMPORT_FILE_STORAGE = {
-    'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
     'KWARGS': {
-        'location': '/home/szhitenev/projects/finmars/files',
-        'base_url': '/api/import/'
+        'acl': 'private',
+        'bucket': os.environ.get('AWS_STORAGE_IMPORT_FILE_BUCKET_NAME', None),
+        'querystring_expire': 10,
+        'custom_domain': None
     }
 }
+
+# IMPORT_FILE_STORAGE = {
+#     'BACKEND': 'django.core.files.storage.FileSystemStorage',
+#     'KWARGS': {
+#         'location': '/home/szhitenev/projects/finmars/files',
+#         'base_url': '/api/import/'
+#     }
+# }
 PRICING_AUTO_DOWNLOAD_DISABLED = True
 if os.environ.get('POMS_PRICING_AUTO_DOWNLOAD_DISABLED') == 'False':
     PRICING_AUTO_DOWNLOAD_DISABLED = False
