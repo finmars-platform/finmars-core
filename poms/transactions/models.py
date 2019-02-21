@@ -987,6 +987,8 @@ class ComplexTransaction(FakeDeletableModel):
         (PENDING, ugettext_lazy('Pending')),
     )
 
+    master_user = models.ForeignKey(MasterUser, related_name='complex_transactions', verbose_name=ugettext_lazy('master user'))
+
     transaction_type = models.ForeignKey(TransactionType, on_delete=models.PROTECT,
                                          verbose_name=ugettext_lazy('transaction type'))
     date = models.DateField(default=date_now, db_index=True, verbose_name=ugettext_lazy("date"))
