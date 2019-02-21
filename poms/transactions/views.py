@@ -687,9 +687,6 @@ def get_complex_transaction_queryset(select_related=True, transactions=False):
             )
         )
 
-    print("get_complex_transaction_queryset get complex")
-    print(len(qs))
-
     return qs
 
 
