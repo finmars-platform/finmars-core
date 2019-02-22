@@ -113,6 +113,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         instrument_types = self.get_instrument_types()
         pricing_automated_schedule = self.get_pricing_automated_schedule()
         pricing_policies = self.get_pricing_policies()
+        currencies = self.get_currencies()
 
         portfolio_attribute_types = self.get_entity_attribute_types('portfolios', 'portfolio')
         account_attribute_types = self.get_entity_attribute_types('accounts', 'account')
@@ -135,6 +136,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration["body"].append(instrument_download_schemes)
         configuration["body"].append(complex_transaction_import_scheme)
         configuration["body"].append(account_types)
+        configuration["body"].append(currencies)
         configuration["body"].append(pricing_policies)
         configuration["body"].append(instrument_types)
         configuration["body"].append(pricing_automated_schedule)
@@ -645,6 +647,44 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         result = {
             "entity": "accounts.accounttype",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_currencies(self):
+        currencies = to_json_objects(
+            Currency.objects.filter(master_user=self._master_user, is_deleted=False).exclude(user_code='-'))
+        results = []
+
+        for currency in currencies:
+            result_item = currency["fields"]
+
+            result_item["pk"] = currency["pk"]
+
+            result_item.pop("master_user", None)
+            result_item.pop("is_deleted", None)
+
+
+            if result_item["daily_pricing_model"]:
+                result_item["___daily_pricing_model__system_code"] = DailyPricingModel.objects.get(
+                    pk=result_item["daily_pricing_model"]).system_code
+                result_item.pop("daily_pricing_model", None)
+
+            if result_item["price_download_scheme"]:
+                result_item["___price_download_scheme__scheme_name"] = PriceDownloadScheme.objects.get(
+                    pk=result_item["price_download_scheme"]).scheme_name
+                result_item.pop("price_download_scheme", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "currencies.currency",
             "count": len(results),
             "content": results
         }

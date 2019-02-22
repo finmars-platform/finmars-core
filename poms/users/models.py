@@ -196,7 +196,8 @@ class MasterUser(models.Model):
         from poms.accounts.models import AccountType, Account
         from poms.counterparties.models import Counterparty, CounterpartyGroup, Responsible, ResponsibleGroup
         from poms.portfolios.models import Portfolio
-        from poms.instruments.models import InstrumentClass, InstrumentType, EventScheduleConfig, Instrument, DailyPricingModel
+        from poms.instruments.models import InstrumentClass, InstrumentType, EventScheduleConfig, Instrument, \
+            DailyPricingModel
         from poms.integrations.models import PricingAutomatedSchedule, CurrencyMapping, ProviderClass
         from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, \
             Strategy2Subgroup, Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
@@ -218,7 +219,9 @@ class MasterUser(models.Model):
         for dc in currencies_data.values():
             dc_user_code = dc['user_code']
             dc_name = dc.get('name', dc_user_code)
-            dc_reference_for_pricing = dc.get('reference_for_pricing', None)
+            # dc_reference_for_pricing = dc.get('reference_for_pricing', None)
+            dc_reference_for_pricing = ''
+            price_download_scheme = PriceDownloadScheme.objects.get(scheme_name='-')
 
             if dc_user_code == '-':
                 pass
@@ -226,12 +229,14 @@ class MasterUser(models.Model):
 
                 if dc_user_code == 'USD':
                     c = Currency.objects.create(master_user=self, user_code=dc_user_code, short_name=dc_name,
-                                                name=dc_name, daily_pricing_model=DailyPricingModel.objects.get(pk=DailyPricingModel.SKIP),
+                                                name=dc_name, daily_pricing_model=DailyPricingModel.objects.get(
+                            pk=DailyPricingModel.SKIP), price_download_scheme=price_download_scheme,
                                                 reference_for_pricing=dc_reference_for_pricing)
                     ccy_usd = c
                 else:
                     c = Currency.objects.create(master_user=self, user_code=dc_user_code, short_name=dc_name,
-                                                name=dc_name, daily_pricing_model=DailyPricingModel.objects.get(pk=DailyPricingModel.PROVIDER_IF_OPEN),
+                                                name=dc_name, daily_pricing_model=DailyPricingModel.objects.get(
+                            pk=DailyPricingModel.DEFAULT), price_download_scheme=price_download_scheme,
                                                 reference_for_pricing=dc_reference_for_pricing)
                 ccys[c.user_code] = c
 
@@ -391,7 +396,6 @@ class MasterUser(models.Model):
 
 
 class Member(FakeDeletableModel):
-
     DO_NOT_NOTIFY = 1
     SHOW_AND_EMAIL = 2
     EMAIL_ONLY = 3
