@@ -213,6 +213,10 @@ class MasterUser(models.Model):
         if not PricingAutomatedSchedule.objects.filter(master_user=self).exists():
             PricingAutomatedSchedule.objects.create(master_user=self, is_enabled=False)
 
+
+        price_download_scheme = PriceDownloadScheme.objects.create(master_user=self, scheme_name='-',
+                                                                   provider=ProviderClass.objects.get(
+                                                                       pk=ProviderClass.BLOOMBERG))
         ccys = {}
         ccy = Currency.objects.create(master_user=self, name='-')
         ccy_usd = None
@@ -275,9 +279,7 @@ class MasterUser(models.Model):
 
         pricing_policy = PricingPolicy.objects.create(master_user=self, name='-', expr='(ask+bid)/2')
         pricing_policy_dft = PricingPolicy.objects.create(master_user=self, name='DFT', expr='(ask+bid)/2')
-        price_download_scheme = PriceDownloadScheme.objects.create(master_user=self, scheme_name='-',
-                                                                   provider=ProviderClass.objects.get(
-                                                                       pk=ProviderClass.BLOOMBERG))
+
 
         if user:
             Member.objects.create(user=user, master_user=self, is_owner=True, is_admin=True)
