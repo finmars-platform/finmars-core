@@ -221,7 +221,7 @@ class MasterUser(models.Model):
             dc_name = dc.get('name', dc_user_code)
             # dc_reference_for_pricing = dc.get('reference_for_pricing', None)
             dc_reference_for_pricing = ''
-            price_download_scheme = PriceDownloadScheme.objects.get(scheme_name='-')
+            price_download_scheme = PriceDownloadScheme.objects.get(scheme_name='-', master_user=self)
 
             if dc_user_code == '-':
                 pass
