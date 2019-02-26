@@ -1,8 +1,12 @@
 import uuid
 
+import time
+import logging
 from poms.reports.builders.balance_item import Report
 from poms.reports.builders.base_item import BaseReportItem, YTMMixin
 from poms.transactions.models import TransactionClass
+
+_l = logging.getLogger('poms.reports')
 
 
 class VirtualTransaction(YTMMixin, BaseReportItem):
@@ -393,48 +397,66 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
     ]
 
     def __init__(self, report, pricing_provider, fx_rate_provider, trn, overrides=None):
+
+        create_virtual_transaction_st = time.perf_counter()
+
         super(VirtualTransaction, self).__init__(report, pricing_provider, fx_rate_provider)
         overrides = overrides or {}
-        self.trn = trn
+
+        # _l.debug(len(self.__class__.__dict__))
+
         self.lid = uuid.uuid1()
-        self.pk = overrides.get('pk', trn.pk)
-        self.trn_code = overrides.get('transaction_code', trn.transaction_code)
-        self.trn_cls = overrides.get('transaction_class', trn.transaction_class)
 
-        self.instr = overrides.get('instrument', trn.instrument)
-        self.trn_ccy = overrides.get('transaction_currency', trn.transaction_currency)
-        self.pos_size = overrides.get('position_size_with_sign', trn.position_size_with_sign)
+        self.trn = trn
 
-        self.stl_ccy = overrides.get('settlement_currency', trn.settlement_currency)
-        self.cash = overrides.get('cash_consideration', trn.cash_consideration)
+        self.pk = trn.pk
+        self.trn_code = trn.transaction_code
+        self.trn_cls = trn.transaction_class
 
-        self.principal = overrides.get('principal_with_sign', trn.principal_with_sign)
-        self.carry = overrides.get('carry_with_sign', trn.carry_with_sign)
-        self.overheads = overrides.get('overheads_with_sign', trn.overheads_with_sign)
+        self.instr = trn.instrument
+        self.trn_ccy = trn.transaction_currency
+        self.pos_size = trn.position_size_with_sign
 
-        self.ref_fx = overrides.get('reference_fx_rate', trn.reference_fx_rate)
+        self.stl_ccy = trn.settlement_currency
+        self.cash = trn.cash_consideration
 
-        self.trn_date = overrides.get('transaction_date', trn.transaction_date)
-        self.acc_date = overrides.get('accounting_date', trn.accounting_date)
-        self.cash_date = overrides.get('cash_date', trn.cash_date)
+        self.principal = trn.principal_with_sign
+        self.carry = trn.carry_with_sign
+        self.overheads = trn.overheads_with_sign
 
-        self.prtfl = overrides.get('portfolio', trn.portfolio)
+        self.ref_fx = trn.reference_fx_rate
 
-        self.acc_pos = overrides.get('account_position', trn.account_position)
-        self.acc_cash = overrides.get('account_cash', trn.account_cash)
-        self.acc_interim = overrides.get('account_interim', trn.account_interim)
+        self.trn_date = trn.transaction_date
+        self.acc_date = trn.accounting_date
+        self.cash_date = trn.cash_date
 
-        self.str1_pos = overrides.get('strategy1_position', trn.strategy1_position)
-        self.str1_cash = overrides.get('strategy1_cash', trn.strategy1_cash)
-        self.str2_pos = overrides.get('strategy2_position', trn.strategy2_position)
-        self.str2_cash = overrides.get('strategy2_cash', trn.strategy2_cash)
-        self.str3_pos = overrides.get('strategy3_position', trn.strategy3_position)
-        self.str3_cash = overrides.get('strategy3_cash', trn.strategy3_cash)
+        self.link_instr = trn.linked_instrument
 
-        self.link_instr = overrides.get('linked_instrument', trn.linked_instrument)
+        self.prtfl = trn.portfolio
 
-        self.alloc_bl = overrides.get('allocation_balance', trn.allocation_balance)
-        self.alloc_pl = overrides.get('allocation_pl', trn.allocation_pl)
+        # self.acc_pos = trn.account_position
+        # self.acc_cash = trn.account_cash
+        # self.acc_interim = trn.account_interim
+        #
+        # self.str1_pos = trn.strategy1_position
+        # self.str1_cash = trn.strategy1_cash
+        #
+        # self.str2_pos = trn.strategy2_position
+        # self.str2_cash = trn.strategy2_cash
+        #
+        # self.str3_pos = trn.strategy3_position
+        # self.str3_cash = trn.strategy3_cash
+        #
+        # self.alloc_bl = trn.allocation_balance
+        # self.alloc_pl = trn.allocation_pl
+
+        self.trade_price = trn.trade_price
+        self.notes = trn.notes
+
+        # _l.debug(overrides)
+        if len(overrides):
+            self.override(overrides)
+
         if report.report_type == Report.TYPE_BALANCE:
             self.alloc = self.alloc_bl
         elif report.report_type == Report.TYPE_PL:
@@ -443,11 +465,12 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
             # raise RuntimeError('Bad report type: %s' % (report.report_type,))
             pass
 
-        self.trade_price = overrides.get('trade_price', trn.trade_price)
-
-        self.notes = overrides.get('notes', trn.notes)
-
         self.set_case()
+
+        res = time.perf_counter() - create_virtual_transaction_st
+
+        if res > 0.03:
+            _l.debug('create virtual transaction done: %s', res)
 
     def set_case(self):
         if self.acc_date <= self.report.report_date < self.cash_date:
@@ -467,6 +490,38 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
     #     ret = super(VirtualTransaction, self).clone()
     #     ret.lid = uuid.uuid1()
     #     return ret
+
+    def override(self, overrides):
+
+        if hasattr(overrides, 'portfolio'):
+            self.prtfl = overrides['portfolio']
+
+        if hasattr(overrides, 'account_position'):
+            self.acc_pos = overrides['account_position']
+        if hasattr(overrides, 'account_cash'):
+            self.acc_cash = overrides['account_cash']
+        if hasattr(overrides, 'account_interim'):
+            self.acc_interim = overrides['account_interim']
+
+        if hasattr(overrides, 'strategy1_position'):
+            self.str1_pos = overrides['strategy1_position']
+        if hasattr(overrides, 'strategy1_cash'):
+            self.str1_cash = overrides['strategy1_cash']
+
+        if hasattr(overrides, 'strategy2_position'):
+            self.str2_pos = overrides['strategy2_position']
+        if hasattr(overrides, 'strategy2_cash'):
+            self.str2_cash = overrides['strategy2_cash']
+
+        if hasattr(overrides, 'strategy3_position'):
+            self.str3_pos = overrides['strategy3_position']
+        if hasattr(overrides, 'strategy3_cash'):
+            self.str3_cash = overrides['strategy3_cash']
+
+        if hasattr(overrides, 'allocation_balance'):
+            self.alloc_bl = overrides['allocation_balance']
+        if hasattr(overrides, 'allocation_pl'):
+            self.alloc_pl = overrides['allocation_pl']
 
     @property
     def is_buy(self):
@@ -618,7 +673,8 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
             self.stl_ccy_cur_fx_loc = self.stl_ccy_cur.fx_rate * pricing_ccy_cur_fx
 
     def get_instr_ytm_data_d0_v0(self):
-        return self.acc_date, -(self.trade_price * self.instr.price_multiplier * self.instr.get_factor(self.report.report_date))
+        return self.acc_date, -(
+                self.trade_price * self.instr.price_multiplier * self.instr.get_factor(self.report.report_date))
 
     def get_instr_ytm_x0(self):
         try:
@@ -818,7 +874,7 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
                     try:
                         self.principal_invested_res = self.principal * self.ref_fx * \
                                                       (
-                                                          self.trn_ccy_acc_hist.fx_rate / self.report_ccy_acc_hist.fx_rate) * \
+                                                              self.trn_ccy_acc_hist.fx_rate / self.report_ccy_acc_hist.fx_rate) * \
                                                       (1.0 - self.multiplier)
                     except ArithmeticError:
                         self.principal_invested_res = 0.0
@@ -826,7 +882,7 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
                     try:
                         self.principal_invested_loc = self.principal * self.ref_fx * \
                                                       (
-                                                          self.trn_ccy_acc_hist.fx_rate / self.pricing_ccy_acc_hist.fx_rate) * \
+                                                              self.trn_ccy_acc_hist.fx_rate / self.pricing_ccy_acc_hist.fx_rate) * \
                                                       (1.0 - self.multiplier)
                     except ArithmeticError:
                         self.principal_invested_loc = 0.0

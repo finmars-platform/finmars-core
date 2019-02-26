@@ -546,14 +546,13 @@ class ReportBuilder(BaseReportBuilder):
         _pricing_provider = self.pricing_provider
         _fx_rate_provider = self.fx_rate_provider
 
+
+        _l.debug('_pricing_provider %s' % _pricing_provider)
+        _l.debug('_fx_rate_provider %s' % _fx_rate_provider)
+
         iteration_st = time.perf_counter()
 
         for t in trn_qs:
-            # total_items = total_items + 1
-            #
-            # t_st = time.perf_counter()
-            #
-            # trn_st = time.perf_counter()
 
             trn = _trn_cls_create(
                 report=_instance,
@@ -563,35 +562,18 @@ class ReportBuilder(BaseReportBuilder):
                 overrides=overrides
             )
 
-            # _l.debug('t trn_st done: %s', format((time.perf_counter() - trn_st), 'f'))
-
-            # trn.key = self._get_trn_group_key(trn)
             _transactions_append(trn)
 
-            # otrn_st = time.perf_counter()
+            # otrn = _trn_cls_create(
+            #     report=_instance,
+            #     pricing_provider=_pricing_provider,
+            #     fx_rate_provider=_fx_rate_provider,
+            #     trn=t,
+            # )
+            #
+            # _original_transactions_append(otrn)
 
-            otrn = _trn_cls_create(
-                report=_instance,
-                pricing_provider=_pricing_provider,
-                fx_rate_provider=_fx_rate_provider,
-                trn=t,
-            )
-
-            # _l.debug('t otrn_st done: %s', format((time.perf_counter() - otrn_st), 'f'))
-
-            _original_transactions_append(otrn)
-
-            # diff = (time.perf_counter() - t_st)
-
-            # _l.debug('t trn_qs_st done: %s', format(diff, 'f'))
-
-            # total_st = total_st + diff
-
-        # _l.debug('_load_transactions total_st done: %s', total_st)
-        # _l.debug('_load_transactions total_items done: %s', total_items)
         _l.debug('_load_transactions iteration_st done: %s', (time.perf_counter() - iteration_st))
-
-        # _l.debug('transactions - len=%s', len(self._transactions))
 
         _l.debug('_load_transactions done: %s', (time.perf_counter() - _load_transactions_st))
 
