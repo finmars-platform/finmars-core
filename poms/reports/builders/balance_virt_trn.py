@@ -434,21 +434,21 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
 
         self.prtfl = trn.portfolio
 
-        # self.acc_pos = trn.account_position
-        # self.acc_cash = trn.account_cash
-        # self.acc_interim = trn.account_interim
-        #
-        # self.str1_pos = trn.strategy1_position
-        # self.str1_cash = trn.strategy1_cash
-        #
-        # self.str2_pos = trn.strategy2_position
-        # self.str2_cash = trn.strategy2_cash
-        #
-        # self.str3_pos = trn.strategy3_position
-        # self.str3_cash = trn.strategy3_cash
-        #
-        # self.alloc_bl = trn.allocation_balance
-        # self.alloc_pl = trn.allocation_pl
+        self.acc_pos = trn.account_position
+        self.acc_cash = trn.account_cash
+        self.acc_interim = trn.account_interim
+
+        self.str1_pos = trn.strategy1_position
+        self.str1_cash = trn.strategy1_cash
+
+        self.str2_pos = trn.strategy2_position
+        self.str2_cash = trn.strategy2_cash
+
+        self.str3_pos = trn.strategy3_position
+        self.str3_cash = trn.strategy3_cash
+
+        self.alloc_bl = trn.allocation_balance
+        self.alloc_pl = trn.allocation_pl
 
         self.trade_price = trn.trade_price
         self.notes = trn.notes
