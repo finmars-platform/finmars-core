@@ -35,7 +35,8 @@ from poms.instruments.serializers import InstrumentSerializer, PriceHistorySeria
     PricingPolicySerializer, EventScheduleConfigSerializer, InstrumentCalculatePricesAccruedPriceSerializer, \
     GeneratedEventSerializer, EventScheduleActionSerializer
 from poms.instruments.tasks import calculate_prices_accrued_price, generate_events, process_events, \
-    only_generate_events_at_date
+    only_generate_events_at_date, generate_events_do_not_inform_apply_default0, \
+    generate_events_do_not_inform_apply_default
 from poms.integrations.models import PriceDownloadScheme
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
@@ -367,6 +368,15 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
     @list_route(methods=['post'], url_path='generate-events', serializer_class=serializers.Serializer)
     def generate_events(self, request):
         ret = generate_events.apply_async(kwargs={'master_users': [request.user.master_user.pk]})
+        return Response({
+            'success': True,
+            'task_id': ret.id,
+        })
+
+    @list_route(methods=['post'], url_path='system-generate-and-process', serializer_class=serializers.Serializer)
+    def system_generate_and_process(self, request):
+
+        ret = generate_events_do_not_inform_apply_default.apply_async()
         return Response({
             'success': True,
             'task_id': ret.id,
