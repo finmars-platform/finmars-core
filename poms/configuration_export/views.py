@@ -270,8 +270,10 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                                 key = '___{}__{}'
                                 key = key.format(input_prop['prop'], input_prop['code'])
 
-                                input_json["fields"][key] = model.objects.get(
-                                    pk=getattr(input_model, input_model.content_type.model).pk).user_code
+                                obj =  model.objects.get(
+                                    pk=getattr(input_model, input_model.content_type.model).pk)
+
+                                input_json["fields"][key] = getattr(obj, input_prop['code'])
 
         results = unwrap_items(inputs)
 
