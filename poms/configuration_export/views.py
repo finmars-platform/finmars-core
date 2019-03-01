@@ -47,6 +47,8 @@ from poms.ui.models import EditLayout, ListLayout, Bookmark
 
 from django.forms.models import model_to_dict
 
+from poms.ui.serializers import BookmarkSerializer
+
 
 def to_json_objects(items):
     return json.loads(serializers.serialize("json", items))
@@ -270,7 +272,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                                 key = '___{}__{}'
                                 key = key.format(input_prop['prop'], input_prop['code'])
 
-                                obj =  model.objects.get(
+                                obj = model.objects.get(
                                     pk=getattr(input_model, input_model.content_type.model).pk)
 
                                 input_json["fields"][key] = getattr(obj, input_prop['code'])
@@ -668,7 +670,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             result_item.pop("master_user", None)
             result_item.pop("is_deleted", None)
 
-
             if result_item["daily_pricing_model"]:
                 result_item["___daily_pricing_model__system_code"] = DailyPricingModel.objects.get(
                     pk=result_item["daily_pricing_model"]).system_code
@@ -887,15 +888,43 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
+    def get_bookmarks_children(self, parent_bookmark):
+
+        serializer = BookmarkSerializer([parent_bookmark], many=True,
+                                        context={"member": self._member, "request": self._request})
+
+        children = serializer.data[0]["children"]
+
+        if len(children):
+            for item in children:
+
+                item_model = Bookmark.objects.get(member=self._member, pk=item["id"])
+
+                item["data"] = item_model.data
+                item["___layout_name"] = item_model.list_layout.name
+                item["___content_type"] = '%s.%s' % (
+                    item_model.list_layout.content_type.app_label,
+                    item_model.list_layout.content_type.model)
+
+        delete_prop(children, 'member')
+        delete_prop(children, 'id')
+        delete_prop(children, 'list_layout')
+
+        return children
+
+
     def get_bookmarks(self):
 
-        results = to_json_objects(Bookmark.objects.filter(member=self._member))
+        results = to_json_objects(Bookmark.objects.filter(member=self._member, parent=None))
 
-        for bookmark_model in Bookmark.objects.filter(member=self._member):
+        for bookmark_model in Bookmark.objects.filter(member=self._member, parent=None):
 
             for bookmark_json in results:
 
                 if bookmark_model.pk == bookmark_json['pk']:
+
+                    bookmark_json["fields"]["children"] = self.get_bookmarks_children(bookmark_model)
+
                     bookmark_json["fields"]["data"] = bookmark_model.data
                     bookmark_json["fields"]["___layout_name"] = bookmark_model.list_layout.name
                     bookmark_json["fields"]["___content_type"] = '%s.%s' % (

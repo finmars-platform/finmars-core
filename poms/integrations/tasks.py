@@ -978,7 +978,7 @@ def complex_transaction_csv_file_import(instance):
     def _process_csv_file(file):
 
         for row_index, row in enumerate(
-                csv.reader(file, delimiter=instance.delimiter, encoding='utf-8', quotechar=instance.quotechar,
+                csv.reader(file, delimiter=instance.delimiter, quotechar=instance.quotechar,
                            strict=False)):
 
             _l.debug('process row: %s -> %s', row_index, row)
