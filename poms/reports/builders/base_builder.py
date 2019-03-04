@@ -219,7 +219,7 @@ class BaseReportBuilder:
 
         # prefetch_qs_st = time.perf_counter()
         #
-        # qs = self._trn_qs_prefetch(qs)
+        qs = self._trn_qs_prefetch(qs)
         #
         # force_qs_evaluation(qs)
         #
