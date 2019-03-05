@@ -292,9 +292,9 @@ class ReportComplexTransactionSerializer(ComplexTransactionSerializer):
 
         self.fields['attributes'] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
 
-        for k in list(self.fields.keys()):
-            if str(k).endswith('_object'):
-                self.fields.pop(k)
+        # for k in list(self.fields.keys()):
+        #     if str(k).endswith('_object'):
+        #         self.fields.pop(k)
 
         self.fields['transaction_type_object'] = TransactionTypeViewSerializer(source='transaction_type', read_only=True)
 
