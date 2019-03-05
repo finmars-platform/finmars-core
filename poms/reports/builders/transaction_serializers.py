@@ -16,7 +16,7 @@ from poms.reports.builders.transaction_item import TransactionReport
 from poms.reports.fields import CustomFieldField
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
 from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, Strategy3ViewSerializer
-from poms.transactions.serializers import TransactionClassSerializer
+from poms.transactions.serializers import TransactionClassSerializer, ComplexTransactionSerializer
 from poms.users.fields import MasterUserField, HiddenMemberField
 
 
@@ -98,7 +98,8 @@ class TransactionReportSerializer(serializers.Serializer):
 
     items = TransactionReportItemSerializer(many=True, read_only=True)
     item_transaction_classes = TransactionClassSerializer(many=True, read_only=True)
-    item_complex_transactions = ReportComplexTransactionSerializer(many=True, read_only=True)
+    # item_complex_transactions = ReportComplexTransactionSerializer(many=True, read_only=True)
+    item_complex_transactions = ComplexTransactionSerializer(many=True, read_only=True)
     # item_transaction_types = TransactionTypeViewSerializer(source='transaction_types', many=True, read_only=True)
     item_instruments = ReportInstrumentSerializer(many=True, read_only=True)
     item_currencies = ReportCurrencySerializer(many=True, read_only=True)
