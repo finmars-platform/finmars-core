@@ -145,7 +145,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
                             if key == 'counterparties':
 
                                 try:
-                                    instance[key] = CounterpartyMapping.objects.get(
+                                    instance[key] = CounterpartyMapping.objects.get(master_user=master_user,
                                         value=csv_row_dict[entity_field.expression]).content_object
 
                                 except (CounterpartyMapping.DoesNotExist, KeyError):
@@ -157,7 +157,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
                             elif key == 'responsibles':
 
                                 try:
-                                    instance[key] = ResponsibleMapping.objects.get(
+                                    instance[key] = ResponsibleMapping.objects.get(master_user=master_user,
                                         value=csv_row_dict[entity_field.expression]).content_object
 
                                 except (ResponsibleMapping.DoesNotExist, KeyError):
@@ -169,7 +169,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
                             elif key == 'accounts':
 
                                 try:
-                                    instance[key] = AccountMapping.objects.get(
+                                    instance[key] = AccountMapping.objects.get(master_user=master_user,
                                         value=csv_row_dict[entity_field.expression]).content_object
 
                                 except (AccountMapping.DoesNotExist, KeyError):
@@ -181,7 +181,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
                             elif key == 'portfolios':
 
                                 try:
-                                    instance[key] = PortfolioMapping.objects.get(
+                                    instance[key] = PortfolioMapping.objects.get(master_user=master_user,
                                         value=csv_row_dict[entity_field.expression]).content_object
 
                                 except (PortfolioMapping.DoesNotExist, KeyError):
@@ -192,8 +192,10 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
                             elif key == 'pricing_policy':
 
+                                print('csv_row_dict[entity_field.expression] %s' % csv_row_dict[entity_field.expression]    )
+
                                 try:
-                                    instance[key] = PricingPolicyMapping.objects.get(
+                                    instance[key] = PricingPolicyMapping.objects.get(master_user=master_user,
                                         value=csv_row_dict[entity_field.expression]).content_object
 
                                 except (PricingPolicyMapping.DoesNotExist, KeyError):
@@ -205,7 +207,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
                             elif key == 'instrument':
 
                                 try:
-                                    instance[key] = InstrumentMapping.objects.get(
+                                    instance[key] = InstrumentMapping.objects.get(master_user=master_user,
                                         value=csv_row_dict[entity_field.expression]).content_object
 
                                 except (InstrumentMapping.DoesNotExist, KeyError):
@@ -217,7 +219,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
                             elif key == 'currency':
 
                                 try:
-                                    instance[key] = CurrencyMapping.objects.get(
+                                    instance[key] = CurrencyMapping.objects.get(master_user=master_user,
                                         value=csv_row_dict[entity_field.expression]).content_object
 
                                 except (CurrencyMapping.DoesNotExist, KeyError):
