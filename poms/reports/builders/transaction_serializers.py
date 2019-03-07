@@ -98,8 +98,8 @@ class TransactionReportSerializer(serializers.Serializer):
 
     items = TransactionReportItemSerializer(many=True, read_only=True)
     item_transaction_classes = TransactionClassSerializer(many=True, read_only=True)
-    # item_complex_transactions = ReportComplexTransactionSerializer(many=True, read_only=True)
-    item_complex_transactions = ComplexTransactionSerializer(many=True, read_only=True)
+    item_complex_transactions = ReportComplexTransactionSerializer(many=True, read_only=True)
+    # item_complex_transactions = ComplexTransactionSerializer(many=True, read_only=True)
     # item_transaction_types = TransactionTypeViewSerializer(source='transaction_types', many=True, read_only=True)
     item_instruments = ReportInstrumentSerializer(many=True, read_only=True)
     item_currencies = ReportCurrencySerializer(many=True, read_only=True)
