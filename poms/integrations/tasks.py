@@ -374,13 +374,18 @@ def download_pricing_async(self, task_id):
     instruments_always = set()
     instruments_if_open = set()
     instruments_opened = set()
+    instruments_default = set()
+
     currencies_always = set()
     currencies_if_open = set()
     currencies_opened = set()
+    currencies_default = set()
 
     for i in instruments:
+
         if i.daily_pricing_model_id in [DailyPricingModel.FORMULA_IF_OPEN, DailyPricingModel.PROVIDER_IF_OPEN]:
             instruments_if_open.add(i.id)
+
         elif i.daily_pricing_model_id in [DailyPricingModel.FORMULA_ALWAYS, DailyPricingModel.PROVIDER_ALWAYS]:
             instruments_always.add(i.id)
             if i.pricing_currency_id:
@@ -388,11 +393,19 @@ def download_pricing_async(self, task_id):
             if i.accrued_currency_id:
                 currencies_always.add(i.accrued_currency_id)
 
+        elif i.daily_pricing_model_id in [DailyPricingModel.DEFAULT]:
+            instruments_default.add(i.id)
+
     for i in currencies:
+
         if i.daily_pricing_model_id in [DailyPricingModel.FORMULA_IF_OPEN, DailyPricingModel.PROVIDER_IF_OPEN]:
             currencies_if_open.add(i.id)
+
         elif i.daily_pricing_model_id in [DailyPricingModel.FORMULA_ALWAYS, DailyPricingModel.PROVIDER_ALWAYS]:
             currencies_always.add(i.id)
+
+        elif i.daily_pricing_model_id in [DailyPricingModel.DEFAULT]:
+            currencies_default.add(i.id)
 
     _l.debug('always: instruments=%s, currencies=%s',
              sorted(instruments_always), sorted(currencies_always))
@@ -424,16 +437,18 @@ def download_pricing_async(self, task_id):
                     currencies_opened.add(i.trn_ccy.id)
         _l.debug('opened: instruments=%s, currencies=%s', sorted(instruments_opened), sorted(currencies_opened))
 
-    instruments = instruments.filter(pk__in=(instruments_always | instruments_opened))
+    instruments = instruments.filter(pk__in=(instruments_always | instruments_opened | instruments_default))
     _l.debug('instruments: %s', [i.id for i in instruments])
 
-    currencies = currencies.filter(pk__in=(currencies_always | currencies_opened))
+    currencies = currencies.filter(pk__in=(currencies_always | currencies_opened | currencies_default))
     _l.debug('currencies: %s', [i.id for i in currencies])
 
     price_download_schemes = {}
 
     instruments_by_scheme = defaultdict(list)
     instruments_by_formula = []
+    instruments_by_default = []
+
     for i in instruments:
         if i.daily_pricing_model_id in [DailyPricingModel.PROVIDER_ALWAYS, DailyPricingModel.PROVIDER_IF_OPEN]:
             if i.price_download_scheme_id and i.reference_for_pricing:
@@ -441,16 +456,25 @@ def download_pricing_async(self, task_id):
                 price_download_schemes[i.price_download_scheme.id] = i.price_download_scheme
         elif i.daily_pricing_model_id in [DailyPricingModel.FORMULA_ALWAYS, DailyPricingModel.FORMULA_IF_OPEN]:
             instruments_by_formula.append(i)
+        elif i.daily_pricing_model_id in [DailyPricingModel.DEFAULT]:
+            instruments_by_default.append(i)
+
     _l.debug('instruments_by_scheme: %s', instruments_by_scheme)
     _l.debug('instruments_by_formula: %s', instruments_by_formula)
+    _l.debug('instruments_by_default: %s', instruments_by_default)
 
     currencies_by_scheme = defaultdict(list)
+    currencies_by_default = []
     for c in currencies:
         if c.daily_pricing_model_id in [DailyPricingModel.PROVIDER_ALWAYS, DailyPricingModel.PROVIDER_IF_OPEN]:
             if c.price_download_scheme_id and c.reference_for_pricing:
                 currencies_by_scheme[c.price_download_scheme.id].append(c)
                 price_download_schemes[c.price_download_scheme.id] = c.price_download_scheme
+        elif c.daily_pricing_model_id in [DailyPricingModel.DEFAULT]:
+            currencies_by_default.append(c)
+
     _l.debug('currencies_by_scheme: %s', currencies_by_scheme)
+    _l.debug('currencies_by_default: %s', currencies_by_default)
 
     # sub_tasks = []
     # celery_sub_tasks = []
@@ -509,6 +533,9 @@ def download_pricing_async(self, task_id):
         for i in instruments_by_formula:
             instrument_task[i.id] = None
 
+        for i in instruments_by_default:
+            instrument_task[i.id] = 'instrument_default'
+
         currency_task = defaultdict(list)
         for scheme_id, currencies0 in currencies_by_scheme.items():
             price_download_scheme = price_download_schemes[scheme_id]
@@ -534,6 +561,9 @@ def download_pricing_async(self, task_id):
 
             for i in currencies0:
                 currency_task[i.id] = sub_task.id
+
+        for i in currencies_by_default:
+            currency_task[i.id] = 'currency_default'
 
         options['instrument_task'] = instrument_task
         options['currency_task'] = currency_task
@@ -644,6 +674,27 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
     instruments_prices += manual_instruments_prices
     errors.update(manual_instruments_errors)
 
+    instrument_for_default_price = [int(i_id) for i_id, task_id in instrument_task.items() if
+                                    task_id == 'instrument_default']
+    _l.debug('instrument_for_default_price: %s', instrument_for_default_price)
+
+    default_instruments_prices, default_instruments_errors = _create_instrument_default_prices(
+        options=options, instruments=instrument_for_default_price, pricing_policies=pricing_policies)
+
+    instruments_prices += default_instruments_prices
+    errors.update(default_instruments_errors)
+
+    currencies_for_default_price = [int(i_id) for i_id, task_id in currency_task.items() if
+                                    task_id == 'currency_default']
+    _l.debug('currencies_for_default_price: %s', currencies_for_default_price)
+
+    default_currencies_prices, default_currencies_errors = _create_currency_default_prices(options=options,
+                                                                                           currencies=currencies_for_default_price,
+                                                                                           pricing_policies=pricing_policies)
+
+    currencies_prices += default_currencies_prices
+    errors.update(default_currencies_errors)
+
     if errors:
         options['errors'] = errors
         task.options_object = options
@@ -751,6 +802,64 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
         task.save()
 
     return task_id
+
+
+def _create_currency_default_prices(options, currencies, pricing_policies):
+    _l.debug('create_currency_default_prices: currencies=%s', currencies)
+
+    errors = {}
+    prices = []
+
+    date_from = parse_date_iso(options['date_from'])
+    date_to = parse_date_iso(options['date_to'])
+
+    days = (date_to - date_from).days + 1
+
+    for c in Currency.objects.filter(pk__in=currencies):
+
+        for pp in pricing_policies:
+
+            for d in rrule(freq=DAILY, count=days, dtstart=date_from):
+                price = CurrencyHistory(
+                    currency=c,
+                    pricing_policy=pp,
+                    date=d.date(),
+                    fx_rate=c.default_fx_rate
+                )
+
+                prices.append(price)
+
+    return prices, errors
+
+
+def _create_instrument_default_prices(options, instruments, pricing_policies):
+    _l.debug('create_instrument_default_prices: instruments=%s', instruments)
+
+    date_from = parse_date_iso(options['date_from'])
+    date_to = parse_date_iso(options['date_to'])
+
+    errors = {}
+    prices = []
+
+    days = (date_to - date_from).days + 1
+
+    for i in Instrument.objects.filter(pk__in=instruments):
+
+        for pp in pricing_policies:
+
+            for dt in rrule(freq=DAILY, count=days, dtstart=date_from):
+
+                d = dt.date()
+                price = PriceHistory(
+                    instrument=i,
+                    pricing_policy=pp,
+                    date=d,
+                    principal_price=i.default_price
+                )
+
+                prices.append(price)
+
+    return prices, errors
 
 
 def _create_instrument_manual_prices(options, instruments):
