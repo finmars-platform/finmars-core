@@ -72,7 +72,7 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
 
 
 def is_relation(item):
-    return item in ['type', 'currency', 'instrument', 'instrument_type', 'group', 'pricing_policy']
+    return item in ['type', 'currency', 'instrument', 'instrument_type', 'group', 'pricing_policy', 'transaction_type']
 
 
 def get_root_system_attr_group(qs, root_group, groups_order):
