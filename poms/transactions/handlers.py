@@ -1,5 +1,5 @@
 import logging
-from datetime import date
+from datetime import date, datetime
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError, IntegrityError
@@ -19,7 +19,7 @@ from poms.obj_perms.utils import assign_perms3
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import ComplexTransaction, TransactionTypeInput, Transaction, EventClass, \
-    NotificationClass, RebookReactionChoice
+    NotificationClass, RebookReactionChoice, ComplexTransactionInput
 
 _l = logging.getLogger('poms.transactions')
 
@@ -252,7 +252,6 @@ class TransactionTypeProcess(object):
                               source=action_instrument, source_attr_name='public_name')
 
                 if getattr(action_instrument, 'notes'):
-
                     self._set_val(errors=errors, values=self.values, default_value='',
                                   target=instrument, target_attr_name='notes',
                                   source=action_instrument, source_attr_name='notes')
@@ -440,7 +439,6 @@ class TransactionTypeProcess(object):
                               source=action_instrument_manual_pricing_formula, source_attr_name='expr')
 
                 if getattr(action_instrument_manual_pricing_formula, 'notes'):
-
                     self._set_val(errors=errors, values=self.values, default_value='',
                                   target=manual_pricing_formula, target_attr_name='notes',
                                   source=action_instrument_manual_pricing_formula, source_attr_name='notes')
@@ -528,7 +526,6 @@ class TransactionTypeProcess(object):
                               source_attr_name='periodicity_n')
 
                 if getattr(action_instrument_accrual_calculation_schedule, 'notes'):
-
                     self._set_val(errors=errors, values=self.values, default_value='',
                                   target=accrual_calculation_schedule, target_attr_name='notes',
                                   source=action_instrument_accrual_calculation_schedule, source_attr_name='notes')
@@ -878,7 +875,6 @@ class TransactionTypeProcess(object):
                 print(action_transaction.notes)
 
                 if action_transaction.notes is not None:
-
                     self._set_val(errors=errors, values=self.values, default_value='',
                                   target=transaction, target_attr_name='notes',
                                   source=action_transaction, source_attr_name='notes')
@@ -906,6 +902,72 @@ class TransactionTypeProcess(object):
 
                     if bool(errors):
                         self.transactions_errors.append(errors)
+
+    def _save_inputs(self):
+
+        self.complex_transaction.inputs.all().delete()
+
+        for ti in self.transaction_type.inputs.all():
+            val = self.values.get(ti.name, None)
+
+            ci = ComplexTransactionInput()
+            ci.complex_transaction = self.complex_transaction
+            ci.transaction_type_input = ti
+
+            if ti.value_type == TransactionTypeInput.STRING:
+                if val is None:
+                    val = ''
+                ci.value_string = val
+            elif ti.value_type == TransactionTypeInput.NUMBER:
+                if val is None:
+                    val = 0.0
+                ci.value_float = val
+            elif ti.value_type == TransactionTypeInput.DATE:
+                if val is None:
+                    val = datetime.date.min
+                ci.value_date = val
+            elif ti.value_type == TransactionTypeInput.RELATION:
+
+                model_class = ti.content_type.model_class()
+
+                if issubclass(model_class, Account):
+                    ci.account = val
+                elif issubclass(model_class, Currency):
+                    ci.currency = val
+                elif issubclass(model_class, Instrument):
+                    ci.instrument = val
+                elif issubclass(model_class, InstrumentType):
+                    ci.instrument_type = val
+                elif issubclass(model_class, Counterparty):
+                    ci.counterparty = val
+                elif issubclass(model_class, Responsible):
+                    ci.responsible = val
+                elif issubclass(model_class, Strategy1):
+                    ci.strategy1 = val
+                elif issubclass(model_class, Strategy2):
+                    ci.strategy2 = val
+                elif issubclass(model_class, Strategy3):
+                    ci.strategy3 = val
+                elif issubclass(model_class, DailyPricingModel):
+                    ci.daily_pricing_model = val
+                elif issubclass(model_class, PaymentSizeDetail):
+                    ci.payment_size_detail = val
+                elif issubclass(model_class, Portfolio):
+                    ci.portfolio = val
+                elif issubclass(model_class, PriceDownloadScheme):
+                    ci.price_download_scheme = val
+                elif issubclass(model_class, PricingPolicy):
+                    ci.pricing_policy = val
+                elif issubclass(model_class, Periodicity):
+                    ci.periodicity = val
+                elif issubclass(model_class, AccrualCalculationModel):
+                    ci.accrual_calculation_model = val
+                elif issubclass(model_class, EventClass):
+                    ci.event_class = val
+                elif issubclass(model_class, NotificationClass):
+                    ci.notification_class = val
+
+            ci.save()
 
     def process(self):
         if self.process_mode == self.MODE_RECALCULATE:
@@ -938,6 +1000,9 @@ class TransactionTypeProcess(object):
                           validator=formula.validate_date)
             if bool(complex_transaction_errors):
                 self.complex_transaction_errors.append(complex_transaction_errors)
+
+            self._save_inputs()
+
             self.complex_transaction.save()
 
         print(self.complex_transaction.transactions.all())

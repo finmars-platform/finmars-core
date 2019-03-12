@@ -1117,6 +1117,7 @@ class GeneratedEvent(models.Model):
     def __str__(self):
         return 'Event #%s' % self.id
 
+
     def processed(self, member, action, complex_transaction, status=BOOKED_SYSTEM_DEFAULT):
         self.member = member
         self.action = action

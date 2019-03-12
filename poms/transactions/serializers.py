@@ -216,7 +216,6 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
             read_only=True)
 
     def validate(self, data):
-        print(data)
         value_type = data['value_type']
         if value_type == TransactionTypeInput.RELATION:
             content_type = data.get('content_type', None)
@@ -1878,8 +1877,8 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
 
         instance.process()
 
-        if instance.is_book:
-            self._save_inputs(instance)
+        # if instance.is_book:
+        #     self._save_inputs(instance)
 
         # if instance.calculate:
         #     instance.process()
@@ -1964,70 +1963,70 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
     #         obj.id = None
     #         obj.save()
 
-    def _save_inputs(self, instance):
-
-        print('_save_unputs instance.values %s' % instance.values)
-
-        instance.complex_transaction.inputs.all().delete()
-
-        for ti in instance.transaction_type.inputs.all():
-            val = instance.values.get(ti.name, None)
-
-            ci = ComplexTransactionInput()
-            ci.complex_transaction = instance.complex_transaction
-            ci.transaction_type_input = ti
-
-            if ti.value_type == TransactionTypeInput.STRING:
-                if val is None:
-                    val = ''
-                ci.value_string = val
-            elif ti.value_type == TransactionTypeInput.NUMBER:
-                if val is None:
-                    val = 0.0
-                ci.value_float = val
-            elif ti.value_type == TransactionTypeInput.DATE:
-                if val is None:
-                    val = datetime.date.min
-                ci.value_date = val
-            elif ti.value_type == TransactionTypeInput.RELATION:
-
-                model_class = ti.content_type.model_class()
-
-                if issubclass(model_class, Account):
-                    ci.account = val
-                elif issubclass(model_class, Currency):
-                    ci.currency = val
-                elif issubclass(model_class, Instrument):
-                    ci.instrument = val
-                elif issubclass(model_class, InstrumentType):
-                    ci.instrument_type = val
-                elif issubclass(model_class, Counterparty):
-                    ci.counterparty = val
-                elif issubclass(model_class, Responsible):
-                    ci.responsible = val
-                elif issubclass(model_class, Strategy1):
-                    ci.strategy1 = val
-                elif issubclass(model_class, Strategy2):
-                    ci.strategy2 = val
-                elif issubclass(model_class, Strategy3):
-                    ci.strategy3 = val
-                elif issubclass(model_class, DailyPricingModel):
-                    ci.daily_pricing_model = val
-                elif issubclass(model_class, PaymentSizeDetail):
-                    ci.payment_size_detail = val
-                elif issubclass(model_class, Portfolio):
-                    ci.portfolio = val
-                elif issubclass(model_class, PriceDownloadScheme):
-                    ci.price_download_scheme = val
-                elif issubclass(model_class, PricingPolicy):
-                    ci.pricing_policy = val
-                elif issubclass(model_class, Periodicity):
-                    ci.periodicity = val
-                elif issubclass(model_class, AccrualCalculationModel):
-                    ci.accrual_calculation_model = val
-                elif issubclass(model_class, EventClass):
-                    ci.event_class = val
-                elif issubclass(model_class, NotificationClass):
-                    ci.notification_class = val
-
-            ci.save()
+    # def _save_inputs(self, instance):
+    #
+    #     print('_save_unputs instance.values %s' % instance.values)
+    #
+    #     instance.complex_transaction.inputs.all().delete()
+    #
+    #     for ti in instance.transaction_type.inputs.all():
+    #         val = instance.values.get(ti.name, None)
+    #
+    #         ci = ComplexTransactionInput()
+    #         ci.complex_transaction = instance.complex_transaction
+    #         ci.transaction_type_input = ti
+    #
+    #         if ti.value_type == TransactionTypeInput.STRING:
+    #             if val is None:
+    #                 val = ''
+    #             ci.value_string = val
+    #         elif ti.value_type == TransactionTypeInput.NUMBER:
+    #             if val is None:
+    #                 val = 0.0
+    #             ci.value_float = val
+    #         elif ti.value_type == TransactionTypeInput.DATE:
+    #             if val is None:
+    #                 val = datetime.date.min
+    #             ci.value_date = val
+    #         elif ti.value_type == TransactionTypeInput.RELATION:
+    #
+    #             model_class = ti.content_type.model_class()
+    #
+    #             if issubclass(model_class, Account):
+    #                 ci.account = val
+    #             elif issubclass(model_class, Currency):
+    #                 ci.currency = val
+    #             elif issubclass(model_class, Instrument):
+    #                 ci.instrument = val
+    #             elif issubclass(model_class, InstrumentType):
+    #                 ci.instrument_type = val
+    #             elif issubclass(model_class, Counterparty):
+    #                 ci.counterparty = val
+    #             elif issubclass(model_class, Responsible):
+    #                 ci.responsible = val
+    #             elif issubclass(model_class, Strategy1):
+    #                 ci.strategy1 = val
+    #             elif issubclass(model_class, Strategy2):
+    #                 ci.strategy2 = val
+    #             elif issubclass(model_class, Strategy3):
+    #                 ci.strategy3 = val
+    #             elif issubclass(model_class, DailyPricingModel):
+    #                 ci.daily_pricing_model = val
+    #             elif issubclass(model_class, PaymentSizeDetail):
+    #                 ci.payment_size_detail = val
+    #             elif issubclass(model_class, Portfolio):
+    #                 ci.portfolio = val
+    #             elif issubclass(model_class, PriceDownloadScheme):
+    #                 ci.price_download_scheme = val
+    #             elif issubclass(model_class, PricingPolicy):
+    #                 ci.pricing_policy = val
+    #             elif issubclass(model_class, Periodicity):
+    #                 ci.periodicity = val
+    #             elif issubclass(model_class, AccrualCalculationModel):
+    #                 ci.accrual_calculation_model = val
+    #             elif issubclass(model_class, EventClass):
+    #                 ci.event_class = val
+    #             elif issubclass(model_class, NotificationClass):
+    #                 ci.notification_class = val
+    #
+    #         ci.save()
