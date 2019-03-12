@@ -6,6 +6,7 @@ from django.utils.translation import ugettext_lazy
 from mptt.models import MPTTModel
 
 from poms.common.models import NamedModel, FakeDeletableModel
+from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_perms.models import GenericObjectPermission
 from poms.tags.models import TagLink
 from poms.users.models import MasterUser
@@ -99,7 +100,7 @@ class Strategy1Subgroup(NamedModel, FakeDeletableModel):
 #         verbose_name_plural = ugettext_lazy('strategy1 subgroups - group permissions')
 
 
-class Strategy1(NamedModel, FakeDeletableModel):
+class Strategy1(NamedModelAutoMapping, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategies1', verbose_name=ugettext_lazy('master user'))
     subgroup = models.ForeignKey(Strategy1Subgroup, null=True, blank=True, on_delete=models.PROTECT,
                                  related_name='strategies')
@@ -230,7 +231,7 @@ class Strategy2Subgroup(NamedModel, FakeDeletableModel):
 #         verbose_name_plural = ugettext_lazy('strategy2 subgroups - group permissions')
 
 
-class Strategy2(NamedModel, FakeDeletableModel):
+class Strategy2(NamedModelAutoMapping, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategies2', verbose_name=ugettext_lazy('master user'))
     subgroup = models.ForeignKey(Strategy2Subgroup, null=True, blank=True, on_delete=models.PROTECT,
                                  related_name='strategies')
@@ -361,7 +362,7 @@ class Strategy3Subgroup(NamedModel, FakeDeletableModel):
 #         verbose_name_plural = ugettext_lazy('strategy3 subgroups - group permissions')
 
 
-class Strategy3(NamedModel, FakeDeletableModel):
+class Strategy3(NamedModelAutoMapping, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategies3', verbose_name=ugettext_lazy('master user'))
     subgroup = models.ForeignKey(Strategy3Subgroup, null=True, blank=True, on_delete=models.PROTECT,
                                  related_name='strategies')

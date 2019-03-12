@@ -6,6 +6,7 @@ from django.utils.translation import ugettext_lazy
 from mptt.models import MPTTModel
 
 from poms.common.models import NamedModel, FakeDeletableModel, EXPRESSION_FIELD_LENGTH
+from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.currencies.models import Currency
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
@@ -54,7 +55,7 @@ class AccountType(NamedModel, FakeDeletableModel):
 #         verbose_name_plural = ugettext_lazy('account types - group permissions')
 
 
-class Account(NamedModel, FakeDeletableModel):
+class Account(NamedModelAutoMapping, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='accounts', verbose_name=ugettext_lazy('master user'))
     type = models.ForeignKey(AccountType, on_delete=models.PROTECT, null=True, blank=True,
                              verbose_name=ugettext_lazy('account type'))

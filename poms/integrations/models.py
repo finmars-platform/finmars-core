@@ -15,7 +15,6 @@ from django.utils import timezone
 from django.utils.translation import ugettext, ugettext_lazy
 
 from poms.common.models import TimeStampedModel, AbstractClassModel, EXPRESSION_FIELD_LENGTH
-from poms.instruments.models import Instrument
 from poms.integrations.storage import import_config_storage
 from poms.obj_attrs.models import GenericClassifier, GenericAttributeType
 

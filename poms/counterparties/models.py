@@ -6,6 +6,7 @@ from django.utils.translation import ugettext_lazy
 from mptt.models import MPTTModel
 
 from poms.common.models import NamedModel, FakeDeletableModel
+from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
 from poms.tags.models import TagLink
@@ -50,7 +51,7 @@ class CounterpartyGroup(NamedModel, FakeDeletableModel):
 #         verbose_name_plural = ugettext_lazy('counterparty groups - group permissions')
 
 
-class Counterparty(NamedModel, FakeDeletableModel):
+class Counterparty(NamedModelAutoMapping, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='counterparties',
                                     verbose_name=ugettext_lazy('master user'))
     group = models.ForeignKey(CounterpartyGroup, related_name='counterparties', null=True, blank=True,
@@ -200,7 +201,7 @@ class ResponsibleGroup(NamedModel, FakeDeletableModel):
 #         verbose_name_plural = ugettext_lazy('responsible groups - group permissions')
 
 
-class Responsible(NamedModel, FakeDeletableModel):
+class Responsible(NamedModelAutoMapping, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='responsibles', verbose_name=ugettext_lazy('master user'))
     group = models.ForeignKey(ResponsibleGroup, related_name='responsibles', null=True, blank=True,
                               verbose_name=ugettext_lazy('group'))

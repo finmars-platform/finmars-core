@@ -5,13 +5,14 @@ from django.db import models
 from django.utils.translation import ugettext_lazy
 from django.contrib.postgres.fields import JSONField
 from poms.common.models import NamedModel, FakeDeletableModel
+from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
 from poms.tags.models import TagLink
 from poms.users.models import MasterUser, Member
 
 
-class Portfolio(NamedModel, FakeDeletableModel):
+class Portfolio(NamedModelAutoMapping, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='portfolios', verbose_name=ugettext_lazy('master user'))
     accounts = models.ManyToManyField('accounts.Account', related_name='portfolios', blank=True,
                                       verbose_name=ugettext_lazy('accounts'))

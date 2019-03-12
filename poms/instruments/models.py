@@ -18,6 +18,7 @@ from poms.common import formula
 from poms.common.formula_accruals import get_coupon
 from poms.common.models import NamedModel, AbstractClassModel, FakeDeletableModel, EXPRESSION_FIELD_LENGTH
 from poms.common.utils import date_now, isclose
+from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
 from poms.tags.models import TagLink
@@ -301,7 +302,7 @@ class PricingPolicy(NamedModel):
         verbose_name_plural = ugettext_lazy('pricing policies')
 
 
-class InstrumentType(NamedModel, FakeDeletableModel):
+class InstrumentType(NamedModelAutoMapping, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='instrument_types',
                                     verbose_name=ugettext_lazy('master user'))
     instrument_class = models.ForeignKey(InstrumentClass, related_name='instrument_types', on_delete=models.PROTECT,
@@ -338,7 +339,7 @@ class InstrumentType(NamedModel, FakeDeletableModel):
         return self.master_user.instrument_type_id == self.id if self.master_user_id else False
 
 
-class Instrument(NamedModel, FakeDeletableModel):
+class Instrument(NamedModelAutoMapping, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='instruments', verbose_name=ugettext_lazy('master user'))
 
     instrument_type = models.ForeignKey(InstrumentType, on_delete=models.PROTECT,
