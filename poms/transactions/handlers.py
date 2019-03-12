@@ -574,6 +574,7 @@ class TransactionTypeProcess(object):
             if action_instrument_event_schedule:
 
                 _l.debug('process event schedule: %s', action_instrument_event_schedule)
+                _l.debug('instrument_map: %s', instrument_map)
 
                 errors = {}
 
@@ -582,6 +583,7 @@ class TransactionTypeProcess(object):
                 self._set_rel(errors=errors, values=self.values, default_value=None,
                               target=event_schedule, target_attr_name='instrument',
                               source=action_instrument_event_schedule, source_attr_name='instrument')
+
                 if action_instrument_event_schedule.instrument_phantom is not None:
                     event_schedule.instrument = instrument_map[
                         action_instrument_event_schedule.instrument_phantom_id]
@@ -609,6 +611,11 @@ class TransactionTypeProcess(object):
                 self._set_val(errors=errors, values=self.values, default_value='',
                               target=event_schedule, target_attr_name='notify_in_n_days',
                               source=action_instrument_event_schedule, source_attr_name='notify_in_n_days')
+
+                self._set_val(errors=errors, values=self.values, default_value=False,
+                              validator=formula.validate_bool,
+                              target=event_schedule, target_attr_name='is_auto_generated',
+                              source=action_instrument_event_schedule, source_attr_name='is_auto_generated')
 
                 self._set_val(errors=errors, values=self.values, default_value='',
                               target=event_schedule, target_attr_name='periodicity_n',
@@ -912,6 +919,8 @@ class TransactionTypeProcess(object):
         actions = self.transaction_type.actions.order_by('order').all()
 
         instrument_map = self.book_create_instruments(actions, master_user, instrument_map)
+
+        print('instrument_map process %s ' % instrument_map)
 
         self.book_create_factor_schedules(actions, instrument_map)
         self.book_create_manual_pricing_formulas(actions, instrument_map)

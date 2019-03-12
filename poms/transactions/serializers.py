@@ -216,6 +216,7 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
             read_only=True)
 
     def validate(self, data):
+        print(data)
         value_type = data['value_type']
         if value_type == TransactionTypeInput.RELATION:
             content_type = data.get('content_type', None)
@@ -702,6 +703,7 @@ class TransactionTypeActionInstrumentEventScheduleSerializer(serializers.ModelSe
     effective_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
     final_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
     notify_in_n_days = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+    is_auto_generated = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
     periodicity_n = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
     name = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
     description = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
@@ -725,6 +727,7 @@ class TransactionTypeActionInstrumentEventScheduleSerializer(serializers.ModelSe
             'effective_date',
             'final_date',
             'notify_in_n_days',
+            'is_auto_generated',
             'periodicity_n',
             'name',
             'description'
@@ -1826,7 +1829,6 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
                     try:
 
                         if fvalues.fields[k].label != 'notes':
-
                             fvalues.fields[k].fail('required')
 
                     except ValidationError as e:
