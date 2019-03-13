@@ -472,6 +472,9 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
                 attribute = GenericAttribute(content_object=instance, attribute_type=attr_type)
 
+                print('result_attr', result_attr)
+                print('attribute', attribute)
+
                 if attr_type.value_type == 10:
                     attribute.value_string = str(result_attr['executed_expression'])
                 elif attr_type.value_type == 20:
@@ -480,7 +483,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
                     attribute.classifier = result_attr['executed_expression']
 
-                    print('attribute', attribute)
+
 
                 elif attr_type.value_type == 40:
                     attribute.value_date = formula._parse_date(result_attr['executed_expression'])
