@@ -15,7 +15,7 @@ from poms.integrations.models import Task, ImportConfig, ProviderClass, Currency
     DailyPricingModelMapping, PaymentSizeDetailMapping, PriceDownloadSchemeMapping, InstrumentAttributeValueMapping, \
     ComplexTransactionImportScheme, ComplexTransactionImportSchemeField, ComplexTransactionImportSchemeInput, \
     ComplexTransactionImportSchemeRule, PortfolioClassifierMapping, AccountClassifierMapping, \
-    CounterpartyClassifierMapping, ResponsibleClassifierMapping
+    CounterpartyClassifierMapping, ResponsibleClassifierMapping, InstrumentClassifierMapping
 
 admin.site.register(ProviderClass, ClassModelAdmin)
 admin.site.register(FactorScheduleDownloadMethod, ClassModelAdmin)
@@ -150,6 +150,7 @@ admin.site.register(PeriodicityMapping, AbstractMappingAdmin)
 admin.site.register(AccountMapping, AbstractMappingAdmin)
 admin.site.register(AccountClassifierMapping, AbstractClassifierMappingAdmin)
 admin.site.register(InstrumentMapping, AbstractMappingAdmin)
+admin.site.register(InstrumentClassifierMapping, AbstractClassifierMappingAdmin)
 admin.site.register(CounterpartyMapping, AbstractMappingAdmin)
 admin.site.register(CounterpartyClassifierMapping, AbstractClassifierMappingAdmin)
 admin.site.register(ResponsibleMapping, AbstractMappingAdmin)

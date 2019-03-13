@@ -392,6 +392,19 @@ class CsvDataImportViewSet(AbstractModelViewSet):
                                         _l.debug('PortfolioClassifierMapping %s does not exist',
                                                  entity_field.expression)
 
+                                if scheme.content_type.model == 'instrument':
+
+                                    try:
+                                        executed_attr['executed_expression'] = InstrumentClassifierMapping.objects.get(
+                                            value=csv_row_dict[entity_field.expression]).content_object
+
+                                    except (InstrumentClassifierMapping.DoesNotExist, KeyError):
+
+                                        inputs_error.append(entity_field)
+
+                                        _l.debug('InstrumentClassifierMapping %s does not exist',
+                                                 entity_field.expression)
+
                                 if scheme.content_type.model == 'account':
 
                                     try:

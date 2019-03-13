@@ -236,6 +236,7 @@ router.register(r'import/periodicity-mapping', integrations.PeriodicityMappingVi
 router.register(r'import/account-mapping', integrations.AccountMappingViewSet)
 router.register(r'import/account-classifier-mapping', integrations.AccountClassifierMappingViewSet)
 router.register(r'import/instrument-mapping', integrations.InstrumentMappingViewSet)
+router.register(r'import/instrument-classifier-mapping', integrations.InstrumentClassifierMappingViewSet)
 router.register(r'import/counterparty-mapping', integrations.CounterpartyMappingViewSet)
 router.register(r'import/counterparty-classifier-mapping', integrations.CounterpartyClassifierMappingViewSet)
 router.register(r'import/responsible-mapping', integrations.ResponsibleMappingViewSet)

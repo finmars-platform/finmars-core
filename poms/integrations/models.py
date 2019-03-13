@@ -459,6 +459,8 @@ class AccountClassifierMapping(AbstractMapping):
         return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
 
 
+
+
 class InstrumentMapping(AbstractMapping):
     content_object = models.ForeignKey('instruments.Instrument', verbose_name=ugettext_lazy('instrument'))
 
@@ -472,6 +474,20 @@ class InstrumentMapping(AbstractMapping):
     def __str__(self):
         return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
 
+
+class InstrumentClassifierMapping(AbstractMapping):
+    attribute_type = models.ForeignKey(GenericAttributeType)
+    content_object = models.ForeignKey(GenericClassifier)
+
+    class Meta(AbstractMapping.Meta):
+        verbose_name = ugettext_lazy('instrument classifier mapping')
+        verbose_name_plural = ugettext_lazy('instrument classifier mappings')
+        unique_together = [
+            ['master_user', 'provider', 'value'],
+        ]
+
+    def __str__(self):
+        return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
 
 class CounterpartyMapping(AbstractMapping):
     content_object = models.ForeignKey('counterparties.Counterparty', verbose_name=ugettext_lazy('counterparty'))

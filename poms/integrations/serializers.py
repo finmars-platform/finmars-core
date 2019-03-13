@@ -36,7 +36,8 @@ from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDo
     Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, DailyPricingModelMapping, PaymentSizeDetailMapping, \
     PriceDownloadSchemeMapping, ComplexTransactionImportScheme, ComplexTransactionImportSchemeInput, \
     ComplexTransactionImportSchemeRule, ComplexTransactionImportSchemeField, PortfolioClassifierMapping, \
-    AccountClassifierMapping, CounterpartyClassifierMapping, ResponsibleClassifierMapping, PricingPolicyMapping
+    AccountClassifierMapping, CounterpartyClassifierMapping, ResponsibleClassifierMapping, PricingPolicyMapping, \
+    InstrumentClassifierMapping
 from poms.integrations.providers.base import get_provider, ProviderException
 from poms.integrations.storage import import_file_storage
 from poms.integrations.tasks import download_pricing, download_instrument
@@ -641,6 +642,17 @@ class InstrumentMappingSerializer(AbstractMappingSerializer):
     def get_content_object_view_serializer(self):
         from poms.instruments.serializers import InstrumentViewSerializer
         return InstrumentViewSerializer
+
+
+class InstrumentClassifierMappingSerializer(AbstractClassifierMappingSerializer):
+    attribute_type = GenericAttributeTypeField()
+    content_object = GenericClassifierField()
+
+    class Meta(AbstractClassifierMappingSerializer.Meta):
+        model = InstrumentClassifierMapping
+
+    def __init__(self, *args, **kwargs):
+        super(InstrumentClassifierMappingSerializer, self).__init__(*args, **kwargs)
 
 
 class CounterpartyMappingSerializer(AbstractMappingSerializer):
