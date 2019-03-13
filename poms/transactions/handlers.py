@@ -1001,13 +1001,13 @@ class TransactionTypeProcess(object):
             if bool(complex_transaction_errors):
                 self.complex_transaction_errors.append(complex_transaction_errors)
 
-            self._save_inputs()
-
             self.complex_transaction.save()
+
+            self._save_inputs()
 
         print(self.complex_transaction.transactions.all())
 
-        self.complex_transaction.transactions.all().delete()
+        self.complex_transaction.transactions.all().delete  ()
 
         self.book_create_transactions(actions, master_user, instrument_map)
 
