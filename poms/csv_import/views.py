@@ -228,6 +228,30 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
                                     _l.debug('CurrencyMapping %s does not exist', entity_field.expression)
 
+                            elif key == 'pricing_currency':
+
+                                try:
+                                    instance[key] = CurrencyMapping.objects.get(master_user=master_user,
+                                                                                value=csv_row_dict[entity_field.expression]).content_object
+
+                                except (CurrencyMapping.DoesNotExist, KeyError):
+
+                                    inputs_error.append(entity_field)
+
+                                    _l.debug('CurrencyMapping %s does not exist', entity_field.expression)
+
+                            elif key == 'accrued_currency':
+
+                                try:
+                                    instance[key] = CurrencyMapping.objects.get(master_user=master_user,
+                                                                                value=csv_row_dict[entity_field.expression]).content_object
+
+                                except (CurrencyMapping.DoesNotExist, KeyError):
+
+                                    inputs_error.append(entity_field)
+
+                                    _l.debug('CurrencyMapping %s does not exist', entity_field.expression)
+
                             else:
 
                                 try:
