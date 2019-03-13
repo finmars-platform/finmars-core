@@ -21,7 +21,7 @@ from poms.common.formula import safe_eval, ExpressionSyntaxError, ExpressionEval
 
 from poms.integrations.models import CounterpartyMapping, AccountMapping, ResponsibleMapping, PortfolioMapping, \
     PortfolioClassifierMapping, AccountClassifierMapping, ResponsibleClassifierMapping, CounterpartyClassifierMapping, \
-    PricingPolicyMapping, InstrumentMapping, CurrencyMapping, InstrumentTypeMapping
+    PricingPolicyMapping, InstrumentMapping, CurrencyMapping, InstrumentTypeMapping, PaymentSizeDetailMapping
 
 from poms.obj_attrs.models import GenericAttributeType, GenericAttribute, GenericClassifier
 
@@ -227,6 +227,18 @@ class CsvDataImportViewSet(AbstractModelViewSet):
                                     inputs_error.append(entity_field)
 
                                     _l.debug('InstrumentTypeMapping %s does not exist', entity_field.expression)
+
+                            elif key == 'payment_size_detail':
+
+                                try:
+                                    instance[key] = PaymentSizeDetailMapping.objects.get(master_user=master_user,
+                                                                                value=csv_row_dict[entity_field.expression]).content_object
+
+                                except (PaymentSizeDetailMapping.DoesNotExist, KeyError):
+
+                                    inputs_error.append(entity_field)
+
+                                    _l.debug('PaymentSizeDetailMapping %s does not exist', entity_field.expression)
 
                             elif key == 'currency':
 
