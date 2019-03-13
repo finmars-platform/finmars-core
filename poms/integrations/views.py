@@ -511,7 +511,7 @@ class InstrumentClassifierMappingFilterSet(AbstractMappingFilterSet):
 
 
 class InstrumentClassifierMappingViewSet(AbstractMappingViewSet):
-    queryset = InstrumentMapping.objects.select_related(
+    queryset = InstrumentClassifierMapping.objects.select_related(
         'master_user', 'provider', 'content_object'
     )
     serializer_class = InstrumentClassifierMappingSerializer
