@@ -22,7 +22,7 @@ from poms.common.formula import safe_eval, ExpressionSyntaxError, ExpressionEval
 from poms.integrations.models import CounterpartyMapping, AccountMapping, ResponsibleMapping, PortfolioMapping, \
     PortfolioClassifierMapping, AccountClassifierMapping, ResponsibleClassifierMapping, CounterpartyClassifierMapping, \
     PricingPolicyMapping, InstrumentMapping, CurrencyMapping, InstrumentTypeMapping, PaymentSizeDetailMapping, \
-    DailyPricingModelMapping, PriceDownloadSchemeMapping
+    DailyPricingModelMapping, PriceDownloadSchemeMapping, InstrumentClassifierMapping
 
 from poms.obj_attrs.models import GenericAttributeType, GenericAttribute, GenericClassifier
 
