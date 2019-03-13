@@ -21,7 +21,7 @@ from poms.common.formula import safe_eval, ExpressionSyntaxError, ExpressionEval
 
 from poms.integrations.models import CounterpartyMapping, AccountMapping, ResponsibleMapping, PortfolioMapping, \
     PortfolioClassifierMapping, AccountClassifierMapping, ResponsibleClassifierMapping, CounterpartyClassifierMapping, \
-    PricingPolicyMapping, InstrumentMapping, CurrencyMapping
+    PricingPolicyMapping, InstrumentMapping, CurrencyMapping, InstrumentTypeMapping
 
 from poms.obj_attrs.models import GenericAttributeType, GenericAttribute, GenericClassifier
 
@@ -215,6 +215,18 @@ class CsvDataImportViewSet(AbstractModelViewSet):
                                     inputs_error.append(entity_field)
 
                                     _l.debug('InstrumentMapping %s does not exist', entity_field.expression)
+
+                            elif key == 'instrument_type':
+
+                                try:
+                                    instance[key] = InstrumentTypeMapping.objects.get(master_user=master_user,
+                                                                                  value=csv_row_dict[entity_field.expression]).content_object
+
+                                except (InstrumentTypeMapping.DoesNotExist, KeyError):
+
+                                    inputs_error.append(entity_field)
+
+                                    _l.debug('InstrumentTypeMapping %s does not exist', entity_field.expression)
 
                             elif key == 'currency':
 
