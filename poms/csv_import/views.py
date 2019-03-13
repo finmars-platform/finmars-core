@@ -21,7 +21,8 @@ from poms.common.formula import safe_eval, ExpressionSyntaxError, ExpressionEval
 
 from poms.integrations.models import CounterpartyMapping, AccountMapping, ResponsibleMapping, PortfolioMapping, \
     PortfolioClassifierMapping, AccountClassifierMapping, ResponsibleClassifierMapping, CounterpartyClassifierMapping, \
-    PricingPolicyMapping, InstrumentMapping, CurrencyMapping, InstrumentTypeMapping, PaymentSizeDetailMapping
+    PricingPolicyMapping, InstrumentMapping, CurrencyMapping, InstrumentTypeMapping, PaymentSizeDetailMapping, \
+    DailyPricingModelMapping, PriceDownloadSchemeMapping
 
 from poms.obj_attrs.models import GenericAttributeType, GenericAttribute, GenericClassifier
 
@@ -146,7 +147,8 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
                                 try:
                                     instance[key] = CounterpartyMapping.objects.get(master_user=master_user,
-                                        value=csv_row_dict[entity_field.expression]).content_object
+                                                                                    value=csv_row_dict[
+                                                                                        entity_field.expression]).content_object
 
                                 except (CounterpartyMapping.DoesNotExist, KeyError):
 
@@ -158,7 +160,8 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
                                 try:
                                     instance[key] = ResponsibleMapping.objects.get(master_user=master_user,
-                                        value=csv_row_dict[entity_field.expression]).content_object
+                                                                                   value=csv_row_dict[
+                                                                                       entity_field.expression]).content_object
 
                                 except (ResponsibleMapping.DoesNotExist, KeyError):
 
@@ -170,7 +173,8 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
                                 try:
                                     instance[key] = AccountMapping.objects.get(master_user=master_user,
-                                        value=csv_row_dict[entity_field.expression]).content_object
+                                                                               value=csv_row_dict[
+                                                                                   entity_field.expression]).content_object
 
                                 except (AccountMapping.DoesNotExist, KeyError):
 
@@ -182,7 +186,8 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
                                 try:
                                     instance[key] = PortfolioMapping.objects.get(master_user=master_user,
-                                        value=csv_row_dict[entity_field.expression]).content_object
+                                                                                 value=csv_row_dict[
+                                                                                     entity_field.expression]).content_object
 
                                 except (PortfolioMapping.DoesNotExist, KeyError):
 
@@ -192,11 +197,13 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
                             elif key == 'pricing_policy':
 
-                                print('csv_row_dict[entity_field.expression] %s' % csv_row_dict[entity_field.expression]    )
+                                print(
+                                    'csv_row_dict[entity_field.expression] %s' % csv_row_dict[entity_field.expression])
 
                                 try:
                                     instance[key] = PricingPolicyMapping.objects.get(master_user=master_user,
-                                        value=csv_row_dict[entity_field.expression]).content_object
+                                                                                     value=csv_row_dict[
+                                                                                         entity_field.expression]).content_object
 
                                 except (PricingPolicyMapping.DoesNotExist, KeyError):
 
@@ -208,7 +215,8 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
                                 try:
                                     instance[key] = InstrumentMapping.objects.get(master_user=master_user,
-                                        value=csv_row_dict[entity_field.expression]).content_object
+                                                                                  value=csv_row_dict[
+                                                                                      entity_field.expression]).content_object
 
                                 except (InstrumentMapping.DoesNotExist, KeyError):
 
@@ -220,19 +228,49 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
                                 try:
                                     instance[key] = InstrumentTypeMapping.objects.get(master_user=master_user,
-                                                                                  value=csv_row_dict[entity_field.expression]).content_object
+                                                                                      value=csv_row_dict[
+                                                                                          entity_field.expression]).content_object
 
                                 except (InstrumentTypeMapping.DoesNotExist, KeyError):
 
                                     inputs_error.append(entity_field)
 
-                                    _l.debug('InstrumentTypeMapping %s does not exist', entity_field.expression)
+                                    _l.debug('InstrumentTypeMapping %s does not exist  ', entity_field.expression)
+
+
+                            elif key == 'price_download_scheme':
+
+                                try:
+                                    instance[key] = PriceDownloadSchemeMapping.objects.get(master_user=master_user,
+                                                                                           value=csv_row_dict[
+                                                                                               entity_field.expression]).content_object
+
+                                except (PriceDownloadSchemeMapping.DoesNotExist, KeyError):
+
+                                    inputs_error.append(entity_field)
+
+                                    _l.debug('PriceDownloadSchemeMapping %s does not exist', entity_field.expression)
+
+                            elif key == 'daily_pricing_model':
+
+                                try:
+                                    instance[key] = DailyPricingModelMapping.objects.get(master_user=master_user,
+                                                                                         value=csv_row_dict[
+                                                                                             entity_field.expression]).content_object
+
+                                except (DailyPricingModelMapping.DoesNotExist, KeyError):
+
+                                    inputs_error.append(entity_field)
+
+                                    _l.debug('DailyPricingModelMapping %s does not exist', entity_field.expression)
+
 
                             elif key == 'payment_size_detail':
 
                                 try:
                                     instance[key] = PaymentSizeDetailMapping.objects.get(master_user=master_user,
-                                                                                value=csv_row_dict[entity_field.expression]).content_object
+                                                                                         value=csv_row_dict[
+                                                                                             entity_field.expression]).content_object
 
                                 except (PaymentSizeDetailMapping.DoesNotExist, KeyError):
 
@@ -244,7 +282,8 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
                                 try:
                                     instance[key] = CurrencyMapping.objects.get(master_user=master_user,
-                                        value=csv_row_dict[entity_field.expression]).content_object
+                                                                                value=csv_row_dict[
+                                                                                    entity_field.expression]).content_object
 
                                 except (CurrencyMapping.DoesNotExist, KeyError):
 
@@ -256,7 +295,8 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
                                 try:
                                     instance[key] = CurrencyMapping.objects.get(master_user=master_user,
-                                                                                value=csv_row_dict[entity_field.expression]).content_object
+                                                                                value=csv_row_dict[
+                                                                                    entity_field.expression]).content_object
 
                                 except (CurrencyMapping.DoesNotExist, KeyError):
 
@@ -268,7 +308,8 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
                                 try:
                                     instance[key] = CurrencyMapping.objects.get(master_user=master_user,
-                                                                                value=csv_row_dict[entity_field.expression]).content_object
+                                                                                value=csv_row_dict[
+                                                                                    entity_field.expression]).content_object
 
                                 except (CurrencyMapping.DoesNotExist, KeyError):
 
