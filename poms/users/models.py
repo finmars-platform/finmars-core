@@ -213,14 +213,16 @@ class MasterUser(models.Model):
         if not PricingAutomatedSchedule.objects.filter(master_user=self).exists():
             PricingAutomatedSchedule.objects.create(master_user=self, is_enabled=False)
 
-
         price_download_scheme = PriceDownloadScheme.objects.create(master_user=self, scheme_name='-',
                                                                    provider=ProviderClass.objects.get(
                                                                        pk=ProviderClass.BLOOMBERG))
         ccys = {}
-        ccy = Currency.objects.create(master_user=self, name='-')
+        ccy = Currency.objects.create(master_user=self, name='-', user_code='-')
         ccy_usd = None
         for dc in currencies_data.values():
+
+            print('dc %s ' % dc)
+
             dc_user_code = dc['user_code']
             dc_name = dc.get('name', dc_user_code)
             # dc_reference_for_pricing = dc.get('reference_for_pricing', None)
@@ -280,20 +282,19 @@ class MasterUser(models.Model):
         pricing_policy = PricingPolicy.objects.create(master_user=self, name='-', expr='(ask+bid)/2')
         pricing_policy_dft = PricingPolicy.objects.create(master_user=self, name='DFT', expr='(ask+bid)/2')
 
-
         if user:
             Member.objects.create(user=user, master_user=self, is_owner=True, is_admin=True)
         group = Group.objects.create(master_user=self, name='%s' % ugettext_lazy('Default'))
 
         bloomberg = ProviderClass.objects.get(pk=ProviderClass.BLOOMBERG)
-        for dc in currencies_data.values():
-            dc_user_code = dc['user_code']
-            dc_bloomberg = dc['bloomberg']
-
-            if dc_user_code != '-' and dc_user_code in ccys:
-                c = ccys[dc_user_code]
-                CurrencyMapping.objects.create(master_user=self, provider=bloomberg, value=dc_bloomberg,
-                                               content_object=c)
+        # for dc in currencies_data.values():
+        #     dc_user_code = dc['user_code']
+        #     dc_bloomberg = dc['bloomberg']
+        #
+        #     if dc_user_code != '-' and dc_user_code in ccys:
+        #         c = ccys[dc_user_code]
+        #         CurrencyMapping.objects.create(master_user=self, provider=bloomberg, value=dc_bloomberg,
+        #                                        content_object=c)
 
         self.system_currency = ccy_usd
         self.currency = ccy
@@ -368,6 +369,7 @@ class MasterUser(models.Model):
                 if is_change:
                     c1.save()
             else:
+
                 c = Currency.objects.create(master_user=self, user_code=dc_user_code, name=dc_name, short_name=dc_name,
                                             public_name=dc_name, reference_for_pricing=dc_reference_for_pricing)
                 ccys[c.user_code] = c
