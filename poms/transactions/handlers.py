@@ -90,8 +90,6 @@ class TransactionTypeProcess(object):
         self.next_fake_id = fake_id_gen or self._next_fake_id_default
         self.next_transaction_order = transaction_order_gen or self._next_transaction_order_default
 
-        print('values %s' % values)
-
         if values is None:
             self._set_values()
         else:
@@ -204,6 +202,8 @@ class TransactionTypeProcess(object):
                             value = None
 
             self.values[i.name] = value
+
+        # print('setvalues %s' % self.values)
 
     def book_create_instruments(self, actions, master_user, instrument_map):
 
@@ -1003,9 +1003,9 @@ class TransactionTypeProcess(object):
 
             self.complex_transaction.save()
 
-            self._save_inputs()
+        self._save_inputs()
 
-        print(self.complex_transaction.transactions.all())
+        # print(self.complex_transaction.transactions.all())
 
         self.complex_transaction.transactions.all().delete  ()
 

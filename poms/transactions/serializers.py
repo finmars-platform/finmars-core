@@ -1630,7 +1630,7 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
             elif i.value_type == TransactionTypeInput.RELATION:
                 model_class = i.content_type.model_class()
 
-                print('model_class %s' % model_class)
+                # print('model_class %s' % model_class)
 
                 if issubclass(model_class, Account):
                     field = AccountField(required=False, allow_null=True,
@@ -1844,15 +1844,10 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
 
     def update(self, instance, validated_data):
 
-        print("Event book here? instance %s" % instance)
-        print("Event book here? validated_data %s" % validated_data)
-
         for key, value in validated_data.items():
             if key not in ['complex_transaction', ]:
                 setattr(instance, key, value)
         instance.value_errors = []
-
-        print('instance.is_book %s' % instance.is_book)
 
         if instance.is_book:
             ctrn_values = validated_data.get('complex_transaction', None)
@@ -1878,7 +1873,7 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
         instance.process()
 
         # if instance.is_book:
-        #     self._save_inputs(instance)
+        #     instance._save_inputs()
 
         # if instance.calculate:
         #     instance.process()

@@ -349,6 +349,9 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
                             attr_type = GenericAttributeType.objects.get(pk=executed_attr['dynamic_attribute_id'])
 
+                            print('attr_type %s' % attr_type)
+                            print('attr_type value_type %s' % attr_type.value_type)
+
                             if attr_type.value_type == 40:
 
                                 executed_attr['executed_expression'] = safe_eval(entity_field.expression,
@@ -444,12 +447,11 @@ class CsvDataImportViewSet(AbstractModelViewSet):
                                         _l.debug('CounterpartyClassifierMapping %s does not exist',
                                                  entity_field.expression)
 
-
                         except (ExpressionEvalError, TypeError, Exception):
 
                             inputs_error.append(entity_field)
 
-                            # _l.debug('Can not evaluate dynamic attribute % expression ', entity_field.expression)
+                            # _l.debug('Can not evaluate dynamic attribute % expression %s ' % executed_attr)
 
                         instance['attributes'].append(executed_attr)
 
@@ -495,8 +497,6 @@ class CsvDataImportViewSet(AbstractModelViewSet):
                 elif attr_type.value_type == 30:
 
                     attribute.classifier = result_attr['executed_expression']
-
-
 
                 elif attr_type.value_type == 40:
                     attribute.value_date = formula._parse_date(result_attr['executed_expression'])
