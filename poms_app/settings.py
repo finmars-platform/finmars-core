@@ -31,6 +31,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'jrixf-%65l5&#@hbmq()sa-pzy@e)=zpdr6g0cg8a!i_&w-c!)'
 
+
+LOCAL = False
+if os.environ.get('LOCAL') == 'True':
+    LOCAL = True
+
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 if os.environ.get('DEBUG') == 'False':
@@ -668,41 +674,49 @@ CELERY_BEAT_SCHEDULE = {
 # INTEGRATIONS ------------------------------------------------
 
 
-IMPORT_CONFIG_STORAGE = {
-    'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
-    'KWARGS': {
-        'acl': 'private',
-        'bucket': os.environ.get('AWS_STORAGE_CONFIG_BUCKET_NAME', None),
-        'querystring_expire': 10,
-        'custom_domain': None
+if LOCAL:
+
+    IMPORT_CONFIG_STORAGE = {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        'KWARGS': {
+            'location': '/opt/finmars-import/config',
+            'base_url': '/api/hidden/'
+        }
     }
-}
-# IMPORT_CONFIG_STORAGE = {
-#     'BACKEND': 'django.core.files.storage.FileSystemStorage',
-#     'KWARGS': {
-#         'location': '/opt/finmars-import/config',
-#         'base_url': '/api/hidden/'
-#     }
-# }
 
-
-IMPORT_FILE_STORAGE = {
-    'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
-    'KWARGS': {
-        'acl': 'private',
-        'bucket': os.environ.get('AWS_STORAGE_IMPORT_FILE_BUCKET_NAME', None),
-        'querystring_expire': 10,
-        'custom_domain': None
+    IMPORT_FILE_STORAGE = {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        'KWARGS': {
+            'location': '/home/szhitenev/projects/finmars/files',
+            'base_url': '/api/import/'
+        }
     }
-}
 
-# IMPORT_FILE_STORAGE = {
-#     'BACKEND': 'django.core.files.storage.FileSystemStorage',
-#     'KWARGS': {
-#         'location': '/home/szhitenev/projects/finmars/files',
-#         'base_url': '/api/import/'
-#     }
-# }
+else:
+
+    IMPORT_CONFIG_STORAGE = {
+        'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
+        'KWARGS': {
+            'acl': 'private',
+            'bucket': os.environ.get('AWS_STORAGE_CONFIG_BUCKET_NAME', None),
+            'querystring_expire': 10,
+            'custom_domain': None
+        }
+    }
+
+    IMPORT_FILE_STORAGE = {
+        'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
+        'KWARGS': {
+            'acl': 'private',
+            'bucket': os.environ.get('AWS_STORAGE_IMPORT_FILE_BUCKET_NAME', None),
+            'querystring_expire': 10,
+            'custom_domain': None
+        }
+    }
+
+
+
+
 PRICING_AUTO_DOWNLOAD_DISABLED = True
 if os.environ.get('POMS_PRICING_AUTO_DOWNLOAD_DISABLED') == 'False':
     PRICING_AUTO_DOWNLOAD_DISABLED = False

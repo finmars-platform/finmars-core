@@ -16,7 +16,7 @@ from poms.reports.builders.base_builder import BaseReportBuilder
 from poms.reports.builders.pricing import FakeInstrumentPricingProvider, FakeCurrencyFxRateProvider, \
     CurrencyFxRateProvider
 from poms.reports.builders.pricing import InstrumentPricingProvider
-from poms.transactions.models import TransactionClass, Transaction, ComplexTransaction
+from poms.transactions.models import TransactionClass
 
 _l = logging.getLogger('poms.reports')
 
@@ -176,6 +176,7 @@ class ReportBuilder(BaseReportBuilder):
         self.instance.close()
 
         _l.debug('done: %s', (time.perf_counter() - st))
+
         return self.instance
 
     def build_position_only(self):

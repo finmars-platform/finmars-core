@@ -76,7 +76,7 @@ class BaseReportBuilder:
     def _trn_cls_cash_out(self):
         return TransactionClass.objects.get(pk=TransactionClass.CASH_OUTFLOW)
 
-    def _trn_qs_prefetch(self, qs):
+    def _trn_qs_prefetch_old(self, qs):
         return qs.prefetch_related(
             'complex_transaction',
             'complex_transaction__transaction_type',
@@ -185,10 +185,42 @@ class BaseReportBuilder:
             )
         )
 
+    def _trn_qs_prefetch(self, qs):
+        return qs.select_related(
+            'complex_transaction',
+            'complex_transaction__transaction_type',
+            'transaction_class',
+            'instrument__instrument_type',
+            'instrument__instrument_type__instrument_class',
+            'instrument__pricing_currency',
+            'instrument__accrued_currency',
+            # 'instrument__accrual_calculation_schedules',
+            # 'instrument__accrual_calculation_schedules__accrual_calculation_model',
+            # 'instrument__accrual_calculation_schedules__periodicity',
+            # 'instrument__factor_schedules',
+            'transaction_currency',
+            'settlement_currency',
+            'portfolio',
+            'account_position',
+            'account_cash',
+            'account_interim',
+            'strategy1_position',
+            'strategy1_cash',
+            'strategy2_position',
+            'strategy2_cash',
+            'strategy3_position',
+            'strategy3_cash',
+            'responsible',
+            'counterparty',
+            'linked_instrument__instrument_type',
+            'allocation_balance',
+            'allocation_pl',
+        )
+
     def _trn_qs_filter(self, qs):
         return qs
 
-    def _trn_qs(self):
+    def _trn_qs_old(self):
 
         _trn_qs_st = time.perf_counter()
 
@@ -278,7 +310,8 @@ class BaseReportBuilder:
             from poms.transactions.filters import TransactionObjectPermissionFilter
             qs = TransactionObjectPermissionFilter.filter_qs(qs, self.instance.master_user, self.instance.member)
 
-        _l.debug('_get_only_transactions permission_filter_qs_st done: %s', (time.perf_counter() - permission_filter_qs_st))
+        _l.debug('_get_only_transactions permission_filter_qs_st done: %s',
+                 (time.perf_counter() - permission_filter_qs_st))
 
         specific_filter_qs_st = time.perf_counter()
 
@@ -292,6 +325,59 @@ class BaseReportBuilder:
         _l.debug('_get_only_transactions _trn_qs_st done: %s', (time.perf_counter() - _trn_qs_st))
 
         # _l.debug("_get_only_transactions end len %s" % len(qs))
+
+        return result
+
+    def _trn_qs(self):
+
+        _trn_qs_st = time.perf_counter()
+
+        qs = self._queryset if self._queryset is not None else Transaction.objects
+
+        complex_qs = ComplexTransaction.objects.filter(status=ComplexTransaction.PRODUCTION,
+                                                       master_user=self.instance.master_user, is_deleted=False)
+
+        qs = qs.filter(complex_transaction__in=complex_qs)
+
+        if self.instance.portfolios:
+            qs = qs.filter(portfolio__in=self.instance.portfolios)
+
+        if self.instance.accounts:
+            qs = qs.filter(account_position__in=self.instance.accounts,
+                           account_cash__in=self.instance.accounts,
+                           account_interim__in=self.instance.accounts)
+
+        if self.instance.accounts_position:
+            qs = qs.filter(account_position__in=self.instance.accounts_position)
+
+        if self.instance.accounts_cash:
+            qs = qs.filter(account_cash__in=self.instance.accounts_cash)
+
+        if self.instance.strategies1:
+            qs = qs.filter(strategy1_position__in=self.instance.strategies1,
+                           strategy1_cash__in=self.instance.strategies1)
+
+        if self.instance.strategies2:
+            qs = qs.filter(strategy2_position__in=self.instance.strategies2,
+                           strategy2_cash__in=self.instance.strategies2)
+
+        if self.instance.strategies3:
+            qs = qs.filter(strategy3_position__in=self.instance.strategies3,
+                           strategy3_cash__in=self.instance.strategies3)
+
+        qs = self._trn_qs_filter(qs)
+
+        qs = self._trn_qs_prefetch(qs)
+
+        # len_qs = str(len(qs))
+        #
+        # str_qs = '_trn_qs_optimized len ' + len_qs
+
+        # _l.debug(str_qs)
+
+        result = qs
+
+        _l.debug('_trn_qs_optimized  done: %s', (time.perf_counter() - _trn_qs_st))
 
         return result
 

@@ -1201,6 +1201,10 @@ def complex_transaction_csv_file_import(instance):
     try:
         with import_file_storage.open(instance.file_path, 'rb') as f:
             with NamedTemporaryFile() as tmpf:
+
+                _l.info('tmpf')
+                _l.info(tmpf)
+
                 for chunk in f.chunks():
                     tmpf.write(chunk)
                 tmpf.flush()

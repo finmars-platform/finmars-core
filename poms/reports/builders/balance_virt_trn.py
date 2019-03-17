@@ -469,8 +469,8 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
 
         res = time.perf_counter() - create_virtual_transaction_st
 
-        if res > 0.03:
-            _l.debug('create virtual transaction done: %s', res)
+        # if res > 0.03:
+        #     _l.debug('create virtual transaction done: %s', res)
 
     def set_case(self):
         if self.acc_date <= self.report.report_date < self.cash_date:
