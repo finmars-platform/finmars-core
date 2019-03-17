@@ -6,4 +6,4 @@ RDS_USERNAME=postgres \
 RDS_PASSWORD=postgres \
 RDS_HOSTNAME=localhost \
 RDS_PORT=5434 \
-celery worker --app poms_app --beat --loglevel=DEBUG
+flower --app poms_app
