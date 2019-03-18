@@ -8,6 +8,7 @@ from django.conf import settings
 from django.core.signing import TimestampSigner
 from django.db import transaction
 from django.utils import timezone
+from django_celery_results.models import TaskResult
 from rest_framework import permissions, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import DjangoFilterBackend, OrderingFilter
@@ -27,6 +28,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from poms.common.grouping_handlers import handle_groups
 import time
+import sys
 
 _l = logging.getLogger('poms.common')
 
@@ -255,8 +257,11 @@ class AbstractAsyncViewSet(AbstractViewSet):
             if res.ready():
                 print('TASK READY')
 
-                # res.maybe_reraise()
                 instance = res.result
+
+                print('instance %s' % instance)
+
+                # print('TASK ITEMS LEN %s' % len(res.result.items))
 
             print('AsyncResult res.ready: %s' % (time.perf_counter() - st))
 

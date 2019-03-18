@@ -6,7 +6,8 @@ from rest_framework.filters import FilterSet
 
 from poms.common.filters import NoOpFilter, CharFilter
 from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet, AbstractReadOnlyModelViewSet, \
-    AbstractSyncViewSet
+    AbstractSyncViewSet, AbstractViewSet
+from poms.reports.builders.balance_pl import ReportBuilder
 from poms.reports.builders.balance_serializers import BalanceReportSerializer, PLReportSerializer
 from poms.reports.builders.cash_flow_projection_serializers import CashFlowProjectionReportSerializer
 from poms.reports.builders.performance_serializers import PerformanceReportSerializer
@@ -16,6 +17,9 @@ from poms.reports.serializers import CustomFieldSerializer
 from poms.reports.tasks import balance_report, pl_report, transaction_report, cash_flow_projection_report, \
     performance_report
 from poms.users.filters import OwnerByMasterUserFilter
+
+from rest_framework.response import Response
+from rest_framework import permissions, status
 
 _l = logging.getLogger('poms.reports')
 
@@ -43,9 +47,31 @@ class CustomFieldViewSet(AbstractModelViewSet):
     ]
 
 
-class BalanceReportViewSet(AbstractAsyncViewSet):
+# class BalanceReportViewSet(AbstractAsyncViewSet):
+#     serializer_class = BalanceReportSerializer
+#     celery_task = balance_report
+
+
+class BalanceReportViewSet(AbstractViewSet):
     serializer_class = BalanceReportSerializer
-    celery_task = balance_report
+
+
+    def create(self, request, *args, **kwargs):
+        print('AbstractSyncViewSet create')
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        builder = ReportBuilder(instance=instance)
+        instance = builder.build_balance()
+
+        instance.task_id = 1
+        instance.task_status = "SUCCESS"
+
+        serializer = self.get_serializer(instance=instance, many=False)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 class BalanceReportSyncViewSet(AbstractSyncViewSet):
