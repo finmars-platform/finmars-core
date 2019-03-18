@@ -246,19 +246,19 @@ class AbstractAsyncViewSet(AbstractViewSet):
 
         if task_id:
 
-            st = time.perf_counter()
-
             res = AsyncResult(signer.unsign(task_id))
 
-            print('AsyncResult unsign: %s' % (time.perf_counter() - st))
-
             print('TASK %s ' % res)
+
+            st = time.perf_counter()
 
             if res.ready():
                 print('TASK READY')
 
                 # res.maybe_reraise()
                 instance = res.result
+
+            print('AsyncResult res.ready: %s' % (time.perf_counter() - st))
 
             if instance.master_user.id != request.user.master_user.id:
                 raise PermissionDenied()

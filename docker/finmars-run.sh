@@ -22,6 +22,12 @@ echo "Collect static"
 
 /var/app-venv/bin/python /var/app/manage.py collectstatic -c --noinput
 
+echo "Start celery"
+
+export DJANGO_SETTINGS_MODULE=poms_app.settings
+
+/etc/init.d/celeryd start
+
 #echo "Standalone"
 #
 #/var/app-venv/bin/python /var/app/manage.py initstandalone
