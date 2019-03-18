@@ -7,7 +7,11 @@ CELERYD_NODES="worker1"
 #   alternatively, you can specify the number of nodes to start:
 #CELERYD_NODES=10
 
+
 # Absolute or relative path to the 'celery' command:
+
+ENV_PYTHON="/var/app-venv/bin/python"
+
 CELERY_BIN="/var/app-venv/bin/celery"
 #CELERY_BIN="/virtualenvs/def/bin/celery"
 
