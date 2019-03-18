@@ -35,7 +35,7 @@ idna==2.2
 itypes==1.1.0
 Jinja2==2.9.6
 jmespath==0.9.1
-kombu==4.2.1
+kombu==4.4.0
 MarkupSafe==1.0
 maxminddb==1.2.3
 mpmath==0.19
@@ -51,7 +51,7 @@ pyparsing==2.2.0
 python-dateutil==2.6.0
 pytz==2017.2
 qrcode==5.3
-redis==2.10.5
+redis==3.2.0
 requests==2.13.0
 s3transfer==0.1.10
 scipy==0.18.1
