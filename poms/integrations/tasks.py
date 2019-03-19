@@ -848,7 +848,6 @@ def _create_instrument_default_prices(options, instruments, pricing_policies):
         for pp in pricing_policies:
 
             for dt in rrule(freq=DAILY, count=days, dtstart=date_from):
-
                 d = dt.date()
                 price = PriceHistory(
                     instrument=i,
@@ -1201,7 +1200,183 @@ def complex_transaction_csv_file_import(instance):
     try:
         with import_file_storage.open(instance.file_path, 'rb') as f:
             with NamedTemporaryFile() as tmpf:
+                _l.info('tmpf')
+                _l.info(tmpf)
 
+                for chunk in f.chunks():
+                    tmpf.write(chunk)
+                tmpf.flush()
+                with open(tmpf.name, mode='rt', encoding=instance.encoding) as cf:
+                    _process_csv_file(cf)
+    # except csv.Error:
+    #     _l.info('Can\'t process file', exc_info=True)
+    #     instance.error_message = ugettext("Invalid file format or file already deleted.")
+    # except (FileNotFoundError, IOError):
+    #     _l.info('Can\'t process file', exc_info=True)
+    #     instance.error_message = ugettext("Invalid file format or file already deleted.")
+    except:
+        _l.info('Can\'t process file', exc_info=True)
+        instance.error_message = ugettext("Invalid file format or file already deleted.")
+    finally:
+        import_file_storage.delete(instance.file_path)
+
+    instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
+
+    return instance
+
+
+@shared_task(name='integrations.complex_transaction_csv_file_import_validate')
+def complex_transaction_csv_file_import_validate(instance):
+    from poms.transactions.models import TransactionTypeInput
+
+    _l.debug('complex_transaction_file_import: %s', instance)
+
+    scheme = instance.scheme
+    scheme_inputs = list(scheme.inputs.all())
+    scheme_rules = {r.value: r for r in
+                    scheme.rules.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()}
+    _l.debug('scheme %s - inputs=%s, rules=%s', scheme,
+             [(i.name, i.column) for i in scheme_inputs],
+             [(r.value, r.transaction_type.user_code) for r in scheme_rules.values()])
+
+    mapping_map = {
+        Account: AccountMapping,
+        Currency: CurrencyMapping,
+        Instrument: InstrumentMapping,
+        InstrumentType: InstrumentTypeMapping,
+        Counterparty: CounterpartyMapping,
+        Responsible: ResponsibleMapping,
+        Strategy1: Strategy1Mapping,
+        Strategy2: Strategy2Mapping,
+        Strategy3: Strategy3Mapping,
+        DailyPricingModel: DailyPricingModelMapping,
+        PaymentSizeDetail: PaymentSizeDetailMapping,
+        Portfolio: PortfolioMapping,
+        PriceDownloadScheme: PriceDownloadSchemeMapping,
+    }
+    mapping_cache = {}
+
+    def _convert_value(field, value):
+        i = field.transaction_type_input
+
+        if i.value_type == TransactionTypeInput.STRING:
+            return str(value)
+
+        elif i.value_type == TransactionTypeInput.NUMBER:
+            return float(value)
+
+        elif i.value_type == TransactionTypeInput.DATE:
+            if not isinstance(value, date):
+                return formula._parse_date(value)
+            else:
+                return value
+
+        elif i.value_type == TransactionTypeInput.RELATION:
+            model_class = i.content_type.model_class()
+            model_map_class = mapping_map[model_class]
+
+            key = (model_class, value)
+            try:
+                return mapping_cache[key]
+            except KeyError:
+                v = model_map_class.objects.get(master_user=instance.master_user, value=value).content_object
+                mapping_cache[key] = v
+                return v
+
+    def _process_csv_file(file):
+
+        for row_index, row in enumerate(
+                csv.reader(file, delimiter=instance.delimiter, quotechar=instance.quotechar,
+                           strict=False)):
+
+            _l.debug('process row: %s -> %s', row_index, row)
+            if (row_index == 0 and instance.skip_first_line) or not row:
+                _l.debug('skip first row')
+                continue
+
+            inputs = {}
+            inputs_error = []
+            error_rows = {
+                'error_message': None,
+                'inputs': inputs,
+                'original_row_index': row_index,
+                'original_row': row,
+            }
+
+            for i in scheme_inputs:
+                try:
+                    inputs[i.name] = row[i.column]
+                except:
+                    _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                    inputs_error.append(i)
+            _l.debug('inputs: error=%s, values=%s', [i.name for i in inputs_error], inputs)
+            if inputs_error:
+                error_rows['error_message'] = ugettext('Can\'t process inputs: %(inputs)s') % {
+                    'inputs': ', '.join(i.name for i in inputs_error)
+                }
+                instance.error_rows.append(error_rows)
+                if instance.break_on_error:
+                    instance.error_row_index = row_index
+                    return
+                else:
+                    continue
+
+            try:
+                rule_value = formula.safe_eval(scheme.rule_expr, names=inputs)
+            except:
+                _l.info('can\'t process rule expression', exc_info=True)
+                error_rows['error_message'] = ugettext('Can\'t eval rule expression')
+                instance.error_rows.append(error_rows)
+                if instance.break_on_error:
+                    instance.error_row_index = row_index
+                    return
+                else:
+                    continue
+            _l.debug('rule value: %s', rule_value)
+
+            try:
+                rule = scheme_rules[rule_value]
+            except:
+                _l.info('rule does not find: %s', rule_value, exc_info=True)
+                error_rows['error_message'] = ugettext('Can\'t find transaction type by "%(value)s"') % {
+                    'value': rule_value
+                }
+                instance.error_rows.append(error_rows)
+                if instance.break_on_error:
+                    instance.error_row_index = row_index
+                    return
+                else:
+                    continue
+            _l.debug('founded rule: %s -> %s', rule, rule.transaction_type)
+
+            fields = {}
+            fields_error = []
+            for field in rule.fields.all():
+                try:
+                    field_value = formula.safe_eval(field.value_expr, names=inputs)
+                    field_value = _convert_value(field, field_value)
+                    fields[field.transaction_type_input.name] = field_value
+                except:
+                    _l.info('can\'t process field: %s|%s', field.transaction_type_input.name,
+                            field.transaction_type_input.pk, exc_info=True)
+                    fields_error.append(field)
+            _l.debug('fields (step 1): error=%s, values=%s', fields_error, fields)
+            if fields_error:
+                error_rows['error_message'] = ugettext('Can\'t process fields: %(fields)s') % {
+                    'fields': ', '.join(f.transaction_type_input.name for f in fields_error)
+                }
+
+                instance.error_rows.append(error_rows)
+                if instance.break_on_error:
+                    instance.error_row_index = row_index
+                    return
+                else:
+                    continue
+
+    instance.error_rows = []
+    try:
+        with import_file_storage.open(instance.file_path, 'rb') as f:
+            with NamedTemporaryFile() as tmpf:
                 _l.info('tmpf')
                 _l.info(tmpf)
 

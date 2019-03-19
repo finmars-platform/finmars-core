@@ -260,6 +260,10 @@ router.register(r'import/complex-transaction-import-scheme', integrations.Comple
 router.register(r'import/complex-transaction-csv-file-import', integrations.ComplexTransactionCsvFileImportViewSet,
                 'complextransactioncsvfileimport')
 
+router.register(r'import/complex-transaction-csv-file-import-validate',
+                integrations.ComplexTransactionCsvFileImportValidateViewSet,
+                'complextransactioncsvfileimportvalidate')
+
 router.register(r'utils/expression', api.ExpressionViewSet, 'expression')
 
 router.register(r'import/data', data_import.DataImportViewSet, 'data_import')

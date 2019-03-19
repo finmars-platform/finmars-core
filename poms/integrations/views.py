@@ -44,7 +44,7 @@ from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer
     ComplexTransactionImportSchemeSerializer, PortfolioClassifierMappingSerializer, AccountClassifierMappingSerializer, \
     CounterpartyClassifierMappingSerializer, ResponsibleClassifierMappingSerializer, PricingPolicyMappingSerializer, \
     InstrumentClassifierMappingSerializer
-from poms.integrations.tasks import complex_transaction_csv_file_import
+from poms.integrations.tasks import complex_transaction_csv_file_import, complex_transaction_csv_file_import_validate
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.portfolios.models import Portfolio
@@ -888,3 +888,8 @@ class ComplexTransactionImportSchemeViewSet(AbstractModelViewSet):
 class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
     celery_task = complex_transaction_csv_file_import
+
+
+class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
+    serializer_class = ComplexTransactionCsvFileImportSerializer
+    celery_task = complex_transaction_csv_file_import_validate
