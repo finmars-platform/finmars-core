@@ -393,8 +393,8 @@ class ReportBuilder(BaseReportBuilder):
         # }
         # qs = super(ReportBuilder, self)._trn_qs()
 
-        # filters = Q(**{'%s__lte' % self.instance.date_field: self.instance.report_date})
-        filters = Q(**{'%s__lt' % self.instance.date_field: self.instance.report_date})
+        filters = Q(**{'%s__lte' % self.instance.date_field: self.instance.report_date})
+        # filters = Q(**{'%s__lt' % self.instance.date_field: self.instance.report_date})
 
         if self.instance.instruments:
             # kw_filters['instrument__in'] = self.instance.instruments
