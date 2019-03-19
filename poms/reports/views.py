@@ -22,6 +22,7 @@ from rest_framework.response import Response
 from rest_framework import permissions, status
 
 _l = logging.getLogger('poms.reports')
+import time
 
 
 class CustomFieldFilterSet(FilterSet):
@@ -69,7 +70,13 @@ class BalanceReportViewSet(AbstractViewSet):
         instance.task_id = 1
         instance.task_status = "SUCCESS"
 
+
+        serialize_report_st = time.perf_counter()
+
         serializer = self.get_serializer(instance=instance, many=False)
+
+        print('serialize report done: %s' % (time.perf_counter() - serialize_report_st))
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

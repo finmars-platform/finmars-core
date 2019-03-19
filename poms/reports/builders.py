@@ -3529,10 +3529,10 @@ class ReportBuilder(object):
             'price_download_scheme__provider',
             get_attributes_prefetch(),
             get_tag_prefetch(),
-            *get_permissions_prefetch_lookups(
-                (None, Instrument),
-                ('instrument_type', InstrumentType),
-            )
+            # *get_permissions_prefetch_lookups(
+            #     (None, Instrument),
+            #     ('instrument_type', InstrumentType),
+            # )
         ).in_bulk(instrs)
         _l.debug('instrs: %s', sorted(instrs.keys()))
 
@@ -3550,9 +3550,9 @@ class ReportBuilder(object):
             'master_user',
             get_attributes_prefetch(),
             get_tag_prefetch(),
-            *get_permissions_prefetch_lookups(
-                (None, Portfolio),
-            )
+            # *get_permissions_prefetch_lookups(
+            #     (None, Portfolio),
+            # )
         ).in_bulk(prtfls)
         _l.debug('prtfls: %s', sorted(prtfls.keys()))
 
@@ -3561,10 +3561,10 @@ class ReportBuilder(object):
             'type',
             get_attributes_prefetch(),
             get_tag_prefetch(),
-            *get_permissions_prefetch_lookups(
-                (None, Account),
-                ('type', AccountType),
-            )
+            # *get_permissions_prefetch_lookups(
+            #     (None, Account),
+            #     ('type', AccountType),
+            # )
         ).in_bulk(accs)
         _l.debug('accs: %s', sorted(accs.keys()))
 
@@ -3573,11 +3573,11 @@ class ReportBuilder(object):
             'subgroup',
             'subgroup__group',
             get_tag_prefetch(),
-            *get_permissions_prefetch_lookups(
-                (None, Strategy1),
-                ('subgroup', Strategy1Subgroup),
-                ('subgroup__group', Strategy1Group),
-            )
+            # *get_permissions_prefetch_lookups(
+            #     (None, Strategy1),
+            #     ('subgroup', Strategy1Subgroup),
+            #     ('subgroup__group', Strategy1Group),
+            # )
         ).in_bulk(strs1)
         _l.debug('strs1: %s', sorted(strs1.keys()))
 
@@ -3586,11 +3586,11 @@ class ReportBuilder(object):
             'subgroup',
             'subgroup__group',
             get_tag_prefetch(),
-            *get_permissions_prefetch_lookups(
-                (None, Strategy2),
-                ('subgroup', Strategy2Subgroup),
-                ('subgroup__group', Strategy2Group),
-            )
+            # *get_permissions_prefetch_lookups(
+            #     (None, Strategy2),
+            #     ('subgroup', Strategy2Subgroup),
+            #     ('subgroup__group', Strategy2Group),
+            # )
         ).in_bulk(strs2)
         _l.debug('strs2: %s', sorted(strs2.keys()))
 
@@ -3599,11 +3599,11 @@ class ReportBuilder(object):
             'subgroup',
             'subgroup__group',
             get_tag_prefetch(),
-            *get_permissions_prefetch_lookups(
-                (None, Strategy3),
-                ('subgroup', Strategy3Subgroup),
-                ('subgroup__group', Strategy3Group),
-            )
+            # *get_permissions_prefetch_lookups(
+            #     (None, Strategy3),
+            #     ('subgroup', Strategy3Subgroup),
+            #     ('subgroup__group', Strategy3Group),
+            # )
         ).in_bulk(strs3)
         _l.debug('strs3: %s', sorted(strs3.keys()))
 

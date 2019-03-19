@@ -194,10 +194,7 @@ class BaseReportBuilder:
             'instrument__instrument_type__instrument_class',
             'instrument__pricing_currency',
             'instrument__accrued_currency',
-            # 'instrument__accrual_calculation_schedules',
-            # 'instrument__accrual_calculation_schedules__accrual_calculation_model',
-            # 'instrument__accrual_calculation_schedules__periodicity',
-            # 'instrument__factor_schedules',
+
             'transaction_currency',
             'settlement_currency',
             'portfolio',
@@ -215,6 +212,11 @@ class BaseReportBuilder:
             'linked_instrument__instrument_type',
             'allocation_balance',
             'allocation_pl',
+        ).prefetch_related(
+            'instrument__accrual_calculation_schedules',
+            'instrument__accrual_calculation_schedules__accrual_calculation_model',
+            'instrument__accrual_calculation_schedules__periodicity',
+            'instrument__factor_schedules',
         )
 
     def _trn_qs_filter(self, qs):
