@@ -1,6 +1,6 @@
 from rest_framework.filters import BaseFilterBackend
 
-from poms.accounts.models import Account
+from poms.accounts.models import Account, AccountType
 from poms.counterparties.models import Counterparty, Responsible
 from poms.instruments.models import InstrumentType, Instrument
 from poms.obj_attrs.models import GenericAttributeType
@@ -63,6 +63,10 @@ class AbstractMappingObjectPermissionFilter(BaseFilterBackend):
 
 class InstrumentTypeMappingObjectPermissionFilter(AbstractMappingObjectPermissionFilter):
     content_object_model = InstrumentType
+
+
+class AccountTypeMappingObjectPermissionFilter(AbstractMappingObjectPermissionFilter):
+    content_object_model = AccountType
 
 
 class InstrumentAttributeValueMappingObjectPermissionFilter(AbstractMappingObjectPermissionFilter):

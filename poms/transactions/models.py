@@ -998,6 +998,8 @@ class ComplexTransaction(FakeDeletableModel):
                                               verbose_name=ugettext_lazy('status'))
     code = models.IntegerField(default=0, verbose_name=ugettext_lazy('code'))
 
+    text = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('text'))
+
     attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
 
     class Meta:
@@ -1012,6 +1014,8 @@ class ComplexTransaction(FakeDeletableModel):
         return str(self.code)
 
     def save(self, *args, **kwargs):
+        print("Complex Transaction Save %s" % self.text)
+
         if self.code is None or self.code == 0:
             self.code = FakeSequence.next_value(self.transaction_type.master_user, 'complex_transaction', d=100)
         super(ComplexTransaction, self).save(*args, **kwargs)

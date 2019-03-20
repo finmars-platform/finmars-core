@@ -1,5 +1,10 @@
 # Changelog
 
+## 20.03.2019
+- Relation expressions in Simple Entity Import
+- Inputs in Complex Transaction text/date
+- Complex transaction text field
+
 ## 21.02.2019
 - Update Complex Transaction Model
 - Update Generated Event Model

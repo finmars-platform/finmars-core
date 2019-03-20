@@ -378,6 +378,20 @@ class InstrumentTypeMapping(AbstractMapping):
         return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
 
 
+class AccountTypeMapping(AbstractMapping):
+    content_object = models.ForeignKey('accounts.AccountType', verbose_name=ugettext_lazy('account type'))
+
+    class Meta(AbstractMapping.Meta):
+        verbose_name = ugettext_lazy('account type mapping')
+        verbose_name_plural = ugettext_lazy('account type mappings')
+        unique_together = [
+            ['master_user', 'provider', 'value'],
+        ]
+
+    def __str__(self):
+        return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
+
+
 class InstrumentAttributeValueMapping(AbstractMapping):
     content_object = models.ForeignKey('obj_attrs.GenericAttributeType', on_delete=models.PROTECT,
                                        verbose_name=ugettext_lazy('attribute type'))

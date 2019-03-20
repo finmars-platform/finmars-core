@@ -235,6 +235,7 @@ router.register(r'import/accrual-calculation-model-mapping', integrations.Accrua
 router.register(r'import/periodicity-mapping', integrations.PeriodicityMappingViewSet)
 router.register(r'import/account-mapping', integrations.AccountMappingViewSet)
 router.register(r'import/account-classifier-mapping', integrations.AccountClassifierMappingViewSet)
+router.register(r'import/account-type-mapping', integrations.AccountTypeMappingViewSet)
 router.register(r'import/instrument-mapping', integrations.InstrumentMappingViewSet)
 router.register(r'import/instrument-classifier-mapping', integrations.InstrumentClassifierMappingViewSet)
 router.register(r'import/counterparty-mapping', integrations.CounterpartyMappingViewSet)

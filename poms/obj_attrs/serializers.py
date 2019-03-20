@@ -223,6 +223,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
+
         attributes = validated_data.pop('attributes', empty)
         # attributes2 = validated_data.pop('attributes2', empty)
         instance = super(ModelWithAttributesSerializer, self).update(instance, validated_data)

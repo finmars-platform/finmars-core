@@ -7,7 +7,7 @@ from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.filters import FilterSet
 from rest_framework.response import Response
 
-from poms.accounts.models import Account
+from poms.accounts.models import Account, AccountType
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
     ModelExtMultipleChoiceFilter
 from poms.common.views import AbstractViewSet, AbstractModelViewSet, AbstractReadOnlyModelViewSet, \
@@ -21,7 +21,7 @@ from poms.integrations.filters import TaskFilter, InstrumentAttributeValueMappin
     InstrumentMappingObjectPermissionFilter, CounterpartyMappingObjectPermissionFilter, \
     ResponsibleMappingObjectPermissionFilter, PortfolioMappingObjectPermissionFilter, \
     Strategy1MappingObjectPermissionFilter, Strategy2MappingObjectPermissionFilter, \
-    Strategy3MappingObjectPermissionFilter
+    Strategy3MappingObjectPermissionFilter, AccountTypeMappingObjectPermissionFilter
 from poms.integrations.models import ImportConfig, Task, InstrumentDownloadScheme, ProviderClass, \
     FactorScheduleDownloadMethod, AccrualScheduleDownloadMethod, PriceDownloadScheme, CurrencyMapping, \
     InstrumentTypeMapping, InstrumentAttributeValueMapping, AccrualCalculationModelMapping, PeriodicityMapping, \
@@ -30,7 +30,7 @@ from poms.integrations.models import ImportConfig, Task, InstrumentDownloadSchem
     DailyPricingModelMapping, \
     PaymentSizeDetailMapping, PriceDownloadSchemeMapping, ComplexTransactionImportScheme, PortfolioClassifierMapping, \
     AccountClassifierMapping, CounterpartyClassifierMapping, ResponsibleClassifierMapping, PricingPolicyMapping, \
-    InstrumentClassifierMapping
+    InstrumentClassifierMapping, AccountTypeMapping
 from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer, ImportInstrumentSerializer, \
     ImportPricingSerializer, InstrumentDownloadSchemeSerializer, ProviderClassSerializer, \
     FactorScheduleDownloadMethodSerializer, AccrualScheduleDownloadMethodSerializer, PriceDownloadSchemeSerializer, \
@@ -43,7 +43,7 @@ from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer
     DailyPricingModelMappingSerializer, PaymentSizeDetailMappingSerializer, PriceDownloadSchemeMappingSerializer, \
     ComplexTransactionImportSchemeSerializer, PortfolioClassifierMappingSerializer, AccountClassifierMappingSerializer, \
     CounterpartyClassifierMappingSerializer, ResponsibleClassifierMappingSerializer, PricingPolicyMappingSerializer, \
-    InstrumentClassifierMappingSerializer
+    InstrumentClassifierMappingSerializer, AccountTypeMappingSerializer
 from poms.integrations.tasks import complex_transaction_csv_file_import, complex_transaction_csv_file_import_validate
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
@@ -382,6 +382,26 @@ class PricingPolicyMappingViewSet(AbstractMappingViewSet):
     )
     serializer_class = PricingPolicyMappingSerializer
     filter_class = PricingPolicyMappingFilterSet
+
+
+
+class AccountTypeMappingFilterSet(AbstractMappingFilterSet):
+    content_object = ModelExtWithPermissionMultipleChoiceFilter(model=AccountType)
+
+    class Meta(AbstractMappingFilterSet.Meta):
+        model = AccountTypeMapping
+
+
+class AccountTypeMappingViewSet(AbstractMappingViewSet):
+    queryset = AccountTypeMapping.objects.select_related(
+        'master_user', 'provider', 'content_object'
+    )
+    serializer_class = AccountTypeMappingSerializer
+    filter_backends = AbstractMappingViewSet.filter_backends + [
+        AccountTypeMappingObjectPermissionFilter,
+    ]
+    filter_class = AccountTypeMappingFilterSet
+
 
 
 class InstrumentTypeMappingFilterSet(AbstractMappingFilterSet):

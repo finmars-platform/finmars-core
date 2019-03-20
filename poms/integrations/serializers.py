@@ -16,7 +16,7 @@ from rest_framework.validators import UniqueTogetherValidator
 
 import uuid
 
-from poms.accounts.fields import AccountField
+from poms.accounts.fields import AccountField, AccountTypeField
 from poms.common.fields import ExpressionField, DateTimeTzAwareField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer
@@ -37,7 +37,7 @@ from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDo
     PriceDownloadSchemeMapping, ComplexTransactionImportScheme, ComplexTransactionImportSchemeInput, \
     ComplexTransactionImportSchemeRule, ComplexTransactionImportSchemeField, PortfolioClassifierMapping, \
     AccountClassifierMapping, CounterpartyClassifierMapping, ResponsibleClassifierMapping, PricingPolicyMapping, \
-    InstrumentClassifierMapping
+    InstrumentClassifierMapping, AccountTypeMapping
 from poms.integrations.providers.base import get_provider, ProviderException
 from poms.integrations.storage import import_file_storage
 from poms.integrations.tasks import download_pricing, download_instrument
@@ -529,6 +529,20 @@ class PricingPolicyMappingSerializer(AbstractMappingSerializer):
     def get_content_object_view_serializer(self):
         from poms.instruments.serializers import PricingPolicyViewSerializer
         return PricingPolicyViewSerializer
+
+
+class AccountTypeMappingSerializer(AbstractMappingSerializer):
+    content_object = AccountTypeField()
+
+    class Meta(AbstractMappingSerializer.Meta):
+        model = AccountTypeMapping
+
+    def __init__(self, *args, **kwargs):
+        super(AccountTypeMappingSerializer, self).__init__(*args, **kwargs)
+
+    def get_content_object_view_serializer(self):
+        from poms.accounts.serializers import AccountTypeViewSerializer
+        return AccountTypeViewSerializer
 
 
 class InstrumentTypeMappingSerializer(AbstractMappingSerializer):

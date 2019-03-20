@@ -994,10 +994,12 @@ class TransactionTypeProcess(object):
         # complex_transaction
         complex_transaction_errors = {}
         if self.complex_transaction.date is None:
-            self._set_val(errors=complex_transaction_errors, values=self.values, default_value=self._now,
-                          target=self.complex_transaction, target_attr_name='date',
-                          source=self.transaction_type, source_attr_name='date_expr',
-                          validator=formula.validate_date)
+
+            # self._set_val(errors=complex_transaction_errors, values=self.values, default_value=self._now,
+            #               target=self.complex_transaction, target_attr_name='date',
+            #               source=self.transaction_type, source_attr_name='date_expr',
+            #               validator=formula.validate_date)
+
             if bool(complex_transaction_errors):
                 self.complex_transaction_errors.append(complex_transaction_errors)
 
