@@ -91,6 +91,14 @@ class TransactionTypeGroupViewSet(AbstractWithObjectPermissionViewSet):
         'user_code', 'name', 'short_name', 'public_name',
     ]
 
+    def perform_destroy(self, instance):
+        super(TransactionTypeGroupViewSet, self).perform_destroy(instance)
+
+        items_qs = TransactionType.objects.filter(master_user=instance.master_user, group=instance)
+        default_group = TransactionTypeGroup.objects.get(master_user=instance.master_user, user_code='-')
+
+        items_qs.update(group=default_group)
+
 
 class TransactionTypeGroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = TransactionTypeGroup.objects.prefetch_related(
@@ -661,8 +669,6 @@ def get_complex_transaction_queryset(select_related=True, transactions=False):
         'transaction_type__group',
     )
     qs = ComplexTransaction.objects
-
-
 
     if select_related:
         qs = qs.select_related(*fields1)

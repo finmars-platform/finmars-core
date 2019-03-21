@@ -114,6 +114,15 @@ class CounterpartyGroupViewSet(AbstractWithObjectPermissionViewSet):
         'user_code', 'name', 'short_name', 'public_name',
     ]
 
+    def perform_destroy(self, instance):
+        super(CounterpartyGroupViewSet, self).perform_destroy(instance)
+
+        items_qs = Counterparty.objects.filter(master_user=instance.master_user, group=instance)
+        default_group = CounterpartyGroup.objects.get(master_user=instance.master_user, user_code='-')
+
+        items_qs.update(group=default_group)
+
+
 class CounterpartyGroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = CounterpartyGroup.objects.select_related(
         'master_user'
@@ -296,6 +305,15 @@ class ResponsibleGroupViewSet(AbstractWithObjectPermissionViewSet):
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
     ]
+
+    def perform_destroy(self, instance):
+        super(ResponsibleGroupViewSet, self).perform_destroy(instance)
+
+        items_qs = Responsible.objects.filter(master_user=instance.master_user, group=instance)
+        default_group = ResponsibleGroup.objects.get(master_user=instance.master_user, user_code='-')
+
+        items_qs.update(group=default_group)
+
 
 class ResponsibleGroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = ResponsibleGroup.objects.select_related(
