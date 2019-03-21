@@ -1552,53 +1552,56 @@ class ComplexTransactionSerializer(ModelWithAttributesSerializer):
             'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'transactions', 'master_user'
         ]
 
-    def update(self, instance, validated_data):
-
-        data = super(ComplexTransactionSerializer, self).to_representation(instance)
-
-        transaction_type_process_instance = TransactionTypeProcess(transaction_type=instance.transaction_type,
-                                                                   complex_transaction=instance,
-                                                                   context=self.context)
-
-        if instance.transaction_type.display_expr:
-            ctrn = formula.value_prepare(data)
-            trns = ctrn.get('transactions', None)
-
-            names = {
-                'complex_transaction': ctrn,
-                'transactions': trns,
-            }
-
-            for key, value in transaction_type_process_instance.values.items():
-                names[key] = value
-
-            try:
-                validated_data['text'] = formula.safe_eval(instance.transaction_type.display_expr, names=names,
-                                                           context=self.context)
-            except formula.InvalidExpression:
-                validated_data['text'] = '<InvalidExpression>'
-
-        if instance.transaction_type.date_expr:
-            ctrn = formula.value_prepare(data)
-            trns = ctrn.get('transactions', None)
-
-            names = {
-                'complex_transaction': ctrn,
-                'transactions': trns,
-            }
-
-            for key, value in transaction_type_process_instance.values.items():
-                names[key] = value
-
-            try:
-                validated_data['date'] = formula.safe_eval(instance.transaction_type.date_expr, names=names,
-                                                           context=self.context)
-            except formula.InvalidExpression:
-                validated_data['date'] = date_now()
-
-        instance = super(ComplexTransactionSerializer, self).update(instance, validated_data)
-
-        return instance
+    # def update(self, instance, validated_data):
+    #
+    #     print("HERE UPATE EXECUTE?")
+    #
+    #     data = super(ComplexTransactionSerializer, self).to_representation(instance)
+    #
+    #     transaction_type_process_instance = TransactionTypeProcess(transaction_type=instance.transaction_type,
+    #                                                                complex_transaction=instance,
+    #                                                                context=self.context)
+    #
+    #     if instance.transaction_type.display_expr:
+    #         ctrn = formula.value_prepare(data)
+    #         trns = ctrn.get('transactions', None)
+    #
+    #         names = {
+    #             'complex_transaction': ctrn,
+    #             'transactions': trns,
+    #         }
+    #
+    #         for key, value in transaction_type_process_instance.values.items():
+    #             names[key] = value
+    #
+    #         try:
+    #             validated_data['text'] = formula.safe_eval(instance.transaction_type.display_expr, names=names,
+    #                                                        context=self.context)
+    #         except formula.InvalidExpression:
+    #             validated_data['text'] = '<InvalidExpression>'
+    #
+    #     if instance.transaction_type.date_expr:
+    #         ctrn = formula.value_prepare(data)
+    #         trns = ctrn.get('transactions', None)
+    #
+    #         names = {
+    #             'complex_transaction': ctrn,
+    #             'transactions': trns,
+    #         }
+    #
+    #         for key, value in transaction_type_process_instance.values.items():
+    #             names[key] = value
+    #
+    #         try:
+    #             validated_data['date'] = formula.safe_eval(instance.transaction_type.date_expr, names=names,
+    #                                                        context=self.context)
+    #         except formula.InvalidExpression:
+    #
+    #             validated_data['date'] = date_now()
+    #
+    #     instance = super(ComplexTransactionSerializer, self).update(instance, validated_data)
+    #
+    #     return instance
 
 
 class ComplexTransactionEvalSerializer(ComplexTransactionSerializer):

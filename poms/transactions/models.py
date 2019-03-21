@@ -1014,7 +1014,8 @@ class ComplexTransaction(FakeDeletableModel):
         return str(self.code)
 
     def save(self, *args, **kwargs):
-        print("Complex Transaction Save %s" % self.text)
+        print("Complex Transaction Save text %s" % self.text)
+        print("Complex Transaction Save date %s" % self.date)
 
         if self.code is None or self.code == 0:
             self.code = FakeSequence.next_value(self.transaction_type.master_user, 'complex_transaction', d=100)

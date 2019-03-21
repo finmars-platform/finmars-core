@@ -21,6 +21,7 @@ from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import ComplexTransaction, TransactionTypeInput, Transaction, EventClass, \
     NotificationClass, RebookReactionChoice, ComplexTransactionInput
 
+
 _l = logging.getLogger('poms.transactions')
 
 
@@ -969,6 +970,49 @@ class TransactionTypeProcess(object):
 
             ci.save()
 
+    def execute_complex_transaction_text_and_date(self):
+
+        print('execute_complex_transaction_text_and_date')
+
+        if self.complex_transaction.transaction_type.display_expr:
+
+            ctrn = formula.value_prepare(self.complex_transaction)
+            trns = self.complex_transaction.transactions.all()
+
+            names = {
+                'complex_transaction': ctrn,
+                'transactions': trns,
+            }
+
+            for key, value in self.values.items():
+                names[key] = value
+
+            try:
+                self.complex_transaction.text = formula.safe_eval(self.complex_transaction.transaction_type.display_expr, names=names,
+                                                           context=self._context)
+            except formula.InvalidExpression:
+                self.complex_transaction.text = '<InvalidExpression>'
+
+        if self.complex_transaction.transaction_type.date_expr:
+
+            ctrn = formula.value_prepare(self.complex_transaction)
+            trns = self.complex_transaction.transactions.all()
+
+            names = {
+                'complex_transaction': ctrn,
+                'transactions': trns,
+            }
+
+            for key, value in self.values.items():
+                names[key] = value
+
+            try:
+                self.complex_transaction.date = formula.safe_eval(self.complex_transaction.transaction_type.date_expr, names=names,
+                                                           context=self._context)
+            except formula.InvalidExpression:
+
+                self.complex_transaction.date = date_now()
+
     def process(self):
         if self.process_mode == self.MODE_RECALCULATE:
             return self.process_recalculate()
@@ -991,19 +1035,21 @@ class TransactionTypeProcess(object):
 
         self.book_create_event_actions(actions, instrument_map, event_schedules_map)
 
+        print("HERE EXECUTE ALWAYS?")
+
         # complex_transaction
         complex_transaction_errors = {}
         if self.complex_transaction.date is None:
+            self._set_val(errors=complex_transaction_errors, values=self.values, default_value=self._now,
+                          target=self.complex_transaction, target_attr_name='date',
+                          source=self.transaction_type, source_attr_name='date_expr',
+                          validator=formula.validate_date)
 
-            # self._set_val(errors=complex_transaction_errors, values=self.values, default_value=self._now,
-            #               target=self.complex_transaction, target_attr_name='date',
-            #               source=self.transaction_type, source_attr_name='date_expr',
-            #               validator=formula.validate_date)
 
-            if bool(complex_transaction_errors):
-                self.complex_transaction_errors.append(complex_transaction_errors)
+        if bool(complex_transaction_errors):
+            self.complex_transaction_errors.append(complex_transaction_errors)
 
-            self.complex_transaction.save()
+        self.complex_transaction.save()
 
         self._save_inputs()
 
@@ -1013,12 +1059,19 @@ class TransactionTypeProcess(object):
 
         self.book_create_transactions(actions, master_user, instrument_map)
 
+        self.execute_complex_transaction_text_and_date()
+
+        self.complex_transaction.save() # save executed text and date expression
+
         if not self.has_errors and self.transactions:
             for trn in self.transactions:
                 trn.calc_cash_by_formulas()
 
         if self.complex_transaction.status == ComplexTransaction.PENDING:
             self.complex_transaction.transactions.all().delete()
+
+
+
 
     def process_recalculate(self):
         if not self.recalculate_inputs:
