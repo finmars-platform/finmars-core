@@ -277,6 +277,7 @@ router.register(r'import/content_type', data_import.ContentTypeViewSet, 'data_im
 # router.register(r'import/csv', data_import.ContentTypeViewSet, 'data_import_content_types')
 router.register(r'import/csv/scheme', csv_import.SchemeViewSet, 'import_csv_scheme')
 router.register(r'import/csv', csv_import.CsvDataImportViewSet, 'import_csv')
+router.register(r'import/csv-validate', csv_import.CsvDataImportValidateViewSet, 'import_csv-validate')
 
 router.register(r'export/configuration', configuration_export.ConfigurationExportViewSet, 'configuration_export')
 router.register(r'export/mapping', configuration_export.MappingExportViewSet, 'mapping_export')

@@ -73,7 +73,409 @@ class SchemeViewSet(AbstractModelViewSet):
     #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CsvDataImportViewSet(AbstractModelViewSet):
+def get_row_data(row, csv_fields):
+
+    csv_row_dict = {}
+
+    for csv_field in csv_fields:
+
+        if csv_field.column < len(row):
+            row_value = row[csv_field.column]
+
+            csv_row_dict[csv_field.value] = row_value
+
+    return csv_row_dict
+
+
+def get_field_type(field):
+
+    if field.system_property_key is not None:
+        return 'system_attribute'
+    else:
+        return 'dynamic_attribute'
+
+
+def process_csv_file(master_user, scheme, rows, error_handler):
+
+    csv_fields = scheme.csv_fields.all()
+    entity_fields = scheme.entity_fields.all()
+
+    errors = []
+    results = []
+
+    row_index = 0
+
+    for row in rows:
+
+        if row_index != 0:
+
+            csv_row_dict = get_row_data(row, csv_fields)
+
+            instance = {}
+            instance['_row_index'] = row_index
+            instance['_row'] = row
+
+            if scheme.content_type.model != 'pricehistory' and scheme.content_type.model != 'currencyhistory':
+                instance['master_user'] = master_user
+                instance['attributes'] = []
+
+            print("model %s" % scheme.content_type.model)
+            print("instance %s" % instance)
+
+            inputs_error = []
+            error_row = {
+                'error_message': None,
+                'original_row_index': row_index,
+                'original_row': row,
+            }
+
+            for entity_field in entity_fields:
+
+                key = entity_field.system_property_key
+
+                if get_field_type(entity_field) == 'system_attribute':
+
+                    if entity_field.expression != '':
+
+                        executed_expression = None
+
+                        try:
+
+                            executed_expression = safe_eval(entity_field.expression, names=csv_row_dict)
+
+                        except (ExpressionEvalError, TypeError, Exception, KeyError):
+
+                            inputs_error.append(entity_field)
+
+
+                        print('executed_expression %s' % executed_expression)
+
+                        if key == 'counterparties':
+
+                            try:
+                                instance[key] = CounterpartyMapping.objects.get(master_user=master_user,
+                                                                                value=executed_expression).content_object
+
+                            except (CounterpartyMapping.DoesNotExist, KeyError):
+
+                                inputs_error.append(entity_field)
+
+                                _l.debug('CounterpartyMapping %s does not exist', entity_field.expression)
+
+                        elif key == 'responsibles':
+
+                            try:
+                                instance[key] = ResponsibleMapping.objects.get(master_user=master_user,
+                                                                               value=executed_expression).content_object
+
+                            except (ResponsibleMapping.DoesNotExist, KeyError):
+
+                                inputs_error.append(entity_field)
+
+                                _l.debug('ResponsibleMapping %s does not exist', entity_field.expression)
+
+                        elif key == 'accounts':
+
+                            try:
+                                instance[key] = AccountMapping.objects.get(master_user=master_user,
+                                                                           value=executed_expression).content_object
+
+                            except (AccountMapping.DoesNotExist, KeyError):
+
+                                inputs_error.append(entity_field)
+
+                                _l.debug('AccountMapping %s does not exist', entity_field.expression)
+
+                        elif key == 'portfolios':
+
+                            try:
+                                instance[key] = PortfolioMapping.objects.get(master_user=master_user,
+                                                                             value=executed_expression).content_object
+
+                            except (PortfolioMapping.DoesNotExist, KeyError):
+
+                                inputs_error.append(entity_field)
+
+                                _l.debug('PortfolioMapping %s does not exist', entity_field.expression)
+
+                        elif key == 'pricing_policy':
+
+                            print(
+                                'csv_row_dict[entity_field.expression] %s' % csv_row_dict[entity_field.expression])
+
+                            try:
+                                instance[key] = PricingPolicyMapping.objects.get(master_user=master_user,
+                                                                                 value=executed_expression).content_object
+
+                            except (PricingPolicyMapping.DoesNotExist, KeyError):
+
+                                inputs_error.append(entity_field)
+
+                                _l.debug('PricingPolicyMapping %s does not exist', entity_field.expression)
+
+                        elif key == 'instrument':
+
+                            try:
+                                instance[key] = InstrumentMapping.objects.get(master_user=master_user,
+                                                                              value=executed_expression).content_object
+
+                            except (InstrumentMapping.DoesNotExist, KeyError):
+
+                                inputs_error.append(entity_field)
+
+                                _l.debug('InstrumentMapping %s does not exist', entity_field.expression)
+
+                        elif key == 'instrument_type':
+
+                            try:
+                                instance[key] = InstrumentTypeMapping.objects.get(master_user=master_user,
+                                                                                  value=executed_expression).content_object
+
+                            except (InstrumentTypeMapping.DoesNotExist, KeyError):
+
+                                inputs_error.append(entity_field)
+
+                                _l.debug('InstrumentTypeMapping %s does not exist  ', entity_field.expression)
+
+                        elif key == 'type':
+
+                            try:
+                                instance[key] = AccountTypeMapping.objects.get(master_user=master_user,
+                                                                               value=executed_expression).content_object
+
+                            except (AccountTypeMapping.DoesNotExist, KeyError):
+
+                                inputs_error.append(entity_field)
+
+                                _l.debug('AccountTypeMapping %s does not exist  ', entity_field.expression)
+
+                        elif key == 'price_download_scheme':
+
+                            try:
+                                instance[key] = PriceDownloadSchemeMapping.objects.get(master_user=master_user,
+                                                                                       value=executed_expression).content_object
+
+                            except (PriceDownloadSchemeMapping.DoesNotExist, KeyError):
+
+                                inputs_error.append(entity_field)
+
+                                _l.debug('PriceDownloadSchemeMapping %s does not exist', entity_field.expression)
+
+                        elif key == 'daily_pricing_model':
+
+                            try:
+                                instance[key] = DailyPricingModelMapping.objects.get(master_user=master_user,
+                                                                                     value=executed_expression).content_object
+
+                            except (DailyPricingModelMapping.DoesNotExist, KeyError):
+
+                                inputs_error.append(entity_field)
+
+                                _l.debug('DailyPricingModelMapping %s does not exist', entity_field.expression)
+
+                        elif key == 'payment_size_detail':
+
+                            try:
+                                instance[key] = PaymentSizeDetailMapping.objects.get(master_user=master_user,
+                                                                                     value=executed_expression).content_object
+
+                            except (PaymentSizeDetailMapping.DoesNotExist, KeyError):
+
+                                inputs_error.append(entity_field)
+
+                                _l.debug('PaymentSizeDetailMapping %s does not exist', entity_field.expression)
+
+                        elif key == 'currency':
+
+                            try:
+                                instance[key] = CurrencyMapping.objects.get(master_user=master_user,
+                                                                            value=executed_expression).content_object
+
+                            except (CurrencyMapping.DoesNotExist, KeyError):
+
+                                inputs_error.append(entity_field)
+
+                                _l.debug('CurrencyMapping %s does not exist', entity_field.expression)
+
+                        elif key == 'pricing_currency':
+
+                            try:
+                                instance[key] = CurrencyMapping.objects.get(master_user=master_user,
+                                                                            value=executed_expression).content_object
+
+                            except (CurrencyMapping.DoesNotExist, KeyError):
+
+                                inputs_error.append(entity_field)
+
+                                _l.debug('CurrencyMapping %s does not exist', entity_field.expression)
+
+                        elif key == 'accrued_currency':
+
+                            try:
+                                instance[key] = CurrencyMapping.objects.get(master_user=master_user,
+                                                                            value=executed_expression).content_object
+
+                            except (CurrencyMapping.DoesNotExist, KeyError):
+
+                                inputs_error.append(entity_field)
+
+                                _l.debug('CurrencyMapping %s does not exist', entity_field.expression)
+
+                        else:
+
+                            instance[key] = executed_expression
+
+                            if key == 'date':
+
+                                try:
+
+                                    instance[key] = formula._parse_date(instance[key])
+
+                                except (ExpressionEvalError, TypeError):
+
+                                    inputs_error.append(entity_field)
+
+                        # _l.debug('Can not evaluate system attribute % expression ', entity_field.expression)
+
+                if get_field_type(entity_field) == 'dynamic_attribute':
+
+                    executed_attr = {}
+                    executed_attr['dynamic_attribute_id'] = entity_field.dynamic_attribute_id
+
+                    try:
+
+                        attr_type = GenericAttributeType.objects.get(pk=executed_attr['dynamic_attribute_id'])
+
+                        print('attr_type %s' % attr_type)
+                        print('attr_type value_type %s' % attr_type.value_type)
+
+                        if attr_type.value_type == 40:
+
+                            executed_attr['executed_expression'] = safe_eval(entity_field.expression,
+                                                                             names=csv_row_dict)
+                            try:
+
+                                formula._parse_date(executed_attr['executed_expression'])
+
+                            except (ExpressionEvalError, TypeError):
+
+                                inputs_error.append(entity_field)
+
+                        if attr_type.value_type == 20:
+
+                            executed_attr['executed_expression'] = safe_eval(entity_field.expression,
+                                                                             names=csv_row_dict)
+                            try:
+
+                                formula._float(executed_attr['executed_expression'])
+
+                            except (ExpressionEvalError, TypeError):
+
+                                inputs_error.append(entity_field)
+
+                        if attr_type.value_type == 10:
+                            executed_attr['executed_expression'] = safe_eval(entity_field.expression,
+                                                                             names=csv_row_dict)
+
+                        if attr_type.value_type == 30:
+
+                            if scheme.content_type.model == 'portfolio':
+
+                                try:
+                                    executed_attr['executed_expression'] = PortfolioClassifierMapping.objects.get(
+                                        value=csv_row_dict[entity_field.expression]).content_object
+
+                                except (PortfolioClassifierMapping.DoesNotExist, KeyError):
+
+                                    inputs_error.append(entity_field)
+
+                                    _l.debug('PortfolioClassifierMapping %s does not exist',
+                                             entity_field.expression)
+
+                            if scheme.content_type.model == 'instrument':
+
+                                try:
+                                    executed_attr['executed_expression'] = InstrumentClassifierMapping.objects.get(
+                                        value=csv_row_dict[entity_field.expression]).content_object
+
+                                except (InstrumentClassifierMapping.DoesNotExist, KeyError):
+
+                                    inputs_error.append(entity_field)
+
+                                    _l.debug('InstrumentClassifierMapping %s does not exist',
+                                             entity_field.expression)
+
+                            if scheme.content_type.model == 'account':
+
+                                try:
+                                    executed_attr['executed_expression'] = AccountClassifierMapping.objects.get(
+                                        value=csv_row_dict[entity_field.expression]).content_object
+
+                                except (AccountClassifierMapping.DoesNotExist, KeyError):
+
+                                    inputs_error.append(entity_field)
+
+                                    _l.debug('AccountClassifierMapping %s does not exist', entity_field.expression)
+
+                            if scheme.content_type.model == 'responsible':
+
+                                try:
+                                    executed_attr['executed_expression'] = ResponsibleClassifierMapping.objects.get(
+                                        value=csv_row_dict[entity_field.expression]).content_object
+
+                                except (ResponsibleClassifierMapping.DoesNotExist, KeyError):
+
+                                    inputs_error.append(entity_field)
+
+                                    _l.debug('ResponsibleClassifierMapping %s does not exist',
+                                             entity_field.expression)
+
+                            if scheme.content_type.model == 'counterparty':
+
+                                try:
+                                    executed_attr[
+                                        'executed_expression'] = CounterpartyClassifierMapping.objects.get(
+                                        value=csv_row_dict[entity_field.expression]).content_object
+
+                                except (CounterpartyClassifierMapping.DoesNotExist, KeyError):
+
+                                    inputs_error.append(entity_field)
+
+                                    _l.debug('CounterpartyClassifierMapping %s does not exist',
+                                             entity_field.expression)
+
+                    except (ExpressionEvalError, TypeError, Exception):
+
+                        inputs_error.append(entity_field)
+
+                        # _l.debug('Can not evaluate dynamic attribute % expression %s ' % executed_attr)
+
+                    instance['attributes'].append(executed_attr)
+
+            if inputs_error:
+
+                error_row['error_message'] = ugettext('Can\'t process field: %(inputs)s') % {
+                    'inputs': ', '.join(i.name for i in inputs_error)
+                }
+
+                errors.append(error_row)
+
+                if error_handler == 'break':
+                    return results, errors
+
+            else:
+
+                # if (hasattr(instance, 'user_code') and instance['user_code'] == ''):
+                #     instance['user_code'] = instance['name']
+
+                results.append(instance)
+
+        row_index = row_index + 1
+
+    return results, errors
+
+
+class CsvDataImportValidateViewSet(AbstractModelViewSet):
     parser_classes = (MultiPartParser,)
     queryset = CsvDataImport.objects.select_related(
         'master_user',
@@ -81,404 +483,49 @@ class CsvDataImportViewSet(AbstractModelViewSet):
     serializer_class = CsvDataImportSerializer
     http_method_names = ['get', 'post', 'head']
 
-    def get_row_data(self, row, csv_fields):
+    def create(self, request, *args, **kwargs):
 
-        csv_row_dict = {}
+        scheme_id = request.data['scheme']
+        error_handler = request.data['error_handler']
 
-        for csv_field in csv_fields:
+        scheme = Scheme.objects.get(pk=scheme_id)
 
-            if csv_field.column < len(row):
-                row_value = row[csv_field.column]
+        if 'file' not in request.data:
+            raise ValidationError('File is not set')
 
-                csv_row_dict[csv_field.value] = row_value
+        if not request.data['file'].name.endswith('.csv'):
+            raise ValidationError('File is not csv format')
 
-        return csv_row_dict
+        csv_contents = request.data['file'].read().decode('utf-8-sig')
+        rows = csv_contents.splitlines()
 
-    def get_field_type(self, field):
+        print('rows len %s' % len(rows))
 
-        if field.system_property_key is not None:
-            return 'system_attribute'
-        else:
-            return 'dynamic_attribute'
+        rows = map(lambda x: x.split(','), rows)
 
-    def process_csv_file(self, master_user, scheme, rows, error_handler):
+        master_user = self.request.user.master_user
 
-        csv_fields = scheme.csv_fields.all()
-        entity_fields = scheme.entity_fields.all()
+        results, process_errors = process_csv_file(master_user, scheme, rows, error_handler)
 
-        errors = []
-        results = []
+        if error_handler == 'break' and len(process_errors) != 0:
+            return Response({
+                "imported": len(results),
+                "errors": process_errors
+            }, status=status.HTTP_202_ACCEPTED)
 
-        row_index = 0
+        return Response({
+            "imported": len(results),
+            "errors": process_errors
+        }, status=status.HTTP_202_ACCEPTED)
 
-        for row in rows:
 
-            if row_index != 0:
-
-                csv_row_dict = self.get_row_data(row, csv_fields)
-
-                instance = {}
-                instance['_row_index'] = row_index
-                instance['_row'] = row
-
-                if scheme.content_type.model != 'pricehistory' and scheme.content_type.model != 'currencyhistory':
-                    instance['master_user'] = master_user
-                    instance['attributes'] = []
-
-                print("model %s" % scheme.content_type.model)
-                print("instance %s" % instance)
-
-                inputs_error = []
-                error_row = {
-                    'error_message': None,
-                    'original_row_index': row_index,
-                    'original_row': row,
-                }
-
-                for entity_field in entity_fields:
-
-                    key = entity_field.system_property_key
-
-                    if self.get_field_type(entity_field) == 'system_attribute':
-
-                        if entity_field.expression != '':
-
-                            executed_expression = None
-
-                            try:
-
-                                executed_expression = safe_eval(entity_field.expression, names=csv_row_dict)
-
-                            except (ExpressionEvalError, TypeError, Exception, KeyError):
-
-                                inputs_error.append(entity_field)
-
-
-                            print('executed_expression %s' % executed_expression)
-
-                            if key == 'counterparties':
-
-                                try:
-                                    instance[key] = CounterpartyMapping.objects.get(master_user=master_user,
-                                                                                    value=executed_expression).content_object
-
-                                except (CounterpartyMapping.DoesNotExist, KeyError):
-
-                                    inputs_error.append(entity_field)
-
-                                    _l.debug('CounterpartyMapping %s does not exist', entity_field.expression)
-
-                            elif key == 'responsibles':
-
-                                try:
-                                    instance[key] = ResponsibleMapping.objects.get(master_user=master_user,
-                                                                                   value=executed_expression).content_object
-
-                                except (ResponsibleMapping.DoesNotExist, KeyError):
-
-                                    inputs_error.append(entity_field)
-
-                                    _l.debug('ResponsibleMapping %s does not exist', entity_field.expression)
-
-                            elif key == 'accounts':
-
-                                try:
-                                    instance[key] = AccountMapping.objects.get(master_user=master_user,
-                                                                               value=executed_expression).content_object
-
-                                except (AccountMapping.DoesNotExist, KeyError):
-
-                                    inputs_error.append(entity_field)
-
-                                    _l.debug('AccountMapping %s does not exist', entity_field.expression)
-
-                            elif key == 'portfolios':
-
-                                try:
-                                    instance[key] = PortfolioMapping.objects.get(master_user=master_user,
-                                                                                 value=executed_expression).content_object
-
-                                except (PortfolioMapping.DoesNotExist, KeyError):
-
-                                    inputs_error.append(entity_field)
-
-                                    _l.debug('PortfolioMapping %s does not exist', entity_field.expression)
-
-                            elif key == 'pricing_policy':
-
-                                print(
-                                    'csv_row_dict[entity_field.expression] %s' % csv_row_dict[entity_field.expression])
-
-                                try:
-                                    instance[key] = PricingPolicyMapping.objects.get(master_user=master_user,
-                                                                                     value=executed_expression).content_object
-
-                                except (PricingPolicyMapping.DoesNotExist, KeyError):
-
-                                    inputs_error.append(entity_field)
-
-                                    _l.debug('PricingPolicyMapping %s does not exist', entity_field.expression)
-
-                            elif key == 'instrument':
-
-                                try:
-                                    instance[key] = InstrumentMapping.objects.get(master_user=master_user,
-                                                                                  value=executed_expression).content_object
-
-                                except (InstrumentMapping.DoesNotExist, KeyError):
-
-                                    inputs_error.append(entity_field)
-
-                                    _l.debug('InstrumentMapping %s does not exist', entity_field.expression)
-
-                            elif key == 'instrument_type':
-
-                                try:
-                                    instance[key] = InstrumentTypeMapping.objects.get(master_user=master_user,
-                                                                                      value=executed_expression).content_object
-
-                                except (InstrumentTypeMapping.DoesNotExist, KeyError):
-
-                                    inputs_error.append(entity_field)
-
-                                    _l.debug('InstrumentTypeMapping %s does not exist  ', entity_field.expression)
-
-                            elif key == 'type':
-
-                                try:
-                                    instance[key] = AccountTypeMapping.objects.get(master_user=master_user,
-                                                                                      value=executed_expression).content_object
-
-                                except (AccountTypeMapping.DoesNotExist, KeyError):
-
-                                    inputs_error.append(entity_field)
-
-                                    _l.debug('AccountTypeMapping %s does not exist  ', entity_field.expression)
-
-                            elif key == 'price_download_scheme':
-
-                                try:
-                                    instance[key] = PriceDownloadSchemeMapping.objects.get(master_user=master_user,
-                                                                                           value=executed_expression).content_object
-
-                                except (PriceDownloadSchemeMapping.DoesNotExist, KeyError):
-
-                                    inputs_error.append(entity_field)
-
-                                    _l.debug('PriceDownloadSchemeMapping %s does not exist', entity_field.expression)
-
-                            elif key == 'daily_pricing_model':
-
-                                try:
-                                    instance[key] = DailyPricingModelMapping.objects.get(master_user=master_user,
-                                                                                         value=executed_expression).content_object
-
-                                except (DailyPricingModelMapping.DoesNotExist, KeyError):
-
-                                    inputs_error.append(entity_field)
-
-                                    _l.debug('DailyPricingModelMapping %s does not exist', entity_field.expression)
-
-                            elif key == 'payment_size_detail':
-
-                                try:
-                                    instance[key] = PaymentSizeDetailMapping.objects.get(master_user=master_user,
-                                                                                         value=executed_expression).content_object
-
-                                except (PaymentSizeDetailMapping.DoesNotExist, KeyError):
-
-                                    inputs_error.append(entity_field)
-
-                                    _l.debug('PaymentSizeDetailMapping %s does not exist', entity_field.expression)
-
-                            elif key == 'currency':
-
-                                try:
-                                    instance[key] = CurrencyMapping.objects.get(master_user=master_user,
-                                                                                value=executed_expression).content_object
-
-                                except (CurrencyMapping.DoesNotExist, KeyError):
-
-                                    inputs_error.append(entity_field)
-
-                                    _l.debug('CurrencyMapping %s does not exist', entity_field.expression)
-
-                            elif key == 'pricing_currency':
-
-                                try:
-                                    instance[key] = CurrencyMapping.objects.get(master_user=master_user,
-                                                                                value=executed_expression).content_object
-
-                                except (CurrencyMapping.DoesNotExist, KeyError):
-
-                                    inputs_error.append(entity_field)
-
-                                    _l.debug('CurrencyMapping %s does not exist', entity_field.expression)
-
-                            elif key == 'accrued_currency':
-
-                                try:
-                                    instance[key] = CurrencyMapping.objects.get(master_user=master_user,
-                                                                                value=executed_expression).content_object
-
-                                except (CurrencyMapping.DoesNotExist, KeyError):
-
-                                    inputs_error.append(entity_field)
-
-                                    _l.debug('CurrencyMapping %s does not exist', entity_field.expression)
-
-                            else:
-
-                                instance[key] = executed_expression
-
-                                if key == 'date':
-
-                                    try:
-
-                                        instance[key] = formula._parse_date(instance[key])
-
-                                    except (ExpressionEvalError, TypeError):
-
-                                        inputs_error.append(entity_field)
-
-                            # _l.debug('Can not evaluate system attribute % expression ', entity_field.expression)
-
-                    if self.get_field_type(entity_field) == 'dynamic_attribute':
-
-                        executed_attr = {}
-                        executed_attr['dynamic_attribute_id'] = entity_field.dynamic_attribute_id
-
-                        try:
-
-                            attr_type = GenericAttributeType.objects.get(pk=executed_attr['dynamic_attribute_id'])
-
-                            print('attr_type %s' % attr_type)
-                            print('attr_type value_type %s' % attr_type.value_type)
-
-                            if attr_type.value_type == 40:
-
-                                executed_attr['executed_expression'] = safe_eval(entity_field.expression,
-                                                                                 names=csv_row_dict)
-                                try:
-
-                                    formula._parse_date(executed_attr['executed_expression'])
-
-                                except (ExpressionEvalError, TypeError):
-
-                                    inputs_error.append(entity_field)
-
-                            if attr_type.value_type == 20:
-
-                                executed_attr['executed_expression'] = safe_eval(entity_field.expression,
-                                                                                 names=csv_row_dict)
-                                try:
-
-                                    formula._float(executed_attr['executed_expression'])
-
-                                except (ExpressionEvalError, TypeError):
-
-                                    inputs_error.append(entity_field)
-
-                            if attr_type.value_type == 10:
-                                executed_attr['executed_expression'] = safe_eval(entity_field.expression,
-                                                                                 names=csv_row_dict)
-
-                            if attr_type.value_type == 30:
-
-                                if scheme.content_type.model == 'portfolio':
-
-                                    try:
-                                        executed_attr['executed_expression'] = PortfolioClassifierMapping.objects.get(
-                                            value=csv_row_dict[entity_field.expression]).content_object
-
-                                    except (PortfolioClassifierMapping.DoesNotExist, KeyError):
-
-                                        inputs_error.append(entity_field)
-
-                                        _l.debug('PortfolioClassifierMapping %s does not exist',
-                                                 entity_field.expression)
-
-                                if scheme.content_type.model == 'instrument':
-
-                                    try:
-                                        executed_attr['executed_expression'] = InstrumentClassifierMapping.objects.get(
-                                            value=csv_row_dict[entity_field.expression]).content_object
-
-                                    except (InstrumentClassifierMapping.DoesNotExist, KeyError):
-
-                                        inputs_error.append(entity_field)
-
-                                        _l.debug('InstrumentClassifierMapping %s does not exist',
-                                                 entity_field.expression)
-
-                                if scheme.content_type.model == 'account':
-
-                                    try:
-                                        executed_attr['executed_expression'] = AccountClassifierMapping.objects.get(
-                                            value=csv_row_dict[entity_field.expression]).content_object
-
-                                    except (AccountClassifierMapping.DoesNotExist, KeyError):
-
-                                        inputs_error.append(entity_field)
-
-                                        _l.debug('AccountClassifierMapping %s does not exist', entity_field.expression)
-
-                                if scheme.content_type.model == 'responsible':
-
-                                    try:
-                                        executed_attr['executed_expression'] = ResponsibleClassifierMapping.objects.get(
-                                            value=csv_row_dict[entity_field.expression]).content_object
-
-                                    except (ResponsibleClassifierMapping.DoesNotExist, KeyError):
-
-                                        inputs_error.append(entity_field)
-
-                                        _l.debug('ResponsibleClassifierMapping %s does not exist',
-                                                 entity_field.expression)
-
-                                if scheme.content_type.model == 'counterparty':
-
-                                    try:
-                                        executed_attr[
-                                            'executed_expression'] = CounterpartyClassifierMapping.objects.get(
-                                            value=csv_row_dict[entity_field.expression]).content_object
-
-                                    except (CounterpartyClassifierMapping.DoesNotExist, KeyError):
-
-                                        inputs_error.append(entity_field)
-
-                                        _l.debug('CounterpartyClassifierMapping %s does not exist',
-                                                 entity_field.expression)
-
-                        except (ExpressionEvalError, TypeError, Exception):
-
-                            inputs_error.append(entity_field)
-
-                            # _l.debug('Can not evaluate dynamic attribute % expression %s ' % executed_attr)
-
-                        instance['attributes'].append(executed_attr)
-
-                if inputs_error:
-
-                    error_row['error_message'] = ugettext('Can\'t process field: %(inputs)s') % {
-                        'inputs': ', '.join(i.name for i in inputs_error)
-                    }
-
-                    errors.append(error_row)
-
-                    if error_handler == 'break':
-                        return results, errors
-
-                else:
-
-                    # if (hasattr(instance, 'user_code') and instance['user_code'] == ''):
-                    #     instance['user_code'] = instance['name']
-
-                    results.append(instance)
-
-            row_index = row_index + 1
-
-        return results, errors
+class CsvDataImportViewSet(AbstractModelViewSet):
+    parser_classes = (MultiPartParser,)
+    queryset = CsvDataImport.objects.select_related(
+        'master_user',
+    )
+    serializer_class = CsvDataImportSerializer
+    http_method_names = ['get', 'post', 'head']
 
     def fill_with_dynamic_attributes(self, instance, attributes):
 
@@ -674,7 +721,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
         master_user = self.request.user.master_user
 
-        results, process_errors = self.process_csv_file(master_user, scheme, rows, error_handler)
+        results, process_errors = process_csv_file(master_user, scheme, rows, error_handler)
 
         if error_handler == 'break' and len(process_errors) != 0:
             return Response({
