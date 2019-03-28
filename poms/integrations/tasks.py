@@ -26,11 +26,11 @@ from poms.common.utils import date_now, isclose
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import Instrument, DailyPricingModel, PricingPolicy, PriceHistory, InstrumentType, \
-    PaymentSizeDetail
+    PaymentSizeDetail, Periodicity
 from poms.integrations.models import Task, PriceDownloadScheme, InstrumentDownloadScheme, PricingAutomatedSchedule, \
     AccountMapping, CurrencyMapping, PortfolioMapping, CounterpartyMapping, InstrumentTypeMapping, ResponsibleMapping, \
     Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, DailyPricingModelMapping, PaymentSizeDetailMapping, \
-    PriceDownloadSchemeMapping, InstrumentMapping
+    PriceDownloadSchemeMapping, InstrumentMapping, PeriodicityMapping
 from poms.integrations.providers.base import get_provider, parse_date_iso, fill_instrument_price, fill_currency_price, \
     AbstractProvider
 from poms.integrations.storage import import_file_storage
@@ -1053,6 +1053,7 @@ def complex_transaction_csv_file_import(instance):
         PaymentSizeDetail: PaymentSizeDetailMapping,
         Portfolio: PortfolioMapping,
         PriceDownloadScheme: PriceDownloadSchemeMapping,
+        Periodicity: PeriodicityMapping,
     }
     mapping_cache = {}
 
@@ -1253,6 +1254,7 @@ def complex_transaction_csv_file_import_validate(instance):
         PaymentSizeDetail: PaymentSizeDetailMapping,
         Portfolio: PortfolioMapping,
         PriceDownloadScheme: PriceDownloadSchemeMapping,
+        Periodicity: PeriodicityMapping,
     }
     mapping_cache = {}
 
