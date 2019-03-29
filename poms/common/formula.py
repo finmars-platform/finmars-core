@@ -341,6 +341,16 @@ def _simple_price(date, date1, value1, date2, value2):
     return 0.0
 
 
+def _generate_user_code(evaluator, prefix='', suffix='', counter=0):
+    from poms.users.utils import get_master_user_from_context
+    from poms.currencies.models import CurrencyHistory
+
+    return prefix + str(counter) + suffix
+
+
+_generate_user_code.evaluator = True
+
+
 def _get_fx_rate(evaluator, date, currency, pricing_policy, default_value=0):
     from poms.users.utils import get_master_user_from_context
     from poms.currencies.models import CurrencyHistory
@@ -360,6 +370,72 @@ def _get_fx_rate(evaluator, date, currency, pricing_policy, default_value=0):
 
 
 _get_fx_rate.evaluator = True
+
+
+def _add_fx_history(evaluator, date, currency, pricing_policy, fx_rate=0, overwrite=True):
+    from poms.users.utils import get_master_user_from_context
+    from poms.currencies.models import CurrencyHistory
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    # TODO need master user check, security hole
+
+    result = CurrencyHistory.objects.get(date=date, currency=currency,
+                                         pricing_policy=pricing_policy)
+
+    if result:
+
+        if overwrite:
+            result.fx_rate = fx_rate
+
+            result.save()
+        else:
+            return False
+
+    else:
+
+        result = CurrencyHistory.objects.create(date=date, currency=currency,
+                                                pricing_policy=pricing_policy, fx_rate=fx_rate)
+
+    return True
+
+
+_add_fx_history.evaluator = True
+
+
+def _add_price_history(evaluator, date, instrument, pricing_policy, principal_price=0, accrued_price=0, overwrite=True):
+    from poms.users.utils import get_master_user_from_context
+    from poms.instruments.models import PriceHistory
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    # TODO need master user check, security hole
+
+    result = PriceHistory.objects.get(date=date, instrument=instrument,
+                                      pricing_policy=pricing_policy)
+
+    if result:
+
+        if overwrite:
+            result.principal_price = principal_price
+            result.accrued_price = accrued_price
+
+            result.save()
+
+        else:
+            return False
+    else:
+
+        result = PriceHistory.objects.create(date=date, instrument=instrument,
+                                             pricing_policy=pricing_policy, principal_price=principal_price,
+                                             accrued_price=accrued_price)
+
+    return True
+
+
+_add_price_history.evaluator = True
 
 
 def _get_price_history_principal_price(evaluator, date, instrument, pricing_policy, default_value=0):
@@ -842,6 +918,9 @@ FUNCTIONS = [
     SimpleEval2Def('get_PrincipalPrice', _get_price_history_principal_price),
     SimpleEval2Def('get_AccruedPrice', _get_price_history_accrued_price),
     SimpleEval2Def('get_Factor', _get_factor_schedule),
+    SimpleEval2Def('add_FXHistory', _add_fx_history),
+    SimpleEval2Def('add_PriceHistory', _add_price_history),
+    SimpleEval2Def('generateUserCode', _generate_user_code),
 
     # SimpleEval2Def('get_instr_accrual_size', _get_instrument_accrual_size),
     # SimpleEval2Def('get_instr_accrual_factor', _get_instrument_accrual_factor),
