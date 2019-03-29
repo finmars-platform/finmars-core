@@ -200,9 +200,6 @@ def process_csv_file(master_user, scheme, rows, error_handler):
 
                         elif key == 'pricing_policy':
 
-                            print(
-                                'csv_row_dict[entity_field.expression] %s' % csv_row_dict[entity_field.expression])
-
                             try:
                                 instance[key] = PricingPolicyMapping.objects.get(master_user=master_user,
                                                                                  value=executed_expression).content_object

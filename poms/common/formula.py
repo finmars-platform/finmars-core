@@ -341,6 +341,89 @@ def _simple_price(date, date1, value1, date2, value2):
     return 0.0
 
 
+def _get_fx_rate(evaluator, date, currency, pricing_policy, default_value=0):
+    from poms.users.utils import get_master_user_from_context
+    from poms.currencies.models import CurrencyHistory
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    # TODO need master user check, security hole
+
+    result = CurrencyHistory.objects.get(date=date, currency=currency,
+                                         pricing_policy=pricing_policy)
+
+    if result:
+        return result.fx_rate
+
+    return default_value
+
+
+_get_fx_rate.evaluator = True
+
+
+def _get_price_history_principal_price(evaluator, date, instrument, pricing_policy, default_value=0):
+    from poms.users.utils import get_master_user_from_context
+    from poms.instruments.models import PriceHistory
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    # TODO need master user check, security hole
+
+    result = PriceHistory.objects.get(date=date, instrument=instrument,
+                                      pricing_policy=pricing_policy)
+
+    if result:
+        return result.principal_price
+
+    return default_value
+
+
+_get_price_history_principal_price.evaluator = True
+
+
+def _get_price_history_accrued_price(evaluator, date, instrument, pricing_policy, default_value=0):
+    from poms.users.utils import get_master_user_from_context
+    from poms.instruments.models import PriceHistory
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    # TODO need master user check, security hole
+
+    result = PriceHistory.objects.get(date=date, instrument=instrument,
+                                      pricing_policy=pricing_policy)
+
+    if result:
+        return result.accrued_price
+
+    return default_value
+
+
+_get_price_history_accrued_price.evaluator = True
+
+
+def _get_factor_schedule(evaluator, date, instrument, default_value=0):
+    from poms.users.utils import get_master_user_from_context
+    from poms.instruments.models import InstrumentFactorSchedule
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    # TODO need master user check, security hole
+
+    result = InstrumentFactorSchedule.objects.get(effective_date=date, instrument=instrument)
+
+    if result:
+        return result.factor_value
+
+    return default_value
+
+
+_get_factor_schedule.evaluator = True
+
+
 def _safe_get_instrument(evaluator, instrument):
     from poms.users.utils import get_master_user_from_context, get_member_from_context
     from poms.instruments.models import Instrument
@@ -755,6 +838,11 @@ FUNCTIONS = [
     SimpleEval2Def('get_instrument_coupon_factor', _get_instrument_coupon_factor),
     SimpleEval2Def('get_instrument_coupon', _get_instrument_coupon),
 
+    SimpleEval2Def('get_FXRate', _get_fx_rate),
+    SimpleEval2Def('get_PrincipalPrice', _get_price_history_principal_price),
+    SimpleEval2Def('get_AccruedPrice', _get_price_history_accrued_price),
+    SimpleEval2Def('get_Factor', _get_factor_schedule),
+
     # SimpleEval2Def('get_instr_accrual_size', _get_instrument_accrual_size),
     # SimpleEval2Def('get_instr_accrual_factor', _get_instrument_accrual_factor),
     # SimpleEval2Def('get_instr_accrued_price', _get_instrument_accrued_price),
@@ -1149,7 +1237,6 @@ def validate_num(val):
 
 
 def validate_bool(val):
-
     print('validate_bool val %s' % val)
 
     return _parse_bool(val)
