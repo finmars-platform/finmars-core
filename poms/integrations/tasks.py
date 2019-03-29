@@ -1086,9 +1086,14 @@ def complex_transaction_csv_file_import(instance):
 
     def _process_csv_file(file):
 
-        for row_index, row in enumerate(
-                csv.reader(file, delimiter=instance.delimiter, quotechar=instance.quotechar,
-                           strict=False)):
+        reader = csv.reader(file, delimiter=instance.delimiter, quotechar=instance.quotechar,
+                            strict=False)
+
+        instance.total_rows = sum(1 for row in reader)
+
+        _l.debug('instance instance.total_rows: %s', instance.total_rows)
+
+        for row_index, row in enumerate(reader):
 
             _l.debug('process row: %s -> %s', row_index, row)
             if (row_index == 0 and instance.skip_first_line) or not row:
@@ -1287,9 +1292,14 @@ def complex_transaction_csv_file_import_validate(instance):
 
     def _process_csv_file(file):
 
-        for row_index, row in enumerate(
-                csv.reader(file, delimiter=instance.delimiter, quotechar=instance.quotechar,
-                           strict=False)):
+        reader = csv.reader(file, delimiter=instance.delimiter, quotechar=instance.quotechar,
+                            strict=False)
+
+        instance.total_rows = sum(1 for row in reader)
+
+        _l.debug('instance instance.total_rows: %s', instance.total_rows)
+
+        for row_index, row in enumerate(reader):
 
             _l.debug('process row: %s -> %s', row_index, row)
             if (row_index == 0 and instance.skip_first_line) or not row:

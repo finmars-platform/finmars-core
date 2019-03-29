@@ -74,7 +74,6 @@ class SchemeViewSet(AbstractModelViewSet):
 
 
 def get_row_data(row, csv_fields):
-
     csv_row_dict = {}
 
     for csv_field in csv_fields:
@@ -88,7 +87,6 @@ def get_row_data(row, csv_fields):
 
 
 def get_field_type(field):
-
     if field.system_property_key is not None:
         return 'system_attribute'
     else:
@@ -96,7 +94,6 @@ def get_field_type(field):
 
 
 def process_csv_file(master_user, scheme, rows, error_handler):
-
     csv_fields = scheme.csv_fields.all()
     entity_fields = scheme.entity_fields.all()
 
@@ -119,8 +116,8 @@ def process_csv_file(master_user, scheme, rows, error_handler):
                 instance['master_user'] = master_user
                 instance['attributes'] = []
 
-            print("model %s" % scheme.content_type.model)
-            print("instance %s" % instance)
+            # print("model %s" % scheme.content_type.model)
+            # print("instance %s" % instance)
 
             inputs_error = []
             error_row = {
@@ -147,8 +144,7 @@ def process_csv_file(master_user, scheme, rows, error_handler):
 
                             inputs_error.append(entity_field)
 
-
-                        print('executed_expression %s' % executed_expression)
+                        # print('executed_expression %s' % executed_expression)
 
                         if key == 'counterparties':
 
@@ -497,9 +493,9 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
         csv_contents = request.data['file'].read().decode('utf-8-sig')
         rows = csv_contents.splitlines()
 
-        print('rows len %s' % len(rows))
+        rows = list(map(lambda x: x.split(delimiter), rows))
 
-        rows = map(lambda x: x.split(delimiter), rows)
+        rows_total = len(rows)
 
         master_user = self.request.user.master_user
 
@@ -508,11 +504,13 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
         if error_handler == 'break' and len(process_errors) != 0:
             return Response({
                 "imported": len(results),
+                "total": rows_total,
                 "errors": process_errors
             }, status=status.HTTP_202_ACCEPTED)
 
         return Response({
             "imported": len(results),
+            "total": rows_total,
             "errors": process_errors
         }, status=status.HTTP_202_ACCEPTED)
 
@@ -618,8 +616,8 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
         for result in results:
 
-            print('scheme.content_type.model %s' % scheme.content_type.model)
-            print('result %s' % result)
+            # print('scheme.content_type.model %s' % scheme.content_type.model)
+            # print('result %s' % result)
 
             if scheme.content_type.model == 'pricehistory':
 
@@ -714,9 +712,9 @@ class CsvDataImportViewSet(AbstractModelViewSet):
         csv_contents = request.data['file'].read().decode('utf-8-sig')
         rows = csv_contents.splitlines()
 
-        print('rows len %s' % len(rows))
+        rows = list(map(lambda x: x.split(delimiter), rows))
 
-        rows = map(lambda x: x.split(delimiter), rows)
+        rows_total = len(rows)
 
         master_user = self.request.user.master_user
 
@@ -725,6 +723,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
         if error_handler == 'break' and len(process_errors) != 0:
             return Response({
                 "imported": len(results),
+                "total": rows_total,
                 "errors": process_errors
             }, status=status.HTTP_202_ACCEPTED)
 
@@ -732,5 +731,6 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
         return Response({
             "imported": len(results),
+            "total": rows_total,
             "errors": process_errors
         }, status=status.HTTP_202_ACCEPTED)
