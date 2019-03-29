@@ -484,6 +484,7 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
 
         scheme_id = request.data['scheme']
         error_handler = request.data['error_handler']
+        delimiter = request.data['delimiter']
 
         scheme = Scheme.objects.get(pk=scheme_id)
 
@@ -498,7 +499,7 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
 
         print('rows len %s' % len(rows))
 
-        rows = map(lambda x: x.split(','), rows)
+        rows = map(lambda x: x.split(delimiter), rows)
 
         master_user = self.request.user.master_user
 
@@ -700,6 +701,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
         scheme_id = request.data['scheme']
         error_handler = request.data['error_handler']
+        delimiter = request.data['delimiter']
 
         scheme = Scheme.objects.get(pk=scheme_id)
 
@@ -714,7 +716,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
         print('rows len %s' % len(rows))
 
-        rows = map(lambda x: x.split(','), rows)
+        rows = map(lambda x: x.split(delimiter), rows)
 
         master_user = self.request.user.master_user
 
