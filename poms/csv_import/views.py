@@ -14,7 +14,9 @@ from django.utils import timezone
 import uuid
 
 from poms.common.views import AbstractModelViewSet
+from poms.obj_perms.views import AbstractWithObjectPermissionViewSet
 from poms.portfolios.models import Portfolio
+from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.models import Member
 from poms.common import formula
 from poms.common.formula import safe_eval, ExpressionSyntaxError, ExpressionEvalError
@@ -55,10 +57,14 @@ def utf_8_encoder(unicode_csv_data):
 
 class SchemeViewSet(AbstractModelViewSet):
     queryset = Scheme.objects.select_related(
+
         'master_user',
     )
     serializer_class = SchemeSerializer
     filter_class = SchemeFilterSet
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
 
     # def create(self, request, *args, **kwargs):
     #

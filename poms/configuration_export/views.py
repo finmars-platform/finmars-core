@@ -897,7 +897,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         if len(children):
             for item in children:
-
                 item_model = Bookmark.objects.get(member=self._member, pk=item["id"])
 
                 item["data"] = item_model.data
@@ -912,7 +911,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return children
 
-
     def get_bookmarks(self):
 
         results = to_json_objects(Bookmark.objects.filter(member=self._member, parent=None))
@@ -922,7 +920,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             for bookmark_json in results:
 
                 if bookmark_model.pk == bookmark_json['pk']:
-
                     bookmark_json["fields"]["children"] = self.get_bookmarks_children(bookmark_model)
 
                     bookmark_json["fields"]["data"] = bookmark_model.data
@@ -966,6 +963,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
     def get_csv_import_schemes(self):
         schemes = to_json_objects(Scheme.objects.filter(master_user=self._master_user))
         results = []
+
+        print('schemes %s' % len(schemes))
+        print('self._master_user %s' % self._master_user)
 
         for scheme in schemes:
             result_item = scheme["fields"]
