@@ -284,7 +284,7 @@ class ReportComplexTransactionSerializer(ComplexTransactionSerializer):
 
         super(ReportComplexTransactionSerializer, self).__init__(*args, **kwargs)
 
-        self.fields.pop('text')
+        # self.fields.pop('text')
         self.fields.pop('transactions')
         self.fields.pop('transactions_object')
         # self.fields.pop('transaction_type_object')
