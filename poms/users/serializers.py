@@ -260,7 +260,8 @@ class MasterUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = MasterUser
         fields = [
-            'id', 'name', 'description', 'is_current', 'is_admin', 'is_owner', 'language', 'timezone',
+            'id', 'name', 'description', 'user_code_counters', 'is_current', 'is_admin', 'is_owner', 'language',
+            'timezone',
             'notification_business_days',
             'system_currency',
             'currency',
@@ -294,7 +295,6 @@ class MasterUserSerializer(serializers.ModelSerializer):
         from poms.chats.serializers import ThreadGroupViewSerializer
         from poms.transactions.serializers import TransactionTypeViewSerializer
         from poms.instruments.serializers import PricingPolicyViewSerializer
-
 
         self.fields['system_currency_object'] = CurrencyViewSerializer(source='system_currency', read_only=True)
         self.fields['currency_object'] = CurrencyViewSerializer(source='currency', read_only=True)
@@ -333,7 +333,8 @@ class MasterUserSerializer(serializers.ModelSerializer):
         self.fields['mismatch_account_object'] = AccountViewSerializer(source='mismatch_account', read_only=True)
 
         self.fields['pricing_policy_object'] = PricingPolicyViewSerializer(source='pricing_policy', read_only=True)
-        self.fields['transaction_type_object'] = TransactionTypeViewSerializer(source='transaction_type', read_only=True)
+        self.fields['transaction_type_object'] = TransactionTypeViewSerializer(source='transaction_type',
+                                                                               read_only=True)
 
     def to_representation(self, instance):
         ret = super(MasterUserSerializer, self).to_representation(instance)
@@ -399,7 +400,8 @@ class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
         fields = [
-            'id', 'master_user', 'join_date', 'is_owner', 'is_admin', 'is_superuser', 'is_current', 'notification_level',
+            'id', 'master_user', 'join_date', 'is_owner', 'is_admin', 'is_superuser', 'is_current',
+            'notification_level',
             'is_deleted', 'username', 'first_name', 'last_name', 'display_name', 'groups', 'groups_object'
         ]
         read_only_fields = [

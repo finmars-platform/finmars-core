@@ -12,7 +12,7 @@ class Scheme(models.Model):
 
     class Meta:
         unique_together = (
-            ('content_type', 'name')
+            ('content_type', 'name', 'master_user')
         )
 
     def __str__(self):

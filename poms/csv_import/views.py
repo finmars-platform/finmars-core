@@ -57,7 +57,6 @@ def utf_8_encoder(unicode_csv_data):
 
 class SchemeViewSet(AbstractModelViewSet):
     queryset = Scheme.objects.select_related(
-
         'master_user',
     )
     serializer_class = SchemeSerializer

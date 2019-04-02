@@ -9,8 +9,9 @@ from .models import Scheme, EntityField, CsvField, CsvDataImport
 class CsvImportAdmin(admin.ModelAdmin):
     list_display = ('id', 'scheme')
 
+
 class CsvSchemeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'content_type')
+    list_display = ('id', 'name', 'content_type', 'master_user')
 
 
 class CsvImportSchemaFieldsAdmin(admin.ModelAdmin):

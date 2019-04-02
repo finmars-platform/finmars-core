@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import pytz
 from django.conf import settings
 from django.contrib.auth.models import User, Permission
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -181,6 +182,8 @@ class MasterUser(models.Model):
     # TODO: what is notification_business_days
     notification_business_days = models.IntegerField(default=0)
 
+    user_code_counters = ArrayField(models.IntegerField(null=True, blank=True), null=True, blank=True)
+
     objects = MasterUserManager()
 
     class Meta:
@@ -216,6 +219,7 @@ class MasterUser(models.Model):
         price_download_scheme = PriceDownloadScheme.objects.create(master_user=self, scheme_name='-',
                                                                    provider=ProviderClass.objects.get(
                                                                        pk=ProviderClass.BLOOMBERG))
+
         ccys = {}
         ccy = Currency.objects.create(master_user=self, name='-', user_code='-')
         ccy_usd = None
