@@ -98,7 +98,7 @@ def get_field_type(field):
         return 'dynamic_attribute'
 
 
-def process_csv_file(master_user, scheme, rows, error_handler):
+def process_csv_file(master_user, scheme, rows, error_handler, context):
     csv_fields = scheme.csv_fields.all()
     entity_fields = scheme.entity_fields.all()
 
@@ -142,8 +142,8 @@ def process_csv_file(master_user, scheme, rows, error_handler):
                         executed_expression = None
 
                         try:
-
-                            executed_expression = safe_eval(entity_field.expression, names=csv_row_dict)
+                            # context=self.report.context
+                            executed_expression = safe_eval(entity_field.expression, names=csv_row_dict, context=context)
 
                         except (ExpressionEvalError, TypeError, Exception, KeyError):
 
@@ -350,7 +350,7 @@ def process_csv_file(master_user, scheme, rows, error_handler):
                         if attr_type.value_type == 40:
 
                             executed_attr['executed_expression'] = safe_eval(entity_field.expression,
-                                                                             names=csv_row_dict)
+                                                                             names=csv_row_dict, context=context)
                             try:
 
                                 formula._parse_date(executed_attr['executed_expression'])
@@ -362,7 +362,7 @@ def process_csv_file(master_user, scheme, rows, error_handler):
                         if attr_type.value_type == 20:
 
                             executed_attr['executed_expression'] = safe_eval(entity_field.expression,
-                                                                             names=csv_row_dict)
+                                                                             names=csv_row_dict, context=context)
                             try:
 
                                 formula._float(executed_attr['executed_expression'])
@@ -373,7 +373,7 @@ def process_csv_file(master_user, scheme, rows, error_handler):
 
                         if attr_type.value_type == 10:
                             executed_attr['executed_expression'] = safe_eval(entity_field.expression,
-                                                                             names=csv_row_dict)
+                                                                             names=csv_row_dict, context=context)
 
                         if attr_type.value_type == 30:
 
@@ -504,7 +504,9 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
 
         master_user = self.request.user.master_user
 
-        results, process_errors = process_csv_file(master_user, scheme, rows, error_handler)
+        context = super(CsvDataImportValidateViewSet, self).get_serializer_context()
+
+        results, process_errors = process_csv_file(master_user, scheme, rows, error_handler, context)
 
         if error_handler == 'break' and len(process_errors) != 0:
             return Response({
@@ -723,7 +725,9 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
         master_user = self.request.user.master_user
 
-        results, process_errors = process_csv_file(master_user, scheme, rows, error_handler)
+        context = super(CsvDataImportViewSet, self).get_serializer_context()
+
+        results, process_errors = process_csv_file(master_user, scheme, rows, error_handler, context)
 
         if error_handler == 'break' and len(process_errors) != 0:
             return Response({

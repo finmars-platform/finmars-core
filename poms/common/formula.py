@@ -343,9 +343,31 @@ def _simple_price(date, date1, value1, date2, value2):
 
 def _generate_user_code(evaluator, prefix='', suffix='', counter=0):
     from poms.users.utils import get_master_user_from_context
-    from poms.currencies.models import CurrencyHistory
 
-    return prefix + str(counter) + suffix
+    context = evaluator.context
+
+    master_user = get_master_user_from_context(context)
+
+    if not master_user.user_code_counters:
+        master_user.user_code_counters = [0, 0, 0, 0, 0,
+                                          0, 0, 0, 0, 0,
+                                          0]
+
+    if counter < 0:
+        raise InvalidExpression('Counter is lower than 0')
+
+    if counter > 10:
+        raise InvalidExpression('Counter is greater than 100')
+
+    master_user.user_code_counters[counter] = master_user.user_code_counters[counter] + 1
+    master_user.save()
+
+    result = prefix + str(master_user.user_code_counters[counter]).zfill(17) + suffix
+
+    if len(result) > 25:
+        raise InvalidExpression('User code is too big')
+
+    return result
 
 
 _generate_user_code.evaluator = True
