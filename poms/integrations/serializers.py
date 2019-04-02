@@ -1483,7 +1483,7 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
     scheme = ComplexTransactionImportSchemeRestField(required=False)
     file = serializers.FileField(required=False, allow_null=True)
     skip_first_line = serializers.BooleanField(required=False, default=True)
-    delimiter = serializers.CharField(max_length=1, required=False, initial=',', default=',')
+    delimiter = serializers.CharField(max_length=2, required=False, initial=',', default=',')
     quotechar = serializers.CharField(max_length=1, required=False, initial='"', default='"')
     encoding = serializers.CharField(max_length=20, required=False, initial='utf-8', default='utf-8')
 

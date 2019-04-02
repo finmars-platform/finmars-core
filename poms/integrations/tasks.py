@@ -1086,12 +1086,10 @@ def complex_transaction_csv_file_import(instance):
 
     def _process_csv_file(file):
 
-        reader = csv.reader(file, delimiter=instance.delimiter, quotechar=instance.quotechar,
+        delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
+
+        reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
                             strict=False)
-
-        instance.total_rows = sum(1 for row in reader)
-
-        _l.debug('instance instance.total_rows: %s', instance.total_rows)
 
         for row_index, row in enumerate(reader):
 
@@ -1202,6 +1200,11 @@ def complex_transaction_csv_file_import(instance):
                     # if settings.DEBUG:
                     #     transaction.set_rollback(True)
 
+    def _row_count(file):
+        for i, l in enumerate(file):
+                pass
+        return i
+
     instance.error_rows = []
     try:
         with import_file_storage.open(instance.file_path, 'rb') as f:
@@ -1212,6 +1215,8 @@ def complex_transaction_csv_file_import(instance):
                 for chunk in f.chunks():
                     tmpf.write(chunk)
                 tmpf.flush()
+                with open(tmpf.name, mode='rt', encoding=instance.encoding) as cfr:
+                    instance.total_rows = _row_count(cfr)
                 with open(tmpf.name, mode='rt', encoding=instance.encoding) as cf:
                     _process_csv_file(cf)
     # except csv.Error:
@@ -1292,12 +1297,10 @@ def complex_transaction_csv_file_import_validate(instance):
 
     def _process_csv_file(file):
 
-        reader = csv.reader(file, delimiter=instance.delimiter, quotechar=instance.quotechar,
+        delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
+
+        reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
                             strict=False)
-
-        instance.total_rows = sum(1 for row in reader)
-
-        _l.debug('instance instance.total_rows: %s', instance.total_rows)
 
         for row_index, row in enumerate(reader):
 
@@ -1385,6 +1388,11 @@ def complex_transaction_csv_file_import_validate(instance):
                 else:
                     continue
 
+    def _row_count(file):
+        for i, l in enumerate(file):
+            pass
+        return i
+
     instance.error_rows = []
     try:
         with import_file_storage.open(instance.file_path, 'rb') as f:
@@ -1395,6 +1403,9 @@ def complex_transaction_csv_file_import_validate(instance):
                 for chunk in f.chunks():
                     tmpf.write(chunk)
                 tmpf.flush()
+                with open(tmpf.name, mode='rt', encoding=instance.encoding) as cfr:
+                    instance.total_rows = _row_count(cfr)
+
                 with open(tmpf.name, mode='rt', encoding=instance.encoding) as cf:
                     _process_csv_file(cf)
     # except csv.Error:
