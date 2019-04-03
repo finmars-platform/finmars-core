@@ -143,7 +143,8 @@ def process_csv_file(master_user, scheme, rows, error_handler, context):
 
                         try:
                             # context=self.report.context
-                            executed_expression = safe_eval(entity_field.expression, names=csv_row_dict, context=context)
+                            executed_expression = safe_eval(entity_field.expression, names=csv_row_dict,
+                                                            context=context)
 
                         except (ExpressionEvalError, TypeError, Exception, KeyError):
 
@@ -498,6 +499,8 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
         csv_contents = request.data['file'].read().decode('utf-8-sig')
         rows = csv_contents.splitlines()
 
+        delimiter = delimiter.encode('utf-8').decode('unicode_escape')
+
         rows = list(map(lambda x: x.split(delimiter), rows))
 
         rows_total = len(rows)
@@ -718,6 +721,8 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
         csv_contents = request.data['file'].read().decode('utf-8-sig')
         rows = csv_contents.splitlines()
+
+        delimiter = delimiter.encode('utf-8').decode('unicode_escape')
 
         rows = list(map(lambda x: x.split(delimiter), rows))
 
