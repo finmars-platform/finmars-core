@@ -21,7 +21,6 @@ from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import ComplexTransaction, TransactionTypeInput, Transaction, EventClass, \
     NotificationClass, RebookReactionChoice, ComplexTransactionInput
 
-
 _l = logging.getLogger('poms.transactions')
 
 
@@ -988,8 +987,9 @@ class TransactionTypeProcess(object):
                 names[key] = value
 
             try:
-                self.complex_transaction.text = formula.safe_eval(self.complex_transaction.transaction_type.display_expr, names=names,
-                                                           context=self._context)
+                self.complex_transaction.text = formula.safe_eval(
+                    self.complex_transaction.transaction_type.display_expr, names=names,
+                    context=self._context)
             except formula.InvalidExpression:
                 self.complex_transaction.text = '<InvalidExpression>'
 
@@ -1009,8 +1009,9 @@ class TransactionTypeProcess(object):
             self.complex_transaction.date = self._now  # as default
 
             try:
-                self.complex_transaction.date = formula.safe_eval(self.complex_transaction.transaction_type.date_expr, names=names,
-                                                           context=self._context)
+                self.complex_transaction.date = formula.safe_eval(self.complex_transaction.transaction_type.date_expr,
+                                                                  names=names,
+                                                                  context=self._context)
             except formula.InvalidExpression:
 
                 self.complex_transaction.date = self._now
@@ -1045,14 +1046,17 @@ class TransactionTypeProcess(object):
         # complex_transaction
         complex_transaction_errors = {}
         if self.complex_transaction.date is None:
+            self.complex_transaction.date = self._now  # set by default
+
             self._set_val(errors=complex_transaction_errors, values=self.values, default_value=self._now,
                           target=self.complex_transaction, target_attr_name='date',
                           source=self.transaction_type, source_attr_name='date_expr',
                           validator=formula.validate_date)
 
-
         if bool(complex_transaction_errors):
             self.complex_transaction_errors.append(complex_transaction_errors)
+
+        print("complex_transaction.date %s" % self.complex_transaction.date)
 
         self.complex_transaction.save()
 
@@ -1060,13 +1064,13 @@ class TransactionTypeProcess(object):
 
         # print(self.complex_transaction.transactions.all())
 
-        self.complex_transaction.transactions.all().delete  ()
+        self.complex_transaction.transactions.all().delete()
 
         self.book_create_transactions(actions, master_user, instrument_map)
 
         self.execute_complex_transaction_text_and_date()
 
-        self.complex_transaction.save() # save executed text and date expression
+        self.complex_transaction.save()  # save executed text and date expression
 
         if not self.has_errors and self.transactions:
             for trn in self.transactions:
@@ -1074,9 +1078,6 @@ class TransactionTypeProcess(object):
 
         if self.complex_transaction.status == ComplexTransaction.PENDING:
             self.complex_transaction.transactions.all().delete()
-
-
-
 
     def process_recalculate(self):
         if not self.recalculate_inputs:
