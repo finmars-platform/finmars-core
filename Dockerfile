@@ -37,12 +37,19 @@ RUN chmod -R 777 /var/app-data/
 
 COPY docker/celeryd /etc/init.d/celeryd
 COPY docker/celeryd-config /etc/default/celeryd
+
+COPY docker/celerybeat /etc/init.d/celerybeat
+COPY docker/celerybeat-config /etc/default/celerybeat
+
 COPY docker/uwsgi-www.ini /etc/uwsgi/finmars-vassals/finmars-www.ini
 COPY docker/uwsgi-emperor.ini /etc/uwsgi/apps-enabled/finmars.ini
 
 RUN chmod +x /var/app/docker/finmars-run.sh
 RUN chmod +x /etc/init.d/celeryd
+RUN chmod +x /etc/init.d/celerybeat
+
 RUN chmod 640 /etc/default/celeryd
+RUN chmod 640 /etc/default/celerybeat
 
 # create celery user
 RUN useradd -N -M --system -s /bin/bash celery

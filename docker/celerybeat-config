@@ -1,0 +1,17 @@
+# Absolute or relative path to the 'celery' command:
+
+ENV_PYTHON="/var/app-venv/bin/python"
+
+CELERY_BIN="/var/app-venv/bin/celery"
+
+# App instance to use
+# comment out this line if you don't use an app
+CELERY_APP="poms_app"
+# or fully qualified:
+#CELERY_APP="proj.tasks:app"
+
+# Where to chdir at start.
+CELERYBEAT_CHDIR="/var/app/"
+
+# Extra arguments to celerybeat
+CELERYBEAT_OPTS="--schedule=/var/run/celery/celerybeat-schedule"
