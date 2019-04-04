@@ -1006,12 +1006,17 @@ class TransactionTypeProcess(object):
             for key, value in self.values.items():
                 names[key] = value
 
+            self.complex_transaction.date = self._now  # as default
+
             try:
                 self.complex_transaction.date = formula.safe_eval(self.complex_transaction.transaction_type.date_expr, names=names,
                                                            context=self._context)
             except formula.InvalidExpression:
 
-                self.complex_transaction.date = date_now()
+                self.complex_transaction.date = self._now
+
+        else:
+            self.complex_transaction.date = self._now
 
     def process(self):
         if self.process_mode == self.MODE_RECALCULATE:
