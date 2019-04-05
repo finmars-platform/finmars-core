@@ -13,7 +13,7 @@ from django.db import models
 
 from poms.common.serializers import ModelWithUserCodeSerializer
 from poms.integrations.models import PortfolioClassifierMapping, ProviderClass, AccountClassifierMapping, \
-    CounterpartyClassifierMapping, ResponsibleClassifierMapping
+    CounterpartyClassifierMapping, ResponsibleClassifierMapping, InstrumentClassifierMapping
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier, GenericAttribute
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
@@ -579,6 +579,13 @@ class GenericAttributeTypeSerializer(ModelWithObjectPermissionSerializer, ModelW
                                                          attribute_type=instance,
                                                          value=node.name)
 
+        if instance.content_type.model == 'instrument':
+            InstrumentClassifierMapping.objects.create(master_user=master_user,
+                                                        content_object=node,
+                                                        provider=bloomberg,
+                                                        attribute_type=instance,
+                                                        value=node.name)
+
     def delete_matched_classifier_node_mapping(self, instance, node):
 
         print('delete node %s' %node )
@@ -595,6 +602,10 @@ class GenericAttributeTypeSerializer(ModelWithObjectPermissionSerializer, ModelW
                                                          value=node.name).delete()
         if instance.content_type.model == 'responsible':
             ResponsibleClassifierMapping.objects.filter(attribute_type=instance,
+                                                        value=node.name).delete()
+
+        if instance.content_type.model == 'instrument':
+            InstrumentClassifierMapping.objects.filter(attribute_type=instance,
                                                         value=node.name).delete()
 
 
