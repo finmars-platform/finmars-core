@@ -2,7 +2,6 @@ from __future__ import unicode_literals, print_function
 
 import json
 
-
 from datetime import timedelta
 from logging import getLogger
 
@@ -51,8 +50,6 @@ from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Fiel
 from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeField, TransactionTypeInputField
 from poms.users.fields import MasterUserField, MemberField, HiddenMemberField
-
-
 
 _l = getLogger('poms.integrations')
 
@@ -495,8 +492,8 @@ class AbstractClassifierMappingSerializer(serializers.ModelSerializer):
         self.validators.append(
             UniqueTogetherValidator(
                 queryset=model.objects.all(),
-                fields=('master_user', 'provider', 'value'),
-                message=ugettext_lazy('The fields provider and value must make a unique set.')
+                fields=('master_user', 'provider', 'value', 'attribute_type'),
+                message=ugettext_lazy('The fields provider, value and attribute_type must make a unique set.')
             )
         )
 
@@ -516,6 +513,7 @@ class CurrencyMappingSerializer(AbstractMappingSerializer):
     def get_content_object_view_serializer(self):
         from poms.currencies.serializers import CurrencyViewSerializer
         return CurrencyViewSerializer
+
 
 class PricingPolicyMappingSerializer(AbstractMappingSerializer):
     content_object = PricingPolicyField()
@@ -633,6 +631,7 @@ class AccountMappingSerializer(AbstractMappingSerializer):
         from poms.accounts.serializers import AccountViewSerializer
         return AccountViewSerializer
 
+
 class AccountClassifierMappingSerializer(AbstractClassifierMappingSerializer):
     attribute_type = GenericAttributeTypeField()
     content_object = GenericClassifierField()
@@ -682,6 +681,7 @@ class CounterpartyMappingSerializer(AbstractMappingSerializer):
         from poms.counterparties.serializers import CounterpartyViewSerializer
         return CounterpartyViewSerializer
 
+
 class CounterpartyClassifierMappingSerializer(AbstractClassifierMappingSerializer):
     attribute_type = GenericAttributeTypeField()
     content_object = GenericClassifierField()
@@ -705,6 +705,7 @@ class ResponsibleMappingSerializer(AbstractMappingSerializer):
     def get_content_object_view_serializer(self):
         from poms.counterparties.serializers import ResponsibleViewSerializer
         return ResponsibleViewSerializer
+
 
 class ResponsibleClassifierMappingSerializer(AbstractClassifierMappingSerializer):
     attribute_type = GenericAttributeTypeField()
@@ -1427,7 +1428,6 @@ class ComplexTransactionImportSchemeSerializer(serializers.ModelSerializer):
             for name, value in field_values.items():
                 setattr(field0, name, value)
 
-
             # TODO check why is that?
             # if field0.transaction_type_input.transaction_type_id != rule.transaction_type_id:
             #     raise serializers.ValidationError(ugettext('Invalid transaction type input. (Hacker has detected!)'))
@@ -1440,7 +1440,8 @@ class ComplexTransactionImportSchemeSerializer(serializers.ModelSerializer):
 class ComplexTransactionCsvFileImport:
     def __init__(self, task_id=None, task_status=None, master_user=None, member=None,
                  scheme=None, file_path=None, skip_first_line=None, delimiter=None, quotechar=None, encoding=None,
-                 error_handling=None, error=None, error_message=None, error_row_index=None, error_rows=None, total_rows=None):
+                 error_handling=None, error=None, error_message=None, error_row_index=None, error_rows=None,
+                 total_rows=None):
         self.task_id = task_id
         self.task_status = task_status
 
