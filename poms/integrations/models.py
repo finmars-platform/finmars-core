@@ -466,7 +466,7 @@ class AccountClassifierMapping(AbstractMapping):
         verbose_name = ugettext_lazy('account classifier mapping')
         verbose_name_plural = ugettext_lazy('account classifier mappings')
         unique_together = [
-            ['master_user', 'provider', 'value'],
+            ['master_user', 'provider', 'value', 'attribute_type'],
         ]
 
     def __str__(self):
@@ -497,7 +497,7 @@ class InstrumentClassifierMapping(AbstractMapping):
         verbose_name = ugettext_lazy('instrument classifier mapping')
         verbose_name_plural = ugettext_lazy('instrument classifier mappings')
         unique_together = [
-            ['master_user', 'provider', 'value'],
+            ['master_user', 'provider', 'value', 'attribute_type'],
         ]
 
     def __str__(self):
@@ -524,7 +524,7 @@ class CounterpartyClassifierMapping(AbstractMapping):
         verbose_name = ugettext_lazy('responsible classifier mapping')
         verbose_name_plural = ugettext_lazy('responsible classifier mappings')
         unique_together = [
-            ['master_user', 'provider', 'value'],
+            ['master_user', 'provider', 'value', 'attribute_type'],
         ]
 
     def __str__(self):
@@ -551,7 +551,7 @@ class ResponsibleClassifierMapping(AbstractMapping):
         verbose_name = ugettext_lazy('responsible classifier mapping')
         verbose_name_plural = ugettext_lazy('responsible classifier mappings')
         unique_together = [
-            ['master_user', 'provider', 'value'],
+            ['master_user', 'provider', 'value', 'attribute_type'],
         ]
 
     def __str__(self):
@@ -580,7 +580,7 @@ class PortfolioClassifierMapping(AbstractMapping):
         verbose_name = ugettext_lazy('portfolio classifier mapping')
         verbose_name_plural = ugettext_lazy('portfolio classifier mappings')
         unique_together = [
-            ['master_user', 'provider', 'value'],
+            ['master_user', 'provider', 'value', 'attribute_type'],
         ]
 
     def __str__(self):
