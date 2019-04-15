@@ -6,7 +6,6 @@ from django.contrib import admin
 from django.views import static
 from poms.api.views import index
 from django.views.generic import TemplateView
-from poms.data_import.views import DataImportViewSet, DataImportSchemaViewSet
 
 urlpatterns = []
 
