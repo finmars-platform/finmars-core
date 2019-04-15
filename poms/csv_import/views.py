@@ -341,117 +341,103 @@ def process_csv_file(master_user, scheme, rows, error_handler, context):
                     executed_attr = {}
                     executed_attr['dynamic_attribute_id'] = entity_field.dynamic_attribute_id
 
+                    executed_expression = None
+
                     try:
+                        # context=self.report.context
+                        executed_expression = safe_eval(entity_field.expression, names=csv_row_dict,
+                                                        context=context)
 
-                        attr_type = GenericAttributeType.objects.get(pk=executed_attr['dynamic_attribute_id'])
-
-                        print('attr_type %s' % attr_type)
-                        print('attr_type value_type %s' % attr_type.value_type)
-
-                        if attr_type.value_type == 40:
-
-                            executed_attr['executed_expression'] = safe_eval(entity_field.expression,
-                                                                             names=csv_row_dict, context=context)
-                            try:
-
-                                formula._parse_date(executed_attr['executed_expression'])
-
-                            except (ExpressionEvalError, TypeError):
-
-                                inputs_error.append(entity_field)
-
-                        if attr_type.value_type == 20:
-
-                            executed_attr['executed_expression'] = safe_eval(entity_field.expression,
-                                                                             names=csv_row_dict, context=context)
-                            try:
-
-                                formula._float(executed_attr['executed_expression'])
-
-                            except (ExpressionEvalError, TypeError):
-
-                                inputs_error.append(entity_field)
-
-                        if attr_type.value_type == 10:
-                            executed_attr['executed_expression'] = safe_eval(entity_field.expression,
-                                                                             names=csv_row_dict, context=context)
-
-                        if attr_type.value_type == 30:
-
-                            if scheme.content_type.model == 'portfolio':
-
-                                try:
-                                    executed_attr['executed_expression'] = PortfolioClassifierMapping.objects.get(
-                                        value=csv_row_dict[entity_field.expression]).content_object
-
-                                except (PortfolioClassifierMapping.DoesNotExist, KeyError):
-
-                                    inputs_error.append(entity_field)
-
-                                    _l.debug('PortfolioClassifierMapping %s does not exist',
-                                             entity_field.expression)
-
-                            if scheme.content_type.model == 'instrument':
-
-                                try:
-                                    executed_attr['executed_expression'] = InstrumentClassifierMapping.objects.get(
-                                        value=csv_row_dict[entity_field.expression]).content_object
-
-                                except (InstrumentClassifierMapping.DoesNotExist, KeyError):
-
-                                    inputs_error.append(entity_field)
-
-                                    _l.debug('InstrumentClassifierMapping %s does not exist',
-                                             entity_field.expression)
-
-                            if scheme.content_type.model == 'account':
-
-                                try:
-                                    executed_attr['executed_expression'] = AccountClassifierMapping.objects.get(
-                                        value=csv_row_dict[entity_field.expression]).content_object
-
-                                except (AccountClassifierMapping.DoesNotExist, KeyError):
-
-                                    inputs_error.append(entity_field)
-
-                                    _l.debug('AccountClassifierMapping %s does not exist', entity_field.expression)
-
-                            if scheme.content_type.model == 'responsible':
-
-                                try:
-                                    executed_attr['executed_expression'] = ResponsibleClassifierMapping.objects.get(
-                                        value=csv_row_dict[entity_field.expression]).content_object
-
-                                except (ResponsibleClassifierMapping.DoesNotExist, KeyError):
-
-                                    inputs_error.append(entity_field)
-
-                                    _l.debug('ResponsibleClassifierMapping %s does not exist',
-                                             entity_field.expression)
-
-                            if scheme.content_type.model == 'counterparty':
-
-                                try:
-                                    executed_attr[
-                                        'executed_expression'] = CounterpartyClassifierMapping.objects.get(
-                                        value=csv_row_dict[entity_field.expression]).content_object
-
-                                except (CounterpartyClassifierMapping.DoesNotExist, KeyError):
-
-                                    inputs_error.append(entity_field)
-
-                                    _l.debug('CounterpartyClassifierMapping %s does not exist',
-                                             entity_field.expression)
-
-                    except (ExpressionEvalError, TypeError, Exception):
+                    except (ExpressionEvalError, TypeError, Exception, KeyError):
 
                         inputs_error.append(entity_field)
 
-                        # _l.debug('Can not evaluate dynamic attribute % expression %s ' % executed_attr)
+                    attr_type = GenericAttributeType.objects.get(pk=executed_attr['dynamic_attribute_id'])
+
+                    if attr_type.value_type == 30:
+
+                        if scheme.content_type.model == 'portfolio':
+
+                            try:
+                                executed_attr['executed_expression'] = PortfolioClassifierMapping.objects.get(
+                                    master_user=master_user,
+                                    value=executed_expression, attribute_type=attr_type).content_object
+
+                            except (PortfolioClassifierMapping.DoesNotExist, KeyError):
+
+                                inputs_error.append(entity_field)
+
+                                print('PortfolioClassifierMapping %s does not exist' %
+                                      executed_expression)
+
+                        if scheme.content_type.model == 'instrument':
+
+                            try:
+                                executed_attr['executed_expression'] = InstrumentClassifierMapping.objects.get(
+                                    master_user=master_user,
+                                    value=executed_expression, attribute_type=attr_type).content_object
+
+                            except (InstrumentClassifierMapping.DoesNotExist, KeyError):
+
+                                inputs_error.append(entity_field)
+
+                                print('InstrumentClassifierMapping %s does not exist' %
+                                      executed_expression)
+
+                        if scheme.content_type.model == 'account':
+
+                            try:
+
+                                executed_attr['executed_expression'] = AccountClassifierMapping.objects.get(
+                                master_user=master_user,
+                                value=executed_expression,
+                                attribute_type=attr_type).content_object
+
+                            except (AccountClassifierMapping.DoesNotExist, KeyError):
+
+                                inputs_error.append(entity_field)
+
+                                print('AccountClassifierMapping %s does not exist' % executed_expression)
+
+                        if scheme.content_type.model == 'responsible':
+
+                            try:
+                                executed_attr['executed_expression'] = ResponsibleClassifierMapping.objects.get(
+                                    master_user=master_user,
+                                    value=executed_expression, attribute_type=attr_type).content_object
+
+                            except (ResponsibleClassifierMapping.DoesNotExist, KeyError):
+
+                                inputs_error.append(entity_field)
+
+                                print('ResponsibleClassifierMapping %s does not exist' %
+                                      executed_expression)
+
+                        if scheme.content_type.model == 'counterparty':
+
+                            try:
+                                executed_attr[
+                                    'executed_expression'] = CounterpartyClassifierMapping.objects.get(
+                                    master_user=master_user,
+                                    value=executed_expression, attribute_type=attr_type).content_object
+
+                            except (CounterpartyClassifierMapping.DoesNotExist, KeyError):
+
+                                inputs_error.append(entity_field)
+
+                                print('CounterpartyClassifierMapping %s does not exist' %
+                                      executed_expression)
+
+                    else:
+
+                        executed_attr['executed_expression'] = executed_expression
 
                     instance['attributes'].append(executed_attr)
 
             if inputs_error:
+
+                print('inputs_error')
+                print(inputs_error)
 
                 error_row['error_message'] = ugettext('Can\'t process field: %(inputs)s') % {
                     'inputs': ', '.join(i.name for i in inputs_error)
@@ -487,6 +473,7 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
         scheme_id = request.data['scheme']
         error_handler = request.data['error_handler']
         delimiter = request.data['delimiter']
+        mode = request.data['mode']
 
         scheme = Scheme.objects.get(pk=scheme_id)
 
@@ -532,6 +519,17 @@ class CsvDataImportViewSet(AbstractModelViewSet):
     )
     serializer_class = CsvDataImportSerializer
     http_method_names = ['get', 'post', 'head']
+
+    def delete_dynamic_attributes(self, instance, attributes):
+
+        for result_attr in attributes:
+
+            attr_type = GenericAttributeType.objects.get(pk=result_attr['dynamic_attribute_id'])
+
+            if attr_type:
+                attribute = GenericAttribute.objects.filter(object_id=instance.pk, attribute_type=attr_type)
+
+                attribute.delete()
 
     def fill_with_dynamic_attributes(self, instance, attributes):
 
@@ -605,6 +603,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
                 self.fill_with_dynamic_attributes(instance, result['attributes'])
 
             instance.save()
+
         except ValidationError as e:
 
             error_row = {
@@ -620,88 +619,115 @@ class CsvDataImportViewSet(AbstractModelViewSet):
             if error_handler == 'break':
                 return process_errors
 
-    def import_results(self, scheme, error_handler, results, process_errors):
+    def overwrite_instance(self, scheme, result, item, process_errors, error_handler):
+
+        print('Overwrite item %s' % item)
+
+        try:
+
+            many_to_many_fields = ['counterparties', 'responsibles', 'accounts', 'portfolios']
+            system_fields = ['_row_index', '_row']
+
+            for key, value in result.items():
+
+                if key != 'attributes':
+
+                    if key not in many_to_many_fields and key not in system_fields:
+                        setattr(item, key, value)
+
+            self.fill_with_relation_attributes(item, result)
+            if scheme.content_type.model != 'pricehistory' and scheme.content_type.model != 'currencyhistory':
+                self.delete_dynamic_attributes(item, result['attributes'])
+                self.fill_with_dynamic_attributes(item, result['attributes'])
+
+            item.save()
+
+        except ValidationError as e:
+
+            error_row = {
+                'error_message': ugettext('Validation error %(error)s ') % {
+                    'error': e
+                },
+                'original_row_index': result['_row_index'],
+                'original_row': result['_row'],
+            }
+
+            process_errors.append(error_row)
+
+            if error_handler == 'break':
+                return process_errors
+
+    def get_item(self, scheme, result):
 
         Model = apps.get_model(app_label=scheme.content_type.app_label, model_name=scheme.content_type.model)
 
+        item_result = None
+
+        if scheme.content_type.model == 'pricehistory':
+
+            try:
+
+                item_result = Model.objects.get(instrument=result['instrument'],
+                                                pricing_policy=result['pricing_policy'],
+                                                date=result['date'])
+            except Model.DoesNotExist:
+
+                item_result = None
+
+
+        elif scheme.content_type.model == 'currencyhistory':
+
+            try:
+
+                item_result = Model.objects.get(currency=result['currency'], pricing_policy=result['pricing_policy'],
+                                                date=result['date'])
+
+            except Model.DoesNotExist:
+
+                item_result = None
+
+        else:
+
+            try:
+
+                item_result = Model.objects.get(master_user_id=result['master_user'], user_code=result['user_code'])
+
+            except Model.DoesNotExist:
+
+                item_result = None
+
+        return item_result
+
+    def import_results(self, scheme, error_handler, mode, results, process_errors):
+
         for result in results:
 
-            # print('scheme.content_type.model %s' % scheme.content_type.model)
-            # print('result %s' % result)
+            item = self.get_item(scheme, result)
 
-            if scheme.content_type.model == 'pricehistory':
+            if mode == 'overwrite' and item:
 
-                try:
+                self.overwrite_instance(scheme, result, item, process_errors, error_handler)
 
-                    Model.objects.get(instrument=result['instrument'], pricing_policy=result['pricing_policy'],
-                                      date=result['date'])
+            elif mode == 'overwrite' and not item:
 
-                    error_row = {
-                        'error_message': ugettext('Entry already exists ') % {
-                            'instrument': result['instrument'],
-                            'pricing_policy': result['pricing_policy'],
-                            'date': result['date']
-                        },
-                        'original_row_index': result['_row_index'],
-                        'original_row': result['_row'],
-                    }
+                self.save_instance(scheme, result, process_errors, error_handler)
 
-                    process_errors.append(error_row)
+            elif mode == 'skip' and not item:
 
-                    if error_handler == 'break':
-                        return process_errors
+                self.save_instance(scheme, result, process_errors, error_handler)
 
-                except Model.DoesNotExist:
+            elif mode == 'skip' and item:
 
-                    self.save_instance(scheme, result, process_errors, error_handler)
+                error_row = {
+                    'error_message': ugettext('Entry already exists '),
+                    'original_row_index': result['_row_index'],
+                    'original_row': result['_row'],
+                }
 
-            elif scheme.content_type.model == 'currencyhistory':
+                process_errors.append(error_row)
 
-                try:
-
-                    Model.objects.get(currency=result['currency'], pricing_policy=result['pricing_policy'],
-                                      date=result['date'])
-
-                    error_row = {
-                        'error_message': ugettext('Entry already exists ') % {
-                            'currency': result['currency'],
-                            'pricing_policy': result['pricing_policy'],
-                            'date': result['date']
-                        },
-                        'original_row_index': result['_row_index'],
-                        'original_row': result['_row'],
-                    }
-
-                    process_errors.append(error_row)
-
-                    if error_handler == 'break':
-                        return process_errors
-
-                except Model.DoesNotExist:
-
-                    self.save_instance(scheme, result, process_errors, error_handler)
-
-            else:
-
-                try:
-
-                    Model.objects.get(master_user_id=result['master_user'], user_code=result['user_code'])
-
-                    error_row = {
-                        'error_message': ugettext('Entry with user code %(user_code)s already exists ') % {
-                            'user_code': result['user_code']
-                        },
-                        'original_row_index': result['_row_index'],
-                        'original_row': result['_row'],
-                    }
-
-                    process_errors.append(error_row)
-
-                    if error_handler == 'break':
-                        return process_errors
-
-                except Model.DoesNotExist:
-                    self.save_instance(scheme, result, process_errors, error_handler)
+                if error_handler == 'break':
+                    return process_errors
 
         return process_errors
 
@@ -710,6 +736,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
         scheme_id = request.data['scheme']
         error_handler = request.data['error_handler']
         delimiter = request.data['delimiter']
+        mode = request.data['mode']
 
         scheme = Scheme.objects.get(pk=scheme_id)
 
@@ -741,7 +768,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
                 "errors": process_errors
             }, status=status.HTTP_202_ACCEPTED)
 
-        process_errors = self.import_results(scheme, error_handler, results, process_errors)
+        process_errors = self.import_results(scheme, error_handler, mode, results, process_errors)
 
         return Response({
             "imported": len(results),

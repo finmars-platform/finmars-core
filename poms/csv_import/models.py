@@ -41,11 +41,24 @@ ERROR_HANDLER_CHOICES = [
     ['continue', 'Continue'],
 ]
 
+MODE_CHOICES = [
+    ['skip', 'Skip if exists'],
+    ['overwrite', 'Overwrite'],
+]
+
+DELIMITER_CHOICES = [
+    [',', 'Comma'],
+    [';', 'Semicolon'],
+    ['\t', 'Tab'],
+]
+
 
 class CsvDataImport(models.Model):
     master_user = models.ForeignKey(MasterUser, blank=True, null=True)
     scheme = models.ForeignKey(Scheme)
     status = models.CharField(max_length=255)
+    mode = models.CharField(max_length=255, choices=MODE_CHOICES, default='skip')
+    delimiter = models.CharField(max_length=255, choices=DELIMITER_CHOICES, default=',')
     created_at = models.DateTimeField(auto_now_add=True)
     error_handler = models.CharField(max_length=255, choices=ERROR_HANDLER_CHOICES, default='break')
     filename = models.CharField(max_length=255)

@@ -21,7 +21,6 @@ import poms.tags.views as tags
 import poms.transactions.views as transactions
 import poms.ui.views as ui
 import poms.users.views as users
-import poms.data_import.views as data_import
 
 import poms.csv_import.views as csv_import
 
@@ -267,14 +266,7 @@ router.register(r'import/complex-transaction-csv-file-import-validate',
 
 router.register(r'utils/expression', api.ExpressionViewSet, 'expression')
 
-router.register(r'import/data', data_import.DataImportViewSet, 'data_import')
-router.register(r'import/data_schema', data_import.DataImportSchemaViewSet, 'data_import_schema')
-router.register(r'import/schema_fields', data_import.DataImportSchemaFieldsViewSet, 'data_import_schema_fields')
-router.register(r'import/schema_models', data_import.DataImportSchemaModelsViewSet, 'data_import_schema_models')
-router.register(r'import/schema_matching', data_import.DataImportSchemaMatchingViewSet, 'data_import_schema_matching')
-router.register(r'import/content_type', data_import.ContentTypeViewSet, 'data_import_content_types')
 
-# router.register(r'import/csv', data_import.ContentTypeViewSet, 'data_import_content_types')
 router.register(r'import/csv/scheme', csv_import.SchemeViewSet, 'import_csv_scheme')
 router.register(r'import/csv', csv_import.CsvDataImportViewSet, 'import_csv')
 router.register(r'import/csv-validate', csv_import.CsvDataImportValidateViewSet, 'import_csv-validate')
