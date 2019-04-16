@@ -90,6 +90,7 @@ INSTALLED_APPS = [
     'poms.reports',
     'poms.api',
     'poms.csv_import',
+    'poms.complex_import',
     'poms.configuration_export',
 
     'django.contrib.admin',

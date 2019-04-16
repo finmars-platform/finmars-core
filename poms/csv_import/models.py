@@ -5,7 +5,7 @@ from django.utils.translation import ugettext_lazy
 from poms.users.models import MasterUser
 
 
-class Scheme(models.Model):
+class CsvImportScheme(models.Model):
     name = models.CharField(max_length=255)
     content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'))
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'))
@@ -21,9 +21,9 @@ class Scheme(models.Model):
 
 class CsvField(models.Model):
     column = models.IntegerField(default=0)
-    value = models.CharField(max_length=255, blank=True, default='')
+    name = models.CharField(max_length=255, blank=True, default='')
 
-    scheme = models.ForeignKey(Scheme, related_name='csv_fields', on_delete=models.CASCADE)
+    scheme = models.ForeignKey(CsvImportScheme, related_name='csv_fields', on_delete=models.CASCADE)
 
 
 class EntityField(models.Model):
@@ -33,7 +33,7 @@ class EntityField(models.Model):
     system_property_key = models.CharField(max_length=255, null=True)
     dynamic_attribute_id = models.IntegerField(null=True)
 
-    scheme = models.ForeignKey(Scheme, related_name='entity_fields', on_delete=models.CASCADE)
+    scheme = models.ForeignKey(CsvImportScheme, related_name='entity_fields', on_delete=models.CASCADE)
 
 
 ERROR_HANDLER_CHOICES = [
@@ -55,7 +55,7 @@ DELIMITER_CHOICES = [
 
 class CsvDataImport(models.Model):
     master_user = models.ForeignKey(MasterUser, blank=True, null=True)
-    scheme = models.ForeignKey(Scheme)
+    scheme = models.ForeignKey(CsvImportScheme)
     status = models.CharField(max_length=255)
     mode = models.CharField(max_length=255, choices=MODE_CHOICES, default='skip')
     delimiter = models.CharField(max_length=255, choices=DELIMITER_CHOICES, default=',')

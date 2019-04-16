@@ -4,18 +4,15 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import smart_text
 
-from poms.common.fields import SlugRelatedFilteredField, PrimaryKeyRelatedFilteredField
-from poms.csv_import.models import CsvImportScheme
-from poms.users.filters import OwnerByMasterUserFilter
+from poms.common.fields import SlugRelatedFilteredField
 
-
-class CsvImportContentTypeField(SlugRelatedFilteredField):
+class ComplexImportContentTypeField(SlugRelatedFilteredField):
     queryset = ContentType.objects
     filter_backends = []
 
     def __init__(self, **kwargs):
         kwargs['slug_field'] = 'model'
-        super(CsvImportContentTypeField, self).__init__(**kwargs)
+        super(ComplexImportContentTypeField, self).__init__(**kwargs)
 
     def to_internal_value(self, data):
         try:
@@ -28,10 +25,3 @@ class CsvImportContentTypeField(SlugRelatedFilteredField):
 
     def to_representation(self, obj):
         return '%s.%s' % (obj.app_label, obj.model)
-
-
-class CsvImportSchemeField(PrimaryKeyRelatedFilteredField):
-    queryset = CsvImportScheme.objects
-    filter_backends = (
-        OwnerByMasterUserFilter,
-    )

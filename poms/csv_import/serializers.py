@@ -4,14 +4,14 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from poms.users.fields import MasterUserField
-from .models import Scheme, CsvField, EntityField, CsvDataImport
+from .models import CsvField, EntityField, CsvDataImport, CsvImportScheme
 from .fields import CsvImportContentTypeField
 
 
 class CsvFieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = CsvField
-        fields = ('column', 'value')
+        fields = ('column', 'name')
 
 
 class EntityFieldSerializer(serializers.ModelSerializer):
@@ -25,17 +25,15 @@ class EntityFieldSerializer(serializers.ModelSerializer):
         }
 
 
-class SchemeSerializer(serializers.ModelSerializer):
-
+class CsvImportSchemeSerializer(serializers.ModelSerializer):
     master_user = MasterUserField()
     csv_fields = CsvFieldSerializer(many=True)
     entity_fields = EntityFieldSerializer(many=True)
     content_type = CsvImportContentTypeField()
 
-
     class Meta:
 
-        model = Scheme
+        model = CsvImportScheme
         fields = ('id', 'master_user', 'name', 'content_type', 'csv_fields', 'entity_fields')
 
     def create_entity_fields_if_not_exist(self, scheme):
@@ -113,7 +111,7 @@ class SchemeSerializer(serializers.ModelSerializer):
 
         csv_fields = validated_data.pop('csv_fields')
         entity_fields = validated_data.pop('entity_fields')
-        scheme = Scheme.objects.create(**validated_data)
+        scheme = CsvImportScheme.objects.create(**validated_data)
 
         self.set_entity_fields_mapping(scheme=scheme, entity_fields=entity_fields)
         self.set_dynamic_attributes_mapping(scheme=scheme, entity_fields=entity_fields)

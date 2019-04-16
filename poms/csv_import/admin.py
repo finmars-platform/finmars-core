@@ -3,7 +3,7 @@ from django.contrib import admin
 # Register your models here.
 
 from django.contrib import admin
-from .models import Scheme, EntityField, CsvField, CsvDataImport
+from .models import CsvImportScheme, EntityField, CsvField, CsvDataImport
 
 
 class CsvImportAdmin(admin.ModelAdmin):
@@ -15,7 +15,7 @@ class CsvSchemeAdmin(admin.ModelAdmin):
 
 
 class CsvImportSchemaFieldsAdmin(admin.ModelAdmin):
-    list_display = ('scheme', 'column', 'value')
+    list_display = ('scheme', 'column', 'name')
 
 
 class CsvImportSchemaEntityFieldAdmin(admin.ModelAdmin):
@@ -23,6 +23,6 @@ class CsvImportSchemaEntityFieldAdmin(admin.ModelAdmin):
 
 
 admin.site.register(CsvDataImport, CsvImportAdmin)
-admin.site.register(Scheme, CsvSchemeAdmin)
+admin.site.register(CsvImportScheme, CsvSchemeAdmin)
 admin.site.register(CsvField, CsvImportSchemaFieldsAdmin)
 admin.site.register(EntityField, CsvImportSchemaEntityFieldAdmin)

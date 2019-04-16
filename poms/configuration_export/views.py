@@ -16,7 +16,7 @@ from poms.accounts.models import AccountType, Account
 from poms.common.utils import delete_keys_from_dict, recursive_callback
 from poms.common.views import AbstractModelViewSet
 from poms.counterparties.models import Counterparty, Responsible
-from poms.csv_import.models import Scheme, CsvField, EntityField
+from poms.csv_import.models import CsvField, EntityField, CsvImportScheme
 from poms.currencies.models import Currency
 from poms.instruments.models import InstrumentType, Instrument, Periodicity, DailyPricingModel, PaymentSizeDetail, \
     AccrualCalculationModel, PricingPolicy
@@ -961,7 +961,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         return results
 
     def get_csv_import_schemes(self):
-        schemes = to_json_objects(Scheme.objects.filter(master_user=self._master_user))
+        schemes = to_json_objects(CsvImportScheme.objects.filter(master_user=self._master_user))
         results = []
 
         print('schemes %s' % len(schemes))
@@ -980,7 +980,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
             results.append(result_item)
 
-        for scheme_model in Scheme.objects.filter(master_user=self._master_user):
+        for scheme_model in CsvImportScheme.objects.filter(master_user=self._master_user):
 
             if scheme_model.content_type:
                 for scheme_json in results:
@@ -992,7 +992,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         delete_prop(results, 'pk')
 
         result = {
-            "entity": "csv_import.scheme",
+            "entity": "csv_import.csvimportscheme",
             "count": len(results),
             "content": results
         }

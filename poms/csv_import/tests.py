@@ -2,7 +2,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 
 from .views import CsvDataImportViewSet
-from .models import Scheme, CsvField, EntityField
+from .models import CsvImportScheme, CsvField, EntityField
 from django.contrib.auth.models import User
 from poms.users.models import MasterUser
 
@@ -156,18 +156,18 @@ class CsvImportTestCase(TestCase):
                                                                                       Counterparty))
 
     def create_portfolio_scheme(self):
-        scheme = Scheme.objects.create(name="Portfolio scheme",
+        scheme = CsvImportScheme.objects.create(name="Portfolio scheme",
                                        master_user=self.master_user,
                                        content_type=ContentType.objects.get_for_model(Portfolio))
 
-        CsvField.objects.create(column=0, value="name", scheme=scheme)
-        CsvField.objects.create(column=1, value="short_name", scheme=scheme)
-        CsvField.objects.create(column=2, value="account", scheme=scheme)
-        CsvField.objects.create(column=3, value="country", scheme=scheme)
-        CsvField.objects.create(column=4, value="date", scheme=scheme)
-        CsvField.objects.create(column=5, value="num", scheme=scheme)
-        CsvField.objects.create(column=6, value="responsible", scheme=scheme)
-        CsvField.objects.create(column=7, value="country_classifier", scheme=scheme)
+        CsvField.objects.create(column=0, name="name", scheme=scheme)
+        CsvField.objects.create(column=1, name="short_name", scheme=scheme)
+        CsvField.objects.create(column=2, name="account", scheme=scheme)
+        CsvField.objects.create(column=3, name="country", scheme=scheme)
+        CsvField.objects.create(column=4, name="date", scheme=scheme)
+        CsvField.objects.create(column=5, name="num", scheme=scheme)
+        CsvField.objects.create(column=6, name="responsible", scheme=scheme)
+        CsvField.objects.create(column=7, name="country_classifier", scheme=scheme)
 
         EntityField.objects.create(name="Name", expression="name", system_property_key="name", scheme=scheme)
         EntityField.objects.create(name="Short name", expression="short_name", system_property_key="short_name",
@@ -191,20 +191,20 @@ class CsvImportTestCase(TestCase):
         EntityField.objects.create(name="Country (Classifier)", expression="country_classifier",
                                    dynamic_attribute_id=self.portfolio_dynamic_attr_classifier.id, scheme=scheme)
 
-        return Scheme.objects.get(pk=scheme.id)
+        return CsvImportScheme.objects.get(pk=scheme.id)
 
     def create_account_scheme(self):
-        scheme = Scheme.objects.create(name="Account scheme", master_user=self.master_user, content_type=ContentType.objects.get_for_model(Account))
+        scheme = CsvImportScheme.objects.create(name="Account scheme", master_user=self.master_user, content_type=ContentType.objects.get_for_model(Account))
 
-        CsvField.objects.create(column=0, value="name", scheme=scheme)
-        CsvField.objects.create(column=1, value="code", scheme=scheme)
-        CsvField.objects.create(column=2, value="short", scheme=scheme)
-        CsvField.objects.create(column=3, value="notes", scheme=scheme)
-        CsvField.objects.create(column=4, value="Op_date", scheme=scheme)
-        CsvField.objects.create(column=5, value="target", scheme=scheme)
-        CsvField.objects.create(column=6, value="public_name", scheme=scheme)
-        CsvField.objects.create(column=7, value="PIN", scheme=scheme)
-        CsvField.objects.create(column=8, value="Pass", scheme=scheme)
+        CsvField.objects.create(column=0, name="name", scheme=scheme)
+        CsvField.objects.create(column=1, name="code", scheme=scheme)
+        CsvField.objects.create(column=2, name="short", scheme=scheme)
+        CsvField.objects.create(column=3, name="notes", scheme=scheme)
+        CsvField.objects.create(column=4, name="Op_date", scheme=scheme)
+        CsvField.objects.create(column=5, name="target", scheme=scheme)
+        CsvField.objects.create(column=6, name="public_name", scheme=scheme)
+        CsvField.objects.create(column=7, name="PIN", scheme=scheme)
+        CsvField.objects.create(column=8, name="Pass", scheme=scheme)
 
         EntityField.objects.create(name="Name", expression="name", system_property_key="name", scheme=scheme)
         EntityField.objects.create(name="Short name", expression="short", system_property_key="short_name",
@@ -221,18 +221,18 @@ class CsvImportTestCase(TestCase):
         EntityField.objects.create(name="Password", expression="Pass",
                                    dynamic_attribute_id=self.account_dynamic_attr_string.id, scheme=scheme)
 
-        return Scheme.objects.get(pk=scheme.id)
+        return CsvImportScheme.objects.get(pk=scheme.id)
 
     def create_counterparty_scheme(self):
-        scheme = Scheme.objects.create(name="Counterparty scheme",
+        scheme = CsvImportScheme.objects.create(name="Counterparty scheme",
                                        master_user=self.master_user,
                                        content_type=ContentType.objects.get_for_model(Counterparty))
 
-        CsvField.objects.create(column=0, value="name", scheme=scheme)
-        CsvField.objects.create(column=1, value="notes", scheme=scheme)
-        CsvField.objects.create(column=2, value="user_code", scheme=scheme)
-        CsvField.objects.create(column=3, value="portfolios", scheme=scheme)
-        CsvField.objects.create(column=4, value="rating", scheme=scheme)
+        CsvField.objects.create(column=0, name="name", scheme=scheme)
+        CsvField.objects.create(column=1, name="notes", scheme=scheme)
+        CsvField.objects.create(column=2, name="user_code", scheme=scheme)
+        CsvField.objects.create(column=3, name="portfolios", scheme=scheme)
+        CsvField.objects.create(column=4, name="rating", scheme=scheme)
 
         EntityField.objects.create(name="Name", expression="name", system_property_key="name", scheme=scheme)
         EntityField.objects.create(name="Notes", expression="notes", system_property_key="notes", scheme=scheme)
@@ -244,18 +244,18 @@ class CsvImportTestCase(TestCase):
         EntityField.objects.create(name="Rating", expression="rating",
                                    dynamic_attribute_id=self.counterparty_dynamic_attr_string.id, scheme=scheme)
 
-        return Scheme.objects.get(pk=scheme.id)
+        return CsvImportScheme.objects.get(pk=scheme.id)
 
     def create_responsible_scheme(self):
-        scheme = Scheme.objects.create(name="Responsible scheme",
+        scheme = CsvImportScheme.objects.create(name="Responsible scheme",
                                        master_user=self.master_user,
                                        content_type=ContentType.objects.get_for_model(Responsible))
 
-        CsvField.objects.create(column=0, value="name", scheme=scheme)
-        CsvField.objects.create(column=1, value="notes", scheme=scheme)
-        CsvField.objects.create(column=2, value="user_code", scheme=scheme)
-        CsvField.objects.create(column=3, value="portfolios", scheme=scheme)
-        CsvField.objects.create(column=4, value="rating", scheme=scheme)
+        CsvField.objects.create(column=0, name="name", scheme=scheme)
+        CsvField.objects.create(column=1, name="notes", scheme=scheme)
+        CsvField.objects.create(column=2, name="user_code", scheme=scheme)
+        CsvField.objects.create(column=3, name="portfolios", scheme=scheme)
+        CsvField.objects.create(column=4, name="rating", scheme=scheme)
 
         EntityField.objects.create(name="Name", expression="name", system_property_key="name", scheme=scheme)
         EntityField.objects.create(name="Notes", expression="notes", system_property_key="notes", scheme=scheme)
@@ -267,7 +267,7 @@ class CsvImportTestCase(TestCase):
         EntityField.objects.create(name="Rating", expression="rating",
                                    dynamic_attribute_id=self.responsible_dynamic_attr_string.id, scheme=scheme)
 
-        return Scheme.objects.get(pk=scheme.id)
+        return CsvImportScheme.objects.get(pk=scheme.id)
 
     def test_scheme_create(self):
         return self.create_portfolio_scheme()
@@ -403,7 +403,7 @@ class CsvImportTestCase(TestCase):
         invalid_field.expression = "format_date(date)"
         invalid_field.save()
 
-        self.scheme = Scheme.objects.get(pk=self.scheme.id)
+        self.scheme = CsvImportScheme.objects.get(pk=self.scheme.id)
 
         rows = TestData.correct_file_rows
 
@@ -425,7 +425,7 @@ class CsvImportTestCase(TestCase):
         invalid_field.expression = "float(num) * 0.23"
         invalid_field.save()
 
-        self.scheme = Scheme.objects.get(pk=self.scheme.id)
+        self.scheme = CsvImportScheme.objects.get(pk=self.scheme.id)
 
         rows = TestData.correct_file_rows
 
@@ -447,7 +447,7 @@ class CsvImportTestCase(TestCase):
         invalid_field.expression = "country + ' risk'"
         invalid_field.save()
 
-        self.scheme = Scheme.objects.get(pk=self.scheme.id)
+        self.scheme = CsvImportScheme.objects.get(pk=self.scheme.id)
 
         rows = TestData.correct_file_rows
 
@@ -469,7 +469,7 @@ class CsvImportTestCase(TestCase):
         invalid_field.expression = "format_date(date, format='%m-%Y-%d')"
         invalid_field.save()
 
-        self.scheme = Scheme.objects.get(pk=self.scheme.id)
+        self.scheme = CsvImportScheme.objects.get(pk=self.scheme.id)
 
         rows = TestData.correct_file_rows
 
@@ -491,7 +491,7 @@ class CsvImportTestCase(TestCase):
         invalid_field.expression = "num / 0"
         invalid_field.save()
 
-        self.scheme = Scheme.objects.get(pk=self.scheme.id)
+        self.scheme = CsvImportScheme.objects.get(pk=self.scheme.id)
 
         rows = TestData.correct_file_rows
 
@@ -513,7 +513,7 @@ class CsvImportTestCase(TestCase):
         invalid_field.expression = "country"
         invalid_field.save()
 
-        self.scheme = Scheme.objects.get(pk=self.scheme.id)
+        self.scheme = CsvImportScheme.objects.get(pk=self.scheme.id)
 
         rows = TestData.correct_file_rows
 
@@ -535,7 +535,7 @@ class CsvImportTestCase(TestCase):
         invalid_field.expression = "country ////"
         invalid_field.save()
 
-        self.scheme = Scheme.objects.get(pk=self.scheme.id)
+        self.scheme = CsvImportScheme.objects.get(pk=self.scheme.id)
 
         rows = TestData.correct_file_rows
 

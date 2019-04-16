@@ -25,6 +25,7 @@ import poms.users.views as users
 import poms.csv_import.views as csv_import
 
 import poms.configuration_export.views as configuration_export
+import poms.complex_import.views as complex_import
 
 router = routers.DefaultRouter()
 router.register(r'users/login', users.LoginViewSet, 'login')
@@ -266,10 +267,12 @@ router.register(r'import/complex-transaction-csv-file-import-validate',
 
 router.register(r'utils/expression', api.ExpressionViewSet, 'expression')
 
-
 router.register(r'import/csv/scheme', csv_import.SchemeViewSet, 'import_csv_scheme')
 router.register(r'import/csv', csv_import.CsvDataImportViewSet, 'import_csv')
 router.register(r'import/csv-validate', csv_import.CsvDataImportValidateViewSet, 'import_csv-validate')
+
+router.register(r'import/complex/scheme', complex_import.ComplexImportSchemeViewSet, 'import_complex_scheme')
+router.register(r'import/complex', complex_import.ComplexImportViewSet, 'import_complex')
 
 router.register(r'export/configuration', configuration_export.ConfigurationExportViewSet, 'configuration_export')
 router.register(r'export/mapping', configuration_export.MappingExportViewSet, 'mapping_export')

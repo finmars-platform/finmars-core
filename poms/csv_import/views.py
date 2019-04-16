@@ -2,40 +2,32 @@ from rest_framework.exceptions import ValidationError
 
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework import viewsets
+
 from rest_framework.parsers import MultiPartParser
 from rest_framework.filters import FilterSet
 from django.apps import apps
 
-from poms.currencies.models import CurrencyHistory
-from poms.instruments.models import PriceHistory
-from poms.integrations.storage import import_file_storage
-from django.utils import timezone
-import uuid
 
 from poms.common.views import AbstractModelViewSet
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet
-from poms.portfolios.models import Portfolio
+
 from poms.users.filters import OwnerByMasterUserFilter
-from poms.users.models import Member
+
 from poms.common import formula
-from poms.common.formula import safe_eval, ExpressionSyntaxError, ExpressionEvalError
+from poms.common.formula import safe_eval, ExpressionEvalError
 
 from poms.integrations.models import CounterpartyMapping, AccountMapping, ResponsibleMapping, PortfolioMapping, \
     PortfolioClassifierMapping, AccountClassifierMapping, ResponsibleClassifierMapping, CounterpartyClassifierMapping, \
     PricingPolicyMapping, InstrumentMapping, CurrencyMapping, InstrumentTypeMapping, PaymentSizeDetailMapping, \
     DailyPricingModelMapping, PriceDownloadSchemeMapping, InstrumentClassifierMapping, AccountTypeMapping
 
-from poms.obj_attrs.models import GenericAttributeType, GenericAttribute, GenericClassifier
+from poms.obj_attrs.models import GenericAttributeType, GenericAttribute
 
 from django.utils.translation import ugettext
 
-import io
-import csv
-
 from .filters import SchemeContentTypeFilter
-from .models import Scheme, CsvDataImport
-from .serializers import SchemeSerializer, CsvDataImportSerializer
+from .models import CsvDataImport, CsvImportScheme
+from .serializers import CsvDataImportSerializer, CsvImportSchemeSerializer
 
 from logging import getLogger
 
@@ -46,7 +38,7 @@ class SchemeFilterSet(FilterSet):
     content_type = SchemeContentTypeFilter(name='content_type')
 
     class Meta:
-        model = Scheme
+        model = CsvImportScheme
         fields = []
 
 
@@ -56,10 +48,10 @@ def utf_8_encoder(unicode_csv_data):
 
 
 class SchemeViewSet(AbstractModelViewSet):
-    queryset = Scheme.objects.select_related(
+    queryset = CsvImportScheme.objects.select_related(
         'master_user',
     )
-    serializer_class = SchemeSerializer
+    serializer_class = CsvImportSchemeSerializer
     filter_class = SchemeFilterSet
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -86,7 +78,7 @@ def get_row_data(row, csv_fields):
         if csv_field.column < len(row):
             row_value = row[csv_field.column]
 
-            csv_row_dict[csv_field.value] = row_value
+            csv_row_dict[csv_field.name] = row_value
 
     return csv_row_dict
 
@@ -475,7 +467,7 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
         delimiter = request.data['delimiter']
         mode = request.data['mode']
 
-        scheme = Scheme.objects.get(pk=scheme_id)
+        scheme = CsvImportScheme.objects.get(pk=scheme_id)
 
         if 'file' not in request.data:
             raise ValidationError('File is not set')
@@ -690,7 +682,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
             try:
 
-                item_result = Model.objects.get(master_user_id=result['master_user'], user_code=result['user_code'])
+                    item_result = Model.objects.get(master_user_id=result['master_user'], user_code=result['user_code'])
 
             except Model.DoesNotExist:
 
@@ -738,7 +730,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
         delimiter = request.data['delimiter']
         mode = request.data['mode']
 
-        scheme = Scheme.objects.get(pk=scheme_id)
+        scheme = CsvImportScheme.objects.get(pk=scheme_id)
 
         if 'file' not in request.data:
             raise ValidationError('File is not set')

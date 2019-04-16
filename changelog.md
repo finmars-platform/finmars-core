@@ -1,5 +1,8 @@
 # Changelog
 
+## 16.04.2019
+- Complex Import
+
 ## 20.03.2019
 - Relation expressions in Simple Entity Import
 - Inputs in Complex Transaction text/date
