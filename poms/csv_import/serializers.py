@@ -34,7 +34,7 @@ class CsvImportSchemeSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = CsvImportScheme
-        fields = ('id', 'master_user', 'name', 'content_type', 'csv_fields', 'entity_fields')
+        fields = ('id', 'master_user', 'scheme_name', 'content_type', 'csv_fields', 'entity_fields')
 
     def create_entity_fields_if_not_exist(self, scheme):
 

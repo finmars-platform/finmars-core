@@ -12,7 +12,7 @@ class ComplexImportAdmin(admin.ModelAdmin):
 
 
 class ComplexSchemeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name',)
+    list_display = ('id', 'scheme_name',)
 
 
 class ComplexImportSchemeActionAdmin(admin.ModelAdmin):

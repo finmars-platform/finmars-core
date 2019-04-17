@@ -52,7 +52,7 @@ class ComplexImportSchemeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ComplexImportScheme
-        fields = ('id', 'master_user', 'name', 'actions')
+        fields = ('id', 'master_user', 'scheme_name', 'actions')
 
     def create(self, validated_data):
         actions = validated_data.pop('actions', None)

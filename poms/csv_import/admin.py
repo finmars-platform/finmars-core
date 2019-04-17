@@ -11,7 +11,7 @@ class CsvImportAdmin(admin.ModelAdmin):
 
 
 class CsvSchemeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'content_type', 'master_user')
+    list_display = ('id', 'scheme_name', 'content_type', 'master_user')
 
 
 class CsvImportSchemaFieldsAdmin(admin.ModelAdmin):

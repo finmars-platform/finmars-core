@@ -15,6 +15,8 @@ from rest_framework.response import Response
 from poms.accounts.models import AccountType, Account
 from poms.common.utils import delete_keys_from_dict, recursive_callback
 from poms.common.views import AbstractModelViewSet
+from poms.complex_import.models import ComplexImportScheme, ComplexImportSchemeAction, \
+    ComplexImportSchemeActionCsvImport, ComplexImportSchemeActionTransactionImport
 from poms.counterparties.models import Counterparty, Responsible
 from poms.csv_import.models import CsvField, EntityField, CsvImportScheme
 from poms.currencies.models import Currency
@@ -108,6 +110,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         report_layouts = self.get_report_layouts()
         bookmarks = self.get_bookmarks()
         csv_import_schemes = self.get_csv_import_schemes()
+        complex_import_schemes = self.get_complex_import_schemes()
         instrument_download_schemes = self.get_instrument_download_schemes()
         price_download_schemes = self.get_price_download_schemes()
         complex_transaction_import_scheme = self.get_complex_transaction_import_scheme()
@@ -134,6 +137,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration["body"].append(report_layouts)
         configuration["body"].append(bookmarks)
         configuration["body"].append(csv_import_schemes)
+        configuration["body"].append(complex_import_schemes)
         configuration["body"].append(price_download_schemes)
         configuration["body"].append(instrument_download_schemes)
         configuration["body"].append(complex_transaction_import_scheme)
@@ -536,15 +540,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                     result = item
 
             if result:
-
                 result_json = to_json_single(result)["fields"]
-
-                for key in result_json:
-                    if key.endswith('_input') and result_json[key]:
-                        result_json[key] = TransactionTypeInput.objects.get(pk=result_json[key]).name
-
-                    if key.endswith('_phantom') and result_json[key]:
-                        result_json[key] = TransactionTypeAction.objects.get(pk=result_json[key]).order
 
                 self.add_user_code_to_relation(result_json, action_key)
 
@@ -900,10 +896,13 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 item_model = Bookmark.objects.get(member=self._member, pk=item["id"])
 
                 item["data"] = item_model.data
-                item["___layout_name"] = item_model.list_layout.name
-                item["___content_type"] = '%s.%s' % (
-                    item_model.list_layout.content_type.app_label,
-                    item_model.list_layout.content_type.model)
+
+                if item_model.list_layout:
+                    item["___layout_name"] = item_model.list_layout.name
+
+                    item["___content_type"] = '%s.%s' % (
+                        item_model.list_layout.content_type.app_label,
+                        item_model.list_layout.content_type.model)
 
         delete_prop(children, 'member')
         delete_prop(children, 'id')
@@ -923,10 +922,11 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                     bookmark_json["fields"]["children"] = self.get_bookmarks_children(bookmark_model)
 
                     bookmark_json["fields"]["data"] = bookmark_model.data
-                    bookmark_json["fields"]["___layout_name"] = bookmark_model.list_layout.name
-                    bookmark_json["fields"]["___content_type"] = '%s.%s' % (
-                        bookmark_model.list_layout.content_type.app_label,
-                        bookmark_model.list_layout.content_type.model)
+                    if bookmark_model.list_layout:
+                        bookmark_json["fields"]["___layout_name"] = bookmark_model.list_layout.name
+                        bookmark_json["fields"]["___content_type"] = '%s.%s' % (
+                            bookmark_model.list_layout.content_type.app_label,
+                            bookmark_model.list_layout.content_type.model)
 
         results = unwrap_items(results)
 
@@ -993,6 +993,92 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         result = {
             "entity": "csv_import.csvimportscheme",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_complex_import_scheme_actions(self, scheme):
+        results = []
+
+        actions_order = ComplexImportSchemeAction.objects.filter(complex_import_scheme__id=scheme["pk"])
+
+        actions_csv_import = ComplexImportSchemeActionCsvImport.objects.filter(complex_import_scheme__id=scheme["pk"])
+        actions_transactionimport = ComplexImportSchemeActionTransactionImport.objects.filter(
+            complex_import_scheme__id=scheme["pk"])
+
+        for order in actions_order:
+
+            result = None
+
+            action = {
+                "action_notes": order.action_notes,
+                "order": order.order,
+                "csv_import_scheme": None,
+                "complex_transaction_import_scheme": None
+            }
+
+            action_key = None
+
+            for item in actions_csv_import:
+                if item.action_notes == order.action_notes:
+                    action_key = 'csv_import_scheme'
+                    result = item
+
+            for item in actions_transactionimport:
+                if item.action_notes == order.action_notes:
+                    action_key = 'complex_transaction_import_scheme'
+                    result = item
+
+            if result:
+
+                result_json = to_json_single(result)["fields"]
+
+                if action_key == 'csv_import_scheme':
+
+                    result_json['___csv_import_scheme__scheme_name'] = CsvImportScheme.objects.get(
+                        pk=result_json['csv_import_scheme']).scheme_name
+
+                    result_json.pop("csv_import_scheme", None)
+
+                if action_key == 'complex_transaction_import_scheme':
+
+                    result_json[
+                        '___complex_transaction_import_scheme__scheme_name'] = ComplexTransactionImportScheme.objects.get(
+                        pk=result_json['complex_transaction_import_scheme']).scheme_name
+
+                    result_json.pop("complex_transaction_import_scheme", None)
+
+                action[action_key] = result_json
+
+            results.append(action)
+
+        return results
+
+    def get_complex_import_schemes(self):
+        schemes = to_json_objects(ComplexImportScheme.objects.filter(master_user=self._master_user))
+        results = []
+
+        print('schemes %s' % len(schemes))
+        print('self._master_user %s' % self._master_user)
+
+        for scheme in schemes:
+            result_item = scheme["fields"]
+            result_item["pk"] = scheme["pk"]
+
+            result_item.pop("master_user", None)
+
+            result_item["actions"] = self.get_complex_import_scheme_actions(scheme)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "complex_import.compleximportscheme",
             "count": len(results),
             "content": results
         }

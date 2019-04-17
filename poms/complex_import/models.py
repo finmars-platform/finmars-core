@@ -6,16 +6,16 @@ from poms.users.models import MasterUser
 
 
 class ComplexImportScheme(models.Model):
-    name = models.CharField(max_length=255)
+    scheme_name = models.CharField(max_length=255)
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'))
 
     class Meta:
         unique_together = (
-            ('name', 'master_user')
+            ('scheme_name', 'master_user')
         )
 
     def __str__(self):
-        return self.name
+        return self.scheme_name
 
 
 ERROR_HANDLER_CHOICES = [

@@ -6,13 +6,13 @@ from poms.users.models import MasterUser
 
 
 class CsvImportScheme(models.Model):
-    name = models.CharField(max_length=255)
+    scheme_name = models.CharField(max_length=255)
     content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'))
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'))
 
     class Meta:
         unique_together = (
-            ('content_type', 'name', 'master_user')
+            ('content_type', 'scheme_name', 'master_user')
         )
 
     def __str__(self):
