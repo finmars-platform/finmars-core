@@ -126,7 +126,7 @@ class CsvImportSchemeSerializer(serializers.ModelSerializer):
         csv_fields = validated_data.pop('csv_fields')
         entity_fields = validated_data.pop('entity_fields')
 
-        scheme.name = validated_data.get('name', scheme.name)
+        scheme.scheme_name = validated_data.get('scheme_name', scheme.scheme_name)
 
         self.set_entity_fields_mapping(scheme=scheme, entity_fields=entity_fields)
         self.set_dynamic_attributes_mapping(scheme=scheme, entity_fields=entity_fields)
