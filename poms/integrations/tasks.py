@@ -1033,11 +1033,15 @@ def complex_transaction_csv_file_import(instance):
 
     scheme = instance.scheme
     scheme_inputs = list(scheme.inputs.all())
-    scheme_rules = {r.value: r for r in
-                    scheme.rules.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()}
+
+    scheme_rules = scheme.rules.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()
+
+    # scheme_rules = {r.value: r for r in
+    #                 scheme.rules.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()}
+
     _l.debug('scheme %s - inputs=%s, rules=%s', scheme,
              [(i.name, i.column) for i in scheme_inputs],
-             [(r.value, r.transaction_type.user_code) for r in scheme_rules.values()])
+             [(r.value, r.transaction_type.user_code) for r in scheme_rules])
 
     mapping_map = {
         Account: AccountMapping,
@@ -1138,71 +1142,76 @@ def complex_transaction_csv_file_import(instance):
                     continue
             _l.debug('rule value: %s', rule_value)
 
-            try:
-                rule = scheme_rules[rule_value]
-            except:
-                _l.info('rule does not find: %s', rule_value, exc_info=True)
-                error_rows['error_message'] = ugettext('Can\'t find transaction type by "%(value)s"') % {
-                    'value': rule_value
-                }
-                instance.error_rows.append(error_rows)
-                if instance.break_on_error:
-                    instance.error_row_index = row_index
-                    return
-                else:
-                    continue
-            _l.debug('founded rule: %s -> %s', rule, rule.transaction_type)
+            for scheme_rule in scheme_rules:
 
-            fields = {}
-            fields_error = []
-            for field in rule.fields.all():
-                try:
-                    field_value = formula.safe_eval(field.value_expr, names=inputs)
-                    field_value = _convert_value(field, field_value)
-                    fields[field.transaction_type_input.name] = field_value
-                except:
-                    _l.info('can\'t process field: %s|%s', field.transaction_type_input.name,
-                            field.transaction_type_input.pk, exc_info=True)
-                    fields_error.append(field)
-            _l.debug('fields (step 1): error=%s, values=%s', fields_error, fields)
-            if fields_error:
-                error_rows['error_message'] = ugettext('Can\'t process fields: %(fields)s') % {
-                    'fields': ', '.join(f.transaction_type_input.name for f in fields_error)
-                }
-                instance.error_rows.append(error_rows)
-                if instance.break_on_error:
-                    instance.error_row_index = row_index
-                    return
-                else:
-                    continue
+                if scheme_rule.value == rule_value:
 
-            with transaction.atomic():
-                try:
-                    tt_process = TransactionTypeProcess(
-                        transaction_type=rule.transaction_type,
-                        default_values=fields,
-                        context={
-                            'master_user': instance.master_user,
-                            'member': instance.member,
+                    try:
+                        # rule = scheme_rules[rule_value]
+                        rule = scheme_rule
+                    except:
+                        _l.info('rule does not find: %s', rule_value, exc_info=True)
+                        error_rows['error_message'] = ugettext('Can\'t find transaction type by "%(value)s"') % {
+                            'value': rule_value
                         }
-                    )
-                    tt_process.process()
-                except:
-                    _l.info("can't process transaction type", exc_info=True)
-                    transaction.set_rollback(True)
-                    if instance.break_on_error:
-                        instance.error_row_index = row_index
-                        return
-                    else:
-                        continue
-                finally:
-                    _l.info("final")
-                    # if settings.DEBUG:
-                    #     transaction.set_rollback(True)
+                        instance.error_rows.append(error_rows)
+                        if instance.break_on_error:
+                            instance.error_row_index = row_index
+                            return
+                        else:
+                            continue
+                    _l.debug('founded rule: %s -> %s', rule, rule.transaction_type)
+
+                    fields = {}
+                    fields_error = []
+                    for field in rule.fields.all():
+                        try:
+                            field_value = formula.safe_eval(field.value_expr, names=inputs)
+                            field_value = _convert_value(field, field_value)
+                            fields[field.transaction_type_input.name] = field_value
+                        except:
+                            _l.info('can\'t process field: %s|%s', field.transaction_type_input.name,
+                                    field.transaction_type_input.pk, exc_info=True)
+                            fields_error.append(field)
+                    _l.debug('fields (step 1): error=%s, values=%s', fields_error, fields)
+                    if fields_error:
+                        error_rows['error_message'] = ugettext('Can\'t process fields: %(fields)s') % {
+                            'fields': ', '.join(f.transaction_type_input.name for f in fields_error)
+                        }
+                        instance.error_rows.append(error_rows)
+                        if instance.break_on_error:
+                            instance.error_row_index = row_index
+                            return
+                        else:
+                            continue
+
+                    with transaction.atomic():
+                        try:
+                            tt_process = TransactionTypeProcess(
+                                transaction_type=rule.transaction_type,
+                                default_values=fields,
+                                context={
+                                    'master_user': instance.master_user,
+                                    'member': instance.member,
+                                }
+                            )
+                            tt_process.process()
+                        except:
+                            _l.info("can't process transaction type", exc_info=True)
+                            transaction.set_rollback(True)
+                            if instance.break_on_error:
+                                instance.error_row_index = row_index
+                                return
+                            else:
+                                continue
+                        finally:
+                            _l.info("final")
+                            # if settings.DEBUG:
+                            #     transaction.set_rollback(True)
 
     def _row_count(file):
         for i, l in enumerate(file):
-                pass
+            pass
         return i
 
     instance.error_rows = []
