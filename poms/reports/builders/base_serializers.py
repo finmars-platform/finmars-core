@@ -79,12 +79,12 @@ class ReportInstrumentSerializer(InstrumentSerializer):
         self.fields.pop('tags')
         self.fields.pop('tags_object')
 
-        self.fields.pop('payment_size_detail')
-        self.fields.pop('payment_size_detail_object')
+        # self.fields.pop('payment_size_detail')
+        # self.fields.pop('payment_size_detail_object')
         self.fields.pop('price_download_scheme')
         self.fields.pop('price_download_scheme_object')
-        self.fields.pop('daily_pricing_model')
-        self.fields.pop('daily_pricing_model_object')
+        # self.fields.pop('daily_pricing_model')
+        # self.fields.pop('daily_pricing_model_object')
 
 
 class ReportAccrualCalculationScheduleSerializer(AccrualCalculationScheduleSerializer):
