@@ -7,7 +7,6 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.filters import FilterSet
 from django.apps import apps
 
-
 from poms.common.views import AbstractModelViewSet
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet
 
@@ -56,18 +55,6 @@ class SchemeViewSet(AbstractModelViewSet):
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
-
-    # def create(self, request, *args, **kwargs):
-    #
-    #     request.data['master_user'] = request.user
-    #
-    #     serializer = SchemeSerializer(data=request.data, context={'user': request.user})
-    #
-    #     if serializer.is_valid(raise_exception=ValueError):
-    #         serializer.save()
-    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 def get_row_data(row, csv_fields):
@@ -381,9 +368,9 @@ def process_csv_file(master_user, scheme, rows, error_handler, context):
                             try:
 
                                 executed_attr['executed_expression'] = AccountClassifierMapping.objects.get(
-                                master_user=master_user,
-                                value=executed_expression,
-                                attribute_type=attr_type).content_object
+                                    master_user=master_user,
+                                    value=executed_expression,
+                                    attribute_type=attr_type).content_object
 
                             except (AccountClassifierMapping.DoesNotExist, KeyError):
 
@@ -452,6 +439,47 @@ def process_csv_file(master_user, scheme, rows, error_handler, context):
     return results, errors
 
 
+def get_item(scheme, result):
+    Model = apps.get_model(app_label=scheme.content_type.app_label, model_name=scheme.content_type.model)
+
+    item_result = None
+
+    if scheme.content_type.model == 'pricehistory':
+
+        try:
+
+            item_result = Model.objects.get(instrument=result['instrument'],
+                                            pricing_policy=result['pricing_policy'],
+                                            date=result['date'])
+        except Model.DoesNotExist:
+
+            item_result = None
+
+
+    elif scheme.content_type.model == 'currencyhistory':
+
+        try:
+
+            item_result = Model.objects.get(currency=result['currency'], pricing_policy=result['pricing_policy'],
+                                            date=result['date'])
+
+        except Model.DoesNotExist:
+
+            item_result = None
+
+    else:
+
+        try:
+
+            item_result = Model.objects.get(master_user_id=result['master_user'], user_code=result['user_code'])
+
+        except Model.DoesNotExist:
+
+            item_result = None
+
+    return item_result
+
+
 class CsvDataImportValidateViewSet(AbstractModelViewSet):
     parser_classes = (MultiPartParser,)
     queryset = CsvDataImport.objects.select_related(
@@ -459,6 +487,153 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
     )
     serializer_class = CsvDataImportSerializer
     http_method_names = ['get', 'post', 'head']
+
+    def create_simple_instance(self, scheme, result):
+
+        Model = apps.get_model(app_label=scheme.content_type.app_label, model_name=scheme.content_type.model)
+
+        result_without_many_to_many = {}
+
+        many_to_many_fields = ['counterparties', 'responsibles', 'accounts', 'portfolios']
+        system_fields = ['_row_index', '_row']
+
+        for key, value in result.items():
+
+            if key != 'attributes':
+
+                if key not in many_to_many_fields and key not in system_fields:
+                    result_without_many_to_many[key] = value
+
+        instance = Model(**result_without_many_to_many)
+
+        return instance
+
+    def attributes_full_clean(self, instance, attributes):
+
+        for result_attr in attributes:
+
+            attr_type = GenericAttributeType.objects.get(pk=result_attr['dynamic_attribute_id'])
+
+            if attr_type:
+
+                attribute = GenericAttribute(content_object=instance, attribute_type=attr_type)
+
+                print('result_attr', result_attr)
+                print('attribute', attribute)
+
+                if attr_type.value_type == 10:
+                    attribute.value_string = str(result_attr['executed_expression'])
+                elif attr_type.value_type == 20:
+                    attribute.value_float = float(result_attr['executed_expression'])
+                elif attr_type.value_type == 30:
+
+                    attribute.classifier = result_attr['executed_expression']
+
+                elif attr_type.value_type == 40:
+                    attribute.value_date = formula._parse_date(result_attr['executed_expression'])
+                else:
+                    pass
+
+                attribute.object_id = 1 # To pass object id check
+
+                attribute.full_clean()
+
+    def instance_full_clean(self, scheme, result, process_errors, error_handler):
+
+        try:
+
+            instance = self.create_simple_instance(scheme, result)
+
+            # self.fill_with_relation_attributes(instance, result)
+            if scheme.content_type.model != 'pricehistory' and scheme.content_type.model != 'currencyhistory':
+                self.attributes_full_clean(instance, result['attributes'])
+
+            instance.full_clean()
+
+        except ValidationError as e:
+
+            error_row = {
+                'error_message': ugettext('Validation error %(error)s ') % {
+                    'error': e
+                },
+                'original_row_index': result['_row_index'],
+                'original_row': result['_row'],
+            }
+
+            process_errors.append(error_row)
+
+            if error_handler == 'break':
+                return process_errors
+
+    def instance_overwrite_full_clean(self, scheme, result, item, process_errors, error_handler):
+
+        print('Overwrite item %s' % item)
+
+        try:
+
+            many_to_many_fields = ['counterparties', 'responsibles', 'accounts', 'portfolios']
+            system_fields = ['_row_index', '_row']
+
+            for key, value in result.items():
+
+                if key != 'attributes':
+
+                    if key not in many_to_many_fields and key not in system_fields:
+                        setattr(item, key, value)
+
+            # self.fill_with_relation_attributes(item, result)
+            if scheme.content_type.model != 'pricehistory' and scheme.content_type.model != 'currencyhistory':
+                self.attributes_full_clean(item, result['attributes'])
+
+            item.full_clean()
+
+        except ValidationError as e:
+
+            error_row = {
+                'error_message': ugettext('Validation error %(error)s ') % {
+                    'error': e
+                },
+                'original_row_index': result['_row_index'],
+                'original_row': result['_row'],
+            }
+
+            process_errors.append(error_row)
+
+            if error_handler == 'break':
+                return process_errors
+
+    def full_clean_results(self, scheme, error_handler, mode, results, process_errors):
+
+        for result in results:
+
+            item = get_item(scheme, result)
+
+            if mode == 'overwrite' and item:
+
+                self.instance_overwrite_full_clean(scheme, result, item, process_errors, error_handler)
+
+            elif mode == 'overwrite' and not item:
+
+                self.instance_full_clean(scheme, result, process_errors, error_handler)
+
+            elif mode == 'skip' and not item:
+
+                self.instance_full_clean(scheme, result, process_errors, error_handler)
+
+            elif mode == 'skip' and item:
+
+                error_row = {
+                    'error_message': ugettext('Entry already exists '),
+                    'original_row_index': result['_row_index'],
+                    'original_row': result['_row'],
+                }
+
+                process_errors.append(error_row)
+
+                if error_handler == 'break':
+                    return process_errors
+
+        return process_errors
 
     def create(self, request, *args, **kwargs):
 
@@ -496,6 +671,8 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
                 "total": rows_total,
                 "errors": process_errors
             }, status=status.HTTP_202_ACCEPTED)
+
+        process_errors = self.full_clean_results(scheme, error_handler, mode, results, process_errors)
 
         return Response({
             "imported": len(results),
@@ -649,52 +826,11 @@ class CsvDataImportViewSet(AbstractModelViewSet):
             if error_handler == 'break':
                 return process_errors
 
-    def get_item(self, scheme, result):
-
-        Model = apps.get_model(app_label=scheme.content_type.app_label, model_name=scheme.content_type.model)
-
-        item_result = None
-
-        if scheme.content_type.model == 'pricehistory':
-
-            try:
-
-                item_result = Model.objects.get(instrument=result['instrument'],
-                                                pricing_policy=result['pricing_policy'],
-                                                date=result['date'])
-            except Model.DoesNotExist:
-
-                item_result = None
-
-
-        elif scheme.content_type.model == 'currencyhistory':
-
-            try:
-
-                item_result = Model.objects.get(currency=result['currency'], pricing_policy=result['pricing_policy'],
-                                                date=result['date'])
-
-            except Model.DoesNotExist:
-
-                item_result = None
-
-        else:
-
-            try:
-
-                    item_result = Model.objects.get(master_user_id=result['master_user'], user_code=result['user_code'])
-
-            except Model.DoesNotExist:
-
-                item_result = None
-
-        return item_result
-
     def import_results(self, scheme, error_handler, mode, results, process_errors):
 
         for result in results:
 
-            item = self.get_item(scheme, result)
+            item = get_item(scheme, result)
 
             if mode == 'overwrite' and item:
 
