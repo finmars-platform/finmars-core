@@ -623,7 +623,7 @@ class TransactionTypeActionTransaction(TransactionTypeAction):
     instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
                                          related_name='+', verbose_name=ugettext_lazy('instrument input'))
     instrument_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
-                                           on_delete=models.PROTECT, related_name='+',
+                                           on_delete=models.SET_NULL, related_name='+',
                                            verbose_name=ugettext_lazy('instrument phantom'))
 
     transaction_currency = models.ForeignKey(Currency, null=True, blank=True, on_delete=models.PROTECT,
@@ -713,7 +713,7 @@ class TransactionTypeActionTransaction(TransactionTypeAction):
     linked_instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
                                                 related_name='+', verbose_name=ugettext_lazy('linked instrument input'))
     linked_instrument_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
-                                                  on_delete=models.PROTECT, related_name='+',
+                                                  on_delete=models.SET_NULL, related_name='+',
                                                   verbose_name=ugettext_lazy('linked instrument phantom'))
 
     allocation_balance = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.PROTECT,
@@ -722,7 +722,7 @@ class TransactionTypeActionTransaction(TransactionTypeAction):
                                                  related_name='+',
                                                  verbose_name=ugettext_lazy('allocation balance input'))
     allocation_balance_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
-                                                   on_delete=models.PROTECT, related_name='+',
+                                                   on_delete=models.SET_NULL, related_name='+',
                                                    verbose_name=ugettext_lazy('allocation balance phantom'))
 
     allocation_pl = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
@@ -730,7 +730,7 @@ class TransactionTypeActionTransaction(TransactionTypeAction):
     allocation_pl_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
                                             related_name='+', verbose_name=ugettext_lazy('allocation pl input'))
     allocation_pl_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
-                                              on_delete=models.PROTECT, related_name='+',
+                                              on_delete=models.SET_NULL, related_name='+',
                                               verbose_name=ugettext_lazy('allocation pl phantom'))
 
     responsible = models.ForeignKey(Responsible, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
@@ -776,7 +776,7 @@ class TransactionTypeActionInstrumentFactorSchedule(TransactionTypeAction):
     instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
                                          related_name='+', verbose_name=ugettext_lazy('instrument input'))
     instrument_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
-                                           on_delete=models.PROTECT, related_name='+',
+                                           on_delete=models.SET_NULL, related_name='+',
                                            verbose_name=ugettext_lazy('instrument phantom'))
 
     effective_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
@@ -794,17 +794,17 @@ class TransactionTypeActionInstrumentFactorSchedule(TransactionTypeAction):
 
 
 class TransactionTypeActionInstrumentManualPricingFormula(TransactionTypeAction):
-    instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+    instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
                                    verbose_name=ugettext_lazy('instrument'))
-    instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+    instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                          related_name='+', verbose_name=ugettext_lazy('instrument input'))
     instrument_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
-                                           on_delete=models.PROTECT, related_name='+',
+                                           on_delete=models.SET_NULL, related_name='+',
                                            verbose_name=ugettext_lazy('instrument phantom'))
 
-    pricing_policy = models.ForeignKey(PricingPolicy, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+    pricing_policy = models.ForeignKey(PricingPolicy, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
                                        verbose_name=ugettext_lazy('pricing policy'))
-    pricing_policy_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+    pricing_policy_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                              related_name='+', verbose_name=ugettext_lazy('pricing policy input'))
 
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
@@ -822,27 +822,27 @@ class TransactionTypeActionInstrumentManualPricingFormula(TransactionTypeAction)
 
 
 class TransactionTypeActionInstrumentAccrualCalculationSchedules(TransactionTypeAction):
-    instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+    instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
                                    verbose_name=ugettext_lazy('instrument'))
-    instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+    instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                          related_name='+', verbose_name=ugettext_lazy('instrument input'))
     instrument_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
-                                           on_delete=models.PROTECT, related_name='+',
+                                           on_delete=models.SET_NULL, related_name='+',
                                            verbose_name=ugettext_lazy('instrument phantom'))
 
     accrual_calculation_model = models.ForeignKey(AccrualCalculationModel, null=True, blank=True,
-                                                  on_delete=models.PROTECT, related_name='+',
+                                                  on_delete=models.SET_NULL, related_name='+',
                                                   verbose_name=ugettext_lazy('accrual calculation model'))
 
     accrual_calculation_model_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True,
-                                                        on_delete=models.PROTECT,
+                                                        on_delete=models.SET_NULL,
                                                         related_name='+',
                                                         verbose_name=ugettext_lazy('accrual calculation model input'))
 
-    periodicity = models.ForeignKey(Periodicity, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+    periodicity = models.ForeignKey(Periodicity, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
                                     verbose_name=ugettext_lazy('periodicity'))
 
-    periodicity_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+    periodicity_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                           related_name='+',
                                           verbose_name=ugettext_lazy('periodicity input'))
 
@@ -870,33 +870,33 @@ class TransactionTypeActionInstrumentAccrualCalculationSchedules(TransactionType
 
 
 class TransactionTypeActionInstrumentEventSchedule(TransactionTypeAction):
-    instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+    instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
                                    verbose_name=ugettext_lazy('instrument'))
-    instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+    instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                          related_name='+', verbose_name=ugettext_lazy('instrument input'))
     instrument_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
-                                           on_delete=models.PROTECT, related_name='+',
+                                           on_delete=models.SET_NULL, related_name='+',
                                            verbose_name=ugettext_lazy('instrument phantom'))
 
-    periodicity = models.ForeignKey(Periodicity, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+    periodicity = models.ForeignKey(Periodicity, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
                                     verbose_name=ugettext_lazy('periodicity'))
 
-    periodicity_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+    periodicity_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                           related_name='+',
                                           verbose_name=ugettext_lazy('periodicity input'))
 
-    notification_class = models.ForeignKey(NotificationClass, null=True, blank=True, on_delete=models.PROTECT,
+    notification_class = models.ForeignKey(NotificationClass, null=True, blank=True, on_delete=models.SET_NULL,
                                            related_name='+',
                                            verbose_name=ugettext_lazy('notification class'))
 
-    notification_class_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+    notification_class_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                                  related_name='+',
                                                  verbose_name=ugettext_lazy('notification class input'))
 
-    event_class = models.ForeignKey(EventClass, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+    event_class = models.ForeignKey(EventClass, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
                                     verbose_name=ugettext_lazy('event class'))
 
-    event_class_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+    event_class_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                           related_name='+',
                                           verbose_name=ugettext_lazy('event class input'))
 
@@ -930,9 +930,9 @@ class TransactionTypeActionInstrumentEventSchedule(TransactionTypeAction):
 
 
 class TransactionTypeActionInstrumentEventScheduleAction(TransactionTypeAction):
-    event_schedule = models.ForeignKey(EventSchedule, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+    event_schedule = models.ForeignKey(EventSchedule, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
                                        verbose_name=ugettext_lazy('event schedule'))
-    event_schedule_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
+    event_schedule_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                              related_name='+', verbose_name=ugettext_lazy('event schedule input'))
 
     #  on_delete=models.PROTECT, TODO check later phantom permossions
