@@ -542,6 +542,13 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             if result:
                 result_json = to_json_single(result)["fields"]
 
+                for key in result_json:
+                    if key.endswith('_input') and result_json[key]:
+                        result_json[key] = TransactionTypeInput.objects.get(pk=result_json[key]).name
+
+                    if key.endswith('_phantom') and result_json[key]:
+                        result_json[key] = TransactionTypeAction.objects.get(pk=result_json[key]).order
+
                 self.add_user_code_to_relation(result_json, action_key)
 
                 action[action_key] = result_json

@@ -904,7 +904,11 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             pk = inp_data.pop('id', None)
             inp = cur_inputs.pop(pk, None)
             if inp is None:
-                inp = TransactionTypeInput(transaction_type=instance)
+                try:
+                    inp = TransactionTypeInput.objects.get(transaction_type=instance, name=inp_data['name'])
+                except TransactionTypeInput.DoesNotExist:
+                    inp = TransactionTypeInput(transaction_type=instance)
+
             inp.order = order
             for attr, value in inp_data.items():
                 setattr(inp, attr, value)
