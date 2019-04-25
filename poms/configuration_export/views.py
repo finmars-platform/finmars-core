@@ -28,7 +28,7 @@ from poms.integrations.models import InstrumentDownloadScheme, InstrumentDownloa
     PricingAutomatedSchedule, PortfolioMapping, CurrencyMapping, InstrumentTypeMapping, AccountMapping, \
     InstrumentMapping, CounterpartyMapping, ResponsibleMapping, Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, \
     PeriodicityMapping, DailyPricingModelMapping, PaymentSizeDetailMapping, AccrualCalculationModelMapping, \
-    PriceDownloadSchemeMapping
+    PriceDownloadSchemeMapping, AccountTypeMapping, PricingPolicyMapping
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_attrs.serializers import GenericClassifierViewSerializer, GenericClassifierNodeSerializer, \
     GenericAttributeTypeSerializer
@@ -1043,14 +1043,12 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 result_json = to_json_single(result)["fields"]
 
                 if action_key == 'csv_import_scheme':
-
                     result_json['___csv_import_scheme__scheme_name'] = CsvImportScheme.objects.get(
                         pk=result_json['csv_import_scheme']).scheme_name
 
                     result_json.pop("csv_import_scheme", None)
 
                 if action_key == 'complex_transaction_import_scheme':
-
                     result_json[
                         '___complex_transaction_import_scheme__scheme_name'] = ComplexTransactionImportScheme.objects.get(
                         pk=result_json['complex_transaction_import_scheme']).scheme_name
@@ -1323,17 +1321,20 @@ class MappingExportViewSet(AbstractModelViewSet):
         currency_mapping = self.get_currency_mapping()
         instrument_type_mapping = self.get_instrument_type_mapping()
         account_mapping = self.get_account_mapping()
+        account_type_mapping = self.get_account_type_mapping()
         instrument_mapping = self.get_instrument_mapping()
         counterparty_mapping = self.get_counterparty_mapping()
         responsible_mapping = self.get_responsible_mapping()
         strategy1_mapping = self.get_strategy1_mapping()
 
+        pricing_policy_mapping = self.get_pricing_policy_mapping()
         periodicity_mapping = self.get_periodicity_mapping()
         daily_pricing_model_mapping = self.get_daily_pricing_model_mapping()
         payment_size_detail_mapping = self.get_payment_size_detail_mapping()
         accrual_calculation_model_mapping = self.get_accrual_calculation_model_mapping()
         price_download_scheme_mapping = self.get_price_download_scheme_mapping()
 
+        configuration["body"].append(account_type_mapping)
         configuration["body"].append(portfolio_mapping)
         configuration["body"].append(currency_mapping)
         configuration["body"].append(instrument_type_mapping)
@@ -1343,6 +1344,7 @@ class MappingExportViewSet(AbstractModelViewSet):
         configuration["body"].append(responsible_mapping)
         configuration["body"].append(strategy1_mapping)
 
+        configuration["body"].append(pricing_policy_mapping)
         configuration["body"].append(periodicity_mapping)
         configuration["body"].append(daily_pricing_model_mapping)
         configuration["body"].append(payment_size_detail_mapping)
@@ -1469,6 +1471,37 @@ class MappingExportViewSet(AbstractModelViewSet):
 
         result = {
             "entity": "integrations.accountmapping",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_account_type_mapping(self):
+        items = to_json_objects(
+            AccountTypeMapping.objects.filter(master_user=self._master_user))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item["pk"] = item["pk"]
+
+            result_item.pop("master_user", None)
+            # result_item.pop("provider", None)
+
+            result_item["___user_code"] = AccountType.objects.get(pk=result_item["content_object"]).user_code
+
+            result_item.pop("content_object", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "integrations.accounttypemapping",
             "count": len(results),
             "content": results
         }
@@ -1686,6 +1719,37 @@ class MappingExportViewSet(AbstractModelViewSet):
 
         result = {
             "entity": "integrations.periodicitymapping",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_pricing_policy_mapping(self):
+        items = to_json_objects(
+            PricingPolicyMapping.objects.filter(master_user=self._master_user))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item["pk"] = item["pk"]
+
+            result_item.pop("master_user", None)
+            # result_item.pop("provider", None)
+
+            result_item["___user_code"] = PricingPolicy.objects.get(pk=result_item["content_object"]).user_code
+
+            result_item.pop("content_object", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "integrations.pricingpolicymapping",
             "count": len(results),
             "content": results
         }
