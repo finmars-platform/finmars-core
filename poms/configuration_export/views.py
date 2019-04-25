@@ -1162,6 +1162,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         for item in results:
             item["___input__name"] = TransactionTypeInput.objects.get(pk=item["transaction_type_input"]).name
 
+        delete_prop(results, 'transaction_type_input')
         delete_prop(results, 'rule')
 
         return results
