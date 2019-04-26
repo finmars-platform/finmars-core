@@ -963,6 +963,13 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         results = unwrap_items(fields)
 
+        for item in results:
+
+            if item["dynamic_attribute_id"]:
+
+                item["___dynamic_attribute_id__user_code"] = GenericAttributeType.objects.get(
+                pk=item["dynamic_attribute_id"]).user_code
+
         delete_prop(results, 'scheme')
 
         return results

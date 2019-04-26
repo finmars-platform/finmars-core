@@ -1378,6 +1378,7 @@ def complex_transaction_csv_file_import_validate(instance):
             for field in rule.fields.all():
                 try:
                     field_value = formula.safe_eval(field.value_expr, names=inputs)
+
                     field_value = _convert_value(field, field_value)
                     fields[field.transaction_type_input.name] = field_value
                 except:
