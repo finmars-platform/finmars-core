@@ -1297,12 +1297,17 @@ def complex_transaction_csv_file_import_validate(instance):
             model_map_class = mapping_map[model_class]
 
             key = (model_class, value)
+
             try:
-                return mapping_cache[key]
-            except KeyError:
                 v = model_map_class.objects.get(master_user=instance.master_user, value=value).content_object
                 mapping_cache[key] = v
-                return v
+
+            except model_map_class.DoesNotExist:
+
+                if instance.missing_data_handler == 'set_defaults':
+                    v = model_map_class.objects.get(master_user=instance.master_user, value='-').content_object
+            
+            return v
 
     def _process_csv_file(file):
 

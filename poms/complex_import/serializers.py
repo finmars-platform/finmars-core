@@ -19,13 +19,13 @@ class ComplexImportSchemeActionCsvImportSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComplexImportSchemeActionCsvImport
         fields = (
-            'csv_import_scheme', 'mode', 'delimiter', 'error_handler')
+            'csv_import_scheme', 'mode', 'missing_data_handler', 'error_handler')
 
 
 class ComplexImportSchemeActionTransactionImportSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComplexImportSchemeActionTransactionImport
-        fields = ('complex_transaction_import_scheme', 'delimiter', 'error_handler')
+        fields = ('complex_transaction_import_scheme', 'missing_data_handler', 'error_handler')
 
 
 class ComplexImportSchemeActionSerializer(serializers.ModelSerializer):

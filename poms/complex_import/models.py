@@ -18,6 +18,11 @@ class ComplexImportScheme(models.Model):
         return self.scheme_name
 
 
+MISSING_DATA_CHOICES = [
+    ['throw_error', 'Treat as Error'],
+    ['set_defaults', 'Replace with Default Value'],
+]
+
 ERROR_HANDLER_CHOICES = [
     ['break', 'Break'],
     ['continue', 'Continue'],
@@ -54,7 +59,7 @@ class ComplexImportSchemeActionCsvImport(ComplexImportSchemeAction):
                                           related_name='+', verbose_name=ugettext_lazy('csv import scheme'))
 
     mode = models.CharField(max_length=255, choices=MODE_CHOICES, default='')
-    delimiter = models.CharField(max_length=255, default=',')
+    missing_data_handler = models.CharField(max_length=255, choices=MISSING_DATA_CHOICES, default='throw_error')
     error_handler = models.CharField(max_length=255, choices=ERROR_HANDLER_CHOICES, default='break')
 
 
@@ -65,7 +70,7 @@ class ComplexImportSchemeActionTransactionImport(ComplexImportSchemeAction):
                                                           related_name='+', verbose_name=ugettext_lazy(
             'complex transaction import scheme'))
 
-    delimiter = models.CharField(max_length=255,  default=',')
+    missing_data_handler = models.CharField(max_length=255, choices=MISSING_DATA_CHOICES, default='throw_error')
     error_handler = models.CharField(max_length=255, choices=ERROR_HANDLER_CHOICES, default='break')
 
 

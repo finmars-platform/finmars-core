@@ -52,6 +52,11 @@ DELIMITER_CHOICES = [
     ['\t', 'Tab'],
 ]
 
+MISSING_DATA_CHOICES = [
+    ['throw_error', 'Treat as Error'],
+    ['set_defaults', 'Replace with Default Value'],
+]
+
 
 class CsvDataImport(models.Model):
     master_user = models.ForeignKey(MasterUser, blank=True, null=True)
@@ -61,6 +66,7 @@ class CsvDataImport(models.Model):
     delimiter = models.CharField(max_length=255, choices=DELIMITER_CHOICES, default=',')
     created_at = models.DateTimeField(auto_now_add=True)
     error_handler = models.CharField(max_length=255, choices=ERROR_HANDLER_CHOICES, default='break')
+    missing_data_handler = models.CharField(max_length=255, choices=MISSING_DATA_CHOICES, default='throw_error')
     filename = models.CharField(max_length=255)
     filesize = models.CharField(max_length=255)
 
