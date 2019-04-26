@@ -1300,13 +1300,13 @@ def complex_transaction_csv_file_import_validate(instance):
 
             try:
                 v = model_map_class.objects.get(master_user=instance.master_user, value=value).content_object
-                mapping_cache[key] = v
-
-            except model_map_class.DoesNotExist:
+            except:
 
                 if instance.missing_data_handler == 'set_defaults':
                     v = model_map_class.objects.get(master_user=instance.master_user, value='-').content_object
-            
+
+            mapping_cache[key] = v
+
             return v
 
     def _process_csv_file(file):

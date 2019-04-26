@@ -1440,7 +1440,7 @@ class ComplexTransactionImportSchemeSerializer(serializers.ModelSerializer):
 class ComplexTransactionCsvFileImport:
     def __init__(self, task_id=None, task_status=None, master_user=None, member=None,
                  scheme=None, file_path=None, skip_first_line=None, delimiter=None, quotechar=None, encoding=None,
-                 error_handling=None, error=None, error_message=None, error_row_index=None, error_rows=None,
+                 error_handling=None, missing_data_handler=None, error=None, error_message=None, error_row_index=None, error_rows=None,
                  total_rows=None):
         self.task_id = task_id
         self.task_status = task_status
@@ -1456,6 +1456,7 @@ class ComplexTransactionCsvFileImport:
         self.encoding = encoding or 'utf-8'
 
         self.error_handling = error_handling or 'continue'
+        self.missing_data_handler = missing_data_handler or 'throw_error'
         self.error = error
         self.error_message = error_message
         self.error_row_index = error_row_index
@@ -1491,6 +1492,11 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
     error_handling = serializers.ChoiceField(
         choices=[('break', 'Break on first error'), ('continue', 'Try continue')],
         required=False, initial='continue', default='continue'
+    )
+
+    missing_data_handler = serializers.ChoiceField(
+        choices=[('throw_error', 'Treat as Error'), ('set_defaults', 'Replace with Default Value')],
+        required=False, initial='throw_error', default='throw_error'
     )
 
     error = serializers.ReadOnlyField()
