@@ -67,6 +67,10 @@ def get_row_data(row, csv_fields):
 
             csv_row_dict[csv_field.name] = row_value
 
+        else:
+
+            csv_row_dict[csv_field.name] = ''
+
     return csv_row_dict
 
 
@@ -104,6 +108,7 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
             # print("instance %s" % instance)
 
             inputs_error = []
+            executed_expressions = []
             error_row = {
                 'error_message': None,
                 'original_row_index': row_index,
@@ -127,13 +132,21 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
                 'accrued_currency': CurrencyMapping
             }
 
+            classifier_mapping_map = {
+                'portfolio': PortfolioClassifierMapping,
+                'instrument': InstrumentClassifierMapping,
+                'account': AccountClassifierMapping,
+                'responsible': ResponsibleClassifierMapping,
+                'counterparty': CounterpartyClassifierMapping
+            }
+
             for entity_field in entity_fields:
 
                 key = entity_field.system_property_key
 
-                if get_field_type(entity_field) == 'system_attribute':
+                if entity_field.expression != '':
 
-                    if entity_field.expression != '':
+                    if get_field_type(entity_field) == 'system_attribute':
 
                         executed_expression = None
 
@@ -142,9 +155,13 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
                             executed_expression = safe_eval(entity_field.expression, names=csv_row_dict,
                                                             context=context)
 
+                            executed_expressions.append(executed_expression)
+
                         except (ExpressionEvalError, TypeError, Exception, KeyError):
 
                             inputs_error.append(entity_field)
+
+                            executed_expressions.append(ugettext('Invalid expression'))
 
                         # print('executed_expression %s' % executed_expression)
 
@@ -184,108 +201,66 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
 
                         # _l.debug('Can not evaluate system attribute % expression ', entity_field.expression)
 
-                if get_field_type(entity_field) == 'dynamic_attribute':
+                    if get_field_type(entity_field) == 'dynamic_attribute':
 
-                    executed_attr = {}
-                    executed_attr['dynamic_attribute_id'] = entity_field.dynamic_attribute_id
+                        executed_attr = {}
+                        executed_attr['dynamic_attribute_id'] = entity_field.dynamic_attribute_id
 
-                    executed_expression = None
+                        executed_expression = None
 
-                    try:
-                        # context=self.report.context
-                        executed_expression = safe_eval(entity_field.expression, names=csv_row_dict,
-                                                        context=context)
+                        try:
+                            # context=self.report.context
+                            executed_expression = safe_eval(entity_field.expression, names=csv_row_dict,
+                                                            context=context)
 
-                    except (ExpressionEvalError, TypeError, Exception, KeyError):
+                            executed_expressions.append(executed_expression)
 
-                        inputs_error.append(entity_field)
+                        except (ExpressionEvalError, TypeError, Exception, KeyError):
 
-                    attr_type = GenericAttributeType.objects.get(pk=executed_attr['dynamic_attribute_id'])
+                            inputs_error.append(entity_field)
 
-                    if attr_type.value_type == 30:
+                            executed_expressions.append(ugettext('Invalid expression'))
 
-                        if scheme.content_type.model == 'portfolio':
+                        attr_type = GenericAttributeType.objects.get(pk=executed_attr['dynamic_attribute_id'])
 
-                            try:
-                                executed_attr['executed_expression'] = PortfolioClassifierMapping.objects.get(
-                                    master_user=master_user,
-                                    value=executed_expression, attribute_type=attr_type).content_object
+                        if attr_type.value_type == 30:
 
-                            except (PortfolioClassifierMapping.DoesNotExist, KeyError):
+                            if scheme.content_type.model in classifier_mapping_map:
 
-                                inputs_error.append(entity_field)
+                                try:
+                                    executed_attr['executed_expression'] = classifier_mapping_map[
+                                        scheme.content_type.model].objects.get(
+                                        master_user=master_user,
+                                        value=executed_expression, attribute_type=attr_type).content_object
 
-                                print('PortfolioClassifierMapping %s does not exist' %
-                                      executed_expression)
+                                except (classifier_mapping_map[scheme.content_type.model].DoesNotExist, KeyError):
 
-                        if scheme.content_type.model == 'instrument':
+                                    inputs_error.append(entity_field)
 
-                            try:
-                                executed_attr['executed_expression'] = InstrumentClassifierMapping.objects.get(
-                                    master_user=master_user,
-                                    value=executed_expression, attribute_type=attr_type).content_object
+                                    print('%s classifier mapping  does not exist' % scheme.content_type.model)
+                                    print('expresion: %s ' % executed_expression)
 
-                            except (InstrumentClassifierMapping.DoesNotExist, KeyError):
+                        else:
 
-                                inputs_error.append(entity_field)
+                            executed_attr['executed_expression'] = executed_expression
 
-                                print('InstrumentClassifierMapping %s does not exist' %
-                                      executed_expression)
-
-                        if scheme.content_type.model == 'account':
-
-                            try:
-
-                                executed_attr['executed_expression'] = AccountClassifierMapping.objects.get(
-                                    master_user=master_user,
-                                    value=executed_expression,
-                                    attribute_type=attr_type).content_object
-
-                            except (AccountClassifierMapping.DoesNotExist, KeyError):
-
-                                inputs_error.append(entity_field)
-
-                                print('AccountClassifierMapping %s does not exist' % executed_expression)
-
-                        if scheme.content_type.model == 'responsible':
-
-                            try:
-                                executed_attr['executed_expression'] = ResponsibleClassifierMapping.objects.get(
-                                    master_user=master_user,
-                                    value=executed_expression, attribute_type=attr_type).content_object
-
-                            except (ResponsibleClassifierMapping.DoesNotExist, KeyError):
-
-                                inputs_error.append(entity_field)
-
-                                print('ResponsibleClassifierMapping %s does not exist' %
-                                      executed_expression)
-
-                        if scheme.content_type.model == 'counterparty':
-
-                            try:
-                                executed_attr[
-                                    'executed_expression'] = CounterpartyClassifierMapping.objects.get(
-                                    master_user=master_user,
-                                    value=executed_expression, attribute_type=attr_type).content_object
-
-                            except (CounterpartyClassifierMapping.DoesNotExist, KeyError):
-
-                                inputs_error.append(entity_field)
-
-                                print('CounterpartyClassifierMapping %s does not exist' %
-                                      executed_expression)
-
-                    else:
-
-                        executed_attr['executed_expression'] = executed_expression
-
-                    instance['attributes'].append(executed_attr)
+                        instance['attributes'].append(executed_attr)
 
             if inputs_error:
 
                 print('inputs_error')
                 print(inputs_error)
+
+                error_row['error_data'] = []
+
+                print('csv_row_dict %s' % csv_row_dict)
+
+                csv_object_values = list(csv_row_dict.values())
+
+                for index in range(len(csv_fields)):
+                    error_row['error_data'].append(csv_object_values[index])
+
+                error_row['error_data'] = error_row['error_data'] + executed_expressions
 
                 error_row['error_message'] = ugettext('Can\'t process field: %(inputs)s') % {
                     'inputs': ', '.join(i.name for i in inputs_error)
@@ -293,13 +268,19 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
 
                 errors.append(error_row)
 
+                error_row['error_reaction'] = 'Continue import'
+
                 if error_handler == 'break':
+                    error_row['error_reaction'] = 'Break import'
+
                     return results, errors
 
             else:
 
                 # if (hasattr(instance, 'user_code') and instance['user_code'] == ''):
                 #     instance['user_code'] = instance['name']
+
+                error_row['error_reaction'] = 'Success'
 
                 results.append(instance)
 
