@@ -113,6 +113,11 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
                 'error_message': None,
                 'original_row_index': row_index,
                 'original_row': row,
+                'error_data': {
+                    'imported_columns': [],
+                    'data_matching': []
+                },
+                'error_reaction': None
             }
 
             mapping_map = {
@@ -248,19 +253,12 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
 
             if inputs_error:
 
-                print('inputs_error')
-                print(inputs_error)
-
-                error_row['error_data'] = []
-
-                print('csv_row_dict %s' % csv_row_dict)
-
                 csv_object_values = list(csv_row_dict.values())
 
                 for index in range(len(csv_fields)):
-                    error_row['error_data'].append(csv_object_values[index])
+                    error_row['error_data']['imported_columns'].append(csv_object_values[index])
 
-                error_row['error_data'] = error_row['error_data'] + executed_expressions
+                error_row['error_data']['data_matching'] = executed_expressions
 
                 error_row['error_message'] = ugettext('Can\'t process field: %(inputs)s') % {
                     'inputs': ', '.join(i.name for i in inputs_error)
