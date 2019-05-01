@@ -3,15 +3,20 @@ from django.apps import apps
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from poms.common.fields import ExpressionField
+from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.users.fields import MasterUserField
 from .models import CsvField, EntityField, CsvDataImport, CsvImportScheme
 from .fields import CsvImportContentTypeField
 
 
 class CsvFieldSerializer(serializers.ModelSerializer):
+
+    name_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
+
     class Meta:
         model = CsvField
-        fields = ('column', 'name')
+        fields = ('column', 'name', 'name_expr')
 
 
 class EntityFieldSerializer(serializers.ModelSerializer):

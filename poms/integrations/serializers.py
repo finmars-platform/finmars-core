@@ -1255,9 +1255,11 @@ class ComplexTransactionImportSchemeInputSerializer(serializers.ModelSerializer)
                                      serializers.RegexValidator(regex='\A[a-zA-Z_][a-zA-Z0-9_]*\Z'),
                                  ])
 
+    name_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
+
     class Meta:
         model = ComplexTransactionImportSchemeInput
-        fields = ['id', 'name', 'column']
+        fields = ['id', 'name', 'column', 'name_expr']
 
 
 class ComplexTransactionImportSchemeFieldSerializer(serializers.ModelSerializer):
@@ -1440,7 +1442,8 @@ class ComplexTransactionImportSchemeSerializer(serializers.ModelSerializer):
 class ComplexTransactionCsvFileImport:
     def __init__(self, task_id=None, task_status=None, master_user=None, member=None,
                  scheme=None, file_path=None, skip_first_line=None, delimiter=None, quotechar=None, encoding=None,
-                 error_handling=None, missing_data_handler=None, error=None, error_message=None, error_row_index=None, error_rows=None,
+                 error_handling=None, missing_data_handler=None, error=None, error_message=None, error_row_index=None,
+                 error_rows=None,
                  total_rows=None):
         self.task_id = task_id
         self.task_status = task_status

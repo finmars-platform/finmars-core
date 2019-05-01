@@ -23,6 +23,8 @@ class CsvField(models.Model):
     column = models.IntegerField(default=0)
     name = models.CharField(max_length=255, blank=True, default='')
 
+    name_expr = models.CharField(max_length=1000, default='', verbose_name=ugettext_lazy('name expression'))
+
     scheme = models.ForeignKey(CsvImportScheme, related_name='csv_fields', on_delete=models.CASCADE)
 
 

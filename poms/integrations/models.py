@@ -473,8 +473,6 @@ class AccountClassifierMapping(AbstractMapping):
         return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
 
 
-
-
 class InstrumentMapping(AbstractMapping):
     content_object = models.ForeignKey('instruments.Instrument', verbose_name=ugettext_lazy('instrument'))
 
@@ -503,6 +501,7 @@ class InstrumentClassifierMapping(AbstractMapping):
     def __str__(self):
         return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
 
+
 class CounterpartyMapping(AbstractMapping):
     content_object = models.ForeignKey('counterparties.Counterparty', verbose_name=ugettext_lazy('counterparty'))
 
@@ -515,6 +514,7 @@ class CounterpartyMapping(AbstractMapping):
 
     def __str__(self):
         return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
+
 
 class CounterpartyClassifierMapping(AbstractMapping):
     attribute_type = models.ForeignKey(GenericAttributeType)
@@ -530,6 +530,7 @@ class CounterpartyClassifierMapping(AbstractMapping):
     def __str__(self):
         return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
 
+
 class ResponsibleMapping(AbstractMapping):
     content_object = models.ForeignKey('counterparties.Responsible', verbose_name=ugettext_lazy('responsible'))
 
@@ -542,6 +543,7 @@ class ResponsibleMapping(AbstractMapping):
 
     def __str__(self):
         return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
+
 
 class ResponsibleClassifierMapping(AbstractMapping):
     attribute_type = models.ForeignKey(GenericAttributeType)
@@ -585,6 +587,7 @@ class PortfolioClassifierMapping(AbstractMapping):
 
     def __str__(self):
         return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
+
 
 class Strategy1Mapping(AbstractMapping):
     content_object = models.ForeignKey('strategies.Strategy1', verbose_name=ugettext_lazy('strategy1'))
@@ -902,6 +905,8 @@ class ComplexTransactionImportSchemeInput(models.Model):
     # order = models.SmallIntegerField(default=0)
     name = models.CharField(max_length=255)
     column = models.SmallIntegerField()
+
+    name_expr = models.CharField(max_length=1000, default='', verbose_name=ugettext_lazy('name expression'))
 
     class Meta:
         verbose_name = ugettext_lazy('complex transaction import scheme input')

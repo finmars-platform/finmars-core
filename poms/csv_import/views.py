@@ -114,11 +114,22 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
                 'original_row_index': row_index,
                 'original_row': row,
                 'error_data': {
-                    'imported_columns': [],
-                    'data_matching': []
+                    'columns': {
+                        'imported_columns': [],
+                        'data_matching': []
+                    },
+                    'data': {
+                        'imported_columns': [],
+                        'data_matching': []
+                    }
                 },
                 'error_reaction': None
             }
+
+            for key, value in csv_row_dict.items():
+                error_row['error_data']['columns']['imported_columns'].append(key)
+                error_row['error_data']['data']['imported_columns'].append(value)
+
 
             mapping_map = {
                 'counterparties': CounterpartyMapping,
@@ -150,6 +161,8 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
                 key = entity_field.system_property_key
 
                 if entity_field.expression != '':
+
+                    error_row['error_data']['columns']['data_matching'].append(entity_field.name)
 
                     if get_field_type(entity_field) == 'system_attribute':
 
@@ -253,12 +266,7 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
 
             if inputs_error:
 
-                csv_object_values = list(csv_row_dict.values())
-
-                for index in range(len(csv_fields)):
-                    error_row['error_data']['imported_columns'].append(csv_object_values[index])
-
-                error_row['error_data']['data_matching'] = executed_expressions
+                error_row['error_data']['data']['data_matching'] = executed_expressions
 
                 error_row['error_message'] = ugettext('Can\'t process field: %(inputs)s') % {
                     'inputs': ', '.join(i.name for i in inputs_error)

@@ -539,6 +539,7 @@ class TransactionTypeProcess(object):
                         if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
 
                             if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
+
                                 AccrualCalculationSchedule.objects.filter(
                                     instrument=accrual_calculation_schedule.instrument).delete()
 
