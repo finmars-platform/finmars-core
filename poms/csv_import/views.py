@@ -62,8 +62,8 @@ def get_row_data(row, csv_fields):
 
     for csv_field in csv_fields:
 
-        if csv_field.column < len(row):
-            row_value = row[csv_field.column]
+        if csv_field.column - 1 < len(row):
+            row_value = row[csv_field.column - 1]
 
             csv_row_dict[csv_field.name] = row_value
 
@@ -79,7 +79,7 @@ def get_row_data_converted(row, csv_fields, csv_row_dict_raw, context, conversio
 
     for csv_field in csv_fields:
 
-        if csv_field.column < len(row):
+        if csv_field.column - 1 < len(row):
 
             try:
 
@@ -167,7 +167,6 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
             for key, value in csv_row_dict.items():
                 error_row['error_data']['columns']['converted_imported_columns'].append(key + ': Conversion Expression')
                 error_row['error_data']['data']['converted_imported_columns'].append(value)
-
 
             if len(conversion_errors) > 0 and error_handler == 'break':
                 error_row['error_message'] = ugettext('Can\'t process conversion expression: %(columns)s') % {

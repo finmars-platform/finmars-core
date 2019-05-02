@@ -1113,7 +1113,7 @@ def complex_transaction_csv_file_import(instance):
 
             for i in scheme_inputs:
                 try:
-                    inputs[i.name] = row[i.column]
+                    inputs[i.name] = row[i.column - 1]
                 except:
                     _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                     inputs_error.append(i)
@@ -1256,7 +1256,7 @@ def complex_transaction_csv_file_import_validate(instance):
     scheme_rules = {r.value: r for r in
                     scheme.rules.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()}
     _l.debug('scheme %s - inputs=%s, rules=%s', scheme,
-             [(i.name, i.column) for i in scheme_inputs],
+             [(i.name, i.column - 1) for i in scheme_inputs],
              [(r.value, r.transaction_type.user_code) for r in scheme_rules.values()])
 
     mapping_map = {
@@ -1355,8 +1355,8 @@ def complex_transaction_csv_file_import_validate(instance):
                 error_rows['error_data']['columns']['imported_columns'].append(i.name)
 
                 try:
-                    inputs_raw[i.name] = row[i.column]
-                    error_rows['error_data']['data']['imported_columns'].append(row[i.column])
+                    inputs_raw[i.name] = row[i.column - 1]
+                    error_rows['error_data']['data']['imported_columns'].append(row[i.column - 1])
                 except:
                     _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                     error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
@@ -1371,7 +1371,7 @@ def complex_transaction_csv_file_import_validate(instance):
 
                 try:
                     inputs[i.name] = formula.safe_eval(i.name_expr, names=inputs_raw)
-                    error_rows['error_data']['data']['converted_imported_columns'].append(row[i.column])
+                    error_rows['error_data']['data']['converted_imported_columns'].append(row[i.column - 1])
                 except:
                     _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                     error_rows['error_data']['data']['converted_imported_columns'].append(
