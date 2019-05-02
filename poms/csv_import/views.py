@@ -74,6 +74,37 @@ def get_row_data(row, csv_fields):
     return csv_row_dict
 
 
+def get_row_data_converted(row, csv_fields, csv_row_dict_raw, context, conversion_errors):
+    csv_row_dict = {}
+
+    for csv_field in csv_fields:
+
+        if csv_field.column < len(row):
+
+            try:
+
+                executed_expression = safe_eval(csv_field.name_expr, names=csv_row_dict_raw, context=context)
+
+                csv_row_dict[csv_field.name] = executed_expression
+
+            except (ExpressionEvalError, TypeError, Exception, KeyError):
+
+                csv_row_dict[csv_field.name] = ugettext('Invalid expression')
+
+                error = {
+                    'name': csv_field.name,
+                    'value': ugettext('Invalid expression')
+                }
+
+                conversion_errors.append(error)
+
+        else:
+
+            csv_row_dict[csv_field.name] = ''
+
+    return csv_row_dict
+
+
 def get_field_type(field):
     if field.system_property_key is not None:
         return 'system_attribute'
@@ -94,8 +125,6 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
 
         if row_index != 0:
 
-            csv_row_dict = get_row_data(row, csv_fields)
-
             instance = {}
             instance['_row_index'] = row_index
             instance['_row'] = row
@@ -103,9 +132,6 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
             if scheme.content_type.model != 'pricehistory' and scheme.content_type.model != 'currencyhistory':
                 instance['master_user'] = master_user
                 instance['attributes'] = []
-
-            # print("model %s" % scheme.content_type.model)
-            # print("instance %s" % instance)
 
             inputs_error = []
             executed_expressions = []
@@ -116,20 +142,42 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
                 'error_data': {
                     'columns': {
                         'imported_columns': [],
+                        'converted_imported_columns': [],
                         'data_matching': []
                     },
                     'data': {
                         'imported_columns': [],
+                        'converted_imported_columns': [],
                         'data_matching': []
                     }
                 },
                 'error_reaction': None
             }
 
-            for key, value in csv_row_dict.items():
+            csv_row_dict_raw = get_row_data(row, csv_fields)
+
+            for key, value in csv_row_dict_raw.items():
                 error_row['error_data']['columns']['imported_columns'].append(key)
                 error_row['error_data']['data']['imported_columns'].append(value)
 
+            conversion_errors = []
+
+            csv_row_dict = get_row_data_converted(row, csv_fields, csv_row_dict_raw, context, conversion_errors)
+
+            for key, value in csv_row_dict.items():
+                error_row['error_data']['columns']['converted_imported_columns'].append(key + ': Conversion Expression')
+                error_row['error_data']['data']['converted_imported_columns'].append(value)
+
+
+            if len(conversion_errors) > 0 and error_handler == 'break':
+                error_row['error_message'] = ugettext('Can\'t process conversion expression: %(columns)s') % {
+                    'columns': ', '.join(i['name'] for i in conversion_errors)
+                }
+                error_row['error_reaction'] = 'Break import'
+
+                errors.append(error_row)
+
+                return results, errors
 
             mapping_map = {
                 'counterparties': CounterpartyMapping,

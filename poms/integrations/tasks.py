@@ -1323,12 +1323,13 @@ def complex_transaction_csv_file_import_validate(instance):
                 _l.debug('skip first row')
                 continue
 
+            inputs_raw = {}
             inputs = {}
             inputs_error = []
 
             error_rows = {
                 'error_message': None,
-                'inputs': inputs,
+                'inputs': inputs_raw,
                 'original_row_index': row_index,
                 'original_row': row,
                 'error_data': {
@@ -1354,14 +1355,28 @@ def complex_transaction_csv_file_import_validate(instance):
                 error_rows['error_data']['columns']['imported_columns'].append(i.name)
 
                 try:
-                    inputs[i.name] = row[i.column]
+                    inputs_raw[i.name] = row[i.column]
                     error_rows['error_data']['data']['imported_columns'].append(row[i.column])
                 except:
                     _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                     error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
                     inputs_error.append(i)
 
-            _l.debug('inputs: error=%s, values=%s', [i.name for i in inputs_error], inputs)
+            _l.debug('inputs: error=%s, values=%s', [i.name for i in inputs_error], inputs_raw)
+
+            for i in scheme_inputs:
+
+                error_rows['error_data']['columns']['converted_imported_columns'].append(
+                    i.name + ': Conversion Expression')
+
+                try:
+                    inputs[i.name] = formula.safe_eval(i.name_expr, names=inputs_raw)
+                    error_rows['error_data']['data']['converted_imported_columns'].append(row[i.column])
+                except:
+                    _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                    error_rows['error_data']['data']['converted_imported_columns'].append(
+                        ugettext('Invalid expression'))
+                    inputs_error.append(i)
 
             if inputs_error:
                 error_rows['error_message'] = ugettext('Can\'t process inputs: %(inputs)s') % {
@@ -1428,7 +1443,8 @@ def complex_transaction_csv_file_import_validate(instance):
                     fields_error = []
                     for field in rule.fields.all():
 
-                        error_rows['error_data']['columns']['executed_input_expressions'].append(field.transaction_type_input.name)
+                        error_rows['error_data']['columns']['executed_input_expressions'].append(
+                            field.transaction_type_input.name)
 
                         try:
                             field_value = formula.safe_eval(field.value_expr, names=inputs)
