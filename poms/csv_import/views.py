@@ -7,8 +7,13 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.filters import FilterSet
 from django.apps import apps
 
+from poms.accounts.models import Account, AccountType
 from poms.common.views import AbstractModelViewSet
+from poms.counterparties.models import Counterparty, Responsible
+from poms.currencies.models import Currency
+from poms.instruments.models import PricingPolicy, Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet
+from poms.portfolios.models import Portfolio
 
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -18,7 +23,8 @@ from poms.common.formula import safe_eval, ExpressionEvalError
 from poms.integrations.models import CounterpartyMapping, AccountMapping, ResponsibleMapping, PortfolioMapping, \
     PortfolioClassifierMapping, AccountClassifierMapping, ResponsibleClassifierMapping, CounterpartyClassifierMapping, \
     PricingPolicyMapping, InstrumentMapping, CurrencyMapping, InstrumentTypeMapping, PaymentSizeDetailMapping, \
-    DailyPricingModelMapping, PriceDownloadSchemeMapping, InstrumentClassifierMapping, AccountTypeMapping
+    DailyPricingModelMapping, PriceDownloadSchemeMapping, InstrumentClassifierMapping, AccountTypeMapping, \
+    PriceDownloadScheme
 
 from poms.obj_attrs.models import GenericAttributeType, GenericAttribute
 
@@ -195,6 +201,23 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
                 'accrued_currency': CurrencyMapping
             }
 
+            relation_map = {
+                'counterparties': Counterparty,
+                'responsibles': Responsible,
+                'accounts': Account,
+                'portfolios': Portfolio,
+                'pricing_policy': PricingPolicy,
+                'instrument': Instrument,
+                'instrument_type': InstrumentType,
+                'type': AccountType,
+                'price_download_scheme': PriceDownloadScheme,
+                'daily_pricing_model': DailyPricingModel,
+                'payment_size_detail': PaymentSizeDetail,
+                'currency': Currency,
+                'pricing_currency': Currency,
+                'accrued_currency': Currency
+            }
+
             classifier_mapping_map = {
                 'portfolio': PortfolioClassifierMapping,
                 'instrument': InstrumentClassifierMapping,
@@ -238,16 +261,34 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
 
                             except (mapping_map[key].DoesNotExist, KeyError):
 
-                                if missing_data_handler == 'set_defaults':
+                                try:
 
-                                    instance[key] = mapping_map[key].objects.get(master_user=master_user,
-                                                                                 value='-').content_object
-                                else:
+                                    print('Lookup by user code %s' % executed_expression)
 
-                                    inputs_error.append(entity_field)
+                                    if key == 'price_download_scheme':
+                                        instance[key] = relation_map[key].objects.get(master_user=master_user,
+                                                                                      scheme_name=executed_expression)
+                                    elif key == 'daily_pricing_model' or key == 'payment_size_detail':
+                                        instance[key] = relation_map[key].objects.get(master_user=master_user,
+                                                                                      system_code=executed_expression)
+                                    else:
+                                        instance[key] = relation_map[key].objects.get(master_user=master_user,
+                                                                                      user_code=executed_expression)
 
-                                    _l.debug('Mapping for key does not exist', key)
-                                    _l.debug('Expression', executed_expression)
+
+
+                                except (mapping_map[key].DoesNotExist, KeyError):
+
+                                    if missing_data_handler == 'set_defaults':
+
+                                        instance[key] = mapping_map[key].objects.get(master_user=master_user,
+                                                                                     value='-').content_object
+                                    else:
+
+                                        inputs_error.append(entity_field)
+
+                                        _l.debug('Mapping for key does not exist', key)
+                                        _l.debug('Expression', executed_expression)
 
 
                         else:
