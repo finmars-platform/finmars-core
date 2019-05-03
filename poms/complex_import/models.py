@@ -33,6 +33,10 @@ MODE_CHOICES = [
     ['overwrite', 'Overwrite'],
 ]
 
+CLASSIFIER_HANDLER = [
+    ['skip', 'Skip'],
+    ['append', 'Append'],
+]
 
 
 class ComplexImportSchemeAction(models.Model):
@@ -60,6 +64,7 @@ class ComplexImportSchemeActionCsvImport(ComplexImportSchemeAction):
 
     mode = models.CharField(max_length=255, choices=MODE_CHOICES, default='')
     missing_data_handler = models.CharField(max_length=255, choices=MISSING_DATA_CHOICES, default='throw_error')
+    classifier_handler = models.CharField(max_length=255, choices=CLASSIFIER_HANDLER, default='skip')
     error_handler = models.CharField(max_length=255, choices=ERROR_HANDLER_CHOICES, default='break')
 
 

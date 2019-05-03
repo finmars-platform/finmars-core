@@ -19,7 +19,7 @@ class ComplexImportSchemeActionCsvImportSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComplexImportSchemeActionCsvImport
         fields = (
-            'csv_import_scheme', 'mode', 'missing_data_handler', 'error_handler')
+            'csv_import_scheme', 'mode', 'missing_data_handler', 'error_handler', 'classifier_handler')
 
 
 class ComplexImportSchemeActionTransactionImportSerializer(serializers.ModelSerializer):
@@ -77,7 +77,8 @@ class ComplexImportSchemeSerializer(serializers.ModelSerializer):
             pk = action_data.pop('id', None)
             action = existed_actions.get(pk, None)
 
-            action_csv_import_scheme_data = action_data.get('csv_import_scheme', action_data.get('compleximportschemeactioncsvimport'))
+            action_csv_import_scheme_data = action_data.get('csv_import_scheme',
+                                                            action_data.get('compleximportschemeactioncsvimport'))
             if action_csv_import_scheme_data:
 
                 action_csv_import_scheme = None
@@ -91,7 +92,8 @@ class ComplexImportSchemeSerializer(serializers.ModelSerializer):
 
                 action_csv_import_scheme.order = order
 
-                action_csv_import_scheme.action_notes = action_data.get('action_notes', action_csv_import_scheme.action_notes)
+                action_csv_import_scheme.action_notes = action_data.get('action_notes',
+                                                                        action_csv_import_scheme.action_notes)
                 for attr, value in action_csv_import_scheme_data.items():
                     setattr(action_csv_import_scheme, attr, value)
 
@@ -104,7 +106,9 @@ class ComplexImportSchemeSerializer(serializers.ModelSerializer):
             pk = action_data.pop('id', None)
             action = existed_actions.get(pk, None)
 
-            action_complex_transaction_import_scheme_data = action_data.get('complex_transaction_import_scheme', action_data.get('compleximportschemeactiontransactionimport'))
+            action_complex_transaction_import_scheme_data = action_data.get('complex_transaction_import_scheme',
+                                                                            action_data.get(
+                                                                                'compleximportschemeactiontransactionimport'))
             if action_complex_transaction_import_scheme_data:
 
                 action_complex_transaction_import_scheme = None
@@ -114,11 +118,13 @@ class ComplexImportSchemeSerializer(serializers.ModelSerializer):
                     except ObjectDoesNotExist:
                         pass
                 if action_complex_transaction_import_scheme is None:
-                    action_complex_transaction_import_scheme = ComplexImportSchemeActionTransactionImport(complex_import_scheme=instance)
+                    action_complex_transaction_import_scheme = ComplexImportSchemeActionTransactionImport(
+                        complex_import_scheme=instance)
 
                 action_complex_transaction_import_scheme.order = order
 
-                action_complex_transaction_import_scheme.action_notes = action_data.get('action_notes', action_complex_transaction_import_scheme.action_notes)
+                action_complex_transaction_import_scheme.action_notes = action_data.get('action_notes',
+                                                                                        action_complex_transaction_import_scheme.action_notes)
                 for attr, value in action_complex_transaction_import_scheme_data.items():
                     setattr(action_complex_transaction_import_scheme, attr, value)
 
