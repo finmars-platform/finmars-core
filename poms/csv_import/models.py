@@ -59,6 +59,11 @@ MISSING_DATA_CHOICES = [
     ['set_defaults', 'Replace with Default Value'],
 ]
 
+CLASSIFIER_HANDLER = [
+    ['skip', 'Skip'],
+    ['append', 'Append'],
+]
+
 
 class CsvDataImport(models.Model):
     master_user = models.ForeignKey(MasterUser, blank=True, null=True)
@@ -69,6 +74,7 @@ class CsvDataImport(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     error_handler = models.CharField(max_length=255, choices=ERROR_HANDLER_CHOICES, default='break')
     missing_data_handler = models.CharField(max_length=255, choices=MISSING_DATA_CHOICES, default='throw_error')
+    classifier_handler = models.CharField(max_length=255, choices=CLASSIFIER_HANDLER, default='skip')
     filename = models.CharField(max_length=255)
     filesize = models.CharField(max_length=255)
 

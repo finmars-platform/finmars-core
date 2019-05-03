@@ -26,7 +26,7 @@ from poms.integrations.models import CounterpartyMapping, AccountMapping, Respon
     DailyPricingModelMapping, PriceDownloadSchemeMapping, InstrumentClassifierMapping, AccountTypeMapping, \
     PriceDownloadScheme
 
-from poms.obj_attrs.models import GenericAttributeType, GenericAttribute
+from poms.obj_attrs.models import GenericAttributeType, GenericAttribute, GenericClassifier
 
 from django.utils.translation import ugettext
 
@@ -118,7 +118,7 @@ def get_field_type(field):
         return 'dynamic_attribute'
 
 
-def process_csv_file(master_user, scheme, rows, error_handler, missing_data_handler, context):
+def process_csv_file(master_user, scheme, rows, error_handler, missing_data_handler, classifier_handler, context):
     csv_fields = scheme.csv_fields.all()
     entity_fields = scheme.entity_fields.all()
 
@@ -275,9 +275,7 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
                                         instance[key] = relation_map[key].objects.get(master_user=master_user,
                                                                                       user_code=executed_expression)
 
-
-
-                                except (mapping_map[key].DoesNotExist, KeyError):
+                                except (relation_map[key].DoesNotExist, KeyError):
 
                                     if missing_data_handler == 'set_defaults':
 
@@ -341,10 +339,31 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
 
                                 except (classifier_mapping_map[scheme.content_type.model].DoesNotExist, KeyError):
 
-                                    inputs_error.append(entity_field)
+                                    try:
 
-                                    print('%s classifier mapping  does not exist' % scheme.content_type.model)
-                                    print('expresion: %s ' % executed_expression)
+                                        print('Lookup by name in classifier')
+
+                                        executed_attr['executed_expression'] = GenericClassifier.objects.get(
+                                            attribute_type=attr_type, name=executed_expression)
+
+                                    except (GenericClassifier.DoesNotExist, KeyError):
+
+                                        if classifier_handler == 'append':
+
+                                            classifier_obj = GenericClassifier.objects.create(attribute_type=attr_type,
+                                                                                              name=executed_expression)
+
+                                            executed_attr['executed_expression'] = classifier_obj
+
+                                        else:
+
+                                            executed_attr['executed_expression'] = None
+
+                                            # inputs_error.append(entity_field)
+                                            #
+                                            # print('%s classifier mapping  does not exist' % scheme.content_type.model)
+                                            # print('expresion: %s ' % executed_expression)
+
 
                         else:
 
@@ -584,6 +603,7 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
         scheme_id = request.data['scheme']
         error_handler = request.data['error_handler']
         missing_data_handler = request.data['missing_data_handler']
+        classifier_handler = request.data['classifier_handler']
         delimiter = request.data['delimiter']
         mode = request.data['mode']
 
@@ -608,7 +628,10 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
 
         context = super(CsvDataImportValidateViewSet, self).get_serializer_context()
 
+        classifier_handler_skip = ' skip'
+
         results, process_errors = process_csv_file(master_user, scheme, rows, error_handler, missing_data_handler,
+                                                   classifier_handler_skip,
                                                    context)
 
         if error_handler == 'break' and len(process_errors) != 0:
@@ -655,9 +678,6 @@ class CsvDataImportViewSet(AbstractModelViewSet):
             if attr_type:
 
                 attribute = GenericAttribute(content_object=instance, attribute_type=attr_type)
-
-                print('result_attr', result_attr)
-                print('attribute', attribute)
 
                 if attr_type.value_type == 10:
                     attribute.value_string = str(result_attr['executed_expression'])
@@ -810,6 +830,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
         scheme_id = request.data['scheme']
         error_handler = request.data['error_handler']
         missing_data_handler = request.data['missing_data_handler']
+        classifier_handler = request.data['classifier_handler']
         delimiter = request.data['delimiter']
         mode = request.data['mode']
 
@@ -835,6 +856,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
         context = super(CsvDataImportViewSet, self).get_serializer_context()
 
         results, process_errors = process_csv_file(master_user, scheme, rows, error_handler, missing_data_handler,
+                                                   classifier_handler,
                                                    context)
 
         if error_handler == 'break' and len(process_errors) != 0:

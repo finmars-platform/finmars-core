@@ -152,4 +152,4 @@ class CsvDataImportSerializer(serializers.ModelSerializer):
     class Meta:
         model = CsvDataImport
 
-        fields = ('file', 'scheme', 'error_handler', 'mode', 'delimiter', 'missing_data_handler')
+        fields = ('file', 'scheme', 'error_handler', 'mode', 'delimiter', 'missing_data_handler', 'classifier_handler')
