@@ -117,9 +117,6 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
 
     def list(self, request):
 
-        _l.info('Django app started')
-        print('here?')
-
         if len(request.query_params.getlist('groups_types')) == 0:
             return Response({
                 "status": status.HTTP_404_NOT_FOUND,

@@ -108,6 +108,12 @@ class CharFilter(django_filters.CharFilter):
 
 class GroupsAttributeFilter(BaseFilterBackend):
 
+    def format_groups(self, group_type):
+        if 'attributes.' in group_type:
+            return group_type.split('attributes.')[1]
+
+        return group_type
+
     def filter_queryset(self, request, queryset, view):
 
         start_time = time.time()
@@ -115,9 +121,11 @@ class GroupsAttributeFilter(BaseFilterBackend):
         groups_types = request.query_params.getlist('groups_types')
         groups_values = request.query_params.getlist('groups_values')
 
+        groups_types = list(map(self.format_groups, groups_types))
+
         # print('GroupsAttributeFilter init')
 
-        # print('GroupsAttributeFilter.group_types %s' % groups_types)
+        print('GroupsAttributeFilter.group_types %s' % groups_types)
         # print('GroupsAttributeFilter.groups_values %s' % groups_values)
 
         # print('queryset len %s' % len(queryset))

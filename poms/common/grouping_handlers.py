@@ -72,7 +72,23 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
 
 
 def is_relation(item):
-    return item in ['type', 'currency', 'instrument', 'instrument_type', 'group', 'pricing_policy', 'transaction_type']
+    return item in ['type', 'currency', 'instrument',
+                    'instrument_type', 'group',
+                    'pricing_policy',
+                    'transaction_type',
+                    'accrued_currency', 'pricing_currency',
+                    'one_off_event', 'regular_event', 'factor_same',
+                    'factor_up', 'factor_down']
+
+
+def is_system_relation(item):
+    return item in ['instrument_class',
+                    'daily_pricing_model',
+                    'payment_size_detail']
+
+
+def is_scheme(item):
+    return item in ['price_download_scheme']
 
 
 def get_root_system_attr_group(qs, root_group, groups_order):
@@ -80,10 +96,21 @@ def get_root_system_attr_group(qs, root_group, groups_order):
         qs = qs.values(root_group) \
             .annotate(group_id=F(root_group)) \
             .distinct() \
-            .annotate(group_name=F(root_group + '__user_code')) \
+            .annotate(group_name=F(root_group + '__short_name')) \
+            .values('group_name', 'group_id')
+    elif is_system_relation(root_group):
+        qs = qs.values(root_group) \
+            .annotate(group_id=F(root_group)) \
+            .distinct() \
+            .annotate(group_name=F(root_group + '__name')) \
+            .values('group_name', 'group_id')
+    elif is_scheme(root_group):
+        qs = qs.values(root_group) \
+            .annotate(group_id=F(root_group)) \
+            .distinct() \
+            .annotate(group_name=F(root_group + '__scheme_name')) \
             .values('group_name', 'group_id')
     else:
-
         qs = qs.distinct(root_group) \
             .annotate(group_name=F(root_group)) \
             .values('group_name') \
@@ -164,9 +191,21 @@ def get_last_system_attr_group(qs, last_group, groups_order):
         qs = qs.values(last_group) \
             .annotate(group_id=F(last_group)) \
             .distinct() \
-            .annotate(group_name=F(last_group + '__user_code')) \
+            .annotate(group_name=F(last_group + '__short_name')) \
             .values('group_name', 'group_id')
 
+    elif is_system_relation(last_group):
+        qs = qs.values(last_group) \
+            .annotate(group_id=F(last_group)) \
+            .distinct() \
+            .annotate(group_name=F(last_group + '__name')) \
+            .values('group_name', 'group_id')
+    elif is_scheme(last_group):
+        qs = qs.values(last_group) \
+            .annotate(group_id=F(last_group)) \
+            .distinct() \
+            .annotate(group_name=F(last_group + '__scheme_name')) \
+            .values('group_name', 'group_id')
     else:
 
         qs = qs.distinct(last_group) \
@@ -270,6 +309,13 @@ def is_root_groups_configuration(groups_types, groups_values):
     return len(groups_types) == 1 and not len(groups_values)
 
 
+def format_groups(group_type):
+    if 'attributes.' in group_type:
+        return group_type.split('attributes.')[1]
+
+    return group_type
+
+
 def handle_groups(qs, request, original_qs):
     start_time = time.time()
 
@@ -277,7 +323,9 @@ def handle_groups(qs, request, original_qs):
     groups_values = request.query_params.getlist('groups_values')
     groups_order = request.query_params.get('groups_order')
 
-    # print('handle_groups.group_types %s' % groups_types)
+    groups_types = list(map(format_groups, groups_types))
+
+    print('handle_groups.group_types %s' % groups_types)
     # print('handle_groups.groups_values %s' % groups_values)
     # print('handle_groups.groups_order %s' % groups_order)
     # print('handle_groups.queryset len %s' % len(qs))
