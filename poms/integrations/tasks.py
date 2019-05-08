@@ -1081,12 +1081,30 @@ def complex_transaction_csv_file_import(instance):
             model_map_class = mapping_map[model_class]
 
             key = (model_class, value)
+
             try:
-                return mapping_cache[key]
-            except KeyError:
                 v = model_map_class.objects.get(master_user=instance.master_user, value=value).content_object
-                mapping_cache[key] = v
-                return v
+            except:
+
+                try:
+
+                    _l.debug('Lookup by user code %s', value)
+
+                    if model_class == PriceDownloadScheme:
+                        v = model_class.objects.get(master_user=instance.master_user, scheme_name=value)
+                    elif model_class == DailyPricingModel or model_class == PaymentSizeDetail or model_class == Periodicity:
+                        v = model_class.objects.get(system_code=value)
+                    else :
+                        v = model_class.objects.get(master_user=instance.master_user, user_code=value)
+
+                except (model_class.DoesNotExist, KeyError):
+
+                    if instance.missing_data_handler == 'set_defaults':
+                        v = model_map_class.objects.get(master_user=instance.master_user, value='-').content_object
+
+            mapping_cache[key] = v
+
+            return v
 
     def _process_csv_file(file):
 
@@ -1302,8 +1320,21 @@ def complex_transaction_csv_file_import_validate(instance):
                 v = model_map_class.objects.get(master_user=instance.master_user, value=value).content_object
             except:
 
-                if instance.missing_data_handler == 'set_defaults':
-                    v = model_map_class.objects.get(master_user=instance.master_user, value='-').content_object
+                try:
+
+                    _l.debug('Lookup by user code %s', value)
+
+                    if model_class == PriceDownloadScheme:
+                        v = model_class.objects.get(master_user=instance.master_user, scheme_name=value)
+                    elif model_class == DailyPricingModel or model_class == PaymentSizeDetail or model_class == Periodicity:
+                        v = model_class.objects.get(system_code=value)
+                    else :
+                        v = model_class.objects.get(master_user=instance.master_user, user_code=value)
+
+                except (model_class.DoesNotExist, KeyError):
+
+                    if instance.missing_data_handler == 'set_defaults':
+                        v = model_map_class.objects.get(master_user=instance.master_user, value='-').content_object
 
             mapping_cache[key] = v
 
