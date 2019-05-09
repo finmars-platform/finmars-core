@@ -41,6 +41,8 @@ from poms.transactions.models import TransactionType, TransactionTypeInput, Tran
     TransactionTypeActionInstrumentEventScheduleAction, TransactionTypeActionInstrumentFactorSchedule, \
     TransactionTypeActionInstrumentManualPricingFormula, NotificationClass, EventClass, TransactionClass
 
+from rest_framework.exceptions import ValidationError
+
 from django.core import serializers
 import json
 
@@ -794,7 +796,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         delete_prop(results, 'pk')
 
         result = {
-            "entity": "import.pricingautomatedschedule",
+            "entity": "integrations.pricingautomatedschedule",
             "count": len(results),
             "content": results
         }
@@ -966,9 +968,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         for item in results:
 
             if item["dynamic_attribute_id"]:
-
                 item["___dynamic_attribute_id__user_code"] = GenericAttributeType.objects.get(
-                pk=item["dynamic_attribute_id"]).user_code
+                    pk=item["dynamic_attribute_id"]).user_code
 
         delete_prop(results, 'scheme')
 
@@ -1888,3 +1889,86 @@ class MappingExportViewSet(AbstractModelViewSet):
         }
 
         return result
+
+
+class ConfigurationDuplicateCheckViewSet(AbstractModelViewSet):
+
+    def create(self, request, *args, **kwargs):
+
+        if 'file' not in request.data:
+            raise ValidationError('File is not set')
+
+        if not request.data['file'].name.endswith('.fcfg'):
+            raise ValidationError('File is not fcfg format')
+
+        file_content = json.loads(request.data['file'].read().decode('utf-8-sig'))
+        master_user = self.request.user.master_user
+        member = self.request.user.member
+
+        head = file_content['head']
+        body = file_content['body']
+
+        results = []
+
+        print(head['date'])
+
+        for entity in body:
+
+            result_item = {
+                'entity': entity['entity'],
+                'content': []
+            }
+
+            pieces = entity['entity'].split('.')
+            app_label = pieces[0]
+            model_name = pieces[1]
+
+            if model_name == 'reportlayout':
+                model_name = 'listlayout'
+
+            try:
+
+                model = apps.get_model(app_label=app_label, model_name=model_name)
+
+            except (LookupError, KeyError):
+                continue
+
+            for item in entity['content']:
+
+                # print('item %s' % item)
+
+                if 'scheme_name' in item:
+
+                    if model.objects.filter(scheme_name=item['scheme_name'], master_user=master_user).exists():
+                        result_item['content'].append({'scheme_name': item['scheme_name'], 'is_duplicate': True})
+                    else:
+                        result_item['content'].append({'scheme_name': item['scheme_name'], 'is_duplicate': False})
+
+                elif 'user_code' in item:
+
+                    if model.objects.filter(user_code=item['user_code'], master_user=master_user).exists():
+                        result_item['content'].append({'user_code': item['user_code'], 'is_duplicate': True})
+                    else:
+                        result_item['content'].append({'user_code': item['user_code'], 'is_duplicate': False})
+
+                elif 'name' in item:
+
+                    if entity['entity'] in ['ui.bookmark', 'ui.listlayout', 'ui.reportlayout', 'ui.editlayout']:
+
+                        if model.objects.filter(name=item['name'], member=member).exists():
+                            result_item['content'].append({'name': item['name'], 'is_duplicate': True})
+                        else:
+                            result_item['content'].append({'name': item['name'], 'is_duplicate': False})
+
+                    else:
+
+                        if model.objects.filter(name=item['name'], master_user=master_user).exists():
+                            result_item['content'].append({'name': item['name'], 'is_duplicate': True})
+                        else:
+                            result_item['content'].append({'name': item['name'], 'is_duplicate': False})
+
+            results.append(result_item)
+
+        return Response({
+            "results": results,
+        }, status=status.HTTP_202_ACCEPTED)

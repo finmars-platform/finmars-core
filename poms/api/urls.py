@@ -276,6 +276,8 @@ router.register(r'import/complex', complex_import.ComplexImportViewSet, 'import_
 
 router.register(r'export/configuration', configuration_export.ConfigurationExportViewSet, 'configuration_export')
 router.register(r'export/mapping', configuration_export.MappingExportViewSet, 'mapping_export')
+router.register(r'import/configuration/check-duplicates', configuration_export.ConfigurationDuplicateCheckViewSet,
+                'configuration_import_check_duplicates')
 
 urlpatterns = [
     url(r'^v1/', include(router.urls, namespace='v1')),
