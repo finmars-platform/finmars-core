@@ -33,31 +33,31 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
         qs = qs \
             .distinct('attributes__value_float') \
             .order_by('-attributes__value_float') \
-            .annotate(group_name=F('attributes__value_float')) \
-            .values('group_name')
+            .annotate(group_name=F('attributes__value_float'), group_identifier=F('attributes__value_float')) \
+            .values('group_name', 'group_identifier')
 
     if attribute_type.value_type == 10:
         qs = qs \
             .order_by('attributes__value_string') \
             .distinct('attributes__value_string') \
             .order_by('-attributes__value_string') \
-            .annotate(group_name=F('attributes__value_string')) \
-            .values('group_name')
+            .annotate(group_name=F('attributes__value_string'), group_identifier=F('attributes__value_string')) \
+            .values('group_name', 'group_identifier')
 
     if attribute_type.value_type == 30:
         qs = qs \
             .values('attributes__classifier') \
-            .annotate(group_id=F('attributes__classifier')) \
+            .annotate(group_identifier=F('attributes__classifier')) \
             .distinct() \
-            .annotate(group_name=F('attributes__classifier__name')) \
-            .values('group_name', 'group_id')
+            .annotate(group_name=F('attributes__classifier__name'), group_identifier=F('attributes__value_string')) \
+            .values('group_name', 'group_identifier')
 
     if attribute_type.value_type == 40:
         qs = qs \
             .distinct('attributes__value_date') \
             .order_by('-attributes__value_date') \
-            .annotate(group_name=F('attributes__value_date')) \
-            .values('group_name')
+            .annotate(group_name=F('attributes__value_date'), group_identifier=F('attributes__value_date')) \
+            .values('group_name', 'group_identifier')
 
     force_qs_evaluation(qs)
 
@@ -94,26 +94,26 @@ def is_scheme(item):
 def get_root_system_attr_group(qs, root_group, groups_order):
     if is_relation(root_group):
         qs = qs.values(root_group) \
-            .annotate(group_id=F(root_group)) \
+            .annotate(group_identifier=F(root_group)) \
             .distinct() \
             .annotate(group_name=F(root_group + '__short_name')) \
-            .values('group_name', 'group_id')
+            .values('group_name', 'group_identifier')
     elif is_system_relation(root_group):
         qs = qs.values(root_group) \
-            .annotate(group_id=F(root_group)) \
+            .annotate(group_identifier=F(root_group)) \
             .distinct() \
             .annotate(group_name=F(root_group + '__name')) \
-            .values('group_name', 'group_id')
+            .values('group_name', 'group_identifier')
     elif is_scheme(root_group):
         qs = qs.values(root_group) \
-            .annotate(group_id=F(root_group)) \
+            .annotate(group_identifier=F(root_group)) \
             .distinct() \
             .annotate(group_name=F(root_group + '__scheme_name')) \
-            .values('group_name', 'group_id')
+            .values('group_name', 'group_identifier')
     else:
         qs = qs.distinct(root_group) \
-            .annotate(group_name=F(root_group)) \
-            .values('group_name') \
+            .annotate(group_name=F(root_group), group_identifier=F(root_group)) \
+            .values('group_name', 'group_identifier') \
             .order_by(root_group)
 
     if groups_order == 'asc':
@@ -147,30 +147,30 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
         qs = qs \
             .distinct('attributes__value_float') \
             .order_by('-attributes__value_float') \
-            .annotate(group_name=F('attributes__value_float')) \
-            .values('group_name')
+            .annotate(group_name=F('attributes__value_float'), group_identifier=F('attributes__value_float')) \
+            .values('group_name', 'group_identifier')
 
     if attribute_type.value_type == 10:
         qs = qs \
             .distinct('attributes__value_string') \
             .order_by('-attributes__value_string') \
-            .annotate(group_name=F('attributes__value_string')) \
-            .values('group_name')
+            .annotate(group_name=F('attributes__value_string'), group_identifier=F('attributes__value_string')) \
+            .values('group_name', 'group_identifier')
 
     if attribute_type.value_type == 30:
         qs = qs \
             .values('attributes__classifier') \
-            .annotate(group_id=F('attributes__classifier')) \
+            .annotate(group_identifier=F('attributes__classifier')) \
             .distinct() \
             .annotate(group_name=F('attributes__classifier__name')) \
-            .values('group_name', 'group_id')
+            .values('group_name', 'group_identifier')
 
     if attribute_type.value_type == 40:
         qs = qs \
             .distinct('attributes__value_date') \
             .order_by('-attributes__value_date') \
-            .annotate(group_name=F('attributes__value_date')) \
-            .values('group_name')
+            .annotate(group_name=F('attributes__value_date'), group_identifier=F('attributes__value_date')) \
+            .values('group_name', 'group_identifier')
 
     force_qs_evaluation(qs)
 
@@ -189,28 +189,28 @@ def get_last_system_attr_group(qs, last_group, groups_order):
 
     if is_relation(last_group):
         qs = qs.values(last_group) \
-            .annotate(group_id=F(last_group)) \
+            .annotate(group_identifier=F(last_group)) \
             .distinct() \
             .annotate(group_name=F(last_group + '__short_name')) \
-            .values('group_name', 'group_id')
+            .values('group_name', 'group_identifier')
 
     elif is_system_relation(last_group):
         qs = qs.values(last_group) \
-            .annotate(group_id=F(last_group)) \
+            .annotate(group_identifier=F(last_group)) \
             .distinct() \
             .annotate(group_name=F(last_group + '__name')) \
-            .values('group_name', 'group_id')
+            .values('group_name', 'group_identifier')
     elif is_scheme(last_group):
         qs = qs.values(last_group) \
-            .annotate(group_id=F(last_group)) \
+            .annotate(group_identifier=F(last_group)) \
             .distinct() \
             .annotate(group_name=F(last_group + '__scheme_name')) \
-            .values('group_name', 'group_id')
+            .values('group_name', 'group_identifier')
     else:
 
         qs = qs.distinct(last_group) \
-            .annotate(group_name=F(last_group)) \
-            .values('group_name')
+            .annotate(group_name=F(last_group), group_identifier=F(last_group)) \
+            .values('group_name', 'group_identifier')
 
     if groups_order == 'desc':
         qs = qs.order_by(F('group_name').desc())
