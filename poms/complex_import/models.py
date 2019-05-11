@@ -58,8 +58,8 @@ class ComplexImportSchemeAction(models.Model):
 
 
 class ComplexImportSchemeActionCsvImport(ComplexImportSchemeAction):
-
-    csv_import_scheme = models.ForeignKey('csv_import.CsvImportScheme', null=True, blank=True, on_delete=models.PROTECT,
+    csv_import_scheme = models.ForeignKey('csv_import.CsvImportScheme', null=True, blank=True,
+                                          on_delete=models.SET_NULL,
                                           related_name='+', verbose_name=ugettext_lazy('csv import scheme'))
 
     mode = models.CharField(max_length=255, choices=MODE_CHOICES, default='')
@@ -67,16 +67,19 @@ class ComplexImportSchemeActionCsvImport(ComplexImportSchemeAction):
     classifier_handler = models.CharField(max_length=255, choices=CLASSIFIER_HANDLER, default='skip')
     error_handler = models.CharField(max_length=255, choices=ERROR_HANDLER_CHOICES, default='break')
 
+    notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
+
 
 class ComplexImportSchemeActionTransactionImport(ComplexImportSchemeAction):
-
     complex_transaction_import_scheme = models.ForeignKey('integrations.ComplexTransactionImportScheme', null=True,
-                                                          blank=True, on_delete=models.PROTECT,
+                                                          blank=True, on_delete=models.SET_NULL,
                                                           related_name='+', verbose_name=ugettext_lazy(
             'complex transaction import scheme'))
 
     missing_data_handler = models.CharField(max_length=255, choices=MISSING_DATA_CHOICES, default='throw_error')
     error_handler = models.CharField(max_length=255, choices=ERROR_HANDLER_CHOICES, default='break')
+
+    notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
 
 
 class ComplexImport(models.Model):
