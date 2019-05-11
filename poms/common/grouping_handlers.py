@@ -49,7 +49,7 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
             .values('attributes__classifier') \
             .annotate(group_identifier=F('attributes__classifier')) \
             .distinct() \
-            .annotate(group_name=F('attributes__classifier__name'), group_identifier=F('attributes__value_string')) \
+            .annotate(group_name=F('attributes__classifier__name'), group_identifier=F('attributes__classifier')) \
             .values('group_name', 'group_identifier')
 
     if attribute_type.value_type == 40:
