@@ -341,6 +341,99 @@ def _simple_price(date, date1, value1, date2, value2):
     return 0.0
 
 
+def _get_ttype_default_input(evaluator, input):
+    from poms.transactions.models import TransactionTypeInput
+
+    from poms.accounts.models import Account
+    from poms.counterparties.models import Counterparty, Responsible
+    from poms.currencies.models import Currency
+    from poms.instruments.models import Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail, PricingPolicy, \
+        Periodicity, AccrualCalculationModel
+    from poms.integrations.models import PriceDownloadScheme
+    from poms.portfolios.models import Portfolio
+    from poms.strategies.models import Strategy1, Strategy2, Strategy3
+    from poms.transactions.models import EventClass, NotificationClass
+
+    if input.value_type == TransactionTypeInput.RELATION:
+
+        def _get_val_by_model_cls(obj, model_class):
+            if issubclass(model_class, Account):
+                return obj.account
+            elif issubclass(model_class, Currency):
+                return obj.currency
+            elif issubclass(model_class, Instrument):
+                return obj.instrument
+            elif issubclass(model_class, InstrumentType):
+                return obj.instrument_type
+            elif issubclass(model_class, Counterparty):
+                return obj.counterparty
+            elif issubclass(model_class, Responsible):
+                return obj.responsible
+            elif issubclass(model_class, Strategy1):
+                return obj.strategy1
+            elif issubclass(model_class, Strategy2):
+                return obj.strategy2
+            elif issubclass(model_class, Strategy3):
+                return obj.strategy3
+            elif issubclass(model_class, DailyPricingModel):
+                return obj.daily_pricing_model
+            elif issubclass(model_class, PaymentSizeDetail):
+                return obj.payment_size_detail
+            elif issubclass(model_class, Portfolio):
+                return obj.portfolio
+            elif issubclass(model_class, PriceDownloadScheme):
+                return obj.price_download_scheme
+            elif issubclass(model_class, PricingPolicy):
+                return obj.pricing_policy
+            elif issubclass(model_class, Periodicity):
+                return obj.periodicity
+            elif issubclass(model_class, AccrualCalculationModel):
+                return obj.accrual_calculation_model
+            elif issubclass(model_class, EventClass):
+                return obj.event_class
+            elif issubclass(model_class, NotificationClass):
+                return obj.notification_class
+            return None
+
+        model_class = input.content_type.model_class()
+
+        result = _get_val_by_model_cls(input, model_class)
+
+    else:
+        result = input.value
+
+    return result
+
+
+_get_ttype_default_input.evaluator = True
+
+
+def _convert_to_number(evaluator, text_number, thousand_separator="", decimal_separator=".", has_braces=False):
+    result = text_number.replace(thousand_separator, '')
+
+    result = result.replace(decimal_separator, '.')
+
+    if has_braces:
+        result = result.replace('(', '')
+        result = result.replace(')', '')
+        result = '-' + result
+
+    return _parse_number(result)
+
+
+_convert_to_number.evaluator = True
+
+
+def _if_null(evaluator, input, default):
+    if input:
+        return input
+
+    return default
+
+
+_if_null.evaluator = True
+
+
 def _generate_user_code(evaluator, prefix='', suffix='', counter=0):
     from poms.users.utils import get_master_user_from_context
 
@@ -943,6 +1036,10 @@ FUNCTIONS = [
     SimpleEval2Def('add_fx_history', _add_fx_history),
     SimpleEval2Def('add_price_history', _add_price_history),
     SimpleEval2Def('generate_user_code', _generate_user_code),
+
+    SimpleEval2Def('get_ttype_default_input', _get_ttype_default_input),
+    SimpleEval2Def('convert_to_number', _convert_to_number),
+    SimpleEval2Def('if_null', _if_null),
 
     # SimpleEval2Def('get_instr_accrual_size', _get_instrument_accrual_size),
     # SimpleEval2Def('get_instr_accrual_factor', _get_instrument_accrual_factor),
