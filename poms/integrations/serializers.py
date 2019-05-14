@@ -88,7 +88,7 @@ class InstrumentDownloadSchemeInputSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = InstrumentDownloadSchemeInput
-        fields = ['id', 'name', 'field']
+        fields = ['id', 'name', 'name_expr', 'field']
 
 
 class InstrumentDownloadSchemeAttributeSerializer(serializers.ModelSerializer):

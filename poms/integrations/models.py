@@ -209,6 +209,7 @@ class InstrumentDownloadSchemeInput(models.Model):
     scheme = models.ForeignKey(InstrumentDownloadScheme, related_name='inputs', verbose_name=ugettext_lazy('scheme'))
     name = models.CharField(max_length=32, blank=True, default='', verbose_name=ugettext_lazy('name'))
     field = models.CharField(max_length=32, blank=True, default='', verbose_name=ugettext_lazy('field'))
+    name_expr = models.CharField(max_length=1000, blank=True, default='', verbose_name=ugettext_lazy('name expression'))
 
     class Meta:
         verbose_name = ugettext_lazy('instrument download scheme input')

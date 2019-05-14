@@ -155,12 +155,19 @@ class AbstractProvider(object):
         instr.default_price = instrument_download_scheme.default_price
         instr.default_accrued = instrument_download_scheme.default_accrued
 
+        values_converted = {}
+
+        for input in instrument_download_scheme.inputs:
+            for key, value in values.items():
+                if input.name == key:
+                    values_converted[key] = formula.safe_eval(input.name_expr, names=values)
+
         for attr in InstrumentDownloadScheme.BASIC_FIELDS:
             expr = getattr(instrument_download_scheme, attr)
             if not expr:
                 continue
             try:
-                v = formula.safe_eval(expr, names=values)
+                v = formula.safe_eval(expr, names=values_converted)
             except formula.InvalidExpression:
                 _l.debug('Invalid instrument attribute expression: id=%s, attr=%s, expr=%s, values=%s',
                          instrument_download_scheme.id, attr, expr, values)

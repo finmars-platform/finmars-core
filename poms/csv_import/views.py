@@ -141,9 +141,13 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
 
             inputs_error = []
             executed_expressions = []
+
+            csv_row_dict_raw = {}
+
             error_row = {
                 'error_message': None,
                 'original_row_index': row_index,
+                'inputs': csv_row_dict_raw,
                 'original_row': row,
                 'error_data': {
                     'columns': {
@@ -161,6 +165,8 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
             }
 
             csv_row_dict_raw = get_row_data(row, csv_fields)
+
+            error_row['inputs'] = csv_row_dict_raw
 
             for key, value in csv_row_dict_raw.items():
                 error_row['error_data']['columns']['imported_columns'].append(key)
