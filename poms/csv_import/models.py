@@ -32,11 +32,21 @@ class EntityField(models.Model):
     name = models.CharField(max_length=255)
     expression = models.CharField(max_length=255, blank=True, default='')
 
+    order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
+
     system_property_key = models.CharField(max_length=255, null=True)
     dynamic_attribute_id = models.IntegerField(null=True)
 
     scheme = models.ForeignKey(CsvImportScheme, related_name='entity_fields', on_delete=models.CASCADE)
 
+    class Meta:
+        verbose_name = ugettext_lazy('entity field')
+        verbose_name_plural = ugettext_lazy('entity fields')
+
+        index_together = [
+            ['scheme', 'order'],
+        ]
+        ordering = ['order']
 
 ERROR_HANDLER_CHOICES = [
     ['break', 'Break'],

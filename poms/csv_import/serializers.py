@@ -11,7 +11,6 @@ from .fields import CsvImportContentTypeField
 
 
 class CsvFieldSerializer(serializers.ModelSerializer):
-
     name_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
 
     class Meta:
@@ -22,7 +21,7 @@ class CsvFieldSerializer(serializers.ModelSerializer):
 class EntityFieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = EntityField
-        fields = ('id', 'name', 'expression', 'system_property_key', 'dynamic_attribute_id')
+        fields = ('id', 'name', 'order', 'expression', 'system_property_key', 'dynamic_attribute_id')
         extra_kwargs = {
             'id': {
                 'read_only': True,
