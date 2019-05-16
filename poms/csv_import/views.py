@@ -1,5 +1,7 @@
 from rest_framework.exceptions import ValidationError
 
+from django.core.exceptions import ValidationError as CoreValidationError
+
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -519,7 +521,7 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
 
             instance.full_clean()
 
-        except ValidationError as e:
+        except CoreValidationError as e:
 
             error_row = {
                 'error_message': ugettext('Validation error %(error)s ') % {
@@ -556,7 +558,7 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
 
             item.full_clean()
 
-        except ValidationError as e:
+        except CoreValidationError as e:
 
             error_row = {
                 'error_message': ugettext('Validation error %(error)s ') % {

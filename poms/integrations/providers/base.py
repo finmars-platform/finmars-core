@@ -157,7 +157,7 @@ class AbstractProvider(object):
 
         values_converted = {}
 
-        for input in instrument_download_scheme.inputs:
+        for input in instrument_download_scheme.inputs.all():
             for key, value in values.items():
                 if input.name == key:
                     values_converted[key] = formula.safe_eval(input.name_expr, names=values)
