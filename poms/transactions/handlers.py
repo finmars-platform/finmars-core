@@ -539,7 +539,6 @@ class TransactionTypeProcess(object):
                         if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
 
                             if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-
                                 AccrualCalculationSchedule.objects.filter(
                                     instrument=accrual_calculation_schedule.instrument).delete()
 
@@ -970,6 +969,48 @@ class TransactionTypeProcess(object):
 
             ci.save()
 
+    def execute_user_fields_expressions(self):
+
+        print('execute_user_fields_expressions')
+
+        ctrn = formula.value_prepare(self.complex_transaction)
+        trns = self.complex_transaction.transactions.all()
+
+        names = {
+            'complex_transaction': ctrn,
+            'transactions': trns,
+        }
+
+        for key, value in self.values.items():
+            names[key] = value
+
+        fields = [
+            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
+            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
+
+            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
+            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+
+            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5'
+        ]
+
+        for field_key in fields:
+
+            print('field_key')
+
+            if getattr(self.complex_transaction.transaction_type, field_key):
+
+                try:
+
+                    print('epxr %s' % getattr(self.complex_transaction.transaction_type, field_key))
+
+                    setattr(self.complex_transaction, field_key, formula.safe_eval(
+                        getattr(self.complex_transaction.transaction_type, field_key), names=names,
+                        context=self._context))
+
+                except formula.InvalidExpression:
+                    setattr(self.complex_transaction, field_key, '<InvalidExpression>')
+
     def execute_complex_transaction_text_and_date(self):
 
         print('execute_complex_transaction_text_and_date')
@@ -1070,6 +1111,8 @@ class TransactionTypeProcess(object):
         self.book_create_transactions(actions, master_user, instrument_map)
 
         self.execute_complex_transaction_text_and_date()
+
+        self.execute_user_fields_expressions()
 
         self.complex_transaction.save()  # save executed text and date expression
 

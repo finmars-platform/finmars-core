@@ -831,6 +831,60 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                                 allow_null=True, default='now()')
     display_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                    allow_null=True, default='')
+
+    user_text_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_4 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_5 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_6 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_7 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_8 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_9 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_10 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+
+    user_number_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_4 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_5 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_6 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_7 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_8 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_9 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_10 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                     allow_null=True, default='')
+
+    user_date_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_date_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_date_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_date_4 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_date_5 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+
     instrument_types = InstrumentTypeField(required=False, allow_null=True, many=True)
     portfolios = PortfolioField(required=False, allow_null=True, many=True)
     # tags = TagField(required=False, many=True, allow_null=True)
@@ -860,6 +914,15 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             'id', 'master_user', 'group',
             'user_code', 'name', 'short_name', 'public_name', 'notes',
             'date_expr', 'display_expr',
+
+            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
+            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
+
+            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
+            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+
+            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
+
             'is_valid_for_all_portfolios', 'is_valid_for_all_instruments', 'is_deleted',
             'book_transaction_layout',
             'instrument_types', 'portfolios',
@@ -1553,7 +1616,16 @@ class ComplexTransactionSerializer(ModelWithAttributesSerializer):
     class Meta:
         model = ComplexTransaction
         fields = [
-            'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'transactions', 'master_user'
+            'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'transactions', 'master_user',
+
+            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
+            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
+
+            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
+            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+
+            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5'
+
         ]
 
     # def update(self, instance, validated_data):

@@ -5,12 +5,22 @@ from rest_framework.filters import FilterSet
 from poms.common.filters import NoOpFilter, CharFilter
 from poms.common.views import AbstractModelViewSet
 from poms.ui.models import TemplateListLayout, TemplateEditLayout, ListLayout, EditLayout, Bookmark, Configuration, \
-    ConfigurationExportLayout
+    ConfigurationExportLayout, TransactionUserFieldModel
 from poms.ui.serializers import TemplateListLayoutSerializer, ListLayoutSerializer, TemplateEditLayoutSerializer, \
-    EditLayoutSerializer, BookmarkSerializer, ConfigurationSerializer, ConfigurationExportLayoutSerializer
+    EditLayoutSerializer, BookmarkSerializer, ConfigurationSerializer, ConfigurationExportLayoutSerializer, \
+    TransactionUserFieldSerializer
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 from poms.users.permissions import SuperUserOnly
 
+
+class TransactionUserFieldViewSet(AbstractModelViewSet):
+    queryset = TransactionUserFieldModel.objects.select_related(
+        'master_user',
+    )
+    serializer_class = TransactionUserFieldSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
 
 class LayoutContentTypeFilter(django_filters.CharFilter):
     def filter(self, qs, value):

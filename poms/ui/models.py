@@ -10,6 +10,14 @@ from mptt.models import MPTTModel
 from poms.users.models import MasterUser, Member
 
 
+class TransactionUserFieldModel(models.Model):
+    master_user = models.ForeignKey(MasterUser, related_name='transaction_user_fields',
+                                    verbose_name=ugettext_lazy('master user'))
+
+    key = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('key'))
+    name = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('name'))
+
+
 class BaseUIModel(models.Model):
     json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
 
@@ -97,7 +105,8 @@ class ListLayout(BaseLayout):
 
 
 class ConfigurationExportLayout(BaseUIModel):
-    member = models.ForeignKey(Member, related_name='configuration_export_layouts', verbose_name=ugettext_lazy('member'))
+    member = models.ForeignKey(Member, related_name='configuration_export_layouts',
+                               verbose_name=ugettext_lazy('member'))
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
     is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
 
@@ -117,6 +126,7 @@ class ConfigurationExportLayout(BaseUIModel):
 
     def __str__(self):
         return self.name
+
 
 class EditLayout(BaseLayout):
     member = models.ForeignKey(Member, related_name='edit_layouts', verbose_name=ugettext_lazy('member'))
@@ -167,4 +177,5 @@ class Configuration(BaseUIModel):
         unique_together = [
             ['master_user', 'name'],
         ]
+
     ordering = ['name']

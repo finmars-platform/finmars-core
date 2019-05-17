@@ -315,6 +315,81 @@ class TransactionType(NamedModel, FakeDeletableModel):
     book_transaction_layout_json = models.TextField(null=True, blank=True,
                                                     verbose_name=ugettext_lazy('book transaction layout json'))
 
+    user_text_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=ugettext_lazy('user text 1'))
+
+    user_text_2 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=ugettext_lazy('user text 2'))
+
+    user_text_3 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=ugettext_lazy('user text 3'))
+
+    user_text_4 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=ugettext_lazy('user text 4'))
+
+    user_text_5 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=ugettext_lazy('user text 5'))
+
+    user_text_6 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=ugettext_lazy('user text 6'))
+
+    user_text_7 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=ugettext_lazy('user text 7'))
+
+    user_text_8 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=ugettext_lazy('user text 8'))
+
+    user_text_9 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=ugettext_lazy('user text 9'))
+
+    user_text_10 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                    verbose_name=ugettext_lazy('user text 10'))
+
+    user_number_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                     verbose_name=ugettext_lazy('user number 1'))
+
+    user_number_2 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                     verbose_name=ugettext_lazy('user number 2'))
+
+    user_number_3 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                     verbose_name=ugettext_lazy('user number 3'))
+
+    user_number_4 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                     verbose_name=ugettext_lazy('user number 4'))
+
+    user_number_5 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                     verbose_name=ugettext_lazy('user number 5'))
+
+    user_number_6 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                     verbose_name=ugettext_lazy('user number 6'))
+
+    user_number_7 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                     verbose_name=ugettext_lazy('user number 7'))
+
+    user_number_8 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                     verbose_name=ugettext_lazy('user number 8'))
+
+    user_number_9 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                     verbose_name=ugettext_lazy('user number 9'))
+
+    user_number_10 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                      verbose_name=ugettext_lazy('user number 10'))
+
+    user_date_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=ugettext_lazy('user date 1'))
+
+    user_date_2 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=ugettext_lazy('user date 2'))
+
+    user_date_3 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=ugettext_lazy('user date 3'))
+
+    user_date_4 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=ugettext_lazy('user date 4'))
+
+    user_date_5 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=ugettext_lazy('user date 5'))
+
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
 
@@ -802,7 +877,8 @@ class TransactionTypeActionInstrumentManualPricingFormula(TransactionTypeAction)
                                            on_delete=models.SET_NULL, related_name='+',
                                            verbose_name=ugettext_lazy('instrument phantom'))
 
-    pricing_policy = models.ForeignKey(PricingPolicy, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
+    pricing_policy = models.ForeignKey(PricingPolicy, null=True, blank=True, on_delete=models.SET_NULL,
+                                       related_name='+',
                                        verbose_name=ugettext_lazy('pricing policy'))
     pricing_policy_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                              related_name='+', verbose_name=ugettext_lazy('pricing policy input'))
@@ -930,7 +1006,8 @@ class TransactionTypeActionInstrumentEventSchedule(TransactionTypeAction):
 
 
 class TransactionTypeActionInstrumentEventScheduleAction(TransactionTypeAction):
-    event_schedule = models.ForeignKey(EventSchedule, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
+    event_schedule = models.ForeignKey(EventSchedule, null=True, blank=True, on_delete=models.SET_NULL,
+                                       related_name='+',
                                        verbose_name=ugettext_lazy('event schedule'))
     event_schedule_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                              related_name='+', verbose_name=ugettext_lazy('event schedule input'))
@@ -999,6 +1076,57 @@ class ComplexTransaction(FakeDeletableModel):
     code = models.IntegerField(default=0, verbose_name=ugettext_lazy('code'))
 
     text = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('text'))
+
+    user_text_1 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 1'))
+
+    user_text_2 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 2'))
+
+    user_text_3 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 3'))
+
+    user_text_4 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 4'))
+
+    user_text_5 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 5'))
+
+    user_text_6 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 6'))
+
+    user_text_7 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 7'))
+
+    user_text_8 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 8'))
+
+    user_text_9 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 9'))
+
+    user_text_10 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 10'))
+
+    user_number_1 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 1'))
+
+    user_number_2 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 2'))
+
+    user_number_3 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 3'))
+
+    user_number_4 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 4'))
+
+    user_number_5 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 5'))
+
+    user_number_6 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 6'))
+
+    user_number_7 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 7'))
+
+    user_number_8 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 8'))
+
+    user_number_9 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 9'))
+
+    user_number_10 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 10'))
+
+    user_date_1 = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("user date 1"))
+
+    user_date_2 = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("user date 2"))
+
+    user_date_3 = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("user date 3"))
+
+    user_date_4 = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("user date 4"))
+
+    user_date_5 = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("user date 5"))
+    
 
     attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
 

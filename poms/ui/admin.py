@@ -2,7 +2,8 @@ from django.contrib import admin
 
 from poms.common.admin import AbstractModelAdmin
 from poms.ui.filters import LayoutContentTypeFilter
-from poms.ui.models import TemplateListLayout, TemplateEditLayout, ListLayout, EditLayout, Bookmark
+from poms.ui.models import TemplateListLayout, TemplateEditLayout, ListLayout, EditLayout, Bookmark, \
+    TransactionUserFieldModel
 
 
 class BaseLayoutAdmin(AbstractModelAdmin):
@@ -11,6 +12,18 @@ class BaseLayoutAdmin(AbstractModelAdmin):
             qs = kwargs.get('queryset', db_field.remote_field.model.objects)
             kwargs['queryset'] = LayoutContentTypeFilter().filter_queryset(request, qs, None)
         return super(BaseLayoutAdmin, self).formfield_for_foreignkey(db_field, request=request, **kwargs)
+
+
+class TransactionUserFieldModelAdmin(BaseLayoutAdmin):
+    model = TransactionUserFieldModel
+    master_user_path = 'master_user'
+    list_display = ['id', 'master_user', 'name', 'key']
+    list_select_related = ['master_user']
+    search_fields = ['id', 'name', 'key']
+    raw_id_fields = ['master_user']
+
+
+admin.site.register(TransactionUserFieldModel, TransactionUserFieldModelAdmin)
 
 
 class TemplateListLayoutAdmin(BaseLayoutAdmin):
