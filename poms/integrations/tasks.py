@@ -1123,7 +1123,7 @@ def complex_transaction_csv_file_import(instance):
             inputs = {}
             inputs_error = []
             error_rows = {
-                'error_message': None,
+                'error_message': '',
                 'inputs': inputs,
                 'original_row_index': row_index,
                 'original_row': row,
@@ -1137,7 +1137,7 @@ def complex_transaction_csv_file_import(instance):
                     inputs_error.append(i)
             _l.debug('inputs: error=%s, values=%s', [i.name for i in inputs_error], inputs)
             if inputs_error:
-                error_rows['error_message'] = ugettext('Can\'t process inputs: %(inputs)s') % {
+                error_rows['error_message'] = error_rows['error_message'] + '\n' + '\n' + ugettext('Can\'t process inputs: %(inputs)s') % {
                     'inputs': ', '.join(i.name for i in inputs_error)
                 }
                 instance.error_rows.append(error_rows)
@@ -1151,7 +1151,7 @@ def complex_transaction_csv_file_import(instance):
                 rule_value = formula.safe_eval(scheme.rule_expr, names=inputs)
             except:
                 _l.info('can\'t process rule expression', exc_info=True)
-                error_rows['error_message'] = ugettext('Can\'t eval rule expression')
+                error_rows['error_message'] = error_rows['error_message'] + '\n' + '\n' + ugettext('Can\'t eval rule expression')
                 instance.error_rows.append(error_rows)
                 if instance.break_on_error:
                     instance.error_row_index = row_index
@@ -1169,7 +1169,7 @@ def complex_transaction_csv_file_import(instance):
                         rule = scheme_rule
                     except:
                         _l.info('rule does not find: %s', rule_value, exc_info=True)
-                        error_rows['error_message'] = ugettext('Can\'t find transaction type by "%(value)s"') % {
+                        error_rows['error_message'] = error_rows['error_message'] + '\n' + '\n' + ugettext('Can\'t find transaction type by "%(value)s"') % {
                             'value': rule_value
                         }
                         instance.error_rows.append(error_rows)
@@ -1193,7 +1193,7 @@ def complex_transaction_csv_file_import(instance):
                             fields_error.append(field)
                     _l.debug('fields (step 1): error=%s, values=%s', fields_error, fields)
                     if fields_error:
-                        error_rows['error_message'] = ugettext('Can\'t process fields: %(fields)s') % {
+                        error_rows['error_message'] = error_rows['error_message'] + '\n' + '\n' + ugettext('Can\'t process fields: %(fields)s') % {
                             'fields': ', '.join(f.transaction_type_input.name for f in fields_error)
                         }
                         instance.error_rows.append(error_rows)

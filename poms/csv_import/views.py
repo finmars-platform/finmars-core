@@ -147,7 +147,7 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
             csv_row_dict_raw = {}
 
             error_row = {
-                'error_message': None,
+                'error_message': '',
                 'original_row_index': row_index,
                 'inputs': csv_row_dict_raw,
                 'original_row': row,
@@ -182,15 +182,21 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
                 error_row['error_data']['columns']['converted_imported_columns'].append(key + ': Conversion Expression')
                 error_row['error_data']['data']['converted_imported_columns'].append(value)
 
-            if len(conversion_errors) > 0 and error_handler == 'break':
-                error_row['error_message'] = ugettext('Can\'t process conversion expression: %(columns)s') % {
-                    'columns': ', '.join(i['name'] for i in conversion_errors)
-                }
-                error_row['error_reaction'] = 'Break import'
+            if len(conversion_errors) > 0:
+                error_row['error_message'] = error_row['error_message'] + '\n' + '\n' + ugettext(
+                    'Can\'t process conversion expression: %(columns)s') % {
+                                                 'columns': ', '.join(i['name'] for i in conversion_errors)
+                                             }
 
-                errors.append(error_row)
+                if error_handler == 'break':
+                    error_row['error_reaction'] = 'Break import'
 
-                return results, errors
+                    errors.append(error_row)
+
+                    return results, errors
+                else:
+                    error_row['error_reaction'] = 'Continue import'
+                    errors.append(error_row)
 
             mapping_map = {
                 'counterparties': CounterpartyMapping,
@@ -255,7 +261,10 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
 
                         except (ExpressionEvalError, TypeError, Exception, KeyError):
 
-                            inputs_error.append(entity_field)
+                            inputs_error.append(
+                                {"field": entity_field,
+                                 "reason": "Invalid Expression"}
+                            )
 
                             executed_expressions.append(ugettext('Invalid expression'))
 
@@ -291,7 +300,12 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
                                                                                      value='-').content_object
                                     else:
 
-                                        inputs_error.append(entity_field)
+                                        inputs_error.append(
+                                            {"field": entity_field,
+                                             "reason": "Relation does not exists"}
+                                        )
+
+                                        # inputs_error.append(entity_field)
 
                                         _l.debug('Mapping for key does not exist', key)
                                         _l.debug('Expression', executed_expression)
@@ -309,7 +323,12 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
 
                                 except (ExpressionEvalError, TypeError):
 
-                                    inputs_error.append(entity_field)
+                                    inputs_error.append(
+                                        {"field": entity_field,
+                                         "reason": "Invalid Expression"}
+                                    )
+
+                                    # inputs_error.append(entity_field)
 
                         # _l.debug('Can not evaluate system attribute % expression ', entity_field.expression)
 
@@ -329,7 +348,11 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
 
                         except (ExpressionEvalError, TypeError, Exception, KeyError):
 
-                            inputs_error.append(entity_field)
+                            # inputs_error.append(entity_field)
+                            inputs_error.append(
+                                {"field": entity_field,
+                                 "reason": "Invalid Expression"}
+                            )
 
                             executed_expressions.append(ugettext('Invalid expression'))
 
@@ -372,7 +395,6 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
                                             # print('%s classifier mapping  does not exist' % scheme.content_type.model)
                                             # print('expresion: %s ' % executed_expression)
 
-
                         else:
 
                             executed_attr['executed_expression'] = executed_expression
@@ -383,9 +405,20 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
 
                 error_row['error_data']['data']['data_matching'] = executed_expressions
 
-                error_row['error_message'] = ugettext('Can\'t process field: %(inputs)s') % {
-                    'inputs': ', '.join(i.name for i in inputs_error)
-                }
+                inputs_messages = []
+
+                for input_error in inputs_error:
+                    message = '{0} ({1})'.format(input_error['field'].name, input_error['reason'])
+
+                    print(message)
+
+                    inputs_messages.append(message)
+
+                print(inputs_messages)
+
+                error_row['error_message'] = error_row['error_message'] + '\n' + '\n' + ugettext(
+                    'Can\'t process field: %(inputs)s') % {
+                                                 'inputs': ', '.join(str(m) for m in inputs_messages)}
 
                 errors.append(error_row)
 
@@ -397,9 +430,6 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
                     return results, errors
 
             else:
-
-                # if (hasattr(instance, 'user_code') and instance['user_code'] == ''):
-                #     instance['user_code'] = instance['name']
 
                 error_row['error_reaction'] = 'Success'
 
