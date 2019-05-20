@@ -12,7 +12,6 @@ from poms.users.fields import MasterUserField, HiddenMemberField
 
 
 class TransactionUserFieldSerializer(serializers.ModelSerializer):
-
     master_user = MasterUserField()
 
     class Meta:
@@ -56,7 +55,7 @@ class ConfigurationExportLayoutSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ConfigurationExportLayout
-        fields = ['id', 'member', 'name', 'is_default', 'data']
+        fields = ['id', 'member', 'name', 'is_default', 'data', 'notes']
 
 
 class EditLayoutSerializer(serializers.ModelSerializer):

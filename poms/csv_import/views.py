@@ -264,6 +264,7 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
                         if key in mapping_map:
 
                             try:
+
                                 instance[key] = mapping_map[key].objects.get(master_user=master_user,
                                                                              value=executed_expression).content_object
 
@@ -277,8 +278,7 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
                                         instance[key] = relation_map[key].objects.get(master_user=master_user,
                                                                                       scheme_name=executed_expression)
                                     elif key == 'daily_pricing_model' or key == 'payment_size_detail':
-                                        instance[key] = relation_map[key].objects.get(master_user=master_user,
-                                                                                      system_code=executed_expression)
+                                        instance[key] = relation_map[key].objects.get(system_code=executed_expression)
                                     else:
                                         instance[key] = relation_map[key].objects.get(master_user=master_user,
                                                                                       user_code=executed_expression)

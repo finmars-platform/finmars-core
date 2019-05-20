@@ -110,6 +110,8 @@ class ConfigurationExportLayout(BaseUIModel):
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
     is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
 
+    notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
+
     class Meta(BaseUIModel.Meta):
         unique_together = [
             ['member', 'name'],
