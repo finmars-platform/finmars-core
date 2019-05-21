@@ -10,9 +10,11 @@ class CsvImportScheme(models.Model):
     content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'))
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'))
 
+    filter_expr = models.CharField(max_length=1000, default='', blank=True, null=True, verbose_name=ugettext_lazy('filter expression'))
+
     class Meta:
         unique_together = (
-            ('content_type', 'scheme_name', 'master_user')
+            ('content_type', 'scheme_name', 'master_user', 'filter_expr')
         )
 
     def __str__(self):

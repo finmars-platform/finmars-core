@@ -38,7 +38,7 @@ class CsvImportSchemeSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = CsvImportScheme
-        fields = ('id', 'master_user', 'scheme_name', 'content_type', 'csv_fields', 'entity_fields')
+        fields = ('id', 'master_user', 'scheme_name', 'filter_expr', 'content_type', 'csv_fields', 'entity_fields')
 
     def create_entity_fields_if_not_exist(self, scheme):
 
@@ -131,6 +131,7 @@ class CsvImportSchemeSerializer(serializers.ModelSerializer):
         entity_fields = validated_data.pop('entity_fields')
 
         scheme.scheme_name = validated_data.get('scheme_name', scheme.scheme_name)
+        scheme.filter_expr = validated_data.get('filter_expr', scheme.filter_expr)
 
         self.set_entity_fields_mapping(scheme=scheme, entity_fields=entity_fields)
         self.set_dynamic_attributes_mapping(scheme=scheme, entity_fields=entity_fields)
