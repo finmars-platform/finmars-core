@@ -1,5 +1,8 @@
 # Changelog
 
+## 23.052019
+- Custom Fields
+
 ## 17.05.2018
 - New fields for Transaction Type and Complex Transaction
 
