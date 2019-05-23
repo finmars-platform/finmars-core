@@ -16,6 +16,7 @@ from poms.reports.builders.base_builder import BaseReportBuilder
 from poms.reports.builders.pricing import FakeInstrumentPricingProvider, FakeCurrencyFxRateProvider, \
     CurrencyFxRateProvider
 from poms.reports.builders.pricing import InstrumentPricingProvider
+from poms.reports.models import BalanceReportCustomField
 from poms.transactions.models import TransactionClass
 
 _l = logging.getLogger('poms.reports')
@@ -169,6 +170,8 @@ class ReportBuilder(BaseReportBuilder):
             self._build_on_pl_first_date()
         if full:
             self._refresh_with_perms()
+
+        self.instance.custom_fields = BalanceReportCustomField.objects.filter(master_user=self.instance.master_user)
 
         _l.debug('build _refresh_st done: %s', (time.perf_counter() - _refresh_st))
 
@@ -550,14 +553,12 @@ class ReportBuilder(BaseReportBuilder):
         _pricing_provider = self.pricing_provider
         _fx_rate_provider = self.fx_rate_provider
 
-
         _l.debug('_pricing_provider %s' % _pricing_provider)
         _l.debug('_fx_rate_provider %s' % _fx_rate_provider)
 
         iteration_st = time.perf_counter()
 
         for t in trn_qs:
-
             trn = _trn_cls_create(
                 report=_instance,
                 pricing_provider=_pricing_provider,
@@ -1379,6 +1380,7 @@ class ReportBuilder(BaseReportBuilder):
             items=self.instance.items,
             attrs=['prtfl', 'mismatch_prtfl']
         )
+
         self.instance.item_accounts = self._refresh_accounts(
             master_user=self.instance.master_user,
             items=self.instance.items,

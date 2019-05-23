@@ -11,20 +11,20 @@ from poms.instruments.serializers import InstrumentSerializer, PriceHistorySeria
     AccrualCalculationScheduleSerializer
 from poms.obj_attrs.serializers import GenericAttributeTypeSerializer, GenericAttributeSerializer
 from poms.portfolios.serializers import PortfolioSerializer
-from poms.reports.models import CustomField
+from poms.reports.serializers import BalanceReportCustomFieldSerializer, TransactionReportCustomFieldSerializer
 from poms.strategies.serializers import Strategy1Serializer, Strategy2Serializer, Strategy3Serializer
 from poms.transactions.serializers import ComplexTransactionSerializer, TransactionTypeViewSerializer
 from poms.users.fields import MasterUserField
 
 
-class CustomFieldViewSerializer(serializers.ModelSerializer):
-    master_user = MasterUserField()
-
-    class Meta:
-        model = CustomField
-        fields = [
-            'id', 'master_user', 'name', 'expr'
-        ]
+# class CustomFieldViewSerializer(serializers.ModelSerializer):
+#     master_user = MasterUserField()
+#
+#     class Meta:
+#         model = CustomField
+#         fields = [
+#             'id', 'master_user', 'name', 'expr'
+#         ]
 
 
 class ReportGenericAttributeTypeSerializer(GenericAttributeTypeSerializer):
@@ -299,16 +299,16 @@ class ReportComplexTransactionSerializer(ComplexTransactionSerializer):
         self.fields['transaction_type_object'] = TransactionTypeViewSerializer(source='transaction_type', read_only=True)
 
 
-class ReportItemCustomFieldSerializer(serializers.Serializer):
+class ReportItemBalanceReportCustomFieldSerializer(serializers.Serializer):
     custom_field = serializers.PrimaryKeyRelatedField(read_only=True)
     value = serializers.ReadOnlyField()
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('read_only', True)
 
-        super(ReportItemCustomFieldSerializer, self).__init__(*args, **kwargs)
+        super(ReportItemBalanceReportCustomFieldSerializer, self).__init__(*args, **kwargs)
 
-        self.fields['custom_field_object'] = CustomFieldViewSerializer(source='custom_field', read_only=True)
+        self.fields['custom_field_object'] = BalanceReportCustomFieldSerializer(source='custom_field', read_only=True)
 
     @cached_property
     def _readable_fields(self):
@@ -318,3 +318,25 @@ class ReportItemCustomFieldSerializer(serializers.Serializer):
             if not field.write_only and (
                 not custom_fields_hide_objects or field.field_name not in ('custom_field_object',))
             ]
+
+
+class ReportItemTransactionReportCustomFieldSerializer(serializers.Serializer):
+    custom_field = serializers.PrimaryKeyRelatedField(read_only=True)
+    value = serializers.ReadOnlyField()
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('read_only', True)
+
+        super(ReportItemTransactionReportCustomFieldSerializer, self).__init__(*args, **kwargs)
+
+        self.fields['custom_field_object'] = TransactionReportCustomFieldSerializer(source='custom_field', read_only=True)
+
+    @cached_property
+    def _readable_fields(self):
+        custom_fields_hide_objects = self.context.get('custom_fields_hide_objects', False)
+        return [
+            field for field in self.fields.values()
+            if not field.write_only and (
+                    not custom_fields_hide_objects or field.field_name not in ('custom_field_object',))
+        ]
+

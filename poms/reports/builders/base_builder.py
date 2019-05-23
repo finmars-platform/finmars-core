@@ -12,6 +12,7 @@ from poms.instruments.models import Instrument, InstrumentType
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.portfolios.models import Portfolio
+from poms.reports.models import BalanceReportCustomField
 from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy1Group, Strategy2, Strategy2Subgroup, \
     Strategy2Group, Strategy3, Strategy3Subgroup, Strategy3Group
 from poms.tags.utils import get_tag_prefetch
@@ -444,6 +445,16 @@ class BaseReportBuilder:
         # _l.debug('objs: %s', objs.keys())
 
         return list(objs.values())
+
+    def _refresh_custom_fields(self, master_user, items, attrs, objects=None):
+        return self._refresh_attrs(
+            items=items,
+            attrs=attrs,
+            objects=objects,
+            queryset=BalanceReportCustomField.objects.filter(
+                master_user=master_user,
+            )
+        )
 
     def _refresh_complex_transactions(self, master_user, items, attrs, objects=None):
         return self._refresh_attrs(

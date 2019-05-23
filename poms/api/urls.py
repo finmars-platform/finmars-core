@@ -198,12 +198,16 @@ router.register(r'ui/configuration', ui.ConfigurationViewSet)
 router.register(r'ui/configuration-export-layout', ui.ConfigurationExportLayoutViewSet)
 router.register(r'ui/transaction-user-field', ui.TransactionUserFieldViewSet)
 
-router.register(r'reports/custom-field', reports.CustomFieldViewSet)
 router.register(r'reports/report', reports.BalanceReportViewSet, "report")
 router.register(r'reports/balance-report', reports.BalanceReportViewSet, "balance-report")
+router.register(r'reports/balance-report/custom-field', reports.BalanceReportCustomFieldViewSet,
+                'balance-report-custom-field')
 # router.register(r'reports/balance-report', reports.BalanceReportSyncViewSet, "balance-report-sync")
 router.register(r'reports/pl-report', reports.PLReportViewSet, "pl-report")
+router.register(r'reports/pl-report/custom-field', reports.PLReportCustomFieldViewSet, 'pl-report-custom-field')
 router.register(r'reports/transaction-report', reports.TransactionReportViewSet, "transaction-report")
+router.register(r'reports/transaction-report/custom-field', reports.TransactionReportCustomFieldViewSet,
+                'transaction-report-custom-field')
 router.register(r'reports/cash-flow-projection-report', reports.CashFlowProjectionReportViewSet,
                 "cash-flow-projection-report")
 router.register(r'reports/performance-report', reports.PerformanceReportViewSet, "performance-report")

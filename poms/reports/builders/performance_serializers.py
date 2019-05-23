@@ -16,10 +16,8 @@ from poms.instruments.models import CostMethod
 from poms.portfolios.fields import PortfolioField
 from poms.portfolios.serializers import PortfolioViewSerializer
 from poms.reports.builders.base_serializers import ReportPortfolioSerializer, ReportAccountSerializer, \
-    ReportStrategy1Serializer, ReportStrategy2Serializer, ReportStrategy3Serializer, \
-    CustomFieldViewSerializer
+    ReportStrategy1Serializer, ReportStrategy2Serializer, ReportStrategy3Serializer
 from poms.reports.builders.performance_item import PerformanceReport
-from poms.reports.fields import CustomFieldField
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
 from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, Strategy3ViewSerializer
 from poms.users.fields import MasterUserField, HiddenMemberField
@@ -107,7 +105,7 @@ class PerformanceReportSerializer(serializers.Serializer):
     strategies1 = Strategy1Field(many=True, required=False, allow_null=True, allow_empty=True)
     strategies2 = Strategy2Field(many=True, required=False, allow_null=True, allow_empty=True)
     strategies3 = Strategy3Field(many=True, required=False, allow_null=True, allow_empty=True)
-    custom_fields = CustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
+    # custom_fields = CustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
 
     portfolios_object = PortfolioViewSerializer(source='portfolios', read_only=True, many=True)
     accounts_object = AccountViewSerializer(source='accounts', read_only=True, many=True)
@@ -116,7 +114,7 @@ class PerformanceReportSerializer(serializers.Serializer):
     strategies1_object = Strategy1ViewSerializer(source='strategies1', read_only=True, many=True)
     strategies2_object = Strategy2ViewSerializer(source='strategies2', read_only=True, many=True)
     strategies3_object = Strategy3ViewSerializer(source='strategies3', read_only=True, many=True)
-    custom_fields_object = CustomFieldViewSerializer(source='custom_fields', read_only=True, many=True)
+    # custom_fields_object = CustomFieldViewSerializer(source='custom_fields', read_only=True, many=True)
 
     has_errors = serializers.ReadOnlyField()
     items = PerformanceReportItemSerializer(many=True, read_only=True)

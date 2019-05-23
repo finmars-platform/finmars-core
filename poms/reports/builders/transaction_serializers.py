@@ -8,12 +8,12 @@ from poms.accounts.serializers import AccountViewSerializer
 from poms.common import formula
 from poms.portfolios.fields import PortfolioField
 from poms.portfolios.serializers import PortfolioViewSerializer
-from poms.reports.builders.base_serializers import ReportItemCustomFieldSerializer, ReportPortfolioSerializer, \
+from poms.reports.builders.base_serializers import ReportPortfolioSerializer, \
     ReportAccountSerializer, ReportStrategy1Serializer, ReportStrategy2Serializer, ReportStrategy3Serializer, \
-    ReportInstrumentSerializer, ReportCurrencySerializer, CustomFieldViewSerializer, ReportGenericAttributeSerializer, \
-    ReportComplexTransactionSerializer, ReportResponsibleSerializer, ReportCounterpartySerializer
+    ReportInstrumentSerializer, ReportCurrencySerializer, ReportGenericAttributeSerializer, \
+    ReportComplexTransactionSerializer, ReportResponsibleSerializer, ReportCounterpartySerializer, \
+    ReportItemTransactionReportCustomFieldSerializer
 from poms.reports.builders.transaction_item import TransactionReport
-from poms.reports.fields import CustomFieldField
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
 from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, Strategy3ViewSerializer
 from poms.transactions.serializers import TransactionClassSerializer, ComplexTransactionSerializer
@@ -62,7 +62,7 @@ class TransactionReportItemSerializer(serializers.Serializer):
     notes = serializers.ReadOnlyField()
     attributes = ReportGenericAttributeSerializer(many=True, read_only=True)
 
-    custom_fields = ReportItemCustomFieldSerializer(many=True, read_only=True)
+    custom_fields = ReportItemTransactionReportCustomFieldSerializer(many=True, read_only=True)
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('read_only', True)
@@ -85,7 +85,7 @@ class TransactionReportSerializer(serializers.Serializer):
     strategies1 = Strategy1Field(many=True, required=False, allow_null=True, allow_empty=True)
     strategies2 = Strategy2Field(many=True, required=False, allow_null=True, allow_empty=True)
     strategies3 = Strategy3Field(many=True, required=False, allow_null=True, allow_empty=True)
-    custom_fields = CustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
+    # custom_fields = CustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
 
     portfolios_object = PortfolioViewSerializer(source='portfolios', read_only=True, many=True)
     accounts_object = AccountViewSerializer(source='accounts', read_only=True, many=True)
@@ -94,7 +94,7 @@ class TransactionReportSerializer(serializers.Serializer):
     strategies1_object = Strategy1ViewSerializer(source='strategies1', read_only=True, many=True)
     strategies2_object = Strategy2ViewSerializer(source='strategies2', read_only=True, many=True)
     strategies3_object = Strategy3ViewSerializer(source='strategies3', read_only=True, many=True)
-    custom_fields_object = CustomFieldViewSerializer(source='custom_fields', read_only=True, many=True)
+    # custom_fields_object = CustomFieldViewSerializer(source='custom_fields', read_only=True, many=True)
 
     items = TransactionReportItemSerializer(many=True, read_only=True)
     item_transaction_classes = TransactionClassSerializer(many=True, read_only=True)

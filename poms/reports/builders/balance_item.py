@@ -3,6 +3,7 @@ from datetime import timedelta
 
 from django.utils.translation import ugettext_lazy, ugettext
 
+from poms.common import formula
 from poms.common.utils import isclose, date_now
 from poms.instruments.models import CostMethod
 from poms.reports.builders.base_item import BaseReportItem, YTMMixin, BaseReport
@@ -1463,21 +1464,21 @@ class ReportItem(YTMMixin, BaseReportItem):
     def eval_custom_fields(self):
         # use optimization inside serialization
         res = []
-        # for cf in self.report.custom_fields:
-        #     if cf.expr and self.report.member:
-        #         try:
-        #             names = {
-        #                 'item': self
-        #             }
-        #             value = formula.safe_eval(cf.expr, names=names, context=self.report.context)
-        #         except formula.InvalidExpression:
-        #             value = ugettext('Invalid expression')
-        #     else:
-        #         value = None
-        #     res.append({
-        #         'custom_field': cf,
-        #         'value': value
-        #     })
+        for cf in self.report.custom_fields:
+            if cf.expr and self.report.member:
+                try:
+                    names = {
+                        'item': self
+                    }
+                    value = formula.safe_eval(cf.expr, names=names, context=self.report.context)
+                except formula.InvalidExpression:
+                    value = ugettext('Invalid expression')
+            else:
+                value = None
+            res.append({
+                'custom_field': cf,
+                'value': value
+            })
         self.custom_fields = res
 
     def set_fields_by_subtype(self):

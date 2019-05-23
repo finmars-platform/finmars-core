@@ -19,11 +19,13 @@ from poms.instruments.serializers import PricingPolicyViewSerializer, CostMethod
 from poms.portfolios.fields import PortfolioField
 from poms.portfolios.serializers import PortfolioViewSerializer
 from poms.reports.builders.balance_item import ReportItem, Report
-from poms.reports.builders.base_serializers import ReportItemCustomFieldSerializer, ReportPortfolioSerializer, \
+from poms.reports.builders.base_serializers import ReportPortfolioSerializer, \
     ReportAccountSerializer, ReportStrategy1Serializer, ReportStrategy2Serializer, ReportStrategy3Serializer, \
     ReportInstrumentSerializer, ReportCurrencySerializer, ReportCurrencyHistorySerializer, ReportPriceHistorySerializer, \
-    ReportAccrualCalculationScheduleSerializer, CustomFieldViewSerializer
-from poms.reports.fields import CustomFieldField
+    ReportAccrualCalculationScheduleSerializer, ReportItemBalanceReportCustomFieldSerializer
+# from poms.reports.fields import CustomFieldField
+from poms.reports.fields import BalanceReportCustomFieldField
+from poms.reports.serializers import BalanceReportCustomFieldSerializer
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
 from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, Strategy3ViewSerializer
 from poms.transactions.models import TransactionClass
@@ -63,7 +65,7 @@ class ReportItemSerializer(serializers.Serializer):
     notes = serializers.CharField(read_only=True)
     source_transactions = serializers.ListField(source='src_trns_id', child=serializers.IntegerField(), read_only=True)
 
-    custom_fields = ReportItemCustomFieldSerializer(many=True, read_only=True)
+    custom_fields = ReportItemBalanceReportCustomFieldSerializer(many=True, read_only=True)
     is_empty = serializers.BooleanField(read_only=True)
 
     pricing_currency = serializers.PrimaryKeyRelatedField(source='pricing_ccy', read_only=True)
@@ -391,7 +393,7 @@ class ReportSerializer(serializers.Serializer):
     allocation_detailing = serializers.BooleanField(default=True, initial=True)
     pl_include_zero = serializers.BooleanField(default=False, initial=False)
 
-    custom_fields = CustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
+    custom_fields = BalanceReportCustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
 
     portfolios = PortfolioField(many=True, required=False, allow_null=True, allow_empty=True)
     accounts = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
@@ -420,7 +422,7 @@ class ReportSerializer(serializers.Serializer):
     strategies1_object = Strategy1ViewSerializer(source='strategies1', read_only=True, many=True)
     strategies2_object = Strategy2ViewSerializer(source='strategies2', read_only=True, many=True)
     strategies3_object = Strategy3ViewSerializer(source='strategies3', read_only=True, many=True)
-    custom_fields_object = CustomFieldViewSerializer(source='custom_fields', read_only=True, many=True)
+    custom_fields_object = BalanceReportCustomFieldSerializer(source='custom_fields', read_only=True, many=True)
     transaction_classes_object = TransactionClassSerializer(source='transaction_classes',
                                                             read_only=True, many=True)
 
@@ -449,8 +451,8 @@ class ReportSerializer(serializers.Serializer):
         # self.fields['strategies1_object'] = Strategy1ViewSerializer(source='strategies1', read_only=True, many=True)
         # self.fields['strategies2_object'] = Strategy2ViewSerializer(source='strategies2', read_only=True, many=True)
         # self.fields['strategies3_object'] = Strategy3ViewSerializer(source='strategies3', read_only=True, many=True)
-        # self.fields['custom_fields_object'] = CustomFieldViewSerializer(source='custom_fields', read_only=True,
-        #                                                                 many=True)
+        # self.fields['custom_fields_object'] = BalanceReportCustomFieldSerializer(source='custom_fields', read_only=True,
+        #                                                                          many=True)
         # self.fields['transaction_classes_object'] = TransactionClassSerializer(source='transaction_classes',
         #                                                                        read_only=True, many=True)
 
@@ -483,7 +485,12 @@ class ReportSerializer(serializers.Serializer):
     def to_representation(self, instance):
         data = super(ReportSerializer, self).to_representation(instance)
 
+        print('here? to_representation')
+
         custom_fields = data['custom_fields_object']
+
+        print('custom_fields %s' % custom_fields)
+
         if custom_fields:
             items = data['items']
 
@@ -502,9 +509,14 @@ class ReportSerializer(serializers.Serializer):
                 pk = names[pk_attr]
                 if pk is not None:
                     names['%s_object' % pk_attr] = objs[pk]
+                    # names[pk_attr] = objs[pk]
 
             for item in items:
-                names = {n: v for n, v in item.items()}
+
+                names = {}
+
+                for key, value in item.items():
+                    names[key] = value
 
                 _set_object(names, 'portfolio', item_portfolios)
                 _set_object(names, 'account', item_accounts)
@@ -527,17 +539,20 @@ class ReportSerializer(serializers.Serializer):
 
                 names = formula.value_prepare(names)
 
+                # print('names %s' % names['market_value'])
+
                 cfv = []
                 for cf in custom_fields:
                     expr = cf['expr']
 
                     if expr:
                         try:
-                            value = formula.safe_eval(expr, names={'item': names}, context=self.context)
+                            value = formula.safe_eval(expr, names=names, context=self.context)
                         except formula.InvalidExpression:
                             value = ugettext('Invalid expression')
                     else:
                         value = None
+
                     cfv.append({
                         'custom_field': cf['id'],
                         'value': value,

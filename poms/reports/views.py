@@ -13,8 +13,10 @@ from poms.reports.builders.cash_flow_projection_serializers import CashFlowProje
 from poms.reports.builders.performance_serializers import PerformanceReportSerializer
 from poms.reports.builders.transaction import TransactionReportBuilder
 from poms.reports.builders.transaction_serializers import TransactionReportSerializer
-from poms.reports.models import CustomField
-from poms.reports.serializers import CustomFieldSerializer
+from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
+from poms.reports.serializers import BalanceReportCustomFieldSerializer, PLReportCustomFieldSerializer, \
+    TransactionReportCustomFieldSerializer
+
 from poms.reports.tasks import balance_report, pl_report, transaction_report, cash_flow_projection_report, \
     performance_report
 from poms.users.filters import OwnerByMasterUserFilter
@@ -26,28 +28,73 @@ _l = logging.getLogger('poms.reports')
 import time
 
 
-class CustomFieldFilterSet(FilterSet):
+class BalanceReportCustomFieldFilterSet(FilterSet):
     id = NoOpFilter()
     name = CharFilter()
 
     class Meta:
-        model = CustomField
+        model = BalanceReportCustomField
         fields = []
 
 
-class CustomFieldViewSet(AbstractModelViewSet):
-    queryset = CustomField.objects.select_related(
+class BalanceReportCustomFieldViewSet(AbstractModelViewSet):
+    queryset = BalanceReportCustomField.objects.select_related(
         'master_user'
     )
-    serializer_class = CustomFieldSerializer
+    serializer_class = BalanceReportCustomFieldSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
-    filter_class = CustomFieldFilterSet
+    filter_class = BalanceReportCustomFieldFilterSet
     ordering_fields = [
         'name',
     ]
 
+
+class PLReportCustomFieldFilterSet(FilterSet):
+    id = NoOpFilter()
+    name = CharFilter()
+
+    class Meta:
+        model = PLReportCustomField
+        fields = []
+
+
+class PLReportCustomFieldViewSet(AbstractModelViewSet):
+    queryset = PLReportCustomField.objects.select_related(
+        'master_user'
+    )
+    serializer_class = PLReportCustomFieldSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = PLReportCustomFieldFilterSet
+    ordering_fields = [
+        'name',
+    ]
+
+
+class TransactionReportCustomFieldFilterSet(FilterSet):
+    id = NoOpFilter()
+    name = CharFilter()
+
+    class Meta:
+        model = TransactionReportCustomField
+        fields = []
+
+
+class TransactionReportCustomFieldViewSet(AbstractModelViewSet):
+    queryset = TransactionReportCustomField.objects.select_related(
+        'master_user'
+    )
+    serializer_class = TransactionReportCustomFieldSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = TransactionReportCustomFieldFilterSet
+    ordering_fields = [
+        'name',
+    ]
 
 # class BalanceReportViewSet(AbstractAsyncViewSet):
 #     serializer_class = BalanceReportSerializer

@@ -4,19 +4,41 @@ from rest_framework import serializers
 
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.reports.models import CustomField
+from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
+
 from poms.users.fields import MasterUserField
 
 
-class CustomFieldSerializer(serializers.ModelSerializer):
+class BalanceReportCustomFieldSerializer(serializers.ModelSerializer):
     master_user = MasterUserField()
     expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='""')
-    layout = serializers.JSONField(required=False, allow_null=True)
 
     class Meta:
-        model = CustomField
+        model = BalanceReportCustomField
         fields = [
-            'id', 'master_user', 'name', 'expr', 'layout'
+            'id', 'master_user', 'name', 'user_code', 'expr',
+        ]
+
+
+class PLReportCustomFieldSerializer(serializers.ModelSerializer):
+    master_user = MasterUserField()
+    expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='""')
+
+    class Meta:
+        model = PLReportCustomField
+        fields = [
+            'id', 'master_user', 'name', 'user_code', 'expr',
+        ]
+
+
+class TransactionReportCustomFieldSerializer(serializers.ModelSerializer):
+    master_user = MasterUserField()
+    expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='""')
+
+    class Meta:
+        model = TransactionReportCustomField
+        fields = [
+            'id', 'master_user', 'name', 'user_code', 'expr',
         ]
 
 # class CustomFieldViewSerializer(serializers.ModelSerializer):

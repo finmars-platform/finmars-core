@@ -11,32 +11,55 @@ from poms.common.models import NamedModel, AbstractClassModel, EXPRESSION_FIELD_
 from poms.users.models import MasterUser
 
 
-class CustomField(models.Model):
-    master_user = models.ForeignKey(MasterUser, related_name='custom_fields', verbose_name=ugettext_lazy('master user'))
+class BalanceReportCustomField(models.Model):
+    master_user = models.ForeignKey(MasterUser, related_name='balance_report_custom_fields', verbose_name=ugettext_lazy('master user'))
     name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'))
+    user_code = models.CharField(max_length=255, verbose_name=ugettext_lazy('user code'))
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('expression'))
-    layout_json = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('layout json'))
 
     class Meta:
-        verbose_name = ugettext_lazy('custom field')
-        verbose_name_plural = ugettext_lazy('custom fields')
+        verbose_name = ugettext_lazy('balance report custom field')
+        verbose_name_plural = ugettext_lazy('balance report custom fields')
         unique_together = [
-            ['master_user', 'name']
+            ['master_user', 'user_code']
         ]
 
     def __str__(self):
         return self.name
 
-    @property
-    def layout(self):
-        try:
-            return json.loads(self.layout_json) if self.layout_json else None
-        except (ValueError, TypeError):
-            return None
 
-    @layout.setter
-    def layout(self, data):
-        self.layout_json = json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True) if data else None
+class PLReportCustomField(models.Model):
+    master_user = models.ForeignKey(MasterUser, related_name='pl_report_custom_fields', verbose_name=ugettext_lazy('master user'))
+    name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'))
+    user_code = models.CharField(max_length=255, verbose_name=ugettext_lazy('user code'))
+    expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('expression'))
+
+    class Meta:
+        verbose_name = ugettext_lazy('pl report custom field')
+        verbose_name_plural = ugettext_lazy('pl report custom fields')
+        unique_together = [
+            ['master_user', 'user_code']
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class TransactionReportCustomField(models.Model):
+    master_user = models.ForeignKey(MasterUser, related_name='transaction_report_custom_fields', verbose_name=ugettext_lazy('master user'))
+    name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'))
+    user_code = models.CharField(max_length=255, verbose_name=ugettext_lazy('user code'))
+    expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('expression'))
+
+    class Meta:
+        verbose_name = ugettext_lazy('transaction report custom field')
+        verbose_name_plural = ugettext_lazy('transaction report custom fields')
+        unique_together = [
+            ['master_user', 'user_code']
+        ]
+
+    def __str__(self):
+        return self.name
 
 
 class BalanceReport(models.Model):
