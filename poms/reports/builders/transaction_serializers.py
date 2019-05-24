@@ -14,6 +14,8 @@ from poms.reports.builders.base_serializers import ReportPortfolioSerializer, \
     ReportComplexTransactionSerializer, ReportResponsibleSerializer, ReportCounterpartySerializer, \
     ReportItemTransactionReportCustomFieldSerializer
 from poms.reports.builders.transaction_item import TransactionReport
+from poms.reports.fields import TransactionReportCustomFieldField
+from poms.reports.serializers import TransactionReportCustomFieldSerializer
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
 from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, Strategy3ViewSerializer
 from poms.transactions.serializers import TransactionClassSerializer, ComplexTransactionSerializer
@@ -87,6 +89,8 @@ class TransactionReportSerializer(serializers.Serializer):
     strategies3 = Strategy3Field(many=True, required=False, allow_null=True, allow_empty=True)
     # custom_fields = CustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
 
+    custom_fields = TransactionReportCustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
+
     portfolios_object = PortfolioViewSerializer(source='portfolios', read_only=True, many=True)
     accounts_object = AccountViewSerializer(source='accounts', read_only=True, many=True)
     accounts_position_object = AccountViewSerializer(source='accounts_position', read_only=True, many=True)
@@ -95,6 +99,8 @@ class TransactionReportSerializer(serializers.Serializer):
     strategies2_object = Strategy2ViewSerializer(source='strategies2', read_only=True, many=True)
     strategies3_object = Strategy3ViewSerializer(source='strategies3', read_only=True, many=True)
     # custom_fields_object = CustomFieldViewSerializer(source='custom_fields', read_only=True, many=True)
+
+    custom_fields_object = TransactionReportCustomFieldSerializer(source='custom_fields', read_only=True, many=True)
 
     items = TransactionReportItemSerializer(many=True, read_only=True)
     item_transaction_classes = TransactionClassSerializer(many=True, read_only=True)
