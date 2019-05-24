@@ -150,6 +150,7 @@ class GenericAttributeTypeViewSet(AbstractWithObjectPermissionViewSet):
         serializer.save(content_type=self.target_model_content_type)
 
     def create(self, request, *args, **kwargs):
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -170,9 +171,11 @@ class GenericAttributeTypeViewSet(AbstractWithObjectPermissionViewSet):
         attr_type = GenericAttributeType.objects.get(pk=serializer.data['id'])
 
         for item in items:
-            attrs.append(GenericAttribute(attribute_type=attr_type, content_type=content_type, object_id=item.pk))
 
-        print('attrs len %s' % len(attrs))
+            if not GenericAttribute.objects.get(attribute_type=attr_type, content_type=content_type,
+                                                object_id=item.pk).exists():
+
+                attrs.append(GenericAttribute(attribute_type=attr_type, content_type=content_type, object_id=item.pk))
 
         GenericAttribute.objects.bulk_create(attrs)
 
