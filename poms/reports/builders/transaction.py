@@ -9,6 +9,7 @@ from poms.common.utils import force_qs_evaluation
 from poms.obj_attrs.models import GenericAttributeType
 from poms.reports.builders.base_builder import BaseReportBuilder
 from poms.reports.builders.transaction_item import TransactionReportItem
+from poms.reports.models import BalanceReportCustomField, TransactionReportCustomField
 from poms.transactions.models import Transaction, ComplexTransaction
 
 _l = logging.getLogger('poms.reports')
@@ -86,6 +87,9 @@ class TransactionReportBuilder(BaseReportBuilder):
                 transaction.set_rollback(True)
 
         _l.debug('done: %s', (time.perf_counter() - st))
+
+        self.instance.custom_fields = TransactionReportCustomField.objects.filter(master_user=self.instance.master_user)
+
         return self.instance
 
     def _get_ref(self, clazz, pk, obj=None):

@@ -161,6 +161,7 @@ class TransactionReportSerializer(serializers.Serializer):
 
         items = data['items']
         custom_fields = data['custom_fields_object']
+
         if custom_fields and items:
             item_transaction_classes = {o['id']: o for o in data['item_transaction_classes']}
             item_complex_transactions = {o['id']: o for o in data['item_complex_transactions']}
@@ -180,7 +181,11 @@ class TransactionReportSerializer(serializers.Serializer):
                     names['%s_object' % pk_attr] = objs[pk]
 
             for item in items:
-                names = {n: v for n, v in item.items()}
+
+                names = {}
+
+                for key, value in item.items():
+                    names[key] = value
 
                 _set_object(names, 'complex_transaction', item_complex_transactions)
                 _set_object(names, 'transaction_class', item_transaction_classes)
@@ -211,7 +216,7 @@ class TransactionReportSerializer(serializers.Serializer):
 
                     if expr:
                         try:
-                            value = formula.safe_eval(expr, names={'item': names}, context=self.context)
+                            value = formula.safe_eval(expr, names=names, context=self.context)
                         except formula.InvalidExpression:
                             value = ugettext('Invalid expression')
                     else:
