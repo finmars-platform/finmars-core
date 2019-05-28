@@ -172,8 +172,11 @@ class GenericAttributeTypeViewSet(AbstractWithObjectPermissionViewSet):
 
         for item in items:
 
-            if not GenericAttribute.objects.get(attribute_type=attr_type, content_type=content_type,
-                                                object_id=item.pk).exists():
+            try:
+                exists = GenericAttribute.objects.get(attribute_type=attr_type, content_type=content_type,
+                                                object_id=item.pk)
+
+            except GenericAttribute.DoesNotExist:
 
                 attrs.append(GenericAttribute(attribute_type=attr_type, content_type=content_type, object_id=item.pk))
 
