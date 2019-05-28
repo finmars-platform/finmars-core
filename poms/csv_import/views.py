@@ -147,6 +147,7 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
             csv_row_dict_raw = {}
 
             error_row = {
+                'level': 'info',
                 'error_message': '',
                 'original_row_index': row_index,
                 'inputs': csv_row_dict_raw,
@@ -163,7 +164,7 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
                         'data_matching': []
                     }
                 },
-                'error_reaction': None
+                'error_reaction': 'Success'
             }
 
             csv_row_dict_raw = get_row_data(row, csv_fields)
@@ -204,7 +205,7 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
                         return results, errors
                     else:
                         error_row['error_reaction'] = 'Continue import'
-                        errors.append(error_row)
+                        # errors.append(error_row)
 
                 mapping_map = {
                     'counterparties': CounterpartyMapping,
@@ -426,27 +427,31 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
 
                     print(inputs_messages)
 
+                    error_row['level'] = 'error'
                     error_row['error_message'] = error_row['error_message'] + '\n' + '\n' + ugettext(
                         'Can\'t process field: %(inputs)s') % {
                                                      'inputs': ', '.join(str(m) for m in inputs_messages)}
 
-                    errors.append(error_row)
-
                     error_row['error_reaction'] = 'Continue import'
 
                     if error_handler == 'break':
+                        errors.append(error_row)
                         error_row['error_reaction'] = 'Break import'
 
                         return results, errors
 
+                    errors.append(error_row)
+
                 else:
 
-                    error_row['error_reaction'] = 'Success'
+                    # error_row['error_reaction'] = 'Success'
 
                     results.append(instance)
+                    errors.append(error_row)
 
             else:
 
+                error_row['level'] = 'error'
                 error_row['error_message'] = 'Row was skipped'
                 error_row['error_reaction'] = 'Skipped'
                 errors.append(error_row)
@@ -555,7 +560,7 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
 
                 attribute.full_clean()
 
-    def instance_full_clean(self, scheme, result, process_errors, error_handler):
+    def instance_full_clean(self, scheme, result, process_errors, error_handler, index):
 
         try:
 
@@ -569,20 +574,16 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
 
         except CoreValidationError as e:
 
-            error_row = {
-                'error_message': ugettext('Validation error %(error)s ') % {
-                    'error': e
-                },
-                'original_row_index': result['_row_index'],
-                'original_row': result['_row'],
-            }
-
-            process_errors.append(error_row)
+            process_errors[index]['level'] = 'error'
+            process_errors[index]['error_message'] = process_errors[index]['error_message'] + ugettext(
+                'Validation error %(error)s ') % {
+                                                         'error': e
+                                                     },
 
             if error_handler == 'break':
                 return process_errors
 
-    def instance_overwrite_full_clean(self, scheme, result, item, process_errors, error_handler):
+    def instance_overwrite_full_clean(self, scheme, result, item, process_errors, error_handler, index):
 
         print('Overwrite item %s' % item)
 
@@ -606,46 +607,41 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
 
         except CoreValidationError as e:
 
-            error_row = {
-                'error_message': ugettext('Validation error %(error)s ') % {
-                    'error': e
-                },
-                'original_row_index': result['_row_index'],
-                'original_row': result['_row'],
-            }
-
-            process_errors.append(error_row)
+            process_errors[index]['level'] = 'error'
+            process_errors[index]['error_message'] = process_errors[index]['error_message'] + ugettext(
+                'Validation error %(error)s ') % {
+                                                         'error': e
+                                                     }
 
             if error_handler == 'break':
                 return process_errors
 
     def full_clean_results(self, scheme, error_handler, mode, results, process_errors):
 
-        for result in results:
+        for index, result in enumerate(results):
 
             item = get_item(scheme, result)
 
             if mode == 'overwrite' and item:
 
-                self.instance_overwrite_full_clean(scheme, result, item, process_errors, error_handler)
+                self.instance_overwrite_full_clean(scheme, result, item, process_errors, error_handler, index)
 
             elif mode == 'overwrite' and not item:
 
-                self.instance_full_clean(scheme, result, process_errors, error_handler)
+                self.instance_full_clean(scheme, result, process_errors, error_handler, index)
 
             elif mode == 'skip' and not item:
 
-                self.instance_full_clean(scheme, result, process_errors, error_handler)
+                self.instance_full_clean(scheme, result, process_errors, error_handler, index)
 
             elif mode == 'skip' and item:
 
-                error_row = {
-                    'error_message': ugettext('Entry already exists '),
-                    'original_row_index': result['_row_index'],
-                    'original_row': result['_row'],
-                }
+                process_errors[index]['level'] = 'error'
+                process_errors[index]['error_reaction'] = 'Skip'
+                process_errors[index]['error_message'] = process_errors[index]['error_message'] + str(ugettext(
+                    'Entry already exists '))
 
-                process_errors.append(error_row)
+                print('error_handler %s' % error_handler)
 
                 if error_handler == 'break':
                     return process_errors
@@ -688,11 +684,18 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
                                                    classifier_handler_skip,
                                                    context)
 
-        if error_handler == 'break' and len(process_errors) != 0:
+        has_errors = False
+
+        for item in process_errors:
+
+            if item["level"] == 'error':
+                has_errors = True
+
+        if error_handler == 'break' and has_errors:
             return Response({
                 "imported": len(results),
                 "total": rows_total,
-                "errors": process_errors
+                "stats": process_errors
             }, status=status.HTTP_202_ACCEPTED)
 
         process_errors = self.full_clean_results(scheme, error_handler, mode, results, process_errors)
@@ -700,7 +703,7 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
         return Response({
             "imported": len(results),
             "total": rows_total,
-            "errors": process_errors
+            "stats": process_errors
         }, status=status.HTTP_202_ACCEPTED)
 
 
@@ -781,7 +784,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
         return instance
 
-    def save_instance(self, scheme, result, process_errors, error_handler):
+    def save_instance(self, scheme, result, process_errors, error_handler, index):
 
         try:
 
@@ -795,20 +798,16 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
         except ValidationError as e:
 
-            error_row = {
-                'error_message': ugettext('Validation error %(error)s ') % {
-                    'error': e
-                },
-                'original_row_index': result['_row_index'],
-                'original_row': result['_row'],
-            }
-
-            process_errors.append(error_row)
+            process_errors[index]['level'] = 'error'
+            process_errors[index]['error_message'] = process_errors[index]['error_message'] + ugettext(
+                'Validation error %(error)s ') % {
+                                                         'error': e
+                                                     }
 
             if error_handler == 'break':
                 return process_errors
 
-    def overwrite_instance(self, scheme, result, item, process_errors, error_handler):
+    def overwrite_instance(self, scheme, result, item, process_errors, error_handler, index):
 
         print('Overwrite item %s' % item)
 
@@ -833,46 +832,37 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
         except ValidationError as e:
 
-            error_row = {
-                'error_message': ugettext('Validation error %(error)s ') % {
-                    'error': e
-                },
-                'original_row_index': result['_row_index'],
-                'original_row': result['_row'],
-            }
-
-            process_errors.append(error_row)
+            process_errors[index]['level'] = 'error'
+            process_errors[index]['error_message'] = process_errors[index]['error_message'] + str(ugettext(
+                'Validation error %(error)s ') % {
+                                                                                                      'error': e
+                                                                                                  })
 
             if error_handler == 'break':
                 return process_errors
 
     def import_results(self, scheme, error_handler, mode, results, process_errors):
 
-        for result in results:
+        for index, result in enumerate(results):
 
             item = get_item(scheme, result)
 
             if mode == 'overwrite' and item:
 
-                self.overwrite_instance(scheme, result, item, process_errors, error_handler)
+                self.overwrite_instance(scheme, result, item, process_errors, error_handler, index)
 
             elif mode == 'overwrite' and not item:
 
-                self.save_instance(scheme, result, process_errors, error_handler)
+                self.save_instance(scheme, result, process_errors, error_handler, index)
 
             elif mode == 'skip' and not item:
 
-                self.save_instance(scheme, result, process_errors, error_handler)
+                self.save_instance(scheme, result, process_errors, error_handler, index)
 
             elif mode == 'skip' and item:
-
-                error_row = {
-                    'error_message': ugettext('Entry already exists '),
-                    'original_row_index': result['_row_index'],
-                    'original_row': result['_row'],
-                }
-
-                process_errors.append(error_row)
+                process_errors[index]['level'] = 'error'
+                process_errors[index]['error_message'] = process_errors[index]['error_message'] + process_errors[index][
+                    'error_message']
 
                 if error_handler == 'break':
                     return process_errors
@@ -913,11 +903,18 @@ class CsvDataImportViewSet(AbstractModelViewSet):
                                                    classifier_handler,
                                                    context)
 
-        if error_handler == 'break' and len(process_errors) != 0:
+        has_errors = False
+
+        for item in process_errors:
+
+            if item["level"] == 'error':
+                has_errors = True
+
+        if error_handler == 'break' and has_errors:
             return Response({
                 "imported": len(results),
                 "total": rows_total,
-                "errors": process_errors
+                "stats": process_errors
             }, status=status.HTTP_202_ACCEPTED)
 
         process_errors = self.import_results(scheme, error_handler, mode, results, process_errors)
@@ -925,5 +922,5 @@ class CsvDataImportViewSet(AbstractModelViewSet):
         return Response({
             "imported": len(results),
             "total": rows_total,
-            "errors": process_errors
+            "stats": process_errors
         }, status=status.HTTP_202_ACCEPTED)
