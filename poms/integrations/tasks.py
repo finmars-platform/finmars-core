@@ -1031,6 +1031,8 @@ def complex_transaction_csv_file_import(instance):
 
     _l.debug('complex_transaction_file_import: %s', instance)
 
+    instance.processed_rows = 0
+
     scheme = instance.scheme
     scheme_inputs = list(scheme.inputs.all())
 
@@ -1107,6 +1109,8 @@ def complex_transaction_csv_file_import(instance):
             return v
 
     def _process_csv_file(file):
+
+        instance.processed_rows = 0
 
         delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
 
@@ -1214,6 +1218,9 @@ def complex_transaction_csv_file_import(instance):
                                 }
                             )
                             tt_process.process()
+
+                            instance.processed_rows = instance.processed_rows + 1
+
                         except:
                             _l.info("can't process transaction type", exc_info=True)
                             transaction.set_rollback(True)
@@ -1266,6 +1273,8 @@ def complex_transaction_csv_file_import(instance):
 @shared_task(name='integrations.complex_transaction_csv_file_import_validate')
 def complex_transaction_csv_file_import_validate(instance):
     from poms.transactions.models import TransactionTypeInput
+
+    instance.processed_rows = 0
 
     _l.debug('complex_transaction_file_import: %s', instance)
 
@@ -1510,6 +1519,8 @@ def complex_transaction_csv_file_import_validate(instance):
                         else:
                             error_rows['error_reaction'] = 'Continue import'
                             continue
+
+                    instance.processed_rows = instance.processed_rows + 1
 
     def _row_count(file):
         for i, l in enumerate(file):
