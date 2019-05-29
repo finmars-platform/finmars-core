@@ -33,6 +33,7 @@ from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_attrs.serializers import GenericClassifierViewSerializer, GenericClassifierNodeSerializer, \
     GenericAttributeTypeSerializer
 from poms.portfolios.models import Portfolio
+from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.tags.utils import get_tag_prefetch
 from poms.transactions.models import TransactionType, TransactionTypeInput, TransactionTypeAction, \
@@ -132,6 +133,10 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         instrument_attribute_types = self.get_entity_attribute_types('instruments', 'instrument')
         instrument_type_attribute_types = self.get_entity_attribute_types('instruments', 'instrumenttype')
 
+        balance_report_custom_fields = self.get_balance_report_custom_fields()
+        pl_report_custom_fields = self.get_pl_report_custom_fields()
+        transaction_report_custom_fields = self.get_transaction_report_custom_fields()
+
         configuration["body"].append(transaction_types)
         configuration["body"].append(transaction_type_groups)
         configuration["body"].append(edit_layouts)
@@ -156,6 +161,10 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration["body"].append(counterparty_attribute_types)
         configuration["body"].append(instrument_attribute_types)
         configuration["body"].append(instrument_type_attribute_types)
+
+        configuration["body"].append(balance_report_custom_fields)
+        configuration["body"].append(pl_report_custom_fields)
+        configuration["body"].append(transaction_report_custom_fields)
 
         return configuration
 
@@ -861,6 +870,81 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
+    def get_balance_report_custom_fields(self):
+
+        custom_fields = to_json_objects(
+            BalanceReportCustomField.objects.filter(master_user=self._master_user))
+
+        results = []
+
+        for custom_field in custom_fields:
+            result_item = custom_field["fields"]
+            result_item.pop("master_user", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "reports.balancereportcustomfield",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_pl_report_custom_fields(self):
+
+        custom_fields = to_json_objects(
+            PLReportCustomField.objects.filter(master_user=self._master_user))
+
+        results = []
+
+        for custom_field in custom_fields:
+            result_item = custom_field["fields"]
+            result_item.pop("master_user", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "reports.plreportcustomfield",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_transaction_report_custom_fields(self):
+
+        custom_fields = to_json_objects(
+            TransactionReportCustomField.objects.filter(master_user=self._master_user))
+
+        results = []
+
+        for custom_field in custom_fields:
+            result_item = custom_field["fields"]
+            result_item.pop("master_user", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "reports.transactionreportcustomfield",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
     def get_report_layouts(self):
 
         content_types = ContentType.objects.filter(app_label='reports')
@@ -1051,15 +1135,28 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 result_json = to_json_single(result)["fields"]
 
                 if action_key == 'csv_import_scheme':
-                    result_json['___csv_import_scheme__scheme_name'] = CsvImportScheme.objects.get(
-                        pk=result_json['csv_import_scheme']).scheme_name
+
+                    if result_json['csv_import_scheme']:
+
+                        result_json['___csv_import_scheme__scheme_name'] = CsvImportScheme.objects.get(
+                            pk=result_json['csv_import_scheme']).scheme_name
+
+                    else:
+
+                        result_json['___csv_import_scheme__scheme_name'] = '-'
 
                     result_json.pop("csv_import_scheme", None)
 
                 if action_key == 'complex_transaction_import_scheme':
-                    result_json[
-                        '___complex_transaction_import_scheme__scheme_name'] = ComplexTransactionImportScheme.objects.get(
-                        pk=result_json['complex_transaction_import_scheme']).scheme_name
+
+                    if result_json['complex_transaction_import_scheme']:
+
+                        result_json[
+                            '___complex_transaction_import_scheme__scheme_name'] = ComplexTransactionImportScheme.objects.get(
+                            pk=result_json['complex_transaction_import_scheme']).scheme_name
+                    else:
+                        result_json[
+                            '___complex_transaction_import_scheme__scheme_name'] = '-'
 
                     result_json.pop("complex_transaction_import_scheme", None)
 

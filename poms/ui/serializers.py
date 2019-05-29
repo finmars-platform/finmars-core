@@ -55,7 +55,7 @@ class ConfigurationExportLayoutSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ConfigurationExportLayout
-        fields = ['id', 'member', 'name', 'is_default', 'data', 'notes']
+        fields = ['id', 'member', 'name', 'is_default', 'data']
 
 
 class EditLayoutSerializer(serializers.ModelSerializer):
