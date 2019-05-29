@@ -25,8 +25,8 @@ class NamedModelAutoMapping(NamedModel):
 
         super(NamedModelAutoMapping, self).save(*args, **kwargs)
 
-        if not model.objects.filter(value=value, content_object=self, provider=provider,
-                                    master_user=master_user).exists():
-
-            model.objects.create(value=value, content_object=self, provider=provider,
-                                 master_user=master_user)
+        # if not model.objects.filter(value=value, content_object=self, provider=provider,
+        #                             master_user=master_user).exists():
+        #
+        #     model.objects.create(value=value, content_object=self, provider=provider,
+        #                          master_user=master_user)
