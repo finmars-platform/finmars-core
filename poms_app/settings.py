@@ -302,9 +302,9 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = 'en'
 LANGUAGES = [
     ('en', ugettext_lazy('English')),
-    ('es', ugettext_lazy('Spanish')),
-    ('de', ugettext_lazy('Deutsch')),
-    ('ru', ugettext_lazy('Russian')),
+    # ('es', ugettext_lazy('Spanish')),
+    # ('de', ugettext_lazy('Deutsch')),
+    # ('ru', ugettext_lazy('Russian')),
 ]
 
 TIME_ZONE = 'UTC'
