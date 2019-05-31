@@ -1106,7 +1106,10 @@ def complex_transaction_csv_file_import(instance):
                     if instance.missing_data_handler == 'set_defaults':
                         v = model_map_class.objects.get(master_user=instance.master_user, value='-').content_object
                     else:
-                        error_rows['error_message'] = error_rows['error_message'] + ' Can\'t find Relation.'
+                        error_rows['error_message'] = error_rows[
+                                                          'error_message'] + ' Can\'t find relation of ' + \
+                                                      field.transaction_type_input.name + '(value:' + \
+                                                      value + ')'
 
             if not v:
                 raise ValueError('Can\'t find Relation.')
@@ -1134,7 +1137,6 @@ def complex_transaction_csv_file_import(instance):
             inputs_raw = {}
             inputs = {}
             inputs_error = []
-
 
             error_rows = {
                 'error_message': '',
@@ -1226,8 +1228,8 @@ def complex_transaction_csv_file_import(instance):
                         _l.info('rule does not find: %s', rule_value, exc_info=True)
                         error_rows['error_message'] = error_rows['error_message'] + '\n' + '\n' + str(ugettext(
                             'Can\'t find transaction type by "%(value)s"') % {
-                                                          'value': rule_value
-                                                      })
+                                                                                                          'value': rule_value
+                                                                                                      })
                         instance.error_rows.append(error_rows)
                         if instance.break_on_error:
                             instance.error_row_index = row_index
@@ -1252,9 +1254,11 @@ def complex_transaction_csv_file_import(instance):
                     if fields_error:
                         error_rows['error_message'] = error_rows['error_message'] + '\n' + '\n' + str(ugettext(
                             'Can\'t process fields: %(fields)s') % {
-                                                          'fields': ', '.join(
-                                                              f.transaction_type_input.name for f in fields_error)
-                                                      })
+                                                                                                          'fields': ', '.join(
+                                                                                                              f.transaction_type_input.name
+                                                                                                              for f in
+                                                                                                              fields_error)
+                                                                                                      })
                         instance.error_rows.append(error_rows)
                         if instance.break_on_error:
                             instance.error_row_index = row_index
@@ -1404,7 +1408,10 @@ def complex_transaction_csv_file_import_validate(instance):
                     if instance.missing_data_handler == 'set_defaults':
                         v = model_map_class.objects.get(master_user=instance.master_user, value='-').content_object
                     else:
-                        error_rows['error_message'] = error_rows['error_message'] + ' Can\'t find Relation.'
+                        error_rows['error_message'] = error_rows[
+                                                          'error_message'] + ' Can\'t find relation of ' + \
+                                                      field.transaction_type_input.name + '(value:' + \
+                                                      value + ')'
 
             if not v:
                 raise ValueError('Can\'t find Relation.')
