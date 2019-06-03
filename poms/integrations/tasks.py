@@ -1246,6 +1246,9 @@ def complex_transaction_csv_file_import(instance):
                             field_value = formula.safe_eval(field.value_expr, names=inputs)
                             field_value = _convert_value(field, field_value, error_rows)
                             fields[field.transaction_type_input.name] = field_value
+
+
+
                         except ValueError:
                             _l.info('can\'t process field: %s|%s', field.transaction_type_input.name,
                                     field.transaction_type_input.pk, exc_info=True)
@@ -1410,8 +1413,8 @@ def complex_transaction_csv_file_import_validate(instance):
                     else:
                         error_rows['error_message'] = error_rows[
                                                           'error_message'] + ' Can\'t find relation of ' + \
-                                                      field.transaction_type_input.name + '(value:' + \
-                                                      value + ')'
+                                                      field.transaction_type_input.name + ' (value:' + \
+                                                      value + '). '
 
             if not v:
                 raise ValueError('Can\'t find Relation.')
@@ -1564,11 +1567,16 @@ def complex_transaction_csv_file_import_validate(instance):
                             field_value = formula.safe_eval(field.value_expr, names=inputs)
 
                             field_value = _convert_value(field, field_value, error_rows)
+
                             fields[field.transaction_type_input.name] = field_value
 
-                            executed_input_expressions.append(field_value)
+                            if hasattr(field_value, 'name'):
+                                executed_input_expressions.append(field_value.name)
+                            else:
+                                executed_input_expressions.append(field_value)
 
-                        except ValueError:
+                        except (ValueError, formula.InvalidExpression):
+
                             _l.info('can\'t process field: %s|%s', field.transaction_type_input.name,
                                     field.transaction_type_input.pk, exc_info=True)
                             fields_error.append(field)
@@ -1576,6 +1584,8 @@ def complex_transaction_csv_file_import_validate(instance):
                             executed_input_expressions.append(ugettext('Invalid expression'))
 
                     _l.debug('fields (step 1): error=%s, values=%s', fields_error, fields)
+
+                    _l.debug(error_rows['error_message'])
 
                     if fields_error:
 
@@ -1596,6 +1606,8 @@ def complex_transaction_csv_file_import_validate(instance):
                             continue
 
                     instance.processed_rows = instance.processed_rows + 1
+
+            _l.debug('instance', instance)
 
     def _row_count(file):
         for i, l in enumerate(file):
