@@ -27,6 +27,7 @@ _l = logging.getLogger('poms.transactions')
 class TransactionTypeProcess(object):
     # if store is false then operations must be rollback outside, for example in view...
     MODE_BOOK = 'book'
+    MODE_REBOOK = 'rebook'
     MODE_RECALCULATE = 'recalculate'
 
     def __init__(self,
@@ -54,6 +55,8 @@ class TransactionTypeProcess(object):
         master_user = self.transaction_type.master_user
 
         self.process_mode = process_mode or TransactionTypeProcess.MODE_BOOK
+
+        _l.debug('process_mode: %s', self.process_mode)
 
         self.default_values = default_values or {}
 
@@ -98,6 +101,10 @@ class TransactionTypeProcess(object):
     @property
     def is_book(self):
         return self.process_mode == self.MODE_BOOK
+
+    @property
+    def is_rebook(self):
+        return self.process_mode == self.MODE_REBOOK
 
     @property
     def is_recalculate(self):
@@ -230,104 +237,131 @@ class TransactionTypeProcess(object):
                     user_code = None
 
                 instrument = None
+                instrument_exists = False
 
                 if user_code:
                     try:
                         instrument = Instrument.objects.get(master_user=master_user, user_code=user_code)
+                        instrument_exists = True
                     except ObjectDoesNotExist:
-                        pass
+
+                        if action_instrument.rebook_reaction and \
+                                action_instrument.rebook_reaction == RebookReactionChoice.FIND_OR_CREATE:
+                            instrument = Instrument.objects.get(master_user=master_user, user_code='-')
+                            instrument_exists = True
+                        else:
+                            pass
 
                 if instrument is None:
                     instrument = Instrument(master_user=master_user)
 
                 instrument.user_code = user_code
-                self._set_val(errors=errors, values=self.values, default_value='',
-                              target=instrument, target_attr_name='name',
-                              source=action_instrument, source_attr_name='name')
-                self._set_val(errors=errors, values=self.values, default_value='',
-                              target=instrument, target_attr_name='short_name',
-                              source=action_instrument, source_attr_name='short_name')
-                self._set_val(errors=errors, values=self.values, default_value='',
-                              target=instrument, target_attr_name='public_name',
-                              source=action_instrument, source_attr_name='public_name')
 
-                if getattr(action_instrument, 'notes'):
+                if user_code != '-':
+
                     self._set_val(errors=errors, values=self.values, default_value='',
-                                  target=instrument, target_attr_name='notes',
-                                  source=action_instrument, source_attr_name='notes')
+                                  target=instrument, target_attr_name='name',
+                                  source=action_instrument, source_attr_name='name')
+                    self._set_val(errors=errors, values=self.values, default_value='',
+                                  target=instrument, target_attr_name='short_name',
+                                  source=action_instrument, source_attr_name='short_name')
+                    self._set_val(errors=errors, values=self.values, default_value='',
+                                  target=instrument, target_attr_name='public_name',
+                                  source=action_instrument, source_attr_name='public_name')
 
-                self._set_rel(errors=errors,
-                              target=instrument, target_attr_name='instrument_type',
-                              source=action_instrument, source_attr_name='instrument_type',
-                              values=self.values, default_value=master_user.instrument_type)
-                self._set_rel(errors=errors, values=self.values, default_value=master_user.currency,
-                              target=instrument, target_attr_name='pricing_currency',
-                              source=action_instrument, source_attr_name='pricing_currency')
-                self._set_val(errors=errors, values=self.values, default_value=0.0,
-                              target=instrument, target_attr_name='price_multiplier',
-                              source=action_instrument, source_attr_name='price_multiplier')
-                self._set_rel(errors=errors, values=self.values, default_value=master_user.currency,
-                              target=instrument, target_attr_name='accrued_currency',
-                              source=action_instrument, source_attr_name='accrued_currency')
-                self._set_val(errors=errors, values=self.values, default_value=0.0,
-                              target=instrument, target_attr_name='accrued_multiplier',
-                              source=action_instrument, source_attr_name='accrued_multiplier')
-                self._set_rel(errors=errors, values=self.values, default_value=None,
-                              target=instrument, target_attr_name='payment_size_detail',
-                              source=action_instrument, source_attr_name='payment_size_detail')
-                self._set_val(errors=errors, values=self.values, default_value=0.0,
-                              target=instrument, target_attr_name='default_price',
-                              source=action_instrument, source_attr_name='default_price')
-                self._set_val(errors=errors, values=self.values, default_value=0.0,
-                              target=instrument, target_attr_name='default_accrued',
-                              source=action_instrument, source_attr_name='default_accrued')
-                self._set_val(errors=errors, values=self.values, default_value='',
-                              target=instrument, target_attr_name='user_text_1',
-                              source=action_instrument, source_attr_name='user_text_1')
-                self._set_val(errors=errors, values=self.values, default_value='',
-                              target=instrument, target_attr_name='user_text_2',
-                              source=action_instrument, source_attr_name='user_text_2')
-                self._set_val(errors=errors, values=self.values, default_value='',
-                              target=instrument, target_attr_name='user_text_3',
-                              source=action_instrument, source_attr_name='user_text_3')
-                self._set_val(errors=errors, values=self.values, default_value='',
-                              target=instrument, target_attr_name='reference_for_pricing',
-                              source=action_instrument, source_attr_name='reference_for_pricing')
-                self._set_rel(errors=errors, values=self.values, default_value=None,
-                              target=instrument, target_attr_name='price_download_scheme',
-                              source=action_instrument, source_attr_name='price_download_scheme')
-                self._set_rel(errors=errors, values=self.values, default_value=daily_pricing_model,
-                              target=instrument, target_attr_name='daily_pricing_model',
-                              source=action_instrument, source_attr_name='daily_pricing_model')
-                self._set_val(errors=errors, values=self.values, default_value=date.max,
-                              target=instrument, target_attr_name='maturity_date',
-                              source=action_instrument, source_attr_name='maturity_date',
-                              validator=formula.validate_date)
-                self._set_val(errors=errors, values=self.values, default_value=0.0,
-                              target=instrument, target_attr_name='maturity_price',
-                              source=action_instrument, source_attr_name='maturity_price')
+                    if getattr(action_instrument, 'notes'):
+                        self._set_val(errors=errors, values=self.values, default_value='',
+                                      target=instrument, target_attr_name='notes',
+                                      source=action_instrument, source_attr_name='notes')
+
+                    self._set_rel(errors=errors,
+                                  target=instrument, target_attr_name='instrument_type',
+                                  source=action_instrument, source_attr_name='instrument_type',
+                                  values=self.values, default_value=master_user.instrument_type)
+                    self._set_rel(errors=errors, values=self.values, default_value=master_user.currency,
+                                  target=instrument, target_attr_name='pricing_currency',
+                                  source=action_instrument, source_attr_name='pricing_currency')
+                    self._set_val(errors=errors, values=self.values, default_value=0.0,
+                                  target=instrument, target_attr_name='price_multiplier',
+                                  source=action_instrument, source_attr_name='price_multiplier')
+                    self._set_rel(errors=errors, values=self.values, default_value=master_user.currency,
+                                  target=instrument, target_attr_name='accrued_currency',
+                                  source=action_instrument, source_attr_name='accrued_currency')
+                    self._set_val(errors=errors, values=self.values, default_value=0.0,
+                                  target=instrument, target_attr_name='accrued_multiplier',
+                                  source=action_instrument, source_attr_name='accrued_multiplier')
+                    self._set_rel(errors=errors, values=self.values, default_value=None,
+                                  target=instrument, target_attr_name='payment_size_detail',
+                                  source=action_instrument, source_attr_name='payment_size_detail')
+                    self._set_val(errors=errors, values=self.values, default_value=0.0,
+                                  target=instrument, target_attr_name='default_price',
+                                  source=action_instrument, source_attr_name='default_price')
+                    self._set_val(errors=errors, values=self.values, default_value=0.0,
+                                  target=instrument, target_attr_name='default_accrued',
+                                  source=action_instrument, source_attr_name='default_accrued')
+                    self._set_val(errors=errors, values=self.values, default_value='',
+                                  target=instrument, target_attr_name='user_text_1',
+                                  source=action_instrument, source_attr_name='user_text_1')
+                    self._set_val(errors=errors, values=self.values, default_value='',
+                                  target=instrument, target_attr_name='user_text_2',
+                                  source=action_instrument, source_attr_name='user_text_2')
+                    self._set_val(errors=errors, values=self.values, default_value='',
+                                  target=instrument, target_attr_name='user_text_3',
+                                  source=action_instrument, source_attr_name='user_text_3')
+                    self._set_val(errors=errors, values=self.values, default_value='',
+                                  target=instrument, target_attr_name='reference_for_pricing',
+                                  source=action_instrument, source_attr_name='reference_for_pricing')
+                    self._set_rel(errors=errors, values=self.values, default_value=None,
+                                  target=instrument, target_attr_name='price_download_scheme',
+                                  source=action_instrument, source_attr_name='price_download_scheme')
+                    self._set_rel(errors=errors, values=self.values, default_value=daily_pricing_model,
+                                  target=instrument, target_attr_name='daily_pricing_model',
+                                  source=action_instrument, source_attr_name='daily_pricing_model')
+                    self._set_val(errors=errors, values=self.values, default_value=date.max,
+                                  target=instrument, target_attr_name='maturity_date',
+                                  source=action_instrument, source_attr_name='maturity_date',
+                                  validator=formula.validate_date)
+                    self._set_val(errors=errors, values=self.values, default_value=0.0,
+                                  target=instrument, target_attr_name='maturity_price',
+                                  source=action_instrument, source_attr_name='maturity_price')
 
                 try:
 
-                    if self.complex_transaction and self.complex_transaction.date is not None:
+                    rebook_reaction = action_instrument.rebook_reaction
 
-                        rebook_reaction = action_instrument.rebook_reaction
+                    if self.is_rebook:
 
-                        if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.OVERWRITE,
-                                               RebookReactionChoice.CREATE_IF_NOT_EXIST]:
-
-                            if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST and instrument.pk is not None:
-                                return
+                        if rebook_reaction == RebookReactionChoice.OVERWRITE:
 
                             instrument.save()
 
-                            self._instrument_assign_permission(instrument, object_permissions)
+                        if rebook_reaction == RebookReactionChoice.CREATE and not instrument_exists:
+
+                            instrument.save()
+
+                        if rebook_reaction == RebookReactionChoice.FIND_OR_CREATE:
+
+                            print('Skip')
 
                     else:
 
-                        instrument.save()
+                        if rebook_reaction == RebookReactionChoice.OVERWRITE:
 
-                        self._instrument_assign_permission(instrument, object_permissions)
+                            instrument.save()
+
+                        if rebook_reaction == RebookReactionChoice.CREATE and not instrument_exists:
+
+                            instrument.save()
+
+                        if rebook_reaction == RebookReactionChoice.FIND_OR_CREATE:
+
+                            instrument.save()
+
+                        if not rebook_reaction:
+
+                            instrument.save()
+
+                    self._instrument_assign_permission(instrument, object_permissions)
 
                 except (ValueError, TypeError, IntegrityError):
 
@@ -379,20 +413,61 @@ class TransactionTypeProcess(object):
 
                 try:
 
-                    if self.complex_transaction and self.complex_transaction.date is not None:
+                    rebook_reaction = action_instrument_factor_schedule.rebook_reaction
 
-                        rebook_reaction = action_instrument_factor_schedule.rebook_reaction
+                    if self.is_rebook:
 
-                        if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
-
-                            if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-                                InstrumentFactorSchedule.objects.filter(instrument=factor.instrument).delete()
+                        if rebook_reaction  == RebookReactionChoice.CREATE:
 
                             factor.save()
 
+                        if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
+
+                            print('Skip')
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
+
+                            InstrumentFactorSchedule.objects.filter(instrument=factor.instrument).delete()
+
+                            factor.save()
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
+
+                            print('Skip')
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR:
+
+                            InstrumentFactorSchedule.objects.filter(instrument=factor.instrument).delete()
+
                     else:
 
-                        factor.save()
+                        if rebook_reaction  == RebookReactionChoice.CREATE:
+
+                            factor.save()
+
+                        if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
+
+                            factor.save()
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
+
+                            InstrumentFactorSchedule.objects.filter(instrument=factor.instrument).delete()
+
+                            factor.save()
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
+
+                            InstrumentFactorSchedule.objects.filter(instrument=factor.instrument).delete()
+
+                            factor.save()
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR:
+
+                            InstrumentFactorSchedule.objects.filter(instrument=factor.instrument).delete()
+
+                        if not rebook_reaction:
+
+                            factor.save()
 
 
                 except (ValueError, TypeError, IntegrityError):
@@ -445,21 +520,61 @@ class TransactionTypeProcess(object):
 
                 try:
 
-                    if self.complex_transaction and self.complex_transaction.date is not None:
+                    rebook_reaction = action_instrument_manual_pricing_formula.rebook_reaction
 
-                        rebook_reaction = action_instrument_manual_pricing_formula.rebook_reaction
+                    if self.is_rebook:
 
-                        if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
-
-                            if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-                                ManualPricingFormula.objects.filter(
-                                    instrument=manual_pricing_formula.instrument).delete()
+                        if rebook_reaction  == RebookReactionChoice.CREATE:
 
                             manual_pricing_formula.save()
 
+                        if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
+
+                            print('Skip')
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
+
+                            ManualPricingFormula.objects.filter(instrument=manual_pricing_formula.instrument).delete()
+
+                            manual_pricing_formula.save()
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
+
+                            print('Skip')
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR:
+
+                            ManualPricingFormula.objects.filter(instrument=manual_pricing_formula.instrument).delete()
+
                     else:
 
-                        manual_pricing_formula.save()
+                        if rebook_reaction  == RebookReactionChoice.CREATE:
+
+                            manual_pricing_formula.save()
+
+                        if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
+
+                            manual_pricing_formula.save()
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
+
+                            ManualPricingFormula.objects.filter(instrument=manual_pricing_formula.instrument).delete()
+
+                            manual_pricing_formula.save()
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
+
+                            ManualPricingFormula.objects.filter(instrument=manual_pricing_formula.instrument).delete()
+
+                            manual_pricing_formula.save()
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR:
+
+                            ManualPricingFormula.objects.filter(instrument=manual_pricing_formula.instrument).delete()
+
+                        if not rebook_reaction:
+
+                            manual_pricing_formula.save()
 
                 except (ValueError, TypeError, IntegrityError):
 
@@ -532,21 +647,66 @@ class TransactionTypeProcess(object):
 
                 try:
 
-                    if self.complex_transaction and self.complex_transaction.date is not None:
+                    rebook_reaction = action_instrument_accrual_calculation_schedule.rebook_reaction
 
-                        rebook_reaction = action_instrument_accrual_calculation_schedule.rebook_reaction
+                    if self.is_rebook:
 
-                        if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
-
-                            if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-                                AccrualCalculationSchedule.objects.filter(
-                                    instrument=accrual_calculation_schedule.instrument).delete()
+                        if rebook_reaction  == RebookReactionChoice.CREATE:
 
                             accrual_calculation_schedule.save()
 
+                        if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
+
+                            print('Skip')
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
+
+                            AccrualCalculationSchedule.objects.filter(
+                                instrument=accrual_calculation_schedule.instrument).delete()
+
+                            accrual_calculation_schedule.save()
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
+
+                            print('Skip')
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR:
+
+                            AccrualCalculationSchedule.objects.filter(
+                                instrument=accrual_calculation_schedule.instrument).delete()
+
                     else:
 
-                        accrual_calculation_schedule.save()
+                        if rebook_reaction  == RebookReactionChoice.CREATE:
+
+                            accrual_calculation_schedule.save()
+
+                        if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
+
+                            accrual_calculation_schedule.save()
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
+
+                            AccrualCalculationSchedule.objects.filter(
+                                instrument=accrual_calculation_schedule.instrument).delete()
+
+                            accrual_calculation_schedule.save()
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
+
+                            AccrualCalculationSchedule.objects.filter(
+                                instrument=accrual_calculation_schedule.instrument).delete()
+
+                            accrual_calculation_schedule.save()
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR:
+
+                            AccrualCalculationSchedule.objects.filter(
+                                instrument=accrual_calculation_schedule.instrument).delete()
+
+                        if not rebook_reaction:
+
+                            accrual_calculation_schedule.save()
 
                 except (ValueError, TypeError, IntegrityError):
 
@@ -628,20 +788,61 @@ class TransactionTypeProcess(object):
 
                 try:
 
-                    if self.complex_transaction and self.complex_transaction.date is not None:
+                    rebook_reaction = action_instrument_event_schedule.rebook_reaction
 
-                        rebook_reaction = action_instrument_event_schedule.rebook_reaction
+                    if self.is_rebook:
 
-                        if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
-
-                            if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-                                EventSchedule.objects.filter(instrument=event_schedule.instrument).delete()
+                        if rebook_reaction  == RebookReactionChoice.CREATE:
 
                             event_schedule.save()
 
+                        if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
+
+                            print('Skip')
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
+
+                            EventSchedule.objects.filter(instrument=event_schedule.instrument).delete()
+
+                            event_schedule.save()
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
+
+                            print('Skip')
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR:
+
+                            EventSchedule.objects.filter(instrument=event_schedule.instrument).delete()
+
                     else:
 
-                        event_schedule.save()
+                        if rebook_reaction  == RebookReactionChoice.CREATE:
+
+                            event_schedule.save()
+
+                        if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
+
+                            event_schedule.save()
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
+
+                            EventSchedule.objects.filter(instrument=event_schedule.instrument).delete()
+
+                            event_schedule.save()
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
+
+                            EventSchedule.objects.filter(instrument=event_schedule.instrument).delete()
+
+                            event_schedule.save()
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR:
+
+                            EventSchedule.objects.filter(instrument=event_schedule.instrument).delete()
+
+                        if not rebook_reaction:
+
+                            event_schedule.save()
 
                 except (ValueError, TypeError, IntegrityError):
 
@@ -710,21 +911,66 @@ class TransactionTypeProcess(object):
 
                 try:
 
-                    if self.complex_transaction and self.complex_transaction.date is not None:
+                    rebook_reaction = action_instrument_event_schedule_action.rebook_reaction
 
-                        rebook_reaction = action_instrument_event_schedule_action.rebook_reaction
+                    if self.is_rebook:
 
-                        if rebook_reaction in [RebookReactionChoice.CREATE, RebookReactionChoice.CLEAR_AND_WRITE]:
-
-                            if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-                                EventScheduleAction.objects.filter(
-                                    event_schedule=event_schedule_action.event_schedule).delete()
+                        if rebook_reaction  == RebookReactionChoice.CREATE:
 
                             event_schedule_action.save()
 
+                        if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
+
+                            print('Skip')
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
+
+                            EventScheduleAction.objects.filter(
+                                event_schedule=event_schedule_action.event_schedule).delete()
+
+                            event_schedule_action.save()
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
+
+                            print('Skip')
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR:
+
+                            EventScheduleAction.objects.filter(
+                                event_schedule=event_schedule_action.event_schedule).delete()
+
                     else:
 
-                        event_schedule_action.save()
+                        if rebook_reaction  == RebookReactionChoice.CREATE:
+
+                            event_schedule_action.save()
+
+                        if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
+
+                            event_schedule_action.save()
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
+
+                            EventScheduleAction.objects.filter(
+                                event_schedule=event_schedule_action.event_schedule).delete()
+
+                            event_schedule_action.save()
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
+
+                            EventScheduleAction.objects.filter(
+                                event_schedule=event_schedule_action.event_schedule).delete()
+
+                            event_schedule_action.save()
+
+                        if rebook_reaction == RebookReactionChoice.CLEAR:
+
+                            EventScheduleAction.objects.filter(
+                                event_schedule=event_schedule_action.event_schedule).delete()
+
+                        if not rebook_reaction:
+
+                            event_schedule_action.save()
 
                 except (ValueError, TypeError, IntegrityError) as e:
 
@@ -1062,6 +1308,7 @@ class TransactionTypeProcess(object):
             self.complex_transaction.date = self._now
 
     def process(self):
+
         if self.process_mode == self.MODE_RECALCULATE:
             return self.process_recalculate()
         _l.debug('process: %s, values=%s', self.transaction_type, self.values)

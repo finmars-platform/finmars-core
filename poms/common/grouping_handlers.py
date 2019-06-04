@@ -311,7 +311,10 @@ def is_root_groups_configuration(groups_types, groups_values):
 
 def format_groups(group_type):
     if 'attributes.' in group_type:
-        return group_type.split('attributes.')[1]
+
+        attribute_type = GenericAttributeType.objects.get(user_code__exact=group_type.split('attributes.')[1])
+
+        return str(attribute_type.id)
 
     return group_type
 

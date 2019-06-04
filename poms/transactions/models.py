@@ -571,12 +571,16 @@ class TransactionTypeInput(models.Model):
 
 
 class RebookReactionChoice():
+
     CREATE = 0
-    SKIP = 1
+    SKIP = 1 # is not in use
     OVERWRITE = 2
     CLEAR_AND_WRITE = 3
-
     CREATE_IF_NOT_EXIST = 4
+
+    FIND_OR_CREATE = 5
+    CLEAR_AND_WRITE_OR_SKIP = 6
+    CLEAR = 7
 
     choices = ((CREATE, 'Create'),  # simple entity create
                (SKIP, 'Skip'),  # skip creating of entity

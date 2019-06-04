@@ -25,7 +25,7 @@ def sort_by_dynamic_attrs(request, queryset):
             print('order %s' % order)
             print('key %s' % key)
 
-            attribute_type = GenericAttributeType.objects.get(id__exact=key)
+            attribute_type = GenericAttributeType.objects.get(user_code__exact=key)
 
             attributes_queryset = GenericAttribute.objects.filter(attribute_type=attribute_type, object_id__in=queryset)
 
