@@ -412,9 +412,9 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
 
                             instance['attributes'].append(executed_attr)
 
-                if inputs_error:
+                error_row['error_data']['data']['data_matching'] = executed_expressions
 
-                    error_row['error_data']['data']['data_matching'] = executed_expressions
+                if inputs_error:
 
                     inputs_messages = []
 
@@ -574,6 +574,7 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
 
         except CoreValidationError as e:
 
+            process_errors[index]['error_reaction'] = 'Continue import'
             process_errors[index]['level'] = 'error'
             process_errors[index]['error_message'] = process_errors[index]['error_message'] + ugettext(
                 'Validation error %(error)s ') % {
@@ -581,6 +582,7 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
                                                      },
 
             if error_handler == 'break':
+                process_errors[index]['error_reaction'] = 'Break import'
                 return process_errors
 
     def instance_overwrite_full_clean(self, scheme, result, item, process_errors, error_handler, index):
@@ -607,6 +609,7 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
 
         except CoreValidationError as e:
 
+            process_errors[index]['error_reaction'] = 'Continue import'
             process_errors[index]['level'] = 'error'
             process_errors[index]['error_message'] = process_errors[index]['error_message'] + ugettext(
                 'Validation error %(error)s ') % {
@@ -614,6 +617,7 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
                                                      }
 
             if error_handler == 'break':
+                process_errors[index]['error_reaction'] = 'Break import'
                 return process_errors
 
     def full_clean_results(self, scheme, error_handler, mode, results, process_errors):
@@ -637,7 +641,7 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
             elif mode == 'skip' and item:
 
                 process_errors[index]['level'] = 'error'
-                process_errors[index]['error_reaction'] = 'Skip'
+                process_errors[index]['error_reaction'] = 'Skipped'
                 process_errors[index]['error_message'] = process_errors[index]['error_message'] + str(ugettext(
                     'Entry already exists '))
 
@@ -798,6 +802,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
         except ValidationError as e:
 
+            process_errors[index]['error_reaction'] = 'Continue import'
             process_errors[index]['level'] = 'error'
             process_errors[index]['error_message'] = process_errors[index]['error_message'] + ugettext(
                 'Validation error %(error)s ') % {
@@ -805,6 +810,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
                                                      }
 
             if error_handler == 'break':
+                process_errors[index]['error_reaction'] = 'Break import'
                 return process_errors
 
     def overwrite_instance(self, scheme, result, item, process_errors, error_handler, index):
@@ -832,6 +838,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
         except ValidationError as e:
 
+            process_errors[index]['error_reaction'] = 'Continue import'
             process_errors[index]['level'] = 'error'
             process_errors[index]['error_message'] = process_errors[index]['error_message'] + str(ugettext(
                 'Validation error %(error)s ') % {
@@ -839,6 +846,7 @@ class CsvDataImportViewSet(AbstractModelViewSet):
                                                                                                   })
 
             if error_handler == 'break':
+                process_errors[index]['error_reaction'] = 'Break import'
                 return process_errors
 
     def import_results(self, scheme, error_handler, mode, results, process_errors):
