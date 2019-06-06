@@ -1283,6 +1283,7 @@ def complex_transaction_csv_file_import(instance):
                             tt_process.process()
 
                             instance.processed_rows = instance.processed_rows + 1
+                            instance.save()
 
                         except:
                             _l.info("can't process transaction type", exc_info=True)
@@ -1315,6 +1316,7 @@ def complex_transaction_csv_file_import(instance):
                 tmpf.flush()
                 with open(tmpf.name, mode='rt', encoding=instance.encoding) as cfr:
                     instance.total_rows = _row_count(cfr)
+                    instance.save()
                 with open(tmpf.name, mode='rt', encoding=instance.encoding) as cf:
                     _process_csv_file(cf)
     # except csv.Error:
@@ -1339,7 +1341,6 @@ def complex_transaction_csv_file_import_validate(instance):
     from poms.transactions.models import TransactionTypeInput
 
     instance.processed_rows = 0
-
     _l.debug('complex_transaction_file_import: %s', instance)
 
     scheme = instance.scheme
@@ -1606,6 +1607,8 @@ def complex_transaction_csv_file_import_validate(instance):
                             continue
 
                     instance.processed_rows = instance.processed_rows + 1
+                    instance.save()
+                    # self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING, meta={'processed_rows': instance.processed_rows, 'total_rows': instance.total_rows})
 
             _l.debug('instance', instance)
 
@@ -1627,6 +1630,8 @@ def complex_transaction_csv_file_import_validate(instance):
                 tmpf.flush()
                 with open(tmpf.name, mode='rt', encoding=instance.encoding) as cfr:
                     instance.total_rows = _row_count(cfr)
+                    instance.save()
+                    # self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING, meta={'total_rows': instance.total_rows})
 
                 with open(tmpf.name, mode='rt', encoding=instance.encoding) as cf:
                     _validate_process_csv_file(cf)

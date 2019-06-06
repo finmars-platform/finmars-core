@@ -237,8 +237,6 @@ class AbstractAsyncViewSet(AbstractViewSet):
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
-        print('instance %s ' % instance)
-
         task_id = instance.task_id
 
         signer = TimestampSigner()
@@ -247,16 +245,11 @@ class AbstractAsyncViewSet(AbstractViewSet):
 
             res = AsyncResult(signer.unsign(task_id))
 
-            print('TASK %s ' % res)
-
             st = time.perf_counter()
 
             if res.ready():
-                print('TASK READY')
 
                 instance = res.result
-
-                print('instance %s' % instance)
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
 
@@ -265,6 +258,7 @@ class AbstractAsyncViewSet(AbstractViewSet):
             if instance.master_user.id != request.user.master_user.id:
                 raise PermissionDenied()
 
+            print('TASK RESULT %s' % res.result)
             print('TASK STATUS %s' % res.status)
 
             instance.task_id = task_id
@@ -304,6 +298,7 @@ class AbstractSyncViewSet(AbstractViewSet):
 
         res.task_id = 1
         res.task_status = "SUCCESS"
+
 
         print('res.task_id %s' % res.task_id)
         print('res.task_status %s' % res.task_status)
