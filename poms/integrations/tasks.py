@@ -1025,8 +1025,8 @@ def download_pricing_auto_scheduler(self):
 #             file_import_delete_async.apply_async(kwargs={'path': path}, countdown=countdown)
 
 
-@shared_task(name='integrations.complex_transaction_csv_file_import')
-def complex_transaction_csv_file_import(instance):
+@shared_task(name='integrations.complex_transaction_csv_file_import', bind=True)
+def complex_transaction_csv_file_import(self, instance):
     from poms.transactions.models import TransactionTypeInput
 
     _l.debug('complex_transaction_file_import: %s', instance)
@@ -1283,7 +1283,8 @@ def complex_transaction_csv_file_import(instance):
                             tt_process.process()
 
                             instance.processed_rows = instance.processed_rows + 1
-                            instance.save()
+                            # instance.save()
+                            self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING, meta={'total_rows': instance.total_rows})
 
                         except:
                             _l.info("can't process transaction type", exc_info=True)
@@ -1316,7 +1317,8 @@ def complex_transaction_csv_file_import(instance):
                 tmpf.flush()
                 with open(tmpf.name, mode='rt', encoding=instance.encoding) as cfr:
                     instance.total_rows = _row_count(cfr)
-                    instance.save()
+                    self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING, meta={'total_rows': instance.total_rows})
+                    # instance.save()
                 with open(tmpf.name, mode='rt', encoding=instance.encoding) as cf:
                     _process_csv_file(cf)
     # except csv.Error:
@@ -1336,8 +1338,8 @@ def complex_transaction_csv_file_import(instance):
     return instance
 
 
-@shared_task(name='integrations.complex_transaction_csv_file_import_validate')
-def complex_transaction_csv_file_import_validate(instance):
+@shared_task(name='integrations.complex_transaction_csv_file_import_validate', bind=True)
+def complex_transaction_csv_file_import_validate(self, instance):
     from poms.transactions.models import TransactionTypeInput
 
     instance.processed_rows = 0
@@ -1607,8 +1609,8 @@ def complex_transaction_csv_file_import_validate(instance):
                             continue
 
                     instance.processed_rows = instance.processed_rows + 1
-                    instance.save()
-                    # self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING, meta={'processed_rows': instance.processed_rows, 'total_rows': instance.total_rows})
+                    # instance.save()
+                    self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING, meta={'processed_rows': instance.processed_rows, 'total_rows': instance.total_rows})
 
             _l.debug('instance', instance)
 
@@ -1630,8 +1632,8 @@ def complex_transaction_csv_file_import_validate(instance):
                 tmpf.flush()
                 with open(tmpf.name, mode='rt', encoding=instance.encoding) as cfr:
                     instance.total_rows = _row_count(cfr)
-                    instance.save()
-                    # self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING, meta={'total_rows': instance.total_rows})
+                    # instance.save()
+                    self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING, meta={'total_rows': instance.total_rows})
 
                 with open(tmpf.name, mode='rt', encoding=instance.encoding) as cf:
                     _validate_process_csv_file(cf)
