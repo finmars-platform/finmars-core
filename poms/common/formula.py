@@ -1463,7 +1463,30 @@ def value_prepare(orig):
                 continue
 
             elif k == 'attributes':
+
+                if 'attributes' not in ret:
+                    ret[k] = {}
+
                 from poms.obj_attrs.models import GenericAttributeType
+
+                # oattrs = _value(v)
+                # nattrs = OrderedDict()
+                # for attr in oattrs:
+                #     attr_t = attr['attribute_type']
+                #     attr_n = attr_t['user_code']
+                #     val_t = attr_t['value_type']
+                #     if val_t == GenericAttributeType.CLASSIFIER:
+                #         attr['value'] = attr['classifier']
+                #     elif val_t == GenericAttributeType.NUMBER:
+                #         attr['value'] = attr['value_float']
+                #     elif val_t == GenericAttributeType.DATE:
+                #         attr['value'] = attr['value_date']
+                #     elif val_t == GenericAttributeType.STRING:
+                #         attr['value'] = attr['value_string']
+                #     else:
+                #         attr['value'] = None
+                #     nattrs[attr_n] = attr
+                # ret[k] = nattrs
 
                 oattrs = _value(v)
                 nattrs = OrderedDict()
@@ -1471,18 +1494,24 @@ def value_prepare(orig):
                     attr_t = attr['attribute_type']
                     attr_n = attr_t['user_code']
                     val_t = attr_t['value_type']
+
                     if val_t == GenericAttributeType.CLASSIFIER:
-                        attr['value'] = attr['classifier']
+
+                        if attr['classifier']:
+                            ret[k][attr_n] = attr['classifier']['name']
+                        else:
+                            ret[k][attr_n] = None
                     elif val_t == GenericAttributeType.NUMBER:
-                        attr['value'] = attr['value_float']
+                        ret[k][attr_n] = attr['value_float']
                     elif val_t == GenericAttributeType.DATE:
-                        attr['value'] = attr['value_date']
+                        ret[k][attr_n] = attr['value_date']
                     elif val_t == GenericAttributeType.STRING:
-                        attr['value'] = attr['value_string']
+                        ret[k][attr_n] = attr['value_string']
                     else:
-                        attr['value'] = None
-                    nattrs[attr_n] = attr
-                ret[k] = nattrs
+                        ret[k][attr_n] = None
+
+                # print('ret[k] %s' % ret[k])
+
 
             elif k.endswith('_object'):
                 k = k[:-7]
