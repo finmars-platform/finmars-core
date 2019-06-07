@@ -1284,7 +1284,8 @@ def complex_transaction_csv_file_import(self, instance):
 
                             instance.processed_rows = instance.processed_rows + 1
                             # instance.save()
-                            self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING, meta={'total_rows': instance.total_rows})
+                            self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING, meta={'processed_rows': instance.processed_rows, 'total_rows': instance.total_rows})
+
 
                         except:
                             _l.info("can't process transaction type", exc_info=True)

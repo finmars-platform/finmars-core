@@ -941,8 +941,11 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
             else:
 
                 if res.result:
-                    instance.processed_rows = res.result['processed_rows']
-                    instance.total_rows = res.result['total_rows']
+
+                    if 'processed_rows' in res.result:
+                        instance.processed_rows = res.result['processed_rows']
+                    if 'total_rows' in res.result:
+                        instance.total_rows = res.result['total_rows']
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
 
@@ -1004,8 +1007,10 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
             else:
 
                 if res.result:
-                    instance.processed_rows = res.result['processed_rows']
-                    instance.total_rows = res.result['total_rows']
+                    if 'processed_rows' in res.result:
+                        instance.processed_rows = res.result['processed_rows']
+                    if 'total_rows' in res.result:
+                        instance.total_rows = res.result['total_rows']
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
 
