@@ -60,6 +60,7 @@ from rest_framework.exceptions import PermissionDenied
 
 import time
 
+
 class ProviderClassViewSet(AbstractClassModelViewSet):
     queryset = ProviderClass.objects
     serializer_class = ProviderClassSerializer
@@ -390,7 +391,6 @@ class PricingPolicyMappingViewSet(AbstractMappingViewSet):
     filter_class = PricingPolicyMappingFilterSet
 
 
-
 class AccountTypeMappingFilterSet(AbstractMappingFilterSet):
     content_object = ModelExtWithPermissionMultipleChoiceFilter(model=AccountType)
 
@@ -407,7 +407,6 @@ class AccountTypeMappingViewSet(AbstractMappingViewSet):
         AccountTypeMappingObjectPermissionFilter,
     ]
     filter_class = AccountTypeMappingFilterSet
-
 
 
 class InstrumentTypeMappingFilterSet(AbstractMappingFilterSet):
@@ -482,12 +481,13 @@ class AccountMappingFilterSet(AbstractMappingFilterSet):
     class Meta(AbstractMappingFilterSet.Meta):
         model = AccountMapping
 
-class AccountClassifierMappingFilterSet(AbstractMappingFilterSet):
 
+class AccountClassifierMappingFilterSet(AbstractMappingFilterSet):
     attribute_type = ModelExtWithPermissionMultipleChoiceFilter(model=GenericAttributeType)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = AccountClassifierMapping
+
 
 class AccountMappingViewSet(AbstractMappingViewSet):
     queryset = AccountMapping.objects.select_related(
@@ -498,6 +498,7 @@ class AccountMappingViewSet(AbstractMappingViewSet):
         AccountMappingObjectPermissionFilter,
     ]
     filter_class = AccountMappingFilterSet
+
 
 class AccountClassifierMappingViewSet(AbstractMappingViewSet):
     queryset = AccountClassifierMapping.objects.select_related(
@@ -529,7 +530,6 @@ class InstrumentMappingViewSet(AbstractMappingViewSet):
 
 
 class InstrumentClassifierMappingFilterSet(AbstractMappingFilterSet):
-
     attribute_type = ModelExtWithPermissionMultipleChoiceFilter(model=GenericAttributeType)
 
     class Meta(AbstractMappingFilterSet.Meta):
@@ -553,8 +553,8 @@ class CounterpartyMappingFilterSet(AbstractMappingFilterSet):
     class Meta(AbstractMappingFilterSet.Meta):
         model = CounterpartyMapping
 
-class CounterpartyClassifierMappingFilterSet(AbstractMappingFilterSet):
 
+class CounterpartyClassifierMappingFilterSet(AbstractMappingFilterSet):
     attribute_type = ModelExtWithPermissionMultipleChoiceFilter(model=GenericAttributeType)
 
     class Meta(AbstractMappingFilterSet.Meta):
@@ -591,7 +591,6 @@ class ResponsibleMappingFilterSet(AbstractMappingFilterSet):
 
 
 class ResponsibleClassifierMappingFilterSet(AbstractMappingFilterSet):
-
     attribute_type = ModelExtWithPermissionMultipleChoiceFilter(model=GenericAttributeType)
 
     class Meta(AbstractMappingFilterSet.Meta):
@@ -628,11 +627,11 @@ class PortfolioMappingFilterSet(AbstractMappingFilterSet):
 
 
 class PortfolioClassifierMappingFilterSet(AbstractMappingFilterSet):
-
     attribute_type = ModelExtWithPermissionMultipleChoiceFilter(model=GenericAttributeType)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = PortfolioClassifierMapping
+
 
 class PortfolioMappingViewSet(AbstractMappingViewSet):
     queryset = PortfolioMapping.objects.select_related(
@@ -643,6 +642,7 @@ class PortfolioMappingViewSet(AbstractMappingViewSet):
         PortfolioMappingObjectPermissionFilter,
     ]
     filter_class = PortfolioMappingFilterSet
+
 
 class PortfolioClassifierMappingViewSet(AbstractMappingViewSet):
     queryset = PortfolioClassifierMapping.objects.select_related(
@@ -833,7 +833,6 @@ class ImportPricingViewSet(AbstractViewSet):
 # ----------------------------------------
 
 
-
 class ComplexTransactionImportSchemeFilterSet(FilterSet):
     id = NoOpFilter()
     provider = django_filters.ModelMultipleChoiceFilter(queryset=ProviderClass.objects)
@@ -896,7 +895,6 @@ class ComplexTransactionImportSchemeViewSet(AbstractModelViewSet):
 #     ]
 
 
-
 # class AbstractFileImportViewSet(AbstractViewSet):
 #     serializer_class = AbstractFileImportSerializer
 #
@@ -942,8 +940,9 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
 
             else:
 
-                instance.processed_rows = res.result['processed_rows']
-                instance.total_rows = res.result['total_rows']
+                if res.result:
+                    instance.processed_rows = res.result['processed_rows']
+                    instance.total_rows = res.result['total_rows']
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
 
@@ -1004,9 +1003,9 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
 
             else:
 
-                instance.processed_rows = res.result['processed_rows']
-                instance.total_rows = res.result['total_rows']
-
+                if res.result:
+                    instance.processed_rows = res.result['processed_rows']
+                    instance.total_rows = res.result['total_rows']
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
 
@@ -1034,4 +1033,3 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
-
