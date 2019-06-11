@@ -160,7 +160,15 @@ class AbstractProvider(object):
         for input in instrument_download_scheme.inputs.all():
             for key, value in values.items():
                 if input.name == key:
-                    values_converted[key] = formula.safe_eval(input.name_expr, names=values)
+
+                    try:
+                        values_converted[key] = formula.safe_eval(input.name_expr, names=values)
+                    except formula.InvalidExpression:
+                        _l.debug('Invalid instrument attribute expression conversion: id=%s, input=%s, expr=%s, values=%s',
+                                 instrument_download_scheme.id, input, input.name_expr, values)
+                        errors[input] = [ugettext_lazy('Invalid expression.')]
+                        continue
+
 
         for attr in InstrumentDownloadScheme.BASIC_FIELDS:
             expr = getattr(instrument_download_scheme, attr)
