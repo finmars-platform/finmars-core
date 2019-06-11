@@ -433,7 +433,39 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
     @detail_route(methods=['get', 'put'], url_path='book', serializer_class=TransactionTypeProcessSerializer)
     def book(self, request, pk=None):
 
-        instance = TransactionTypeProcess(process_mode='book', transaction_type=self.get_object(), context=self.get_serializer_context())
+        complex_transaction_status = ComplexTransaction.PRODUCTION
+
+        instance = TransactionTypeProcess(process_mode='book', transaction_type=self.get_object(),
+                                          context=self.get_serializer_context(),
+                                          complex_transaction_status=complex_transaction_status)
+
+        if request.method == 'GET':
+            serializer = self.get_serializer(instance=instance)
+            return Response(serializer.data)
+        else:
+            try:
+                history.set_flag_addition()
+
+                serializer = self.get_serializer(instance=instance, data=request.data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+
+                history.set_actor_content_object(instance.complex_transaction)
+
+                return Response(serializer.data)
+            finally:
+                if instance.has_errors:
+                    transaction.set_rollback(True)
+
+    @detail_route(methods=['get', 'put'], url_path='book-pending', serializer_class=TransactionTypeProcessSerializer)
+    def book_pending(self, request, pk=None):
+
+        complex_transaction_status = ComplexTransaction.PENDING
+
+        instance = TransactionTypeProcess(process_mode='book', transaction_type=self.get_object(),
+                                          context=self.get_serializer_context(),
+                                          complex_transaction_status=complex_transaction_status)
+
         if request.method == 'GET':
             serializer = self.get_serializer(instance=instance)
             return Response(serializer.data)
@@ -982,9 +1014,41 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
             is_deleted=instance.is_deleted
         )
 
-    @detail_route(methods=['get', 'put'], url_path='book', serializer_class=TransactionTypeProcessSerializer)
-    def book(self, request, pk=None):
+    @detail_route(methods=['get', 'put'], url_path='rebook', serializer_class=TransactionTypeProcessSerializer)
+    def rebook(self, request, pk=None):
         complex_transaction = self.get_object()
+
+        complex_transaction.status = ComplexTransaction.PRODUCTION
+
+        instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
+                                          process_mode='rebook',
+                                          complex_transaction=complex_transaction,
+                                          context=self.get_serializer_context())
+        if request.method == 'GET':
+            serializer = self.get_serializer(instance=instance)
+            return Response(serializer.data)
+        else:
+            try:
+                history.set_flag_change()
+
+                serializer = self.get_serializer(instance=instance, data=request.data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+
+                history.set_actor_content_object(complex_transaction)
+
+                return Response(serializer.data)
+            finally:
+                if instance.has_errors:
+                    transaction.set_rollback(True)
+
+    @detail_route(methods=['get', 'put'], url_path='rebook-pending', serializer_class=TransactionTypeProcessSerializer)
+    def rebook_pending(self, request, pk=None):
+
+        complex_transaction = self.get_object()
+
+        complex_transaction.status = ComplexTransaction.PENDING
+
         instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
                                           process_mode='rebook',
                                           complex_transaction=complex_transaction,
