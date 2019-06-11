@@ -1178,7 +1178,7 @@ def complex_transaction_csv_file_import(self, instance):
             for i in scheme_inputs:
 
                 error_rows['error_data']['columns']['converted_imported_columns'].append(
-                    i.name + ': Conversion Expression')
+                    i.name + ': Conversion Expression ' + '(' + i.name_expr + ')')
 
                 try:
                     inputs[i.name] = formula.safe_eval(i.name_expr, names=inputs_raw)
@@ -1284,7 +1284,9 @@ def complex_transaction_csv_file_import(self, instance):
 
                             instance.processed_rows = instance.processed_rows + 1
                             # instance.save()
-                            self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING, meta={'processed_rows': instance.processed_rows, 'total_rows': instance.total_rows})
+                            self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
+                                              meta={'processed_rows': instance.processed_rows,
+                                                    'total_rows': instance.total_rows})
 
 
                         except:
@@ -1318,7 +1320,8 @@ def complex_transaction_csv_file_import(self, instance):
                 tmpf.flush()
                 with open(tmpf.name, mode='rt', encoding=instance.encoding) as cfr:
                     instance.total_rows = _row_count(cfr)
-                    self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING, meta={'total_rows': instance.total_rows})
+                    self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
+                                      meta={'total_rows': instance.total_rows})
                     # instance.save()
                 with open(tmpf.name, mode='rt', encoding=instance.encoding) as cf:
                     _process_csv_file(cf)
@@ -1485,7 +1488,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
             for i in scheme_inputs:
 
                 error_rows['error_data']['columns']['converted_imported_columns'].append(
-                    i.name + ': Conversion Expression')
+                    i.name + ': Conversion Expression ' + '(' + i.name_expr + ')')
 
                 try:
                     inputs[i.name] = formula.safe_eval(i.name_expr, names=inputs_raw)
@@ -1611,7 +1614,9 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                     instance.processed_rows = instance.processed_rows + 1
                     # instance.save()
-                    self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING, meta={'processed_rows': instance.processed_rows, 'total_rows': instance.total_rows})
+                    self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
+                                      meta={'processed_rows': instance.processed_rows,
+                                            'total_rows': instance.total_rows})
 
             _l.debug('instance', instance)
 
@@ -1634,7 +1639,8 @@ def complex_transaction_csv_file_import_validate(self, instance):
                 with open(tmpf.name, mode='rt', encoding=instance.encoding) as cfr:
                     instance.total_rows = _row_count(cfr)
                     # instance.save()
-                    self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING, meta={'total_rows': instance.total_rows})
+                    self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
+                                      meta={'total_rows': instance.total_rows})
 
                 with open(tmpf.name, mode='rt', encoding=instance.encoding) as cf:
                     _validate_process_csv_file(cf)
