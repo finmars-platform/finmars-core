@@ -455,7 +455,7 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
 
             else:
 
-                error_row['level'] = 'error'
+                error_row['level'] = 'info'
                 error_row['error_message'] = 'Row was skipped'
                 error_row['error_reaction'] = 'Skipped'
                 errors.append(error_row)
