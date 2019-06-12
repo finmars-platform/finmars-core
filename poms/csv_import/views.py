@@ -38,6 +38,8 @@ from .serializers import CsvDataImportSerializer, CsvImportSchemeSerializer
 
 from logging import getLogger
 
+import re
+
 _l = getLogger('poms.csv_import')
 
 
@@ -674,7 +676,16 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
 
         delimiter = delimiter.encode('utf-8').decode('unicode_escape')
 
-        rows = list(map(lambda x: x.split(delimiter), rows))
+        expr = r',(?=")'
+
+        if delimiter == ',':
+            expr = r',(?=")'
+        elif delimiter == ';':
+            expr = r';(?=")'
+        elif delimiter == '\t':
+            expr = r'\t(?=")'
+
+        rows = list(map(lambda x: re.split(expr, x), rows))
 
         rows_total = len(rows)
 
@@ -899,7 +910,16 @@ class CsvDataImportViewSet(AbstractModelViewSet):
 
         delimiter = delimiter.encode('utf-8').decode('unicode_escape')
 
-        rows = list(map(lambda x: x.split(delimiter), rows))
+        expr = r',(?=")'
+
+        if delimiter == ',':
+            expr = r',(?=")'
+        elif delimiter == ';':
+            expr = r';(?=")'
+        elif delimiter == '\t':
+            expr = r'\t(?=")'
+
+        rows = list(map(lambda x: re.split(expr, x), rows))
 
         rows_total = len(rows)
 

@@ -1125,7 +1125,7 @@ def complex_transaction_csv_file_import(self, instance):
         delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
 
         reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
-                            strict=False)
+                            strict=False, skipinitialspace=True)
 
         for row_index, row in enumerate(reader):
 
@@ -1435,7 +1435,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
         delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
 
         reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
-                            strict=False)
+                            strict=False, skipinitialspace=True)
 
         for row_index, row in enumerate(reader):
 
