@@ -39,6 +39,8 @@ from .serializers import CsvDataImportSerializer, CsvImportSchemeSerializer
 from logging import getLogger
 
 import re
+from io import StringIO
+import csv
 
 _l = getLogger('poms.csv_import')
 
@@ -671,21 +673,21 @@ class CsvDataImportValidateViewSet(AbstractModelViewSet):
         if not request.data['file'].name.endswith('.csv'):
             raise ValidationError('File is not csv format')
 
-        csv_contents = request.data['file'].read().decode('utf-8-sig')
-        rows = csv_contents.splitlines()
+        # csv_contents = request.data['file'].read().decode('utf-8-sig')
+        # rows = csv_contents.splitlines()
 
         delimiter = delimiter.encode('utf-8').decode('unicode_escape')
 
-        expr = r',(?=")'
+        rows = []
 
-        if delimiter == ',':
-            expr = r',(?=")'
-        elif delimiter == ';':
-            expr = r';(?=")'
-        elif delimiter == '\t':
-            expr = r'\t(?=")'
+        scsv = request.data['file'].read().decode('utf-8-sig')
 
-        rows = list(map(lambda x: re.split(expr, x), rows))
+        f = StringIO(scsv)
+        reader = csv.reader(f, delimiter=delimiter, strict=False, skipinitialspace=True)
+        for row in reader:
+            rows.append(row)
+
+        # rows = list(map(lambda x: re.split(delimiter, x), rows))
 
         rows_total = len(rows)
 
@@ -905,21 +907,19 @@ class CsvDataImportViewSet(AbstractModelViewSet):
         if not request.data['file'].name.endswith('.csv'):
             raise ValidationError('File is not csv format')
 
-        csv_contents = request.data['file'].read().decode('utf-8-sig')
-        rows = csv_contents.splitlines()
+        # csv_contents = request.data['file'].read().decode('utf-8-sig')
+        # rows = csv_contents.splitlines()
 
         delimiter = delimiter.encode('utf-8').decode('unicode_escape')
 
-        expr = r',(?=")'
+        rows = []
 
-        if delimiter == ',':
-            expr = r',(?=")'
-        elif delimiter == ';':
-            expr = r';(?=")'
-        elif delimiter == '\t':
-            expr = r'\t(?=")'
+        scsv = request.data['file'].read().decode('utf-8-sig')
 
-        rows = list(map(lambda x: re.split(expr, x), rows))
+        f = StringIO(scsv)
+        reader = csv.reader(f, delimiter=delimiter, strict=False, skipinitialspace=True)
+        for row in reader:
+            rows.append(row)
 
         rows_total = len(rows)
 
