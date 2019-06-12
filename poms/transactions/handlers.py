@@ -187,15 +187,16 @@ class TransactionTypeProcess(object):
             value = None
             if i.value_type == TransactionTypeInput.RELATION:
                 model_class = i.content_type.model_class()
-                if i.is_fill_from_context:
-                    for k, v in self.default_values.items():
-                        if isinstance(v, model_class):
-                            value = v
-                            break
+                # if i.is_fill_from_context:
+                for k, v in self.default_values.items():
+                    if isinstance(v, model_class):
+                        value = v
+                        break
                 if value is None:
                     value = _get_val_by_model_cls(i, model_class)
             else:
-                if i.is_fill_from_context and i.name in self.default_values:
+                # if i.is_fill_from_context and i.name in self.default_values:
+                if i.name in self.default_values:
                     value = self.default_values[i.name]
                 if value is None:
 
