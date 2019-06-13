@@ -310,8 +310,17 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
 
                                         if missing_data_handler == 'set_defaults':
 
-                                            instance[key] = mapping_map[key].objects.get(master_user=master_user,
-                                                                                         value='-').content_object
+                                            if key == 'price_download_scheme':
+                                                instance[key] = relation_map[key].objects.get(master_user=master_user,
+                                                                                              scheme_name='-')
+                                            elif key == 'daily_pricing_model' or key == 'payment_size_detail':
+                                                instance[key] = relation_map[key].objects.get(system_code='-')
+                                            else:
+                                                instance[key] = relation_map[key].objects.get(master_user=master_user,
+                                                                                              user_code='-')
+
+                                            print('instance[key] %s' % instance[key])
+
                                         else:
 
                                             inputs_error.append(
@@ -496,6 +505,8 @@ def get_item(scheme, result):
     else:
 
         try:
+
+            print('result %s' % result)
 
             item_result = Model.objects.get(master_user_id=result['master_user'], user_code=result['user_code'])
 

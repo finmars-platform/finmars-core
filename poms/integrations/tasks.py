@@ -1104,7 +1104,14 @@ def complex_transaction_csv_file_import(self, instance):
                 except (model_class.DoesNotExist, KeyError):
 
                     if instance.missing_data_handler == 'set_defaults':
-                        v = model_map_class.objects.get(master_user=instance.master_user, value='-').content_object
+
+                        if model_class == PriceDownloadScheme:
+                            v = model_class.objects.get(master_user=instance.master_user, scheme_name='-')
+                        elif model_class == DailyPricingModel or model_class == PaymentSizeDetail or model_class == Periodicity:
+                            v = model_class.objects.get(system_code='-')
+                        else:
+                            v = model_class.objects.get(master_user=instance.master_user, user_code='-')
+
                     else:
                         error_rows['error_message'] = error_rows[
                                                           'error_message'] + ' Can\'t find relation of ' + \
