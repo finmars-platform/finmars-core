@@ -194,6 +194,38 @@ class PerformanceReportSerializer(serializers.Serializer):
                     for cf in custom_fields:
 
                         if cf['user_code'] == key:
+
+                            expr = cf['expr']
+
+                            if cf['value_type'] == 10:
+
+                                if expr:
+                                    try:
+                                        value = formula.safe_eval('str(item)', names={'item': value}, context=self.context)
+                                    except formula.InvalidExpression:
+                                        value = ugettext('Invalid expression')
+                                else:
+                                    value = None
+
+                            elif cf['value_type'] == 20:
+
+                                if expr:
+                                    try:
+                                        value = formula.safe_eval('float(item)', names={'item': value}, context=self.context)
+                                    except formula.InvalidExpression:
+                                        value = ugettext('Invalid expression')
+                                else:
+                                    value = None
+                            elif cf['value_type'] == 40:
+
+                                if expr:
+                                    try:
+                                        value = formula.safe_eval("parse_date(item, '%d/%m/%Y')", names={'item': value}, context=self.context)
+                                    except formula.InvalidExpression:
+                                        value = ugettext('Invalid expression')
+                                else:
+                                    value = None
+
                             cfv.append({
                                 'custom_field': cf['id'],
                                 'user_code': cf['user_code'],
