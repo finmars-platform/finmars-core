@@ -211,20 +211,40 @@ class TransactionReportSerializer(serializers.Serializer):
                 names = formula.value_prepare(names)
 
                 cfv = []
-                for cf in custom_fields:
-                    expr = cf['expr']
 
-                    if expr:
-                        try:
-                            value = formula.safe_eval(expr, names=names, context=self.context)
-                        except formula.InvalidExpression:
-                            value = ugettext('Invalid expression')
-                    else:
-                        value = None
-                    cfv.append({
-                        'custom_field': cf['id'],
-                        'value': value,
-                    })
+                custom_fields_names = {}
+
+                for i in range(10):
+
+                    for cf in custom_fields:
+                        expr = cf['expr']
+
+                        if expr:
+                            try:
+                                value = formula.safe_eval(expr, names=names, context=self.context)
+                            except formula.InvalidExpression:
+                                value = ugettext('Invalid expression')
+                        else:
+                            value = None
+
+                        if not cf['user_code'] in custom_fields_names:
+                            custom_fields_names[cf['user_code']] = value
+                        else:
+                            if custom_fields_names[cf['user_code']] == None or custom_fields_names[cf['user_code']] == ugettext('Invalid expression'):
+                                custom_fields_names[cf['user_code']] = value
+
+                    names['custom_fields'] = custom_fields_names
+
+                for key, value in custom_fields_names.items():
+
+                    for cf in custom_fields:
+
+                        if cf['user_code'] == key:
+                            cfv.append({
+                                'custom_field': cf['id'],
+                                'user_code': cf['user_code'],
+                                'value': value,
+                            })
 
                 item['custom_fields'] = cfv
 

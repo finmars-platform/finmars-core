@@ -301,6 +301,7 @@ class ReportComplexTransactionSerializer(ComplexTransactionSerializer):
 
 class ReportItemBalanceReportCustomFieldSerializer(serializers.Serializer):
     custom_field = serializers.PrimaryKeyRelatedField(read_only=True)
+    user_code = serializers.ReadOnlyField()
     value = serializers.ReadOnlyField()
 
     def __init__(self, *args, **kwargs):
@@ -322,6 +323,7 @@ class ReportItemBalanceReportCustomFieldSerializer(serializers.Serializer):
 
 class ReportItemTransactionReportCustomFieldSerializer(serializers.Serializer):
     custom_field = serializers.PrimaryKeyRelatedField(read_only=True)
+    user_code = serializers.ReadOnlyField()
     value = serializers.ReadOnlyField()
 
     def __init__(self, *args, **kwargs):
