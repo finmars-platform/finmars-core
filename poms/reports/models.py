@@ -29,6 +29,7 @@ class BalanceReportCustomField(models.Model):
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('expression'))
     value_type = models.PositiveSmallIntegerField(choices=VALUE_TYPES, default=STRING,
                                                   verbose_name=ugettext_lazy('value type'))
+    notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
 
     class Meta:
         verbose_name = ugettext_lazy('balance report custom field')
@@ -59,6 +60,7 @@ class PLReportCustomField(models.Model):
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('expression'))
     value_type = models.PositiveSmallIntegerField(choices=VALUE_TYPES, default=STRING,
                                                   verbose_name=ugettext_lazy('value type'))
+    notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
 
     class Meta:
         verbose_name = ugettext_lazy('pl report custom field')
@@ -89,6 +91,7 @@ class TransactionReportCustomField(models.Model):
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('expression'))
     value_type = models.PositiveSmallIntegerField(choices=VALUE_TYPES, default=STRING,
                                                   verbose_name=ugettext_lazy('value type'))
+    notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
 
     class Meta:
         verbose_name = ugettext_lazy('transaction report custom field')

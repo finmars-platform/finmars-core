@@ -16,7 +16,7 @@ class BalanceReportCustomFieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = BalanceReportCustomField
         fields = [
-            'id', 'master_user', 'name', 'user_code', 'expr', 'value_type'
+            'id', 'master_user', 'name', 'user_code', 'expr', 'value_type', 'notes'
         ]
 
 
@@ -27,7 +27,7 @@ class PLReportCustomFieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = PLReportCustomField
         fields = [
-            'id', 'master_user', 'name', 'user_code', 'expr', 'value_type'
+            'id', 'master_user', 'name', 'user_code', 'expr', 'value_type', 'notes'
         ]
 
 
@@ -38,7 +38,7 @@ class TransactionReportCustomFieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = TransactionReportCustomField
         fields = [
-            'id', 'master_user', 'name', 'user_code', 'expr', 'value_type'
+            'id', 'master_user', 'name', 'user_code', 'expr', 'value_type', 'notes'
         ]
 
 # class CustomFieldViewSerializer(serializers.ModelSerializer):
