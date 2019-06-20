@@ -90,12 +90,11 @@ def fix_ecosystem_default(apps, schema_editor):
             ecosystem_defaults.transaction_type = TransactionType.objects.get(master_user=master_user, user_code='-')
             ecosystem_defaults.price_download_scheme = PriceDownloadScheme.objects.get(master_user=master_user, scheme_name='-')
 
-            ecosystem_defaults.instrument_class = InstrumentClass.objects.get(pk=6),  # InstrumentClass.DEFAULT
-            ecosystem_defaults.daily_pricing_model = DailyPricingModel.objects.get(pk=6), # DailyPricingModel.DEFAULT
-            ecosystem_defaults.accrual_calculation_model = AccrualCalculationModel.objects.get(
-                pk=25), # AccrualCalculationModel.DEFAULT
-            ecosystem_defaults.payment_size_detail = PaymentSizeDetail.objects.get(pk=7), # PaymentSizeDetail.DEFAULT
-            ecosystem_defaults.periodicity = Periodicity.objects.get(pk=13), # Periodicity.DEFAULT
+            ecosystem_defaults.instrument_class = InstrumentClass.objects.get(pk=6)  # InstrumentClass.DEFAULT
+            ecosystem_defaults.daily_pricing_model = DailyPricingModel.objects.get(pk=6) # DailyPricingModel.DEFAULT
+            ecosystem_defaults.accrual_calculation_model = AccrualCalculationModel.objects.get(pk=25) # AccrualCalculationModel.DEFAULT
+            ecosystem_defaults.payment_size_detail = PaymentSizeDetail.objects.get(pk=7) # PaymentSizeDetail.DEFAULT
+            ecosystem_defaults.periodicity = Periodicity.objects.get(pk=13) # Periodicity.DEFAULT
 
             ecosystem_defaults.save()
 

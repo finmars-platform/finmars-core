@@ -470,6 +470,7 @@ class MasterUser(models.Model):
 
 
 class EcosystemDefault(models.Model):
+
     master_user = models.ForeignKey(MasterUser, related_name='ecosystem_default',
                                     verbose_name=ugettext_lazy('master user'))
 
