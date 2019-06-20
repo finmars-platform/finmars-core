@@ -59,36 +59,138 @@ def fix_ecosystem_default(apps, schema_editor):
             ecosystem_defaults = EcosystemDefault()
 
             ecosystem_defaults.master_user = master_user
-            ecosystem_defaults.currency = Currency.objects.get(master_user=master_user, user_code='-')
-            ecosystem_defaults.account_type = AccountType.objects.get(master_user=master_user, user_code='-')
-            ecosystem_defaults.account = Account.objects.get(master_user=master_user, user_code='-')
-            ecosystem_defaults.counterparty_group = CounterpartyGroup.objects.get(master_user=master_user, user_code='-')
-            ecosystem_defaults.counterparty = Counterparty.objects.get(master_user=master_user, user_code='-')
-            ecosystem_defaults.responsible_group = ResponsibleGroup.objects.get(master_user=master_user, user_code='-')
-            ecosystem_defaults.responsible = Responsible.objects.get(master_user=master_user, user_code='-')
-            ecosystem_defaults.portfolio = Portfolio.objects.get(master_user=master_user, user_code='-')
-            ecosystem_defaults.instrument_type = InstrumentType.objects.get(master_user=master_user, user_code='-')
-            ecosystem_defaults.instrument = Instrument.objects.get(master_user=master_user, user_code='-')
 
-            ecosystem_defaults.strategy1_group = Strategy1Group.objects.get(master_user=master_user, user_code='-')
-            ecosystem_defaults.strategy1_subgroup = Strategy1Subgroup.objects.get(master_user=master_user, user_code='-')
-            ecosystem_defaults.strategy1 = Strategy1.objects.get(master_user=master_user, user_code='-')
+            try:
+                ecosystem_defaults.currency = Currency.objects.get(master_user=master_user, user_code='-')
+            except Currency.DoesNotExist:
+                ecosystem_defaults.currency = None
 
-            ecosystem_defaults.strategy2_group = Strategy2Group.objects.get(master_user=master_user, user_code='-')
-            ecosystem_defaults.strategy2_subgroup = Strategy2Subgroup.objects.get(master_user=master_user, user_code='-')
-            ecosystem_defaults.strategy2 = Strategy2.objects.get(master_user=master_user, user_code='-')
+            try:
+                ecosystem_defaults.account_type = AccountType.objects.get(master_user=master_user, user_code='-')
+            except AccountType.DoesNotExist:
+                ecosystem_defaults.account_type = None
 
-            ecosystem_defaults.strategy3_group = Strategy3Group.objects.get(master_user=master_user, user_code='-')
-            ecosystem_defaults.strategy3_subgroup = Strategy3Subgroup.objects.get(master_user=master_user, user_code='-')
-            ecosystem_defaults.strategy3 = Strategy3.objects.get(master_user=master_user, user_code='-')
+            try:
+                ecosystem_defaults.account = Account.objects.get(master_user=master_user, user_code='-')
+            except Account.DoesNotExist:
+                ecosystem_defaults.account = None
 
-            ecosystem_defaults.thread_group = ThreadGroup.objects.get(master_user=master_user, name='-')
-            ecosystem_defaults.transaction_type_group = TransactionTypeGroup.objects.get(master_user=master_user, user_code='-')
-            ecosystem_defaults.mismatch_portfolio = Portfolio.objects.get(master_user=master_user, user_code='-')
-            ecosystem_defaults.mismatch_account = Account.objects.get(master_user=master_user, user_code='-')
-            ecosystem_defaults.pricing_policy = PricingPolicy.objects.get(master_user=master_user, name='-')
-            ecosystem_defaults.transaction_type = TransactionType.objects.get(master_user=master_user, user_code='-')
-            ecosystem_defaults.price_download_scheme = PriceDownloadScheme.objects.get(master_user=master_user, scheme_name='-')
+            try:
+                ecosystem_defaults.counterparty_group = CounterpartyGroup.objects.get(master_user=master_user, user_code='-')
+            except CounterpartyGroup.DoesNotExist:
+                ecosystem_defaults.counterparty_group = None
+
+            try:
+                ecosystem_defaults.counterparty = Counterparty.objects.get(master_user=master_user, user_code='-')
+            except Counterparty.DoesNotExist:
+                ecosystem_defaults.counterparty = None
+
+            try:
+                ecosystem_defaults.responsible_group = ResponsibleGroup.objects.get(master_user=master_user, user_code='-')
+            except ResponsibleGroup.DoesNotExist:
+                ecosystem_defaults.responsible_group = None
+
+            try:
+                ecosystem_defaults.responsible = Responsible.objects.get(master_user=master_user, user_code='-')
+            except Responsible.DoesNotExist:
+                ecosystem_defaults.responsible = None
+
+            try:
+                ecosystem_defaults.portfolio = Portfolio.objects.get(master_user=master_user, user_code='-')
+            except Portfolio.DoesNotExist:
+                ecosystem_defaults.portfolio = None
+
+            try:
+                ecosystem_defaults.instrument_type = InstrumentType.objects.get(master_user=master_user, user_code='-')
+            except InstrumentType.DoesNotExist:
+                ecosystem_defaults.instrument_type = None
+
+            try:
+                ecosystem_defaults.instrument = Instrument.objects.get(master_user=master_user, user_code='-')
+            except Instrument.DoesNotExist:
+                ecosystem_defaults.instrument = None
+
+            try:
+                ecosystem_defaults.strategy1_group = Strategy1Group.objects.get(master_user=master_user, user_code='-')
+            except Strategy1Group.DoesNotExist:
+                ecosystem_defaults.strategy1_group = None
+
+            try:
+                ecosystem_defaults.strategy1_subgroup = Strategy1Subgroup.objects.get(master_user=master_user, user_code='-')
+            except Strategy1Subgroup.DoesNotExist:
+                ecosystem_defaults.strategy1_subgroup = None
+
+            try:
+                ecosystem_defaults.strategy1 = Strategy1.objects.get(master_user=master_user, user_code='-')
+            except Strategy1.DoesNotExist:
+                ecosystem_defaults.strategy1 = None
+
+
+            try:
+                ecosystem_defaults.strategy2_group = Strategy2Group.objects.get(master_user=master_user, user_code='-')
+            except Strategy2Group.DoesNotExist:
+                ecosystem_defaults.strategy2_group = None
+
+            try:
+                ecosystem_defaults.strategy2_subgroup = Strategy2Subgroup.objects.get(master_user=master_user, user_code='-')
+            except Strategy2Subgroup.DoesNotExist:
+                ecosystem_defaults.strategy2_subgroup = None
+
+            try:
+                ecosystem_defaults.strategy2 = Strategy2.objects.get(master_user=master_user, user_code='-')
+            except Strategy2.DoesNotExist:
+                ecosystem_defaults.strategy2 = None
+
+            try:
+                ecosystem_defaults.strategy3_group = Strategy3Group.objects.get(master_user=master_user, user_code='-')
+            except Strategy3Group.DoesNotExist:
+                ecosystem_defaults.strategy3_group = None
+
+            try:
+                ecosystem_defaults.strategy3_subgroup = Strategy3Subgroup.objects.get(master_user=master_user, user_code='-')
+            except Strategy3Subgroup.DoesNotExist:
+                ecosystem_defaults.strategy3_subgroup = None
+
+            try:
+                ecosystem_defaults.strategy3 = Strategy3.objects.get(master_user=master_user, user_code='-')
+            except Strategy3.DoesNotExist:
+                ecosystem_defaults.strategy3 = None
+
+
+            try:
+                ecosystem_defaults.thread_group = ThreadGroup.objects.get(master_user=master_user, name='-')
+            except ThreadGroup.DoesNotExist:
+                ecosystem_defaults.thread_group = None
+
+            try:
+                ecosystem_defaults.transaction_type_group = TransactionTypeGroup.objects.get(master_user=master_user, user_code='-')
+            except TransactionTypeGroup.DoesNotExist:
+                ecosystem_defaults.transaction_type_group = None
+
+            try:
+                ecosystem_defaults.mismatch_portfolio = Portfolio.objects.get(master_user=master_user, user_code='-')
+            except Portfolio.DoesNotExist:
+                ecosystem_defaults.mismatch_portfolio = None
+
+            try:
+                ecosystem_defaults.mismatch_account = Account.objects.get(master_user=master_user, user_code='-')
+            except Account.DoesNotExist:
+                ecosystem_defaults.mismatch_account = None
+
+            try:
+                ecosystem_defaults.pricing_policy = PricingPolicy.objects.get(master_user=master_user, name='-')
+            except PricingPolicy.DoesNotExist:
+                ecosystem_defaults.pricing_policy = None
+
+            try:
+                ecosystem_defaults.transaction_type = TransactionType.objects.get(master_user=master_user, user_code='-')
+            except TransactionType.DoesNotExist:
+                ecosystem_defaults.transaction_type = None
+
+            try:
+                ecosystem_defaults.price_download_scheme = PriceDownloadScheme.objects.get(master_user=master_user, scheme_name='-')
+            except PriceDownloadScheme.DoesNotExist:
+                ecosystem_defaults.price_download_scheme = None
 
             ecosystem_defaults.instrument_class = InstrumentClass.objects.get(pk=6)  # InstrumentClass.DEFAULT
             ecosystem_defaults.daily_pricing_model = DailyPricingModel.objects.get(pk=6) # DailyPricingModel.DEFAULT
