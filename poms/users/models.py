@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 import pytz
 from django.conf import settings
 from django.contrib.auth.models import User, Permission
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models.signals import post_save
@@ -194,13 +196,34 @@ class MasterUser(models.Model):
     def __str__(self):
         return self.name
 
+    def create_user_fields(self):
+
+        from poms.ui.models import InstrumentUserFieldModel, TransactionUserFieldModel
+
+        for i in range(10):
+            num = str(i + 1)
+            TransactionUserFieldModel.objects.create(master_user=self, key='user_text_' + num, name='User Text ' + num)
+
+        for i in range(10):
+            num = str(i + 1)
+            TransactionUserFieldModel.objects.create(master_user=self, key='user_number_' + num,
+                                                     name='User Number ' + num)
+
+        for i in range(10):
+            num = str(i + 1)
+            TransactionUserFieldModel.objects.create(master_user=self, key='user_date_' + num, name='User Dext ' + num)
+
+        for i in range(3):
+            num = str(i + 1)
+            InstrumentUserFieldModel.objects.create(master_user=self, key='user_text_' + num, name='User Text ' + num)
+
     def create_defaults(self, user=None):
         from poms.currencies.models import currencies_data, Currency
         from poms.accounts.models import AccountType, Account
         from poms.counterparties.models import Counterparty, CounterpartyGroup, Responsible, ResponsibleGroup
         from poms.portfolios.models import Portfolio
         from poms.instruments.models import InstrumentClass, InstrumentType, EventScheduleConfig, Instrument, \
-            DailyPricingModel
+            DailyPricingModel, AccrualCalculationModel, PaymentSizeDetail, Periodicity
         from poms.integrations.models import PricingAutomatedSchedule, CurrencyMapping, ProviderClass
         from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, \
             Strategy2Subgroup, Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
@@ -300,6 +323,8 @@ class MasterUser(models.Model):
         #         CurrencyMapping.objects.create(master_user=self, provider=bloomberg, value=dc_bloomberg,
         #                                        content_object=c)
 
+        # TODO refactor later, that thing used in report logic,
+        # TODO so, someday we need to change it to take defaults from EcosystemDefault
         self.system_currency = ccy_usd
         self.currency = ccy
         self.account_type = account_type
@@ -327,6 +352,47 @@ class MasterUser(models.Model):
         self.pricing_policy = pricing_policy
         self.transaction_type = transaction_type
         self.price_download_scheme = price_download_scheme
+
+        ecosystem_defaults = EcosystemDefault()
+
+        ecosystem_defaults.master_user = self
+        ecosystem_defaults.currency = ccy
+        ecosystem_defaults.account_type = account_type
+        ecosystem_defaults.account = account
+        ecosystem_defaults.counterparty_group = counterparty_group
+        ecosystem_defaults.counterparty = counterparty
+        ecosystem_defaults.responsible_group = responsible_group
+        ecosystem_defaults.responsible = responsible
+        ecosystem_defaults.portfolio = portfolio
+        ecosystem_defaults.instrument_type = instrument_type
+        ecosystem_defaults.instrument = instrument
+        ecosystem_defaults.strategy1_group = strategy1_group
+        ecosystem_defaults.strategy1_subgroup = strategy1_subgroup
+        ecosystem_defaults.strategy1 = strategy1
+        ecosystem_defaults.strategy2_group = strategy2_group
+        ecosystem_defaults.strategy2_subgroup = strategy2_subgroup
+        ecosystem_defaults.strategy2 = strategy2
+        ecosystem_defaults.strategy3_group = strategy3_group
+        ecosystem_defaults.strategy3_subgroup = strategy3_subgroup
+        ecosystem_defaults.strategy3 = strategy3
+        ecosystem_defaults.thread_group = thread_group
+        ecosystem_defaults.transaction_type_group = transaction_type_group
+        ecosystem_defaults.mismatch_portfolio = portfolio
+        ecosystem_defaults.mismatch_account = account
+        ecosystem_defaults.pricing_policy = pricing_policy
+        ecosystem_defaults.transaction_type = transaction_type
+        ecosystem_defaults.price_download_scheme = price_download_scheme
+
+        ecosystem_defaults.instrument_class = InstrumentClass.objects.get(pk=InstrumentClass.DEFAULT),
+        ecosystem_defaults.daily_pricing_model = DailyPricingModel.objects.get(pk=DailyPricingModel.DEFAULT),
+        ecosystem_defaults.accrual_calculation_model = AccrualCalculationModel.objects.get(pk=AccrualCalculationModel.DEFAULT),
+        ecosystem_defaults.payment_size_detail = PaymentSizeDetail.objects.get(pk=PaymentSizeDetail.DEFAULT),
+        ecosystem_defaults.periodicity = Periodicity.objects.get(pk=Periodicity.DEFAULT),
+
+        ecosystem_defaults.save()
+
+        self.create_user_fields()
+
         self.save()
 
         for c in [account_type, account, counterparty_group, counterparty, responsible_group, responsible, portfolio,
@@ -401,6 +467,105 @@ class MasterUser(models.Model):
                         mapping.save()
                 else:
                     CurrencyMapping.objects.create(master_user=self, provider=bloomberg, value=dc_bloomberg, currency=c)
+
+
+class EcosystemDefault(models.Model):
+    master_user = models.ForeignKey(MasterUser, related_name='ecosystem_default',
+                                    verbose_name=ugettext_lazy('master user'))
+
+    account_type = models.ForeignKey('accounts.AccountType', null=True, blank=True, on_delete=models.PROTECT,
+                                     verbose_name=ugettext_lazy('account type'))
+    account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.PROTECT,
+                                verbose_name=ugettext_lazy('account'))
+
+    currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.PROTECT,
+                                 verbose_name=ugettext_lazy('currency'))
+    counterparty_group = models.ForeignKey('counterparties.CounterpartyGroup', null=True, blank=True,
+                                           on_delete=models.PROTECT, verbose_name=ugettext_lazy('counterparty group'))
+    counterparty = models.ForeignKey('counterparties.Counterparty', null=True, blank=True, on_delete=models.PROTECT,
+                                     verbose_name=ugettext_lazy('counterparty'))
+    responsible_group = models.ForeignKey('counterparties.ResponsibleGroup', null=True, blank=True,
+                                          on_delete=models.PROTECT, verbose_name=ugettext_lazy('responsible group'))
+    responsible = models.ForeignKey('counterparties.Responsible', null=True, blank=True, on_delete=models.PROTECT,
+                                    verbose_name=ugettext_lazy('responsible'))
+
+    instrument_type = models.ForeignKey('instruments.InstrumentType', null=True, blank=True, on_delete=models.PROTECT,
+                                        verbose_name=ugettext_lazy('instrument type'))
+    instrument = models.ForeignKey('instruments.Instrument', null=True, blank=True, on_delete=models.PROTECT,
+                                   verbose_name=ugettext_lazy('instrument'))
+
+    portfolio = models.ForeignKey('portfolios.Portfolio', null=True, blank=True, on_delete=models.PROTECT,
+                                  verbose_name=ugettext_lazy('portfolio'))
+
+    strategy1_group = models.ForeignKey('strategies.Strategy1Group', null=True, blank=True, on_delete=models.PROTECT,
+
+                                        verbose_name=ugettext_lazy('strategy1 group'))
+    strategy1_subgroup = models.ForeignKey('strategies.Strategy1Subgroup', null=True, blank=True,
+                                           on_delete=models.PROTECT,
+                                           verbose_name=ugettext_lazy('strategy1 subgroup'))
+    strategy1 = models.ForeignKey('strategies.Strategy1', null=True, blank=True, on_delete=models.PROTECT,
+                                  verbose_name=ugettext_lazy('strategy1'))
+
+    strategy2_group = models.ForeignKey('strategies.Strategy2Group', null=True, blank=True, on_delete=models.PROTECT,
+                                        verbose_name=ugettext_lazy('strategy2 group'))
+    strategy2_subgroup = models.ForeignKey('strategies.Strategy2Subgroup', null=True, blank=True,
+                                           on_delete=models.PROTECT,
+                                           verbose_name=ugettext_lazy('strategy2 subgroup'))
+    strategy2 = models.ForeignKey('strategies.Strategy2', null=True, blank=True, on_delete=models.PROTECT,
+                                  verbose_name=ugettext_lazy('strategy2'))
+
+    strategy3_group = models.ForeignKey('strategies.Strategy3Group', null=True, blank=True, on_delete=models.PROTECT,
+                                        verbose_name=ugettext_lazy('strategy3 group'))
+    strategy3_subgroup = models.ForeignKey('strategies.Strategy3Subgroup', null=True, blank=True,
+                                           on_delete=models.PROTECT,
+                                           verbose_name=ugettext_lazy('strategy3 subgroup'))
+    strategy3 = models.ForeignKey('strategies.Strategy3', null=True, blank=True, on_delete=models.PROTECT,
+                                  verbose_name=ugettext_lazy('strategy3'))
+
+    thread_group = models.ForeignKey('chats.ThreadGroup', null=True, blank=True, on_delete=models.PROTECT,
+                                     verbose_name=ugettext_lazy('thread group'))
+
+    transaction_type = models.ForeignKey('transactions.TransactionType', null=True, blank=True,
+                                         on_delete=models.PROTECT,
+                                         verbose_name=ugettext_lazy('transaction type'))
+
+    transaction_type_group = models.ForeignKey('transactions.TransactionTypeGroup', null=True, blank=True,
+                                               on_delete=models.PROTECT,
+                                               verbose_name=ugettext_lazy('transaction type group'))
+
+    mismatch_portfolio = models.ForeignKey('portfolios.Portfolio', null=True, blank=True, on_delete=models.PROTECT,
+                                           related_name='ecosystem_default_mismatch_portfolio',
+                                           verbose_name=ugettext_lazy('mismatch portfolio'))
+    mismatch_account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.PROTECT,
+                                         related_name='ecosystem_default_mismatch_account',
+                                         verbose_name=ugettext_lazy('mismatch account'))
+
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', null=True, blank=True, on_delete=models.PROTECT,
+                                       verbose_name=ugettext_lazy('pricing policy'))
+
+    price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', null=True, blank=True,
+                                              on_delete=models.PROTECT,
+                                              verbose_name=ugettext_lazy('price download scheme'))
+
+    instrument_class = models.ForeignKey('instruments.InstrumentClass', null=True, blank=True,
+                                         on_delete=models.PROTECT,
+                                         verbose_name=ugettext_lazy('instrument class'))
+
+    daily_pricing_model = models.ForeignKey('instruments.DailyPricingModel', null=True, blank=True,
+                                            on_delete=models.PROTECT,
+                                            verbose_name=ugettext_lazy('daily pricing model'))
+
+    accrual_calculation_model = models.ForeignKey('instruments.AccrualCalculationModel', null=True, blank=True,
+                                                  on_delete=models.PROTECT,
+                                                  verbose_name=ugettext_lazy('accrual calculation model'))
+
+    payment_size_detail = models.ForeignKey('instruments.PaymentSizeDetail', null=True, blank=True,
+                                            on_delete=models.PROTECT,
+                                            verbose_name=ugettext_lazy('payment size detail'))
+
+    periodicity = models.ForeignKey('instruments.Periodicity', null=True, blank=True,
+                                            on_delete=models.PROTECT,
+                                            verbose_name=ugettext_lazy('periodicity'))
 
 
 class Member(FakeDeletableModel):

@@ -48,7 +48,7 @@ from django.core import serializers
 import json
 
 from poms.transactions.serializers import TransactionTypeSerializer
-from poms.ui.models import EditLayout, ListLayout, Bookmark
+from poms.ui.models import EditLayout, ListLayout, Bookmark, TransactionUserFieldModel, InstrumentUserFieldModel
 
 from django.forms.models import model_to_dict
 
@@ -137,6 +137,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         pl_report_custom_fields = self.get_pl_report_custom_fields()
         transaction_report_custom_fields = self.get_transaction_report_custom_fields()
 
+        get_transaction_user_fields = self.get_transaction_user_fields()
+        instrument_user_fields = self.get_instrument_user_fields()
+
         configuration["body"].append(transaction_types)
         configuration["body"].append(transaction_type_groups)
         configuration["body"].append(edit_layouts)
@@ -165,6 +168,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration["body"].append(balance_report_custom_fields)
         configuration["body"].append(pl_report_custom_fields)
         configuration["body"].append(transaction_report_custom_fields)
+
+        configuration["body"].append(get_transaction_user_fields)
+        configuration["body"].append(instrument_user_fields)
 
         return configuration
 
@@ -864,6 +870,56 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         result = {
             "entity": "ui.listlayout",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_transaction_user_fields(self):
+
+        user_fields = to_json_objects(
+            TransactionUserFieldModel.objects.filter(master_user=self._master_user))
+
+        results = []
+
+        for user_field in user_fields:
+            result_item = user_field["fields"]
+            result_item.pop("master_user", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "ui.transactionuserfieldmodel",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_instrument_user_fields(self):
+
+        user_fields = to_json_objects(
+            InstrumentUserFieldModel.objects.filter(master_user=self._master_user))
+
+        results = []
+
+        for user_field in user_fields:
+            result_item = user_field["fields"]
+            result_item.pop("master_user", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "ui.instrumentuserfieldmodel",
             "count": len(results),
             "content": results
         }
@@ -2050,19 +2106,27 @@ class ConfigurationDuplicateCheckViewSet(AbstractModelViewSet):
 
                 elif 'name' in item:
 
-                    if entity['entity'] in ['ui.bookmark', 'ui.listlayout', 'ui.reportlayout', 'ui.editlayout']:
+                    if entity['entity'] in ['ui.transactionuserfieldmodel', 'ui.instrumentuserfieldmodel']:
 
-                        if model.objects.filter(name=item['name'], member=member).exists():
+                        if model.objects.filter(key=item['key'], master_user=master_user).exists():
+
                             result_item['content'].append({'name': item['name'], 'is_duplicate': True})
-                        else:
-                            result_item['content'].append({'name': item['name'], 'is_duplicate': False})
 
                     else:
 
-                        if model.objects.filter(name=item['name'], master_user=master_user).exists():
-                            result_item['content'].append({'name': item['name'], 'is_duplicate': True})
+                        if entity['entity'] in ['ui.bookmark', 'ui.listlayout', 'ui.reportlayout', 'ui.editlayout']:
+
+                            if model.objects.filter(name=item['name'], member=member).exists():
+                                result_item['content'].append({'name': item['name'], 'is_duplicate': True})
+                            else:
+                                result_item['content'].append({'name': item['name'], 'is_duplicate': False})
+
                         else:
-                            result_item['content'].append({'name': item['name'], 'is_duplicate': False})
+
+                            if model.objects.filter(name=item['name'], master_user=master_user).exists():
+                                result_item['content'].append({'name': item['name'], 'is_duplicate': True})
+                            else:
+                                result_item['content'].append({'name': item['name'], 'is_duplicate': False})
 
             results.append(result_item)
 

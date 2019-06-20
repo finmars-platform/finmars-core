@@ -39,7 +39,7 @@ from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.handlers import TransactionTypeProcess
-from poms.users.models import MasterUser
+from poms.users.models import MasterUser, EcosystemDefault
 
 _l = logging.getLogger('poms.integrations')
 
@@ -1144,6 +1144,7 @@ def complex_transaction_csv_file_import(self, instance):
             inputs_raw = {}
             inputs = {}
             inputs_error = []
+            inputs_conversion_error = []
 
             error_rows = {
                 'error_message': '',
@@ -1182,6 +1183,20 @@ def complex_transaction_csv_file_import(self, instance):
 
             _l.debug('inputs: error=%s, values=%s', [i.name for i in inputs_error], inputs_raw)
 
+            if inputs_error:
+                error_rows['error_message'] = error_rows['error_message'] + str(
+                    ugettext('Can\'t process inputs: %(inputs)s') % {
+                        'inputs': ', '.join(i.name for i in inputs_error)
+                    })
+                instance.error_rows.append(error_rows)
+                if instance.break_on_error:
+                    error_rows['error_reaction'] = 'Break'
+                    instance.error_row_index = row_index
+                    return
+                else:
+                    error_rows['error_reaction'] = 'Continue import'
+                    continue
+
             for i in scheme_inputs:
 
                 error_rows['error_data']['columns']['converted_imported_columns'].append(
@@ -1191,15 +1206,15 @@ def complex_transaction_csv_file_import(self, instance):
                     inputs[i.name] = formula.safe_eval(i.name_expr, names=inputs_raw)
                     error_rows['error_data']['data']['converted_imported_columns'].append(row[i.column - 1])
                 except:
-                    _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                    _l.info('can\'t process conversion input: %s|%s', i.name, i.column, exc_info=True)
                     error_rows['error_data']['data']['converted_imported_columns'].append(
                         ugettext('Invalid expression'))
-                    inputs_error.append(i)
+                    inputs_conversion_error.append(i)
 
-            if inputs_error:
+            if inputs_conversion_error:
                 error_rows['error_message'] = error_rows['error_message'] + str(
-                    ugettext('Can\'t process inputs: %(inputs)s') % {
-                        'inputs': ', '.join(i.name for i in inputs_error)
+                    ugettext('Can\'t process conversion inputs: %(inputs)s') % {
+                        'inputs': ', '.join(i.name for i in inputs_conversion_error)
                     })
                 instance.error_rows.append(error_rows)
                 if instance.break_on_error:
@@ -1265,7 +1280,7 @@ def complex_transaction_csv_file_import(self, instance):
                         error_rows['error_message'] = error_rows['error_message'] + '\n' + '\n' + str(ugettext(
                             'Can\'t process fields: %(fields)s') % {
                                                                                                           'fields': ', '.join(
-                                                                                                              f.transaction_type_input.name
+                                                                                                              f.transaction_type_input.name + '( TType: ' + rule_value + ')'
                                                                                                               for f in
                                                                                                               fields_error)
                                                                                                       })
@@ -1423,7 +1438,13 @@ def complex_transaction_csv_file_import_validate(self, instance):
                 except (model_class.DoesNotExist, KeyError):
 
                     if instance.missing_data_handler == 'set_defaults':
-                        v = model_map_class.objects.get(master_user=instance.master_user, value='-').content_object
+
+                        ecosystem_default = EcosystemDefault.objects.get(master_user=instance.master_user)
+
+                        if hasattr(ecosystem_default, key):
+                            v = getattr(ecosystem_default, key)
+                        else:
+                            v = model_map_class.objects.get(master_user=instance.master_user, value='-').content_object
                     else:
                         error_rows['error_message'] = error_rows[
                                                           'error_message'] + ' Can\'t find relation of ' + \
@@ -1605,7 +1626,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                         error_rows['error_message'] = error_rows['error_message'] + str(
                             ugettext('Can\'t process fields: %(fields)s') % {
-                                'fields': ', '.join(f.transaction_type_input.name for f in fields_error)
+                                'fields': ', '.join(f.transaction_type_input.name + '( TType: ' + rule_value + ')' for f in fields_error)
                             })
 
                         error_rows['error_data']['data']['executed_input_expressions'] = executed_input_expressions

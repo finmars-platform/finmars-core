@@ -32,6 +32,7 @@ from poms.obj_attrs.models import GenericAttributeType, GenericAttribute, Generi
 
 from django.utils.translation import ugettext
 
+from poms.users.models import EcosystemDefault
 from .filters import SchemeContentTypeFilter
 from .models import CsvDataImport, CsvImportScheme
 from .serializers import CsvDataImportSerializer, CsvImportSchemeSerializer
@@ -310,14 +311,21 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
 
                                         if missing_data_handler == 'set_defaults':
 
-                                            if key == 'price_download_scheme':
-                                                instance[key] = relation_map[key].objects.get(master_user=master_user,
-                                                                                              scheme_name='-')
-                                            elif key == 'daily_pricing_model' or key == 'payment_size_detail':
-                                                instance[key] = relation_map[key].objects.get(system_code='-')
+                                            ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+
+                                            if hasattr(ecosystem_default, key):
+                                                instance = getattr(ecosystem_default, key)
                                             else:
-                                                instance[key] = relation_map[key].objects.get(master_user=master_user,
-                                                                                              user_code='-')
+                                                if key == 'price_download_scheme':
+                                                    instance[key] = relation_map[key].objects.get(
+                                                        master_user=master_user,
+                                                        scheme_name='-')
+                                                elif key == 'daily_pricing_model' or key == 'payment_size_detail':
+                                                    instance[key] = relation_map[key].objects.get(system_code='-')
+                                                else:
+                                                    instance[key] = relation_map[key].objects.get(
+                                                        master_user=master_user,
+                                                        user_code='-')
 
                                             print('instance[key] %s' % instance[key])
 

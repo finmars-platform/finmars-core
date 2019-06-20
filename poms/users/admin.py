@@ -17,7 +17,8 @@ from django.utils.translation import ugettext_lazy
 from poms.common.admin import AbstractModelAdmin
 from poms.instruments.models import EventScheduleConfig
 from poms.integrations.models import PricingAutomatedSchedule
-from poms.users.models import MasterUser, UserProfile, Member, Group, TIMEZONE_CHOICES, FakeSequence, InviteToMasterUser
+from poms.users.models import MasterUser, UserProfile, Member, Group, TIMEZONE_CHOICES, FakeSequence, \
+    InviteToMasterUser, EcosystemDefault
 
 
 class MemberInline(admin.TabularInline):
@@ -191,6 +192,19 @@ class MasterUserAdmin(AbstractModelAdmin):
 admin.site.register(MasterUser, MasterUserAdmin)
 
 
+class EcosystemDefaultAdmin(AbstractModelAdmin):
+    model = EcosystemDefault
+    master_user_path = 'master_user'
+    list_display = ['id', 'master_user', 'currency', 'account_type', 'account', 'counterparty_group', 'counterparty',
+                    'responsible_group', 'responsible', 'portfolio', 'instrument_type', 'instrument',
+                    'transaction_type']
+    list_select_related = ['master_user', ]
+    raw_id_fields = ['master_user', ]
+
+
+admin.site.register(EcosystemDefault, EcosystemDefaultAdmin)
+
+
 class MemberAdmin(AbstractModelAdmin):
     model = Member
     master_user_path = 'master_user'
@@ -205,7 +219,9 @@ class MemberAdmin(AbstractModelAdmin):
     #         kwargs['queryset'] = qs.select_related('content_type')
     #     return super(MemberAdmin, self).formfield_for_manytomany(db_field, request=request, **kwargs)
 
+
 admin.site.register(Member, MemberAdmin)
+
 
 class UserProfileForm(forms.ModelForm):
     language = forms.ChoiceField(choices=settings.LANGUAGES, initial=settings.LANGUAGE_CODE)

@@ -18,6 +18,14 @@ class TransactionUserFieldModel(models.Model):
     name = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('name'))
 
 
+class InstrumentUserFieldModel(models.Model):
+    master_user = models.ForeignKey(MasterUser, related_name='instrument_user_fields',
+                                    verbose_name=ugettext_lazy('master user'))
+
+    key = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('key'))
+    name = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('name'))
+
+
 class BaseUIModel(models.Model):
     json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
 

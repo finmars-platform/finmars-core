@@ -17,7 +17,7 @@ from poms.common.fields import DateTimeTzAwareField
 from poms.counterparties.fields import CounterpartyField, ResponsibleField, CounterpartyGroupField, \
     ResponsibleGroupField
 from poms.currencies.fields import CurrencyField
-from poms.instruments.fields import InstrumentTypeField, InstrumentField, PricingPolicyField
+from poms.instruments.fields import InstrumentTypeField, InstrumentField, PricingPolicyField, PeriodicityField
 
 from poms.portfolios.fields import PortfolioField
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field, Strategy1SubgroupField, \
@@ -27,7 +27,7 @@ from poms.transactions.fields import TransactionTypeField
 from poms.ui.models import ListLayout, EditLayout
 from poms.users.fields import MasterUserField, MemberField, GroupField
 from poms.users.models import MasterUser, UserProfile, Group, Member, TIMEZONE_CHOICES, InviteToMasterUser, \
-    InviteStatusChoice
+    InviteStatusChoice, EcosystemDefault
 from poms.users.utils import get_user_from_context, get_master_user_from_context, get_member_from_context
 
 from django.core.mail import send_mail
@@ -366,6 +366,57 @@ class MasterUserSerializer(serializers.ModelSerializer):
         member = Member.objects.get(master_user=obj.id, user=user.id)
 
         return member.is_owner
+
+
+class EcosystemDefaultSerializer(serializers.ModelSerializer):
+    currency = CurrencyField()
+    account_type = AccountTypeField()
+    account = AccountField()
+    counterparty_group = CounterpartyGroupField()
+    counterparty = CounterpartyField()
+    responsible_group = ResponsibleGroupField()
+    responsible = ResponsibleField()
+    instrument_type = InstrumentTypeField()
+    instrument = InstrumentField()
+    portfolio = PortfolioField()
+    strategy1_group = Strategy1GroupField()
+    strategy1_subgroup = Strategy1SubgroupField()
+    strategy1 = Strategy1Field()
+    strategy2_group = Strategy2GroupField()
+    strategy2_subgroup = Strategy2SubgroupField()
+    strategy2 = Strategy2Field()
+    strategy3_group = Strategy3GroupField()
+    strategy3_subgroup = Strategy3SubgroupField()
+    strategy3 = Strategy3Field()
+    thread_group = ThreadGroupField()
+    mismatch_portfolio = PortfolioField()
+    mismatch_account = AccountField()
+    pricing_policy = PricingPolicyField()
+    transaction_type = TransactionTypeField()
+
+
+    periodicity = PeriodicityField()
+
+    class Meta:
+        model = EcosystemDefault
+        fields = [
+            'id',
+            'currency',
+            'account_type', 'account',
+            'counterparty_group', 'counterparty',
+            'responsible_group', 'responsible',
+            'instrument_type', 'instrument',
+            'portfolio',
+            'price_download_scheme',
+            'strategy1_group', 'strategy1_subgroup', 'strategy1',
+            'strategy2_group', 'strategy2_subgroup', 'strategy2',
+            'strategy3_group', 'strategy3_subgroup', 'strategy3',
+            'thread_group',
+            'mismatch_portfolio', 'mismatch_account',
+            'pricing_policy', 'transaction_type',
+            'instrument_class', 'daily_pricing_model', 'accrual_calculation_model',
+            'payment_size_detail', 'periodicity'
+        ]
 
 
 class MasterUserSetCurrentSerializer(serializers.Serializer):

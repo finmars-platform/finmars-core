@@ -4,7 +4,6 @@ from django.db import models
 from django.utils.text import Truncator
 from django.utils.translation import ugettext_lazy
 
-
 EXPRESSION_FIELD_LENGTH = 1024
 
 

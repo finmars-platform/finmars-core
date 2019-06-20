@@ -7,7 +7,7 @@ from rest_framework import serializers
 
 from poms.ui.fields import LayoutContentTypeField, ListLayoutField
 from poms.ui.models import TemplateListLayout, TemplateEditLayout, ListLayout, EditLayout, Bookmark, Configuration, \
-    ConfigurationExportLayout, TransactionUserFieldModel
+    ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel
 from poms.users.fields import MasterUserField, HiddenMemberField
 
 
@@ -16,6 +16,14 @@ class TransactionUserFieldSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TransactionUserFieldModel
+        fields = ['id', 'master_user', 'key', 'name']
+
+
+class InstrumentUserFieldSerializer(serializers.ModelSerializer):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = InstrumentUserFieldModel
         fields = ['id', 'master_user', 'key', 'name']
 
 
