@@ -383,11 +383,11 @@ class MasterUser(models.Model):
         ecosystem_defaults.transaction_type = transaction_type
         ecosystem_defaults.price_download_scheme = price_download_scheme
 
-        ecosystem_defaults.instrument_class = InstrumentClass.objects.get(pk=InstrumentClass.DEFAULT),
-        ecosystem_defaults.daily_pricing_model = DailyPricingModel.objects.get(pk=DailyPricingModel.DEFAULT),
-        ecosystem_defaults.accrual_calculation_model = AccrualCalculationModel.objects.get(pk=AccrualCalculationModel.DEFAULT),
-        ecosystem_defaults.payment_size_detail = PaymentSizeDetail.objects.get(pk=PaymentSizeDetail.DEFAULT),
-        ecosystem_defaults.periodicity = Periodicity.objects.get(pk=Periodicity.DEFAULT),
+        ecosystem_defaults.instrument_class = InstrumentClass.objects.get(pk=InstrumentClass.DEFAULT)
+        ecosystem_defaults.daily_pricing_model = DailyPricingModel.objects.get(pk=DailyPricingModel.DEFAULT)
+        ecosystem_defaults.accrual_calculation_model = AccrualCalculationModel.objects.get(pk=AccrualCalculationModel.DEFAULT)
+        ecosystem_defaults.payment_size_detail = PaymentSizeDetail.objects.get(pk=PaymentSizeDetail.DEFAULT)
+        ecosystem_defaults.periodicity = Periodicity.objects.get(pk=Periodicity.DEFAULT)
 
         ecosystem_defaults.save()
 
