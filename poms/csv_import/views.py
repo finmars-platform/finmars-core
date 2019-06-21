@@ -314,7 +314,7 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
                                             ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
 
                                             if hasattr(ecosystem_default, key):
-                                                instance = getattr(ecosystem_default, key)
+                                                instance[key] = getattr(ecosystem_default, key)
                                             else:
                                                 if key == 'price_download_scheme':
                                                     instance[key] = relation_map[key].objects.get(
@@ -485,6 +485,8 @@ def get_item(scheme, result):
     Model = apps.get_model(app_label=scheme.content_type.app_label, model_name=scheme.content_type.model)
 
     item_result = None
+
+    print('result %s' % result)
 
     if scheme.content_type.model == 'pricehistory':
 
