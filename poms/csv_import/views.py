@@ -327,7 +327,6 @@ def process_csv_file(master_user, scheme, rows, error_handler, missing_data_hand
                                                         master_user=master_user,
                                                         user_code='-')
 
-                                            print('instance[key] %s' % instance[key])
 
                                         else:
 
