@@ -566,14 +566,14 @@ class TransactionTypeInput(models.Model):
 
     @property
     def can_recalculate(self):
+
         return bool(self.value_expr) and self.value_type in [TransactionTypeInput.STRING, TransactionTypeInput.DATE,
-                                                             TransactionTypeInput.NUMBER]
+                                                             TransactionTypeInput.NUMBER, TransactionTypeInput.RELATION]
 
 
 class RebookReactionChoice():
-
     CREATE = 0
-    SKIP = 1 # is not in use
+    SKIP = 1  # is not in use
     OVERWRITE = 2
     CLEAR_AND_WRITE = 3
     CREATE_IF_NOT_EXIST = 4
@@ -1130,7 +1130,6 @@ class ComplexTransaction(FakeDeletableModel):
     user_date_4 = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("user date 4"))
 
     user_date_5 = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("user date 5"))
-    
 
     attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
 

@@ -20,6 +20,8 @@ from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import ComplexTransaction, TransactionTypeInput, Transaction, EventClass, \
     NotificationClass, RebookReactionChoice, ComplexTransactionInput
+from poms.users.models import EcosystemDefault
+from django.apps import apps
 
 _l = logging.getLogger('poms.transactions')
 
@@ -333,33 +335,26 @@ class TransactionTypeProcess(object):
                     if self.is_rebook:
 
                         if rebook_reaction == RebookReactionChoice.OVERWRITE:
-
                             instrument.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE and not instrument_exists:
-
                             instrument.save()
 
                         if rebook_reaction == RebookReactionChoice.FIND_OR_CREATE:
-
                             print('Skip')
 
                     else:
 
                         if rebook_reaction == RebookReactionChoice.OVERWRITE:
-
                             instrument.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE and not instrument_exists:
-
                             instrument.save()
 
                         if rebook_reaction == RebookReactionChoice.FIND_OR_CREATE:
-
                             instrument.save()
 
                         if not rebook_reaction:
-
                             instrument.save()
 
                     self._instrument_assign_permission(instrument, object_permissions)
@@ -418,56 +413,45 @@ class TransactionTypeProcess(object):
 
                     if self.is_rebook:
 
-                        if rebook_reaction  == RebookReactionChoice.CREATE:
-
+                        if rebook_reaction == RebookReactionChoice.CREATE:
                             factor.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
-
                             print('Skip')
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-
                             InstrumentFactorSchedule.objects.filter(instrument=factor.instrument).delete()
 
                             factor.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
-
                             print('Skip')
 
                         if rebook_reaction == RebookReactionChoice.CLEAR:
-
                             InstrumentFactorSchedule.objects.filter(instrument=factor.instrument).delete()
 
                     else:
 
-                        if rebook_reaction  == RebookReactionChoice.CREATE:
-
+                        if rebook_reaction == RebookReactionChoice.CREATE:
                             factor.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
-
                             factor.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-
                             InstrumentFactorSchedule.objects.filter(instrument=factor.instrument).delete()
 
                             factor.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
-
                             InstrumentFactorSchedule.objects.filter(instrument=factor.instrument).delete()
 
                             factor.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR:
-
                             InstrumentFactorSchedule.objects.filter(instrument=factor.instrument).delete()
 
                         if not rebook_reaction:
-
                             factor.save()
 
 
@@ -525,56 +509,45 @@ class TransactionTypeProcess(object):
 
                     if self.is_rebook:
 
-                        if rebook_reaction  == RebookReactionChoice.CREATE:
-
+                        if rebook_reaction == RebookReactionChoice.CREATE:
                             manual_pricing_formula.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
-
                             print('Skip')
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-
                             ManualPricingFormula.objects.filter(instrument=manual_pricing_formula.instrument).delete()
 
                             manual_pricing_formula.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
-
                             print('Skip')
 
                         if rebook_reaction == RebookReactionChoice.CLEAR:
-
                             ManualPricingFormula.objects.filter(instrument=manual_pricing_formula.instrument).delete()
 
                     else:
 
-                        if rebook_reaction  == RebookReactionChoice.CREATE:
-
+                        if rebook_reaction == RebookReactionChoice.CREATE:
                             manual_pricing_formula.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
-
                             manual_pricing_formula.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-
                             ManualPricingFormula.objects.filter(instrument=manual_pricing_formula.instrument).delete()
 
                             manual_pricing_formula.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
-
                             ManualPricingFormula.objects.filter(instrument=manual_pricing_formula.instrument).delete()
 
                             manual_pricing_formula.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR:
-
                             ManualPricingFormula.objects.filter(instrument=manual_pricing_formula.instrument).delete()
 
                         if not rebook_reaction:
-
                             manual_pricing_formula.save()
 
                 except (ValueError, TypeError, IntegrityError):
@@ -652,61 +625,50 @@ class TransactionTypeProcess(object):
 
                     if self.is_rebook:
 
-                        if rebook_reaction  == RebookReactionChoice.CREATE:
-
+                        if rebook_reaction == RebookReactionChoice.CREATE:
                             accrual_calculation_schedule.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
-
                             print('Skip')
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-
                             AccrualCalculationSchedule.objects.filter(
                                 instrument=accrual_calculation_schedule.instrument).delete()
 
                             accrual_calculation_schedule.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
-
                             print('Skip')
 
                         if rebook_reaction == RebookReactionChoice.CLEAR:
-
                             AccrualCalculationSchedule.objects.filter(
                                 instrument=accrual_calculation_schedule.instrument).delete()
 
                     else:
 
-                        if rebook_reaction  == RebookReactionChoice.CREATE:
-
+                        if rebook_reaction == RebookReactionChoice.CREATE:
                             accrual_calculation_schedule.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
-
                             accrual_calculation_schedule.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-
                             AccrualCalculationSchedule.objects.filter(
                                 instrument=accrual_calculation_schedule.instrument).delete()
 
                             accrual_calculation_schedule.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
-
                             AccrualCalculationSchedule.objects.filter(
                                 instrument=accrual_calculation_schedule.instrument).delete()
 
                             accrual_calculation_schedule.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR:
-
                             AccrualCalculationSchedule.objects.filter(
                                 instrument=accrual_calculation_schedule.instrument).delete()
 
                         if not rebook_reaction:
-
                             accrual_calculation_schedule.save()
 
                 except (ValueError, TypeError, IntegrityError):
@@ -793,56 +755,45 @@ class TransactionTypeProcess(object):
 
                     if self.is_rebook:
 
-                        if rebook_reaction  == RebookReactionChoice.CREATE:
-
+                        if rebook_reaction == RebookReactionChoice.CREATE:
                             event_schedule.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
-
                             print('Skip')
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-
                             EventSchedule.objects.filter(instrument=event_schedule.instrument).delete()
 
                             event_schedule.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
-
                             print('Skip')
 
                         if rebook_reaction == RebookReactionChoice.CLEAR:
-
                             EventSchedule.objects.filter(instrument=event_schedule.instrument).delete()
 
                     else:
 
-                        if rebook_reaction  == RebookReactionChoice.CREATE:
-
+                        if rebook_reaction == RebookReactionChoice.CREATE:
                             event_schedule.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
-
                             event_schedule.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-
                             EventSchedule.objects.filter(instrument=event_schedule.instrument).delete()
 
                             event_schedule.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
-
                             EventSchedule.objects.filter(instrument=event_schedule.instrument).delete()
 
                             event_schedule.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR:
-
                             EventSchedule.objects.filter(instrument=event_schedule.instrument).delete()
 
                         if not rebook_reaction:
-
                             event_schedule.save()
 
                 except (ValueError, TypeError, IntegrityError):
@@ -916,61 +867,50 @@ class TransactionTypeProcess(object):
 
                     if self.is_rebook:
 
-                        if rebook_reaction  == RebookReactionChoice.CREATE:
-
+                        if rebook_reaction == RebookReactionChoice.CREATE:
                             event_schedule_action.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
-
                             print('Skip')
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-
                             EventScheduleAction.objects.filter(
                                 event_schedule=event_schedule_action.event_schedule).delete()
 
                             event_schedule_action.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
-
                             print('Skip')
 
                         if rebook_reaction == RebookReactionChoice.CLEAR:
-
                             EventScheduleAction.objects.filter(
                                 event_schedule=event_schedule_action.event_schedule).delete()
 
                     else:
 
-                        if rebook_reaction  == RebookReactionChoice.CREATE:
-
+                        if rebook_reaction == RebookReactionChoice.CREATE:
                             event_schedule_action.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
-
                             event_schedule_action.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
-
                             EventScheduleAction.objects.filter(
                                 event_schedule=event_schedule_action.event_schedule).delete()
 
                             event_schedule_action.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
-
                             EventScheduleAction.objects.filter(
                                 event_schedule=event_schedule_action.event_schedule).delete()
 
                             event_schedule_action.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR:
-
                             EventScheduleAction.objects.filter(
                                 event_schedule=event_schedule_action.event_schedule).delete()
 
                         if not rebook_reaction:
-
                             event_schedule_action.save()
 
                 except (ValueError, TypeError, IntegrityError) as e:
@@ -1380,13 +1320,78 @@ class TransactionTypeProcess(object):
         for name in self.recalculate_inputs:
             inp = inputs[name]
             if inp.can_recalculate:
-                errors = {}
-                try:
-                    res = formula.safe_eval(inp.value_expr, names=self.values, now=self._now, context=self._context)
-                    self.values[name] = res
-                except formula.InvalidExpression as e:
-                    self._set_eval_error(errors, inp.name, inp.value_expr, e)
-                    self.value_errors.append(errors)
+
+                if inp.value_type in [TransactionTypeInput.RELATION]:
+
+                    errors = {}
+                    try:
+                        res = formula.safe_eval(inp.value_expr, names=self.values, now=self._now, context=self._context)
+
+                        print('relation input expr')
+                        print(inp.content_type)
+                        print(res)
+
+                        Model = apps.get_model(app_label=inp.content_type.app_label, model_name=inp.content_type.model)
+
+                        try:
+
+                            if inp.content_type.model == 'pricedownloadscheme':
+                                self.values[name] = Model.objects.get(
+                                    master_user=self.transaction_type.master_user,
+                                    scheme_name='-')
+                            elif inp.content_type.model == 'dailypricingmodel' or key == 'paymentsizedetail':
+                                self.values[name] = Model.objects.get(system_code='-')
+                            else:
+                                self.values[name] = Model.objects.get(master_user=self.transaction_type.master_user,
+                                                              user_code=res)
+                        except Model.DoesNotExist:
+                            raise formula.InvalidExpression
+
+                    except formula.InvalidExpression as e:
+
+                        ecosystem_default = EcosystemDefault.objects.get(master_user=self.transaction_type.master_user)
+
+                        print('error')
+                        print(inp.content_type)
+
+                        entity_map = {
+                            'instrument': 'instrument',
+                            'instrumenttype': 'instrument_type',
+                            'account': 'account',
+                            'currency': 'currency',
+                            'counterparty': 'counterparty',
+                            'responsible': 'responsible',
+                            'portfolio': 'portfolio',
+                            'strategy1': 'strategy1',
+                            'strategy2': 'strategy2',
+                            'strategy2': 'strategy2',
+                            'dailypricingmodel': 'daily_pricing_model',
+                            'paymentsizedetail': 'payment_size_detail',
+                            'pricedownloadscheme': 'price_download_scheme',
+                            'pricingpolicy': 'pricing_policy',
+                            'periodicity': 'periodicity',
+                            'accrualcalculationmodel': 'accrual_calculation_model',
+                            'eventclass': 'event_class',
+                            'notificationclass': 'notification_class',
+                        }
+
+                        key = entity_map[inp.content_type.model]
+
+                        if hasattr(ecosystem_default, key):
+                            res = getattr(ecosystem_default, key)
+                            self.values[name] = res
+                        else:
+                            self._set_eval_error(errors, inp.name, inp.value_expr, e)
+                            self.value_errors.append(errors)
+
+                else:
+                    errors = {}
+                    try:
+                        res = formula.safe_eval(inp.value_expr, names=self.values, now=self._now, context=self._context)
+                        self.values[name] = res
+                    except formula.InvalidExpression as e:
+                        self._set_eval_error(errors, inp.name, inp.value_expr, e)
+                        self.value_errors.append(errors)
 
     @property
     def has_errors(self):

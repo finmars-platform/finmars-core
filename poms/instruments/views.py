@@ -700,7 +700,6 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
 
         action_pk = request.query_params.get('action', None)
 
-
         action = None
         if action_pk:
             try:
@@ -757,6 +756,21 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
             raise PermissionDenied()
 
         generated_event.status = GeneratedEvent.INFORMED
+        generated_event.status_date = timezone.now()
+        generated_event.member = self.request.user.member
+        generated_event.save()
+
+        serializer = self.get_serializer(instance=generated_event)
+        return Response(serializer.data)
+
+    @detail_route(methods=['put'], url_path='error')
+    def error(self, request, pk=None):
+        generated_event = self.get_object()
+
+        if generated_event.status != GeneratedEvent.NEW:
+            raise PermissionDenied()
+
+        generated_event.status = GeneratedEvent.ERROR
         generated_event.status_date = timezone.now()
         generated_event.member = self.request.user.member
         generated_event.save()
