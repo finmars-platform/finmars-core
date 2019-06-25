@@ -261,13 +261,13 @@ class MasterUser(models.Model):
             else:
 
                 if dc_user_code == 'USD':
-                    c = Currency.objects.create(master_user=self, user_code=dc_user_code, short_name=dc_name,
+                    c = Currency.objects.create(master_user=self, user_code=dc_user_code, short_name=dc_user_code,
                                                 name=dc_name, daily_pricing_model=DailyPricingModel.objects.get(
                             pk=DailyPricingModel.SKIP), price_download_scheme=price_download_scheme,
                                                 reference_for_pricing=dc_reference_for_pricing)
                     ccy_usd = c
                 else:
-                    c = Currency.objects.create(master_user=self, user_code=dc_user_code, short_name=dc_name,
+                    c = Currency.objects.create(master_user=self, user_code=dc_user_code, short_name=dc_user_code,
                                                 name=dc_name, daily_pricing_model=DailyPricingModel.objects.get(
                             pk=DailyPricingModel.DEFAULT), price_download_scheme=price_download_scheme,
                                                 reference_for_pricing=dc_reference_for_pricing)
@@ -440,7 +440,7 @@ class MasterUser(models.Model):
                     c1.save()
             else:
 
-                c = Currency.objects.create(master_user=self, user_code=dc_user_code, name=dc_name, short_name=dc_name,
+                c = Currency.objects.create(master_user=self, user_code=dc_user_code, name=dc_name, short_name=dc_user_code,
                                             public_name=dc_name, reference_for_pricing=dc_reference_for_pricing)
                 ccys[c.user_code] = c
 
