@@ -675,6 +675,72 @@ def _safe_get_instrument(evaluator, instrument):
     return instrument
 
 
+def _get_instrument_user_attribute_value(evaluator, instrument, attribute_user_code):
+    from poms.users.utils import get_master_user_from_context
+    from poms.instruments.models import Instrument
+    from poms.obj_attrs.models import GenericAttributeType, GenericAttribute
+    from django.contrib.contenttypes.models import ContentType
+
+    if isinstance(instrument, Instrument):
+        return instrument
+
+    context = evaluator.context
+
+    if context is None:
+        raise InvalidExpression('Context must be specified')
+
+    if attribute_user_code is None:
+        raise InvalidExpression('User code is not set')
+
+    pk = None
+
+    master_user = get_master_user_from_context(context)
+
+    if isinstance(instrument, dict):
+        pk = int(instrument['id'])
+
+    elif isinstance(instrument, (int, float)):
+        pk = int(instrument)
+
+    elif isinstance(instrument, str):
+        pk = Instrument.objects.get(master_user=master_user, user_code=instrument).id
+
+    if pk is None:
+        raise ExpressionEvalError('Invalid instrument')
+
+    attribute_type = None
+    attribute = None
+
+    try:
+        attribute_type = GenericAttributeType.objects.get(master_user=master_user, user_code=attribute_user_code)
+    except GenericAttributeType.DoesNotExist:
+        raise ExpressionEvalError('Attribute type is not found')
+
+    try:
+        attribute = GenericAttribute.objects.get(attribute_type=attribute_type, object_id=pk,
+                                                 content_type=ContentType.objects.get_for_model(Instrument))
+    except GenericAttribute.DoesNotExist:
+        raise ExpressionEvalError('Attribute is not found')
+
+    if attribute_type.value_type == GenericAttributeType.STRING:
+        return attribute.value_string
+
+    if attribute_type.value_type == GenericAttributeType.NUMBER:
+        return attribute.value_float
+
+    if attribute_type.value_type == GenericAttributeType.CLASSIFIER:
+        if attribute.classifier:
+            return attribute.classifier.name
+        else:
+            raise ExpressionEvalError('Classifier is not exist')
+
+    if attribute_type.value_type == GenericAttributeType.DATE:
+        return attribute.value_date
+
+
+_get_instrument_user_attribute_value.evaluator = True
+
+
 def _get_instrument_accrued_price(evaluator, instrument, date):
     if instrument is None or date is None:
         return 0.0
@@ -1036,6 +1102,8 @@ FUNCTIONS = [
     SimpleEval2Def('add_fx_history', _add_fx_history),
     SimpleEval2Def('add_price_history', _add_price_history),
     SimpleEval2Def('generate_user_code', _generate_user_code),
+
+    SimpleEval2Def('get_instrument_user_attribute_value', _get_instrument_user_attribute_value),
 
     SimpleEval2Def('get_ttype_default_input', _get_ttype_default_input),
     SimpleEval2Def('convert_to_number', _convert_to_number),
