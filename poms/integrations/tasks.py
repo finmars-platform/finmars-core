@@ -1147,6 +1147,7 @@ def complex_transaction_csv_file_import(self, instance):
             inputs_conversion_error = []
 
             error_rows = {
+                'level': 'info',
                 'error_message': '',
                 'inputs': inputs_raw,
                 'original_row_index': row_index,
@@ -1184,6 +1185,9 @@ def complex_transaction_csv_file_import(self, instance):
             _l.debug('inputs: error=%s, values=%s', [i.name for i in inputs_error], inputs_raw)
 
             if inputs_error:
+
+                error_rows['level'] = 'error'
+
                 error_rows['error_message'] = error_rows['error_message'] + str(
                     ugettext('Can\'t process inputs: %(inputs)s') % {
                         'inputs': ', '.join(i.name for i in inputs_error)
@@ -1192,6 +1196,7 @@ def complex_transaction_csv_file_import(self, instance):
                 if instance.break_on_error:
                     error_rows['error_reaction'] = 'Break'
                     instance.error_row_index = row_index
+                    instance.error_rows.append(error_rows)
                     return
                 else:
                     error_rows['error_reaction'] = 'Continue import'
@@ -1212,6 +1217,9 @@ def complex_transaction_csv_file_import(self, instance):
                     inputs_conversion_error.append(i)
 
             if inputs_conversion_error:
+
+                error_rows['level'] = 'error'
+
                 error_rows['error_message'] = error_rows['error_message'] + str(
                     ugettext('Can\'t process conversion inputs: %(inputs)s') % {
                         'inputs': ', '.join(i.name for i in inputs_conversion_error)
@@ -1220,6 +1228,7 @@ def complex_transaction_csv_file_import(self, instance):
                 if instance.break_on_error:
                     error_rows['error_reaction'] = 'Break'
                     instance.error_row_index = row_index
+                    instance.error_rows.append(error_rows)
                     return
                 else:
                     error_rows['error_reaction'] = 'Continue import'
@@ -1228,12 +1237,16 @@ def complex_transaction_csv_file_import(self, instance):
             try:
                 rule_value = formula.safe_eval(scheme.rule_expr, names=inputs)
             except:
+
+                error_rows['level'] = 'error'
+
                 _l.info('can\'t process rule expression', exc_info=True)
                 error_rows['error_message'] = error_rows['error_message'] + '\n' + '\n' + str(ugettext(
                     'Can\'t eval rule expression'))
                 instance.error_rows.append(error_rows)
                 if instance.break_on_error:
                     instance.error_row_index = row_index
+                    instance.error_rows.append(error_rows)
                     return
                 else:
                     continue
@@ -1247,6 +1260,9 @@ def complex_transaction_csv_file_import(self, instance):
                         # rule = scheme_rules[rule_value]
                         rule = scheme_rule
                     except:
+
+                        error_rows['level'] = 'error'
+
                         _l.info('rule does not find: %s', rule_value, exc_info=True)
                         error_rows['error_message'] = error_rows['error_message'] + '\n' + '\n' + str(ugettext(
                             'Can\'t find transaction type by "%(value)s"') % {
@@ -1276,7 +1292,11 @@ def complex_transaction_csv_file_import(self, instance):
                                     field.transaction_type_input.pk, exc_info=True)
                             fields_error.append(field)
                     _l.debug('fields (step 1): error=%s, values=%s', fields_error, fields)
+
                     if fields_error:
+
+                        error_rows['level'] = 'error'
+
                         error_rows['error_message'] = error_rows['error_message'] + '\n' + '\n' + str(ugettext(
                             'Can\'t process fields: %(fields)s') % {
                                                                                                           'fields': ', '.join(
@@ -1284,12 +1304,14 @@ def complex_transaction_csv_file_import(self, instance):
                                                                                                               for f in
                                                                                                               fields_error)
                                                                                                       })
-                        instance.error_rows.append(error_rows)
+
                         if instance.break_on_error:
                             instance.error_row_index = row_index
                             error_rows['error_reaction'] = 'Break'
+                            instance.error_rows.append(error_rows)
                             return
                         else:
+                            error_rows['error_reaction'] = 'Continue import'
                             continue
 
                     with transaction.atomic():
@@ -1312,6 +1334,9 @@ def complex_transaction_csv_file_import(self, instance):
 
 
                         except:
+
+                            error_rows['level'] = 'error'
+
                             _l.info("can't process transaction type", exc_info=True)
                             transaction.set_rollback(True)
                             if instance.break_on_error:
@@ -1324,6 +1349,9 @@ def complex_transaction_csv_file_import(self, instance):
                             _l.info("final")
                             # if settings.DEBUG:
                             #     transaction.set_rollback(True)
+
+            instance.error_rows.append(error_rows)
+
 
     def _row_count(file):
         for i, l in enumerate(file):
@@ -1477,6 +1505,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
             inputs_error = []
 
             error_rows = {
+                'level': 'info',
                 'error_message': '',
                 'inputs': inputs_raw,
                 'original_row_index': row_index,
@@ -1511,6 +1540,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
                     error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
                     inputs_error.append(i)
 
+
             _l.debug('inputs: error=%s, values=%s', [i.name for i in inputs_error], inputs_raw)
 
             for i in scheme_inputs:
@@ -1527,16 +1557,21 @@ def complex_transaction_csv_file_import_validate(self, instance):
                         ugettext('Invalid expression'))
                     inputs_error.append(i)
 
+
             if inputs_error:
+
+                error_rows['level'] = 'error'
 
                 error_rows['error_message'] = error_rows['error_message'] + str(
                     ugettext('Can\'t process inputs: %(inputs)s') % {
                         'inputs': ', '.join(i.name for i in inputs_error)
                     })
                 instance.error_rows.append(error_rows)
+
                 if instance.break_on_error:
                     error_rows['error_reaction'] = 'Break'
                     instance.error_row_index = row_index
+                    instance.error_rows.append(error_rows)
                     return
                 else:
                     error_rows['error_reaction'] = 'Continue import'
@@ -1545,12 +1580,16 @@ def complex_transaction_csv_file_import_validate(self, instance):
             try:
                 rule_value = formula.safe_eval(scheme.rule_expr, names=inputs)
             except:
+
+                error_rows['level'] = 'error'
+
                 _l.info('can\'t process rule expression', exc_info=True)
                 error_rows['error_message'] = error_rows['error_message'] + str(ugettext('Can\'t eval rule expression'))
                 instance.error_rows.append(error_rows)
                 if instance.break_on_error:
                     instance.error_row_index = row_index
                     error_rows['error_reaction'] = 'Break'
+                    instance.error_rows.append(error_rows)
                     return
                 else:
                     error_rows['error_reaction'] = 'Continue import'
@@ -1571,6 +1610,9 @@ def complex_transaction_csv_file_import_validate(self, instance):
                         error_rows['error_data']['data']['transaction_type_selector'].append(rule_value)
 
                     except:
+
+                        error_rows['level'] = 'error'
+
                         _l.info('rule does not find: %s', rule_value, exc_info=True)
                         error_rows['error_message'] = error_rows['error_message'] + str(
                             ugettext('Can\'t find transaction type by "%(value)s"') % {
@@ -1584,6 +1626,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
                         if instance.break_on_error:
                             instance.error_row_index = row_index
                             error_rows['error_reaction'] = 'Break'
+                            instance.error_rows.append(error_rows)
                             return
                         else:
                             error_rows['error_reaction'] = 'Continue import'
@@ -1618,11 +1661,11 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                             executed_input_expressions.append(ugettext('Invalid expression'))
 
-                    _l.debug('fields (step 1): error=%s, values=%s', fields_error, fields)
+                    if len(fields_error):
 
-                    _l.debug(error_rows['error_message'])
+                        _l.debug('fields (step 1): error=%s, values=%s', fields_error, fields)
 
-                    if fields_error:
+                        _l.debug(error_rows['error_message'])
 
                         error_rows['error_message'] = error_rows['error_message'] + str(
                             ugettext('Can\'t process fields: %(fields)s') % {
@@ -1631,20 +1674,34 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                         error_rows['error_data']['data']['executed_input_expressions'] = executed_input_expressions
 
-                        instance.error_rows.append(error_rows)
+                        error_rows['level'] = 'error'
+
                         if instance.break_on_error:
                             error_rows['error_reaction'] = 'Break'
                             instance.error_row_index = row_index
+                            instance.error_rows.append(error_rows)
                             return
                         else:
                             error_rows['error_reaction'] = 'Continue import'
                             continue
 
-                    instance.processed_rows = instance.processed_rows + 1
-                    # instance.save()
-                    self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                                      meta={'processed_rows': instance.processed_rows,
-                                            'total_rows': instance.total_rows})
+            instance.error_rows.append(error_rows)
+
+            # if fields_error:
+            #
+            #     if instance.break_on_error:
+            #         error_rows['error_reaction'] = 'Break'
+            #         instance.error_row_index = row_index
+            #         return
+            #     else:
+            #         error_rows['error_reaction'] = 'Continue import'
+            #         continue
+
+            instance.processed_rows = instance.processed_rows + 1
+            # instance.save()
+            self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
+                              meta={'processed_rows': instance.processed_rows,
+                                    'total_rows': instance.total_rows})
 
             _l.debug('instance', instance)
 
