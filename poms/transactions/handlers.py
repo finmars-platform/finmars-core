@@ -1340,7 +1340,7 @@ class TransactionTypeProcess(object):
                                 self.values[name] = Model.objects.get(
                                     master_user=self.transaction_type.master_user,
                                     scheme_name='-')
-                            elif inp.content_type.model == 'dailypricingmodel' or key == 'paymentsizedetail':
+                            elif inp.content_type.model == 'dailypricingmodel' or inp.content_type.model == 'paymentsizedetail':
                                 self.values[name] = Model.objects.get(system_code='-')
                             else:
                                 self.values[name] = Model.objects.get(master_user=self.transaction_type.master_user,
