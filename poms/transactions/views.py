@@ -1018,7 +1018,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
     def rebook(self, request, pk=None):
         complex_transaction = self.get_object()
 
-        complex_transaction.status = ComplexTransaction.PRODUCTION
+        # complex_transaction.status = ComplexTransaction.PRODUCTION
 
         instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
                                           process_mode='rebook',
