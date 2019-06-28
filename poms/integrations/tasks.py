@@ -1600,8 +1600,6 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                 if scheme_rule.value == rule_value:
 
-                    executed_input_expressions = []
-
                     error_rows['error_data']['columns']['transaction_type_selector'].append('TType Selector')
 
                     try:
@@ -1636,6 +1634,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                     fields = {}
                     fields_error = []
+
                     for field in rule.fields.all():
 
                         error_rows['error_data']['columns']['executed_input_expressions'].append(
@@ -1649,9 +1648,9 @@ def complex_transaction_csv_file_import_validate(self, instance):
                             fields[field.transaction_type_input.name] = field_value
 
                             if hasattr(field_value, 'name'):
-                                executed_input_expressions.append(field_value.name)
+                                error_rows['error_data']['data']['executed_input_expressions'].append(field_value.name)
                             else:
-                                executed_input_expressions.append(field_value)
+                                error_rows['error_data']['data']['executed_input_expressions'].append(field_value)
 
                         except (ValueError, formula.InvalidExpression):
 
@@ -1659,7 +1658,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
                                     field.transaction_type_input.pk, exc_info=True)
                             fields_error.append(field)
 
-                            executed_input_expressions.append(ugettext('Invalid expression'))
+                            error_rows['error_data']['data']['executed_input_expressions'].append(ugettext('Invalid expression'))
 
                     if len(fields_error):
 
@@ -1672,7 +1671,6 @@ def complex_transaction_csv_file_import_validate(self, instance):
                                 'fields': ', '.join(f.transaction_type_input.name + '( TType: ' + rule_value + ')' for f in fields_error)
                             })
 
-                        error_rows['error_data']['data']['executed_input_expressions'] = executed_input_expressions
 
                         error_rows['level'] = 'error'
 
