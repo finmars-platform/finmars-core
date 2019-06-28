@@ -1018,8 +1018,8 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
     def rebook(self, request, pk=None):
         complex_transaction = self.get_object()
 
-        if request.method != 'GET':
-            complex_transaction.status = ComplexTransaction.PRODUCTION
+        # if request.method != 'GET':
+        #     complex_transaction.status = ComplexTransaction.PRODUCTION
 
         instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
                                           process_mode='rebook',
@@ -1031,6 +1031,9 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         else:
             try:
                 history.set_flag_change()
+
+                if request.data['complex_transaction']:
+                    request.data['complex_transaction']['status'] = ComplexTransaction.PRODUCTION
 
                 serializer = self.get_serializer(instance=instance, data=request.data)
                 serializer.is_valid(raise_exception=True)
