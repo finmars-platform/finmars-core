@@ -333,29 +333,41 @@ class TransactionTypeProcess(object):
 
                     rebook_reaction = action_instrument.rebook_reaction
 
+                    print('rebook_reaction %s' % rebook_reaction)
+
                     if self.is_rebook:
 
                         if rebook_reaction == RebookReactionChoice.OVERWRITE:
+                            print('Rebook  OVERWRITE')
+
                             instrument.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE and not instrument_exists:
+                            print('Rebook CREATE')
+
                             instrument.save()
 
                         if rebook_reaction == RebookReactionChoice.FIND_OR_CREATE:
-                            print('Skip')
+                            print('Rebook FIND_OR_CREATE')
 
                     else:
 
                         if rebook_reaction == RebookReactionChoice.OVERWRITE:
+                            print('Book  OVERWRITE')
+
                             instrument.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE and not instrument_exists:
+                            print('Book  OVERWRITE')
+
                             instrument.save()
 
                         if rebook_reaction == RebookReactionChoice.FIND_OR_CREATE:
+                            print('Book  FIND_OR_CREATE')
+
                             instrument.save()
 
-                        if not rebook_reaction:
+                        if rebook_reaction is None:
                             instrument.save()
 
                     self._instrument_assign_permission(instrument, object_permissions)
@@ -452,7 +464,7 @@ class TransactionTypeProcess(object):
                         if rebook_reaction == RebookReactionChoice.CLEAR:
                             InstrumentFactorSchedule.objects.filter(instrument=factor.instrument).delete()
 
-                        if not rebook_reaction:
+                        if rebook_reaction is None:
                             factor.save()
 
 
@@ -548,7 +560,7 @@ class TransactionTypeProcess(object):
                         if rebook_reaction == RebookReactionChoice.CLEAR:
                             ManualPricingFormula.objects.filter(instrument=manual_pricing_formula.instrument).delete()
 
-                        if not rebook_reaction:
+                        if rebook_reaction is None:
                             manual_pricing_formula.save()
 
                 except (ValueError, TypeError, IntegrityError):
@@ -669,7 +681,7 @@ class TransactionTypeProcess(object):
                             AccrualCalculationSchedule.objects.filter(
                                 instrument=accrual_calculation_schedule.instrument).delete()
 
-                        if not rebook_reaction:
+                        if rebook_reaction is None:
                             accrual_calculation_schedule.save()
 
                 except (ValueError, TypeError, IntegrityError):
@@ -794,7 +806,7 @@ class TransactionTypeProcess(object):
                         if rebook_reaction == RebookReactionChoice.CLEAR:
                             EventSchedule.objects.filter(instrument=event_schedule.instrument).delete()
 
-                        if not rebook_reaction:
+                        if rebook_reaction is None:
                             event_schedule.save()
 
                 except (ValueError, TypeError, IntegrityError):
@@ -911,7 +923,7 @@ class TransactionTypeProcess(object):
                             EventScheduleAction.objects.filter(
                                 event_schedule=event_schedule_action.event_schedule).delete()
 
-                        if not rebook_reaction:
+                        if rebook_reaction is None:
                             event_schedule_action.save()
 
                 except (ValueError, TypeError, IntegrityError) as e:
@@ -1344,7 +1356,7 @@ class TransactionTypeProcess(object):
                                 self.values[name] = Model.objects.get(system_code='-')
                             else:
                                 self.values[name] = Model.objects.get(master_user=self.transaction_type.master_user,
-                                                              user_code=res)
+                                                                      user_code=res)
                         except Model.DoesNotExist:
                             raise formula.InvalidExpression
 

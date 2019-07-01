@@ -31,11 +31,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'jrixf-%65l5&#@hbmq()sa-pzy@e)=zpdr6g0cg8a!i_&w-c!)'
 
-
 LOCAL = False
 if os.environ.get('LOCAL') == 'True':
     LOCAL = True
-
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -633,7 +631,7 @@ CELERY_ACCEPT_CONTENT = ['json', 'pickle-signed']
 CELERY_TASK_SERIALIZER = 'pickle-signed'
 CELERY_RESULT_SERIALIZER = 'pickle-signed'
 
-CELERYD_CONCURRENCY = 8 # Defaults to the number of available CPUs, but I prefer doubling it.
+CELERYD_CONCURRENCY = 8  # Defaults to the number of available CPUs, but I prefer doubling it.
 CELERYD_TASK_SOFT_TIME_LIMIT = 60 * 20
 CELERYD_TASK_TIME_LIMIT = 60 * 30  # The worker processing the task will be killed and replaced with a new one when this is exceeded.
 CELERY_SEND_TASK_SENT_EVENT = True
@@ -679,7 +677,8 @@ if LOCAL:
     IMPORT_CONFIG_STORAGE = {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
         'KWARGS': {
-            'location': '/opt/finmars-import/config',
+            # 'location': '/opt/finmars-import/config',
+            'location': '/home/szhitenev/projects/finmars/config',
             'base_url': '/api/hidden/'
         }
     }
@@ -713,9 +712,6 @@ else:
             'custom_domain': None
         }
     }
-
-
-
 
 PRICING_AUTO_DOWNLOAD_DISABLED = True
 if os.environ.get('POMS_PRICING_AUTO_DOWNLOAD_DISABLED') == 'False':

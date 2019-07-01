@@ -400,7 +400,7 @@ class ReportBuilder(BaseReportBuilder):
         # filters = Q(**{'%s__lt' % self.instance.date_field: self.instance.report_date})
 
         if self.instance.pl_first_date:
-            filters = Q(**{'%s__gte' % self.instance.date_field: self.instance.pl_first_date})
+            filters = Q(**{'%s__gt' % self.instance.date_field: self.instance.pl_first_date})
 
         if self.instance.instruments:
             # kw_filters['instrument__in'] = self.instance.instruments
