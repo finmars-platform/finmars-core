@@ -394,7 +394,6 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
     pricing_policy = PricingPolicyField()
     transaction_type = TransactionTypeField()
 
-
     periodicity = PeriodicityField()
 
     class Meta:
@@ -417,6 +416,87 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
             'instrument_class', 'daily_pricing_model', 'accrual_calculation_model',
             'payment_size_detail', 'periodicity'
         ]
+
+    def __init__(self, *args, **kwargs):
+        super(EcosystemDefaultSerializer, self).__init__(*args, **kwargs)
+
+        from poms.currencies.serializers import CurrencyViewSerializer
+        from poms.accounts.serializers import AccountTypeViewSerializer, AccountViewSerializer
+        from poms.counterparties.serializers import CounterpartyGroupViewSerializer, CounterpartyViewSerializer, \
+            ResponsibleGroupViewSerializer, ResponsibleViewSerializer
+        from poms.instruments.serializers import InstrumentViewSerializer, InstrumentTypeViewSerializer, \
+            AccrualCalculationModelViewSerializer, \
+            InstrumentClassViewSerializer, DailyPricingModelViewSerializer, PaymentSizeDetailViewSerializer, \
+            PeriodicityViewSerializer, CostMethodViewSerializer
+        from poms.portfolios.serializers import PortfolioViewSerializer
+        from poms.strategies.serializers import Strategy1GroupViewSerializer, Strategy1SubgroupViewSerializer, \
+            Strategy1ViewSerializer, Strategy2GroupViewSerializer, Strategy2SubgroupViewSerializer, \
+            Strategy2ViewSerializer, Strategy3GroupViewSerializer, Strategy3SubgroupViewSerializer, \
+            Strategy3ViewSerializer
+        from poms.chats.serializers import ThreadGroupViewSerializer
+        from poms.transactions.serializers import TransactionTypeViewSerializer
+        from poms.instruments.serializers import PricingPolicyViewSerializer
+        from poms.integrations.serializers import PriceDownloadSchemeViewSerializer
+
+        self.fields['accrual_calculation_model_object'] = AccrualCalculationModelViewSerializer(
+            source='accrual_calculation_model', read_only=True)
+
+        self.fields['daily_pricing_model_object'] = DailyPricingModelViewSerializer(
+            source='daily_pricing_model', read_only=True)
+
+        self.fields['payment_size_detail_object'] = PaymentSizeDetailViewSerializer(
+            source='payment_size_detail', read_only=True)
+
+        self.fields['periodicity_object'] = PeriodicityViewSerializer(
+            source='periodicity', read_only=True)
+
+        self.fields['instrument_class_object'] = InstrumentClassViewSerializer(
+            source='instrument_class', read_only=True)
+
+        self.fields['price_download_scheme_object'] = PriceDownloadSchemeViewSerializer(
+            source='price_download_scheme', read_only=True)
+
+        self.fields['currency_object'] = CurrencyViewSerializer(source='currency', read_only=True)
+
+        self.fields['account_type_object'] = AccountTypeViewSerializer(source='account_type', read_only=True)
+        self.fields['account_object'] = AccountViewSerializer(source='account', read_only=True)
+
+        self.fields['counterparty_group_object'] = CounterpartyGroupViewSerializer(source='counterparty_group',
+                                                                                   read_only=True)
+        self.fields['counterparty_object'] = CounterpartyViewSerializer(source='counterparty', read_only=True)
+        self.fields['responsible_group_object'] = ResponsibleGroupViewSerializer(source='responsible_group',
+                                                                                 read_only=True)
+        self.fields['responsible_object'] = ResponsibleViewSerializer(source='responsible', read_only=True)
+
+        self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
+        self.fields['instrument_type_object'] = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
+
+        self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
+
+        self.fields['strategy1_group_object'] = Strategy1GroupViewSerializer(source='strategy1_group', read_only=True)
+        self.fields['strategy1_subgroup_object'] = Strategy1SubgroupViewSerializer(source='strategy1_subgroup',
+                                                                                   read_only=True)
+        self.fields['strategy1_object'] = Strategy1ViewSerializer(source='strategy1', read_only=True)
+
+        self.fields['strategy2_group_object'] = Strategy2GroupViewSerializer(source='strategy2_group', read_only=True)
+        self.fields['strategy2_subgroup_object'] = Strategy2SubgroupViewSerializer(source='strategy2_subgroup',
+                                                                                   read_only=True)
+        self.fields['strategy2_object'] = Strategy2ViewSerializer(source='strategy2', read_only=True)
+
+        self.fields['strategy3_group_object'] = Strategy3GroupViewSerializer(source='strategy3_group', read_only=True)
+        self.fields['strategy3_subgroup_object'] = Strategy3SubgroupViewSerializer(source='strategy3_subgroup',
+                                                                                   read_only=True)
+        self.fields['strategy3_object'] = Strategy3ViewSerializer(source='strategy3', read_only=True)
+
+        self.fields['thread_group_object'] = ThreadGroupViewSerializer(source='thread_group', read_only=True)
+
+        self.fields['pricing_policy_object'] = PricingPolicyViewSerializer(source='pricing_policy', read_only=True)
+        self.fields['transaction_type_object'] = TransactionTypeViewSerializer(source='transaction_type',
+                                                                               read_only=True)
+
+        self.fields['mismatch_portfolio_object'] = PortfolioViewSerializer(source='mismatch_portfolio', read_only=True)
+        self.fields['mismatch_account_object'] = AccountViewSerializer(source='mismatch_account', read_only=True)
+
 
 
 class MasterUserSetCurrentSerializer(serializers.Serializer):

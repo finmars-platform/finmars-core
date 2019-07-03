@@ -29,7 +29,8 @@ from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy1Group, Strategy2Subgroup, Strategy2Group, \
     Strategy2, Strategy3, Strategy3Subgroup, Strategy3Group
-from poms.users.filters import OwnerByMasterUserFilter, MasterUserFilter, OwnerByUserFilter, InviteToMasterUserFilter, IsMemberFilterBackend
+from poms.users.filters import OwnerByMasterUserFilter, MasterUserFilter, OwnerByUserFilter, InviteToMasterUserFilter, \
+    IsMemberFilterBackend
 from poms.users.models import MasterUser, Member, Group, ResetPasswordToken, InviteToMasterUser, EcosystemDefault
 from poms.users.permissions import SuperUserOrReadOnly, IsCurrentMasterUser, IsCurrentUser
 from poms.users.serializers import GroupSerializer, UserSerializer, MasterUserSerializer, MemberSerializer, \
@@ -515,11 +516,10 @@ class EcosystemDefaultViewSet(AbstractModelViewSet):
         )
     )
     serializer_class = EcosystemDefaultSerializer
-    permission_classes = AbstractModelViewSet.permission_classes + [
-        IsCurrentMasterUser,
-        SuperUserOrReadOnly,
+    permission_classes = AbstractModelViewSet.permission_classes + []
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter
     ]
-    filter_backends = AbstractModelViewSet.filter_backends + []
     ordering_fields = [
         'name',
     ]

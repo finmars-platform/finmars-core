@@ -32,9 +32,21 @@ class InstrumentClassSerializer(PomsClassSerializer):
         model = InstrumentClass
 
 
+class InstrumentClassViewSerializer(PomsClassSerializer):
+    class Meta:
+        model = InstrumentClass
+        fields = ['id', 'system_code', 'name']
+
+
 class DailyPricingModelSerializer(PomsClassSerializer):
     class Meta(PomsClassSerializer.Meta):
         model = DailyPricingModel
+
+
+class DailyPricingModelViewSerializer(PomsClassSerializer):
+    class Meta:
+        model = DailyPricingModel
+        fields = ['id', 'system_code', 'name']
 
 
 class AccrualCalculationModelSerializer(PomsClassSerializer):
@@ -42,9 +54,21 @@ class AccrualCalculationModelSerializer(PomsClassSerializer):
         model = AccrualCalculationModel
 
 
+class AccrualCalculationModelViewSerializer(PomsClassSerializer):
+    class Meta:
+        model = AccrualCalculationModel
+        fields = ['id', 'system_code', 'name']
+
+
 class PaymentSizeDetailSerializer(PomsClassSerializer):
     class Meta(PomsClassSerializer.Meta):
         model = PaymentSizeDetail
+
+
+class PaymentSizeDetailViewSerializer(PomsClassSerializer):
+    class Meta:
+        model = PaymentSizeDetail
+        fields = ['id', 'system_code', 'name']
 
 
 class PeriodicitySerializer(PomsClassSerializer):
@@ -52,9 +76,21 @@ class PeriodicitySerializer(PomsClassSerializer):
         model = Periodicity
 
 
+class PeriodicityViewSerializer(PomsClassSerializer):
+    class Meta:
+        model = Periodicity
+        fields = ['id', 'system_code', 'name']
+
+
 class CostMethodSerializer(PomsClassSerializer):
     class Meta(PomsClassSerializer.Meta):
         model = CostMethod
+
+
+class CostMethodViewSerializer(PomsClassSerializer):
+    class Meta:
+        model = CostMethod
+        fields = ['id', 'system_code', 'name']
 
 
 class PricingPolicySerializer(ModelWithUserCodeSerializer):

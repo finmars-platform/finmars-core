@@ -65,12 +65,12 @@ class DailyPricingModel(AbstractClassModel):
     PROVIDER_IF_OPEN = 5
     DEFAULT = 6
     CLASSES = (
-        (SKIP, 'SKIP', ugettext_lazy("Skip")),
-        (FORMULA_ALWAYS, 'FORMULA_ALWAYS', ugettext_lazy("Formula (always)")),
-        (FORMULA_IF_OPEN, 'FORMULA_IF_OPEN', ugettext_lazy("Formula (if open)")),
-        (PROVIDER_ALWAYS, 'PROVIDER_ALWAYS', ugettext_lazy("Provider (always)")),
-        (PROVIDER_IF_OPEN, 'PROVIDER_IF_OPEN', ugettext_lazy("Provider (if open)")),
-        (DEFAULT, '-', ugettext_lazy("Default"))
+        (SKIP, 'SKIP', ugettext_lazy("No Pricing (no Price History)")),
+        (FORMULA_ALWAYS, 'FORMULA_ALWAYS', ugettext_lazy("Don't download, just apply Formula / Pricing Policy (always)")),
+        (FORMULA_IF_OPEN, 'FORMULA_IF_OPEN', ugettext_lazy("Download & apply Formula / Pricing Policy (if non-zero position)")),
+        (PROVIDER_ALWAYS, 'PROVIDER_ALWAYS', ugettext_lazy("Download & apply Formula / Pricing Policy (always)")),
+        (PROVIDER_IF_OPEN, 'PROVIDER_IF_OPEN', ugettext_lazy("Don't download, just apply Formula / Pricing Policy (if non-zero position)")),
+        (DEFAULT, '-', ugettext_lazy("Use Default Price (no Price History)"))
     )
 
     class Meta(AbstractClassModel.Meta):
