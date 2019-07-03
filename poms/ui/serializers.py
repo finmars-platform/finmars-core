@@ -54,7 +54,7 @@ class ListLayoutSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ListLayout
-        fields = ['id', 'member', 'content_type', 'name', 'is_default', 'data']
+        fields = ['id', 'member', 'content_type', 'name', 'is_default', 'is_active', 'data']
 
 
 class ConfigurationExportLayoutSerializer(serializers.ModelSerializer):

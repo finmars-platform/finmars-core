@@ -93,6 +93,7 @@ class ListLayout(BaseLayout):
     member = models.ForeignKey(Member, related_name='template_list_layouts', verbose_name=ugettext_lazy('member'))
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
     is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
+    is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('is active'))
 
     class Meta(BaseLayout.Meta):
         unique_together = [
@@ -106,6 +107,12 @@ class ListLayout(BaseLayout):
             if self.pk:
                 qs = qs.exclude(pk=self.pk)
             qs.update(is_default=False)
+
+            qs = ListLayout.objects.filter(member=self.member, content_type=self.content_type, is_active=True)
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            qs.update(is_active=False)
+
         return super(ListLayout, self).save(*args, **kwargs)
 
     def __str__(self):

@@ -115,6 +115,7 @@ class TemplateEditLayoutViewSet(AbstractModelViewSet):
 class ListLayoutFilterSet(FilterSet):
     id = NoOpFilter()
     is_default = django_filters.BooleanFilter()
+    is_active = django_filters.BooleanFilter()
     name = CharFilter()
     content_type = LayoutContentTypeFilter()
 
