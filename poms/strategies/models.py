@@ -7,6 +7,7 @@ from mptt.models import MPTTModel
 
 from poms.common.models import NamedModel, FakeDeletableModel
 from poms.common.wrapper_models import NamedModelAutoMapping
+from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
 from poms.tags.models import TagLink
 from poms.users.models import MasterUser
@@ -107,6 +108,8 @@ class Strategy1(NamedModelAutoMapping, FakeDeletableModel):
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
+
+    attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = ugettext_lazy('strategy1')
@@ -239,6 +242,8 @@ class Strategy2(NamedModelAutoMapping, FakeDeletableModel):
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
 
+    attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
+
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = ugettext_lazy('strategy2')
         verbose_name_plural = ugettext_lazy('strategies2')
@@ -369,6 +374,8 @@ class Strategy3(NamedModelAutoMapping, FakeDeletableModel):
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
+
+    attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = ugettext_lazy('strategy3')

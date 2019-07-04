@@ -21,6 +21,8 @@ class AccountType(NamedModel, FakeDeletableModel):
     transaction_details_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True,
                                                 verbose_name=ugettext_lazy('transaction details expr'))
 
+    attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
+
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
 

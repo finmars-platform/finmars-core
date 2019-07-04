@@ -6,6 +6,8 @@ from django.db.models.functions import Lower
 
 from django.db.models import CharField, Case, When
 from django.db.models.functions import Coalesce
+from django.contrib.contenttypes.models import ContentType
+
 
 from django.db.models import Q
 
@@ -309,24 +311,26 @@ def is_root_groups_configuration(groups_types, groups_values):
     return len(groups_types) == 1 and not len(groups_values)
 
 
-def format_groups(group_type):
+def format_groups(group_type, master_user, content_type):
     if 'attributes.' in group_type:
-
-        attribute_type = GenericAttributeType.objects.get(user_code__exact=group_type.split('attributes.')[1])
+        attribute_type = GenericAttributeType.objects.get(user_code__exact=group_type.split('attributes.')[1],
+                                                          master_user=master_user, content_type=content_type)
 
         return str(attribute_type.id)
 
     return group_type
 
 
-def handle_groups(qs, request, original_qs):
+def handle_groups(qs, request, original_qs, content_type):
     start_time = time.time()
 
     groups_types = request.query_params.getlist('groups_types')
     groups_values = request.query_params.getlist('groups_values')
     groups_order = request.query_params.get('groups_order')
 
-    groups_types = list(map(format_groups, groups_types))
+    master_user = request.user.master_user
+
+    groups_types = list(map(lambda x: format_groups(x, master_user, content_type), groups_types))
 
     print('handle_groups.group_types %s' % groups_types)
     # print('handle_groups.groups_values %s' % groups_values)

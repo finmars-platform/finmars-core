@@ -22,7 +22,7 @@ from poms.users.fields import MasterUserField
 #         model = AccountClassifier
 
 
-class AccountTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer, ModelWithTagSerializer):
+class AccountTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer, ModelWithTagSerializer, ModelWithAttributesSerializer):
     master_user = MasterUserField()
     transaction_details_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                                allow_null=True, default='""')

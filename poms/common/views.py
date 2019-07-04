@@ -139,7 +139,7 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
         if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy']:
             filtered_qs = filtered_qs.filter(is_deleted=False)
 
-        filtered_qs = handle_groups(filtered_qs, request, self.get_queryset())
+        filtered_qs = handle_groups(filtered_qs, request, self.get_queryset(), content_type)
 
         page = self.paginate_queryset(filtered_qs)
 

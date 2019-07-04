@@ -52,6 +52,7 @@ router.register(r'users/ecosystem-default', users.EcosystemDefaultViewSet, 'ecos
 
 router.register(r'accounts/account-type-ev-group', accounts.AccountTypeEvGroupViewSet)
 router.register(r'accounts/account-type', accounts.AccountTypeViewSet)
+router.register(r'accounts/account-type-attribute-type', accounts.AccountTypeAttributeTypeViewSet)
 
 # router.register(r'accounts/account-attribute-type', accounts.AccountAttributeTypeViewSet)
 router.register(r'accounts/account-attribute-type', accounts.AccountAttributeTypeViewSet, 'accountattributetype')
@@ -107,6 +108,7 @@ router.register(r'instruments/event-schedule-config', instruments.EventScheduleC
 
 router.register(r'instruments/instrument-type-ev-group', instruments.InstrumentTypeEvGroupViewSet)
 router.register(r'instruments/instrument-type', instruments.InstrumentTypeViewSet)
+router.register(r'instruments/instrument-type-attribute-type', instruments.InstrumentTypeAttributeTypeViewSet)
 
 # router.register(r'instruments/instrument-attribute-type', instruments.InstrumentAttributeTypeViewSet)
 router.register(r'instruments/instrument-attribute-type', instruments.InstrumentAttributeTypeViewSet,
@@ -141,6 +143,9 @@ router.register(r'strategies/1/subgroup', strategies.Strategy1SubgroupViewSet)
 router.register(r'strategies/1/strategy-ev-group', strategies.Strategy1EvGroupViewSet, 'strategy1evgroup')
 router.register(r'strategies/1/strategy', strategies.Strategy1ViewSet)
 
+router.register(r'strategies/1/strategy-attribute-type', strategies.Strategy1AttributeTypeViewSet)
+
+
 router.register(r'strategies/2/group-ev-group', strategies.Strategy2GroupEvGroupViewSet, 'strategy2groupevgroup')
 router.register(r'strategies/2/group', strategies.Strategy2GroupViewSet)
 
@@ -151,6 +156,8 @@ router.register(r'strategies/2/subgroup', strategies.Strategy2SubgroupViewSet)
 router.register(r'strategies/2/strategy-ev-group', strategies.Strategy2EvGroupViewSet, 'strategy2evgroup')
 router.register(r'strategies/2/strategy', strategies.Strategy2ViewSet)
 
+router.register(r'strategies/2/strategy-attribute-type', strategies.Strategy2AttributeTypeViewSet)
+
 router.register(r'strategies/3/group-ev-group', strategies.Strategy3GroupEvGroupViewSet, 'strategy3groupevgroup')
 router.register(r'strategies/3/group', strategies.Strategy3GroupViewSet)
 
@@ -160,6 +167,8 @@ router.register(r'strategies/3/subgroup', strategies.Strategy3SubgroupViewSet)
 
 router.register(r'strategies/3/strategy-ev-group', strategies.Strategy3EvGroupViewSet, 'strategy3evgroup')
 router.register(r'strategies/3/strategy', strategies.Strategy3ViewSet)
+
+router.register(r'strategies/3/strategy-attribute-type', strategies.Strategy3AttributeTypeViewSet)
 
 router.register(r'tags/tag', tags.TagViewSet)
 
@@ -173,6 +182,7 @@ router.register(r'transactions/transaction-type-group', transactions.Transaction
 router.register(r'transactions/transaction-type-ev-group', transactions.TransactionTypeEvGroupViewSet,
                 'transactiontypeevgroup')
 router.register(r'transactions/transaction-type', transactions.TransactionTypeViewSet)
+router.register(r'transactions/transaction-type-attribute-type', transactions.TransactionTypeAttributeTypeViewSet)
 # router.register(r'transactions/transaction-attribute-type', transactions.TransactionAttributeTypeViewSet)
 router.register(r'transactions/transaction-attribute-type', transactions.TransactionAttributeTypeViewSet,
                 'transactionattributetype')

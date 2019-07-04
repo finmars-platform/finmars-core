@@ -127,6 +127,10 @@ class PricingPolicyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cu
     ]
 
 
+class InstrumentTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
+    target_model = InstrumentType
+
+
 class InstrumentTypeFilterSet(FilterSet):
     id = NoOpFilter()
     is_deleted = django_filters.BooleanFilter()
@@ -166,6 +170,7 @@ class InstrumentTypeViewSet(AbstractWithObjectPermissionViewSet):
         'factor_down__group',
     ).prefetch_related(
         get_tag_prefetch(),
+        get_attributes_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, InstrumentType),
             ('one_off_event', TransactionType),

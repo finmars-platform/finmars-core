@@ -7,6 +7,7 @@ from rest_framework.settings import api_settings
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, AttributeFilter, \
     GroupsAttributeFilter
 from poms.common.pagination import CustomPaginationMixin
+from poms.obj_attrs.views import GenericAttributeTypeViewSet
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
     ObjectPermissionPermissionFilter
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
@@ -20,6 +21,7 @@ from poms.tags.filters import TagFilter
 from poms.tags.models import Tag
 from poms.tags.utils import get_tag_prefetch
 from poms.users.filters import OwnerByMasterUserFilter
+from poms.obj_attrs.utils import get_attributes_prefetch
 
 
 class Strategy1GroupFilterSet(FilterSet):
@@ -59,6 +61,7 @@ class Strategy1GroupViewSet(AbstractWithObjectPermissionViewSet):
         'user_code', 'name', 'short_name', 'public_name',
     ]
 
+
 class Strategy1GroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Strategy1Group.objects.select_related(
         'master_user'
@@ -76,6 +79,7 @@ class Strategy1GroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, C
         OwnerByMasterUserFilter,
         AttributeFilter
     ]
+
 
 class Strategy1SubgroupFilterSet(FilterSet):
     id = NoOpFilter()
@@ -121,6 +125,7 @@ class Strategy1SubgroupViewSet(AbstractWithObjectPermissionViewSet):
         'group', 'group__user_code', 'group__name', 'group__short_name', 'group__public_name',
     ]
 
+
 class Strategy1SubgroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Strategy1Subgroup.objects.select_related(
         'master_user',
@@ -161,6 +166,10 @@ class Strategy1FilterSet(FilterSet):
         fields = []
 
 
+class Strategy1AttributeTypeViewSet(GenericAttributeTypeViewSet):
+    target_model = Strategy1
+
+
 class Strategy1ViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Strategy1.objects.select_related(
         'master_user',
@@ -168,6 +177,7 @@ class Strategy1ViewSet(AbstractWithObjectPermissionViewSet):
         'subgroup__group'
     ).prefetch_related(
         get_tag_prefetch(),
+        get_attributes_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy1),
             ('subgroup', Strategy1Subgroup),
@@ -191,6 +201,7 @@ class Strategy1ViewSet(AbstractWithObjectPermissionViewSet):
         'subgroup', 'subgroup__user_code', 'subgroup__name', 'subgroup__short_name', 'subgroup__public_name',
     ]
 
+
 class Strategy1EvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Strategy1.objects.select_related(
         'master_user',
@@ -212,6 +223,7 @@ class Strategy1EvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Custom
         OwnerByMasterUserFilter,
         AttributeFilter
     ]
+
 
 # 2
 
@@ -243,6 +255,7 @@ class Strategy2GroupViewSet(Strategy1GroupViewSet):
     serializer_class = Strategy2GroupSerializer
     filter_class = Strategy2GroupFilterSet
 
+
 class Strategy2GroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Strategy2Group.objects.select_related(
         'master_user'
@@ -260,6 +273,7 @@ class Strategy2GroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, C
         OwnerByMasterUserFilter,
         AttributeFilter
     ]
+
 
 class Strategy2SubgroupFilterSet(Strategy1SubgroupFilterSet):
     tag = TagFilter(model=Strategy2Subgroup)
@@ -291,6 +305,7 @@ class Strategy2SubgroupViewSet(Strategy1SubgroupViewSet):
     serializer_class = Strategy2SubgroupSerializer
     filter_class = Strategy2SubgroupFilterSet
 
+
 class Strategy2SubgroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Strategy2Subgroup.objects.select_related(
         'master_user',
@@ -311,6 +326,11 @@ class Strategy2SubgroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet
         AttributeFilter
     ]
 
+
+class Strategy2AttributeTypeViewSet(GenericAttributeTypeViewSet):
+    target_model = Strategy2
+
+
 class Strategy2FilterSet(Strategy1FilterSet):
     tag = TagFilter(model=Strategy2)
     subgroup__group = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy2Group)
@@ -330,6 +350,7 @@ class Strategy2ViewSet(Strategy1ViewSet):
         'subgroup__group'
     ).prefetch_related(
         get_tag_prefetch(),
+        get_attributes_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy2),
             ('subgroup', Strategy2Subgroup),
@@ -343,6 +364,7 @@ class Strategy2ViewSet(Strategy1ViewSet):
     ]
     serializer_class = Strategy2Serializer
     filter_class = Strategy2FilterSet
+
 
 class Strategy2EvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Strategy2.objects.select_related(
@@ -365,6 +387,7 @@ class Strategy2EvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Custom
         OwnerByMasterUserFilter,
         AttributeFilter
     ]
+
 
 # 3
 
@@ -394,6 +417,7 @@ class Strategy3GroupViewSet(Strategy1GroupViewSet):
     serializer_class = Strategy3GroupSerializer
     filter_class = Strategy3GroupFilterSet
 
+
 class Strategy3GroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Strategy3Group.objects.prefetch_related('master_user').prefetch_related(
         get_tag_prefetch(),
@@ -409,6 +433,7 @@ class Strategy3GroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, C
         OwnerByMasterUserFilter,
         AttributeFilter
     ]
+
 
 class Strategy3SubgroupFilterSet(Strategy1SubgroupFilterSet):
     tag = TagFilter(model=Strategy3Subgroup)
@@ -440,6 +465,7 @@ class Strategy3SubgroupViewSet(Strategy1SubgroupViewSet):
     serializer_class = Strategy3SubgroupSerializer
     filter_class = Strategy3SubgroupFilterSet
 
+
 class Strategy3SubgroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Strategy3Subgroup.objects.select_related(
         'master_user',
@@ -461,6 +487,10 @@ class Strategy3SubgroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet
     ]
 
 
+class Strategy3AttributeTypeViewSet(GenericAttributeTypeViewSet):
+    target_model = Strategy3
+
+
 class Strategy3FilterSet(Strategy1FilterSet):
     tag = TagFilter(model=Strategy3)
     subgroup__group = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy3Group)
@@ -480,6 +510,7 @@ class Strategy3ViewSet(Strategy1ViewSet):
         'subgroup__group'
     ).prefetch_related(
         get_tag_prefetch(),
+        get_attributes_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy3),
             ('subgroup', Strategy3Subgroup),
@@ -493,6 +524,7 @@ class Strategy3ViewSet(Strategy1ViewSet):
     ]
     serializer_class = Strategy3Serializer
     filter_class = Strategy3FilterSet
+
 
 class Strategy3EvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Strategy3.objects.select_related(

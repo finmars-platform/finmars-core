@@ -24,6 +24,8 @@ from rest_framework.response import Response
 from poms.common.grouping_handlers import handle_groups
 from rest_framework import viewsets, status
 
+class AccountTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
+    target_model = AccountType
 
 class AccountTypeFilterSet(FilterSet):
     id = NoOpFilter()
@@ -48,6 +50,7 @@ class AccountTypeViewSet(AbstractWithObjectPermissionViewSet):
         'master_user'
     ).prefetch_related(
         get_tag_prefetch(),
+        get_attributes_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, AccountType),
         )

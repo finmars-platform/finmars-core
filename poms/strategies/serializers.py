@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from poms.common.serializers import ModelWithUserCodeSerializer
+from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.strategies.fields import Strategy1GroupField, Strategy1SubgroupField, Strategy2GroupField, \
     Strategy2SubgroupField, Strategy3GroupField, Strategy3SubgroupField, Strategy1GroupDefault, Strategy1SubgroupDefault, \
@@ -63,7 +64,7 @@ class Strategy1SubgroupViewSerializer(ModelWithObjectPermissionSerializer):
         ]
 
 
-class Strategy1Serializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer, ModelWithTagSerializer):
+class Strategy1Serializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer, ModelWithTagSerializer, ModelWithAttributesSerializer):
     master_user = MasterUserField()
     subgroup = Strategy1SubgroupField(default=Strategy1SubgroupDefault())
     subgroup_object = Strategy1SubgroupViewSerializer(source='subgroup', read_only=True)
@@ -127,7 +128,7 @@ class Strategy2Serializer(Strategy1Serializer):
         model = Strategy2
 
 
-class Strategy2ViewSerializer(Strategy1ViewSerializer):
+class Strategy2ViewSerializer(Strategy1ViewSerializer, ModelWithAttributesSerializer):
     subgroup_object = Strategy2SubgroupViewSerializer(source='subgroup', read_only=True)
 
     class Meta(Strategy1ViewSerializer.Meta):
@@ -163,7 +164,7 @@ class Strategy3SubgroupViewSerializer(Strategy1SubgroupViewSerializer):
         model = Strategy3Subgroup
 
 
-class Strategy3Serializer(Strategy1Serializer):
+class Strategy3Serializer(Strategy1Serializer, ModelWithAttributesSerializer):
     subgroup = Strategy3SubgroupField(default=Strategy3SubgroupDefault())
     subgroup_object = Strategy3SubgroupViewSerializer(source='subgroup', read_only=True)
 

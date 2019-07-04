@@ -167,12 +167,16 @@ class TransactionTypeFilterSet(FilterSet):
         fields = []
 
 
+class TransactionTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
+    target_model = TransactionType
+
 class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
     queryset = TransactionType.objects.select_related(
         'group'
     ).prefetch_related(
         'portfolios',
         get_tag_prefetch(),
+        get_attributes_prefetch(),
         Prefetch(
             'instrument_types',
             queryset=InstrumentType.objects.select_related('instrument_class')

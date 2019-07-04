@@ -11,6 +11,8 @@ from poms.obj_perms.utils import obj_perms_filter_objects_for_view
 
 from django.db.models import Q
 
+from django.contrib.contenttypes.models import ContentType
+
 import time
 
 
@@ -108,9 +110,10 @@ class CharFilter(django_filters.CharFilter):
 
 class GroupsAttributeFilter(BaseFilterBackend):
 
-    def format_groups(self, group_type):
+    def format_groups(self, group_type, master_user, content_type):
         if 'attributes.' in group_type:
-            attribute_type = GenericAttributeType.objects.get(user_code__exact=group_type.split('attributes.')[1])
+            attribute_type = GenericAttributeType.objects.get(user_code__exact=group_type.split('attributes.')[1],
+                                                              master_user=master_user, content_type=content_type)
 
             return str(attribute_type.id)
 
@@ -123,7 +126,13 @@ class GroupsAttributeFilter(BaseFilterBackend):
         groups_types = request.query_params.getlist('groups_types')
         groups_values = request.query_params.getlist('groups_values')
 
-        groups_types = list(map(self.format_groups, groups_types))
+        master_user = request.user.master_user
+
+        model = view.serializer_class.Meta.model
+
+        content_type =  ContentType.objects.get_for_model(model, for_concrete_model=False)
+
+        groups_types = list(map(lambda x: self.format_groups(x, master_user, content_type), groups_types))
 
         # print('GroupsAttributeFilter init')
 

@@ -320,6 +320,8 @@ class InstrumentType(NamedModelAutoMapping, FakeDeletableModel):
     factor_down = models.ForeignKey('transactions.TransactionType', null=True, blank=True, on_delete=models.PROTECT,
                                     related_name='+', verbose_name=ugettext_lazy('factor down'))
 
+    attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
+
     object_permissions = GenericRelation(GenericObjectPermission)
     tags = GenericRelation(TagLink)
 

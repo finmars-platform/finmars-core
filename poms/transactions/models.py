@@ -315,6 +315,8 @@ class TransactionType(NamedModel, FakeDeletableModel):
     book_transaction_layout_json = models.TextField(null=True, blank=True,
                                                     verbose_name=ugettext_lazy('book transaction layout json'))
 
+    attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
+
     user_text_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                    verbose_name=ugettext_lazy('user text 1'))
 

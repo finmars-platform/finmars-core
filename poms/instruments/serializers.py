@@ -119,7 +119,7 @@ class PricingPolicyViewSerializer(ModelWithUserCodeSerializer):
 
 
 class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
-                               ModelWithTagSerializer):
+                               ModelWithTagSerializer, ModelWithAttributesSerializer):
     master_user = MasterUserField()
     instrument_class_object = InstrumentClassSerializer(source='instrument_class', read_only=True)
     one_off_event = TransactionTypeField(allow_null=True, required=False)
