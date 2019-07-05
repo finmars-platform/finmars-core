@@ -128,9 +128,12 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
         master_user = request.user.master_user
 
-        model = view.serializer_class.Meta.model
+        if hasattr(view.serializer_class, 'Meta'):
+            model = view.serializer_class.Meta.model
+        else:
+            return queryset
 
-        content_type =  ContentType.objects.get_for_model(model, for_concrete_model=False)
+        content_type = ContentType.objects.get_for_model(model, for_concrete_model=False)
 
         groups_types = list(map(lambda x: self.format_groups(x, master_user, content_type), groups_types))
 
