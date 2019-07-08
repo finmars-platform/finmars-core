@@ -787,10 +787,14 @@ class TransactionTypeActionSerializer(serializers.ModelSerializer):
 
     rebook_reaction = serializers.IntegerField(required=False, allow_null=True)
 
+    condition_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                     allow_null=True, default='')
+
     transaction = TransactionTypeActionTransactionSerializer(source='transactiontypeactiontransaction', required=False,
                                                              allow_null=True)
     instrument = TransactionTypeActionInstrumentSerializer(source='transactiontypeactioninstrument', required=False,
                                                            allow_null=True)
+
     instrument_factor_schedule = TransactionTypeActionInstrumentFactorScheduleSerializer(
         source='transactiontypeactioninstrumentfactorschedule', required=False,
         allow_null=True)
@@ -813,7 +817,7 @@ class TransactionTypeActionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TransactionTypeAction
-        fields = ['id', 'order', 'rebook_reaction', 'action_notes', 'transaction', 'instrument',
+        fields = ['id', 'order', 'rebook_reaction', 'condition_expr', 'action_notes', 'transaction', 'instrument',
                   'instrument_factor_schedule',
                   'instrument_manual_pricing_formula', 'instrument_accrual_calculation_schedules',
                   'instrument_event_schedule', 'instrument_event_schedule_action']
@@ -1007,6 +1011,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                 action_instrument.rebook_reaction = action_data.get('rebook_reaction',
                                                                     action_instrument.rebook_reaction)
                 action_instrument.action_notes = action_data.get('action_notes', action_instrument.action_notes)
+                action_instrument.condition_expr = action_data.get('condition_expr', action_instrument.condition_expr)
                 for attr, value in action_instrument_data.items():
                     setattr(action_instrument, attr, value)
 
@@ -1065,6 +1070,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                 action_transaction.rebook_reaction = action_data.get('rebook_reaction',
                                                                      action_transaction.rebook_reaction)
                 action_transaction.action_notes = action_data.get('action_notes', action_transaction.action_notes)
+                action_transaction.condition_expr = action_data.get('condition_expr', action_transaction.condition_expr)
                 for attr, value in action_transaction_data.items():
                     setattr(action_transaction, attr, value)
 
@@ -1107,6 +1113,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                 item.rebook_reaction = action_data.get('rebook_reaction', item.rebook_reaction)
                 item.action_notes = action_data.get('action_notes',
                                                     item.action_notes)
+                item.condition_expr = action_data.get('condition_expr', item.condition_expr)
                 for attr, value in item_data.items():
                     setattr(item, attr, value)
 
@@ -1150,6 +1157,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                 item.rebook_reaction = action_data.get('rebook_reaction', item.rebook_reaction)
                 item.action_notes = action_data.get('action_notes',
                                                     item.action_notes)
+                item.condition_expr = action_data.get('condition_expr', item.condition_expr)
                 for attr, value in item_data.items():
                     setattr(item, attr, value)
 
@@ -1194,6 +1202,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                 item.rebook_reaction = action_data.get('rebook_reaction', item.rebook_reaction)
                 item.action_notes = action_data.get('action_notes',
                                                     item.action_notes)
+                item.condition_expr = action_data.get('condition_expr', item.condition_expr)
                 for attr, value in item_data.items():
                     setattr(item, attr, value)
 
@@ -1237,6 +1246,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                 item.order = order
                 item.rebook_reaction = action_data.get('rebook_reaction', item.rebook_reaction)
                 item.action_notes = action_data.get('action_notes', item.action_notes)
+                item.condition_expr = action_data.get('condition_expr', item.condition_expr)
                 for attr, value in item_data.items():
                     setattr(item, attr, value)
 
@@ -1280,6 +1290,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                 item.order = order
                 item.rebook_reaction = action_data.get('rebook_reaction', item.rebook_reaction)
                 item.action_notes = action_data.get('action_notes', item.action_notes)
+                item.condition_expr = action_data.get('condition_expr', item.condition_expr)
                 for attr, value in item_data.items():
                     setattr(item, attr, value)
 
@@ -1340,7 +1351,7 @@ class TransactionTypeViewSerializer(ModelWithObjectPermissionSerializer):
             'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
 
             'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5'
-            
+
         ]
 
 

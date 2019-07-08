@@ -121,6 +121,35 @@ class TransactionTypeProcess(object):
         self._transaction_order_seq += 1
         return self._transaction_order_seq
 
+    def execute_action_condition(self, action):
+
+        print('action.condition_expr')
+        print(action.condition_expr)
+
+        if action is None:
+            return False
+
+        if action.condition_expr is None or action.condition_expr == '':
+            return True
+
+        try:
+            result = formula.safe_eval(action.condition_expr, names=self.values,
+                                       context=self._context)
+
+            print('Action is executed')
+            print(result)
+
+            if result == "False" or result == False:
+                return False
+
+            return True
+
+        except formula.InvalidExpression as e:
+
+            print('Action is skipped')
+
+            return False
+
     def _set_values(self):
         def _get_val_by_model_cls(obj, model_class):
             if issubclass(model_class, Account):
@@ -227,7 +256,7 @@ class TransactionTypeProcess(object):
             except ObjectDoesNotExist:
                 action_instrument = None
 
-            if action_instrument:
+            if action_instrument and self.execute_action_condition(action_instrument):
 
                 print('action_instrument %s' % action_instrument)
 
@@ -397,7 +426,7 @@ class TransactionTypeProcess(object):
             except ObjectDoesNotExist:
                 action_instrument_factor_schedule = None
 
-            if action_instrument_factor_schedule:
+            if action_instrument_factor_schedule and self.execute_action_condition(action_instrument_factor_schedule):
 
                 _l.debug('process factor schedule: %s', action_instrument_factor_schedule)
 
@@ -488,7 +517,8 @@ class TransactionTypeProcess(object):
             except ObjectDoesNotExist:
                 action_instrument_manual_pricing_formula = None
 
-            if action_instrument_manual_pricing_formula:
+            if action_instrument_manual_pricing_formula and self.execute_action_condition(
+                    action_instrument_manual_pricing_formula):
 
                 _l.debug('process manual pricing formula: %s', action_instrument_manual_pricing_formula)
 
@@ -583,7 +613,8 @@ class TransactionTypeProcess(object):
             except ObjectDoesNotExist:
                 action_instrument_accrual_calculation_schedule = None
 
-            if action_instrument_accrual_calculation_schedule:
+            if action_instrument_accrual_calculation_schedule and self.execute_action_condition(
+                    action_instrument_accrual_calculation_schedule):
 
                 _l.debug('process accrual calculation schedule: %s', action_instrument_accrual_calculation_schedule)
 
@@ -704,7 +735,7 @@ class TransactionTypeProcess(object):
             except ObjectDoesNotExist:
                 action_instrument_event_schedule = None
 
-            if action_instrument_event_schedule:
+            if action_instrument_event_schedule and self.execute_action_condition(action_instrument_event_schedule):
 
                 _l.debug('process event schedule: %s', action_instrument_event_schedule)
                 _l.debug('instrument_map: %s', instrument_map)
@@ -833,7 +864,8 @@ class TransactionTypeProcess(object):
             except ObjectDoesNotExist:
                 action_instrument_event_schedule_action = None
 
-            if action_instrument_event_schedule_action:
+            if action_instrument_event_schedule_action and self.execute_action_condition(
+                    action_instrument_event_schedule_action):
 
                 errors = {}
 
@@ -946,7 +978,7 @@ class TransactionTypeProcess(object):
             except ObjectDoesNotExist:
                 action_transaction = None
 
-            if action_transaction:
+            if action_transaction and self.execute_action_condition(action_transaction):
 
                 _l.debug('process transaction: %s', action_transaction)
                 errors = {}

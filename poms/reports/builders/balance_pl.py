@@ -80,6 +80,7 @@ class ReportBuilder(BaseReportBuilder):
     def build_pl(self, full=True):
         st = time.perf_counter()
         _l.debug('build pl report: %s', self.instance)
+        _l.debug('build pl report pl_first_date: %s', self.instance.pl_first_date)
 
         self.instance.report_type = Report.TYPE_PL
         self.build(full=full)
@@ -167,6 +168,10 @@ class ReportBuilder(BaseReportBuilder):
         _refresh_st = time.perf_counter()
 
         if self.instance.pl_first_date and self.instance.pl_first_date != date.min:
+
+            print('here? %s ' % self.instance.pl_first_date)
+            print('date? %s ' % date.min)
+
             self._build_on_pl_first_date()
         if full:
             self._refresh_with_perms()
@@ -399,8 +404,15 @@ class ReportBuilder(BaseReportBuilder):
         filters = Q(**{'%s__lte' % self.instance.date_field: self.instance.report_date})
         # filters = Q(**{'%s__lt' % self.instance.date_field: self.instance.report_date})
 
+        print('date field')
+        print(qs[0].__dict__)
+        print(self.instance.date_field)
+
+        print('self.instance.pl_first_date')
+        print(self.instance.pl_first_date)
+
         if self.instance.pl_first_date:
-            filters = Q(**{'%s__gt' % self.instance.date_field: self.instance.pl_first_date})
+            filters &= Q(**{'%s__gt' % self.instance.date_field: self.instance.pl_first_date})
 
         if self.instance.instruments:
             # kw_filters['instrument__in'] = self.instance.instruments
@@ -435,6 +447,8 @@ class ReportBuilder(BaseReportBuilder):
         if self.instance.transaction_classes:
             # kw_filters['transaction_class__in'] = self.instance.transaction_classes
             filters &= Q(transaction_class__in=self.instance.transaction_classes)
+
+        print(filters)
 
         qs = qs.filter(filters)
 

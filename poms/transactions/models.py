@@ -602,6 +602,9 @@ class TransactionTypeAction(models.Model):
 
     rebook_reaction = models.IntegerField(default=0, choices=RebookReactionChoice.choices)
 
+    condition_expr = models.CharField(max_length=1000, blank=True, default='',
+                                      verbose_name=ugettext_lazy('condition expression'))
+
     class Meta:
         verbose_name = ugettext_lazy('action')
         verbose_name_plural = ugettext_lazy('actions')
