@@ -1061,6 +1061,8 @@ def complex_transaction_csv_file_import(self, instance):
         Portfolio: PortfolioMapping,
         PriceDownloadScheme: PriceDownloadSchemeMapping,
         Periodicity: PeriodicityMapping,
+        AccrualCalculationModel: AccrualCalculationModelMapping,
+
     }
     mapping_cache = {}
 
@@ -1079,6 +1081,7 @@ def complex_transaction_csv_file_import(self, instance):
         Portfolio: 'portfolio',
         PriceDownloadScheme: 'price_download_scheme',
         Periodicity: 'periodicity',
+        AccrualCalculationModel: 'accrual_calculation_model',
     }
 
     def _convert_value(field, value, error_rows):
@@ -1114,7 +1117,7 @@ def complex_transaction_csv_file_import(self, instance):
 
                     if model_class == PriceDownloadScheme:
                         v = model_class.objects.get(master_user=instance.master_user, scheme_name=value)
-                    elif model_class == DailyPricingModel or model_class == PaymentSizeDetail or model_class == Periodicity:
+                    elif model_class == DailyPricingModel or model_class == PaymentSizeDetail or model_class == Periodicity or model_class == AccrualCalculationModel:
                         v = model_class.objects.get(system_code=value)
                     else:
                         v = model_class.objects.get(master_user=instance.master_user, user_code=value)
@@ -1458,7 +1461,6 @@ def complex_transaction_csv_file_import_validate(self, instance):
         PriceDownloadScheme: 'price_download_scheme',
         Periodicity: 'periodicity',
         AccrualCalculationModel: 'accrual_calculation_model',
-        EventClass: 'event_class',
     }
 
     mapping_cache = {}
