@@ -26,11 +26,11 @@ from poms.common.utils import date_now, isclose
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import Instrument, DailyPricingModel, PricingPolicy, PriceHistory, InstrumentType, \
-    PaymentSizeDetail, Periodicity
+    PaymentSizeDetail, Periodicity, AccrualCalculationModel
 from poms.integrations.models import Task, PriceDownloadScheme, InstrumentDownloadScheme, PricingAutomatedSchedule, \
     AccountMapping, CurrencyMapping, PortfolioMapping, CounterpartyMapping, InstrumentTypeMapping, ResponsibleMapping, \
     Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, DailyPricingModelMapping, PaymentSizeDetailMapping, \
-    PriceDownloadSchemeMapping, InstrumentMapping, PeriodicityMapping
+    PriceDownloadSchemeMapping, InstrumentMapping, PeriodicityMapping, AccrualCalculationModelMapping
 from poms.integrations.providers.base import get_provider, parse_date_iso, fill_instrument_price, fill_currency_price, \
     AbstractProvider
 from poms.integrations.storage import import_file_storage
@@ -39,6 +39,7 @@ from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.handlers import TransactionTypeProcess
+from poms.transactions.models import EventClass
 from poms.users.models import MasterUser, EcosystemDefault
 
 _l = logging.getLogger('poms.integrations')
@@ -1438,6 +1439,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
         Portfolio: PortfolioMapping,
         PriceDownloadScheme: PriceDownloadSchemeMapping,
         Periodicity: PeriodicityMapping,
+        AccrualCalculationModel: AccrualCalculationModelMapping,
     }
 
     props_map = {
@@ -1455,6 +1457,8 @@ def complex_transaction_csv_file_import_validate(self, instance):
         Portfolio: 'portfolio',
         PriceDownloadScheme: 'price_download_scheme',
         Periodicity: 'periodicity',
+        AccrualCalculationModel: 'accrual_calculation_model',
+        EventClass: 'event_class',
     }
 
     mapping_cache = {}
@@ -1492,7 +1496,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                     if model_class == PriceDownloadScheme:
                         v = model_class.objects.get(master_user=instance.master_user, scheme_name=value)
-                    elif model_class == DailyPricingModel or model_class == PaymentSizeDetail or model_class == Periodicity:
+                    elif model_class == DailyPricingModel or model_class == PaymentSizeDetail or model_class == Periodicity or model_class == AccrualCalculationModel:
                         v = model_class.objects.get(system_code=value)
                     else:
                         v = model_class.objects.get(master_user=instance.master_user, user_code=value)
