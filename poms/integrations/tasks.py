@@ -1063,6 +1063,23 @@ def complex_transaction_csv_file_import(self, instance):
     }
     mapping_cache = {}
 
+    props_map = {
+        Account: 'account',
+        Currency: 'currency',
+        Instrument: 'instrument',
+        InstrumentType: 'instrument_type',
+        Counterparty: 'counterparty',
+        Responsible: 'responsible',
+        Strategy1: 'strategy1',
+        Strategy2: 'strategy2',
+        Strategy3: 'strategy3',
+        DailyPricingModel: 'daily_pricing_model',
+        PaymentSizeDetail: 'payment_size_detail',
+        Portfolio: 'portfolio',
+        PriceDownloadScheme: 'price_download_scheme',
+        Periodicity: 'periodicity',
+    }
+
     def _convert_value(field, value, error_rows):
         i = field.transaction_type_input
 
@@ -1082,7 +1099,7 @@ def complex_transaction_csv_file_import(self, instance):
             model_class = i.content_type.model_class()
             model_map_class = mapping_map[model_class]
 
-            key = (model_class, value)
+            key = props_map[model_class]
 
             v = None
 
@@ -1092,7 +1109,7 @@ def complex_transaction_csv_file_import(self, instance):
 
                 try:
 
-                    _l.debug('Lookup by user code %s', value)
+                    # _l.debug('Lookup by user code %s', value)
 
                     if model_class == PriceDownloadScheme:
                         v = model_class.objects.get(master_user=instance.master_user, scheme_name=value)
@@ -1105,14 +1122,14 @@ def complex_transaction_csv_file_import(self, instance):
 
                     if instance.missing_data_handler == 'set_defaults':
 
-                        if model_class == PriceDownloadScheme:
-                            v = model_class.objects.get(master_user=instance.master_user, scheme_name='-')
-                        elif model_class == DailyPricingModel or model_class == PaymentSizeDetail or model_class == Periodicity:
-                            v = model_class.objects.get(system_code='-')
-                        else:
-                            v = model_class.objects.get(master_user=instance.master_user, user_code='-')
+                        ecosystem_default = EcosystemDefault.objects.get(master_user=instance.master_user)
 
+                        if hasattr(ecosystem_default, key):
+                            v = getattr(ecosystem_default, key)
+                        else:
+                            v = model_map_class.objects.get(master_user=instance.master_user, value='-').content_object
                     else:
+
                         error_rows['error_message'] = error_rows[
                                                           'error_message'] + ' Can\'t find relation of ' + \
                                                       field.transaction_type_input.name + '(value:' + \
@@ -1352,7 +1369,6 @@ def complex_transaction_csv_file_import(self, instance):
 
             instance.error_rows.append(error_rows)
 
-
     def _row_count(file):
         for i, l in enumerate(file):
             pass
@@ -1423,6 +1439,24 @@ def complex_transaction_csv_file_import_validate(self, instance):
         PriceDownloadScheme: PriceDownloadSchemeMapping,
         Periodicity: PeriodicityMapping,
     }
+
+    props_map = {
+        Account: 'account',
+        Currency: 'currency',
+        Instrument: 'instrument',
+        InstrumentType: 'instrument_type',
+        Counterparty: 'counterparty',
+        Responsible: 'responsible',
+        Strategy1: 'strategy1',
+        Strategy2: 'strategy2',
+        Strategy3: 'strategy3',
+        DailyPricingModel: 'daily_pricing_model',
+        PaymentSizeDetail: 'payment_size_detail',
+        Portfolio: 'portfolio',
+        PriceDownloadScheme: 'price_download_scheme',
+        Periodicity: 'periodicity',
+    }
+
     mapping_cache = {}
 
     def _convert_value(field, value, error_rows):
@@ -1444,7 +1478,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
             model_class = i.content_type.model_class()
             model_map_class = mapping_map[model_class]
 
-            key = (model_class, value)
+            key = props_map[model_class]
 
             v = None
 
@@ -1454,7 +1488,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                 try:
 
-                    _l.debug('Lookup by user code %s', value)
+                    # _l.debug('Lookup by user code %s', value)
 
                     if model_class == PriceDownloadScheme:
                         v = model_class.objects.get(master_user=instance.master_user, scheme_name=value)
@@ -1468,6 +1502,9 @@ def complex_transaction_csv_file_import_validate(self, instance):
                     if instance.missing_data_handler == 'set_defaults':
 
                         ecosystem_default = EcosystemDefault.objects.get(master_user=instance.master_user)
+
+                        # _l.debug('key %s' % key)
+                        # _l.debug('value %s' % value)
 
                         if hasattr(ecosystem_default, key):
                             v = getattr(ecosystem_default, key)
@@ -1540,7 +1577,6 @@ def complex_transaction_csv_file_import_validate(self, instance):
                     error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
                     inputs_error.append(i)
 
-
             _l.debug('inputs: error=%s, values=%s', [i.name for i in inputs_error], inputs_raw)
 
             for i in scheme_inputs:
@@ -1556,7 +1592,6 @@ def complex_transaction_csv_file_import_validate(self, instance):
                     error_rows['error_data']['data']['converted_imported_columns'].append(
                         ugettext('Invalid expression'))
                     inputs_error.append(i)
-
 
             if inputs_error:
 
@@ -1658,7 +1693,8 @@ def complex_transaction_csv_file_import_validate(self, instance):
                                     field.transaction_type_input.pk, exc_info=True)
                             fields_error.append(field)
 
-                            error_rows['error_data']['data']['executed_input_expressions'].append(ugettext('Invalid expression'))
+                            error_rows['error_data']['data']['executed_input_expressions'].append(
+                                ugettext('Invalid expression'))
 
                     if len(fields_error):
 
@@ -1668,9 +1704,10 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                         error_rows['error_message'] = error_rows['error_message'] + str(
                             ugettext('Can\'t process fields: %(fields)s') % {
-                                'fields': ', '.join(f.transaction_type_input.name + '( TType: ' + rule_value + ')' for f in fields_error)
+                                'fields': ', '.join(
+                                    f.transaction_type_input.name + '( TType: ' + rule_value + ')' for f in
+                                    fields_error)
                             })
-
 
                         error_rows['level'] = 'error'
 
