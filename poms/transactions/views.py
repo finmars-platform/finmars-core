@@ -170,6 +170,7 @@ class TransactionTypeFilterSet(FilterSet):
 class TransactionTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = TransactionType
 
+
 class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
     queryset = TransactionType.objects.select_related(
         'group'
@@ -434,13 +435,100 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
         'group__public_name',
     ]
 
+    def get_context_for_book(self, request):
+
+        master_user = request.user.master_user
+        default_values = {}
+
+        instrument_id = request.query_params.get('instrument', None)
+        pricing_currency_id = request.query_params.get('pricing_currency', None)
+        accrued_currency_id = request.query_params.get('accrued_currency', None)
+        portfolio_id = request.query_params.get('portfolio', None)
+        account_id = request.query_params.get('account', None)
+        strategy1_id = request.query_params.get('strategy1', None)
+        strategy2_id = request.query_params.get('strategy2', None)
+        strategy3_id = request.query_params.get('strategy3', None)
+
+        context_instrument = None
+        context_pricing_currency = None
+        context_accrued_currency = None
+        context_portfolio = None
+        context_account = None
+        context_strategy1 = None
+        context_strategy2 = None
+        context_strategy3 = None
+
+        context_position = request.query_params.get('position', None)
+        context_effective_date = request.query_params.get('effective_date', None)
+        context_notification_date = request.query_params.get('notification_date', None)
+        context_final_date = request.query_params.get('final_date', None)
+        context_maturity_date = request.query_params.get('maturity_date', None)
+
+        if instrument_id:
+            try:
+                context_instrument = Instrument.objects.get(master_user=master_user, id=instrument_id)
+            except Instrument.DoesNotExist:
+                context_instrument = None
+
+        if portfolio_id:
+            try:
+                context_portfolio = Portfolio.objects.get(master_user=master_user, id=portfolio_id)
+            except Portfolio.DoesNotExist:
+                context_portfolio = None
+
+        if account_id:
+            try:
+                context_account = Account.objects.get(master_user=master_user, id=account_id)
+            except Account.DoesNotExist:
+                context_account = None
+
+        if strategy1_id:
+            try:
+                context_strategy1 = Strategy1.objects.get(master_user=master_user, id=strategy1_id)
+            except Strategy1.DoesNotExist:
+                context_strategy1 = None
+
+        if strategy2_id:
+            try:
+                context_strategy2 = Strategy2.objects.get(master_user=master_user, id=strategy2_id)
+            except Strategy2.DoesNotExist:
+                context_strategy2 = None
+
+        if strategy3_id:
+            try:
+                context_strategy3 = Strategy3.objects.get(master_user=master_user, id=strategy3_id)
+            except Strategy3.DoesNotExist:
+                context_strategy3 = None
+
+        default_values.update({
+            'instrument': context_instrument,
+            # 'pricing_currency': context_pricing_currency,
+            # 'accrued_currency': context_accrued_currency,
+            'portfolio': context_portfolio,
+            'account': context_account,
+            'strategy1': context_strategy1,
+            'strategy2': context_strategy2,
+            'strategy3': context_strategy3,
+            # 'position': context_position,
+            'effective_date': context_effective_date,
+            # 'notification_date': context_notification_date, # not in context variables
+            # 'final_date': context_final_date,
+            # 'maturity_date': context_maturity_date
+        })
+
+        return default_values
+
     @detail_route(methods=['get', 'put'], url_path='book', serializer_class=TransactionTypeProcessSerializer)
     def book(self, request, pk=None):
 
         complex_transaction_status = ComplexTransaction.PRODUCTION
 
+        default_values = self.get_context_for_book(request)
+
+        print("default_values %s" % default_values)
+
         instance = TransactionTypeProcess(process_mode='book', transaction_type=self.get_object(),
-                                          context=self.get_serializer_context(),
+                                          context=self.get_serializer_context(), default_values=default_values,
                                           complex_transaction_status=complex_transaction_status)
 
         if request.method == 'GET':
