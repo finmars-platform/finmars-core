@@ -288,7 +288,7 @@ class TransactionTypeProcess(object):
                 if instrument is None:
                     instrument = Instrument(master_user=master_user)
 
-                instrument.user_code = user_code
+                # instrument.user_code = user_code
 
                 if user_code != '-':
 
@@ -376,8 +376,10 @@ class TransactionTypeProcess(object):
 
                             instrument.save()
 
-                        if rebook_reaction == RebookReactionChoice.FIND_OR_CREATE:
+                        if rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and not instrument_exists:
                             print('Rebook FIND_OR_CREATE')
+
+                            instrument.save()
 
                     else:
 
@@ -391,13 +393,13 @@ class TransactionTypeProcess(object):
 
                             instrument.save()
 
-                        if rebook_reaction == RebookReactionChoice.FIND_OR_CREATE:
+                        if rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and not instrument_exists:
                             print('Book  FIND_OR_CREATE')
 
                             instrument.save()
 
-                        if rebook_reaction is None:
-                            instrument.save()
+                    if rebook_reaction is None:
+                        instrument.save()
 
                     self._instrument_assign_permission(instrument, object_permissions)
 

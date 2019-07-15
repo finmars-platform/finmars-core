@@ -506,7 +506,6 @@ class MasterUserSetCurrentSerializer(serializers.Serializer):
     def update(self, instance, validated_data):
         return self.create(validated_data)
 
-
 # class MemberMiniSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Member

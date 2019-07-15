@@ -22,7 +22,7 @@ from poms.chats.models import ThreadGroup
 from poms.common.filters import CharFilter, NoOpFilter, ModelExtMultipleChoiceFilter
 from poms.common.mixins import UpdateModelMixinExt
 from poms.common.pagination import BigPagination
-from poms.common.views import AbstractModelViewSet, AbstractApiView
+from poms.common.views import AbstractModelViewSet, AbstractApiView, AbstractViewSet
 from poms.counterparties.models import CounterpartyGroup, Counterparty, ResponsibleGroup, Responsible
 from poms.instruments.models import InstrumentType, Instrument
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
@@ -648,3 +648,16 @@ class LeaveMasterUserViewSet(AbstractApiView, ViewSet):
         Member.objects.get(user=request.user.id, master_user=pk).delete()
 
         return Response("You left from %s master user" % request.user.master_user.name)
+
+
+class GetCurrentMasterUserViewSet(AbstractViewSet):
+    serializer_class = MasterUserSerializer
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+    def list(self, request, pk=None, *args, **kwargs):
+
+        serializer = self.get_serializer(request.user.master_user)
+
+        return Response(serializer.data)
