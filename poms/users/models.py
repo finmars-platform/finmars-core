@@ -89,7 +89,6 @@ class MasterUserManager(models.Manager):
 
         return obj
 
-
 class MasterUser(models.Model):
     name = models.CharField(max_length=255, null=True, blank=True,
                             verbose_name=ugettext_lazy('name'))
@@ -100,85 +99,85 @@ class MasterUser(models.Model):
                                 verbose_name=ugettext_lazy('language'))
     timezone = models.CharField(max_length=TIMEZONE_MAX_LENGTH, default=settings.TIME_ZONE,
                                 verbose_name=ugettext_lazy('timezone'))
-    system_currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.PROTECT,
+    system_currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.SET_NULL,
                                         related_name='+',
                                         verbose_name=ugettext_lazy('system currency'))
 
-    account_type = models.ForeignKey('accounts.AccountType', null=True, blank=True, on_delete=models.PROTECT,
+    account_type = models.ForeignKey('accounts.AccountType', null=True, blank=True, on_delete=models.SET_NULL,
                                      verbose_name=ugettext_lazy('account type'))
-    account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.PROTECT,
+    account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.SET_NULL,
                                 verbose_name=ugettext_lazy('account'))
 
-    currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.PROTECT,
+    currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.SET_NULL,
                                  verbose_name=ugettext_lazy('currency'))
     counterparty_group = models.ForeignKey('counterparties.CounterpartyGroup', null=True, blank=True,
-                                           on_delete=models.PROTECT, verbose_name=ugettext_lazy('counterparty group'))
-    counterparty = models.ForeignKey('counterparties.Counterparty', null=True, blank=True, on_delete=models.PROTECT,
+                                           on_delete=models.SET_NULL, verbose_name=ugettext_lazy('counterparty group'))
+    counterparty = models.ForeignKey('counterparties.Counterparty', null=True, blank=True, on_delete=models.SET_NULL,
                                      verbose_name=ugettext_lazy('counterparty'))
     responsible_group = models.ForeignKey('counterparties.ResponsibleGroup', null=True, blank=True,
-                                          on_delete=models.PROTECT, verbose_name=ugettext_lazy('responsible group'))
-    responsible = models.ForeignKey('counterparties.Responsible', null=True, blank=True, on_delete=models.PROTECT,
+                                          on_delete=models.SET_NULL, verbose_name=ugettext_lazy('responsible group'))
+    responsible = models.ForeignKey('counterparties.Responsible', null=True, blank=True, on_delete=models.SET_NULL,
                                     verbose_name=ugettext_lazy('responsible'))
 
-    instrument_type = models.ForeignKey('instruments.InstrumentType', null=True, blank=True, on_delete=models.PROTECT,
+    instrument_type = models.ForeignKey('instruments.InstrumentType', null=True, blank=True, on_delete=models.SET_NULL,
                                         verbose_name=ugettext_lazy('instrument type'))
-    instrument = models.ForeignKey('instruments.Instrument', null=True, blank=True, on_delete=models.PROTECT,
+    instrument = models.ForeignKey('instruments.Instrument', null=True, blank=True, on_delete=models.SET_NULL,
                                    verbose_name=ugettext_lazy('instrument'))
 
-    portfolio = models.ForeignKey('portfolios.Portfolio', null=True, blank=True, on_delete=models.PROTECT,
+    portfolio = models.ForeignKey('portfolios.Portfolio', null=True, blank=True, on_delete=models.SET_NULL,
                                   verbose_name=ugettext_lazy('portfolio'))
 
-    strategy1_group = models.ForeignKey('strategies.Strategy1Group', null=True, blank=True, on_delete=models.PROTECT,
+    strategy1_group = models.ForeignKey('strategies.Strategy1Group', null=True, blank=True, on_delete=models.SET_NULL,
                                         related_name='master_user_strategy1_group',
                                         verbose_name=ugettext_lazy('strategy1 group'))
     strategy1_subgroup = models.ForeignKey('strategies.Strategy1Subgroup', null=True, blank=True,
-                                           on_delete=models.PROTECT, related_name='master_user_strategy1_subgroup',
+                                           on_delete=models.SET_NULL, related_name='master_user_strategy1_subgroup',
                                            verbose_name=ugettext_lazy('strategy1 subgroup'))
-    strategy1 = models.ForeignKey('strategies.Strategy1', null=True, blank=True, on_delete=models.PROTECT,
+    strategy1 = models.ForeignKey('strategies.Strategy1', null=True, blank=True, on_delete=models.SET_NULL,
                                   related_name='master_user_strategy1', verbose_name=ugettext_lazy('strategy1'))
 
-    strategy2_group = models.ForeignKey('strategies.Strategy2Group', null=True, blank=True, on_delete=models.PROTECT,
+    strategy2_group = models.ForeignKey('strategies.Strategy2Group', null=True, blank=True, on_delete=models.SET_NULL,
                                         related_name='master_user_strategy2_group',
                                         verbose_name=ugettext_lazy('strategy2 group'))
     strategy2_subgroup = models.ForeignKey('strategies.Strategy2Subgroup', null=True, blank=True,
-                                           on_delete=models.PROTECT, related_name='master_user_strategy2_subgroup',
+                                           on_delete=models.SET_NULL, related_name='master_user_strategy2_subgroup',
                                            verbose_name=ugettext_lazy('strategy2 subgroup'))
-    strategy2 = models.ForeignKey('strategies.Strategy2', null=True, blank=True, on_delete=models.PROTECT,
+    strategy2 = models.ForeignKey('strategies.Strategy2', null=True, blank=True, on_delete=models.SET_NULL,
                                   related_name='master_user_strategy2', verbose_name=ugettext_lazy('strategy2'))
 
-    strategy3_group = models.ForeignKey('strategies.Strategy3Group', null=True, blank=True, on_delete=models.PROTECT,
+    strategy3_group = models.ForeignKey('strategies.Strategy3Group', null=True, blank=True, on_delete=models.SET_NULL,
                                         related_name='master_user_strategy3_group',
                                         verbose_name=ugettext_lazy('strategy3 group'))
     strategy3_subgroup = models.ForeignKey('strategies.Strategy3Subgroup', null=True, blank=True,
-                                           on_delete=models.PROTECT, related_name='master_user_strategy3_subgroup',
+                                           on_delete=models.SET_NULL, related_name='master_user_strategy3_subgroup',
                                            verbose_name=ugettext_lazy('strategy3 subgroup'))
-    strategy3 = models.ForeignKey('strategies.Strategy3', null=True, blank=True, on_delete=models.PROTECT,
+    strategy3 = models.ForeignKey('strategies.Strategy3', null=True, blank=True, on_delete=models.SET_NULL,
                                   related_name='master_user_strategy3', verbose_name=ugettext_lazy('strategy3'))
 
-    thread_group = models.ForeignKey('chats.ThreadGroup', null=True, blank=True, on_delete=models.PROTECT,
+    thread_group = models.ForeignKey('chats.ThreadGroup', null=True, blank=True, on_delete=models.SET_NULL,
                                      related_name='master_user_thread_group',
                                      verbose_name=ugettext_lazy('thread group'))
 
     transaction_type = models.ForeignKey('transactions.TransactionType', null=True, blank=True,
-                                         on_delete=models.PROTECT,
+                                         on_delete=models.SET_NULL,
                                          verbose_name=ugettext_lazy('transaction type'))
 
     transaction_type_group = models.ForeignKey('transactions.TransactionTypeGroup', null=True, blank=True,
-                                               on_delete=models.PROTECT,
+                                               on_delete=models.SET_NULL,
                                                verbose_name=ugettext_lazy('transaction type group'))
 
-    mismatch_portfolio = models.ForeignKey('portfolios.Portfolio', null=True, blank=True, on_delete=models.PROTECT,
+    mismatch_portfolio = models.ForeignKey('portfolios.Portfolio', null=True, blank=True, on_delete=models.SET_NULL,
                                            related_name='master_user_mismatch_portfolio',
                                            verbose_name=ugettext_lazy('mismatch portfolio'))
-    mismatch_account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.PROTECT,
+    mismatch_account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.SET_NULL,
                                          related_name='master_user_mismatch_account',
                                          verbose_name=ugettext_lazy('mismatch account'))
 
-    pricing_policy = models.ForeignKey('instruments.PricingPolicy', null=True, blank=True, on_delete=models.PROTECT,
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', null=True, blank=True, on_delete=models.SET_NULL,
                                        verbose_name=ugettext_lazy('pricing policy'))
 
     price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', null=True, blank=True,
-                                              on_delete=models.PROTECT,
+                                              on_delete=models.SET_NULL,
                                               verbose_name=ugettext_lazy('price download scheme'))
 
     # TODO: what is notification_business_days
@@ -385,7 +384,8 @@ class MasterUser(models.Model):
 
         ecosystem_defaults.instrument_class = InstrumentClass.objects.get(pk=InstrumentClass.DEFAULT)
         ecosystem_defaults.daily_pricing_model = DailyPricingModel.objects.get(pk=DailyPricingModel.DEFAULT)
-        ecosystem_defaults.accrual_calculation_model = AccrualCalculationModel.objects.get(pk=AccrualCalculationModel.DEFAULT)
+        ecosystem_defaults.accrual_calculation_model = AccrualCalculationModel.objects.get(
+            pk=AccrualCalculationModel.DEFAULT)
         ecosystem_defaults.payment_size_detail = PaymentSizeDetail.objects.get(pk=PaymentSizeDetail.DEFAULT)
         ecosystem_defaults.periodicity = Periodicity.objects.get(pk=Periodicity.DEFAULT)
 
@@ -440,7 +440,8 @@ class MasterUser(models.Model):
                     c1.save()
             else:
 
-                c = Currency.objects.create(master_user=self, user_code=dc_user_code, name=dc_name, short_name=dc_user_code,
+                c = Currency.objects.create(master_user=self, user_code=dc_user_code, name=dc_name,
+                                            short_name=dc_user_code,
                                             public_name=dc_name, reference_for_pricing=dc_reference_for_pricing)
                 ccys[c.user_code] = c
 
@@ -470,7 +471,6 @@ class MasterUser(models.Model):
 
 
 class EcosystemDefault(models.Model):
-
     master_user = models.ForeignKey(MasterUser, related_name='ecosystem_default',
                                     verbose_name=ugettext_lazy('master user'))
 
@@ -565,8 +565,8 @@ class EcosystemDefault(models.Model):
                                             verbose_name=ugettext_lazy('payment size detail'))
 
     periodicity = models.ForeignKey('instruments.Periodicity', null=True, blank=True,
-                                            on_delete=models.PROTECT,
-                                            verbose_name=ugettext_lazy('periodicity'))
+                                    on_delete=models.PROTECT,
+                                    verbose_name=ugettext_lazy('periodicity'))
 
 
 class Member(FakeDeletableModel):

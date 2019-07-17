@@ -496,9 +496,9 @@ class TransactionTypeInput(models.Model):
                              help_text=ugettext_lazy('this is expression for default value'))
     account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.PROTECT, related_name='+',
                                 verbose_name=ugettext_lazy('account'))
-    instrument_type = models.ForeignKey('instruments.InstrumentType', null=True, blank=True, on_delete=models.PROTECT,
+    instrument_type = models.ForeignKey('instruments.InstrumentType', null=True, blank=True, on_delete=models.SET_NULL,
                                         related_name='+', verbose_name=ugettext_lazy('instrument type'))
-    instrument = models.ForeignKey('instruments.Instrument', null=True, blank=True, on_delete=models.PROTECT,
+    instrument = models.ForeignKey('instruments.Instrument', null=True, blank=True, on_delete=models.SET_NULL,
                                    related_name='+', verbose_name=ugettext_lazy('instrument'))
     currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.PROTECT,
                                  related_name='+', verbose_name=ugettext_lazy('currency'))
@@ -632,7 +632,7 @@ class TransactionTypeActionInstrument(TransactionTypeAction):
     notes = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                              verbose_name=ugettext_lazy('notes'))
 
-    instrument_type = models.ForeignKey('instruments.InstrumentType', null=True, blank=True, on_delete=models.PROTECT,
+    instrument_type = models.ForeignKey('instruments.InstrumentType', null=True, blank=True, on_delete=models.SET_NULL,
                                         related_name='+', verbose_name=ugettext_lazy('instrument type'))
     instrument_type_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
                                               related_name='+', verbose_name=ugettext_lazy('instrument type input'))
@@ -702,7 +702,7 @@ class TransactionTypeActionTransaction(TransactionTypeAction):
     transaction_class = models.ForeignKey(TransactionClass, on_delete=models.PROTECT, related_name='+',
                                           verbose_name=ugettext_lazy('transaction class'))
 
-    instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+    instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
                                    verbose_name=ugettext_lazy('instrument'))
     instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
                                          related_name='+', verbose_name=ugettext_lazy('instrument input'))
@@ -792,7 +792,7 @@ class TransactionTypeActionTransaction(TransactionTypeAction):
     strategy3_cash_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
                                              related_name='+', verbose_name=ugettext_lazy('strategy 3 cash input'))
 
-    linked_instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+    linked_instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
                                           verbose_name=ugettext_lazy('linked instrument'))
     linked_instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
                                                 related_name='+', verbose_name=ugettext_lazy('linked instrument input'))
@@ -800,7 +800,7 @@ class TransactionTypeActionTransaction(TransactionTypeAction):
                                                   on_delete=models.SET_NULL, related_name='+',
                                                   verbose_name=ugettext_lazy('linked instrument phantom'))
 
-    allocation_balance = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.PROTECT,
+    allocation_balance = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.SET_NULL,
                                            related_name='+', verbose_name=ugettext_lazy('allocation balance'))
     allocation_balance_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
                                                  related_name='+',
@@ -809,7 +809,7 @@ class TransactionTypeActionTransaction(TransactionTypeAction):
                                                    on_delete=models.SET_NULL, related_name='+',
                                                    verbose_name=ugettext_lazy('allocation balance phantom'))
 
-    allocation_pl = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+    allocation_pl = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
                                       verbose_name=ugettext_lazy('allocation pl'))
     allocation_pl_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
                                             related_name='+', verbose_name=ugettext_lazy('allocation pl input'))
@@ -855,7 +855,7 @@ class TransactionTypeActionTransaction(TransactionTypeAction):
 
 
 class TransactionTypeActionInstrumentFactorSchedule(TransactionTypeAction):
-    instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.PROTECT, related_name='+',
+    instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
                                    verbose_name=ugettext_lazy('instrument'))
     instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.PROTECT,
                                          related_name='+', verbose_name=ugettext_lazy('instrument input'))

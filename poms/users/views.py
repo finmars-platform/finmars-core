@@ -24,11 +24,15 @@ from poms.common.mixins import UpdateModelMixinExt
 from poms.common.pagination import BigPagination
 from poms.common.views import AbstractModelViewSet, AbstractApiView, AbstractViewSet
 from poms.counterparties.models import CounterpartyGroup, Counterparty, ResponsibleGroup, Responsible
+from poms.currencies.models import Currency
 from poms.instruments.models import InstrumentType, Instrument
+from poms.integrations.models import InstrumentDownloadScheme
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy1Group, Strategy2Subgroup, Strategy2Group, \
     Strategy2, Strategy3, Strategy3Subgroup, Strategy3Group
+from poms.transactions.models import TransactionType, TransactionTypeInput, TransactionTypeAction, \
+    TransactionTypeActionInstrument
 from poms.users.filters import OwnerByMasterUserFilter, MasterUserFilter, OwnerByUserFilter, InviteToMasterUserFilter, \
     IsMemberFilterBackend
 from poms.users.models import MasterUser, Member, Group, ResetPasswordToken, InviteToMasterUser, EcosystemDefault
@@ -647,7 +651,71 @@ class LeaveMasterUserViewSet(AbstractApiView, ViewSet):
 
         Member.objects.get(user=request.user.id, master_user=pk).delete()
 
-        return Response("You left from %s master user" % request.user.master_user.name)
+        # return Response("You left from %s master user" % request.user.master_user.name)
+        return Response(status=status.HTTP_200_OK)
+
+
+class DeleteMasterUserViewSet(AbstractApiView, ViewSet, ):
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+    @method_decorator(ensure_csrf_cookie)
+    def destroy(self, request, pk=None, *args, **kwargs):
+
+        master_user_id = pk
+
+        if not request.user.member:
+            raise PermissionDenied()
+
+        if not request.user.member.is_owner:
+            raise PermissionDenied()
+
+        master_user = MasterUser.objects.get(id=master_user_id)
+
+        try:
+            Member.objects.get(master_user=master_user_id, user=request.user.id)
+        except EcosystemDefault.DoesNotExist:
+            raise PermissionDenied()
+
+        try:
+            ecosystem_default = EcosystemDefault.objects.get(master_user=master_user_id)
+            ecosystem_default.delete()
+        except EcosystemDefault.DoesNotExist:
+            print("EcosystemDefault Already deleted")
+
+        ThreadGroup.objects.filter(master_user=master_user_id).delete()
+
+        Instrument.objects.filter(master_user=master_user_id).delete()
+        InstrumentType.objects.filter(master_user=master_user_id).delete()
+
+        transaction_types = TransactionType.objects.filter(master_user=master_user_id)
+
+        TransactionTypeAction.objects.filter(transaction_type__in=transaction_types).delete()
+        TransactionTypeInput.objects.filter(transaction_type__in=transaction_types).delete()
+
+        TransactionType.objects.filter(master_user=master_user_id).delete()
+
+        InstrumentDownloadScheme.objects.filter(master_user=master_user_id).delete()
+
+        Account.objects.filter(master_user=master_user_id).delete()
+        AccountType.objects.filter(master_user=master_user_id).delete()
+        Currency.objects.filter(master_user=master_user_id).delete()
+        Strategy1.objects.filter(master_user=master_user_id).delete()
+        Strategy2.objects.filter(master_user=master_user_id).delete()
+        Strategy3.objects.filter(master_user=master_user_id).delete()
+        Strategy1Subgroup.objects.filter(master_user=master_user_id).delete()
+        Strategy2Subgroup.objects.filter(master_user=master_user_id).delete()
+        Strategy3Subgroup.objects.filter(master_user=master_user_id).delete()
+        Strategy1Group.objects.filter(master_user=master_user_id).delete()
+        Strategy2Group.objects.filter(master_user=master_user_id).delete()
+        Strategy3Group.objects.filter(master_user=master_user_id).delete()
+
+        MasterUser.objects.get(id=master_user_id).delete()
+
+        # return Response("Master user %s has been deleted." % request.user.master_user.name)
+        return Response(status=status.HTTP_200_OK,
+                        data={"message": "Master user %s has been deleted." % master_user.name})
 
 
 class GetCurrentMasterUserViewSet(AbstractViewSet):
@@ -657,7 +725,6 @@ class GetCurrentMasterUserViewSet(AbstractViewSet):
     ]
 
     def list(self, request, pk=None, *args, **kwargs):
-
         serializer = self.get_serializer(request.user.master_user)
 
         return Response(serializer.data)
