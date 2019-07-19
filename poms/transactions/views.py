@@ -464,6 +464,8 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
         context_final_date = request.query_params.get('final_date', None)
         context_maturity_date = request.query_params.get('maturity_date', None)
 
+        print('strategy1_id %s' % strategy1_id)
+
         if instrument_id:
             try:
                 context_instrument = Instrument.objects.get(master_user=master_user, id=instrument_id)

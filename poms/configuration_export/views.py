@@ -133,6 +133,12 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         instrument_attribute_types = self.get_entity_attribute_types('instruments', 'instrument')
         instrument_type_attribute_types = self.get_entity_attribute_types('instruments', 'instrumenttype')
 
+        transaction_type_attribute_types = self.get_entity_attribute_types('transactions', 'transactiontype')
+
+        strategy1_attribute_types = self.get_entity_attribute_types('strategies', 'strategy1')
+        strategy2_attribute_types = self.get_entity_attribute_types('strategies', 'strategy2')
+        strategy3_attribute_types = self.get_entity_attribute_types('strategies', 'strategy3')
+
         balance_report_custom_fields = self.get_balance_report_custom_fields()
         pl_report_custom_fields = self.get_pl_report_custom_fields()
         transaction_report_custom_fields = self.get_transaction_report_custom_fields()
@@ -164,6 +170,11 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration["body"].append(counterparty_attribute_types)
         configuration["body"].append(instrument_attribute_types)
         configuration["body"].append(instrument_type_attribute_types)
+        configuration["body"].append(transaction_type_attribute_types)
+
+        configuration["body"].append(strategy1_attribute_types)
+        configuration["body"].append(strategy2_attribute_types)
+        configuration["body"].append(strategy3_attribute_types)
 
         configuration["body"].append(balance_report_custom_fields)
         configuration["body"].append(pl_report_custom_fields)
