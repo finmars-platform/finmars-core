@@ -332,8 +332,8 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = InstrumentSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
-        AttributeFilter,
-        GroupsAttributeFilter,
+            AttributeFilter,
+            GroupsAttributeFilter,
     ]
     filter_class = InstrumentFilterSet
     ordering_fields = [

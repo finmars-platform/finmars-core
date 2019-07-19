@@ -8,7 +8,7 @@ from django.db.models.functions import Coalesce
 import math
 
 
-def sort_by_dynamic_attrs(request, queryset):
+def sort_by_dynamic_attrs(request, queryset, content_type):
     ordering = request.GET.get('ordering')
 
     if ordering:
@@ -25,7 +25,10 @@ def sort_by_dynamic_attrs(request, queryset):
             print('order %s' % order)
             print('key %s' % key)
 
-            attribute_type = GenericAttributeType.objects.get(user_code__exact=key)
+            master_user = request.user.master_user
+
+            attribute_type = GenericAttributeType.objects.get(user_code__exact=key, master_user=master_user,
+                                                              content_type=content_type)
 
             attributes_queryset = GenericAttribute.objects.filter(attribute_type=attribute_type, object_id__in=queryset)
 

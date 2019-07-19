@@ -166,7 +166,9 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
-        queryset = sort_by_dynamic_attrs(request, queryset)
+        content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
+
+        queryset = sort_by_dynamic_attrs(request, queryset, content_type)
 
         print('queryset')
 
