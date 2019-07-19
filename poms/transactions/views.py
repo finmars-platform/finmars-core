@@ -500,10 +500,22 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
             except Strategy3.DoesNotExist:
                 context_strategy3 = None
 
+        if pricing_currency_id:
+            try:
+                context_pricing_currency = Currency.objects.get(master_user=master_user, id=pricing_currency_id)
+            except Currency.DoesNotExist:
+                context_pricing_currency = None
+
+        if accrued_currency_id:
+            try:
+                context_accrued_currency = Currency.objects.get(master_user=master_user, id=pricing_currency_id)
+            except Currency.DoesNotExist:
+                context_accrued_currency = None
+
         default_values.update({
             'instrument': context_instrument,
-            # 'pricing_currency': context_pricing_currency,
-            # 'accrued_currency': context_accrued_currency,
+            'pricing_currency': context_pricing_currency,
+            'accrued_currency': context_accrued_currency,
             'portfolio': context_portfolio,
             'account': context_account,
             'strategy1': context_strategy1,
