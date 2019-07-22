@@ -1136,7 +1136,7 @@ def complex_transaction_csv_file_import(self, instance):
 
                         error_rows['error_message'] = error_rows[
                                                           'error_message'] + ' Can\'t find relation of ' + \
-                                                      field.transaction_type_input.name + '(value:' + \
+                                                      '[' + field.transaction_type_input.name + ']' + '(value:' + \
                                                       value + ')'
 
             if not v:
@@ -1211,7 +1211,7 @@ def complex_transaction_csv_file_import(self, instance):
 
                 error_rows['error_message'] = error_rows['error_message'] + str(
                     ugettext('Can\'t process inputs: %(inputs)s') % {
-                        'inputs': ', '.join(i.name for i in inputs_error)
+                        'inputs': ', '.join('[' + i.name + ']' for i in inputs_error)
                     })
                 instance.error_rows.append(error_rows)
                 if instance.break_on_error:
@@ -1243,7 +1243,7 @@ def complex_transaction_csv_file_import(self, instance):
 
                 error_rows['error_message'] = error_rows['error_message'] + str(
                     ugettext('Can\'t process conversion inputs: %(inputs)s') % {
-                        'inputs': ', '.join(i.name for i in inputs_conversion_error)
+                        'inputs': ', '.join('[' + i.name + ']' for i in inputs_conversion_error)
                     })
                 instance.error_rows.append(error_rows)
                 if instance.break_on_error:
@@ -1321,7 +1321,7 @@ def complex_transaction_csv_file_import(self, instance):
                         error_rows['error_message'] = error_rows['error_message'] + '\n' + '\n' + str(ugettext(
                             'Can\'t process fields: %(fields)s') % {
                                                                                                           'fields': ', '.join(
-                                                                                                              f.transaction_type_input.name + '( TType: ' + rule_value + ')'
+                                                                                                              '[' + f.transaction_type_input.name + '] '+ '( TType: ' + rule_value + ')'
                                                                                                               for f in
                                                                                                               fields_error)
                                                                                                       })
@@ -1519,7 +1519,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
                     else:
                         error_rows['error_message'] = error_rows[
                                                           'error_message'] + ' Can\'t find relation of ' + \
-                                                      field.transaction_type_input.name + ' (value:' + \
+                                                      '[' + field.transaction_type_input.name + ']' + ' (value:' + \
                                                       value + '). '
 
             if not v:
@@ -1605,7 +1605,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                 error_rows['error_message'] = error_rows['error_message'] + str(
                     ugettext('Can\'t process inputs: %(inputs)s') % {
-                        'inputs': ', '.join(i.name for i in inputs_error)
+                        'inputs': ', '.join('[' + i.name + ']' for i in inputs_error)
                     })
                 instance.error_rows.append(error_rows)
 
@@ -1711,7 +1711,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
                         error_rows['error_message'] = error_rows['error_message'] + str(
                             ugettext('Can\'t process fields: %(fields)s') % {
                                 'fields': ', '.join(
-                                    f.transaction_type_input.name + '( TType: ' + rule_value + ')' for f in
+                                    '[' + f.transaction_type_input.name + '] ' + '( TType: ' + rule_value + ')' for f in
                                     fields_error)
                             })
 

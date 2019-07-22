@@ -23,6 +23,7 @@ from poms.common.filters import CharFilter, NoOpFilter, ModelExtMultipleChoiceFi
 from poms.common.mixins import UpdateModelMixinExt
 from poms.common.pagination import BigPagination
 from poms.common.views import AbstractModelViewSet, AbstractApiView, AbstractViewSet
+from poms.complex_import.models import ComplexImportSchemeAction, ComplexImportScheme
 from poms.counterparties.models import CounterpartyGroup, Counterparty, ResponsibleGroup, Responsible
 from poms.currencies.models import Currency
 from poms.instruments.models import InstrumentType, Instrument
@@ -32,7 +33,7 @@ from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy1Group, Strategy2Subgroup, Strategy2Group, \
     Strategy2, Strategy3, Strategy3Subgroup, Strategy3Group
 from poms.transactions.models import TransactionType, TransactionTypeInput, TransactionTypeAction, \
-    TransactionTypeActionInstrument
+    TransactionTypeActionInstrument, Transaction, ComplexTransaction
 from poms.users.filters import OwnerByMasterUserFilter, MasterUserFilter, OwnerByUserFilter, InviteToMasterUserFilter, \
     IsMemberFilterBackend
 from poms.users.models import MasterUser, Member, Group, ResetPasswordToken, InviteToMasterUser, EcosystemDefault
@@ -685,6 +686,11 @@ class DeleteMasterUserViewSet(AbstractApiView, ViewSet, ):
             print("EcosystemDefault Already deleted")
 
         ThreadGroup.objects.filter(master_user=master_user_id).delete()
+
+        Transaction.objects.filter(master_user=master_user_id).delete()
+        ComplexTransaction.objects.filter(master_user=master_user_id).delete()
+
+        ComplexImportScheme.objects.filter(master_user=master_user_id).delete()
 
         Instrument.objects.filter(master_user=master_user_id).delete()
         InstrumentType.objects.filter(master_user=master_user_id).delete()

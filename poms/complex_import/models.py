@@ -43,7 +43,7 @@ class ComplexImportSchemeAction(models.Model):
     action_notes = models.TextField(default='', verbose_name=ugettext_lazy('action notes'))
     order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
 
-    complex_import_scheme = models.ForeignKey(ComplexImportScheme, related_name='actions', on_delete=models.PROTECT)
+    complex_import_scheme = models.ForeignKey(ComplexImportScheme, related_name='actions', on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = ugettext_lazy('action')
