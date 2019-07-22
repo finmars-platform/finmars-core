@@ -279,8 +279,11 @@ class TransactionTypeProcess(object):
                     except ObjectDoesNotExist:
 
                         if action_instrument.rebook_reaction and \
-                                action_instrument.rebook_reaction == RebookReactionChoice.FIND_OR_CREATE:
-                            instrument = Instrument.objects.get(master_user=master_user, user_code='-')
+                                action_instrument.rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and self.is_rebook:
+
+                            ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+
+                            instrument = ecosystem_default.instrument
                             instrument_exists = True
                         else:
                             pass
@@ -290,7 +293,9 @@ class TransactionTypeProcess(object):
 
                 # instrument.user_code = user_code
 
-                if user_code != '-':
+                print('instrument.user_code %s ' % user_code)
+
+                if instrument.user_code != '-':
 
                     self._set_val(errors=errors, values=self.values, default_value='',
                                   target=instrument, target_attr_name='name',
@@ -363,6 +368,7 @@ class TransactionTypeProcess(object):
                     rebook_reaction = action_instrument.rebook_reaction
 
                     print('rebook_reaction %s' % rebook_reaction)
+                    print('instrument_exists %s' % instrument_exists)
 
                     if self.is_rebook:
 
@@ -389,7 +395,7 @@ class TransactionTypeProcess(object):
                             instrument.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE and not instrument_exists:
-                            print('Book  OVERWRITE')
+                            print('Book  CREATE')
 
                             instrument.save()
 

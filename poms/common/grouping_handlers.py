@@ -8,7 +8,6 @@ from django.db.models import CharField, Case, When
 from django.db.models.functions import Coalesce
 from django.contrib.contenttypes.models import ContentType
 
-
 from django.db.models import Q
 
 import time
@@ -76,15 +75,29 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
 def is_relation(item):
     return item in ['type', 'currency', 'instrument',
                     'instrument_type', 'group',
-                    'pricing_policy',
-                    'transaction_type',
+                    'pricing_policy', 'portfolio',
+                    'transaction_type', 'transaction_currency',
+                    'settlement_currency', 'account_cash',
+                    'account_interim', 'account_position',
                     'accrued_currency', 'pricing_currency',
                     'one_off_event', 'regular_event', 'factor_same',
-                    'factor_up', 'factor_down']
+                    'factor_up', 'factor_down',
+
+                    'strategy1_position', 'strategy1_cash',
+                    'strategy2_position', 'strategy2_cash',
+                    'strategy3_position', 'strategy3_cash',
+
+                    'counterparty', 'responsible',
+
+                    'allocation_balance', 'allocation_pl',
+                    'linked_instrument'
+
+                    ]
 
 
 def is_system_relation(item):
     return item in ['instrument_class',
+                    'transaction_class',
                     'daily_pricing_model',
                     'payment_size_detail']
 
