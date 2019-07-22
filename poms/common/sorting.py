@@ -55,7 +55,7 @@ def sort_by_dynamic_attrs(request, queryset, content_type):
                 if attribute_type.value_type == 40:
                     attributes_queryset = attributes_queryset.annotate(value_date_null=
                                                                        Coalesce('value_date',
-                                                                                Value('0000-00-00'))).order_by(
+                                                                                Value('0001-01-01'))).order_by(
                         '-value_date_null')
 
             else:
@@ -80,10 +80,10 @@ def sort_by_dynamic_attrs(request, queryset, content_type):
                 if attribute_type.value_type == 40:
                     attributes_queryset = attributes_queryset.annotate(value_date_null=
                                                                        Coalesce('value_date',
-                                                                                Value('0000-00-00'))).order_by(
+                                                                                Value('0001-01-01'))).order_by(
                         'value_date_null')
 
-            print('attributes_queryset %s' % attributes_queryset)
+            # print('attributes_queryset %s' % attributes_queryset)
 
             # TODO refactor!
 
