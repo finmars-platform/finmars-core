@@ -1,3 +1,4 @@
+from poms.instruments.models import GeneratedEvent
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import ComplexTransaction
 
@@ -28,10 +29,13 @@ class GeneratedEventProcess(TransactionTypeProcess):
         })
         kwargs['default_values'] = default_values
 
-        if action.is_sent_to_pending:
+        if generated_event.status == GeneratedEvent.ERROR:
             kwargs['complex_transaction_status'] = ComplexTransaction.PENDING
         else:
-            kwargs['complex_transaction_status'] = ComplexTransaction.PRODUCTION
+            if action.is_sent_to_pending:
+                kwargs['complex_transaction_status'] = ComplexTransaction.PENDING
+            else:
+                kwargs['complex_transaction_status'] = ComplexTransaction.PRODUCTION
 
         # context = kwargs.get('context', None) or {}
         # if 'master_user' not in context:
