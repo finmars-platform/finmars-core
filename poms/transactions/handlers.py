@@ -274,7 +274,8 @@ class TransactionTypeProcess(object):
 
                 if user_code:
                     try:
-                        instrument = Instrument.objects.get(master_user=master_user, user_code=user_code)
+                        instrument = Instrument.objects.get(master_user=master_user, user_code=user_code,
+                                                            is_deleted=False)
                         instrument_exists = True
                     except ObjectDoesNotExist:
 
