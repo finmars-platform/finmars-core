@@ -681,6 +681,9 @@ def _get_instrument_user_attribute_value(evaluator, instrument, attribute_user_c
     from poms.obj_attrs.models import GenericAttributeType, GenericAttribute
     from django.contrib.contenttypes.models import ContentType
 
+    print('formula instrument %s' % instrument)
+    print('formula attribute_user_code %s' % attribute_user_code)
+
     if isinstance(instrument, Instrument):
         return instrument
 
@@ -705,6 +708,8 @@ def _get_instrument_user_attribute_value(evaluator, instrument, attribute_user_c
     elif isinstance(instrument, str):
         pk = Instrument.objects.get(master_user=master_user, user_code=instrument).id
 
+    print('formula pk %s' % pk)
+
     if pk is None:
         raise ExpressionEvalError('Invalid instrument')
 
@@ -712,15 +717,20 @@ def _get_instrument_user_attribute_value(evaluator, instrument, attribute_user_c
     attribute = None
 
     try:
-        attribute_type = GenericAttributeType.objects.get(master_user=master_user, user_code=attribute_user_code)
+        attribute_type = GenericAttributeType.objects.get(master_user=master_user, user_code=attribute_user_code,
+                                                          content_type=ContentType.objects.get_for_model(Instrument))
     except GenericAttributeType.DoesNotExist:
         raise ExpressionEvalError('Attribute type is not found')
+
+    print('formula attribute_type %s ' % attribute_type)
 
     try:
         attribute = GenericAttribute.objects.get(attribute_type=attribute_type, object_id=pk,
                                                  content_type=ContentType.objects.get_for_model(Instrument))
     except GenericAttribute.DoesNotExist:
         raise ExpressionEvalError('Attribute is not found')
+
+    print('formula attribute %s' % attribute)
 
     if attribute_type.value_type == GenericAttributeType.STRING:
         return attribute.value_string

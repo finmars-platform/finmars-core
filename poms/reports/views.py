@@ -118,7 +118,6 @@ class BalanceReportViewSet(AbstractViewSet):
         instance.task_id = 1
         instance.task_status = "SUCCESS"
 
-
         serialize_report_st = time.perf_counter()
 
         serializer = self.get_serializer(instance=instance, many=False)

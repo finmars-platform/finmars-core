@@ -185,10 +185,17 @@ class TransactionReportBuilder(BaseReportBuilder):
 
         filters = Q()
 
+        filter_obj = {}
+
         if self.instance.begin_date:
             # filters &= Q(complex_transaction__date__gte=self.instance.begin_date)
 
-            qs = qs.filter(complex_transaction__date__gte=self.instance.begin_date)
+            filter_obj['complex_transaction__' + self.instance.date_field + '__gte'] = self.instance.begin_date
+
+
+
+            # qs = qs.filter(complex_transaction__date__gte=self.instance.begin_date)
+            qs = qs.filter(**filter_obj)
 
         _l.debug('< base begin date filter: %s', len(list(qs)))
 
@@ -197,7 +204,12 @@ class TransactionReportBuilder(BaseReportBuilder):
         if self.instance.end_date:
             # filters &= Q(complex_transaction__date__lte=self.instance.end_date)
 
-            qs = qs.filter(complex_transaction__date__lte=self.instance.end_date)
+            filter_obj['complex_transaction__' + self.instance.date_field + '__lte'] = self.instance.end_date
+
+            print('filter_obj %s ' % filter_obj)
+
+            # qs = qs.filter(complex_transaction__date__lte=self.instance.end_date)
+            qs = qs.filter(**filter_obj)
 
             # qs = qs.filter(filters)
 

@@ -78,6 +78,25 @@ class TransactionReportSerializer(serializers.Serializer):
 
     master_user = MasterUserField()
     member = HiddenMemberField()
+
+    date_field = serializers.ChoiceField(required=False, allow_null=True,
+                                         choices=(
+                                             ('transaction_date', ugettext('Transaction date')),
+                                             ('accounting_date', ugettext('Accounting date')),
+                                             ('cash_date', ugettext('Cash date')),
+                                             ('date', ugettext('Date')),
+                                             ('user_date_1', ugettext('User Date 1')),
+                                             ('user_date_2', ugettext('User Date 2')),
+                                             ('user_date_3', ugettext('User Date 3')),
+                                             ('user_date_4', ugettext('User Date 4')),
+                                             ('user_date_5', ugettext('User Date 5')),
+                                             ('user_date_6', ugettext('User Date 6')),
+                                             ('user_date_7', ugettext('User Date 7')),
+                                             ('user_date_8', ugettext('User Date 8')),
+                                             ('user_date_9', ugettext('User Date 9')),
+                                             ('user_date_10', ugettext('User Date 10')),
+                                         ))
+
     begin_date = serializers.DateField(required=False, allow_null=True)
     end_date = serializers.DateField(required=False, allow_null=True)
     portfolios = PortfolioField(many=True, required=False, allow_null=True, allow_empty=True)

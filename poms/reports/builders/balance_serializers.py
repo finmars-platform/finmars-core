@@ -407,9 +407,20 @@ class ReportSerializer(serializers.Serializer):
                                                              allow_empty=True)
     date_field = serializers.ChoiceField(required=False, allow_null=True,
                                          choices=(
-                                             ('transaction_date', ugettext_lazy('Transaction date')),
-                                             ('accounting_date', ugettext_lazy('Accounting date')),
-                                             ('cash_date', ugettext_lazy('Cash date')),
+                                             ('transaction_date', ugettext('Transaction date')),
+                                             ('accounting_date', ugettext('Accounting date')),
+                                             ('date', ugettext('Date')),
+                                             ('cash_date', ugettext('Cash date')),
+                                             ('user_date_1', ugettext('User Date 1')),
+                                             ('user_date_2', ugettext('User Date 2')),
+                                             ('user_date_3', ugettext('User Date 3')),
+                                             ('user_date_4', ugettext('User Date 4')),
+                                             ('user_date_5', ugettext('User Date 5')),
+                                             ('user_date_6', ugettext('User Date 6')),
+                                             ('user_date_7', ugettext('User Date 7')),
+                                             ('user_date_8', ugettext('User Date 8')),
+                                             ('user_date_9', ugettext('User Date 9')),
+                                             ('user_date_10', ugettext('User Date 10')),
                                          ))
 
     pricing_policy_object = PricingPolicyViewSerializer(source='pricing_policy', read_only=True)
@@ -561,7 +572,8 @@ class ReportSerializer(serializers.Serializer):
                         if not cf['user_code'] in custom_fields_names:
                             custom_fields_names[cf['user_code']] = value
                         else:
-                            if custom_fields_names[cf['user_code']] == None or custom_fields_names[cf['user_code']] == ugettext('Invalid expression'):
+                            if custom_fields_names[cf['user_code']] == None or custom_fields_names[
+                                cf['user_code']] == ugettext('Invalid expression'):
                                 custom_fields_names[cf['user_code']] = value
 
                     names['custom_fields'] = custom_fields_names
@@ -578,7 +590,8 @@ class ReportSerializer(serializers.Serializer):
 
                                 if expr:
                                     try:
-                                        value = formula.safe_eval('str(item)', names={'item': value}, context=self.context)
+                                        value = formula.safe_eval('str(item)', names={'item': value},
+                                                                  context=self.context)
                                     except formula.InvalidExpression:
                                         value = ugettext('Invalid expression')
                                 else:
@@ -588,7 +601,8 @@ class ReportSerializer(serializers.Serializer):
 
                                 if expr:
                                     try:
-                                        value = formula.safe_eval('float(item)', names={'item': value}, context=self.context)
+                                        value = formula.safe_eval('float(item)', names={'item': value},
+                                                                  context=self.context)
                                     except formula.InvalidExpression:
                                         value = ugettext('Invalid expression')
                                 else:
@@ -597,7 +611,8 @@ class ReportSerializer(serializers.Serializer):
 
                                 if expr:
                                     try:
-                                        value = formula.safe_eval("parse_date(item, '%d/%m/%Y')", names={'item': value}, context=self.context)
+                                        value = formula.safe_eval("parse_date(item, '%d/%m/%Y')", names={'item': value},
+                                                                  context=self.context)
                                     except formula.InvalidExpression:
                                         value = ugettext('Invalid expression')
                                 else:

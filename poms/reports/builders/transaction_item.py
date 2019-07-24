@@ -181,7 +181,8 @@ class TransactionReport(BaseReport):
                  strategies2=None,
                  strategies3=None,
                  custom_fields=None,
-                 items=None):
+                 items=None,
+                 date_field=None):
         super(TransactionReport, self).__init__(id=id, master_user=master_user, member=member,
                                                 task_id=task_id, task_status=task_status)
 
@@ -223,6 +224,11 @@ class TransactionReport(BaseReport):
         self.item_strategies3 = []
         self.item_responsibles = []
         self.item_counterparties = []
+
+        if date_field:
+            self.date_field = date_field
+        else:
+            self.date_field = 'date'
 
     def __str__(self):
         return 'TransactionReport:%s' % self.id
