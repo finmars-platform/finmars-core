@@ -555,15 +555,39 @@ _add_price_history.evaluator = True
 
 def _get_price_history_principal_price(evaluator, date, instrument, pricing_policy, default_value=0):
     from poms.users.utils import get_master_user_from_context
-    from poms.instruments.models import PriceHistory
+    from poms.instruments.models import PriceHistory, Instrument, PricingPolicy
 
     context = evaluator.context
     master_user = get_master_user_from_context(context)
 
     # TODO need master user check, security hole
 
-    result = PriceHistory.objects.get(date=date, instrument=instrument,
-                                      pricing_policy=pricing_policy)
+    if isinstance(instrument, dict):
+        instrument_pk = int(instrument['id'])
+
+    elif isinstance(instrument, (int, float)):
+        instrument_pk = int(instrument)
+
+    elif isinstance(instrument, str):
+        instrument_pk = Instrument.objects.get(master_user=master_user, user_code=instrument).id
+
+    if instrument_pk is None:
+        raise ExpressionEvalError('Invalid Instrument')
+
+    pricing_policy_pk = None
+
+    if isinstance(pricing_policy, dict):
+        pricing_policy_pk = int(pricing_policy['id'])
+
+    elif isinstance(pricing_policy, (int, float)):
+        pricing_policy_pk = int(pricing_policy)
+
+    elif isinstance(pricing_policy, str):
+        pricing_policy_pk = PricingPolicy.objects.get(master_user=master_user, user_code=pricing_policy).id
+
+
+    result = PriceHistory.objects.get(date=date, instrument=instrument_pk,
+                                      pricing_policy=pricing_policy_pk)
 
     if result:
         return result.principal_price
@@ -576,15 +600,47 @@ _get_price_history_principal_price.evaluator = True
 
 def _get_price_history_accrued_price(evaluator, date, instrument, pricing_policy, default_value=0):
     from poms.users.utils import get_master_user_from_context
-    from poms.instruments.models import PriceHistory
+    from poms.instruments.models import PriceHistory, Instrument, PricingPolicy
 
     context = evaluator.context
     master_user = get_master_user_from_context(context)
 
     # TODO need master user check, security hole
 
-    result = PriceHistory.objects.get(date=date, instrument=instrument,
-                                      pricing_policy=pricing_policy)
+    instrument_pk = None
+
+    master_user = get_master_user_from_context(context)
+
+    if isinstance(instrument, dict):
+        instrument_pk = int(instrument['id'])
+
+    elif isinstance(instrument, (int, float)):
+        instrument_pk = int(instrument)
+
+    elif isinstance(instrument, str):
+        instrument_pk = Instrument.objects.get(master_user=master_user, user_code=instrument).id
+
+    if instrument_pk is None:
+        raise ExpressionEvalError('Invalid Instrument')
+
+    pricing_policy_pk = None
+
+    if isinstance(pricing_policy, dict):
+        pricing_policy_pk = int(pricing_policy['id'])
+
+    elif isinstance(pricing_policy, (int, float)):
+        pricing_policy_pk = int(pricing_policy)
+
+    elif isinstance(pricing_policy, str):
+        pricing_policy_pk = PricingPolicy.objects.get(master_user=master_user, user_code=pricing_policy).id
+
+    # print('formula pk %s' % pk)
+
+    if pricing_policy_pk is None:
+        raise ExpressionEvalError('Invalid Pricing Policy')
+
+    result = PriceHistory.objects.get(date=date, instrument=instrument_pk,
+                                      pricing_policy=pricing_policy_pk)
 
     if result:
         return result.accrued_price
@@ -681,8 +737,8 @@ def _get_instrument_user_attribute_value(evaluator, instrument, attribute_user_c
     from poms.obj_attrs.models import GenericAttributeType, GenericAttribute
     from django.contrib.contenttypes.models import ContentType
 
-    print('formula instrument %s' % instrument)
-    print('formula attribute_user_code %s' % attribute_user_code)
+    # print('formula instrument %s' % instrument)
+    # print('formula attribute_user_code %s' % attribute_user_code)
 
     if isinstance(instrument, Instrument):
         return instrument
@@ -708,7 +764,7 @@ def _get_instrument_user_attribute_value(evaluator, instrument, attribute_user_c
     elif isinstance(instrument, str):
         pk = Instrument.objects.get(master_user=master_user, user_code=instrument).id
 
-    print('formula pk %s' % pk)
+    # print('formula pk %s' % pk)
 
     if pk is None:
         raise ExpressionEvalError('Invalid instrument')
@@ -722,7 +778,7 @@ def _get_instrument_user_attribute_value(evaluator, instrument, attribute_user_c
     except GenericAttributeType.DoesNotExist:
         raise ExpressionEvalError('Attribute type is not found')
 
-    print('formula attribute_type %s ' % attribute_type)
+    # print('formula attribute_type %s ' % attribute_type)
 
     try:
         attribute = GenericAttribute.objects.get(attribute_type=attribute_type, object_id=pk,
@@ -730,7 +786,7 @@ def _get_instrument_user_attribute_value(evaluator, instrument, attribute_user_c
     except GenericAttribute.DoesNotExist:
         raise ExpressionEvalError('Attribute is not found')
 
-    print('formula attribute %s' % attribute)
+    # print('formula attribute %s' % attribute)
 
     if attribute_type.value_type == GenericAttributeType.STRING:
         return attribute.value_string
