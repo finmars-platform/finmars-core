@@ -289,8 +289,11 @@ class TransactionTypeProcess(object):
 
                     except Instrument.DoesNotExist:
 
-                        if action_instrument.rebook_reaction and \
-                                action_instrument.rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and self.process_mode == self.MODE_REBOOK:
+                        print("Instrument DoesNotExist exception")
+
+                        if action_instrument.rebook_reaction is not None and \
+                                action_instrument.rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and \
+                                self.process_mode == self.MODE_REBOOK:
                             instrument = ecosystem_default.instrument
                             instrument_exists = True
 
