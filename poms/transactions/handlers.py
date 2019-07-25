@@ -56,7 +56,10 @@ class TransactionTypeProcess(object):
 
         master_user = self.transaction_type.master_user
 
-        self.process_mode = process_mode or TransactionTypeProcess.MODE_BOOK
+        self.process_mode = process_mode
+
+        if self.process_mode is None:
+            self.process_mode = TransactionTypeProcess.MODE_BOOK
 
         _l.debug('process_mode: %s', self.process_mode)
 
@@ -292,13 +295,12 @@ class TransactionTypeProcess(object):
 
                         print("Instrument DoesNotExist exception")
                         print("action_instrument.rebook_reaction %s " % action_instrument.rebook_reaction)
-                        print("RebookReactionChoice.FIND_OR_CREATE %s" % RebookReactionChoice.FIND_OR_CREATE )
+                        print("RebookReactionChoice.FIND_OR_CREATE %s" % RebookReactionChoice.FIND_OR_CREATE)
                         print("self.process_mode %s" % self.process_mode)
                         print("self.MODE_REBOOK %s" % self.MODE_REBOOK)
 
                         if action_instrument.rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and \
                                 self.process_mode == self.MODE_REBOOK:
-
                             instrument = ecosystem_default.instrument
                             instrument_exists = True
 
