@@ -58,10 +58,8 @@ class TransactionTypeProcess(object):
 
         self.process_mode = process_mode
 
-        # if self.process_mode is None:
-        #     self.process_mode = TransactionTypeProcess.MODE_BOOK
-
-        _l.debug('process_mode: %s', self.process_mode)
+        if self.process_mode is None:
+            self.process_mode = TransactionTypeProcess.MODE_BOOK
 
         print('self.process_mode %s' % self.process_mode)
 
@@ -265,6 +263,7 @@ class TransactionTypeProcess(object):
 
                 print('action_instrument %s' % action_instrument)
                 print('self.process_mode == self.MODE_REBOOK')
+                print('self.process_mode %s ' % self.process_mode)
                 print(self.process_mode == self.MODE_REBOOK)
                 print('action_instrument.rebook_reaction %s' % action_instrument.rebook_reaction)
 
@@ -1327,6 +1326,8 @@ class TransactionTypeProcess(object):
             return self.process_recalculate()
         _l.debug('process: %s, values=%s', self.transaction_type, self.values)
 
+        print('process self.process_mode %s' % self.process_mode)
+
         master_user = self.transaction_type.master_user
 
         instrument_map = {}
@@ -1343,8 +1344,6 @@ class TransactionTypeProcess(object):
         event_schedules_map = self.book_create_event_schedules(actions, instrument_map, event_schedules_map)
 
         self.book_create_event_actions(actions, instrument_map, event_schedules_map)
-
-        print("HERE EXECUTE ALWAYS?")
 
         # complex_transaction
         complex_transaction_errors = {}

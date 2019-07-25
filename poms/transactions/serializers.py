@@ -787,7 +787,6 @@ class TransactionTypeActionSerializer(serializers.ModelSerializer):
 
     rebook_reaction = serializers.IntegerField(required=False, allow_null=True)
 
-
     condition_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                      allow_null=True, default='')
 
@@ -1948,6 +1947,7 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
             choices=(
                 (TransactionTypeProcess.MODE_BOOK, 'Book'),
                 (TransactionTypeProcess.MODE_RECALCULATE, 'Recalculate fields values'),
+                (TransactionTypeProcess.MODE_REBOOK, 'Rebook'),
             )
         )
 
