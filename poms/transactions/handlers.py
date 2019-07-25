@@ -83,6 +83,7 @@ class TransactionTypeProcess(object):
 
         self._now = now or date_now()
         self._context = context
+        self._context['transaction_type'] = self.transaction_type
 
         self.recalculate_inputs = recalculate_inputs or []
 
@@ -1255,13 +1256,13 @@ class TransactionTypeProcess(object):
 
         for field_key in fields:
 
-            print('field_key')
+            # print('field_key')
 
             if getattr(self.complex_transaction.transaction_type, field_key):
 
                 try:
 
-                    print('epxr %s' % getattr(self.complex_transaction.transaction_type, field_key))
+                    # print('epxr %s' % getattr(self.complex_transaction.transaction_type, field_key))
 
                     setattr(self.complex_transaction, field_key, formula.safe_eval(
                         getattr(self.complex_transaction.transaction_type, field_key), names=names,

@@ -354,7 +354,31 @@ def _get_ttype_default_input(evaluator, input):
     from poms.strategies.models import Strategy1, Strategy2, Strategy3
     from poms.transactions.models import EventClass, NotificationClass
 
-    if input.value_type == TransactionTypeInput.RELATION:
+    context = evaluator.context
+
+    try:
+        transaction_type = context['transaction_type']
+    except ValueError:
+        raise ExpressionEvalError('Missing context: Transacion Type')
+
+    inputs = list(transaction_type.inputs.all())
+
+    input_obj = None
+
+    for tt_input in inputs:
+
+        if input == tt_input.name:
+            input_obj = tt_input
+
+    print('input_obj %s' % input_obj)
+
+    if input_obj is None:
+        raise ExpressionEvalError('Input is not found')
+
+    print('input_obj.value_type %s' % input_obj.value_type)
+    print('input_obj.value %s' % input_obj.value)
+
+    if input_obj.value_type == TransactionTypeInput.RELATION:
 
         def _get_val_by_model_cls(obj, model_class):
             if issubclass(model_class, Account):
@@ -395,12 +419,17 @@ def _get_ttype_default_input(evaluator, input):
                 return obj.notification_class
             return None
 
-        model_class = input.content_type.model_class()
+        model_class = input_obj.content_type.model_class()
 
-        result = _get_val_by_model_cls(input, model_class)
+        print('model_class %s' % model_class)
+
+        result = _get_val_by_model_cls(input_obj, model_class).__dict__
+
+        # print('result relation.name %s' % result.name)
+        print('result relation[name] %s' % result['name'])
 
     else:
-        result = input.value
+        result = input_obj.value
 
     return result
 
@@ -584,7 +613,6 @@ def _get_price_history_principal_price(evaluator, date, instrument, pricing_poli
 
     elif isinstance(pricing_policy, str):
         pricing_policy_pk = PricingPolicy.objects.get(master_user=master_user, user_code=pricing_policy).id
-
 
     result = PriceHistory.objects.get(date=date, instrument=instrument_pk,
                                       pricing_policy=pricing_policy_pk)
