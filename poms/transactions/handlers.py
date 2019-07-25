@@ -261,7 +261,7 @@ class TransactionTypeProcess(object):
             if action_instrument and self.execute_action_condition(action_instrument):
 
                 print('action_instrument %s' % action_instrument)
-                print('is_rebook %s' % self.is_rebook)
+                print('is_rebook %s' % self.process_mode == self.MODE_REBOOK)
                 print('action_instrument.rebook_reaction %s' % action_instrument.rebook_reaction)
 
                 _l.debug('process instrument: %s', action_instrument)
@@ -290,7 +290,7 @@ class TransactionTypeProcess(object):
                     except Instrument.DoesNotExist:
 
                         if action_instrument.rebook_reaction and \
-                                action_instrument.rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and self.is_rebook:
+                                action_instrument.rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and self.process_mode == self.MODE_REBOOK:
                             instrument = ecosystem_default.instrument
                             instrument_exists = True
 
@@ -379,7 +379,7 @@ class TransactionTypeProcess(object):
                     print('rebook_reaction %s' % rebook_reaction)
                     print('instrument_exists %s' % instrument_exists)
 
-                    if self.is_rebook:
+                    if self.process_mode == self.MODE_REBOOK:
 
                         if rebook_reaction == RebookReactionChoice.OVERWRITE:
                             print('Rebook  OVERWRITE')
@@ -470,7 +470,7 @@ class TransactionTypeProcess(object):
 
                     rebook_reaction = action_instrument_factor_schedule.rebook_reaction
 
-                    if self.is_rebook:
+                    if self.process_mode == self.MODE_REBOOK:
 
                         if rebook_reaction == RebookReactionChoice.CREATE:
                             factor.save()
@@ -567,7 +567,7 @@ class TransactionTypeProcess(object):
 
                     rebook_reaction = action_instrument_manual_pricing_formula.rebook_reaction
 
-                    if self.is_rebook:
+                    if self.process_mode == self.MODE_REBOOK:
 
                         if rebook_reaction == RebookReactionChoice.CREATE:
                             manual_pricing_formula.save()
@@ -684,7 +684,7 @@ class TransactionTypeProcess(object):
 
                     rebook_reaction = action_instrument_accrual_calculation_schedule.rebook_reaction
 
-                    if self.is_rebook:
+                    if self.process_mode == self.MODE_REBOOK:
 
                         if rebook_reaction == RebookReactionChoice.CREATE:
                             accrual_calculation_schedule.save()
@@ -814,7 +814,7 @@ class TransactionTypeProcess(object):
 
                     rebook_reaction = action_instrument_event_schedule.rebook_reaction
 
-                    if self.is_rebook:
+                    if self.process_mode == self.MODE_REBOOK:
 
                         if rebook_reaction == RebookReactionChoice.CREATE:
                             event_schedule.save()
@@ -927,7 +927,7 @@ class TransactionTypeProcess(object):
 
                     rebook_reaction = action_instrument_event_schedule_action.rebook_reaction
 
-                    if self.is_rebook:
+                    if self.process_mode == self.MODE_REBOOK:
 
                         if rebook_reaction == RebookReactionChoice.CREATE:
                             event_schedule_action.save()
