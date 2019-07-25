@@ -1127,6 +1127,8 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         # if request.method != 'GET':
         #     complex_transaction.status = ComplexTransaction.PRODUCTION
 
+        print('process rebook')
+
         instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
                                           process_mode='rebook',
                                           complex_transaction=complex_transaction,

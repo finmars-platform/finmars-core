@@ -60,6 +60,8 @@ class TransactionTypeProcess(object):
 
         _l.debug('process_mode: %s', self.process_mode)
 
+        print('self.process_mode %s' % self.process_mode)
+
         self.default_values = default_values or {}
 
         # self.expressions = expressions or {}
