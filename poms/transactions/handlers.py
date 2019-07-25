@@ -259,6 +259,8 @@ class TransactionTypeProcess(object):
             if action_instrument and self.execute_action_condition(action_instrument):
 
                 print('action_instrument %s' % action_instrument)
+                print('is_rebook %s' % self.is_rebook)
+                print('action_instrument.rebook_reaction %s' % action_instrument.rebook_reaction)
 
                 _l.debug('process instrument: %s', action_instrument)
                 errors = {}
@@ -283,7 +285,7 @@ class TransactionTypeProcess(object):
 
                         print('Instrument found by user code')
 
-                    except ObjectDoesNotExist:
+                    except Instrument.DoesNotExist:
 
                         if action_instrument.rebook_reaction and \
                                 action_instrument.rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and self.is_rebook:
