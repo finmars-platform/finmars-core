@@ -272,28 +272,35 @@ class TransactionTypeProcess(object):
                 instrument = None
                 instrument_exists = False
 
+                ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+
                 if user_code:
                     try:
+
                         instrument = Instrument.objects.get(master_user=master_user, user_code=user_code,
                                                             is_deleted=False)
                         instrument_exists = True
+
+                        print('Instrument found by user code')
+
                     except ObjectDoesNotExist:
 
                         if action_instrument.rebook_reaction and \
                                 action_instrument.rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and self.is_rebook:
-                            ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
-
                             instrument = ecosystem_default.instrument
                             instrument_exists = True
 
+                            print('Rebook: Instrument is not exists, return Default %s' % instrument.user_code)
+
                 if instrument is None:
                     instrument = Instrument(master_user=master_user, user_code=user_code)
+                    print("Instrument is not exists. Create new.")
 
                 # instrument.user_code = user_code
 
                 print('instrument.user_code %s ' % instrument.user_code)
 
-                if instrument.user_code != '-':
+                if instrument.user_code != '-' and instrument.user_code != ecosystem_default.instrument.user_code:
 
                     self._set_val(errors=errors, values=self.values, default_value='',
                                   target=instrument, target_attr_name='name',
