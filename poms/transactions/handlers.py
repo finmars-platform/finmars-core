@@ -58,8 +58,8 @@ class TransactionTypeProcess(object):
 
         self.process_mode = process_mode
 
-        if self.process_mode is None:
-            self.process_mode = TransactionTypeProcess.MODE_BOOK
+        # if self.process_mode is None:
+        #     self.process_mode = TransactionTypeProcess.MODE_BOOK
 
         _l.debug('process_mode: %s', self.process_mode)
 
