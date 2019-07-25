@@ -261,7 +261,8 @@ class TransactionTypeProcess(object):
             if action_instrument and self.execute_action_condition(action_instrument):
 
                 print('action_instrument %s' % action_instrument)
-                print('is_rebook %s' % self.process_mode == self.MODE_REBOOK)
+                print('self.process_mode == self.MODE_REBOOK')
+                print(self.process_mode == self.MODE_REBOOK)
                 print('action_instrument.rebook_reaction %s' % action_instrument.rebook_reaction)
 
                 _l.debug('process instrument: %s', action_instrument)
@@ -290,10 +291,14 @@ class TransactionTypeProcess(object):
                     except Instrument.DoesNotExist:
 
                         print("Instrument DoesNotExist exception")
+                        print("action_instrument.rebook_reaction %s " % action_instrument.rebook_reaction)
+                        print("RebookReactionChoice.FIND_OR_CREATE %s" % RebookReactionChoice.FIND_OR_CREATE )
+                        print("self.process_mode %s" % self.process_mode)
+                        print("self.MODE_REBOOK %s" % self.MODE_REBOOK)
 
-                        if action_instrument.rebook_reaction is not None and \
-                                action_instrument.rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and \
+                        if action_instrument.rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and \
                                 self.process_mode == self.MODE_REBOOK:
+
                             instrument = ecosystem_default.instrument
                             instrument_exists = True
 
