@@ -614,13 +614,16 @@ def _get_price_history_principal_price(evaluator, date, instrument, pricing_poli
     elif isinstance(pricing_policy, str):
         pricing_policy_pk = PricingPolicy.objects.get(master_user=master_user, user_code=pricing_policy).id
 
-    result = PriceHistory.objects.get(date=date, instrument=instrument_pk,
-                                      pricing_policy=pricing_policy_pk)
+    try:
 
-    if result:
+        result = PriceHistory.objects.get(date=date, instrument=instrument_pk,
+                                          pricing_policy=pricing_policy_pk)
+
         return result.principal_price
 
-    return default_value
+    except PriceHistory.DoesNotExist:
+
+        return default_value
 
 
 _get_price_history_principal_price.evaluator = True
@@ -667,13 +670,16 @@ def _get_price_history_accrued_price(evaluator, date, instrument, pricing_policy
     if pricing_policy_pk is None:
         raise ExpressionEvalError('Invalid Pricing Policy')
 
-    result = PriceHistory.objects.get(date=date, instrument=instrument_pk,
-                                      pricing_policy=pricing_policy_pk)
+    try:
 
-    if result:
+        result = PriceHistory.objects.get(date=date, instrument=instrument_pk,
+                                          pricing_policy=pricing_policy_pk)
+
         return result.accrued_price
 
-    return default_value
+    except PriceHistory.DoesNotExist:
+
+        return default_value
 
 
 _get_price_history_accrued_price.evaluator = True
