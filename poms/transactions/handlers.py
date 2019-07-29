@@ -1401,8 +1401,10 @@ class TransactionTypeProcess(object):
                         res = formula.safe_eval(inp.value_expr, names=self.values, now=self._now, context=self._context)
 
                         print('relation input expr')
+                        print('relation input expr %s ' % inp.value_expr)
                         print(inp.content_type)
-                        print(res)
+                        print('res %s' % res)
+                        print('name %s' % name)
 
                         Model = apps.get_model(app_label=inp.content_type.app_label, model_name=inp.content_type.model)
 
@@ -1437,7 +1439,7 @@ class TransactionTypeProcess(object):
                             'portfolio': 'portfolio',
                             'strategy1': 'strategy1',
                             'strategy2': 'strategy2',
-                            'strategy2': 'strategy2',
+                            'strategy3': 'strategy3',
                             'dailypricingmodel': 'daily_pricing_model',
                             'paymentsizedetail': 'payment_size_detail',
                             'pricedownloadscheme': 'price_download_scheme',

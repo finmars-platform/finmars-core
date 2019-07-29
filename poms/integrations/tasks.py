@@ -1273,9 +1273,13 @@ def complex_transaction_csv_file_import(self, instance):
                     continue
             _l.debug('rule value: %s', rule_value)
 
+            matched_rule = False
+
             for scheme_rule in scheme_rules:
 
                 if scheme_rule.value == rule_value:
+
+                    matched_rule = True
 
                     try:
                         # rule = scheme_rules[rule_value]
@@ -1370,6 +1374,11 @@ def complex_transaction_csv_file_import(self, instance):
                             _l.info("final")
                             # if settings.DEBUG:
                             #     transaction.set_rollback(True)
+
+            if matched_rule == False:
+
+                error_rows['level'] = 'error'
+
 
             instance.error_rows.append(error_rows)
 
