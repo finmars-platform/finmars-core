@@ -147,7 +147,6 @@ router.register(r'strategies/1/strategy', strategies.Strategy1ViewSet)
 
 router.register(r'strategies/1/strategy-attribute-type', strategies.Strategy1AttributeTypeViewSet)
 
-
 router.register(r'strategies/2/group-ev-group', strategies.Strategy2GroupEvGroupViewSet, 'strategy2groupevgroup')
 router.register(r'strategies/2/group', strategies.Strategy2GroupViewSet)
 
@@ -202,6 +201,7 @@ router.register(r'transactions/complex-transaction-ev-group', transactions.Compl
                 'complextransactionevgroup')
 router.register(r'transactions/complex-transaction', transactions.ComplexTransactionViewSet)
 
+router.register(r'ui/portal-interface-access', ui.PortalInterfaceAccessViewSet)
 router.register(r'ui/list-layout', ui.ListLayoutViewSet)
 router.register(r'ui/edit-layout', ui.EditLayoutViewSet)
 router.register(r'ui/template-list-layout', ui.TemplateListLayoutViewSet)

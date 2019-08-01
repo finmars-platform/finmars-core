@@ -1325,7 +1325,7 @@ def complex_transaction_csv_file_import(self, instance):
                         error_rows['error_message'] = error_rows['error_message'] + '\n' + '\n' + str(ugettext(
                             'Can\'t process fields: %(fields)s') % {
                                                                                                           'fields': ', '.join(
-                                                                                                              '[' + f.transaction_type_input.name + '] '+ '( TType: ' + rule_value + ')'
+                                                                                                              '[' + f.transaction_type_input.name + '] ' + '( TType: ' + rule_value + ')'
                                                                                                               for f in
                                                                                                               fields_error)
                                                                                                       })
@@ -1376,9 +1376,15 @@ def complex_transaction_csv_file_import(self, instance):
                             #     transaction.set_rollback(True)
 
             if matched_rule == False:
-
                 error_rows['level'] = 'error'
 
+                if instance.break_on_error:
+                    instance.error_row_index = row_index
+                    error_rows['error_reaction'] = 'Break'
+                    instance.error_rows.append(error_rows)
+                    return
+                else:
+                    error_rows['error_reaction'] = 'Continue import'
 
             instance.error_rows.append(error_rows)
 
@@ -1646,9 +1652,13 @@ def complex_transaction_csv_file_import_validate(self, instance):
                     continue
             _l.debug('rule value: %s', rule_value)
 
+            matched_rule = False
+
             for scheme_rule in scheme_rules:
 
                 if scheme_rule.value == rule_value:
+
+                    matched_rule = True
 
                     error_rows['error_data']['columns']['transaction_type_selector'].append('TType Selector')
 
@@ -1734,6 +1744,19 @@ def complex_transaction_csv_file_import_validate(self, instance):
                         else:
                             error_rows['error_reaction'] = 'Continue import'
                             continue
+
+            print('matched_rule %s' % matched_rule)
+
+            if matched_rule == False:
+                error_rows['level'] = 'error'
+
+                if instance.break_on_error:
+                    instance.error_row_index = row_index
+                    error_rows['error_reaction'] = 'Break'
+                    instance.error_rows.append(error_rows)
+                    return
+                else:
+                    error_rows['error_reaction'] = 'Continue import'
 
             instance.error_rows.append(error_rows)
 

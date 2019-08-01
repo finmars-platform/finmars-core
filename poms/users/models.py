@@ -596,6 +596,9 @@ class Member(FakeDeletableModel):
     notification_level = models.PositiveSmallIntegerField(default=SHOW_ONLY, choices=STATUS_CHOICES, db_index=True,
                                                           verbose_name=ugettext_lazy('notification level'))
 
+    interface_level = models.PositiveSmallIntegerField(default=20, db_index=True,
+                                                       verbose_name=ugettext_lazy('interface level'))
+
     join_date = models.DateTimeField(auto_now_add=True, verbose_name=ugettext_lazy('join date'))
     is_owner = models.BooleanField(default=False, verbose_name=ugettext_lazy('is owner'))
     is_admin = models.BooleanField(default=False, verbose_name=ugettext_lazy('is admin'))

@@ -3,8 +3,16 @@ from django.contrib import admin
 from poms.common.admin import AbstractModelAdmin
 from poms.ui.filters import LayoutContentTypeFilter
 from poms.ui.models import TemplateListLayout, TemplateEditLayout, ListLayout, EditLayout, Bookmark, \
-    TransactionUserFieldModel
+    TransactionUserFieldModel, PortalInterfaceAccessModel
 
+
+class PortalInterfaceAccessModelAdmin(AbstractModelAdmin):
+    model = PortalInterfaceAccessModel
+    list_display = ['id', 'system_code', 'name', 'value']
+    search_fields = ['id', 'system_code', 'name', 'value']
+
+
+admin.site.register(PortalInterfaceAccessModel, PortalInterfaceAccessModelAdmin)
 
 class BaseLayoutAdmin(AbstractModelAdmin):
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):

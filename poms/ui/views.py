@@ -3,14 +3,20 @@ from django_filters.fields import Lookup
 from rest_framework.filters import FilterSet
 
 from poms.common.filters import NoOpFilter, CharFilter
-from poms.common.views import AbstractModelViewSet
+from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet
 from poms.ui.models import TemplateListLayout, TemplateEditLayout, ListLayout, EditLayout, Bookmark, Configuration, \
-    ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel
+    ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel
 from poms.ui.serializers import TemplateListLayoutSerializer, ListLayoutSerializer, TemplateEditLayoutSerializer, \
     EditLayoutSerializer, BookmarkSerializer, ConfigurationSerializer, ConfigurationExportLayoutSerializer, \
-    TransactionUserFieldSerializer, InstrumentUserFieldSerializer
+    TransactionUserFieldSerializer, InstrumentUserFieldSerializer, PortalInterfaceAccessModelSerializer
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 from poms.users.permissions import SuperUserOnly
+
+
+class PortalInterfaceAccessViewSet(AbstractReadOnlyModelViewSet):
+    queryset = PortalInterfaceAccessModel.objects
+    serializer_class = PortalInterfaceAccessModelSerializer
+    pagination_class = None
 
 
 class TransactionUserFieldViewSet(AbstractModelViewSet):
