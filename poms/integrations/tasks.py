@@ -42,11 +42,11 @@ from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import EventClass
 from poms.users.models import MasterUser, EcosystemDefault
 
-# _l = logging.getLogger('poms.integrations')
+_l = logging.getLogger('poms.integrations')
 
 from celery.utils.log import get_task_logger
 
-_l = get_task_logger('poms.integrations')
+celery_logger = get_task_logger(__name__)
 
 
 @shared_task(name='integrations.health_check')
@@ -350,6 +350,8 @@ def download_currency_pricing_async(self, task_id):
 
 @shared_task(name='integrations.download_pricing_async', bind=True, ignore_result=False)
 def download_pricing_async(self, task_id):
+
+    celery_logger.info('download pricing async')
     task = Task.objects.get(pk=task_id)
     _l.info('download_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
 
@@ -592,6 +594,8 @@ def download_pricing_async(self, task_id):
 
 @shared_task(name='integrations.download_pricing_wait', bind=True, ignore_result=False)
 def download_pricing_wait(self, sub_tasks_id, task_id):
+
+    celery_logger.info('download pricing wait')
     task = Task.objects.get(pk=task_id)
     _l.info('download_pricing_wait: master_user_id=%s, task=%s', task.master_user_id, task.info)
 
@@ -929,6 +933,9 @@ def _create_instrument_manual_prices(options, instruments):
 
 def download_pricing(master_user=None, member=None, date_from=None, date_to=None, is_yesterday=None, balance_date=None,
                      fill_days=None, override_existed=None, task=None):
+
+    celery_logger.info('download pricing')
+
     _l.info('download_pricing: master_user_id=%s, task=%s, date_from=%s, date_to=%s, is_yesterday=%s,'
              ' balance_date=%s, fill_days=%s, override_existed=%s',
              getattr(master_user, 'id', None), getattr(task, 'info', None), date_from, date_to, is_yesterday,
