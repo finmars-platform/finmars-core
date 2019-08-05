@@ -445,6 +445,13 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose'
         },
+        'celery': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': '/var/log/finmars/celery.log',
+            'formatter': 'verbose',
+            'maxBytes': 1024 * 1024 * 100,  # 100 mb
+        },
         # 'mail_admins': {
         #     'level': 'ERROR',
         #     'class': 'django.utils.log.AdminEmailHandler',
@@ -491,12 +498,12 @@ LOGGING = {
         # },
         'poms': {
             'level': 'DEBUG',
-            'handlers': ['console', 'logstash'],
+            'handlers': ['console', 'logstash', 'celery'],
             'propagate': False,
         },
         'celery': {
             'level': 'INFO',
-            'handlers': ['console', 'logstash'],
+            'handlers': ['console', 'logstash', 'celery'],
         },
         'suds': {
             'level': 'INFO',
