@@ -20,12 +20,7 @@ from poms.integrations.models import FactorScheduleDownloadMethod, AccrualSchedu
     InstrumentDownloadScheme, PriceDownloadScheme
 from poms.integrations.providers.base import AbstractProvider, ProviderException, parse_date_iso
 
-__author__ = 'alyakhov'
-
 _l = logging.getLogger('poms.integrations.providers.bloomberg')
-
-
-# _l = getLogger(__name__)
 
 
 class BloombergException(ProviderException):
