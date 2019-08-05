@@ -42,7 +42,11 @@ from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import EventClass
 from poms.users.models import MasterUser, EcosystemDefault
 
-_l = logging.getLogger('poms.integrations')
+# _l = logging.getLogger('poms.integrations')
+
+from celery.utils.log import get_task_logger
+
+_l = get_task_logger('poms.integrations')
 
 
 @shared_task(name='integrations.health_check')
