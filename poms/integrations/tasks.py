@@ -113,18 +113,18 @@ def mail_managers(subject, message):
 def auth_log_statistics():
     logged_in_count = AuthLogEntry.objects.filter(is_success=True).count()
     login_failed_count = AuthLogEntry.objects.filter(is_success=False).count()
-    _l.debug('auth (total): logged_in=%s, login_failed=%s', logged_in_count, login_failed_count)
+    _l.info('auth (total): logged_in=%s, login_failed=%s', logged_in_count, login_failed_count)
 
     now = timezone.now().date()
     logged_in_count = AuthLogEntry.objects.filter(is_success=True, date__startswith=now).count()
     login_failed_count = AuthLogEntry.objects.filter(is_success=False, date__startswith=now).count()
-    _l.debug('auth (today): logged_in=%s, login_failed=%s', logged_in_count, login_failed_count)
+    _l.info('auth (today): logged_in=%s, login_failed=%s', logged_in_count, login_failed_count)
 
 
 @shared_task(name='integrations.download_instrument', bind=True, ignore_result=False)
 def download_instrument_async(self, task_id=None):
     task = Task.objects.get(pk=task_id)
-    _l.debug('download_instrument_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
+    _l.info('download_instrument_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
 
     task.add_celery_task_id(self.request.id)
 
@@ -143,7 +143,7 @@ def download_instrument_async(self, task_id=None):
         return
 
     if task.status not in [Task.STATUS_PENDING, Task.STATUS_WAIT_RESPONSE]:
-        _l.debug('invalid task status')
+        _l.info('invalid task status')
         return
     options = task.options_object
 
@@ -182,7 +182,7 @@ def download_instrument_async(self, task_id=None):
 
 def download_instrument(instrument_code=None, instrument_download_scheme=None, master_user=None, member=None,
                         task=None, value_overrides=None):
-    _l.debug('download_pricing: master_user_id=%s, task=%s, instrument_code=%s, instrument_download_scheme=%s',
+    _l.info('download_pricing: master_user_id=%s, task=%s, instrument_code=%s, instrument_download_scheme=%s',
              getattr(master_user, 'id', None), getattr(task, 'info', None), instrument_code, instrument_download_scheme)
 
     if task is None:
@@ -228,7 +228,7 @@ def download_instrument(instrument_code=None, instrument_download_scheme=None, m
 @shared_task(name='integrations.download_instrument_pricing_async', bind=True, ignore_result=False)
 def download_instrument_pricing_async(self, task_id):
     task = Task.objects.get(pk=task_id)
-    _l.debug('download_instrument_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
+    _l.info('download_instrument_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
 
     task.add_celery_task_id(self.request.id)
 
@@ -287,7 +287,7 @@ def download_instrument_pricing_async(self, task_id):
 @shared_task(name='integrations.download_currency_pricing_async', bind=True, ignore_result=False)
 def download_currency_pricing_async(self, task_id):
     task = Task.objects.get(pk=task_id)
-    _l.debug('download_currency_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
+    _l.info('download_currency_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
 
     task.add_celery_task_id(self.request.id)
 
@@ -347,7 +347,7 @@ def download_currency_pricing_async(self, task_id):
 @shared_task(name='integrations.download_pricing_async', bind=True, ignore_result=False)
 def download_pricing_async(self, task_id):
     task = Task.objects.get(pk=task_id)
-    _l.debug('download_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
+    _l.info('download_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
 
     if task.status not in [Task.STATUS_PENDING, Task.STATUS_WAIT_RESPONSE]:
         return
@@ -363,14 +363,14 @@ def download_pricing_async(self, task_id):
     ).exclude(
         daily_pricing_model=DailyPricingModel.SKIP
     )
-    _l.debug('instruments: %s', [i.id for i in instruments])
+    _l.info('instruments: %s', [i.id for i in instruments])
 
     currencies = Currency.objects.select_related('price_download_scheme').filter(
         master_user=master_user
     ).exclude(
         daily_pricing_model=DailyPricingModel.SKIP
     )
-    _l.debug('currencies: %s', [i.id for i in currencies])
+    _l.info('currencies: %s', [i.id for i in currencies])
 
     instruments_always = set()
     instruments_if_open = set()
@@ -408,11 +408,11 @@ def download_pricing_async(self, task_id):
         elif i.daily_pricing_model_id in [DailyPricingModel.DEFAULT]:
             currencies_default.add(i.id)
 
-    _l.debug('always: instruments=%s, currencies=%s',
+    _l.info('always: instruments=%s, currencies=%s',
              sorted(instruments_always), sorted(currencies_always))
 
     balance_date = parse_date_iso(options['balance_date'])
-    _l.debug('calculate position report on %s for: instruments=%s, currencies=%s',
+    _l.info('calculate position report on %s for: instruments=%s, currencies=%s',
              balance_date, sorted(instruments_if_open), sorted(currencies_if_open))
 
     if balance_date and (instruments_if_open or currencies_if_open):
@@ -436,13 +436,13 @@ def download_pricing_async(self, task_id):
                     currencies_opened.add(i.ccy.id)
                 if i.trn_ccy:
                     currencies_opened.add(i.trn_ccy.id)
-        _l.debug('opened: instruments=%s, currencies=%s', sorted(instruments_opened), sorted(currencies_opened))
+        _l.info('opened: instruments=%s, currencies=%s', sorted(instruments_opened), sorted(currencies_opened))
 
     instruments = instruments.filter(pk__in=(instruments_always | instruments_opened | instruments_default))
-    _l.debug('instruments: %s', [i.id for i in instruments])
+    _l.info('instruments: %s', [i.id for i in instruments])
 
     currencies = currencies.filter(pk__in=(currencies_always | currencies_opened | currencies_default))
-    _l.debug('currencies: %s', [i.id for i in currencies])
+    _l.info('currencies: %s', [i.id for i in currencies])
 
     price_download_schemes = {}
 
@@ -460,9 +460,9 @@ def download_pricing_async(self, task_id):
         elif i.daily_pricing_model_id in [DailyPricingModel.DEFAULT]:
             instruments_by_default.append(i)
 
-    _l.debug('instruments_by_scheme: %s', instruments_by_scheme)
-    _l.debug('instruments_by_formula: %s', instruments_by_formula)
-    _l.debug('instruments_by_default: %s', instruments_by_default)
+    _l.info('instruments_by_scheme: %s', instruments_by_scheme)
+    _l.info('instruments_by_formula: %s', instruments_by_formula)
+    _l.info('instruments_by_default: %s', instruments_by_default)
 
     currencies_by_scheme = defaultdict(list)
     currencies_by_default = []
@@ -474,8 +474,8 @@ def download_pricing_async(self, task_id):
         elif c.daily_pricing_model_id in [DailyPricingModel.DEFAULT]:
             currencies_by_default.append(c)
 
-    _l.debug('currencies_by_scheme: %s', currencies_by_scheme)
-    _l.debug('currencies_by_default: %s', currencies_by_default)
+    _l.info('currencies_by_scheme: %s', currencies_by_scheme)
+    _l.info('currencies_by_default: %s', currencies_by_default)
 
     # sub_tasks = []
     # celery_sub_tasks = []
@@ -589,7 +589,7 @@ def download_pricing_async(self, task_id):
 @shared_task(name='integrations.download_pricing_wait', bind=True, ignore_result=False)
 def download_pricing_wait(self, sub_tasks_id, task_id):
     task = Task.objects.get(pk=task_id)
-    _l.debug('download_pricing_wait: master_user_id=%s, task=%s', task.master_user_id, task.info)
+    _l.info('download_pricing_wait: master_user_id=%s, task=%s', task.master_user_id, task.info)
 
     if task.status != Task.STATUS_WAIT_RESPONSE:
         return
@@ -613,17 +613,17 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
     instruments_prices = []
     currencies_prices = []
 
-    _l.debug('instrument_task: %s', instrument_task)
-    _l.debug('currency_task: %s', currency_task)
+    _l.info('instrument_task: %s', instrument_task)
+    _l.info('currency_task: %s', currency_task)
 
     instruments_pk = [int(pk) for pk in instrument_task.keys()]
-    _l.debug('instruments_pk: %s', instruments_pk)
+    _l.info('instruments_pk: %s', instruments_pk)
     currencies_pk = [int(pk) for pk in currency_task.keys()]
-    _l.debug('currencies_pk: %s', currencies_pk)
+    _l.info('currencies_pk: %s', currencies_pk)
 
-    _l.debug('sub_tasks_id: %s', sub_tasks_id)
+    _l.info('sub_tasks_id: %s', sub_tasks_id)
     for sub_task in Task.objects.filter(pk__in=sub_tasks_id):
-        _l.debug('sub_task: %s', sub_task.info)
+        _l.info('sub_task: %s', sub_task.info)
         if sub_task.status != Task.STATUS_DONE:
             continue
 
@@ -668,7 +668,7 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
             errors.update(sub_task_errors)
 
     instrument_for_manual_price = [int(i_id) for i_id, task_id in instrument_task.items() if task_id is None]
-    _l.debug('instrument_for_manual_price: %s', instrument_for_manual_price)
+    _l.info('instrument_for_manual_price: %s', instrument_for_manual_price)
     manual_instruments_prices, manual_instruments_errors = _create_instrument_manual_prices(
         options=options, instruments=instrument_for_manual_price)
 
@@ -677,7 +677,7 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
 
     instrument_for_default_price = [int(i_id) for i_id, task_id in instrument_task.items() if
                                     task_id == 'instrument_default']
-    _l.debug('instrument_for_default_price: %s', instrument_for_default_price)
+    _l.info('instrument_for_default_price: %s', instrument_for_default_price)
 
     default_instruments_prices, default_instruments_errors = _create_instrument_default_prices(
         options=options, instruments=instrument_for_default_price, pricing_policies=pricing_policies)
@@ -687,7 +687,7 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
 
     currencies_for_default_price = [int(i_id) for i_id, task_id in currency_task.items() if
                                     task_id == 'currency_default']
-    _l.debug('currencies_for_default_price: %s', currencies_for_default_price)
+    _l.info('currencies_for_default_price: %s', currencies_for_default_price)
 
     default_currencies_prices, default_currencies_errors = _create_currency_default_prices(options=options,
                                                                                            currencies=currencies_for_default_price,
@@ -706,17 +706,17 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
     if fill_days > 0:
         fill_date_from = date_to + timedelta(days=1)
         instrument_last_price = [p for p in instruments_prices if p.date == date_to]
-        _l.debug('instrument last prices: %s', instrument_last_price)
+        _l.info('instrument last prices: %s', instrument_last_price)
         for p in instrument_last_price:
             instruments_prices + fill_instrument_price(fill_date_from, fill_days, p)
 
         currency_last_price = [p for p in currencies_prices if p.date == date_to]
-        _l.debug('currency last prices: %s', currency_last_price)
+        _l.info('currency last prices: %s', currency_last_price)
         for p in currency_last_price:
             currencies_prices += fill_currency_price(fill_date_from, fill_days, p)
 
-    _l.debug('instruments_prices: %s', instruments_prices)
-    _l.debug('currencies_prices: %s', currencies_prices)
+    _l.info('instruments_prices: %s', instruments_prices)
+    _l.info('currencies_prices: %s', currencies_prices)
 
     for p in instruments_prices:
         # p.calculate_accrued_price(save=False)
@@ -724,13 +724,13 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
         p.accrued_price = accrued_price if accrued_price is not None else 0.0
 
     with transaction.atomic():
-        _l.debug('instruments_pk: %s', instruments_pk)
+        _l.info('instruments_pk: %s', instruments_pk)
         existed_instrument_prices = {
             (p.instrument_id, p.pricing_policy_id, p.date): p
             for p in PriceHistory.objects.filter(instrument__in=instruments_pk,
                                                  date__range=(date_from, date_to + timedelta(days=fill_days)))
         }
-        _l.debug('existed_instrument_prices: %s', existed_instrument_prices)
+        _l.info('existed_instrument_prices: %s', existed_instrument_prices)
         for p in instruments_prices:
             op = existed_instrument_prices.get((p.instrument_id, p.pricing_policy_id, p.date), None)
             if op is None:
@@ -741,13 +741,13 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
                     op.accrued_price = p.accrued_price
                     op.save()
 
-        _l.debug('currencies_pk: %s', currencies_pk)
+        _l.info('currencies_pk: %s', currencies_pk)
         existed_currency_prices = {
             (p.currency_id, p.pricing_policy_id, p.date): p
             for p in CurrencyHistory.objects.filter(currency__in=currencies_pk,
                                                     date__range=(date_from, date_to + timedelta(days=fill_days)))
         }
-        _l.debug('existed_currency_prices: %s', existed_currency_prices)
+        _l.info('existed_currency_prices: %s', existed_currency_prices)
         for p in currencies_prices:
             op = existed_currency_prices.get((p.currency_id, p.pricing_policy_id, p.date), None)
 
@@ -794,8 +794,8 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
             # currency_price_missed = CurrencyHistorySerializer(instance=currency_price_missed_objects, many=True).data
             result['currency_price_missed'] = list(currency_price_missed)
 
-            _l.debug('instrument_price_missed: %s', instrument_price_missed)
-            _l.debug('currency_price_missed: %s', currency_price_missed)
+            _l.info('instrument_price_missed: %s', instrument_price_missed)
+            _l.info('currency_price_missed: %s', currency_price_missed)
 
         task.options_object = options
         task.result_object = result
@@ -806,7 +806,7 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
 
 
 def _create_currency_default_prices(options, currencies, pricing_policies):
-    _l.debug('create_currency_default_prices: currencies=%s', currencies)
+    _l.info('create_currency_default_prices: currencies=%s', currencies)
 
     errors = {}
     prices = []
@@ -834,7 +834,7 @@ def _create_currency_default_prices(options, currencies, pricing_policies):
 
 
 def _create_instrument_default_prices(options, instruments, pricing_policies):
-    _l.debug('create_instrument_default_prices: instruments=%s', instruments)
+    _l.info('create_instrument_default_prices: instruments=%s', instruments)
 
     date_from = parse_date_iso(options['date_from'])
     date_to = parse_date_iso(options['date_to'])
@@ -863,7 +863,7 @@ def _create_instrument_default_prices(options, instruments, pricing_policies):
 
 
 def _create_instrument_manual_prices(options, instruments):
-    _l.debug('create_instrument_manual_prices: instruments=%s', instruments)
+    _l.info('create_instrument_manual_prices: instruments=%s', instruments)
 
     date_from = parse_date_iso(options['date_from'])
     date_to = parse_date_iso(options['date_to'])
@@ -925,7 +925,7 @@ def _create_instrument_manual_prices(options, instruments):
 
 def download_pricing(master_user=None, member=None, date_from=None, date_to=None, is_yesterday=None, balance_date=None,
                      fill_days=None, override_existed=None, task=None):
-    _l.debug('download_pricing: master_user_id=%s, task=%s, date_from=%s, date_to=%s, is_yesterday=%s,'
+    _l.info('download_pricing: master_user_id=%s, task=%s, date_from=%s, date_to=%s, is_yesterday=%s,'
              ' balance_date=%s, fill_days=%s, override_existed=%s',
              getattr(master_user, 'id', None), getattr(task, 'info', None), date_from, date_to, is_yesterday,
              balance_date, fill_days, override_existed)
@@ -960,7 +960,7 @@ def download_pricing(master_user=None, member=None, date_from=None, date_to=None
 
 @shared_task(name='integrations.download_pricing_auto', bind=True, ignore_result=True)
 def download_pricing_auto(self, master_user_id):
-    _l.debug('download_pricing_auto: master_user=%s', master_user_id)
+    _l.info('download_pricing_auto: master_user=%s', master_user_id)
     try:
         master_user = MasterUser.objects.get(pk=master_user_id)
         sched = master_user.pricing_automated_schedule
@@ -994,25 +994,25 @@ def download_pricing_auto(self, master_user_id):
 
 @shared_task(name='integrations.download_pricing_auto_scheduler', bind=True, ignore_result=True)
 def download_pricing_auto_scheduler(self):
-    _l.debug('pricing_auto')
+    _l.info('pricing_auto')
     schedule_qs = PricingAutomatedSchedule.objects.select_related('master_user').filter(
         is_enabled=True, next_run_at__lte=timezone.now()
     )
-    _l.debug('count=%s', schedule_qs.count())
+    _l.info('count=%s', schedule_qs.count())
     for s in schedule_qs:
         master_user = s.master_user
         with timezone.override(master_user.timezone or settings.TIME_ZONE):
             next_run_at = timezone.localtime(s.next_run_at)
             s.schedule(save=True)
-            _l.debug('pricing_auto: master_user=%s, next_run_at=%s',
+            _l.info('pricing_auto: master_user=%s, next_run_at=%s',
                      master_user.id, s.next_run_at)
         download_pricing_auto.apply_async(kwargs={'master_user_id': master_user.id})
-    _l.debug('finished')
+    _l.info('finished')
 
 
 # @shared_task(name='integrations.file_import_delete', ignore_result=True)
 # def file_import_delete_async(path):
-#     _l.debug('file_import_delete_async: path=%s', path)
+#     _l.info('file_import_delete_async: path=%s', path)
 #     import_file_storage.delete(path)
 #
 #
@@ -1022,7 +1022,7 @@ def download_pricing_auto_scheduler(self):
 #     else:
 #         if not getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', False):
 #             countdown = countdown or 600
-#             _l.debug('schedule_file_import_delete: path=%s, countdown=%s', path, countdown)
+#             _l.info('schedule_file_import_delete: path=%s, countdown=%s', path, countdown)
 #             file_import_delete_async.apply_async(kwargs={'path': path}, countdown=countdown)
 
 
@@ -1030,7 +1030,7 @@ def download_pricing_auto_scheduler(self):
 def complex_transaction_csv_file_import(self, instance):
     from poms.transactions.models import TransactionTypeInput
 
-    _l.debug('complex_transaction_file_import: %s', instance)
+    _l.info('complex_transaction_file_import: %s', instance)
 
     instance.processed_rows = 0
 
@@ -1042,7 +1042,7 @@ def complex_transaction_csv_file_import(self, instance):
     # scheme_rules = {r.value: r for r in
     #                 scheme.rules.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()}
 
-    _l.debug('scheme %s - inputs=%s, rules=%s', scheme,
+    _l.info('scheme %s - inputs=%s, rules=%s', scheme,
              [(i.name, i.column) for i in scheme_inputs],
              [(r.value, r.transaction_type.user_code) for r in scheme_rules])
 
@@ -1113,7 +1113,7 @@ def complex_transaction_csv_file_import(self, instance):
 
                 try:
 
-                    # _l.debug('Lookup by user code %s', value)
+                    # _l.info('Lookup by user code %s', value)
 
                     if model_class == PriceDownloadScheme:
                         v = model_class.objects.get(master_user=instance.master_user, scheme_name=value)
@@ -1157,9 +1157,9 @@ def complex_transaction_csv_file_import(self, instance):
 
         for row_index, row in enumerate(reader):
 
-            _l.debug('process row: %s -> %s', row_index, row)
+            _l.info('process row: %s -> %s', row_index, row)
             if (row_index == 0 and instance.skip_first_line) or not row:
-                _l.debug('skip first row')
+                _l.info('skip first row')
                 continue
 
             inputs_raw = {}
@@ -1203,7 +1203,7 @@ def complex_transaction_csv_file_import(self, instance):
                     error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
                     inputs_error.append(i)
 
-            _l.debug('inputs: error=%s, values=%s', [i.name for i in inputs_error], inputs_raw)
+            _l.info('inputs: error=%s, values=%s', [i.name for i in inputs_error], inputs_raw)
 
             if inputs_error:
 
@@ -1271,7 +1271,7 @@ def complex_transaction_csv_file_import(self, instance):
                     return
                 else:
                     continue
-            _l.debug('rule value: %s', rule_value)
+            _l.info('rule value: %s', rule_value)
 
             matched_rule = False
 
@@ -1300,7 +1300,7 @@ def complex_transaction_csv_file_import(self, instance):
                             return
                         else:
                             continue
-                    _l.debug('founded rule: %s -> %s', rule, rule.transaction_type)
+                    _l.info('founded rule: %s -> %s', rule, rule.transaction_type)
 
                     fields = {}
                     fields_error = []
@@ -1316,7 +1316,7 @@ def complex_transaction_csv_file_import(self, instance):
                             _l.info('can\'t process field: %s|%s', field.transaction_type_input.name,
                                     field.transaction_type_input.pk, exc_info=True)
                             fields_error.append(field)
-                    _l.debug('fields (step 1): error=%s, values=%s', fields_error, fields)
+                    _l.info('fields (step 1): error=%s, values=%s', fields_error, fields)
 
                     if fields_error:
 
@@ -1432,13 +1432,13 @@ def complex_transaction_csv_file_import_validate(self, instance):
     from poms.transactions.models import TransactionTypeInput
 
     instance.processed_rows = 0
-    _l.debug('complex_transaction_file_import: %s', instance)
+    _l.info('complex_transaction_file_import: %s', instance)
 
     scheme = instance.scheme
     scheme_inputs = list(scheme.inputs.all())
     scheme_rules = scheme.rules.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()
 
-    _l.debug('scheme %s - inputs=%s, rules=%s', scheme,
+    _l.info('scheme %s - inputs=%s, rules=%s', scheme,
              [(i.name, i.column) for i in scheme_inputs],
              [(r.value, r.transaction_type.user_code) for r in scheme_rules])
 
@@ -1509,7 +1509,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                 try:
 
-                    # _l.debug('Lookup by user code %s', value)
+                    # _l.info('Lookup by user code %s', value)
 
                     if model_class == PriceDownloadScheme:
                         v = model_class.objects.get(master_user=instance.master_user, scheme_name=value)
@@ -1524,8 +1524,8 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                         ecosystem_default = EcosystemDefault.objects.get(master_user=instance.master_user)
 
-                        # _l.debug('key %s' % key)
-                        # _l.debug('value %s' % value)
+                        # _l.info('key %s' % key)
+                        # _l.info('value %s' % value)
 
                         if hasattr(ecosystem_default, key):
                             v = getattr(ecosystem_default, key)
@@ -1553,9 +1553,9 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
         for row_index, row in enumerate(reader):
 
-            _l.debug('_validate_process_csv_file row: %s -> %s', row_index, row)
+            _l.info('_validate_process_csv_file row: %s -> %s', row_index, row)
             if (row_index == 0 and instance.skip_first_line) or not row:
-                _l.debug('skip first row')
+                _l.info('skip first row')
                 continue
 
             inputs_raw = {}
@@ -1598,7 +1598,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
                     error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
                     inputs_error.append(i)
 
-            _l.debug('inputs: error=%s, values=%s', [i.name for i in inputs_error], inputs_raw)
+            _l.info('inputs: error=%s, values=%s', [i.name for i in inputs_error], inputs_raw)
 
             for i in scheme_inputs:
 
@@ -1650,7 +1650,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
                 else:
                     error_rows['error_reaction'] = 'Continue import'
                     continue
-            _l.debug('rule value: %s', rule_value)
+            _l.info('rule value: %s', rule_value)
 
             matched_rule = False
 
@@ -1690,7 +1690,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
                             error_rows['error_reaction'] = 'Continue import'
                             continue
 
-                    _l.debug('founded rule: %s -> %s', rule, rule.transaction_type)
+                    _l.info('founded rule: %s -> %s', rule, rule.transaction_type)
 
                     fields = {}
                     fields_error = []
@@ -1723,9 +1723,9 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                     if len(fields_error):
 
-                        _l.debug('fields (step 1): error=%s, values=%s', fields_error, fields)
+                        _l.info('fields (step 1): error=%s, values=%s', fields_error, fields)
 
-                        _l.debug(error_rows['error_message'])
+                        _l.info(error_rows['error_message'])
 
                         error_rows['error_message'] = error_rows['error_message'] + str(
                             ugettext('Can\'t process fields: %(fields)s') % {
@@ -1776,7 +1776,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
                               meta={'processed_rows': instance.processed_rows,
                                     'total_rows': instance.total_rows})
 
-            _l.debug('instance', instance)
+            _l.info('instance', instance)
 
     def _row_count(file):
         for i, l in enumerate(file):
