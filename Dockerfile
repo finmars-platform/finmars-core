@@ -32,9 +32,6 @@ RUN mkdir -p /var/app-data/import/configs/
 RUN mkdir -p /var/app-data/import/files/
 RUN chmod -R 777 /var/app-data/
 
-#COPY docker/uwsgi-celery.ini /etc/uwsgi/finmars-vassals/finmars-celery.ini
-#COPY docker/uwsgi-celerybeat.ini /etc/uwsgi/   finmars-vassals/finmars-celerybeat.ini
-
 COPY docker/celeryd /etc/init.d/celeryd
 COPY docker/celeryd-config /etc/default/celeryd
 
