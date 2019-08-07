@@ -6,6 +6,14 @@
 
 echo "Finmars"
 
+echo "Create celery log file /var/log/uwsgi/app/finmars-celery.log"
+
+touch /var/log/uwsgi/app/finmars-celery.log
+
+echo "set chmod 777 /var/log/uwsgi/app/finmars-celery.log"
+
+chmod 777 /var/log/uwsgi/app/finmars-celery.log
+
 echo "Migrating"
 
 /var/app-venv/bin/python /var/app/manage.py migrate
@@ -33,14 +41,6 @@ echo "Start celerybeat"
 export DJANGO_SETTINGS_MODULE=poms_app.settings
 
 /etc/init.d/celerybeat start
-
-echo "Create celery log file /var/log/uwsgi/app/finmars-celery.log"
-
-touch /var/log/uwsgi/app/finmars-celery.log
-
-echo "Chmod 777 /var/log/uwsgi/app/finmars-celery.log"
-
-chmod 777 /var/log/uwsgi/app/finmars-celery.log
 
 echo "Run uwsgi"
 
