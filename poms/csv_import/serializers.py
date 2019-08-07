@@ -7,8 +7,37 @@ from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.users.fields import MasterUserField
 from .models import CsvField, EntityField, CsvDataImport, CsvImportScheme
-from .fields import CsvImportContentTypeField
+from .fields import CsvImportContentTypeField, CsvImportSchemeField
 
+
+class CsvDataFileImport:
+    def __init__(self, task_id=None, task_status=None, master_user=None, status=None,
+                 scheme=None, file=None,  delimiter=None, mode=None,
+                 error_handler=None, missing_data_handler=None, classifier_handler=None,
+                 total_rows=None, processed_rows=None, stats=None, imported=None):
+
+        self.task_id = task_id
+        self.task_status = task_status
+
+        self.file = file
+        self.master_user = master_user
+        self.scheme = scheme
+        self.status = status
+        self.mode = mode
+        self.delimiter = delimiter
+        self.error_handler = error_handler
+        self.missing_data_handler = missing_data_handler
+        self.classifier_handler = classifier_handler
+
+        self.stats = stats
+
+        self.imported = imported
+
+        self.total_rows = total_rows
+        self.processed_rows = processed_rows
+
+    def __str__(self):
+        return '%s:%s' % (getattr(self.master_user, 'id', None), getattr(self.scheme, 'id', None))
 
 class CsvFieldSerializer(serializers.ModelSerializer):
     name_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
@@ -146,10 +175,53 @@ class CsvImportSchemeSerializer(serializers.ModelSerializer):
         return scheme
 
 
-class CsvDataImportSerializer(serializers.ModelSerializer):
-    file = serializers.FileField()
+class CsvDataImportSerializer(serializers.Serializer):
 
-    class Meta:
-        model = CsvDataImport
+    task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    task_status = serializers.ReadOnlyField()
 
-        fields = ('file', 'scheme', 'error_handler', 'mode', 'delimiter', 'missing_data_handler', 'classifier_handler')
+    file = serializers.FileField(required=False, allow_null=True)
+
+    master_user = MasterUserField()
+
+    scheme = CsvImportSchemeField(required=False)
+
+    delimiter = serializers.CharField(max_length=2, required=False, initial=',', default=',')
+
+    error_handler = serializers.ChoiceField(
+        choices=[('break', 'Break on first error'), ('continue', 'Try continue')],
+        required=False, initial='continue', default='continue'
+    )
+
+    missing_data_handler = serializers.ChoiceField(
+        choices=[('throw_error', 'Treat as Error'), ('set_defaults', 'Replace with Default Value')],
+        required=False, initial='throw_error', default='throw_error'
+    )
+
+    classifier_handler = serializers.ChoiceField(
+        choices=[('skip', 'Skip (assign Null)'), ('append', 'Append Category (assign the appended category)')],
+        required=False, initial='skip', default='skip'
+    )
+
+
+    stats = serializers.ReadOnlyField()
+    imported = serializers.ReadOnlyField()
+
+    processed_rows = serializers.ReadOnlyField()
+    total_rows = serializers.ReadOnlyField()
+
+    scheme_object = CsvImportSchemeSerializer(source='scheme', read_only=True)
+
+    def create(self, validated_data):
+
+        print('validated_data %s' % validated_data )
+
+        if validated_data.get('task_id', None):
+            validated_data.pop('file', None)
+
+        return  CsvDataFileImport(**validated_data)
+
+    # class Meta:
+    #     model = CsvDataImport
+
+        # fields = ('file', 'scheme', 'error_handler', 'mode', 'delimiter', 'missing_data_handler', 'classifier_handler', 'task_id', 'task_status', 'stats', 'imported', 'total_rows', 'processed_rows')

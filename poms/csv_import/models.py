@@ -18,7 +18,7 @@ class CsvImportScheme(models.Model):
         )
 
     def __str__(self):
-        return self.name
+        return self.scheme_name
 
 
 class CsvField(models.Model):
@@ -80,14 +80,14 @@ CLASSIFIER_HANDLER = [
 class CsvDataImport(models.Model):
     master_user = models.ForeignKey(MasterUser, blank=True, null=True)
     scheme = models.ForeignKey(CsvImportScheme)
-    status = models.CharField(max_length=255)
+    task_id = models.CharField(max_length=255, blank=True, null=True)
+    task_status = models.CharField(max_length=255, blank=True, null=True)
+
     mode = models.CharField(max_length=255, choices=MODE_CHOICES, default='skip')
     delimiter = models.CharField(max_length=255, choices=DELIMITER_CHOICES, default=',')
     created_at = models.DateTimeField(auto_now_add=True)
     error_handler = models.CharField(max_length=255, choices=ERROR_HANDLER_CHOICES, default='break')
     missing_data_handler = models.CharField(max_length=255, choices=MISSING_DATA_CHOICES, default='throw_error')
     classifier_handler = models.CharField(max_length=255, choices=CLASSIFIER_HANDLER, default='skip')
-    filename = models.CharField(max_length=255)
-    filesize = models.CharField(max_length=255)
 
     file = ''
