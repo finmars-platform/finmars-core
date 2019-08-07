@@ -34,10 +34,6 @@ export DJANGO_SETTINGS_MODULE=poms_app.settings
 
 /etc/init.d/celerybeat start
 
-#echo "Standalone"
-#
-#/var/app-venv/bin/python /var/app/manage.py initstandalone
-
 echo "Run uwsgi"
 
 /usr/bin/uwsgi /etc/uwsgi/apps-enabled/finmars.ini

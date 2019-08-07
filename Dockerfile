@@ -41,6 +41,9 @@ COPY docker/celerybeat-config /etc/default/celerybeat
 COPY docker/uwsgi-www.ini /etc/uwsgi/finmars-vassals/finmars-www.ini
 COPY docker/uwsgi-emperor.ini /etc/uwsgi/apps-enabled/finmars.ini
 
+RUN mkdir /var/log/finmars
+RUN chmod 755 /var/log/finmars
+
 RUN chmod +x /var/app/docker/finmars-run.sh
 RUN chmod +x /etc/init.d/celeryd
 RUN chmod +x /etc/init.d/celerybeat
