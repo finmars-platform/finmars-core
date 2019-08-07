@@ -31,6 +31,7 @@ RUN mkdir -p /var/app-data/media/
 RUN mkdir -p /var/app-data/import/configs/
 RUN mkdir -p /var/app-data/import/files/
 RUN chmod -R 777 /var/app-data/
+RUN chmod -R 777 /var/log/finmars
 
 COPY docker/celeryd /etc/init.d/celeryd
 COPY docker/celeryd-config /etc/default/celeryd
@@ -40,9 +41,6 @@ COPY docker/celerybeat-config /etc/default/celerybeat
 
 COPY docker/uwsgi-www.ini /etc/uwsgi/finmars-vassals/finmars-www.ini
 COPY docker/uwsgi-emperor.ini /etc/uwsgi/apps-enabled/finmars.ini
-
-RUN mkdir /var/log/finmars
-RUN chmod 755 /var/log/finmars
 
 RUN chmod +x /var/app/docker/finmars-run.sh
 RUN chmod +x /etc/init.d/celeryd
