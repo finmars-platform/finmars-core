@@ -25,13 +25,11 @@ ADD poms_app/ /var/app/poms_app/
 ADD manage.py /var/app/manage.py
 ADD requirements.txt /var/app/requirements.txt
 
-RUN mkdir -p /var/log/finmars/
 RUN mkdir -p /var/app-data/
 RUN mkdir -p /var/app-data/media/
 RUN mkdir -p /var/app-data/import/configs/
 RUN mkdir -p /var/app-data/import/files/
 RUN chmod -R 777 /var/app-data/
-RUN chmod -R 777 /var/log/finmars
 
 COPY docker/celeryd /etc/init.d/celeryd
 COPY docker/celeryd-config /etc/default/celeryd

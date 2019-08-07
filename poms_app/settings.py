@@ -448,7 +448,7 @@ LOGGING = {
         'celery': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': '/var/log/finmars/celery.log',
+            'filename': '/var/log/uwsgi/app/celery.log',
             'formatter': 'verbose',
             'maxBytes': 1024 * 1024 * 100,  # 100 mb
         },
