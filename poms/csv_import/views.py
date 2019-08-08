@@ -76,6 +76,8 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
     def create(self, request, *args, **kwargs):
 
+        print('TASK: data_csv_file_import')
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
@@ -142,6 +144,8 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
 
     def create(self, request, *args, **kwargs):
 
+        print('TASK: data_csv_file_import_validate')
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
@@ -177,6 +181,8 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
 
             print('TASK RESULT %s' % res.result)
             print('TASK STATUS %s' % res.status)
+
+            print('instance %s ' % instance)
 
             instance.task_id = task_id
             instance.task_status = res.status

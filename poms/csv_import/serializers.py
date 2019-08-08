@@ -37,7 +37,7 @@ class CsvDataFileImport:
         self.processed_rows = processed_rows
 
     def __str__(self):
-        return '%s:%s' % (getattr(self.master_user, 'id', None), getattr(self.scheme, 'id', None))
+        return '%s:%s' % (getattr(self.master_user, 'name', None), getattr(self.scheme, 'scheme_name', None))
 
 class CsvFieldSerializer(serializers.ModelSerializer):
     name_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
@@ -200,6 +200,11 @@ class CsvDataImportSerializer(serializers.Serializer):
 
     classifier_handler = serializers.ChoiceField(
         choices=[('skip', 'Skip (assign Null)'), ('append', 'Append Category (assign the appended category)')],
+        required=False, initial='skip', default='skip'
+    )
+
+    mode = serializers.ChoiceField(
+        choices=[('skip', 'Skip if exists'), ('overwrite', 'Overwrite')],
         required=False, initial='skip', default='skip'
     )
 

@@ -196,6 +196,9 @@ def process_csv_file(master_user,
             if scheme.filter_expr:
                 executed_filter_expression = safe_eval(scheme.filter_expr, names=csv_row_dict_raw, context={})
 
+            _l.info('csv_row_dict_raw %s' % csv_row_dict_raw)
+            _l.info('executed_filter_expression %s' % executed_filter_expression)
+
             if executed_filter_expression:
 
                 error_row['inputs'] = csv_row_dict_raw
@@ -207,6 +210,8 @@ def process_csv_file(master_user,
                 conversion_errors = []
 
                 csv_row_dict = get_row_data_converted(row, csv_fields, csv_row_dict_raw, {}, conversion_errors)
+
+                print('csv_row_dict %s' % csv_row_dict)
 
                 for key, value in csv_row_dict.items():
                     error_row['error_data']['columns']['converted_imported_columns'].append(
@@ -227,7 +232,7 @@ def process_csv_file(master_user,
                         return results, errors
                     else:
                         error_row['error_reaction'] = 'Continue import'
-                        # errors.append(error_row)
+
 
                 mapping_map = {
                     'counterparties': CounterpartyMapping,
@@ -245,6 +250,7 @@ def process_csv_file(master_user,
                     'pricing_currency': CurrencyMapping,
                     'accrued_currency': CurrencyMapping
                 }
+
 
                 relation_map = {
                     'counterparties': Counterparty,
@@ -275,6 +281,8 @@ def process_csv_file(master_user,
 
                     key = entity_field.system_property_key
 
+                    _l.info('key %s' % key)
+
                     if entity_field.expression != '':
 
                         error_row['error_data']['columns']['data_matching'].append(entity_field.name)
@@ -283,6 +291,9 @@ def process_csv_file(master_user,
 
                             executed_expression = None
 
+                            _l.info('entity_field.expression %s' % entity_field.expression)
+                            _l.info('csv_row_dict %s' % csv_row_dict)
+
                             try:
                                 # context=self.report.context
                                 executed_expression = safe_eval(entity_field.expression, names=csv_row_dict,
@@ -290,7 +301,90 @@ def process_csv_file(master_user,
 
                                 executed_expressions.append(executed_expression)
 
+                                print('executed_expression %s ' % executed_expression)
+
+                                if key in mapping_map:
+
+                                    try:
+
+                                        instance[key] = mapping_map[key].objects.get(master_user=master_user,
+                                                                                     value=executed_expression).content_object
+
+                                    except (mapping_map[key].DoesNotExist, KeyError):
+
+                                        try:
+
+                                            _l.info('Lookup by user code %s' % executed_expression)
+
+                                            if key == 'price_download_scheme':
+                                                instance[key] = relation_map[key].objects.get(master_user=master_user,
+                                                                                              scheme_name=executed_expression)
+                                            elif key == 'daily_pricing_model' or key == 'payment_size_detail':
+                                                instance[key] = relation_map[key].objects.get(
+                                                    system_code=executed_expression)
+                                            else:
+                                                instance[key] = relation_map[key].objects.get(master_user=master_user,
+                                                                                              user_code=executed_expression)
+
+                                        except (relation_map[key].DoesNotExist, KeyError):
+
+                                            if missing_data_handler == 'set_defaults':
+
+                                                ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+
+                                                if hasattr(ecosystem_default, key):
+                                                    instance[key] = getattr(ecosystem_default, key)
+                                                else:
+                                                    if key == 'price_download_scheme':
+                                                        instance[key] = relation_map[key].objects.get(
+                                                            master_user=master_user,
+                                                            scheme_name='-')
+                                                    elif key == 'daily_pricing_model' or key == 'payment_size_detail':
+                                                        instance[key] = relation_map[key].objects.get(system_code='-')
+                                                    else:
+                                                        instance[key] = relation_map[key].objects.get(
+                                                            master_user=master_user,
+                                                            user_code='-')
+
+
+                                            else:
+
+                                                inputs_error.append(
+                                                    {"field": entity_field,
+                                                     "reason": "Relation does not exists"}
+                                                )
+
+                                                # inputs_error.append(entity_field)
+
+                                                _l.debug('Mapping for key does not exist', key)
+                                                _l.debug('Expression', executed_expression)
+
+
+                                else:
+
+                                    instance[key] = executed_expression
+
+                                    print('date instance[key] %s' % instance[key])
+
+                                    # if key == 'date':
+                                    #
+                                    #     try:
+                                    #
+                                    #         instance[key] = formula._parse_date(instance[key])
+                                    #
+                                    #         print('date instance[key] %s' % instance[key])
+                                    #
+                                    #     except (ExpressionEvalError, TypeError):
+                                    #
+                                    #         inputs_error.append(
+                                    #             {"field": entity_field,
+                                    #              "reason": "Invalid Expression"}
+                                    #         )
+
+
                             except (ExpressionEvalError, TypeError, Exception, KeyError):
+
+                                _l.info('ExpressionEvalError %s' % ExpressionEvalError)
 
                                 inputs_error.append(
                                     {"field": entity_field,
@@ -300,84 +394,6 @@ def process_csv_file(master_user,
                                 executed_expressions.append(ugettext('Invalid expression'))
 
                             # print('executed_expression %s' % executed_expression)
-
-                            if key in mapping_map:
-
-                                try:
-
-                                    instance[key] = mapping_map[key].objects.get(master_user=master_user,
-                                                                                 value=executed_expression).content_object
-
-                                except (mapping_map[key].DoesNotExist, KeyError):
-
-                                    try:
-
-                                        # print('Lookup by user code %s' % executed_expression)
-
-                                        if key == 'price_download_scheme':
-                                            instance[key] = relation_map[key].objects.get(master_user=master_user,
-                                                                                          scheme_name=executed_expression)
-                                        elif key == 'daily_pricing_model' or key == 'payment_size_detail':
-                                            instance[key] = relation_map[key].objects.get(
-                                                system_code=executed_expression)
-                                        else:
-                                            instance[key] = relation_map[key].objects.get(master_user=master_user,
-                                                                                          user_code=executed_expression)
-
-                                    except (relation_map[key].DoesNotExist, KeyError):
-
-                                        if missing_data_handler == 'set_defaults':
-
-                                            ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
-
-                                            if hasattr(ecosystem_default, key):
-                                                instance[key] = getattr(ecosystem_default, key)
-                                            else:
-                                                if key == 'price_download_scheme':
-                                                    instance[key] = relation_map[key].objects.get(
-                                                        master_user=master_user,
-                                                        scheme_name='-')
-                                                elif key == 'daily_pricing_model' or key == 'payment_size_detail':
-                                                    instance[key] = relation_map[key].objects.get(system_code='-')
-                                                else:
-                                                    instance[key] = relation_map[key].objects.get(
-                                                        master_user=master_user,
-                                                        user_code='-')
-
-
-                                        else:
-
-                                            inputs_error.append(
-                                                {"field": entity_field,
-                                                 "reason": "Relation does not exists"}
-                                            )
-
-                                            # inputs_error.append(entity_field)
-
-                                            _l.debug('Mapping for key does not exist', key)
-                                            _l.debug('Expression', executed_expression)
-
-
-                            else:
-
-                                instance[key] = executed_expression
-
-                                if key == 'date':
-
-                                    try:
-
-                                        instance[key] = formula._parse_date(instance[key])
-
-                                    except (ExpressionEvalError, TypeError):
-
-                                        inputs_error.append(
-                                            {"field": entity_field,
-                                             "reason": "Invalid Expression"}
-                                        )
-
-                                        # inputs_error.append(entity_field)
-
-                            # _l.debug('Can not evaluate system attribute % expression ', entity_field.expression)
 
                         if get_field_type(entity_field) == 'dynamic_attribute':
 
@@ -496,6 +512,8 @@ def process_csv_file(master_user,
         row_index = row_index + 1
 
         task_instance.processed_rows = row_index
+
+        _l.info('task_instance.processed_rows: %s', task_instance.processed_rows)
 
         update_state(task_id=task_instance.task_id, state=Task.STATUS_PENDING,
                      meta={'processed_rows': task_instance.processed_rows,
@@ -650,6 +668,8 @@ class ValidateHandler:
 
     def process(self, instance, update_state):
 
+        _l.info('ValidateHandler.process: initialized')
+
         scheme_id = instance.scheme.id
         error_handler = instance.error_handler
         missing_data_handler = instance.missing_data_handler
@@ -659,6 +679,8 @@ class ValidateHandler:
         master_user = instance.master_user
 
         scheme = CsvImportScheme.objects.get(pk=scheme_id)
+
+        _l.info('ValidateHandler.mode %s' % mode)
 
         if not instance.file.name.endswith('.csv'):
             raise ValidationError('File is not csv format')
@@ -693,6 +715,8 @@ class ValidateHandler:
 
         classifier_handler_skip = ' skip'
 
+        _l.info('ValidateHandler.process_csv_file: initialized')
+
         results, process_errors = process_csv_file(master_user,
                                                    scheme,
                                                    rows,
@@ -702,6 +726,9 @@ class ValidateHandler:
                                                    context,
                                                    instance,
                                                    update_state)
+
+        _l.info('ValidateHandler.process_csv_file: finished')
+        _l.info('ValidateHandler.process_csv_file process_errors %s: ' % len(process_errors))
 
         instance.imported = len(results)
         instance.stats = process_errors
@@ -713,10 +740,16 @@ class ValidateHandler:
             if item["level"] == 'error':
                 has_errors = True
 
+        _l.info('ValidateHandler.has_errors %s' % has_errors)
+
         if error_handler == 'break' and has_errors:
             return instance
 
+        _l.info('ValidateHandler.full_clean_results: initialized')
+
         process_errors = self.full_clean_results(scheme, error_handler, mode, results, process_errors)
+
+        _l.info('ValidateHandler.full_clean_results: finished')
 
         instance.imported = len(results)
         instance.stats = process_errors
@@ -813,6 +846,8 @@ class ImportHandler:
 
             instance = self.create_simple_instance(scheme, result)
 
+            _l.info('ImportHandler save_instance %s ' % instance)
+
             self.fill_with_relation_attributes(instance, result)
             if scheme.content_type.model != 'pricehistory' and scheme.content_type.model != 'currencyhistory':
                 self.fill_with_dynamic_attributes(instance, result['attributes'])
@@ -835,6 +870,8 @@ class ImportHandler:
     def overwrite_instance(self, scheme, result, item, process_errors, error_handler, index):
 
         # print('Overwrite item %s' % item)
+
+        _l.info('ImportHandler overwrite_instance %s ' % item)
 
         try:
 
@@ -870,23 +907,41 @@ class ImportHandler:
 
     def import_results(self, scheme, error_handler, mode, results, process_errors):
 
+        _l.info('ImportHandler results len %s' % len(results))
+        _l.info('ImportHandler results mode %s' % mode)
+
+        index = 0
+
         for index, result in enumerate(results):
+
+            index = index + 1
 
             item = get_item(scheme, result)
 
+            _l.info('ImportHandler item %s' % item)
+
             if mode == 'overwrite' and item:
+
+                _l.info('Overwrite instance')
 
                 self.overwrite_instance(scheme, result, item, process_errors, error_handler, index)
 
             elif mode == 'overwrite' and not item:
 
+                _l.info('Create instance')
+
                 self.save_instance(scheme, result, process_errors, error_handler, index)
 
             elif mode == 'skip' and not item:
 
+                _l.info('Create instance')
+
                 self.save_instance(scheme, result, process_errors, error_handler, index)
 
             elif mode == 'skip' and item:
+
+                _l.info('Skip instance %s')
+
                 process_errors[index]['level'] = 'error'
                 process_errors[index]['error_message'] = process_errors[index]['error_message'] + process_errors[index][
                     'error_message']
@@ -894,9 +949,14 @@ class ImportHandler:
                 if error_handler == 'break':
                     return process_errors
 
+            _l.info('ImportHandler row # %s imported ' % index)
+
+
         return process_errors
 
     def process(self, instance, update_state):
+
+        _l.info('ImportHandler.process: initialized')
 
         scheme_id = instance.scheme.id
         error_handler = instance.error_handler
@@ -905,6 +965,8 @@ class ImportHandler:
         delimiter = instance.delimiter
         mode = instance.mode
         master_user = instance.master_user
+
+        _l.info('ImportHandler.mode %s' % mode)
 
         scheme = CsvImportScheme.objects.get(pk=scheme_id)
 
@@ -932,9 +994,14 @@ class ImportHandler:
 
         context = {}
 
+        _l.info('ImportHandler.process_csv_file: initialized')
+
         results, process_errors = process_csv_file(master_user, scheme, rows, error_handler, missing_data_handler,
                                                    classifier_handler,
                                                    context, instance, update_state)
+
+        _l.info('ImportHandler.process_csv_file: finished')
+        _l.info('ImportHandler.process_csv_file process_errors %s: ' % len(process_errors))
 
         instance.imported = len(results)
         instance.stats = process_errors
@@ -946,10 +1013,14 @@ class ImportHandler:
             if item["level"] == 'error':
                 has_errors = True
 
+        _l.info('ImportHandler.has_errors %s' % has_errors)
+
         if error_handler == 'break' and has_errors:
             return instance
 
+        _l.info('ImportHandler.import_results: initialized')
         process_errors = self.import_results(scheme, error_handler, mode, results, process_errors)
+        _l.info('ImportHandler.import_results: finished')
 
         instance.stats = process_errors
 
