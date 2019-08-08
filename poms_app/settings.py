@@ -28,6 +28,15 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
 
+
+class BackendRole:
+    ALL = 'ALL'
+    SIMPLE = 'SIMPLE'
+    REPORTER = 'REPORTER'
+    FILE_IMPORTER = 'FILE_IMPORTER'
+    DATA_PROVIDER = 'DATA_PROVIDER'
+
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'jrixf-%65l5&#@hbmq()sa-pzy@e)=zpdr6g0cg8a!i_&w-c!)'
 
@@ -54,6 +63,14 @@ if os.environ.get('LOCAL') == 'False':
 ADMIN = True
 
 ALLOWED_HOSTS = ['*']
+
+
+BACKEND_ROLES = ['ALL']
+
+if os.environ.get('BACKEND_ROLES'):
+    BACKEND_ROLES = os.environ.get('BACKEND_ROLES').split(', ')
+
+print('BACKEND_ROLES %s' % BACKEND_ROLES)
 
 # Application definition
 
@@ -624,13 +641,8 @@ AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', None)
 
 # CELERY ------------------------------------------------
 
-print(REDIS_HOST)
-
 CELERYD_LOG_LEVEL = "DEBUG"
 CELERYD_HIJACK_ROOT_LOGGER = False
-
-print('CELERYD_LOG_LEVEL %s' % CELERYD_LOG_LEVEL)
-print('CELERYD_HIJACK_ROOT_LOGGER %s' % CELERYD_HIJACK_ROOT_LOGGER)
 
 CELERY_BROKER_URL = 'redis://%s/1' % REDIS_HOST
 # CELERY_RESULT_BACKEND = 'redis://%s/1' % REDIS_HOST
@@ -667,20 +679,25 @@ except (ValueError, TypeError):
 # CELERY_SEND_EVENTS = True
 # CELERY_TASK_SEND_SENT_EVENT = True
 
-CELERY_BEAT_SCHEDULE = {
-    'integrations.download_pricing_auto_scheduler': {
-        'task': 'integrations.download_pricing_auto_scheduler',
-        'schedule': crontab(minute='0,10,20,30,40,50'),
-    },
-    'instruments.generate_events_do_not_inform_apply_default': {
-        'task': 'instruments.generate_events_do_not_inform_apply_default',
-        'schedule': crontab(minute=0, hour=0),
-    },
-    # 'instruments.process_events': {
-    #     'task': 'instruments.process_events',
-    #     'schedule': crontab(minute='2,32'),
-    # },
-}
+
+if BackendRole.ALL in BACKEND_ROLES or BackendRole.DATA_PROVIDER in BACKEND_ROLES:
+
+    print("Role: DATA_PROVIDER. CELERY BEAT SCHEDULE INITIALIZED")
+
+    CELERY_BEAT_SCHEDULE = {
+        'integrations.download_pricing_auto_scheduler': {
+            'task': 'integrations.download_pricing_auto_scheduler',
+            'schedule': crontab(minute='0,10,20,30,40,50'),
+        },
+        'instruments.generate_events_do_not_inform_apply_default': {
+            'task': 'instruments.generate_events_do_not_inform_apply_default',
+            'schedule': crontab(minute=0, hour=0),
+        },
+        # 'instruments.process_events': {
+        #     'task': 'instruments.process_events',
+        #     'schedule': crontab(minute='2,32'),
+        # },
+    }
 
 # INTEGRATIONS ------------------------------------------------
 

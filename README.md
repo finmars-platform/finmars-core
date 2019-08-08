@@ -59,6 +59,22 @@ How to compile django app
    `REDIS_HOST=localhost RDS_DB_NAME=finmars_dev RDS_USERNAME=postgres RDS_PASSWORD=postgres RDS_HOSTNAME=localhost RDS_PORT=5434 dist/backend/backend manage.py runserver 8080`
    
 
+## Backend Settings
+
+We can setup backend in several ways passing ENV VARIABLE `BACKEND_ROLES`:
+Possible values of `BACKEND_ROLES`:
+
+* `ALL` - Default role, if nothing is passed. Backend instance do all services.
+* `SIMPLE` - Simple backend instance - Auth / CRUD for all entities / Configuration Export/Import
+* `REPORTER` - All Reports 
+* `FILE_IMPORTER` - Simple Entity Import / Complex Transaction  File imports
+* `DATA_PROVIDER` - Providers (Bloomberg) interaction 
+
+You can pass several roles to Backend instance. 
+Example : `REPORTER, FILE_IMPORTER, DATA_PROVIDER`
+
+P.S. You also need to specify your nginx config to route correctly. 
+
 
 `docker-compose.yml` - Сейчас нигде не используется
 

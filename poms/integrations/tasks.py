@@ -466,7 +466,7 @@ def download_pricing_async(self, task_id):
         elif i.daily_pricing_model_id in [DailyPricingModel.DEFAULT]:
             instruments_by_default.append(i)
 
-    _l.info('instruments_by_scheme: %s', instruments_by_scheme)
+        _l.info('instruments_by_scheme: %s', instruments_by_scheme)
     _l.info('instruments_by_formula: %s', instruments_by_formula)
     _l.info('instruments_by_default: %s', instruments_by_default)
 
