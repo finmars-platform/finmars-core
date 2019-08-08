@@ -218,17 +218,17 @@ class BloombergDataProvider(AbstractProvider):
         return ret
 
     def _invoke_sync(self, name, request_func, request_kwargs, response_func):
-        _l.debug('|> %s', name)
+        _l.info('|> %s', name)
         response_id = request_func(**request_kwargs)
-        _l.debug('|  response_id=%s', response_id)
+        _l.info('|  response_id=%s', response_id)
         for attempt in range(settings.BLOOMBERG_MAX_RETRIES):
             sleep(settings.BLOOMBERG_RETRY_DELAY)
-            _l.debug('|  attempt=%s', attempt)
+            _l.info('|  attempt=%s', attempt)
             result = response_func(response_id)
             if result is not None:
-                _l.debug('|<')
+                _l.info('|<')
                 return result
-        _l.debug('|< failed')
+        _l.info('|< failed')
         raise BloombergException("%s('%s') failed" % (name, response_id,))
 
     def get_max_retries(self):
@@ -263,7 +263,7 @@ class BloombergDataProvider(AbstractProvider):
         return False
 
     def download_instrument(self, options):
-        _l.debug('download_instrument: %s', options)
+        _l.info('download_instrument: %s', options)
 
         response_id = options.get('response_id', None)
         if response_id is None:
@@ -295,7 +295,7 @@ class BloombergDataProvider(AbstractProvider):
             return result, result is not None
 
     def download_instrument_pricing(self, options):
-        _l.debug('download_instrument_pricing: %s', options)
+        _l.info('download_instrument_pricing: %s', options)
 
         is_yesterday = options['is_yesterday']
         response_id = options.get('response_id', None)
@@ -325,7 +325,7 @@ class BloombergDataProvider(AbstractProvider):
             return result, result is not None
 
     def download_currency_pricing(self, options):
-        _l.debug('download_currency_pricing: %s', options)
+        _l.info('download_currency_pricing: %s', options)
 
         is_yesterday = options['is_yesterday']
         response_id = options.get('response_id', None)
@@ -365,11 +365,11 @@ class BloombergDataProvider(AbstractProvider):
         @return: response id, used by get_instrument_get_response method
         @rtype: str
         """
-        _l.debug('> get_instrument_send_request: instrument="%s", fields=%s',
+        _l.info('> get_instrument_send_request: instrument="%s", fields=%s',
                  instrument, fields)
 
         if not instrument or not fields:
-            _l.debug('< response_id=%s', None)
+            _l.info('< response_id=%s', None)
             return None
 
         fields_data = self.soap_client.factory.create('Fields')
@@ -383,17 +383,17 @@ class BloombergDataProvider(AbstractProvider):
         }
         instruments = [{"instrument": self._bbg_instr(instrument)}]
 
-        _l.debug('request: instruments=%s, fields=%s, headers=%s', instruments, fields, headers)
+        _l.info('request: instruments=%s, fields=%s, headers=%s', instruments, fields, headers)
         response = self.soap_client.service.submitGetDataRequest(
             headers=headers,
             fields=fields_data,
             instruments=instruments,
         )
-        _l.debug('response=%s', response)
+        _l.info('response=%s', response)
         self._response_is_valid(response)
 
         response_id = str(response.responseId)
-        _l.debug('< response_id=%s', response_id)
+        _l.info('< response_id=%s', response_id)
 
         return response_id
 
@@ -406,14 +406,14 @@ class BloombergDataProvider(AbstractProvider):
         @rtype: dict
         """
 
-        _l.debug('> get_instrument_get_response: response_id=%s', response_id)
+        _l.info('> get_instrument_get_response: response_id=%s', response_id)
 
         if response_id is None:
-            _l.debug('< result=%s', None)
+            _l.info('< result=%s', None)
             return None
 
         response = self.soap_client.service.retrieveGetDataResponse(responseId=response_id)
-        _l.debug('response=%s', response)
+        _l.info('response=%s', response)
 
         self._response_is_valid(response, pending=True)
         if self._data_is_ready(response):
@@ -430,7 +430,7 @@ class BloombergDataProvider(AbstractProvider):
                 else:
                     value = response.instrumentDatas[0][0].data[i]._value
                 result[field] = value
-            _l.debug('< result=%s', result)
+            _l.info('< result=%s', result)
             return result
         return None
 
@@ -438,11 +438,11 @@ class BloombergDataProvider(AbstractProvider):
         # response_id = self.get_instrument_send_request(instrument, fields)
         # for attempt in six.moves.range(1000):
         #     sleep(0.5)
-        #     _l.debug('get_instrument_sync: response_id=%s, attempt=%s', response_id, attempt)
+        #     _l.info('get_instrument_sync: response_id=%s, attempt=%s', response_id, attempt)
         #     result = self.get_instrument_get_response(response_id)
         #     if result:
         #         return result
-        # _l.debug('get_instrument_sync: failed')
+        # _l.info('get_instrument_sync: failed')
         # raise BloombergDataProviderException("get_instrument_sync('%s') failed" % response_id)
         return self._invoke_sync(name='get_instrument_sync',
                                  request_func=self.get_instrument_send_request,
@@ -455,14 +455,14 @@ class BloombergDataProvider(AbstractProvider):
         @return: bloomberg mnemonic test data.
         @rtype: dict
         """
-        _l.debug('get_fields >')
+        _l.info('get_fields >')
 
         response = self.soap_client.service.getFields(
             criteria={
                 "mnemonic": "NAME"
             }
         )
-        _l.debug('response=%s', response)
+        _l.info('response=%s', response)
         self._response_is_valid(response)
         return response
 
@@ -477,12 +477,12 @@ class BloombergDataProvider(AbstractProvider):
         @return: response_id: used to get data in get_pricing_latest_get_response
         @rtype: str
         """
-        _l.debug('> get_pricing_latest_send_request: instrument=%s, fields=%s', instruments, fields)
+        _l.info('> get_pricing_latest_send_request: instrument=%s, fields=%s', instruments, fields)
 
         # fields = ['PX_YEST_BID', 'PX_YEST_ASK', 'PX_YEST_CLOSE', 'PX_CLOSE_1D', 'ACCRUED_FACTOR', 'CPN', 'SECURITY_TYP']
 
         if not instruments or not fields:
-            _l.debug('< response_id=%s', None)
+            _l.info('< response_id=%s', None)
             return None
 
         fields_data = self.soap_client.factory.create('Fields')
@@ -498,17 +498,17 @@ class BloombergDataProvider(AbstractProvider):
             "historical": True,
         }
 
-        _l.debug('request: instruments=%s, fields=%s, headers=%s', instruments_data, fields, headers)
+        _l.info('request: instruments=%s, fields=%s, headers=%s', instruments_data, fields, headers)
         response = self.soap_client.service.submitGetDataRequest(
             headers=headers,
             fields=fields_data,
             instruments=instruments_data
         )
-        _l.debug('response=%s', response)
+        _l.info('response=%s', response)
         self._response_is_valid(response)
 
         response_id = str(response.responseId)
-        _l.debug('< response_id=%s', response_id)
+        _l.info('< response_id=%s', response_id)
 
         return response_id
 
@@ -521,11 +521,11 @@ class BloombergDataProvider(AbstractProvider):
         @rtype: dict
         """
         if response_id is None:
-            _l.debug('< result=%s', None)
+            _l.info('< result=%s', None)
             return None
 
         response = self.soap_client.service.retrieveGetDataResponse(responseId=response_id)
-        _l.debug('> get_pricing_latest_get_response: response_id=%s, response=%s', response_id, response)
+        _l.info('> get_pricing_latest_get_response: response_id=%s, response=%s', response_id, response)
 
         self._response_is_valid(response, pending=True)
         if self._data_is_ready(response):
@@ -541,7 +541,7 @@ class BloombergDataProvider(AbstractProvider):
                     instrument_fields[field] = instrument.data[i]._value
                 result[instrument.instrument.id] = instrument_fields
 
-            _l.debug('< result=%s', result)
+            _l.info('< result=%s', result)
             return result
         return None
 
@@ -555,11 +555,11 @@ class BloombergDataProvider(AbstractProvider):
                                  response_func=self.get_pricing_latest_get_response)
 
     def get_pricing_history_send_request(self, instruments, fields, date_from, date_to):
-        _l.debug('> get_pricing_history_send_request: instrument=%s, fields=%s, date_from=%s, date_to=%s',
+        _l.info('> get_pricing_history_send_request: instrument=%s, fields=%s, date_from=%s, date_to=%s',
                  instruments, fields, date_from, date_to)
 
         if not instruments or not fields or not date_from or not date_to:
-            _l.debug('< response_id=%s', None)
+            _l.info('< response_id=%s', None)
             return None
 
         start = date_from.strftime("%Y-%m-%d")
@@ -585,27 +585,27 @@ class BloombergDataProvider(AbstractProvider):
         for code in instruments:
             instruments_data.instrument.append(self._bbg_instr(code))
 
-        _l.debug('request: instruments=%s, fields=%s, headers=%s', instruments_data, fields, headers)
+        _l.info('request: instruments=%s, fields=%s, headers=%s', instruments_data, fields, headers)
         response = self.soap_client.service.submitGetHistoryRequest(
             headers=headers,
             fields=fields_data,
             instruments=instruments_data
         )
-        _l.debug('response=%s', response)
+        _l.info('response=%s', response)
         self._response_is_valid(response)
 
         response_id = str(response.responseId)
-        _l.debug('< response_id=%s', response_id)
+        _l.info('< response_id=%s', response_id)
 
         return response_id
 
     def get_pricing_history_get_response(self, response_id):
         if response_id is None:
-            _l.debug('< result=%s', None)
+            _l.info('< result=%s', None)
             return None
 
         response = self.soap_client.service.retrieveGetHistoryResponse(responseId=response_id)
-        _l.debug('> get_pricing_history_get_response: response_id=%s, response=%s', response_id, response)
+        _l.info('> get_pricing_history_get_response: response_id=%s, response=%s', response_id, response)
 
         self._response_is_valid(response, pending=True)
         if self._data_is_ready(response):
@@ -613,7 +613,7 @@ class BloombergDataProvider(AbstractProvider):
             try:
                 fields = response.fields[0]
             except (AttributeError, KeyError, IndexError):
-                _l.debug('< result=%s', result)
+                _l.info('< result=%s', result)
                 return result
             for instrument in response.instrumentDatas[0]:
                 try:
@@ -634,7 +634,7 @@ class BloombergDataProvider(AbstractProvider):
                     result[instrument.instrument.id].append(instrument_fields)
                 else:
                     result[instrument.instrument.id] = [instrument_fields]
-            _l.debug('< result=%s', result)
+            _l.info('< result=%s', result)
             return result
         return None
 
@@ -912,17 +912,17 @@ class FakeBloombergDataProvider(BloombergDataProvider):
         return 'fake'
 
     def get_instrument_send_request(self, instrument, fields):
-        _l.debug('> get_instrument_send_request: instrument="%s", fields=%s', instrument, fields)
+        _l.info('> get_instrument_send_request: instrument="%s", fields=%s', instrument, fields)
 
         if settings.BLOOMBERG_SANDBOX_SEND_EMPTY:
-            _l.debug('< get_instrument_send_request: BLOOMBERG_SANDBOX_SEND_EMPTY')
+            _l.info('< get_instrument_send_request: BLOOMBERG_SANDBOX_SEND_EMPTY')
             return None
         if settings.BLOOMBERG_SANDBOX_SEND_FAIL:
-            _l.debug('< get_instrument_send_request: BLOOMBERG_SANDBOX_SEND_FAIL')
+            _l.info('< get_instrument_send_request: BLOOMBERG_SANDBOX_SEND_FAIL')
             raise BloombergException('BLOOMBERG_SANDBOX_SEND_FAIL')
 
         if not instrument or not fields:
-            _l.debug('< response_id=%s', None)
+            _l.info('< response_id=%s', None)
             return None
 
         response_id = self._new_response_id()
@@ -935,19 +935,19 @@ class FakeBloombergDataProvider(BloombergDataProvider):
             'response_id': response_id,
         }, timeout=30)
 
-        _l.debug('< response_id=%s', response_id)
+        _l.info('< response_id=%s', response_id)
 
         return response_id
 
     def get_instrument_get_response(self, response_id):
-        _l.debug('> get_instrument_get_response: response_id=%s', response_id)
+        _l.info('> get_instrument_get_response: response_id=%s', response_id)
 
         if settings.BLOOMBERG_SANDBOX_WAIT_FAIL:
-            _l.debug('< get_instrument_get_response: BLOOMBERG_SANDBOX_WAIT_FAIL')
+            _l.info('< get_instrument_get_response: BLOOMBERG_SANDBOX_WAIT_FAIL')
             raise BloombergException('BLOOMBERG_SANDBOX_WAIT_FAIL')
 
         if response_id is None:
-            _l.debug('< result=%s', None)
+            _l.info('< result=%s', None)
             return None
 
         key = self._make_key(response_id)
@@ -1048,22 +1048,22 @@ class FakeBloombergDataProvider(BloombergDataProvider):
         result = {}
         for field in req['fields']:
             result[field] = fake_data.get(field, None)
-        _l.debug('< result=%s', result)
+        _l.info('< result=%s', result)
         return result
 
     def get_pricing_latest_send_request(self, instruments, fields):
-        _l.debug('> get_pricing_latest_send_request: instruments=%s, fields=%s',
+        _l.info('> get_pricing_latest_send_request: instruments=%s, fields=%s',
                  instruments, fields)
 
         if settings.BLOOMBERG_SANDBOX_SEND_EMPTY:
-            _l.debug('< get_pricing_latest_send_request: BLOOMBERG_SANDBOX_SEND_EMPTY')
+            _l.info('< get_pricing_latest_send_request: BLOOMBERG_SANDBOX_SEND_EMPTY')
             return None
         if settings.BLOOMBERG_SANDBOX_SEND_FAIL:
-            _l.debug('< get_pricing_latest_send_request: BLOOMBERG_SANDBOX_SEND_FAIL')
+            _l.info('< get_pricing_latest_send_request: BLOOMBERG_SANDBOX_SEND_FAIL')
             raise BloombergException('BLOOMBERG_SANDBOX_SEND_FAIL')
 
         if not instruments or not fields:
-            _l.debug('< response_id=%s', None)
+            _l.info('< response_id=%s', None)
             return None
 
         response_id = self._new_response_id()
@@ -1079,19 +1079,19 @@ class FakeBloombergDataProvider(BloombergDataProvider):
             'response_id': response_id,
         }, timeout=30)
 
-        _l.debug('< response_id=%s', response_id)
+        _l.info('< response_id=%s', response_id)
 
         return response_id
 
     def get_pricing_latest_get_response(self, response_id):
-        _l.debug('> get_pricing_latest_get_response: response_id=%s', response_id)
+        _l.info('> get_pricing_latest_get_response: response_id=%s', response_id)
 
         if settings.BLOOMBERG_SANDBOX_WAIT_FAIL:
-            _l.debug('< get_pricing_latest_get_response: BLOOMBERG_SANDBOX_WAIT_FAIL')
+            _l.info('< get_pricing_latest_get_response: BLOOMBERG_SANDBOX_WAIT_FAIL')
             raise BloombergException('BLOOMBERG_SANDBOX_WAIT_FAIL')
 
         if response_id is None:
-            _l.debug('< result=%s', None)
+            _l.info('< result=%s', None)
             return None
 
         fake_data = {
@@ -1137,22 +1137,22 @@ class FakeBloombergDataProvider(BloombergDataProvider):
                     instrument_fields[field] = fake_data.get(field, None)
 
             result[instr_id] = instrument_fields
-        _l.debug('< result=%s', result)
+        _l.info('< result=%s', result)
         return result
 
     def get_pricing_history_send_request(self, instruments, fields, date_from, date_to):
-        _l.debug('> get_pricing_history_send_request: instrument=%s, date_from=%s, date_to=%s',
+        _l.info('> get_pricing_history_send_request: instrument=%s, date_from=%s, date_to=%s',
                  instruments, date_from, date_to)
 
         if settings.BLOOMBERG_SANDBOX_SEND_EMPTY:
-            _l.debug('< get_pricing_history_send_request: BLOOMBERG_SANDBOX_SEND_EMPTY')
+            _l.info('< get_pricing_history_send_request: BLOOMBERG_SANDBOX_SEND_EMPTY')
             return None
         if settings.BLOOMBERG_SANDBOX_SEND_FAIL:
-            _l.debug('< get_pricing_history_send_request: BLOOMBERG_SANDBOX_SEND_FAIL')
+            _l.info('< get_pricing_history_send_request: BLOOMBERG_SANDBOX_SEND_FAIL')
             raise BloombergException('BLOOMBERG_SANDBOX_SEND_FAIL')
 
         if not instruments or not fields or not date_from or not date_to:
-            _l.debug('< response_id=%s', None)
+            _l.info('< response_id=%s', None)
             return None
 
         response_id = self._new_response_id()
@@ -1170,19 +1170,19 @@ class FakeBloombergDataProvider(BloombergDataProvider):
             'response_id': response_id,
         }, timeout=30)
 
-        _l.debug('< response_id=%s', response_id)
+        _l.info('< response_id=%s', response_id)
 
         return response_id
 
     def get_pricing_history_get_response(self, response_id):
-        _l.debug('> get_pricing_history_get_response: response_id=%s', response_id)
+        _l.info('> get_pricing_history_get_response: response_id=%s', response_id)
 
         if settings.BLOOMBERG_SANDBOX_WAIT_FAIL:
-            _l.debug('< get_pricing_history_get_response: BLOOMBERG_SANDBOX_WAIT_FAIL')
+            _l.info('< get_pricing_history_get_response: BLOOMBERG_SANDBOX_WAIT_FAIL')
             raise BloombergException('BLOOMBERG_SANDBOX_WAIT_FAIL')
 
         if response_id is None:
-            _l.debug('< result=%s', None)
+            _l.info('< result=%s', None)
             return None
 
         fake_data = {
@@ -1226,5 +1226,5 @@ class FakeBloombergDataProvider(BloombergDataProvider):
                     result[instr_id] = [price_fields]
 
                 d += timedelta(days=1)
-        _l.debug('< result=%s', result)
+        _l.info('< result=%s', result)
         return result
