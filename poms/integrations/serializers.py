@@ -39,7 +39,7 @@ from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDo
     InstrumentClassifierMapping, AccountTypeMapping
 from poms.integrations.providers.base import get_provider, ProviderException
 from poms.integrations.storage import import_file_storage
-from poms.integrations.tasks import download_pricing, download_instrument
+from poms.integrations.tasks import download_pricing, download_instrument, test_certificate
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, GenericAttributeTypeSerializer, \
     GenericClassifierSerializer
@@ -1081,6 +1081,30 @@ class ImportInstrumentSerializer(serializers.Serializer):
         return {}
 
 
+class ImportTestCertificate(object):
+
+    def __init__(self, master_user=None, member=None,
+                 provider_id=None, task=None):
+
+        self.master_user = master_user
+        self.member = member
+        self.provider_id = provider_id
+
+        self.task = task
+        self._task_object = None
+
+    @property
+    def task_object(self):
+        if not self._task_object and self.task:
+            self._task_object = self.master_user.tasks.get(pk=self.task)
+        return self._task_object
+
+    @task_object.setter
+    def task_object(self, value):
+        self._task_object = value
+        self.task = getattr(value, 'pk', None)
+
+
 class ImportPricingEntry(object):
     def __init__(self, master_user=None, member=None,
                  instruments=None, currencies=None,
@@ -1242,6 +1266,45 @@ class ImportPricingSerializer(serializers.Serializer):
                 override_existed=instance.override_existed
             )
             instance.task_object = task
+        return instance
+
+
+class TestCertificateSerializer(serializers.Serializer):
+    master_user = MasterUserField()
+    member = HiddenMemberField()
+
+    task = serializers.IntegerField(required=False, allow_null=True)
+    task_object = TaskSerializer(read_only=True)
+
+    provider_id = serializers.ReadOnlyField()
+    errors = serializers.ReadOnlyField()
+    instrument_price_missed = serializers.ReadOnlyField()
+    currency_price_missed = serializers.ReadOnlyField()
+
+    def __init__(self, **kwargs):
+        super(TestCertificateSerializer, self).__init__(**kwargs)
+
+        from poms.instruments.serializers import PriceHistorySerializer
+        self.fields['instrument_price_missed'] = PriceHistorySerializer(read_only=True, many=True)
+
+        from poms.currencies.serializers import CurrencyHistorySerializer
+        self.fields['currency_price_missed'] = CurrencyHistorySerializer(read_only=True, many=True)
+
+    def validate(self, attrs):
+        attrs = super(TestCertificateSerializer, self).validate(attrs)
+
+        return attrs
+
+    def create(self, validated_data):
+
+        instance = ImportTestCertificate(**validated_data)
+
+        task, is_ready = test_certificate(
+            master_user=instance.master_user,
+            member=instance.member
+        )
+        instance.task_object = task
+
         return instance
 
 

@@ -19,6 +19,7 @@ from poms.instruments.models import AccrualCalculationSchedule, InstrumentFactor
 from poms.integrations.models import FactorScheduleDownloadMethod, AccrualScheduleDownloadMethod, ProviderClass, \
     InstrumentDownloadScheme, PriceDownloadScheme
 from poms.integrations.providers.base import AbstractProvider, ProviderException, parse_date_iso
+from poms.common.utils import date_now, isclose
 
 _l = logging.getLogger('poms.integrations.providers.bloomberg')
 
@@ -262,6 +263,16 @@ class BloombergDataProvider(AbstractProvider):
                 return True
         return False
 
+    def test_certificate(self, options):
+
+        _l.info('download_currency_pricing: %s', options)
+
+        return self._invoke_sync(name='test_certificate',
+                                 request_func=self.get_test_certificate_send_request,
+                                 request_kwargs={
+                                 },
+                                 response_func=self.get_test_certificate_get_response)
+
     def download_instrument(self, options):
         _l.info('download_instrument: %s', options)
 
@@ -465,6 +476,66 @@ class BloombergDataProvider(AbstractProvider):
         _l.info('response=%s', response)
         self._response_is_valid(response)
         return response
+
+    def get_test_certificate_send_request(self):
+        """
+        Async method to check if certificate is valid
+        @return: response_id: used to get data in get_pricing_latest_get_response
+        @rtype: str
+        """
+        _l.info('> get_test_certificate_send_request:')
+
+        fields = ['PX_YEST_BID', 'PX_YEST_ASK', 'PX_YEST_CLOSE', 'PX_CLOSE_1D', 'ACCRUED_FACTOR', 'CPN', 'SECURITY_TYP']
+
+        fields_data = self.soap_client.factory.create('Fields')
+        fields_data.field = fields
+
+        headers = {
+            "secmaster": True,
+            "pricing": True,
+            "historical": True,
+        }
+
+        _l.info('request: fields=%s, headers=%s', fields, headers)
+        response = self.soap_client.service.submitGetDataRequest(
+            headers=headers,
+            fields=fields_data
+        )
+        _l.info('response=%s', response)
+        self._response_is_valid(response)
+
+        response_id = str(response.responseId)
+        _l.info('< response_id=%s', response_id)
+
+        return response_id
+
+    def get_test_certificate_get_response(self, response_id):
+        """
+        Retrieval of status of test certificate request. Return None is data is not ready.
+        @param response_id: request-response reference, received in get_pricing_latest_send_request
+        @type str
+        @return: dictionary, where key - ISIN, value - dict with {bloomberg_field:value} dicts
+        @rtype: dict
+        """
+        if response_id is None:
+            _l.info('< result=%s', None)
+            return None
+
+        response = self.soap_client.service.retrieveGetDataResponse(responseId=response_id)
+        _l.info('> get_test_certificate_get_response: response_id=%s, response=%s', response_id, response)
+
+        self._response_is_valid(response, pending=True)
+        if self._data_is_ready(response):
+            result = {}
+
+            _l.info('< result=%s', result)
+
+            result = response
+
+            _l.info('< response=%s', response)
+
+            return result
+        return None
 
     def get_pricing_latest_send_request(self, instruments, fields):
         """
@@ -1227,4 +1298,58 @@ class FakeBloombergDataProvider(BloombergDataProvider):
 
                 d += timedelta(days=1)
         _l.info('< result=%s', result)
+        return result
+
+    def get_test_certificate_send_request(self):
+        _l.info('> get_test_certificate_send_request:')
+
+        if settings.BLOOMBERG_SANDBOX_SEND_EMPTY:
+            _l.info('< get_pricing_latest_send_request: BLOOMBERG_SANDBOX_SEND_EMPTY')
+            return None
+        if settings.BLOOMBERG_SANDBOX_SEND_FAIL:
+            _l.info('< get_pricing_latest_send_request: BLOOMBERG_SANDBOX_SEND_FAIL')
+            raise BloombergException('BLOOMBERG_SANDBOX_SEND_FAIL')
+
+        response_id = self._new_response_id()
+        # if not fields:
+        #     fields = ['PX_YEST_BID', 'PX_YEST_ASK', 'PX_YEST_CLOSE', 'PX_CLOSE_1D', 'ACCRUED_FACTOR', 'CPN',
+        #               'SECURITY_TYP']
+
+        key = self._make_key(response_id)
+        self._cache.set(key, {
+            'action': 'test_certificate',
+            'response_id': response_id,
+        }, timeout=30)
+
+        _l.info('< response_id=%s', response_id)
+
+        return response_id
+
+    def get_test_certificate_get_response(self, response_id):
+        _l.info('> get_test_certificate_get_response: response_id=%s', response_id)
+
+        if settings.BLOOMBERG_SANDBOX_WAIT_FAIL:
+            _l.info('< get_pricing_latest_get_response: BLOOMBERG_SANDBOX_WAIT_FAIL')
+            raise BloombergException('BLOOMBERG_SANDBOX_WAIT_FAIL')
+
+        if response_id is None:
+            _l.info('< result=%s', None)
+            return None
+
+        fake_data = {
+
+        }
+
+        key = self._make_key(response_id)
+        req = self._cache.get(key)
+        if not req:
+            raise RuntimeError('invalid response_id')
+
+        instruments = req['instruments'] or []
+        fields = req['fields']
+
+        result = {}
+
+        _l.info('< result=%s', result)
+
         return result

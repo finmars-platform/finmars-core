@@ -45,7 +45,7 @@ from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer
     DailyPricingModelMappingSerializer, PaymentSizeDetailMappingSerializer, PriceDownloadSchemeMappingSerializer, \
     ComplexTransactionImportSchemeSerializer, PortfolioClassifierMappingSerializer, AccountClassifierMappingSerializer, \
     CounterpartyClassifierMappingSerializer, ResponsibleClassifierMappingSerializer, PricingPolicyMappingSerializer, \
-    InstrumentClassifierMappingSerializer, AccountTypeMappingSerializer
+    InstrumentClassifierMappingSerializer, AccountTypeMappingSerializer, TestCertificateSerializer
 from poms.integrations.tasks import complex_transaction_csv_file_import, complex_transaction_csv_file_import_validate
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
@@ -822,6 +822,16 @@ class ImportInstrumentViewSet(AbstractViewSet):
 
 class ImportPricingViewSet(AbstractViewSet):
     serializer_class = ImportPricingSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
+class TestCertificateViewSet(AbstractViewSet):
+    serializer_class = TestCertificateSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

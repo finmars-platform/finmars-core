@@ -288,6 +288,66 @@ def download_instrument_pricing_async(self, task_id):
     return task_id
 
 
+@shared_task(name='integrations.test_certificate', bind=True, ignore_result=False)
+def test_certificate_async(self, task_id):
+    task = Task.objects.get(pk=task_id)
+    _l.info('test_certificate_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
+
+    task.add_celery_task_id(self.request.id)
+
+    try:
+        provider = get_provider(task.master_user, task.provider_id)
+    except:
+        _l.info('provider load error', exc_info=True)
+        task.status = Task.STATUS_ERROR
+        task.save()
+        return
+
+    if provider is None:
+        _l.info('provider not found')
+        task.status = Task.STATUS_ERROR
+        task.save()
+        return
+
+    if task.status not in [Task.STATUS_PENDING, Task.STATUS_WAIT_RESPONSE]:
+        _l.warn('invalid task status')
+        return
+
+    options = task.options_object
+
+    try:
+        result, is_ready = provider.test_certificate(options)
+    except:
+        _l.warn("provider processing error", exc_info=True)
+        task.status = Task.STATUS_ERROR
+    else:
+        if is_ready:
+            task.status = Task.STATUS_DONE
+            task.result_object = result
+        else:
+            task.status = Task.STATUS_WAIT_RESPONSE
+
+    response_id = options.get('response_id', None)
+    if response_id:
+        task.response_id = response_id
+
+    task.options_object = options
+    task.save()
+
+    if task.status == Task.STATUS_WAIT_RESPONSE:
+        if self.request.is_eager:
+            time.sleep(provider.get_retry_delay())
+        try:
+            self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries())
+            # self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries(), throw=False)
+        except MaxRetriesExceededError:
+            task.status = Task.STATUS_TIMEOUT
+            task.save()
+        return
+
+    return task_id
+
+
 @shared_task(name='integrations.download_currency_pricing_async', bind=True, ignore_result=False)
 def download_currency_pricing_async(self, task_id):
     task = Task.objects.get(pk=task_id)
@@ -929,6 +989,36 @@ def _create_instrument_manual_prices(options, instruments):
                         prices.append(price)
 
     return prices, errors
+
+
+def test_certificate(master_user=None, member=None, task=None):
+
+    _l.info('test_certificate: master_user_id=%s, task=%s',
+            getattr(master_user, 'id', None), getattr(task, 'info', None))
+    if task is None:
+        with transaction.atomic():
+
+            options = {
+
+            }
+
+            task = Task(
+                master_user=master_user,
+                member=member,
+                provider_id=1,
+                status=Task.STATUS_PENDING,
+                action=Task.ACTION_PRICING
+            )
+
+            task.options_object = options
+            task.save()
+
+            transaction.on_commit(lambda: test_certificate_async.apply_async(kwargs={'task_id': task.id}))
+        return task, False
+    else:
+        if task.status == Task.STATUS_DONE:
+            return task, True
+        return task, False
 
 
 def download_pricing(master_user=None, member=None, date_from=None, date_to=None, is_yesterday=None, balance_date=None,

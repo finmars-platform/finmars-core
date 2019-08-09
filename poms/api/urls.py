@@ -272,6 +272,7 @@ router.register(r'import/price-download-scheme-mapping', integrations.PriceDownl
 
 router.register(r'import/instrument', integrations.ImportInstrumentViewSet, 'importinstrument')
 router.register(r'import/pricing', integrations.ImportPricingViewSet, 'importpricing')
+router.register(r'import/test-certificate', integrations.TestCertificateViewSet, 'testcertificate')
 router.register(r'import/pricing-automated-schedule', integrations.PricingAutomatedScheduleViewSet)
 
 router.register(r'import/task', integrations.TaskViewSet)
