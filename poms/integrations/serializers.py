@@ -1290,7 +1290,7 @@ class TestCertificateSerializer(serializers.Serializer):
 
         instance = ImportTestCertificate(**validated_data)
 
-        task = test_certificate(
+        task, is_ready = test_certificate(
             master_user=instance.master_user,
             member=instance.member
         )
