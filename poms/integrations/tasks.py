@@ -333,7 +333,7 @@ def test_certificate_async(self, task_id):
         task.save()
 
         import_config = ImportConfig.objects.get(master_user=task.master_user, provider=1)
-        import_config.is_valid = result.is_authorized
+        import_config.is_valid = result['is_authorized']
         import_config.save()
 
         _l.info('handle_test_certificate_async import_config: import_config=%s, is_valid=%s', import_config, import_config.is_valid)
