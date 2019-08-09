@@ -42,6 +42,8 @@ from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import EventClass
 from poms.users.models import MasterUser, EcosystemDefault
 
+from .models import ImportConfig
+
 _l = logging.getLogger('poms.integrations')
 
 from celery.utils.log import get_task_logger
@@ -288,10 +290,10 @@ def download_instrument_pricing_async(self, task_id):
     return task_id
 
 
-@shared_task(name='integrations.test_certificate', bind=True, ignore_result=False)
+@shared_task(name='integrations.test_certificate_async', bind=True, ignore_result=False)
 def test_certificate_async(self, task_id):
     task = Task.objects.get(pk=task_id)
-    _l.info('test_certificate_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
+    _l.info('handle_test_certificate_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
 
     task.add_celery_task_id(self.request.id)
 
@@ -316,23 +318,27 @@ def test_certificate_async(self, task_id):
     options = task.options_object
 
     try:
-        result, is_ready = provider.test_certificate(options)
+        result = provider.test_certificate(options)
     except:
         _l.warn("provider processing error", exc_info=True)
         task.status = Task.STATUS_ERROR
+        return
     else:
-        if is_ready:
-            task.status = Task.STATUS_DONE
-            task.result_object = result
-        else:
-            task.status = Task.STATUS_WAIT_RESPONSE
+        _l.info('handle_test_certificate_async task: result', result)
 
-    response_id = options.get('response_id', None)
-    if response_id:
-        task.response_id = response_id
+        task.status = Task.STATUS_DONE
+        task.result_object = result
 
-    task.options_object = options
-    task.save()
+        task.options_object = options
+        task.save()
+
+        import_config = ImportConfig.objects.get(master_user=task.master_user, provider=1)
+        import_config.is_valid = result.is_authorized
+        import_config.save()
+
+        _l.info('handle_test_certificate_async import_config: import_config=%s, is_valid=%s', import_config, import_config.is_valid)
+        _l.info('handle_test_certificate_async task: master_user_id=%s, task=%s', task.master_user_id, task.result)
+
 
     if task.status == Task.STATUS_WAIT_RESPONSE:
         if self.request.is_eager:
@@ -346,7 +352,6 @@ def test_certificate_async(self, task_id):
         return
 
     return task_id
-
 
 @shared_task(name='integrations.download_currency_pricing_async', bind=True, ignore_result=False)
 def download_currency_pricing_async(self, task_id):
@@ -1014,6 +1019,7 @@ def test_certificate(master_user=None, member=None, task=None):
             task.save()
 
             transaction.on_commit(lambda: test_certificate_async.apply_async(kwargs={'task_id': task.id}))
+
         return task, False
     else:
         if task.status == Task.STATUS_DONE:

@@ -72,6 +72,8 @@ class ImportConfig(models.Model):
     key = models.FileField(null=True, blank=True, upload_to=import_cert_upload_to, storage=import_config_storage,
                            verbose_name=ugettext_lazy('key'))
 
+    is_valid = models.BooleanField(default=False, verbose_name=ugettext_lazy('is valid'))
+
     class Meta:
         verbose_name = ugettext_lazy('import config')
         verbose_name_plural = ugettext_lazy('import configs')

@@ -79,7 +79,7 @@ class ImportConfigSerializer(serializers.ModelSerializer):
         model = ImportConfig
         fields = [
             'id', 'master_user', 'provider', 'provider_object', 'p12cert', 'password', 'has_p12cert',
-            'has_password',
+            'has_password', 'is_valid'
         ]
 
 
