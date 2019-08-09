@@ -1301,46 +1301,9 @@ class FakeBloombergDataProvider(BloombergDataProvider):
             _l.info('< get_pricing_latest_send_request: BLOOMBERG_SANDBOX_SEND_FAIL')
             raise BloombergException('BLOOMBERG_SANDBOX_SEND_FAIL')
 
-        response_id = self._new_response_id()
-        # if not fields:
-        #     fields = ['PX_YEST_BID', 'PX_YEST_ASK', 'PX_YEST_CLOSE', 'PX_CLOSE_1D', 'ACCRUED_FACTOR', 'CPN',
-        #               'SECURITY_TYP']
-
-        key = self._make_key(response_id)
-        self._cache.set(key, {
-            'action': 'test_certificate',
-            'response_id': response_id,
-        }, timeout=30)
-
-        _l.info('< response_id=%s', response_id)
-
-        return response_id
+        return True
 
     def get_test_certificate_get_response(self, response_id):
-        _l.info('> get_test_certificate_get_response: response_id=%s', response_id)
-
-        if settings.BLOOMBERG_SANDBOX_WAIT_FAIL:
-            _l.info('< get_pricing_latest_get_response: BLOOMBERG_SANDBOX_WAIT_FAIL')
-            raise BloombergException('BLOOMBERG_SANDBOX_WAIT_FAIL')
-
-        if response_id is None:
-            _l.info('< result=%s', None)
-            return None
-
-        fake_data = {
-
+        return {
+            "is_authorized": True
         }
-
-        key = self._make_key(response_id)
-        req = self._cache.get(key)
-        if not req:
-            raise RuntimeError('invalid response_id')
-
-        instruments = req['instruments'] or []
-        fields = req['fields']
-
-        result = {}
-
-        _l.info('< result=%s', result)
-
-        return result

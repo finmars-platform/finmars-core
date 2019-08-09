@@ -1294,7 +1294,7 @@ class TestCertificateSerializer(serializers.Serializer):
             task, is_ready = test_certificate(
                 master_user=instance.master_user,
                 member=instance.member,
-                task=instance.task
+                task=instance.task_object
             )
             instance.task_object = task
         else:
