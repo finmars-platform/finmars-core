@@ -324,7 +324,8 @@ def test_certificate_async(self, task_id):
         task.status = Task.STATUS_ERROR
         return
     else:
-        _l.info('handle_test_certificate_async task: result', result)
+        _l.info('handle_test_certificate_async task: result %s' % result)
+        _l.info('handle_test_certificate_async task: result is authorized %s' % result['is_authorized'])
 
         task.status = Task.STATUS_DONE
         task.result_object = result
