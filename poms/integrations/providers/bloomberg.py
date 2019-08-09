@@ -513,36 +513,20 @@ class BloombergDataProvider(AbstractProvider):
 
         return is_authorized
 
-    def get_test_certificate_get_response(self, response_id):
+    def get_test_certificate_get_response(self, is_authorized):
         """
-        Retrieval of status of test certificate request. Return None is data is not ready.
-        @param response_id: request-response reference, received in get_pricing_latest_send_request
+        Retrieval of status of test certificate request. Return True/False as status value
+        @param is_authorized: authorization status
         @type str
-        @return: dictionary, where key - ISIN, value - dict with {bloomberg_field:value} dicts
+        @return: dictionary, where key - is_authorized, value - True/False
         @rtype: dict
         """
 
-        _l.info('get_test_certificate_get_response response_id %s' % response_id)
+        _l.info('get_test_certificate_get_response is_authorized %s' % is_authorized)
 
-        if response_id is None:
-            _l.info('< result=%s', None)
-            return None
-
-        response = self.soap_client.service.retrieveGetDataResponse(responseId=response_id)
-        _l.info('> get_test_certificate_get_response: response_id=%s, response=%s', response_id, response)
-
-        self._response_is_valid(response, pending=True)
-        if self._data_is_ready(response):
-            result = {}
-
-            _l.info('< result=%s', result)
-
-            result = response
-
-            _l.info('< response=%s', response)
-
-            return result
-        return None
+        return {
+            is_authorized: is_authorized
+        }
 
     def get_pricing_latest_send_request(self, instruments, fields):
         """
