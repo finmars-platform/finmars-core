@@ -525,7 +525,7 @@ class BloombergDataProvider(AbstractProvider):
         _l.info('get_test_certificate_get_response is_authorized %s' % is_authorized)
 
         return {
-            is_authorized: is_authorized
+            "is_authorized": is_authorized
         }
 
     def get_pricing_latest_send_request(self, instruments, fields):
