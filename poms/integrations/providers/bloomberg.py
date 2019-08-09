@@ -485,7 +485,8 @@ class BloombergDataProvider(AbstractProvider):
         """
         _l.info('> get_test_certificate_send_request:')
 
-        fields = ['PX_YEST_BID', 'PX_YEST_ASK', 'PX_YEST_CLOSE', 'PX_CLOSE_1D', 'ACCRUED_FACTOR', 'CPN', 'SECURITY_TYP']
+        # fields = ['PX_YEST_BID', 'PX_YEST_ASK', 'PX_YEST_CLOSE', 'PX_CLOSE_1D', 'ACCRUED_FACTOR', 'CPN', 'SECURITY_TYP']
+        fields = []
 
         fields_data = self.soap_client.factory.create('Fields')
         fields_data.field = fields
@@ -502,12 +503,15 @@ class BloombergDataProvider(AbstractProvider):
             fields=fields_data
         )
         _l.info('response=%s', response)
-        self._response_is_valid(response)
 
-        response_id = str(response.responseId)
-        _l.info('< response_id=%s', response_id)
+        is_authorized = False
 
-        return response_id
+        if response.statusCode.code == 200:
+            is_authorized = True
+
+        _l.info('< is_authorized=%s', is_authorized)
+
+        return is_authorized
 
     def get_test_certificate_get_response(self, response_id):
         """
@@ -517,6 +521,9 @@ class BloombergDataProvider(AbstractProvider):
         @return: dictionary, where key - ISIN, value - dict with {bloomberg_field:value} dicts
         @rtype: dict
         """
+
+        _l.info('get_test_certificate_get_response response_id %s' % response_id)
+
         if response_id is None:
             _l.info('< result=%s', None)
             return None
