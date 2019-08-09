@@ -1277,18 +1277,9 @@ class TestCertificateSerializer(serializers.Serializer):
     task_object = TaskSerializer(read_only=True)
 
     provider_id = serializers.ReadOnlyField()
-    errors = serializers.ReadOnlyField()
-    instrument_price_missed = serializers.ReadOnlyField()
-    currency_price_missed = serializers.ReadOnlyField()
 
     def __init__(self, **kwargs):
         super(TestCertificateSerializer, self).__init__(**kwargs)
-
-        from poms.instruments.serializers import PriceHistorySerializer
-        self.fields['instrument_price_missed'] = PriceHistorySerializer(read_only=True, many=True)
-
-        from poms.currencies.serializers import CurrencyHistorySerializer
-        self.fields['currency_price_missed'] = CurrencyHistorySerializer(read_only=True, many=True)
 
     def validate(self, attrs):
         attrs = super(TestCertificateSerializer, self).validate(attrs)
@@ -1299,7 +1290,7 @@ class TestCertificateSerializer(serializers.Serializer):
 
         instance = ImportTestCertificate(**validated_data)
 
-        task, is_ready = test_certificate(
+        task = test_certificate(
             master_user=instance.master_user,
             member=instance.member
         )

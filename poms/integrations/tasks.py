@@ -338,7 +338,7 @@ def test_certificate_async(self, task_id):
         import_config.save()
 
         _l.info('handle_test_certificate_async import_config: import_config=%s, is_valid=%s', import_config, import_config.is_valid)
-        _l.info('handle_test_certificate_async task: master_user_id=%s, task=%s', task.master_user_id, task.result)
+        _l.info('handle_test_certificate_async task: master_user_id=%s, task=%s task.status=%s', task.master_user_id, task.result, task.status)
 
 
     if task.status == Task.STATUS_WAIT_RESPONSE:
