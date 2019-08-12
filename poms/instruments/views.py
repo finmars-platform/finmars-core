@@ -775,16 +775,30 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
         if generated_event.status != GeneratedEvent.NEW:
             raise PermissionDenied()
 
+        action_pk = request.query_params.get('action', None)
+
+        action = None
+        if action_pk:
+            try:
+                action = generated_event.event_schedule.actions.get(pk=action_pk)
+            except ObjectDoesNotExist:
+                pass
+        if action is None:
+            raise ValidationError('Require "action" query parameter')
+
         generated_event.status = GeneratedEvent.ERROR
         generated_event.status_date = timezone.now()
         generated_event.member = self.request.user.member
 
         instance = GeneratedEventProcess(
             generated_event=generated_event,
+            action=action,
             context=self.get_serializer_context()
         )
 
-        generated_event.processed(self.request.user.member, None, instance.complex_transaction,
+        instance.process_as_pending()
+
+        generated_event.processed(self.request.user.member, action, instance.complex_transaction,
                                   GeneratedEvent.ERROR)
 
         generated_event.save()

@@ -1321,6 +1321,32 @@ class TransactionTypeProcess(object):
         else:
             self.complex_transaction.date = self._now
 
+    def process_as_pending(self):
+
+        complex_transaction_errors = {}
+        if self.complex_transaction.date is None:
+            self.complex_transaction.date = self._now  # set by default
+
+            self._set_val(errors=complex_transaction_errors, values=self.values, default_value=self._now,
+                          target=self.complex_transaction, target_attr_name='date',
+                          source=self.transaction_type, source_attr_name='date_expr',
+                          validator=formula.validate_date)
+
+        if bool(complex_transaction_errors):
+            self.complex_transaction_errors.append(complex_transaction_errors)
+
+        self.complex_transaction.status = ComplexTransaction.PENDING
+
+        self.complex_transaction.save()
+
+        self.execute_complex_transaction_text_and_date()
+
+        self.execute_user_fields_expressions()
+
+        self.complex_transaction.save()
+
+        self._save_inputs()
+
     def process(self):
 
         if self.process_mode == self.MODE_RECALCULATE:
