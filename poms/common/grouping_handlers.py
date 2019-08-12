@@ -90,7 +90,9 @@ def is_relation(item):
                     'counterparty', 'responsible',
 
                     'allocation_balance', 'allocation_pl',
-                    'linked_instrument'
+                    'linked_instrument',
+
+                    'subgroup'
 
                     ]
 
