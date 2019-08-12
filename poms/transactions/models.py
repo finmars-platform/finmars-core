@@ -574,13 +574,13 @@ class TransactionTypeInput(models.Model):
 
 
 class RebookReactionChoice():
-    CREATE = 0
+    CREATE = 0 # Used in Instrument Action
     SKIP = 1  # is not in use
-    OVERWRITE = 2
+    OVERWRITE = 2 # Used in Instrument Action
     CLEAR_AND_WRITE = 3
     CREATE_IF_NOT_EXIST = 4
 
-    FIND_OR_CREATE = 5
+    FIND_OR_CREATE = 5 # Used in Instrument Action
     CLEAR_AND_WRITE_OR_SKIP = 6
     CLEAR = 7
 
@@ -590,6 +590,7 @@ class RebookReactionChoice():
                (CLEAR_AND_WRITE, 'Clear all & Create'),
                # Special rewrite for entities without user_code (e.g.  Accruals schedule in Instrument)
                (CREATE_IF_NOT_EXIST, 'Create if not exist'),
+               (CLEAR_AND_WRITE_OR_SKIP, 'If book: Clear & Append. If rebook: Skip')
                # Create if there is no entity with same user_code, otherwise skip
                )
 

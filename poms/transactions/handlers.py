@@ -617,8 +617,8 @@ class TransactionTypeProcess(object):
                         if rebook_reaction == RebookReactionChoice.CLEAR:
                             ManualPricingFormula.objects.filter(instrument=manual_pricing_formula.instrument).delete()
 
-                        if rebook_reaction is None:
-                            manual_pricing_formula.save()
+                    if rebook_reaction is None:
+                        manual_pricing_formula.save()
 
                 except (ValueError, TypeError, IntegrityError):
 
