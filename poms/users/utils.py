@@ -1,3 +1,4 @@
+from django.contrib.sessions.models import Session
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.exceptions import NotFound, PermissionDenied
 
@@ -12,6 +13,9 @@ def set_master_user(request, master_user):
             del request.session['master_user_id']
         else:
             request.session['master_user_id'] = master_user_id
+
+        print('Session save. Master user id %s' % request.session['master_user_id'])
+        request.session.save()
 
 
 def get_master_user_and_member(request):
