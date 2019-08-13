@@ -523,7 +523,7 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
             'strategy1': context_strategy1,
             'strategy2': context_strategy2,
             'strategy3': context_strategy3,
-            # 'position': context_position,
+            'position': context_position,
             'effective_date': context_effective_date,
             # 'notification_date': context_notification_date, # not in context variables
             # 'final_date': context_final_date,
