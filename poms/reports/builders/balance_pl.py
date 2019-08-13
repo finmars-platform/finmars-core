@@ -404,12 +404,12 @@ class ReportBuilder(BaseReportBuilder):
         filters = Q(**{'%s__lte' % self.instance.date_field: self.instance.report_date})
         # filters = Q(**{'%s__lt' % self.instance.date_field: self.instance.report_date})
 
-        print('date field')
-        print(qs[0].__dict__)
-        print(self.instance.date_field)
-
-        print('self.instance.pl_first_date')
-        print(self.instance.pl_first_date)
+        # print('date field')
+        # print(qs[0].__dict__)
+        # print(self.instance.date_field)
+        #
+        # print('self.instance.pl_first_date')
+        # print(self.instance.pl_first_date)
 
         if self.instance.pl_first_date:
             filters &= Q(**{'%s__gt' % self.instance.date_field: self.instance.pl_first_date})

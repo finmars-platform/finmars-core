@@ -12,8 +12,8 @@ def set_master_user(request, master_user):
     master_user_id = master_user.id
     old_master_user_id = session.current_master_user.id
 
-    print('set_master_user master_user_id %s ' % master_user_id)
-    print('set_master_user old_master_user_id %s ' % old_master_user_id)
+    # print('set_master_user master_user_id %s ' % master_user_id)
+    # print('set_master_user old_master_user_id %s ' % old_master_user_id)
 
     sessions = Session.objects.filter(user=request.user.id)
 
@@ -48,7 +48,7 @@ def get_master_user_and_member(request):
 
     master_user_id = session.current_master_user
 
-    print('request.session.get master_user_id %s' % master_user_id)
+    # print('request.session.get master_user_id %s' % master_user_id)
 
     if master_user_id is None:
         master_user_id = request.query_params.get('master_user_id', None)
@@ -56,7 +56,7 @@ def get_master_user_and_member(request):
     member_qs = Member.objects.select_related('master_user').prefetch_related('groups').filter(user=user,
                                                                                                is_deleted=False)
 
-    print('get_master_user_and_member.master_user_id %s' % master_user_id)
+    # print('get_master_user_and_member.master_user_id %s' % master_user_id)
 
     if master_user_id is not None:
         try:
