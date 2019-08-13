@@ -58,7 +58,7 @@ class SchemeViewSet(AbstractModelViewSet):
     queryset = CsvImportScheme.objects
     serializer_class = CsvImportSchemeSerializer
     filter_class = SchemeFilterSet
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+    filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
 
