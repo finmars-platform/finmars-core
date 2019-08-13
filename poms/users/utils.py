@@ -12,9 +12,11 @@ def set_master_user(request, master_user):
         if master_user_id is None:
             del request.session['master_user_id']
         else:
+            request.user.master_user = master_user
             request.session['master_user_id'] = master_user_id
 
         print('Session save. Master user id %s' % request.session['master_user_id'])
+
         request.session.save()
 
 
