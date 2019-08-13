@@ -55,9 +55,7 @@ def utf_8_encoder(unicode_csv_data):
 
 
 class SchemeViewSet(AbstractModelViewSet):
-    queryset = CsvImportScheme.objects.select_related(
-        'master_user',
-    )
+    queryset = CsvImportScheme.objects
     serializer_class = CsvImportSchemeSerializer
     filter_class = SchemeFilterSet
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
