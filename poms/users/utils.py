@@ -25,12 +25,19 @@ def get_master_user_and_member(request):
     if not user.is_authenticated():
         raise PermissionDenied()
 
-    master_user_id = request.query_params.get('master_user_id', None)
+    # master_user_id = request.query_params.get('master_user_id', None)
+    # if master_user_id is None:
+    #     master_user_id = request.session.get('master_user_id', None)
+
+    master_user_id = request.session.get('master_user_id', None)
     if master_user_id is None:
-        master_user_id = request.session.get('master_user_id', None)
+        master_user_id = request.query_params.get('master_user_id', None)
 
     member_qs = Member.objects.select_related('master_user').prefetch_related('groups').filter(user=user,
                                                                                                is_deleted=False)
+
+    print('get_master_user_and_member.master_user_id %s' % master_user_id)
+
     if master_user_id is not None:
         try:
             member = member_qs.get(master_user=master_user_id)
