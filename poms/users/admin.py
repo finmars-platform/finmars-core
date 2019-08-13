@@ -6,6 +6,7 @@ from django import forms
 from django.conf import settings
 from django.conf.urls import url
 from django.contrib import admin
+from django.contrib.admin import ModelAdmin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User, Permission
 from django.contrib.contenttypes.models import ContentType
@@ -20,6 +21,12 @@ from poms.integrations.models import PricingAutomatedSchedule
 from poms.users.models import MasterUser, UserProfile, Member, Group, TIMEZONE_CHOICES, FakeSequence, \
     InviteToMasterUser, EcosystemDefault
 
+# from django.contrib.sessions.models import Session
+# class SessionAdmin(ModelAdmin):
+#     def _session_data(self, obj):
+#         return obj.get_decoded()
+#     list_display = ['session_key', '_session_data', 'expire_date']
+# admin.site.register(Session, SessionAdmin)
 
 class MemberInline(admin.TabularInline):
     model = Member

@@ -8,6 +8,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy
 
 from poms.http_sessions.backends.db import SessionStore
+from poms.users.models import MasterUser
 
 
 class Session(AbstractBaseSession):
@@ -15,6 +16,7 @@ class Session(AbstractBaseSession):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, verbose_name=ugettext_lazy('user'))
     user_agent = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user agent'))
     user_ip = models.GenericIPAddressField(null=True, blank=True, verbose_name=ugettext_lazy('user ip'))
+    current_master_user = models.ForeignKey(MasterUser, null=True, blank=True, verbose_name=ugettext_lazy('master user'))
 
     class Meta(AbstractBaseSession.Meta):
         ordering = ['expire_date']

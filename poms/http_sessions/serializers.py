@@ -13,7 +13,7 @@ class SessionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Session
-        fields = ['id', 'is_current', 'user_ip', 'user_agent', 'human_user_agent', 'user_location',]
+        fields = ['id', 'is_current', 'user_ip', 'user_agent', 'human_user_agent', 'user_location', 'current_master_user']
 
     def get_is_current(self, instance):
         request = self.context['request']

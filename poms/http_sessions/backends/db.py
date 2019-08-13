@@ -24,4 +24,18 @@ class SessionStore(DjangoSessionStore):
         obj.user_agent = data.get('user_agent', None)
         obj.user_ip = data.get('user_ip', None)
 
+
+
+        try:
+            master_user_id = int(data.get('current_master_user', None))
+        except (ValueError, TypeError):
+            master_user_id = None
+
+        print('data %s' % data)
+        print('create_model_instance master_user_id %s' % master_user_id)
+
+        if master_user_id:
+            from poms.users.models import MasterUser
+            obj.current_master_user = MasterUser.objects.get(pk=master_user_id)
+
         return obj

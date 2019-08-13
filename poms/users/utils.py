@@ -1,23 +1,38 @@
-from django.contrib.sessions.models import Session
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.exceptions import NotFound, PermissionDenied
 
-from poms.users.models import Member
+from poms.http_sessions.models import Session
+from poms.users.models import Member, MasterUser
 
 
 def set_master_user(request, master_user):
+
+    session = Session.objects.get(session_key=request.session.session_key)
+
     master_user_id = master_user.id
-    old_master_user_id = request.session.get('master_user_id', None)
+    old_master_user_id = session.current_master_user.id
+
+    print('set_master_user master_user_id %s ' % master_user_id)
+    print('set_master_user old_master_user_id %s ' % old_master_user_id)
+
+    sessions = Session.objects.filter(user=request.user.id)
+
     if old_master_user_id != master_user_id:
         if master_user_id is None:
-            del request.session['master_user_id']
+            del request.session['current_master_user']
+
+            for session in sessions:
+                session.current_master_user = None
+
+                session.save()
+
         else:
-            request.user.master_user = master_user
-            request.session['master_user_id'] = master_user_id
+            request.session['current_master_user'] = master_user_id
 
-        print('Session save. Master user id %s' % request.session['master_user_id'])
+            for session in sessions:
+                session.current_master_user = MasterUser.objects.get(id=master_user_id)
 
-        request.session.save()
+                session.save()
 
 
 def get_master_user_and_member(request):
@@ -29,7 +44,12 @@ def get_master_user_and_member(request):
     # if master_user_id is None:
     #     master_user_id = request.session.get('master_user_id', None)
 
-    master_user_id = request.session.get('master_user_id', None)
+    session = Session.objects.get(session_key=request.session.session_key)
+
+    master_user_id = session.current_master_user
+
+    print('request.session.get master_user_id %s' % master_user_id)
+
     if master_user_id is None:
         master_user_id = request.query_params.get('master_user_id', None)
 
@@ -47,7 +67,10 @@ def get_master_user_and_member(request):
 
     member = member_qs.first()
     if member:
-        request.session['master_user_id'] = member.master_user.id
+
+        session.current_master_user = member.master_user
+        session.save()
+        # request.session['master_user_id'] = member.master_user.id
         return member, member.master_user
 
     # raise NotFound()
