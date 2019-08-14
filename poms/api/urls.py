@@ -23,6 +23,7 @@ import poms.ui.views as ui
 import poms.users.views as users
 
 import poms.csv_import.views as csv_import
+import poms.reference_tables.views as reference_table
 
 import poms.configuration_export.views as configuration_export
 import poms.complex_import.views as complex_import
@@ -173,6 +174,8 @@ router.register(r'strategies/3/strategy-attribute-type', strategies.Strategy3Att
 
 router.register(r'tags/tag', tags.TagViewSet)
 
+router.register(r'reference-tables/reference-table', reference_table.ReferenceTableViewSet, 'reference_table')
+
 router.register(r'transactions/event-class', transactions.EventClassViewSet)
 router.register(r'transactions/notification-class', transactions.NotificationClassViewSet)
 router.register(r'transactions/transaction-class', transactions.TransactionClassViewSet)
@@ -289,6 +292,7 @@ router.register(r'utils/expression', api.ExpressionViewSet, 'expression')
 
 router.register(r'import/csv/scheme', csv_import.SchemeViewSet, 'import_csv_scheme')
 router.register(r'import/csv', csv_import.CsvDataImportViewSet, 'import_csv')
+
 router.register(r'import/csv-validate', csv_import.CsvDataImportValidateViewSet, 'import_csv-validate')
 
 router.register(r'import/complex/scheme', complex_import.ComplexImportSchemeViewSet, 'import_complex_scheme')

@@ -6,23 +6,37 @@ from django.contrib import admin
 from .models import CsvImportScheme, EntityField, CsvField, CsvDataImport
 
 
+class EntityFieldInline(admin.TabularInline):
+    model = EntityField
+    extra = 0
+
+    fields = ('name', 'expression')
+    readonly_fields = ('id',)
+
+
+class CsvFieldInline(admin.TabularInline):
+    model = CsvField
+    extra = 0
+
+    fields = ('column', 'name', 'name_expr')
+    readonly_fields = ('id',)
+
+
 class CsvImportAdmin(admin.ModelAdmin):
     list_display = ('id', 'scheme')
 
 
 class CsvSchemeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'scheme_name', 'content_type', 'master_user')
-
-
-class CsvImportSchemaFieldsAdmin(admin.ModelAdmin):
-    list_display = ('scheme', 'column', 'name')
-
-
-class CsvImportSchemaEntityFieldAdmin(admin.ModelAdmin):
-    list_display = ('scheme', 'name', 'expression')
+    model = CsvImportScheme
+    master_user_path = 'master_user'
+    list_display = ['id', 'master_user', 'scheme_name', ]
+    search_fields = ['id', 'scheme_name']
+    raw_id_fields = ['master_user']
+    inlines = [
+        EntityFieldInline,
+        CsvFieldInline
+    ]
 
 
 admin.site.register(CsvDataImport, CsvImportAdmin)
 admin.site.register(CsvImportScheme, CsvSchemeAdmin)
-admin.site.register(CsvField, CsvImportSchemaFieldsAdmin)
-admin.site.register(EntityField, CsvImportSchemaEntityFieldAdmin)

@@ -29,6 +29,14 @@ class CsvField(models.Model):
 
     scheme = models.ForeignKey(CsvImportScheme, related_name='csv_fields', on_delete=models.CASCADE)
 
+    class Meta:
+        verbose_name = ugettext_lazy('csv field')
+        verbose_name_plural = ugettext_lazy('csv fields')
+
+        index_together = [
+            ['scheme'],
+        ]
+
 
 class EntityField(models.Model):
     name = models.CharField(max_length=255)
@@ -49,6 +57,7 @@ class EntityField(models.Model):
             ['scheme', 'order'],
         ]
         ordering = ['order']
+
 
 ERROR_HANDLER_CHOICES = [
     ['break', 'Break'],
