@@ -33,6 +33,7 @@ from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_attrs.serializers import GenericClassifierViewSerializer, GenericClassifierNodeSerializer, \
     GenericAttributeTypeSerializer
 from poms.portfolios.models import Portfolio
+from poms.reference_tables.models import ReferenceTable, ReferenceTableRow
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.tags.utils import get_tag_prefetch
@@ -123,6 +124,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         pricing_policies = self.get_pricing_policies()
         currencies = self.get_currencies()
 
+        reference_tables = self.get_reference_tables()
+
         portfolio_attribute_types = self.get_entity_attribute_types('portfolios', 'portfolio')
         account_attribute_types = self.get_entity_attribute_types('accounts', 'account')
         account_type_attribute_types = self.get_entity_attribute_types('accounts', 'accounttype')
@@ -162,6 +165,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration["body"].append(pricing_policies)
         configuration["body"].append(instrument_types)
         configuration["body"].append(pricing_automated_schedule)
+
+        configuration["body"].append(reference_tables)
 
         configuration["body"].append(portfolio_attribute_types)
         configuration["body"].append(account_attribute_types)
@@ -886,6 +891,45 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         }
 
         return result
+
+    def get_reference_table_rows(self, reference_table):
+
+        rows = to_json_objects(ReferenceTableRow.objects.filter(reference_table=reference_table["pk"]))
+
+        results = unwrap_items(rows)
+
+        delete_prop(results, 'reference_table')
+
+        return results
+
+
+
+    def get_reference_tables(self):
+
+        reference_tables = to_json_objects(
+            ReferenceTable.objects.filter(master_user=self._master_user))
+
+        results = []
+
+        for reference_table in reference_tables:
+            result_item = reference_table["fields"]
+            result_item.pop("master_user", None)
+            result_item["rows"] = self.get_reference_table_rows(reference_table)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "reference_tables.referencetable",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
 
     def get_transaction_user_fields(self):
 
