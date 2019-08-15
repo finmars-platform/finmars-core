@@ -27,5 +27,8 @@ class ReferenceTableRow(models.Model):
     value = models.CharField(max_length=255, verbose_name=ugettext_lazy('value'))
 
     class Meta:
+        unique_together = (
+            ('reference_table', 'key')
+        )
         verbose_name = ugettext_lazy('Reference Table Row')
         verbose_name_plural = ugettext_lazy('Reference Table Rows')

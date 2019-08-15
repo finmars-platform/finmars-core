@@ -127,6 +127,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         reference_tables = self.get_reference_tables()
 
         portfolio_attribute_types = self.get_entity_attribute_types('portfolios', 'portfolio')
+        currency_attribute_types = self.get_entity_attribute_types('currencies', 'currency')
         account_attribute_types = self.get_entity_attribute_types('accounts', 'account')
         account_type_attribute_types = self.get_entity_attribute_types('accounts', 'accounttype')
 
@@ -169,6 +170,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration["body"].append(reference_tables)
 
         configuration["body"].append(portfolio_attribute_types)
+        configuration["body"].append(currency_attribute_types)
         configuration["body"].append(account_attribute_types)
         configuration["body"].append(account_type_attribute_types)
         configuration["body"].append(responsible_attribute_types)
@@ -903,7 +905,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         return results
 
 
-
     def get_reference_tables(self):
 
         reference_tables = to_json_objects(
@@ -929,7 +930,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         }
 
         return result
-
 
     def get_transaction_user_fields(self):
 
