@@ -175,7 +175,7 @@ class CashFlowProjectionReportBuilder(TransactionReportBuilder):
         for t in self._transactions:
             self._transaction_order_seq = max(self._transaction_order_seq, int(t.transaction_code))
 
-            d = getattr(t.complex_transaction, 'date', datetime.date.min)
+            d = getattr(t.complex_transaction, 'date', date.min)
             self._transactions_by_date[d].append(t)
 
             if d <= self.instance.balance_date:

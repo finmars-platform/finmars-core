@@ -1184,7 +1184,7 @@ class TransactionTypeProcess(object):
                 ci.value_float = val
             elif ti.value_type == TransactionTypeInput.DATE:
                 if val is None:
-                    val = datetime.date.min
+                    val = date.min
                 ci.value_date = val
             elif ti.value_type == TransactionTypeInput.RELATION:
 

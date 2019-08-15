@@ -2,7 +2,7 @@ from __future__ import unicode_literals, print_function, division
 
 import ast
 import calendar
-import datetime
+from datetime import date, datetime
 import logging
 import random
 import time
@@ -140,11 +140,11 @@ def _date(year, month=1, day=1):
 
 
 def _date_min():
-    return datetime.date.min
+    return date.min
 
 
 def _date_max():
-    return datetime.date.max
+    return date.max
 
 
 def _isleap(date_or_year):

@@ -2015,7 +2015,7 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
 
                 is_date_was_empty = False
                 if not ctrn_values.get('date', None):
-                    ctrn_values['date'] = datetime.date.min
+                    ctrn_values['date'] = date.min
                     is_date_was_empty = True
 
                 if instance.complex_transaction:
