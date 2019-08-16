@@ -2114,76 +2114,83 @@ class ConfigurationDuplicateCheckViewSet(AbstractModelViewSet):
         member = self.request.user.member
 
         head = file_content['head']
-        body = file_content['body']
+        sections = file_content['body']
 
         results = []
 
         print(head['date'])
 
-        for entity in body:
+        configuration_section = None
 
-            result_item = {
-                'entity': entity['entity'],
-                'content': []
-            }
+        for section in sections:
+            if section['section_name'] == 'configuration':
+                configuration_section = section
 
-            pieces = entity['entity'].split('.')
-            app_label = pieces[0]
-            model_name = pieces[1]
+        if configuration_section:
+            for entity in configuration_section['items']:
 
-            if model_name == 'reportlayout':
-                model_name = 'listlayout'
+                result_item = {
+                    'entity': entity['entity'],
+                    'content': []
+                }
 
-            try:
+                pieces = entity['entity'].split('.')
+                app_label = pieces[0]
+                model_name = pieces[1]
 
-                model = apps.get_model(app_label=app_label, model_name=model_name)
+                if model_name == 'reportlayout':
+                    model_name = 'listlayout'
 
-            except (LookupError, KeyError):
-                continue
+                try:
 
-            for item in entity['content']:
+                    model = apps.get_model(app_label=app_label, model_name=model_name)
 
-                # print('item %s' % item)
+                except (LookupError, KeyError):
+                    continue
 
-                if 'scheme_name' in item:
+                for item in entity['content']:
 
-                    if model.objects.filter(scheme_name=item['scheme_name'], master_user=master_user).exists():
-                        result_item['content'].append({'scheme_name': item['scheme_name'], 'is_duplicate': True})
-                    else:
-                        result_item['content'].append({'scheme_name': item['scheme_name'], 'is_duplicate': False})
+                    # print('item %s' % item)
 
-                elif 'user_code' in item:
+                    if 'scheme_name' in item:
 
-                    if model.objects.filter(user_code=item['user_code'], master_user=master_user).exists():
-                        result_item['content'].append({'user_code': item['user_code'], 'is_duplicate': True})
-                    else:
-                        result_item['content'].append({'user_code': item['user_code'], 'is_duplicate': False})
+                        if model.objects.filter(scheme_name=item['scheme_name'], master_user=master_user).exists():
+                            result_item['content'].append({'scheme_name': item['scheme_name'], 'is_duplicate': True})
+                        else:
+                            result_item['content'].append({'scheme_name': item['scheme_name'], 'is_duplicate': False})
 
-                elif 'name' in item:
+                    elif 'user_code' in item:
 
-                    if entity['entity'] in ['ui.transactionuserfieldmodel', 'ui.instrumentuserfieldmodel']:
+                        if model.objects.filter(user_code=item['user_code'], master_user=master_user).exists():
+                            result_item['content'].append({'user_code': item['user_code'], 'is_duplicate': True})
+                        else:
+                            result_item['content'].append({'user_code': item['user_code'], 'is_duplicate': False})
 
-                        if model.objects.filter(key=item['key'], master_user=master_user).exists():
+                    elif 'name' in item:
 
-                            result_item['content'].append({'name': item['name'], 'is_duplicate': True})
+                        if entity['entity'] in ['ui.transactionuserfieldmodel', 'ui.instrumentuserfieldmodel']:
 
-                    else:
+                            if model.objects.filter(key=item['key'], master_user=master_user).exists():
 
-                        if entity['entity'] in ['ui.bookmark', 'ui.listlayout', 'ui.reportlayout', 'ui.editlayout']:
-
-                            if model.objects.filter(name=item['name'], member=member).exists():
                                 result_item['content'].append({'name': item['name'], 'is_duplicate': True})
-                            else:
-                                result_item['content'].append({'name': item['name'], 'is_duplicate': False})
 
                         else:
 
-                            if model.objects.filter(name=item['name'], master_user=master_user).exists():
-                                result_item['content'].append({'name': item['name'], 'is_duplicate': True})
-                            else:
-                                result_item['content'].append({'name': item['name'], 'is_duplicate': False})
+                            if entity['entity'] in ['ui.bookmark', 'ui.listlayout', 'ui.reportlayout', 'ui.editlayout']:
 
-            results.append(result_item)
+                                if model.objects.filter(name=item['name'], member=member).exists():
+                                    result_item['content'].append({'name': item['name'], 'is_duplicate': True})
+                                else:
+                                    result_item['content'].append({'name': item['name'], 'is_duplicate': False})
+
+                            else:
+
+                                if model.objects.filter(name=item['name'], master_user=master_user).exists():
+                                    result_item['content'].append({'name': item['name'], 'is_duplicate': True})
+                                else:
+                                    result_item['content'].append({'name': item['name'], 'is_duplicate': False})
+
+                results.append(result_item)
 
         return Response({
             "results": results,
