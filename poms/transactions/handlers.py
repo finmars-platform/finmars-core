@@ -25,6 +25,19 @@ from django.apps import apps
 
 _l = logging.getLogger('poms.transactions')
 
+CONTEXT_PROPERTIES = {
+    1: 'instrument',
+    2: 'pricing_currency',
+    3: 'accrued_currency',
+    4: 'portfolio',
+    5: 'account',
+    6: 'strategy1',
+    7: 'strategy2',
+    8: 'strategy3',
+    9:  'position',
+    10: 'effective_date',
+}
+
 
 class TransactionTypeProcess(object):
     # if store is false then operations must be rollback outside, for example in view...
@@ -50,7 +63,8 @@ class TransactionTypeProcess(object):
                  fake_id_gen=None,
                  transaction_order_gen=None,
                  now=None,
-                 context=None):
+                 context=None,  # for formula engine
+                 context_values=None):  # context_values = CONTEXT VARIABLES
 
         self.transaction_type = transaction_type
 
@@ -64,6 +78,9 @@ class TransactionTypeProcess(object):
         print('self.process_mode %s' % self.process_mode)
 
         self.default_values = default_values or {}
+        self.context_values = context_values or {}
+
+        print('TransactionTypeProcess.context_values %s' % context_values)
 
         # self.expressions = expressions or {}
         # self.expressions_error = None
@@ -221,9 +238,19 @@ class TransactionTypeProcess(object):
             if i.name in self.values:
                 continue
             value = None
+
+            if i.is_fill_from_context:
+
+                key = CONTEXT_PROPERTIES[i.context_property]
+
+                value = self.context_values[key]
+
+                if value:
+                    self.default_values[i.name] = value
+
             if i.value_type == TransactionTypeInput.RELATION:
                 model_class = i.content_type.model_class()
-                # if i.is_fill_from_context:
+
                 for k, v in self.default_values.items():
                     if isinstance(v, model_class):
                         value = v
@@ -231,7 +258,7 @@ class TransactionTypeProcess(object):
                 if value is None:
                     value = _get_val_by_model_cls(i, model_class)
             else:
-                # if i.is_fill_from_context and i.name in self.default_values:
+
                 if i.name in self.default_values:
                     value = self.default_values[i.name]
                 if value is None:

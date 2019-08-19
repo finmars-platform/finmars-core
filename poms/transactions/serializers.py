@@ -157,7 +157,7 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
         model = TransactionTypeInput
         fields = [
             'id', 'name', 'verbose_name', 'value_type', 'content_type', 'order', 'can_recalculate', 'value_expr',
-            'is_fill_from_context', 'value', 'account', 'instrument_type', 'instrument', 'currency', 'counterparty',
+            'is_fill_from_context', 'context_property', 'value', 'account', 'instrument_type', 'instrument', 'currency', 'counterparty',
             'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3', 'daily_pricing_model',
             'payment_size_detail', 'price_download_scheme', 'pricing_policy', 'periodicity', 'accrual_calculation_model'
             # 'account_object',
@@ -2015,7 +2015,7 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
 
                 is_date_was_empty = False
                 if not ctrn_values.get('date', None):
-                    ctrn_values['date'] = date.min
+                    ctrn_values['date'] = datetime.date.min
                     is_date_was_empty = True
 
                 if instance.complex_transaction:

@@ -440,6 +440,21 @@ class TransactionType(NamedModel, FakeDeletableModel):
 # pos - number
 # price - number
 # acc - content_type:account
+
+CONTEXT_PROPERTIES = (
+    (1, ugettext_lazy('Instrument')),
+    (2, ugettext_lazy('Pricing Currency')),
+    (3, ugettext_lazy('Accrued Currency')),
+    (4, ugettext_lazy('Portfolio')),
+    (5, ugettext_lazy('Account')),
+    (6, ugettext_lazy('Strategy 1')),
+    (7, ugettext_lazy('Strategy 2')),
+    (8, ugettext_lazy('Strategy 3')),
+    (9, ugettext_lazy('Position')),
+    (10, ugettext_lazy('Effective Date')),
+)
+
+
 class TransactionTypeInput(models.Model):
     STRING = 10
     NUMBER = 20
@@ -491,6 +506,9 @@ class TransactionTypeInput(models.Model):
                                   help_text=ugettext_lazy('this is expression for recalculate value'))
 
     is_fill_from_context = models.BooleanField(default=False, verbose_name=ugettext_lazy('is fill from context'))
+    context_property = models.PositiveSmallIntegerField(default=None, choices=CONTEXT_PROPERTIES, null=True, blank=True,
+                                                        verbose_name=ugettext_lazy('context property'))
+
     value = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True,
                              verbose_name=ugettext_lazy('value'),
                              help_text=ugettext_lazy('this is expression for default value'))

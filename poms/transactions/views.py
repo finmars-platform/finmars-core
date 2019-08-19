@@ -438,7 +438,7 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
     def get_context_for_book(self, request):
 
         master_user = request.user.master_user
-        default_values = {}
+        context_values = {}
 
         instrument_id = request.query_params.get('instrument', None)
         pricing_currency_id = request.query_params.get('pricing_currency', None)
@@ -514,7 +514,7 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
             except Currency.DoesNotExist:
                 context_accrued_currency = None
 
-        default_values.update({
+        context_values.update({
             'instrument': context_instrument,
             'pricing_currency': context_pricing_currency,
             'accrued_currency': context_accrued_currency,
@@ -530,19 +530,19 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
             # 'maturity_date': context_maturity_date
         })
 
-        return default_values
+        return context_values
 
     @detail_route(methods=['get', 'put'], url_path='book', serializer_class=TransactionTypeProcessSerializer)
     def book(self, request, pk=None):
 
         complex_transaction_status = ComplexTransaction.PRODUCTION
 
-        default_values = self.get_context_for_book(request)
+        context_values = self.get_context_for_book(request)
 
-        print("default_values %s" % default_values)
+        print("context_values %s" % context_values)
 
         instance = TransactionTypeProcess(process_mode='book', transaction_type=self.get_object(),
-                                          context=self.get_serializer_context(), default_values=default_values,
+                                          context=self.get_serializer_context(), context_values=context_values,
                                           complex_transaction_status=complex_transaction_status)
 
         if request.method == 'GET':
