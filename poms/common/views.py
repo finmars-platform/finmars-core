@@ -165,9 +165,12 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
         groups_order = request.data.get('groups_order', None)
         master_user = request.user.master_user
         content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
+        filter_settings = request.data.get('filter_settings', None)
 
         qs = self.get_queryset()
         qs = self.filter_queryset(qs)
+        qs = handle_filters(qs, filter_settings)
+
 
         filtered_qs = self.get_queryset()
         filtered_qs = filtered_qs.filter(id__in=qs)
@@ -223,6 +226,11 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
 
         queryset = self.filter_queryset(self.get_queryset())
         queryset = handle_filters(queryset, filter_settings)
+
+        # queryset = queryset.filter(**{'user_code__contains':'Bank'})
+
+        print('queryset len %s ' % len(list(queryset)))
+
 
         content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
 

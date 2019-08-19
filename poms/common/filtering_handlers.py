@@ -20,8 +20,8 @@ class ValueType:
 
 
 class FilterType:
-    CONTAIN = 'contain'
-    DOES_NOT_CONTAIN = 'does_not_contain'
+    CONTAINS = 'contains'
+    DOES_NOT_CONTAINS = 'does_not_contains'
     FROM_TO = 'from_to'
     EQUAL = 'equal'
     NOT_EQUAL = 'not_equal'
@@ -45,18 +45,23 @@ def add_filter(qs, filter_config):
 
     # STRING FILTERS START
 
-    if filter_type == FilterType.CONTAIN and int(value_type) == ValueType.STRING:
+    if filter_type == FilterType.CONTAINS and int(value_type) == ValueType.STRING:
 
-        value = filter_config['value']
+        value = filter_config['value'][0]
+
+        print('value? %s' % value)
+        print('key? %s' % key)
 
         options = {}
-        options[key + '__contains'] =  value
+        options[key + '__contains'] = value
+
+        print('options %s' % options)
 
         qs = qs.filter(**options)
 
-    if filter_type == FilterType.DOES_NOT_CONTAIN and int(value_type) == ValueType.STRING:
+    if filter_type == FilterType.DOES_NOT_CONTAINS and int(value_type) == ValueType.STRING:
 
-        value = filter_config['value']
+        value = filter_config['value'][0]
 
         options = {}
         options[key + '__contains'] =  value
@@ -69,7 +74,7 @@ def add_filter(qs, filter_config):
 
     if filter_type == FilterType.EQUAL and value_type == ValueType.NUMBER:
 
-        value = filter_config['value']
+        value = filter_config['value'][0]
 
         options = {}
         options[key] = value
@@ -78,7 +83,7 @@ def add_filter(qs, filter_config):
 
     if filter_type == FilterType.NOT_EQUAL and value_type == ValueType.NUMBER:
 
-        value = filter_config['value']
+        value = filter_config['value'][0]
 
         options = {}
         options[key] = value
@@ -87,7 +92,7 @@ def add_filter(qs, filter_config):
 
     if filter_type == FilterType.GREATER and value_type == ValueType.NUMBER:
 
-        value = filter_config['value']
+        value = filter_config['value'][0]
 
         options = {}
         options[key + '__gt'] = value
@@ -96,7 +101,7 @@ def add_filter(qs, filter_config):
 
     if filter_type == FilterType.GREATER_EQUAL and value_type == ValueType.NUMBER:
 
-        value = filter_config['value']
+        value = filter_config['value'][0]
 
         options = {}
         options[key + '__gte'] = value
@@ -105,7 +110,7 @@ def add_filter(qs, filter_config):
 
     if filter_type == FilterType.LESS and value_type == ValueType.NUMBER:
 
-        value = filter_config['value']
+        value = filter_config['value'][0]
 
         options = {}
         options[key + '__lt'] = value
@@ -114,7 +119,7 @@ def add_filter(qs, filter_config):
 
     if filter_type == FilterType.LESS_EQUAL and value_type == ValueType.NUMBER:
 
-        value = filter_config['value']
+        value = filter_config['value'][0]
 
         options = {}
         options[key + '__lte'] = value
@@ -138,7 +143,7 @@ def add_filter(qs, filter_config):
 
     if filter_type == FilterType.EQUAL and value_type == ValueType.DATE:
 
-        value = filter_config['value']
+        value = filter_config['value'][0]
 
         options = {}
         options[key] = value
@@ -147,7 +152,7 @@ def add_filter(qs, filter_config):
 
     if filter_type == FilterType.NOT_EQUAL and value_type == ValueType.DATE:
 
-        value = filter_config['value']
+        value = filter_config['value'][0]
 
         options = {}
         options[key] = value
@@ -156,7 +161,7 @@ def add_filter(qs, filter_config):
 
     if filter_type == FilterType.GREATER and value_type == ValueType.DATE:
 
-        value = filter_config['value']
+        value = filter_config['value'][0]
 
         options = {}
         options[key + '__gt'] = value
@@ -165,7 +170,7 @@ def add_filter(qs, filter_config):
 
     if filter_type == FilterType.GREATER_EQUAL and value_type == ValueType.DATE:
 
-        value = filter_config['value']
+        value = filter_config['value'][0]
 
         options = {}
         options[key + '__gte'] = value
@@ -174,7 +179,7 @@ def add_filter(qs, filter_config):
 
     if filter_type == FilterType.LESS and value_type == ValueType.DATE:
 
-        value = filter_config['value']
+        value = filter_config['value'][0]
 
         options = {}
         options[key + '__lt'] = value
@@ -183,7 +188,7 @@ def add_filter(qs, filter_config):
 
     if filter_type == FilterType.LESS_EQUAL and value_type == ValueType.DATE:
 
-        value = filter_config['value']
+        value = filter_config['value'][0]
 
         options = {}
         options[key + '__lte'] = value
@@ -213,7 +218,7 @@ def handle_filters(qs, filter_settings):
 
     if filter_settings:
         for filter_config in filter_settings:
-            add_filter(qs, filter_config)
+            qs = add_filter(qs, filter_config)
 
     print("handle_filters %s seconds " % (time.time() - start_time))
 
