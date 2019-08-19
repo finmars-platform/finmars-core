@@ -336,14 +336,8 @@ def format_groups(group_type, master_user, content_type):
     return group_type
 
 
-def handle_groups(qs, request, original_qs, content_type):
+def handle_groups(qs, groups_types, groups_values, groups_order, master_user, original_qs, content_type):
     start_time = time.time()
-
-    groups_types = request.query_params.getlist('groups_types')
-    groups_values = request.query_params.getlist('groups_values')
-    groups_order = request.query_params.get('groups_order')
-
-    master_user = request.user.master_user
 
     groups_types = list(map(lambda x: format_groups(x, master_user, content_type), groups_types))
 

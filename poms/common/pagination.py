@@ -1,12 +1,64 @@
 import sys
 
+from django.core.paginator import InvalidPage
+from rest_framework.exceptions import NotFound
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.settings import api_settings
+from django.utils import six
+
+def _positive_int(integer_string, strict=False, cutoff=None):
+    """
+    Cast a string to a strictly positive integer.
+    """
+    ret = int(integer_string)
+    if ret < 0 or (ret == 0 and strict):
+        raise ValueError()
+    if cutoff:
+        ret = min(ret, cutoff)
+    return ret
 
 
 class PageNumberPaginationExt(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = api_settings.PAGE_SIZE * 10
+
+
+class PostPageNumberPagination(PageNumberPagination):
+    page_size_query_param = 'page_size'
+    max_page_size = api_settings.PAGE_SIZE * 10
+
+    def paginate_queryset(self, queryset, request, view=None):
+
+        page_size = request.data.get('page_size', self.page_size)
+
+        if not page_size:
+            return None
+
+        # print('POST PAGINATION page_size %s' % page_size)
+
+        paginator = self.django_paginator_class(queryset, page_size)
+
+        page_number = request.data.get('page', 1)
+
+        # print('POST PAGINATION page_number %s' % page_number)
+
+        if page_number in self.last_page_strings:
+            page_number = paginator.num_pages
+
+        try:
+            self.page = paginator.page(page_number)
+        except InvalidPage as exc:
+            msg = self.invalid_page_message.format(
+                page_number=page_number, message=six.text_type(exc)
+            )
+            raise NotFound(msg)
+
+        if paginator.num_pages > 1 and self.template is not None:
+            # The browsable API should display pagination controls.
+            self.display_page_controls = True
+
+        self.request = request
+        return list(self.page)
 
 
 class BigPagination(PageNumberPagination):

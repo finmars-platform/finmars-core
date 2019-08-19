@@ -543,6 +543,7 @@ LOGGING = {
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'poms.common.pagination.PageNumberPaginationExt',
+    'POST_PAGINATION_CLASS': 'poms.common.pagination.PostPageNumberPagination',
     'PAGE_SIZE': 40,
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',
