@@ -97,10 +97,13 @@ def add_filter(qs, filter_config):
 
     if filter_type == FilterType.EMPTY and int(value_type) == ValueType.STRING:
 
-        options = {}
-        options[key + '__isnull'] = True
+        include_null_options = {}
+        include_empty_string_options = {}
 
-        qs = qs.filter(Q(**options))
+        include_null_options[key + '__isnull'] = True
+        include_empty_string_options[key] = ''
+
+        qs = qs.filter(Q(**include_null_options) | Q(**include_empty_string_options))
 
     # STRING FILTERS END
 
@@ -237,10 +240,13 @@ def add_filter(qs, filter_config):
 
     if filter_type == FilterType.EMPTY and int(value_type) == ValueType.NUMBER:
 
-        options = {}
-        options[key + '__isnull'] = True
+        include_null_options = {}
+        include_empty_string_options = {}
 
-        qs = qs.filter(Q(**options))
+        include_null_options[key + '__isnull'] = True
+        include_empty_string_options[key] = ''
+
+        qs = qs.filter(Q(**include_null_options) | Q(**include_empty_string_options))
 
     # NUMBER FILTERS END
 
@@ -375,10 +381,13 @@ def add_filter(qs, filter_config):
 
     if filter_type == FilterType.EMPTY and int(value_type) == ValueType.DATE:
 
-        options = {}
-        options[key + '__isnull'] = True
+        include_null_options = {}
+        include_empty_string_options = {}
 
-        qs = qs.filter(Q(**options))
+        include_null_options[key + '__isnull'] = True
+        include_empty_string_options[key] = ''
+
+        qs = qs.filter(Q(**include_null_options) | Q(**include_empty_string_options))
 
     # DATE FILTERS END
 
