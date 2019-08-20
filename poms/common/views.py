@@ -229,7 +229,7 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
 
         # queryset = queryset.filter(**{'user_code__contains':'Bank'})
 
-        print('queryset len %s ' % len(list(queryset)))
+        # print('queryset len %s ' % len(list(queryset)))
 
 
         content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
