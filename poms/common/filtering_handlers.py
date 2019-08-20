@@ -44,6 +44,7 @@ def add_filter(qs, filter_config):
     filter_type = filter_config['filter_type']
     value_type = int(filter_config['value_type'])
     key = filter_config['key']
+    value = None
 
     exclude_empty_cells = filter_config['exclude_empty_cells']
 
@@ -57,29 +58,42 @@ def add_filter(qs, filter_config):
 
     if filter_type == FilterType.CONTAINS and int(value_type) == ValueType.STRING:
 
-        value = filter_config['value'][0]
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
 
-        options = {}
-        options[key + '__contains'] = value
+        if value:
 
-        include_null_options = {}
-        if not exclude_empty_cells:
-            include_null_options[key + '__isnull'] = True
+            options = {}
+            options[key + '__contains'] = value
 
-        qs = qs.filter(Q(**options) | Q(**include_null_options))
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+                include_empty_string_options[key] = ''
+
+            print('include_null_options %s' % include_null_options)
+            print('options %s' % options)
+
+            qs = qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
     if filter_type == FilterType.DOES_NOT_CONTAINS and int(value_type) == ValueType.STRING:
 
-        value = filter_config['value'][0]
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
 
-        options = {}
-        options[key + '__contains'] =  value
+        if value:
 
-        include_null_options = {}
-        if not exclude_empty_cells:
-            include_null_options[key + '__isnull'] = True
+            options = {}
+            options[key + '__contains'] =  value
 
-        qs = qs.exclude(Q(**options)).filter(Q(**include_null_options))
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+                include_empty_string_options[key] = ''
+
+            qs = qs.exclude(Q(**options)).filter(Q(**include_null_options) | Q(**include_empty_string_options))
 
     if filter_type == FilterType.EMPTY and int(value_type) == ValueType.STRING:
 
@@ -94,96 +108,132 @@ def add_filter(qs, filter_config):
 
     if filter_type == FilterType.EQUAL and value_type == ValueType.NUMBER:
 
-        value = filter_config['value'][0]
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
 
-        options = {}
-        options[key] = value
+        if value:
 
-        include_null_options = {}
-        if not exclude_empty_cells:
-            include_null_options[key + '__isnull'] = True
+            options = {}
+            options[key] = value
 
-        qs = qs.filter(Q(**options) | Q(**include_null_options))
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+                include_empty_string_options[key] = ''
+
+            qs = qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
     if filter_type == FilterType.NOT_EQUAL and value_type == ValueType.NUMBER:
 
-        value = filter_config['value'][0]
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
 
-        options = {}
-        options[key] = value
+        if value:
 
-        include_null_options = {}
-        if not exclude_empty_cells:
-            include_null_options[key + '__isnull'] = True
+            options = {}
+            options[key] = value
 
-        qs = qs.exclude(Q(**options) | Q(**include_null_options))
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+                include_empty_string_options[key] = ''
+
+            qs = qs.exclude(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
     if filter_type == FilterType.GREATER and value_type == ValueType.NUMBER:
 
-        value = filter_config['value'][0]
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
 
-        options = {}
-        options[key + '__gt'] = value
+        if value:
 
-        include_null_options = {}
-        if not exclude_empty_cells:
-            include_null_options[key + '__isnull'] = True
+            options = {}
+            options[key + '__gt'] = value
 
-        qs = qs.filter(Q(**options) | Q(**include_null_options))
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+                include_empty_string_options[key] = ''
+
+            qs = qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
     if filter_type == FilterType.GREATER_EQUAL and value_type == ValueType.NUMBER:
 
-        value = filter_config['value'][0]
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
 
-        options = {}
-        options[key + '__gte'] = value
+        if value:
 
-        include_null_options = {}
-        if not exclude_empty_cells:
-            include_null_options[key + '__isnull'] = True
+            options = {}
+            options[key + '__gte'] = value
 
-        qs = qs.filter(Q(**options) | Q(**include_null_options))
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+                include_empty_string_options[key] = ''
+
+            qs = qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
     if filter_type == FilterType.LESS and value_type == ValueType.NUMBER:
 
-        value = filter_config['value'][0]
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
 
-        options = {}
-        options[key + '__lt'] = value
+        if value:
 
-        include_null_options = {}
-        if not exclude_empty_cells:
-            include_null_options[key + '__isnull'] = True
+            options = {}
+            options[key + '__lt'] = value
 
-        qs = qs.filter(Q(**options) | Q(**include_null_options))
+            include_null_options = {}
+            include_empty_string_options = {}
+
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+                include_empty_string_options[key] = ''
+
+            qs = qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
     if filter_type == FilterType.LESS_EQUAL and value_type == ValueType.NUMBER:
 
-        value = filter_config['value'][0]
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
 
-        options = {}
-        options[key + '__lte'] = value
+        if value:
 
-        include_null_options = {}
-        if not exclude_empty_cells:
-            include_null_options[key + '__isnull'] = True
+            options = {}
+            options[key + '__lte'] = value
 
-        qs = qs.filter(Q(**options) | Q(**include_null_options))
+            include_null_options = {}
+            include_empty_string_options = {}
+
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+                include_empty_string_options[key] = ''
+
+            qs = qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
     if filter_type == FilterType.FROM_TO and value_type == ValueType.NUMBER:
 
         max_value = filter_config['value']['max_value']
         min_value = filter_config['value']['min_value']
 
-        options = {}
-        options[key + '__gte'] =  min_value
-        options[key + '__lte'] =  max_value
+        if max_value is not None and min_value is not None:
 
-        include_null_options = {}
-        if not exclude_empty_cells:
-            include_null_options[key + '__isnull'] = True
+            options = {}
+            options[key + '__gte'] =  min_value
+            options[key + '__lte'] =  max_value
 
-        qs = qs.filter(Q(**options) | Q(**include_null_options))
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+                include_empty_string_options[key] = ''
+
+            qs = qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
     if filter_type == FilterType.EMPTY and int(value_type) == ValueType.NUMBER:
 
@@ -198,96 +248,130 @@ def add_filter(qs, filter_config):
 
     if filter_type == FilterType.EQUAL and value_type == ValueType.DATE:
 
-        value = filter_config['value'][0]
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
 
-        options = {}
-        options[key] = value
+        if value:
 
-        include_null_options = {}
-        if not exclude_empty_cells:
-            include_null_options[key + '__isnull'] = True
+            options = {}
+            options[key] = value
 
-        qs = qs.filter(Q(**options) | Q(**include_null_options))
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+                include_empty_string_options[key] = ''
+
+            qs = qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
     if filter_type == FilterType.NOT_EQUAL and value_type == ValueType.DATE:
 
-        value = filter_config['value'][0]
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
 
-        options = {}
-        options[key] = value
+        if value:
 
-        include_null_options = {}
-        if not exclude_empty_cells:
-            include_null_options[key + '__isnull'] = True
+            options = {}
+            options[key] = value
 
-        qs = qs.exclude(Q(**options) | Q(**include_null_options))
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+                include_empty_string_options[key] = ''
+
+            qs = qs.exclude(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
     if filter_type == FilterType.GREATER and value_type == ValueType.DATE:
 
-        value = filter_config['value'][0]
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
 
-        options = {}
-        options[key + '__gt'] = value
+        if value:
 
-        include_null_options = {}
-        if not exclude_empty_cells:
-            include_null_options[key + '__isnull'] = True
+            options = {}
+            options[key + '__gt'] = value
 
-        qs = qs.filter(Q(**options) | Q(**include_null_options))
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+                include_empty_string_options[key] = ''
+
+            qs = qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
     if filter_type == FilterType.GREATER_EQUAL and value_type == ValueType.DATE:
 
-        value = filter_config['value'][0]
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
 
-        options = {}
-        options[key + '__gte'] = value
+        if value:
 
-        include_null_options = {}
-        if not exclude_empty_cells:
-            include_null_options[key + '__isnull'] = True
+            options = {}
+            options[key + '__gte'] = value
 
-        qs = qs.filter(Q(**options) | Q(**include_null_options))
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+                include_empty_string_options[key] = ''
+
+            qs = qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
     if filter_type == FilterType.LESS and value_type == ValueType.DATE:
 
-        value = filter_config['value'][0]
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
 
-        options = {}
-        options[key + '__lt'] = value
+        if value:
 
-        include_null_options = {}
-        if not exclude_empty_cells:
-            include_null_options[key + '__isnull'] = True
+            options = {}
+            options[key + '__lt'] = value
 
-        qs = qs.filter(Q(**options) | Q(**include_null_options))
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+                include_empty_string_options[key] = ''
+
+            qs = qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
     if filter_type == FilterType.LESS_EQUAL and value_type == ValueType.DATE:
 
-        value = filter_config['value'][0]
+        if len(filter_config['value']):
+                value = filter_config['value'][0]
 
-        options = {}
-        options[key + '__lte'] = value
+        if value:
 
-        include_null_options = {}
-        if not exclude_empty_cells:
-            include_null_options[key + '__isnull'] = True
+            options = {}
+            options[key + '__lte'] = value
 
-        qs = qs.filter(Q(**options) | Q(**include_null_options))
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+                include_empty_string_options[key] = ''
+
+            qs = qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
     if filter_type == FilterType.FROM_TO and value_type == ValueType.DATE:
 
         max_value = filter_config['value']['max_value']
         min_value = filter_config['value']['min_value']
 
-        options = {}
-        options[key + '__gte'] =  min_value
-        options[key + '__lte'] =  max_value
+        if max_value and min_value:
 
-        include_null_options = {}
-        if not exclude_empty_cells:
-            include_null_options[key + '__isnull'] = True
+            options = {}
+            options[key + '__gte'] =  min_value
+            options[key + '__lte'] =  max_value
 
-        qs = qs.filter(Q(**options) | Q(**include_null_options))
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+                include_empty_string_options[key] = ''
+
+            qs = qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
     if filter_type == FilterType.EMPTY and int(value_type) == ValueType.DATE:
 
