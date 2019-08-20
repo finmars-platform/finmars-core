@@ -32,6 +32,12 @@ class FilterType:
     LESS_EQUAL = 'less_equal'
 
 
+def add_dynamic_attribute_filter(qs, filter_config):
+
+    print('add dynamic attribute filter')
+
+    return qs
+
 def add_filter(qs, filter_config):
     # print('filter_config %s ' % filter_config)
 
@@ -297,12 +303,23 @@ def add_filter(qs, filter_config):
     return qs
 
 
+def is_dynamic_attribute_filter(filter_config):
+
+    key = filter_config['key']
+
+    return 'attributes' in key
+
+
 def handle_filters(qs, filter_settings):
     start_time = time.time()
 
     if filter_settings:
         for filter_config in filter_settings:
-            qs = add_filter(qs, filter_config)
+
+            if is_dynamic_attribute_filter(filter_config):
+                qs = add_dynamic_attribute_filter(qs, filter_config)
+            else:
+                qs = add_filter(qs, filter_config)
 
     print("handle_filters %s seconds " % (time.time() - start_time))
 
