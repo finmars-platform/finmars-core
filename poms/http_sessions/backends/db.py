@@ -31,8 +31,8 @@ class SessionStore(DjangoSessionStore):
         except (ValueError, TypeError):
             master_user_id = None
 
-        print('data %s' % data)
-        print('create_model_instance master_user_id %s' % master_user_id)
+        # print('data %s' % data)
+        # print('create_model_instance master_user_id %s' % master_user_id)
 
         if master_user_id:
             from poms.users.models import MasterUser

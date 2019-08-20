@@ -1093,7 +1093,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
     queryset = get_complex_transaction_queryset(select_related=False, transactions=True)
     serializer_class = ComplexTransactionSerializer
     permission_classes = AbstractModelViewSet.permission_classes + [
-        ComplexTransactionPermission
+        # ComplexTransactionPermission
     ]
     filter_backends = AbstractModelViewSet.filter_backends + [
         ComplexTransactionPermissionFilter,

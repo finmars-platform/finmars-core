@@ -182,7 +182,7 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
 
         page = self.paginate_queryset(filtered_qs)
 
-        print("Filtered List %s seconds " % (time.time() - start_time))
+        print("Filtered EV Group List %s seconds " % (time.time() - start_time))
 
         if page is not None:
             return self.get_paginated_response(page)
@@ -222,6 +222,8 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
     @list_route(methods=['post'], url_path='filtered')
     def filtered_list(self, request, *args, **kwargs):
 
+        start_time = time.time()
+
         filter_settings = request.data.get('filter_settings', None)
 
         queryset = self.filter_queryset(self.get_queryset())
@@ -242,6 +244,10 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
+
+
+        print("Filtered List %s seconds " % (time.time() - start_time))
+
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
