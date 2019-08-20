@@ -33,7 +33,7 @@ class FilterType:
 
 
 def add_filter(qs, filter_config):
-    print('filter_config %s ' % filter_config)
+    # print('filter_config %s ' % filter_config)
 
     filter_type = filter_config['filter_type']
     value_type = int(filter_config['value_type'])
@@ -41,11 +41,11 @@ def add_filter(qs, filter_config):
 
     exclude_empty_cells = filter_config['exclude_empty_cells']
 
-    print('filter_type %s' % filter_type)
-    print('value_type %s' % value_type)
-    print('exclude_empty_cells %s' % exclude_empty_cells)
-
-    print('qs len before filters %s' % len(list(qs)))
+    # print('filter_type %s' % filter_type)
+    # print('value_type %s' % value_type)
+    # print('exclude_empty_cells %s' % exclude_empty_cells)
+    #
+    # print('qs len before filters %s' % len(list(qs)))
 
     # STRING FILTERS START
 
@@ -292,7 +292,7 @@ def add_filter(qs, filter_config):
 
     # DATE FILTERS END
 
-    print('qs len after filters %s' % len(list(qs)))
+    # print('qs len after filters %s' % len(list(qs)))
 
     return qs
 

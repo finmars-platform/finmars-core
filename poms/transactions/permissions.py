@@ -15,6 +15,6 @@ class TransactionObjectPermission(BasePermission):
 class ComplexTransactionPermission(BasePermission):
 
     def has_permission(self, request, view):
-        if request.method in ['POST']:
-            return False
+        # if request.method in ['POST']:
+        #     return False
         return True
