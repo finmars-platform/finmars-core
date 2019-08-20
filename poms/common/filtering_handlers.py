@@ -20,6 +20,7 @@ class ValueType:
 
 
 class FilterType:
+    EMPTY = 'empty'
     CONTAINS = 'contains'
     DOES_NOT_CONTAINS = 'does_not_contains'
     FROM_TO = 'from_to'
@@ -38,8 +39,11 @@ def add_filter(qs, filter_config):
     value_type = int(filter_config['value_type'])
     key = filter_config['key']
 
+    exclude_empty_cells = filter_config['exclude_empty_cells']
+
     print('filter_type %s' % filter_type)
     print('value_type %s' % value_type)
+    print('exclude_empty_cells %s' % exclude_empty_cells)
 
     print('qs len before filters %s' % len(list(qs)))
 
@@ -49,15 +53,14 @@ def add_filter(qs, filter_config):
 
         value = filter_config['value'][0]
 
-        print('value? %s' % value)
-        print('key? %s' % key)
-
         options = {}
         options[key + '__contains'] = value
 
-        print('options %s' % options)
+        include_null_options = {}
+        if not exclude_empty_cells:
+            include_null_options[key + '__isnull'] = True
 
-        qs = qs.filter(**options)
+        qs = qs.filter(Q(**options) | Q(**include_null_options))
 
     if filter_type == FilterType.DOES_NOT_CONTAINS and int(value_type) == ValueType.STRING:
 
@@ -66,7 +69,18 @@ def add_filter(qs, filter_config):
         options = {}
         options[key + '__contains'] =  value
 
-        qs = qs.exclude(**options)
+        include_null_options = {}
+        if not exclude_empty_cells:
+            include_null_options[key + '__isnull'] = True
+
+        qs = qs.exclude(Q(**options)).filter(Q(**include_null_options))
+
+    if filter_type == FilterType.EMPTY and int(value_type) == ValueType.STRING:
+
+        options = {}
+        options[key + '__isnull'] = True
+
+        qs = qs.filter(Q(**options))
 
     # STRING FILTERS END
 
@@ -79,7 +93,11 @@ def add_filter(qs, filter_config):
         options = {}
         options[key] = value
 
-        qs = qs.filter(**options)
+        include_null_options = {}
+        if not exclude_empty_cells:
+            include_null_options[key + '__isnull'] = True
+
+        qs = qs.filter(Q(**options) | Q(**include_null_options))
 
     if filter_type == FilterType.NOT_EQUAL and value_type == ValueType.NUMBER:
 
@@ -88,7 +106,11 @@ def add_filter(qs, filter_config):
         options = {}
         options[key] = value
 
-        qs = qs.exclude(**options)
+        include_null_options = {}
+        if not exclude_empty_cells:
+            include_null_options[key + '__isnull'] = True
+
+        qs = qs.exclude(Q(**options) | Q(**include_null_options))
 
     if filter_type == FilterType.GREATER and value_type == ValueType.NUMBER:
 
@@ -97,7 +119,11 @@ def add_filter(qs, filter_config):
         options = {}
         options[key + '__gt'] = value
 
-        qs = qs.filter(**options)
+        include_null_options = {}
+        if not exclude_empty_cells:
+            include_null_options[key + '__isnull'] = True
+
+        qs = qs.filter(Q(**options) | Q(**include_null_options))
 
     if filter_type == FilterType.GREATER_EQUAL and value_type == ValueType.NUMBER:
 
@@ -106,7 +132,11 @@ def add_filter(qs, filter_config):
         options = {}
         options[key + '__gte'] = value
 
-        qs = qs.filter(**options)
+        include_null_options = {}
+        if not exclude_empty_cells:
+            include_null_options[key + '__isnull'] = True
+
+        qs = qs.filter(Q(**options) | Q(**include_null_options))
 
     if filter_type == FilterType.LESS and value_type == ValueType.NUMBER:
 
@@ -115,7 +145,11 @@ def add_filter(qs, filter_config):
         options = {}
         options[key + '__lt'] = value
 
-        qs = qs.filter(**options)
+        include_null_options = {}
+        if not exclude_empty_cells:
+            include_null_options[key + '__isnull'] = True
+
+        qs = qs.filter(Q(**options) | Q(**include_null_options))
 
     if filter_type == FilterType.LESS_EQUAL and value_type == ValueType.NUMBER:
 
@@ -124,7 +158,11 @@ def add_filter(qs, filter_config):
         options = {}
         options[key + '__lte'] = value
 
-        qs = qs.filter(options)
+        include_null_options = {}
+        if not exclude_empty_cells:
+            include_null_options[key + '__isnull'] = True
+
+        qs = qs.filter(Q(**options) | Q(**include_null_options))
 
     if filter_type == FilterType.FROM_TO and value_type == ValueType.NUMBER:
 
@@ -135,7 +173,18 @@ def add_filter(qs, filter_config):
         options[key + '__gte'] =  min_value
         options[key + '__lte'] =  max_value
 
-        qs = qs.filter(**options)
+        include_null_options = {}
+        if not exclude_empty_cells:
+            include_null_options[key + '__isnull'] = True
+
+        qs = qs.filter(Q(**options) | Q(**include_null_options))
+
+    if filter_type == FilterType.EMPTY and int(value_type) == ValueType.NUMBER:
+
+        options = {}
+        options[key + '__isnull'] = True
+
+        qs = qs.filter(Q(**options))
 
     # NUMBER FILTERS END
 
@@ -148,7 +197,11 @@ def add_filter(qs, filter_config):
         options = {}
         options[key] = value
 
-        qs = qs.filter(**options)
+        include_null_options = {}
+        if not exclude_empty_cells:
+            include_null_options[key + '__isnull'] = True
+
+        qs = qs.filter(Q(**options) | Q(**include_null_options))
 
     if filter_type == FilterType.NOT_EQUAL and value_type == ValueType.DATE:
 
@@ -157,7 +210,11 @@ def add_filter(qs, filter_config):
         options = {}
         options[key] = value
 
-        qs = qs.exclude(**options)
+        include_null_options = {}
+        if not exclude_empty_cells:
+            include_null_options[key + '__isnull'] = True
+
+        qs = qs.exclude(Q(**options) | Q(**include_null_options))
 
     if filter_type == FilterType.GREATER and value_type == ValueType.DATE:
 
@@ -166,7 +223,11 @@ def add_filter(qs, filter_config):
         options = {}
         options[key + '__gt'] = value
 
-        qs = qs.filter(**options)
+        include_null_options = {}
+        if not exclude_empty_cells:
+            include_null_options[key + '__isnull'] = True
+
+        qs = qs.filter(Q(**options) | Q(**include_null_options))
 
     if filter_type == FilterType.GREATER_EQUAL and value_type == ValueType.DATE:
 
@@ -175,7 +236,11 @@ def add_filter(qs, filter_config):
         options = {}
         options[key + '__gte'] = value
 
-        qs = qs.filter(**options)
+        include_null_options = {}
+        if not exclude_empty_cells:
+            include_null_options[key + '__isnull'] = True
+
+        qs = qs.filter(Q(**options) | Q(**include_null_options))
 
     if filter_type == FilterType.LESS and value_type == ValueType.DATE:
 
@@ -184,7 +249,11 @@ def add_filter(qs, filter_config):
         options = {}
         options[key + '__lt'] = value
 
-        qs = qs.filter(**options)
+        include_null_options = {}
+        if not exclude_empty_cells:
+            include_null_options[key + '__isnull'] = True
+
+        qs = qs.filter(Q(**options) | Q(**include_null_options))
 
     if filter_type == FilterType.LESS_EQUAL and value_type == ValueType.DATE:
 
@@ -193,7 +262,11 @@ def add_filter(qs, filter_config):
         options = {}
         options[key + '__lte'] = value
 
-        qs = qs.filter(**options)
+        include_null_options = {}
+        if not exclude_empty_cells:
+            include_null_options[key + '__isnull'] = True
+
+        qs = qs.filter(Q(**options) | Q(**include_null_options))
 
     if filter_type == FilterType.FROM_TO and value_type == ValueType.DATE:
 
@@ -204,7 +277,18 @@ def add_filter(qs, filter_config):
         options[key + '__gte'] =  min_value
         options[key + '__lte'] =  max_value
 
-        qs = qs.filter(**options)
+        include_null_options = {}
+        if not exclude_empty_cells:
+            include_null_options[key + '__isnull'] = True
+
+        qs = qs.filter(Q(**options) | Q(**include_null_options))
+
+    if filter_type == FilterType.EMPTY and int(value_type) == ValueType.DATE:
+
+        options = {}
+        options[key + '__isnull'] = True
+
+        qs = qs.filter(Q(**options))
 
     # DATE FILTERS END
 
