@@ -1,4 +1,5 @@
 from celery import shared_task, chord, current_task
+from django.db import IntegrityError
 
 from poms.common.formula import safe_eval, ExpressionEvalError
 
@@ -124,7 +125,11 @@ def get_item(scheme, result):
 
         try:
 
-            item_result = Model.objects.get(master_user_id=result['master_user'], user_code=result['user_code'])
+            print('result %s' % result)
+
+            if 'user_code' in result:
+
+                item_result = Model.objects.get(master_user_id=result['master_user'], user_code=result['user_code'])
 
         except Model.DoesNotExist:
 
@@ -194,7 +199,14 @@ def process_csv_file(master_user,
             executed_filter_expression = True
 
             if scheme.filter_expr:
-                executed_filter_expression = safe_eval(scheme.filter_expr, names=csv_row_dict_raw, context={})
+
+                try:
+                    executed_filter_expression = safe_eval(scheme.filter_expr, names=csv_row_dict_raw, context={})
+                except (ExpressionEvalError, TypeError, Exception, KeyError):
+
+                    _l.info('Filter expression error')
+
+                    return
 
             _l.info('csv_row_dict_raw %s' % csv_row_dict_raw)
             _l.info('executed_filter_expression %s' % executed_filter_expression)
@@ -281,7 +293,7 @@ def process_csv_file(master_user,
 
                     key = entity_field.system_property_key
 
-                    _l.info('key %s' % key)
+
 
                     if entity_field.expression != '':
 
@@ -301,7 +313,7 @@ def process_csv_file(master_user,
 
                                 executed_expressions.append(executed_expression)
 
-                                print('executed_expression %s ' % executed_expression)
+                                _l.info('executed_expression %s ' % executed_expression)
 
                                 if key in mapping_map:
 
@@ -362,9 +374,11 @@ def process_csv_file(master_user,
 
                                 else:
 
+                                    _l.info('key %s' % key)
+
                                     instance[key] = executed_expression
 
-                                    print('date instance[key] %s' % instance[key])
+                                    _l.info('date instance[key] %s' % instance[key])
 
                                     # if key == 'date':
                                     #
@@ -540,7 +554,13 @@ class ValidateHandler:
                 if key not in many_to_many_fields and key not in system_fields:
                     result_without_many_to_many[key] = value
 
-        instance = Model(**result_without_many_to_many)
+        try:
+            instance = Model(**result_without_many_to_many)
+        except (ValidationError, IntegrityError):
+
+            _l.info("Validation error create simple instance %s" % result)
+
+            instance = None
 
         return instance
 
@@ -580,11 +600,13 @@ class ValidateHandler:
 
             instance = self.create_simple_instance(scheme, result)
 
-            # self.fill_with_relation_attributes(instance, result)
-            if scheme.content_type.model != 'pricehistory' and scheme.content_type.model != 'currencyhistory':
-                self.attributes_full_clean(instance, result['attributes'])
+            if instance:
 
-            instance.full_clean()
+                # self.fill_with_relation_attributes(instance, result)
+                if scheme.content_type.model != 'pricehistory' and scheme.content_type.model != 'currencyhistory':
+                    self.attributes_full_clean(instance, result['attributes'])
+
+                instance.full_clean()
 
         except CoreValidationError as e:
 
@@ -634,7 +656,7 @@ class ValidateHandler:
                 process_errors[index]['error_reaction'] = 'Break import'
                 return process_errors
 
-    def full_clean_results(self, scheme, error_handler, mode, results, process_errors):
+    def full_clean_results(self, scheme, error_handler, mode, results, process_errors, update_state, task_instance):
 
         for index, result in enumerate(results):
 
@@ -747,7 +769,13 @@ class ValidateHandler:
 
         _l.info('ValidateHandler.full_clean_results: initialized')
 
-        process_errors = self.full_clean_results(scheme, error_handler, mode, results, process_errors)
+        instance.processed_rows = 0
+
+        update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
+                     meta={'processed_rows': instance.processed_rows,
+                           'total_rows': instance.total_rows})
+
+        process_errors = self.full_clean_results(scheme, error_handler, mode, results, process_errors, update_state, instance)
 
         _l.info('ValidateHandler.full_clean_results: finished')
 
@@ -836,7 +864,10 @@ class ImportHandler:
                 if key not in many_to_many_fields and key not in system_fields:
                     result_without_many_to_many[key] = value
 
-        instance = Model.objects.create(**result_without_many_to_many)
+        try:
+            instance = Model.objects.create(**result_without_many_to_many)
+        except (ValidationError, IntegrityError):
+            instance = None
 
         return instance
 
@@ -848,11 +879,13 @@ class ImportHandler:
 
             _l.info('ImportHandler save_instance %s ' % instance)
 
-            self.fill_with_relation_attributes(instance, result)
-            if scheme.content_type.model != 'pricehistory' and scheme.content_type.model != 'currencyhistory':
-                self.fill_with_dynamic_attributes(instance, result['attributes'])
+            if instance:
 
-            instance.save()
+                self.fill_with_relation_attributes(instance, result)
+                if scheme.content_type.model != 'pricehistory' and scheme.content_type.model != 'currencyhistory':
+                    self.fill_with_dynamic_attributes(instance, result['attributes'])
+
+                instance.save()
 
         except ValidationError as e:
 

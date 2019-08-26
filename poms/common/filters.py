@@ -121,10 +121,15 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
     def filter_queryset(self, request, queryset, view):
 
+        print('GroupsAttributeFilter')
+
         start_time = time.time()
 
-        groups_types = request.query_params.getlist('groups_types')
-        groups_values = request.query_params.getlist('groups_values')
+        # groups_types = request.query_params.getlist('groups_types')
+        # groups_values = request.query_params.getlist('groups_values')
+
+        groups_types = request.data.get('groups_types', [])
+        groups_values = request.data.get('groups_values', [])
 
         master_user = request.user.master_user
 
@@ -222,10 +227,12 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
         return queryset
 
-
+# DEPRECATED
 class AttributeFilter(BaseFilterBackend):
 
     def filter_queryset(self, request, queryset, view):
+
+        print('Attributes Filter')
 
         start_time = time.time()
 
@@ -242,8 +249,8 @@ class AttributeFilter(BaseFilterBackend):
 
         # print('AttributeFilter init')
 
-        # print('AttributeFilter.groups_types %s' % groups_types)
-        # print('AttributeFilter.groups_values %s' % groups_values)
+        print('AttributeFilter.groups_types %s' % groups_types)
+        print('AttributeFilter.groups_values %s' % groups_values)
 
         if len(groups_types) and len(groups_values):
 
