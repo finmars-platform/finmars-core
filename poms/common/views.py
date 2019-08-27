@@ -20,7 +20,7 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
 
 from poms.audit.mixins import HistoricalModelMixin
 from poms.common.filtering_handlers import handle_filters
-from poms.common.filters import ByIdFilterBackend, ByIsDeletedFilterBackend
+from poms.common.filters import ByIdFilterBackend, ByIsDeletedFilterBackend, OrderingPostFilter
 from poms.common.mixins import BulkModelMixin, DestroyModelFakeMixin, UpdateModelMixinExt
 from poms.common.sorting import sort_by_dynamic_attrs
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
@@ -115,6 +115,7 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
         ByIsDeletedFilterBackend,
         DjangoFilterBackend,
         OrderingFilter,
+        OrderingPostFilter
     ]
 
     def list(self, request):
@@ -200,6 +201,7 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         ByIsDeletedFilterBackend,
         DjangoFilterBackend,
         OrderingFilter,
+        OrderingPostFilter
     ]
 
     def list(self, request, *args, **kwargs):
@@ -234,6 +236,8 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         queryset = handle_filters(queryset, filter_settings, master_user, content_type)
 
         ordering = request.data.get('ordering', None)
+
+        print('ordering %s' % ordering)
 
         if ordering:
             queryset = sort_by_dynamic_attrs(queryset, ordering, master_user, content_type)

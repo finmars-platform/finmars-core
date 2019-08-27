@@ -3,6 +3,7 @@ from functools import partial
 import django_filters
 from django.db.models import F
 from rest_framework.filters import BaseFilterBackend, FilterSet
+from rest_framework.settings import api_settings
 
 from poms.common.middleware import get_request
 from poms.common.utils import force_qs_evaluation
@@ -12,6 +13,10 @@ from poms.obj_perms.utils import obj_perms_filter_objects_for_view
 from django.db.models import Q
 
 from django.contrib.contenttypes.models import ContentType
+
+from django.utils.translation import ugettext_lazy as _
+from django.utils import six
+from django.core.exceptions import ImproperlyConfigured
 
 import time
 
@@ -373,3 +378,114 @@ class IsDefaultFilter(django_filters.BooleanFilter):
             return qs.filter(**{'pk': F('master_user__%s__id' % self.source)})
         else:
             return qs.exclude(**{'pk': F('master_user__%s__id' % self.source)})
+
+
+class OrderingPostFilter(BaseFilterBackend):
+    # The URL query parameter used for the ordering.
+    ordering_param = api_settings.ORDERING_PARAM
+    ordering_fields = None
+    template = 'rest_framework/filters/ordering.html'
+
+    def get_ordering(self, request, queryset, view):
+        """
+        Ordering is set by a comma delimited ?ordering=... query parameter.
+
+        The `ordering` query parameter can be overridden by setting
+        the `ordering_param` value on the OrderingFilter or by
+        specifying an `ORDERING_PARAM` value in the API settings.
+        """
+        params = request.data.get(self.ordering_param)
+        if params:
+            fields = [param.strip() for param in params.split(',')]
+            ordering = self.remove_invalid_fields(queryset, fields, view)
+            if ordering:
+                return ordering
+
+        # No ordering was included, or all the ordering fields were invalid
+        return self.get_default_ordering(view)
+
+    def get_default_ordering(self, view):
+        ordering = getattr(view, 'ordering', None)
+        if isinstance(ordering, six.string_types):
+            return (ordering,)
+        return ordering
+
+    def get_default_valid_fields(self, queryset, view):
+        # If `ordering_fields` is not specified, then we determine a default
+        # based on the serializer class, if one exists on the view.
+        if hasattr(view, 'get_serializer_class'):
+            try:
+                serializer_class = view.get_serializer_class()
+            except AssertionError:
+                # Raised by the default implementation if
+                # no serializer_class was found
+                serializer_class = None
+        else:
+            serializer_class = getattr(view, 'serializer_class', None)
+
+        if serializer_class is None:
+            msg = (
+                "Cannot use %s on a view which does not have either a "
+                "'serializer_class', an overriding 'get_serializer_class' "
+                "or 'ordering_fields' attribute."
+            )
+            raise ImproperlyConfigured(msg % self.__class__.__name__)
+
+        return [
+            (field.source or field_name, field.label)
+            for field_name, field in serializer_class().fields.items()
+            if not getattr(field, 'write_only', False) and not field.source == '*'
+        ]
+
+    def get_valid_fields(self, queryset, view):
+        valid_fields = getattr(view, 'ordering_fields', self.ordering_fields)
+
+        if valid_fields is None:
+            # Default to allowing filtering on serializer fields
+            return self.get_default_valid_fields(queryset, view)
+
+        elif valid_fields == '__all__':
+            # View explicitly allows filtering on any model field
+            valid_fields = [
+                (field.name, field.verbose_name) for field in queryset.model._meta.fields
+            ]
+            valid_fields += [
+                (key, key.title().split('__'))
+                for key in queryset.query.annotations.keys()
+            ]
+        else:
+            valid_fields = [
+                (item, item) if isinstance(item, six.string_types) else item
+                for item in valid_fields
+            ]
+
+        return valid_fields
+
+    def remove_invalid_fields(self, queryset, fields, view):
+        valid_fields = [item[0] for item in self.get_valid_fields(queryset, view)]
+        return [term for term in fields if term.lstrip('-') in valid_fields]
+
+    def filter_queryset(self, request, queryset, view):
+        ordering = self.get_ordering(request, queryset, view)
+
+        if ordering:
+            return queryset.order_by(*ordering)
+
+        return queryset
+
+    def get_template_context(self, request, queryset, view):
+        current = self.get_ordering(request, queryset, view)
+        current = None if current is None else current[0]
+        options = []
+        for key, label in self.get_valid_fields(queryset, view):
+            options.append((key, '%s - %s' % (label, _('ascending'))))
+            options.append(('-' + key, '%s - %s' % (label, _('descending'))))
+        return {
+            'request': request,
+            'current': current,
+            'param': self.ordering_param,
+            'options': options,
+        }
+
+    def get_fields(self, view):
+        return [self.ordering_param]
