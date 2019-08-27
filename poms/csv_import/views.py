@@ -1,7 +1,6 @@
 from celery.result import AsyncResult
 from django.core.signing import TimestampSigner
 
-
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -9,7 +8,7 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.filters import FilterSet
 from django.apps import apps
 
-
+from poms.celery_tasks.models import CeleryTask
 from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet
 
 from poms.csv_import.tasks import data_csv_file_import, data_csv_file_import_validate
@@ -24,7 +23,6 @@ from poms.obj_attrs.models import GenericAttributeType, GenericAttribute, Generi
 
 from django.utils.translation import ugettext
 
-
 from .filters import SchemeContentTypeFilter
 from .models import CsvDataImport, CsvImportScheme
 from .serializers import CsvDataImportSerializer, CsvImportSchemeSerializer
@@ -34,9 +32,6 @@ from rest_framework.exceptions import PermissionDenied
 import time
 
 from logging import getLogger
-
-
-
 
 _l = getLogger('poms.csv_import')
 
@@ -88,6 +83,14 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
             res = AsyncResult(signer.unsign(task_id))
 
+            try:
+                celery_task = CeleryTask.objects.get(master_user=request.user.master_user, task_id=task_id)
+            except CeleryTask.DoesNotExist:
+                celery_task = None
+                print("Cant create Celery Task")
+
+            print('celery_task %s' % celery_task)
+
             st = time.perf_counter()
 
             if res.ready():
@@ -103,6 +106,11 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
                     if 'total_rows' in res.result:
                         instance.total_rows = res.result['total_rows']
 
+                    celery_task.data = {
+                        "total_rows": res.result['total_rows'],
+                        "processed_rows": res.result['processed_rows']
+                    }
+
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
 
             print('AsyncResult res.ready: %s' % (time.perf_counter() - st))
@@ -116,6 +124,10 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
             instance.task_id = task_id
             instance.task_status = res.status
 
+            celery_task.task_status = res.status
+
+            celery_task.save()
+
             serializer = self.get_serializer(instance=instance, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -124,6 +136,10 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
             res = self.celery_task.apply_async(kwargs={'instance': instance})
             instance.task_id = signer.sign('%s' % res.id)
 
+            celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
+                                                    task_type='simple_import', task_id=res.id)
+
+            print('CREATE CELERY TASK celery_task %s' % celery_task)
             print('CREATE CELERY TASK %s' % res.id)
 
             instance.task_status = res.status
@@ -156,6 +172,15 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
 
             res = AsyncResult(signer.unsign(task_id))
 
+            try:
+                celery_task = CeleryTask.objects.get(master_user=request.user.master_user, task_id=task_id)
+            except CeleryTask.DoesNotExist:
+                celery_task = None
+                print("Cant create Celery Task")
+
+
+            print('celery_task %s ' % celery_task)
+
             st = time.perf_counter()
 
             if res.ready():
@@ -169,6 +194,12 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
                         instance.processed_rows = res.result['processed_rows']
                     if 'total_rows' in res.result:
                         instance.total_rows = res.result['total_rows']
+
+                    if celery_task:
+                        celery_task.data = {
+                            "total_rows": res.result['total_rows'],
+                            "processed_rows": res.result['processed_rows']
+                        }
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
 
@@ -185,6 +216,10 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
             instance.task_id = task_id
             instance.task_status = res.status
 
+            if celery_task:
+                celery_task.task_status = res.status
+                celery_task.save()
+
             serializer = self.get_serializer(instance=instance, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -193,7 +228,13 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
             res = self.celery_task.apply_async(kwargs={'instance': instance})
             instance.task_id = signer.sign('%s' % res.id)
 
+            celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
+                                                    task_type='validate_simple_import', task_id=instance.task_id)
+
+            celery_task.save()
+
             print('CREATE CELERY TASK %s' % res.id)
+            print('celery_task %s' % celery_task)
 
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)

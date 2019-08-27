@@ -14,8 +14,6 @@ class OwnerByMasterUserFilter(BaseFilterBackend):
 
         if hasattr(request.user, 'master_user'):
 
-            print('OwnerByMasterUserFilter %s' % request.user.master_user.name)
-
             master_user = request.user.master_user
             return queryset.filter(master_user=master_user)
 
@@ -53,6 +51,7 @@ class MasterUserFilter(BaseFilterBackend):
 class InviteToMasterUserFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         return queryset.filter(status=InviteStatusChoice.SENT)
+
 
 class IsMemberFilterBackend(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):

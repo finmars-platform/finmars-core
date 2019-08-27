@@ -10,6 +10,7 @@ from rest_framework.filters import FilterSet
 from rest_framework.response import Response
 
 from poms.accounts.models import Account, AccountType
+from poms.celery_tasks.models import CeleryTask
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
     ModelExtMultipleChoiceFilter
 from poms.common.views import AbstractViewSet, AbstractModelViewSet, AbstractReadOnlyModelViewSet, \
@@ -942,6 +943,12 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
 
             res = AsyncResult(signer.unsign(task_id))
 
+            try:
+                celery_task = CeleryTask.objects.get(master_user=request.user.master_user, task_id=task_id)
+            except CeleryTask.DoesNotExist:
+                celery_task = None
+                print("Cant create Celery Task")
+
             st = time.perf_counter()
 
             if res.ready():
@@ -957,6 +964,12 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
                     if 'total_rows' in res.result:
                         instance.total_rows = res.result['total_rows']
 
+                    if celery_task:
+                        celery_task.data = {
+                            "total_rows": res.result['total_rows'],
+                            "processed_rows": res.result['processed_rows']
+                        }
+
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
 
             print('AsyncResult res.ready: %s' % (time.perf_counter() - st))
@@ -966,6 +979,10 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
 
             print('TASK RESULT %s' % res.result)
             print('TASK STATUS %s' % res.status)
+
+            if celery_task:
+                celery_task.task_status = res.status
+                celery_task.save()
 
             instance.task_id = task_id
             instance.task_status = res.status
@@ -977,6 +994,11 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
 
             res = self.celery_task.apply_async(kwargs={'instance': instance})
             instance.task_id = signer.sign('%s' % res.id)
+
+            celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
+                                                    task_type='transaction_import', task_id=instance.task_id)
+
+            celery_task.save()
 
             print('CREATE CELERY TASK %s' % res.id)
 
@@ -1008,6 +1030,13 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
 
             res = AsyncResult(signer.unsign(task_id))
 
+            try:
+                celery_task = CeleryTask.objects.get(master_user=request.user.master_user, task_id=task_id)
+            except CeleryTask.DoesNotExist:
+                celery_task = None
+                print("Cant create Celery Task")
+
+
             st = time.perf_counter()
 
             if res.ready():
@@ -1022,6 +1051,12 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
                     if 'total_rows' in res.result:
                         instance.total_rows = res.result['total_rows']
 
+                    if celery_task:
+                        celery_task.data = {
+                            "total_rows": res.result['total_rows'],
+                            "processed_rows": res.result['processed_rows']
+                        }
+
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
 
             print('AsyncResult res.ready: %s' % (time.perf_counter() - st))
@@ -1035,6 +1070,10 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
             instance.task_id = task_id
             instance.task_status = res.status
 
+            if celery_task:
+                celery_task.task_status = res.status
+                celery_task.save()
+
             serializer = self.get_serializer(instance=instance, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -1042,6 +1081,11 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
 
             res = self.celery_task.apply_async(kwargs={'instance': instance})
             instance.task_id = signer.sign('%s' % res.id)
+
+            celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
+                                                    task_type='validate_transaction_import', task_id=instance.task_id)
+
+            celery_task.save()
 
             print('CREATE CELERY TASK %s' % res.id)
 

@@ -108,6 +108,7 @@ INSTALLED_APPS = [
     'poms.complex_import',
     'poms.configuration_export',
     'poms.reference_tables',
+    'poms.celery_tasks',
 
     'django.contrib.admin',
     'django.contrib.admindocs',

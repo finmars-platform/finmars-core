@@ -24,6 +24,7 @@ import poms.users.views as users
 
 import poms.csv_import.views as csv_import
 import poms.reference_tables.views as reference_table
+import poms.celery_tasks.views as celery_tasks
 
 import poms.configuration_export.views as configuration_export
 import poms.complex_import.views as complex_import
@@ -175,6 +176,7 @@ router.register(r'strategies/3/strategy-attribute-type', strategies.Strategy3Att
 router.register(r'tags/tag', tags.TagViewSet)
 
 router.register(r'reference-tables/reference-table', reference_table.ReferenceTableViewSet, 'reference_table')
+router.register(r'active_processes/active_processes', celery_tasks.CeleryTaskViewSet, 'celery_tasks')
 
 router.register(r'transactions/event-class', transactions.EventClassViewSet)
 router.register(r'transactions/notification-class', transactions.NotificationClassViewSet)
