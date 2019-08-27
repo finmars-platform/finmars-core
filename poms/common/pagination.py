@@ -22,25 +22,16 @@ class PageNumberPaginationExt(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = api_settings.PAGE_SIZE * 10
 
-
-class PostPageNumberPagination(PageNumberPagination):
-    page_size_query_param = 'page_size'
-    max_page_size = api_settings.PAGE_SIZE * 10
-
-    def paginate_queryset(self, queryset, request, view=None):
+    def post_paginate_queryset(self, queryset, request, view=None):
 
         page_size = request.data.get('page_size', self.page_size)
 
         if not page_size:
             return None
 
-        # print('POST PAGINATION page_size %s' % page_size)
-
         paginator = self.django_paginator_class(queryset, page_size)
 
         page_number = request.data.get('page', 1)
-
-        # print('POST PAGINATION page_number %s' % page_number)
 
         if page_number in self.last_page_strings:
             page_number = paginator.num_pages
@@ -59,7 +50,6 @@ class PostPageNumberPagination(PageNumberPagination):
 
         self.request = request
         return list(self.page)
-
 
 class BigPagination(PageNumberPagination):
     page_size_query_param = 'page_size'

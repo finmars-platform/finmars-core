@@ -22,7 +22,6 @@ from poms.audit.mixins import HistoricalModelMixin
 from poms.common.filtering_handlers import handle_filters
 from poms.common.filters import ByIdFilterBackend, ByIsDeletedFilterBackend
 from poms.common.mixins import BulkModelMixin, DestroyModelFakeMixin, UpdateModelMixinExt
-from poms.common.pagination import PostPageNumberPagination
 from poms.common.sorting import sort_by_dynamic_attrs
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.users.utils import get_master_user_and_member
@@ -118,8 +117,6 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
         OrderingFilter,
     ]
 
-    pagination_class = PostPageNumberPagination
-
     def list(self, request):
 
         if len(request.query_params.getlist('groups_types')) == 0:
@@ -180,7 +177,10 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
 
         filtered_qs = handle_groups(filtered_qs, groups_types, groups_values, groups_order, master_user, self.get_queryset(), content_type)
 
-        page = self.paginate_queryset(filtered_qs)
+
+        page = self.paginator.post_paginate_queryset(filtered_qs, request)
+
+        # print('page, %s' % page)
 
         print("Filtered EV Group List %s seconds " % (time.time() - start_time))
 
@@ -202,14 +202,16 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         OrderingFilter,
     ]
 
-    pagination_class = PostPageNumberPagination
-
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
         content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
 
-        queryset = sort_by_dynamic_attrs(request, queryset, content_type)
+        ordering = request.GET.get('ordering')
+        master_user = request.user.master_user
+
+        if ordering:
+            queryset = sort_by_dynamic_attrs(queryset, ordering, master_user, content_type)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -231,20 +233,17 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         queryset = self.filter_queryset(self.get_queryset())
         queryset = handle_filters(queryset, filter_settings, master_user, content_type)
 
-        # queryset = queryset.filter(**{'user_code__contains':'Bank'})
+        ordering = request.data.get('ordering', None)
 
-        # print('queryset len %s ' % len(list(queryset)))
+        if ordering:
+            queryset = sort_by_dynamic_attrs(queryset, ordering, master_user, content_type)
 
-
-        queryset = sort_by_dynamic_attrs(request, queryset, content_type)
-
-        page = self.paginate_queryset(queryset)
+        page = self.paginator.post_paginate_queryset(queryset, request)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
-
 
         print("Filtered List %s seconds " % (time.time() - start_time))
 
