@@ -63,7 +63,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             if attribute_type.value_type == GenericAttributeType.CLASSIFIER:
 
                 options = {}
-                options['classifier__name__contains'] = value
+                options['classifier__name__icontains'] = value
 
                 include_null_options = {}
                 if not exclude_empty_cells:
@@ -78,7 +78,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             else:
 
                 options = {}
-                options['value_string__contains'] = value
+                options['value_string__icontains'] = value
 
                 include_null_options = {}
                 include_empty_string_options = {}
@@ -98,7 +98,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             if attribute_type.value_type == GenericAttributeType.CLASSIFIER:
 
                 options = {}
-                options['classifier__name__contains'] = value
+                options['classifier__name__icontains'] = value
 
                 exclude_empty_cells_options = {}
                 if exclude_empty_cells:
@@ -109,7 +109,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             else:
 
                 options = {}
-                options['value_string__contains'] = value
+                options['value_string__icontains'] = value
 
                 exclude_empty_cells_options = {}
                 exclude_null_options = {}
@@ -141,7 +141,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
 
             options = {}
-            options['value_float'] = value
+            options['value_float__iexact'] = value
 
             include_null_options = {}
             if not exclude_empty_cells:
@@ -157,7 +157,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
 
             options = {}
-            options['value_float'] = value
+            options['value_float__iexact'] = value
 
             exclude_empty_cells_options = {}
             if exclude_empty_cells:
@@ -410,7 +410,7 @@ def add_filter(qs, filter_config):
         if value:
 
             options = {}
-            options[key + '__name__contains'] = value
+            options[key + '__name__icontains'] = value
 
             include_null_options = {}
             include_empty_string_options = {}
@@ -431,7 +431,7 @@ def add_filter(qs, filter_config):
         if value:
 
             options = {}
-            options[key + '__name__contains'] = value
+            options[key + '__name__icontains'] = value
 
             exclude_nulls_options = {}
             exclude_empty_cells_options = {}
@@ -460,7 +460,7 @@ def add_filter(qs, filter_config):
         if value:
 
             options = {}
-            options[key + '__contains'] = value
+            options[key + '__icontains'] = value
 
             include_null_options = {}
             include_empty_string_options = {}
@@ -481,7 +481,7 @@ def add_filter(qs, filter_config):
         if value:
 
             options = {}
-            options[key + '__contains'] = value
+            options[key + '__icontains'] = value
 
             exclude_nulls_options = {}
             exclude_empty_cells_options = {}
@@ -512,7 +512,7 @@ def add_filter(qs, filter_config):
         if value:
 
             options = {}
-            options[key] = value
+            options[key + '__iexact'] = value
 
             include_null_options = {}
             if not exclude_empty_cells:
@@ -528,7 +528,7 @@ def add_filter(qs, filter_config):
         if value:
 
             options = {}
-            options[key] = value
+            options[key + '__iexact'] = value
 
             exclude_empty_cells_options = {}
             if exclude_empty_cells:
