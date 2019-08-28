@@ -145,7 +145,7 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
     start_time = time.time()
 
     # print('get_last_dynamic_attr_group qs len %s' % len(qs))
-    print("get_last_dynamic_attr_group dynamic attr id %s " % last_group)
+    # print("get_last_dynamic_attr_group dynamic attr id %s " % last_group)
 
     # force_qs_evaluation(qs)
 
@@ -153,8 +153,8 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
 
     qs = qs.filter(attributes__attribute_type=attribute_type)
 
-    print('get_last_dynamic_attr_group.attribute_type %s ' % attribute_type)
-    print('get_last_dynamic_attr_group.attribute_type.value_type %s ' % attribute_type.value_type)
+    # print('get_last_dynamic_attr_group.attribute_type %s ' % attribute_type)
+    # print('get_last_dynamic_attr_group.attribute_type.value_type %s ' % attribute_type.value_type)
 
     # print('get_last_dynamic_attr_group len %s' % len(qs))
 
@@ -202,7 +202,7 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
 
 
 def get_last_system_attr_group(qs, last_group, groups_order):
-    print('last_group %s ' % last_group)
+    # print('last_group %s ' % last_group)
 
     if is_relation(last_group):
         qs = qs.values(last_group) \
@@ -341,7 +341,7 @@ def handle_groups(qs, groups_types, groups_values, groups_order, master_user, or
 
     groups_types = list(map(lambda x: format_groups(x, master_user, content_type), groups_types))
 
-    print('handle_groups.group_types %s' % groups_types)
+    # print('handle_groups.group_types %s' % groups_types)
     # print('handle_groups.groups_values %s' % groups_values)
     # print('handle_groups.groups_order %s' % groups_order)
     # print('handle_groups.queryset len %s' % len(qs))

@@ -25,18 +25,18 @@ from django.apps import apps
 
 _l = logging.getLogger('poms.transactions')
 
-CONTEXT_PROPERTIES = {
-    1: 'instrument',
-    2: 'pricing_currency',
-    3: 'accrued_currency',
-    4: 'portfolio',
-    5: 'account',
-    6: 'strategy1',
-    7: 'strategy2',
-    8: 'strategy3',
-    9:  'position',
-    10: 'effective_date',
-}
+# CONTEXT_PROPERTIES = {
+#     1: 'instrument',
+#     2: 'pricing_currency',
+#     3: 'accrued_currency',
+#     4: 'portfolio',
+#     5: 'account',
+#     6: 'strategy1',
+#     7: 'strategy2',
+#     8: 'strategy3',
+#     9:  'position',
+#     10: 'effective_date',
+# }
 
 
 class TransactionTypeProcess(object):
@@ -241,9 +241,9 @@ class TransactionTypeProcess(object):
 
             if i.is_fill_from_context:
 
-                key = CONTEXT_PROPERTIES[i.context_property]
+                # key = CONTEXT_PROPERTIES[i.context_property]
 
-                value = self.context_values[key]
+                value = self.context_values[i.context_property]
 
                 if value:
                     self.default_values[i.name] = value
