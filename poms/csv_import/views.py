@@ -106,10 +106,11 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
                     if 'total_rows' in res.result:
                         instance.total_rows = res.result['total_rows']
 
-                    celery_task.data = {
-                        "total_rows": res.result['total_rows'],
-                        "processed_rows": res.result['processed_rows']
-                    }
+                    if celery_task:
+                        celery_task.data = {
+                            "total_rows": res.result['total_rows'],
+                            "processed_rows": res.result['processed_rows']
+                        }
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
 
@@ -124,9 +125,9 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
             instance.task_id = task_id
             instance.task_status = res.status
 
-            celery_task.task_status = res.status
-
-            celery_task.save()
+            if celery_task:
+                celery_task.task_status = res.status
+                celery_task.save()
 
             serializer = self.get_serializer(instance=instance, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)

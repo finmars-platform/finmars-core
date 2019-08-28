@@ -125,7 +125,7 @@ def get_item(scheme, result):
 
         try:
 
-            print('result %s' % result)
+            _l.info('result %s' % result)
 
             if 'user_code' in result:
 
@@ -146,7 +146,9 @@ def process_csv_file(master_user,
                      classifier_handler,
                      context,
                      task_instance,
-                     update_state):
+                     update_state,
+                     mode,
+                     process_result_handler):
 
     csv_fields = scheme.csv_fields.all()
     entity_fields = scheme.entity_fields.all()
@@ -208,9 +210,6 @@ def process_csv_file(master_user,
 
                     return
 
-            _l.info('csv_row_dict_raw %s' % csv_row_dict_raw)
-            _l.info('executed_filter_expression %s' % executed_filter_expression)
-
             if executed_filter_expression:
 
                 error_row['inputs'] = csv_row_dict_raw
@@ -223,7 +222,7 @@ def process_csv_file(master_user,
 
                 csv_row_dict = get_row_data_converted(row, csv_fields, csv_row_dict_raw, {}, conversion_errors)
 
-                print('csv_row_dict %s' % csv_row_dict)
+                # _l.info('csv_row_dict %s' % csv_row_dict)
 
                 for key, value in csv_row_dict.items():
                     error_row['error_data']['columns']['converted_imported_columns'].append(
@@ -238,13 +237,13 @@ def process_csv_file(master_user,
 
                     if error_handler == 'break':
                         error_row['error_reaction'] = 'Break import'
-
+                        error_row['level'] = 'error'
                         errors.append(error_row)
 
                         return results, errors
                     else:
+                        error_row['level'] = 'error'
                         error_row['error_reaction'] = 'Continue import'
-
 
                 mapping_map = {
                     'counterparties': CounterpartyMapping,
@@ -262,7 +261,6 @@ def process_csv_file(master_user,
                     'pricing_currency': CurrencyMapping,
                     'accrued_currency': CurrencyMapping
                 }
-
 
                 relation_map = {
                     'counterparties': Counterparty,
@@ -293,8 +291,6 @@ def process_csv_file(master_user,
 
                     key = entity_field.system_property_key
 
-
-
                     if entity_field.expression != '':
 
                         error_row['error_data']['columns']['data_matching'].append(entity_field.name)
@@ -303,8 +299,8 @@ def process_csv_file(master_user,
 
                             executed_expression = None
 
-                            _l.info('entity_field.expression %s' % entity_field.expression)
-                            _l.info('csv_row_dict %s' % csv_row_dict)
+                            # _l.info('entity_field.expression %s' % entity_field.expression)
+                            # _l.info('csv_row_dict %s' % csv_row_dict)
 
                             try:
                                 # context=self.report.context
@@ -313,7 +309,7 @@ def process_csv_file(master_user,
 
                                 executed_expressions.append(executed_expression)
 
-                                _l.info('executed_expression %s ' % executed_expression)
+                                # _l.info('executed_expression %s ' % executed_expression)
 
                                 if key in mapping_map:
 
@@ -326,7 +322,7 @@ def process_csv_file(master_user,
 
                                         try:
 
-                                            _l.info('Lookup by user code %s' % executed_expression)
+                                            # _l.info('Lookup by user code %s' % executed_expression)
 
                                             if key == 'price_download_scheme':
                                                 instance[key] = relation_map[key].objects.get(master_user=master_user,
@@ -374,11 +370,11 @@ def process_csv_file(master_user,
 
                                 else:
 
-                                    _l.info('key %s' % key)
+                                    # _l.info('key %s' % key)
 
                                     instance[key] = executed_expression
 
-                                    _l.info('date instance[key] %s' % instance[key])
+                                    # _l.info('date instance[key] %s' % instance[key])
 
                                     # if key == 'date':
                                     #
@@ -386,7 +382,7 @@ def process_csv_file(master_user,
                                     #
                                     #         instance[key] = formula._parse_date(instance[key])
                                     #
-                                    #         print('date instance[key] %s' % instance[key])
+                                    #         _l.info('date instance[key] %s' % instance[key])
                                     #
                                     #     except (ExpressionEvalError, TypeError):
                                     #
@@ -407,7 +403,7 @@ def process_csv_file(master_user,
 
                                 executed_expressions.append(ugettext('Invalid expression'))
 
-                            # print('executed_expression %s' % executed_expression)
+                            # _l.info('executed_expression %s' % executed_expression)
 
                         if get_field_type(entity_field) == 'dynamic_attribute':
 
@@ -449,7 +445,7 @@ def process_csv_file(master_user,
 
                                         try:
 
-                                            # print('Lookup by name in classifier')
+                                            # _l.info('Lookup by name in classifier')
 
                                             executed_attr['executed_expression'] = GenericClassifier.objects.get(
                                                 attribute_type=attr_type, name=executed_expression)
@@ -470,8 +466,8 @@ def process_csv_file(master_user,
 
                                                 # inputs_error.append(entity_field)
                                                 #
-                                                # print('%s classifier mapping  does not exist' % scheme.content_type.model)
-                                                # print('expresion: %s ' % executed_expression)
+                                                # _l.info('%s classifier mapping  does not exist' % scheme.content_type.model)
+                                                # _l.info('expresion: %s ' % executed_expression)
 
                             else:
 
@@ -488,11 +484,11 @@ def process_csv_file(master_user,
                     for input_error in inputs_error:
                         message = '{0} ({1})'.format(input_error['field'].name, input_error['reason'])
 
-                        # print(message)
+                        # _l.info(message)
 
                         inputs_messages.append(message)
 
-                    # print(inputs_messages)
+                    # _l.info(inputs_messages)
 
                     error_row['level'] = 'error'
                     error_row['error_message'] = error_row['error_message'] + '\n' + '\n' + ugettext(
@@ -502,8 +498,10 @@ def process_csv_file(master_user,
                     error_row['error_reaction'] = 'Continue import'
 
                     if error_handler == 'break':
-                        errors.append(error_row)
+
+                        error_row['level'] = 'error'
                         error_row['error_reaction'] = 'Break import'
+                        errors.append(error_row)
 
                         return results, errors
 
@@ -513,8 +511,14 @@ def process_csv_file(master_user,
 
                     # error_row['error_reaction'] = 'Success'
 
+                    instance, error_row = process_result_handler(instance, error_row, scheme, error_handler, mode)
+
                     results.append(instance)
                     errors.append(error_row)
+
+                    if error_handler == 'break' and error_row['level'] == 'error':
+                        error_row['error_reaction'] = 'Break import'
+                        return results, errors
 
             else:
 
@@ -527,7 +531,7 @@ def process_csv_file(master_user,
 
         task_instance.processed_rows = row_index
 
-        _l.info('task_instance.processed_rows: %s', task_instance.processed_rows)
+        # _l.info('task_instance.processed_rows: %s', task_instance.processed_rows)
 
         update_state(task_id=task_instance.task_id, state=Task.STATUS_PENDING,
                      meta={'processed_rows': task_instance.processed_rows,
@@ -574,8 +578,8 @@ class ValidateHandler:
 
                 attribute = GenericAttribute(content_object=instance, attribute_type=attr_type)
 
-                # print('result_attr', result_attr)
-                # print('attribute', attribute)
+                # _l.info('result_attr', result_attr)
+                # _l.info('attribute', attribute)
 
                 if attr_type.value_type == 10:
                     attribute.value_string = str(result_attr['executed_expression'])
@@ -594,7 +598,7 @@ class ValidateHandler:
 
                 attribute.full_clean()
 
-    def instance_full_clean(self, scheme, result, process_errors, error_handler, index):
+    def instance_full_clean(self, scheme, result, error_handler, error_row):
 
         try:
 
@@ -610,20 +614,16 @@ class ValidateHandler:
 
         except CoreValidationError as e:
 
-            process_errors[index]['error_reaction'] = 'Continue import'
-            process_errors[index]['level'] = 'error'
-            process_errors[index]['error_message'] = process_errors[index]['error_message'] + ugettext(
+            error_row['error_reaction'] = 'Continue import'
+            error_row['level'] = 'error'
+            error_row['error_message'] = error_row['error_message'] + ugettext(
                 'Validation error %(error)s ') % {
                                                          'error': e
                                                      },
 
-            if error_handler == 'break':
-                process_errors[index]['error_reaction'] = 'Break import'
-                return process_errors
+    def instance_overwrite_full_clean(self, scheme, result, item, error_handler, error_row):
 
-    def instance_overwrite_full_clean(self, scheme, result, item, process_errors, error_handler, index):
-
-        # print('Overwrite item %s' % item)
+        # _l.info('Overwrite item %s' % item)
 
         try:
 
@@ -645,48 +645,40 @@ class ValidateHandler:
 
         except CoreValidationError as e:
 
-            process_errors[index]['error_reaction'] = 'Continue import'
-            process_errors[index]['level'] = 'error'
-            process_errors[index]['error_message'] = process_errors[index]['error_message'] + ugettext(
+            error_row['error_reaction'] = 'Continue import'
+            error_row['level'] = 'error'
+            error_row['error_message'] = error_row['error_message'] + ugettext(
                 'Validation error %(error)s ') % {
                                                          'error': e
                                                      }
 
             if error_handler == 'break':
-                process_errors[index]['error_reaction'] = 'Break import'
-                return process_errors
+                error_row['error_reaction'] = 'Break import'
 
-    def full_clean_results(self, scheme, error_handler, mode, results, process_errors, update_state, task_instance):
+    def full_clean_result(self, result_item, error_row, scheme, error_handler, mode):
 
-        for index, result in enumerate(results):
+        item = get_item(scheme, result_item)
 
-            item = get_item(scheme, result)
+        if mode == 'overwrite' and item:
 
-            if mode == 'overwrite' and item:
+            self.instance_overwrite_full_clean(scheme, result_item, item,  error_handler, error_row)
 
-                self.instance_overwrite_full_clean(scheme, result, item, process_errors, error_handler, index)
+        elif mode == 'overwrite' and not item:
 
-            elif mode == 'overwrite' and not item:
+            self.instance_full_clean(scheme, result_item, error_handler, error_row)
 
-                self.instance_full_clean(scheme, result, process_errors, error_handler, index)
+        elif mode == 'skip' and not item:
 
-            elif mode == 'skip' and not item:
+            self.instance_full_clean(scheme, result_item, error_handler, error_row)
 
-                self.instance_full_clean(scheme, result, process_errors, error_handler, index)
+        elif mode == 'skip' and item:
 
-            elif mode == 'skip' and item:
+            error_row['level'] = 'error'
+            error_row['error_reaction'] = 'Skipped'
+            error_row['error_message'] = error_row['error_message'] + str(ugettext(
+                'Entry already exists '))
 
-                process_errors[index]['level'] = 'error'
-                process_errors[index]['error_reaction'] = 'Skipped'
-                process_errors[index]['error_message'] = process_errors[index]['error_message'] + str(ugettext(
-                    'Entry already exists '))
-
-                # print('error_handler %s' % error_handler)
-
-                if error_handler == 'break':
-                    return process_errors
-
-        return process_errors
+        return result_item, error_row
 
     def process(self, instance, update_state):
 
@@ -710,8 +702,8 @@ class ValidateHandler:
         # csv_contents = request.data['file'].read().decode('utf-8-sig')
         # rows = csv_contents.splitlines()
 
-        # print('instance task id %s' % instance.task_id)
-        # print('instance %s' % instance.file.name)
+        # _l.info('instance task id %s' % instance.task_id)
+        # _l.info('instance %s' % instance.file.name)
 
         delimiter = delimiter.encode('utf-8').decode('unicode_escape')
 
@@ -735,7 +727,7 @@ class ValidateHandler:
 
         context = {}
 
-        classifier_handler_skip = ' skip'
+        classifier_handler_skip = ' skip' # only for import
 
         _l.info('ValidateHandler.process_csv_file: initialized')
 
@@ -747,37 +739,10 @@ class ValidateHandler:
                                                    classifier_handler_skip,
                                                    context,
                                                    instance,
-                                                   update_state)
+                                                   update_state, mode, self.full_clean_result)
 
         _l.info('ValidateHandler.process_csv_file: finished')
         _l.info('ValidateHandler.process_csv_file process_errors %s: ' % len(process_errors))
-
-        instance.imported = len(results)
-        instance.stats = process_errors
-
-        has_errors = False
-
-        for item in process_errors:
-
-            if item["level"] == 'error':
-                has_errors = True
-
-        _l.info('ValidateHandler.has_errors %s' % has_errors)
-
-        if error_handler == 'break' and has_errors:
-            return instance
-
-        _l.info('ValidateHandler.full_clean_results: initialized')
-
-        instance.processed_rows = 0
-
-        update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                     meta={'processed_rows': instance.processed_rows,
-                           'total_rows': instance.total_rows})
-
-        process_errors = self.full_clean_results(scheme, error_handler, mode, results, process_errors, update_state, instance)
-
-        _l.info('ValidateHandler.full_clean_results: finished')
 
         instance.imported = len(results)
         instance.stats = process_errors
@@ -871,7 +836,7 @@ class ImportHandler:
 
         return instance
 
-    def save_instance(self, scheme, result, process_errors, error_handler, index):
+    def save_instance(self, scheme, result, error_handler, error_row):
 
         try:
 
@@ -889,20 +854,16 @@ class ImportHandler:
 
         except ValidationError as e:
 
-            process_errors[index]['error_reaction'] = 'Continue import'
-            process_errors[index]['level'] = 'error'
-            process_errors[index]['error_message'] = process_errors[index]['error_message'] + ugettext(
+            error_row['error_reaction'] = 'Continue import'
+            error_row['level'] = 'error'
+            error_row['error_message'] = error_row['error_message'] + ugettext(
                 'Validation error %(error)s ') % {
                                                          'error': e
                                                      }
 
-            if error_handler == 'break':
-                process_errors[index]['error_reaction'] = 'Break import'
-                return process_errors
+    def overwrite_instance(self, scheme, result, item, error_handler, error_row):
 
-    def overwrite_instance(self, scheme, result, item, process_errors, error_handler, index):
-
-        # print('Overwrite item %s' % item)
+        # _l.info('Overwrite item %s' % item)
 
         _l.info('ImportHandler overwrite_instance %s ' % item)
 
@@ -927,65 +888,46 @@ class ImportHandler:
 
         except ValidationError as e:
 
-            process_errors[index]['error_reaction'] = 'Continue import'
-            process_errors[index]['level'] = 'error'
-            process_errors[index]['error_message'] = process_errors[index]['error_message'] + str(ugettext(
+            error_row['error_reaction'] = 'Continue import'
+            error_row['level'] = 'error'
+            error_row['error_message'] = error_row['error_message'] + str(ugettext(
                 'Validation error %(error)s ') % {
                                                                                                       'error': e
                                                                                                   })
 
-            if error_handler == 'break':
-                process_errors[index]['error_reaction'] = 'Break import'
-                return process_errors
+    def import_result(self, result_item, error_row, scheme, error_handler, mode):
 
-    def import_results(self, scheme, error_handler, mode, results, process_errors):
+        # _l.info('ImportHandler.result_item %s' % result_item)
 
-        _l.info('ImportHandler results len %s' % len(results))
-        _l.info('ImportHandler results mode %s' % mode)
+        item = get_item(scheme, result_item)
 
-        index = 0
+        if mode == 'overwrite' and item:
 
-        for index, result in enumerate(results):
+            # _l.info('Overwrite instance')
 
-            index = index + 1
+            self.overwrite_instance(scheme, result_item, item, error_handler, error_row)
 
-            item = get_item(scheme, result)
+        elif mode == 'overwrite' and not item:
 
-            _l.info('ImportHandler item %s' % item)
+            _l.info('Create instance')
 
-            if mode == 'overwrite' and item:
+            self.save_instance(scheme, result_item, error_handler, error_row)
 
-                _l.info('Overwrite instance')
+        elif mode == 'skip' and not item:
 
-                self.overwrite_instance(scheme, result, item, process_errors, error_handler, index)
+            _l.info('Create instance')
 
-            elif mode == 'overwrite' and not item:
+            self.save_instance(scheme, result_item, error_handler, error_row)
 
-                _l.info('Create instance')
+        elif mode == 'skip' and item:
 
-                self.save_instance(scheme, result, process_errors, error_handler, index)
+            # _l.info('Skip instance %s')
 
-            elif mode == 'skip' and not item:
+            error_row['level'] = 'error'
+            error_row['error_message'] = error_row['error_message'] + error_row[
+                'error_message']
 
-                _l.info('Create instance')
-
-                self.save_instance(scheme, result, process_errors, error_handler, index)
-
-            elif mode == 'skip' and item:
-
-                _l.info('Skip instance %s')
-
-                process_errors[index]['level'] = 'error'
-                process_errors[index]['error_message'] = process_errors[index]['error_message'] + process_errors[index][
-                    'error_message']
-
-                if error_handler == 'break':
-                    return process_errors
-
-            _l.info('ImportHandler row # %s imported ' % index)
-
-
-        return process_errors
+        return result_item, error_row
 
     def process(self, instance, update_state):
 
@@ -1028,33 +970,16 @@ class ImportHandler:
         context = {}
 
         _l.info('ImportHandler.process_csv_file: initialized')
+        _l.info('ImportHandler.total_rows %s' % instance.total_rows)
 
         results, process_errors = process_csv_file(master_user, scheme, rows, error_handler, missing_data_handler,
                                                    classifier_handler,
-                                                   context, instance, update_state)
+                                                   context, instance, update_state, mode, self.import_result)
 
         _l.info('ImportHandler.process_csv_file: finished')
         _l.info('ImportHandler.process_csv_file process_errors %s: ' % len(process_errors))
 
         instance.imported = len(results)
-        instance.stats = process_errors
-
-        has_errors = False
-
-        for item in process_errors:
-
-            if item["level"] == 'error':
-                has_errors = True
-
-        _l.info('ImportHandler.has_errors %s' % has_errors)
-
-        if error_handler == 'break' and has_errors:
-            return instance
-
-        _l.info('ImportHandler.import_results: initialized')
-        process_errors = self.import_results(scheme, error_handler, mode, results, process_errors)
-        _l.info('ImportHandler.import_results: finished')
-
         instance.stats = process_errors
 
         return instance
