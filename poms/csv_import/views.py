@@ -138,6 +138,8 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
                                                     started_at=datetime_now(),
                                                     task_type='simple_import', task_id=res.id)
 
+            celery_task.save()
+
             print('CREATE CELERY TASK celery_task %s' % celery_task)
             print('CREATE CELERY TASK %s' % res.id)
 
