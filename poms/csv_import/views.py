@@ -89,7 +89,8 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
                 instance = res.result
 
-                celery_task.finished_at = datetime_now()
+                if celery_task:
+                    celery_task.finished_at = datetime_now()
 
             else:
 
@@ -185,7 +186,8 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
 
                 instance = res.result
 
-                celery_task.finished_at = datetime_now()
+                if celery_task:
+                    celery_task.finished_at = datetime_now()
 
             else:
 

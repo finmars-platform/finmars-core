@@ -956,8 +956,8 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
             if res.ready():
 
                 instance = res.result
-
-                celery_task.finished_at = datetime_now()
+                if celery_task:
+                    celery_task.finished_at = datetime_now()
 
             else:
 
@@ -1048,8 +1048,8 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
             if res.ready():
 
                 instance = res.result
-
-                celery_task.finished_at = datetime_now()
+                if celery_task:
+                    celery_task.finished_at = datetime_now()
 
             else:
 
