@@ -11,6 +11,9 @@ from rest_framework.fields import empty
 from rest_framework.serializers import ListSerializer
 from django.db import models
 
+from poms.common.fields import ExpressionField
+from poms.common.formula import safe_eval, ExpressionEvalError
+from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import ModelWithUserCodeSerializer
 from poms.integrations.models import PortfolioClassifierMapping, ProviderClass, AccountClassifierMapping, \
     CounterpartyClassifierMapping, ResponsibleClassifierMapping, InstrumentClassifierMapping
@@ -215,61 +218,121 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
         self.fields['attributes'] = GenericAttributeSerializer(many=True, required=False, allow_null=True)
 
     def create(self, validated_data):
+
         attributes = validated_data.pop('attributes', None)
-        # attributes2 = validated_data.pop('attributes2', None)
         instance = super(ModelWithAttributesSerializer, self).create(validated_data)
+
+        self.create_attributes_if_not_exists(instance)
+
         self.save_attributes(instance, attributes, True)
-        # self.save_attributes2(instance, attributes2, True)
+        self.calculate_attributes(instance, attributes, True)
+
         return instance
 
     def update(self, instance, validated_data):
 
         attributes = validated_data.pop('attributes', empty)
-        # attributes2 = validated_data.pop('attributes2', empty)
+
         instance = super(ModelWithAttributesSerializer, self).update(instance, validated_data)
+
+        self.create_attributes_if_not_exists(instance)
+
         if attributes is not empty:
             self.save_attributes(instance, attributes, False)
-        # if attributes2 is not empty:
-        #     self.save_attributes2(instance, attributes2, False)
+
+        self.calculate_attributes(instance, attributes, False)
+
         return instance
 
-    # def save_attributes(self, instance, attributes, created):
-    #     if attributes is None:
-    #         return
-    #
-    #     member = get_member_from_context(self.context)
-    #     cur_attrs = {a.attribute_type_id: a
-    #                  for a in instance.attributes.select_related('attribute_type').all()}
-    #     processed = set()
-    #
-    #     for attr in attributes:
-    #         attr_type = attr['attribute_type']
-    #         if has_view_perms(member, attr_type):
-    #             if attr_type.id in processed:
-    #                 raise ValidationError("Duplicated attribute type %s" % attr_type.id)
-    #             processed.add(attr_type.id)
-    #
-    #             if attr_type.id in cur_attrs:
-    #                 cur_attr = cur_attrs[attr_type.id]
-    #                 # verify value_ and classifier -> DONE in AttributeSerializerBase
-    #                 for k, v in attr.items():
-    #                     if k not in ['id', 'attribute_type']:
-    #                         setattr(cur_attr, k, v)
-    #                 cur_attr.save()
-    #             else:
-    #                 # verify value_ and classifier -> DONE in AttributeSerializerBase
-    #                 instance.attributes.create(**attr)
-    #         else:
-    #             # perms error...
-    #             pass
-    #
-    #     for attr in cur_attrs.values():
-    #         # add attrs that not visible for current member
-    #         attr_type = attr.attribute_type
-    #         if not has_view_perms(member, attr_type):
-    #             processed.add(attr_type.id)
-    #
-    #     instance.attributes.exclude(attribute_type_id__in=processed).delete()
+    def create_attributes_if_not_exists(self, instance):
+
+        master_user = get_master_user_from_context(self.context)
+
+        content_type = ContentType.objects.get_for_model(instance)
+
+        attribute_types = GenericAttributeType.objects.filter(content_type=content_type,
+                                                              master_user=master_user)
+
+        for attribute_type in attribute_types:
+
+            try:
+
+                exists = GenericAttribute.objects.get(attribute_type=attribute_type, content_type=content_type,
+                                                      object_id=instance.id)
+
+            except (GenericAttribute.DoesNotExist, KeyError):
+
+                GenericAttribute.objects.create(attribute_type=attribute_type, content_type=content_type,
+                                            object_id=instance.id)
+
+    def recursive_calculation(self, attribute_types, executed_expressions, eval_data, current_index, limit):
+
+        for attribute_type in attribute_types:
+
+            if attribute_type.can_recalculate:
+                try:
+                    executed_expressions[attribute_type.id] = safe_eval(attribute_type.expr, names={'this': eval_data}, context={})
+                except (ExpressionEvalError, TypeError, Exception, KeyError):
+                    executed_expressions[attribute_type.id] = 'Invalid Expression'
+                    return
+
+        current_index = current_index + 1
+
+        if current_index < limit:
+            self.recursive_calculation(attribute_types, executed_expressions, eval_data, current_index, limit)
+
+    def calculate_attributes(self, instance, attributes, created):
+
+        data = super(ModelWithAttributesSerializer, self).to_representation(instance)
+
+        master_user = get_master_user_from_context(self.context)
+        ctype = ContentType.objects.get_for_model(instance)
+        # if hasattr(instance, 'attributes'):
+        #     attrs_qs = instance.attributes.all()
+        # else:
+        attr_types_qs = GenericAttributeType.objects.filter(content_type=ctype, master_user=master_user)
+        attrs_qs = GenericAttribute.objects.filter(content_type=ctype, object_id=instance.id)
+
+        executed_expressions = {}
+
+        # print('data %s' % data)
+
+        self.recursive_calculation(attr_types_qs, executed_expressions, data, current_index=0, limit=4)
+
+        for attr in attrs_qs:
+
+            if attr.attribute_type.can_recalculate:
+
+                if attr.attribute_type.value_type == GenericAttributeType.STRING:
+
+                    if executed_expressions[attr.attribute_type.id] == 'Invalid Expression':
+                        attr.value_string = 'Invalid Expression'
+                    else:
+                        attr.value_string = executed_expressions[attr.attribute_type.id]
+
+                if attr.attribute_type.value_type == GenericAttributeType.NUMBER:
+
+                    if executed_expressions[attr.attribute_type.id] == 'Invalid Expression':
+                        attr.value_float = None
+                    else:
+                        attr.value_float = executed_expressions[attr.attribute_type.id]
+
+                if attr.attribute_type.value_type == GenericAttributeType.DATE:
+
+                    if executed_expressions[attr.attribute_type.id] == 'Invalid Expression':
+                        attr.value_date = None
+                    else:
+                        attr.value_date = executed_expressions[attr.attribute_type.id]
+
+                if attr.attribute_type.value_type == GenericAttributeType.CLASSIFIER:
+
+                    if executed_expressions[attr.attribute_type.id] == 'Invalid Expression':
+                        attr.classifier = None
+                    else:
+                        attr.classifier = executed_expressions[attr.attribute_type.id]
+
+                attr.save()
+
 
     def save_attributes(self, instance, attributes, created):
         member = get_member_from_context(self.context)
@@ -309,6 +372,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                     oattr = GenericAttribute(**attr)
                     oattr.content_object = instance
                     oattr.attribute_type = attribute_type
+
                 if 'value_string' in attr:
 
                     if attr['value_string'] == '':
@@ -437,9 +501,13 @@ class GenericAttributeTypeSerializer(ModelWithObjectPermissionSerializer, ModelW
     classifiers = GenericClassifierSerializer(required=False, allow_null=True, many=True)
     classifiers_flat = GenericClassifierWithoutChildrenSerializer(source='classifiers', read_only=True, many=True)
 
+    expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, allow_null=True,
+                           default='""')
+
     class Meta:
         model = GenericAttributeType
         fields = ['id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes',
+                  'expr', 'can_recalculate',
                   'value_type', 'order', 'is_hidden', 'classifiers', 'classifiers_flat']
 
     def __init__(self, *args, **kwargs):
@@ -526,7 +594,6 @@ class GenericAttributeTypeSerializer(ModelWithObjectPermissionSerializer, ModelW
 
         print('o %s', o)
 
-
         try:
 
             self.delete_matched_classifier_node_mapping(instance, o)
@@ -568,27 +635,27 @@ class GenericAttributeTypeSerializer(ModelWithObjectPermissionSerializer, ModelW
                                                     value=node.name)
         if instance.content_type.model == 'counterparty':
             CounterpartyClassifierMapping.objects.create(master_user=master_user,
-                                                    content_object=node,
-                                                    provider=bloomberg,
-                                                    attribute_type=instance,
-                                                    value=node.name)
-        if instance.content_type.model == 'responsible':
-            ResponsibleClassifierMapping.objects.create(master_user=master_user,
                                                          content_object=node,
                                                          provider=bloomberg,
                                                          attribute_type=instance,
                                                          value=node.name)
-
-        if instance.content_type.model == 'instrument':
-            InstrumentClassifierMapping.objects.create(master_user=master_user,
+        if instance.content_type.model == 'responsible':
+            ResponsibleClassifierMapping.objects.create(master_user=master_user,
                                                         content_object=node,
                                                         provider=bloomberg,
                                                         attribute_type=instance,
                                                         value=node.name)
 
+        if instance.content_type.model == 'instrument':
+            InstrumentClassifierMapping.objects.create(master_user=master_user,
+                                                       content_object=node,
+                                                       provider=bloomberg,
+                                                       attribute_type=instance,
+                                                       value=node.name)
+
     def delete_matched_classifier_node_mapping(self, instance, node):
 
-        print('delete node %s' %node )
+        print('delete node %s' % node)
 
         if instance.content_type.model == 'portfolio':
             PortfolioClassifierMapping.objects.filter(attribute_type=instance,
@@ -596,7 +663,7 @@ class GenericAttributeTypeSerializer(ModelWithObjectPermissionSerializer, ModelW
 
         if instance.content_type.model == 'account':
             AccountClassifierMapping.objects.filter(attribute_type=instance,
-                                                     value=node.name).delete()
+                                                    value=node.name).delete()
         if instance.content_type.model == 'counterparty':
             CounterpartyClassifierMapping.objects.filter(attribute_type=instance,
                                                          value=node.name).delete()
@@ -606,8 +673,7 @@ class GenericAttributeTypeSerializer(ModelWithObjectPermissionSerializer, ModelW
 
         if instance.content_type.model == 'instrument':
             InstrumentClassifierMapping.objects.filter(attribute_type=instance,
-                                                        value=node.name).delete()
-
+                                                       value=node.name).delete()
 
 
 class GenericAttributeTypeViewSerializer(ModelWithObjectPermissionSerializer):
@@ -652,6 +718,7 @@ class GenericAttributeViewListSerializer(serializers.ListSerializer):
         return [
             o for o in objects if has_view_perms(member, o.attribute)
         ]
+
 
 class GenericAttributeSerializer(serializers.ModelSerializer):
     attribute_type = GenericAttributeTypeField()
@@ -710,5 +777,3 @@ class GenericAttributeSerializer(serializers.ModelSerializer):
             instance.classifier = self._attribute_type_classifiers[instance.classifier_id]
 
         return super(GenericAttributeSerializer, self).to_representation(instance)
-
-

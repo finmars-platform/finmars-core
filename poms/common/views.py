@@ -254,19 +254,13 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
+
+        print('AbstractModelViewSet create')
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-
-        content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
-
-        attribute_types = GenericAttributeType.objects.filter(content_type=content_type,
-                                                              master_user=request.user.master_user)
-
-        for attribute_type in attribute_types:
-            GenericAttribute.objects.create(attribute_type=attribute_type, content_type=content_type,
-                                            object_id=serializer.data['id'])
 
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 

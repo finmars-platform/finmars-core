@@ -7,7 +7,7 @@ from django.utils.translation import ugettext_lazy
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
-from poms.common.models import NamedModel
+from poms.common.models import NamedModel, EXPRESSION_FIELD_LENGTH
 from poms.obj_perms.models import GenericObjectPermission
 from poms.users.models import MasterUser, Member
 
@@ -150,6 +150,11 @@ class GenericAttributeType(NamedModel):
     content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'))
     value_type = models.PositiveSmallIntegerField(choices=VALUE_TYPES, default=STRING,
                                                   verbose_name=ugettext_lazy('value type'))
+
+    expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True, verbose_name=ugettext_lazy('expression'))
+
+    can_recalculate = models.BooleanField(default=False, verbose_name=ugettext_lazy("can recalculate"))
+
     order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
@@ -238,6 +243,9 @@ class GenericAttribute(models.Model):
         index_together = [
             ['content_type', 'object_id']
         ]
+        unique_together = [
+            ['attribute_type', 'object_id', 'content_type']
+        ]
         ordering = ['attribute_type']
 
     def __str__(self):
@@ -257,6 +265,9 @@ class GenericAttribute(models.Model):
         return None
 
     def set_value(self, value):
+
+        print('here?')
+
         t = self.attribute_type.value_type
         if t == GenericAttributeType.STRING:
             self.value_string = value
