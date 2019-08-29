@@ -2,6 +2,7 @@ import math
 from collections import OrderedDict
 
 from django.views.generic.dates import timezone_today
+from django.utils.timezone import now
 
 
 def force_qs_evaluation(qs):
@@ -44,6 +45,8 @@ def db_class_check_data(model, verbosity, using):
 def date_now():
     return timezone_today()
 
+def datetime_now():
+    return now()
 
 try:
     isclose = math.isclose

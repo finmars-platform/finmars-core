@@ -4,24 +4,16 @@ from django.core.signing import TimestampSigner
 from rest_framework.response import Response
 from rest_framework import status
 
-from rest_framework.parsers import MultiPartParser
+from poms.common.utils import date_now, datetime_now
+
 from rest_framework.filters import FilterSet
-from django.apps import apps
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet
 
 from poms.csv_import.tasks import data_csv_file_import, data_csv_file_import_validate
 
-from poms.obj_perms.views import AbstractWithObjectPermissionViewSet
-
 from poms.users.filters import OwnerByMasterUserFilter
-
-from poms.common import formula
-
-from poms.obj_attrs.models import GenericAttributeType, GenericAttribute, GenericClassifier
-
-from django.utils.translation import ugettext
 
 from .filters import SchemeContentTypeFilter
 from .models import CsvDataImport, CsvImportScheme
@@ -97,6 +89,8 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
                 instance = res.result
 
+                celery_task.finished_at = datetime_now()
+
             else:
 
                 if res.result:
@@ -121,6 +115,7 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
             # print('TASK RESULT %s' % res.result)
             print('TASK STATUS %s' % res.status)
+            print('TASK STATUS celery_task %s' % celery_task)
 
             instance.task_id = task_id
             instance.task_status = res.status
@@ -138,6 +133,8 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
             instance.task_id = signer.sign('%s' % res.id)
 
             celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
+                                                    member=request.user.member,
+                                                    started_at=datetime_now(),
                                                     task_type='simple_import', task_id=res.id)
 
             print('CREATE CELERY TASK celery_task %s' % celery_task)
@@ -188,6 +185,8 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
 
                 instance = res.result
 
+                celery_task.finished_at = datetime_now()
+
             else:
 
                 if res.result:
@@ -230,6 +229,8 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
             instance.task_id = signer.sign('%s' % res.id)
 
             celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
+                                                    member=request.user.member,
+                                                    started_at=datetime_now(),
                                                     task_type='validate_simple_import', task_id=instance.task_id)
 
             celery_task.save()

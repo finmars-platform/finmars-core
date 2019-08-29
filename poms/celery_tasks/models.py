@@ -1,13 +1,19 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy
 
-
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 
 
 class CeleryTask(models.Model):
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'))
+    member = models.ForeignKey('users.Member', verbose_name=ugettext_lazy('member'), null=True, blank=True)
+
+    started_at = models.DateTimeField(blank=True, null=True)
+    finished_at = models.DateTimeField(blank=True, null=True)
+
+    is_system_task = models.BooleanField(default=False, verbose_name=ugettext_lazy("is system task"))
+
     task_id = models.CharField('task_id', max_length=255, unique=True)
     task_status = models.CharField('task_status', max_length=50, blank=True, null=True)
     task_type = models.CharField('task_type', max_length=50, blank=True, null=True)

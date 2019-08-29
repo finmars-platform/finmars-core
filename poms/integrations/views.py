@@ -9,6 +9,8 @@ from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.filters import FilterSet
 from rest_framework.response import Response
 
+from poms.common.utils import date_now, datetime_now
+
 from poms.accounts.models import Account, AccountType
 from poms.celery_tasks.models import CeleryTask
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
@@ -955,6 +957,8 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
 
                 instance = res.result
 
+                celery_task.finished_at = datetime_now()
+
             else:
 
                 if res.result:
@@ -996,6 +1000,8 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
             instance.task_id = signer.sign('%s' % res.id)
 
             celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
+                                                    member=request.user.member,
+                                                    started_at=datetime_now(),
                                                     task_type='transaction_import', task_id=instance.task_id)
 
             celery_task.save()
@@ -1043,6 +1049,8 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
 
                 instance = res.result
 
+                celery_task.finished_at = datetime_now()
+
             else:
 
                 if res.result:
@@ -1083,6 +1091,8 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
             instance.task_id = signer.sign('%s' % res.id)
 
             celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
+                                                    member=request.user.member,
+                                                    started_at=datetime_now(),
                                                     task_type='validate_transaction_import', task_id=instance.task_id)
 
             celery_task.save()
