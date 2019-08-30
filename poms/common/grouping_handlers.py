@@ -111,19 +111,19 @@ def is_scheme(item):
 def get_root_system_attr_group(qs, root_group, groups_order):
     if is_relation(root_group):
         qs = qs.values(root_group) \
-            .annotate(group_identifier=F(root_group)) \
+            .annotate(group_identifier=F(root_group + '__user_code')) \
             .distinct() \
             .annotate(group_name=F(root_group + '__short_name')) \
             .values('group_name', 'group_identifier')
     elif is_system_relation(root_group):
         qs = qs.values(root_group) \
-            .annotate(group_identifier=F(root_group)) \
+            .annotate(group_identifier=F(root_group + '__system_code')) \
             .distinct() \
             .annotate(group_name=F(root_group + '__name')) \
             .values('group_name', 'group_identifier')
     elif is_scheme(root_group):
         qs = qs.values(root_group) \
-            .annotate(group_identifier=F(root_group)) \
+            .annotate(group_identifier=F(root_group + '__scheme_name')) \
             .distinct() \
             .annotate(group_name=F(root_group + '__scheme_name')) \
             .values('group_name', 'group_identifier')
@@ -206,20 +206,20 @@ def get_last_system_attr_group(qs, last_group, groups_order):
 
     if is_relation(last_group):
         qs = qs.values(last_group) \
-            .annotate(group_identifier=F(last_group)) \
+            .annotate(group_identifier=F(last_group + '__user_code')) \
             .distinct() \
             .annotate(group_name=F(last_group + '__short_name')) \
             .values('group_name', 'group_identifier')
 
     elif is_system_relation(last_group):
         qs = qs.values(last_group) \
-            .annotate(group_identifier=F(last_group)) \
+            .annotate(group_identifier=F(last_group + '__system_code')) \
             .distinct() \
             .annotate(group_name=F(last_group + '__name')) \
             .values('group_name', 'group_identifier')
     elif is_scheme(last_group):
         qs = qs.values(last_group) \
-            .annotate(group_identifier=F(last_group)) \
+            .annotate(group_identifier=F(last_group + '__scheme_name')) \
             .distinct() \
             .annotate(group_name=F(last_group + '__scheme_name')) \
             .values('group_name', 'group_identifier')
