@@ -165,7 +165,13 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
         content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
         filter_settings = request.data.get('filter_settings', None)
 
+        qs = self.get_queryset()
+
+        qs = self.filter_queryset(qs)
+
         filtered_qs = self.get_queryset()
+
+        filtered_qs = filtered_qs.filter(id__in=qs)
 
         # print('len before handle filters %s' % len(filtered_qs))
 
