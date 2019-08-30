@@ -243,10 +243,13 @@ class TransactionTypeProcess(object):
 
                 # key = CONTEXT_PROPERTIES[i.context_property]
 
-                value = self.context_values[i.context_property]
+                try:
+                    value = self.context_values[i.context_property]
+                except KeyError:
+                    print("Can't find context variable %s" % i.context_property)
 
                 if value:
-                    self.default_values[i.name] = value
+                        self.default_values[i.name] = value
 
             if i.value_type == TransactionTypeInput.RELATION:
                 model_class = i.content_type.model_class()
