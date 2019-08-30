@@ -31,6 +31,41 @@ import time
 #             return queryset.filter(parent__isnull=True)
 
 
+def is_relation(item):
+    return item in ['type', 'currency', 'instrument',
+                    'instrument_type', 'group',
+                    'pricing_policy', 'portfolio',
+                    'transaction_type', 'transaction_currency',
+                    'settlement_currency', 'account_cash',
+                    'account_interim', 'account_position',
+                    'accrued_currency', 'pricing_currency',
+                    'one_off_event', 'regular_event', 'factor_same',
+                    'factor_up', 'factor_down',
+
+                    'strategy1_position', 'strategy1_cash',
+                    'strategy2_position', 'strategy2_cash',
+                    'strategy3_position', 'strategy3_cash',
+
+                    'counterparty', 'responsible',
+
+                    'allocation_balance', 'allocation_pl',
+                    'linked_instrument',
+
+                    'subgroup'
+
+                    ]
+
+
+def is_system_relation(item):
+    return item in ['instrument_class',
+                    'transaction_class',
+                    'daily_pricing_model',
+                    'payment_size_detail']
+
+
+def is_scheme(item):
+    return item in ['price_download_scheme']
+
 def _model_choices(model, field_name, master_user_path):
     master_user = get_request().user.master_user
     qs = model.objects.filter(**{master_user_path: master_user}).order_by(field_name)
@@ -217,10 +252,28 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
                         if groups_values[i] == '-':
 
-                            queryset = queryset.filter(Q(**{attr + '__isnull': True}) | Q(**{attr: '-'}))
+                            res_attr = attr
+
+                            if is_relation(res_attr):
+                                res_attr = res_attr + '__user_code'
+                            elif is_system_relation(attr):
+                                res_attr = res_attr + '__system_code'
+                            elif is_scheme(attr):
+                                res_attr = res_attr + '__scheme_name'
+
+                            queryset = queryset.filter(Q(**{res_attr + '__isnull': True}) | Q(**{res_attr: '-'}))
 
                         else:
-                            params[attr] = groups_values[i]
+
+                            if is_relation(attr):
+                                params[attr + '__user_code'] = groups_values[i]
+                            elif is_system_relation(attr):
+                                params[attr + '__system_code'] = groups_values[i]
+                            elif is_scheme(attr):
+                                params[attr + '__scheme_name'] = groups_values[i]
+
+                            # print(attr)
+                            # print(params)
 
                             queryset = queryset.filter(**params)
 
