@@ -202,7 +202,7 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
 
 
 def get_last_system_attr_group(qs, last_group, groups_order):
-    # print('last_group %s ' % last_group)
+    print('last_group %s ' % last_group)
 
     if is_relation(last_group):
         qs = qs.values(last_group) \
@@ -318,6 +318,8 @@ def get_queryset_filters(qs, groups_types, groups_values, original_qs):
                         params[attr + '__system_code'] = groups_values[i]
                     elif is_scheme(attr):
                         params[attr + '__scheme_name'] = groups_values[i]
+                    else:
+                        params[attr] = groups_values[i]
 
                     qs = qs.filter(**params)
 
@@ -327,9 +329,9 @@ def get_queryset_filters(qs, groups_types, groups_values, original_qs):
 
     print("get_queryset_filters %s seconds " % (time.time() - start_time))
 
-    original_qs = original_qs.filter(id__in=qs)
+    # original_qs = original_qs.filter(id__in=qs)
 
-    return original_qs
+    return qs
 
 
 def is_dynamic_attribute(item):
@@ -376,6 +378,7 @@ def handle_groups(qs, groups_types, groups_values, groups_order, master_user, or
         qs = get_queryset_filters(qs, groups_types, groups_values, original_qs)
 
         # print('handle groups after filters qs len %s' % len(qs))
+        # print('handle groups after filters qs len %s' % qs)
 
         if is_dynamic_attribute(groups_types[-1]):
 
@@ -384,6 +387,8 @@ def handle_groups(qs, groups_types, groups_values, groups_order, master_user, or
         else:
 
             qs = get_last_system_attr_group(qs, last_group=groups_types[-1], groups_order=groups_order)
+
+    # print('handle_groups  %s' % qs)
 
     print("handle_groups %s seconds " % (time.time() - start_time))
 

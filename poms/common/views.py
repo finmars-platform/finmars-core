@@ -186,7 +186,7 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
 
         # print('page, %s' % page)
 
-        # print("Filtered EV Group List %s seconds " % (time.time() - start_time))
+        print("Filtered EV Group List %s seconds " % (time.time() - start_time))
 
         if page is not None:
             return self.get_paginated_response(page)

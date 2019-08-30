@@ -161,7 +161,7 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
     def filter_queryset(self, request, queryset, view):
 
-        # print('GroupsAttributeFilter')
+        print('GroupsAttributeFilter')
 
         start_time = time.time()
 
@@ -271,6 +271,8 @@ class GroupsAttributeFilter(BaseFilterBackend):
                                 params[attr + '__system_code'] = groups_values[i]
                             elif is_scheme(attr):
                                 params[attr + '__scheme_name'] = groups_values[i]
+                            else:
+                                params[attr] = groups_values[i]
 
                             # print(attr)
                             # print(params)
@@ -285,6 +287,7 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
         return queryset
 
+
 # DEPRECATED
 class AttributeFilter(BaseFilterBackend):
 
@@ -294,16 +297,16 @@ class AttributeFilter(BaseFilterBackend):
 
         start_time = time.time()
 
-        groups_types = []
-        groups_values = []
+        groups_types = request.data.get('groups_types', [])
+        groups_values = request.data.get('groups_values', [])
 
-        for key in list(request.GET.keys()):
-
-            key_formatted = key.split('___da_')
-
-            if len(key_formatted) == 2:
-                groups_types.append(key_formatted[1])
-                groups_values.append(request.GET.getlist(key)[0])
+        # for key in list(request.GET.keys()):
+        #
+        #     key_formatted = key.split('___da_')
+        #
+        #     if len(key_formatted) == 2:
+        #         groups_types.append(key_formatted[1])
+        #         groups_values.append(request.GET.getlist(key)[0])
 
         # print('AttributeFilter init')
 

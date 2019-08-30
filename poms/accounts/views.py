@@ -67,6 +67,7 @@ class AccountTypeViewSet(AbstractWithObjectPermissionViewSet):
         'user_code', 'name', 'short_name', 'public_name', 'show_transaction_details'
     ]
 
+
 class AccountTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = AccountType.objects.select_related(
         'master_user'
