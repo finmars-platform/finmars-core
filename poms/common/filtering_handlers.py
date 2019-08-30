@@ -394,9 +394,12 @@ def add_filter(qs, filter_config):
     # print('filter_config %s ' % filter_config)
 
     filter_type = filter_config['filter_type']
-    value_type = filter_config['value_type']
+    value_type = str(filter_config['value_type'])
     key = filter_config['key']
     value = None
+
+    # print('value_type %s' % value_type)
+    # print('value_type %s' % type(value_type))
 
     exclude_empty_cells = filter_config['exclude_empty_cells']
 
@@ -453,6 +456,8 @@ def add_filter(qs, filter_config):
     # STRING FILTERS START
 
     elif filter_type == FilterType.CONTAINS and value_type == ValueType.STRING:
+
+        # print('here?')
 
         if len(filter_config['value']):
             value = filter_config['value'][0]
@@ -769,7 +774,7 @@ def is_dynamic_attribute_filter(filter_config):
 
 def handle_filters(qs, filter_settings, master_user, content_type):
 
-    print('Handle filters')
+    print('Handle filters %s' % filter_settings)
 
     start_time = time.time()
 

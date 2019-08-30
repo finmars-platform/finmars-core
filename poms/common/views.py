@@ -165,25 +165,28 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
         content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
         filter_settings = request.data.get('filter_settings', None)
 
-        qs = self.get_queryset()
-        qs = self.filter_queryset(qs)
-        qs = handle_filters(qs, filter_settings, master_user, content_type)
-
-
         filtered_qs = self.get_queryset()
-        filtered_qs = filtered_qs.filter(id__in=qs)
+
+        # print('len before handle filters %s' % len(filtered_qs))
+
+        filtered_qs = handle_filters(filtered_qs, filter_settings, master_user, content_type)
+
+        # print('len after handle filters %s' % len(filtered_qs))
+
+        # filtered_qs = filtered_qs.filter(id__in=qs)
 
         if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy']:
             filtered_qs = filtered_qs.filter(is_deleted=False)
 
         filtered_qs = handle_groups(filtered_qs, groups_types, groups_values, groups_order, master_user, self.get_queryset(), content_type)
 
+        # print('len after handle groups %s' % len(filtered_qs))
 
         page = self.paginator.post_paginate_queryset(filtered_qs, request)
 
         # print('page, %s' % page)
 
-        print("Filtered EV Group List %s seconds " % (time.time() - start_time))
+        # print("Filtered EV Group List %s seconds " % (time.time() - start_time))
 
         if page is not None:
             return self.get_paginated_response(page)
