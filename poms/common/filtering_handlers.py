@@ -38,7 +38,7 @@ class FilterType:
 def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
 
     filter_type = filter_config['filter_type']
-    value_type = int(filter_config['value_type'])
+    value_type = str(filter_config['value_type'])
     value = None
 
     exclude_empty_cells = filter_config['exclude_empty_cells']
