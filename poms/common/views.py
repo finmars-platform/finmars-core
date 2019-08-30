@@ -236,6 +236,10 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         master_user = request.user.master_user
 
         queryset = self.filter_queryset(self.get_queryset())
+
+        if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy']:
+            queryset = queryset.filter(is_deleted=False)
+
         queryset = handle_filters(queryset, filter_settings, master_user, content_type)
 
         ordering = request.data.get('ordering', None)
