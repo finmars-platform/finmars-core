@@ -241,8 +241,6 @@ class TransactionTypeProcess(object):
 
             if i.is_fill_from_context:
 
-                # key = CONTEXT_PROPERTIES[i.context_property]
-
                 try:
                     value = self.context_values[i.context_property]
                 except KeyError:

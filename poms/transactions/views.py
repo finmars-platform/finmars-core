@@ -537,12 +537,16 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
 
         complex_transaction_status = ComplexTransaction.PRODUCTION
 
+        # Some Inputs can choose from which context variable it will take value
         context_values = self.get_context_for_book(request)
+        # But by default Context Variables overwrites default value
+        default_values = self.get_context_for_book(request)
 
         print("context_values %s" % context_values)
 
         instance = TransactionTypeProcess(process_mode='book', transaction_type=self.get_object(),
                                           context=self.get_serializer_context(), context_values=context_values,
+                                          default_values=default_values,
                                           complex_transaction_status=complex_transaction_status)
 
         if request.method == 'GET':
