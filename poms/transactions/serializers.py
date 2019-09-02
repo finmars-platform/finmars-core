@@ -156,7 +156,7 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
     class Meta:
         model = TransactionTypeInput
         fields = [
-            'id', 'name', 'verbose_name', 'value_type', 'content_type', 'order', 'can_recalculate', 'value_expr',
+            'id', 'name', 'verbose_name', 'value_type', 'reference_table', 'content_type', 'order', 'can_recalculate', 'value_expr',
             'is_fill_from_context', 'context_property', 'value', 'account', 'instrument_type', 'instrument', 'currency', 'counterparty',
             'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3', 'daily_pricing_model',
             'payment_size_detail', 'price_download_scheme', 'pricing_policy', 'periodicity', 'accrual_calculation_model'
@@ -1771,7 +1771,7 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
             field = None
             field_object = None
 
-            if i.value_type == TransactionTypeInput.STRING:
+            if i.value_type == TransactionTypeInput.STRING or i.value_type == TransactionTypeInput.SELECTOR:
                 # field = serializers.CharField(required=True, label=i.name, help_text=i.verbose_name)
                 field = serializers.CharField(required=False, allow_blank=True, allow_null=True,
                                               label=i.name, help_text=i.verbose_name)

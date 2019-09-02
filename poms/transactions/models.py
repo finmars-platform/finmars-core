@@ -461,6 +461,7 @@ class TransactionTypeInput(models.Model):
     # EXPRESSION = 30
     DATE = 40
     RELATION = 100
+    SELECTOR = 110
 
     # ACCOUNT = 110
     # INSTRUMENT = 120
@@ -480,6 +481,7 @@ class TransactionTypeInput(models.Model):
         (DATE, ugettext_lazy('Date')),
         # (EXPRESSION, ugettext_lazy('Expression')),
         (RELATION, ugettext_lazy('Relation')),
+        (SELECTOR, ugettext_lazy('Selector')),
         # (ACCOUNT, ugettext_lazy('Account')),
         # (INSTRUMENT, ugettext_lazy('Instrument')),
         # (CURRENCY, ugettext_lazy('Currency')),
@@ -500,6 +502,9 @@ class TransactionTypeInput(models.Model):
     value_type = models.PositiveSmallIntegerField(default=NUMBER, choices=TYPES,
                                                   verbose_name=ugettext_lazy('value type'))
     content_type = models.ForeignKey(ContentType, null=True, blank=True, verbose_name=ugettext_lazy('content type'))
+
+    reference_table = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('reference table'))
+
     order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
     value_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True,
                                   verbose_name=ugettext_lazy('value expression'),
@@ -586,7 +591,7 @@ class TransactionTypeInput(models.Model):
     @property
     def can_recalculate(self):
 
-        return bool(self.value_expr) and self.value_type in [TransactionTypeInput.STRING, TransactionTypeInput.DATE,
+        return bool(self.value_expr) and self.value_type in [TransactionTypeInput.STRING, TransactionTypeInput.SELECTOR,  TransactionTypeInput.DATE,
                                                              TransactionTypeInput.NUMBER, TransactionTypeInput.RELATION]
 
 

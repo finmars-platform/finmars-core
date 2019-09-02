@@ -222,7 +222,7 @@ class TransactionTypeProcess(object):
             for ci in ci_qs:
                 i = ci.transaction_type_input
                 value = None
-                if i.value_type == TransactionTypeInput.STRING:
+                if i.value_type == TransactionTypeInput.STRING or i.value_type == TransactionTypeInput.SELECTOR:
                     value = ci.value_string
                 elif i.value_type == TransactionTypeInput.NUMBER:
                     value = ci.value_float
@@ -1202,7 +1202,7 @@ class TransactionTypeProcess(object):
             ci.complex_transaction = self.complex_transaction
             ci.transaction_type_input = ti
 
-            if ti.value_type == TransactionTypeInput.STRING:
+            if ti.value_type == TransactionTypeInput.STRING or ti.value_type == TransactionTypeInput.SELECTOR:
                 if val is None:
                     val = ''
                 ci.value_string = val
