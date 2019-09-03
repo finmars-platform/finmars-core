@@ -189,7 +189,7 @@ def download_instrument_async(self, task_id=None):
 def download_instrument(instrument_code=None, instrument_download_scheme=None, master_user=None, member=None,
                         task=None, value_overrides=None):
     _l.info('download_pricing: master_user_id=%s, task=%s, instrument_code=%s, instrument_download_scheme=%s',
-             getattr(master_user, 'id', None), getattr(task, 'info', None), instrument_code, instrument_download_scheme)
+            getattr(master_user, 'id', None), getattr(task, 'info', None), instrument_code, instrument_download_scheme)
 
     if task is None:
         provider = get_provider(instrument_download_scheme.master_user, instrument_download_scheme.provider)
@@ -337,10 +337,10 @@ def test_certificate_async(self, task_id):
         import_config.is_valid = result['is_authorized']
         import_config.save()
 
-        _l.info('handle_test_certificate_async import_config: import_config=%s, is_valid=%s', import_config, import_config.is_valid)
+        _l.info('handle_test_certificate_async import_config: import_config=%s, is_valid=%s', import_config,
+                import_config.is_valid)
         _l.info('handle_test_certificate_async task: master_user_id=%s, task=%s', task.master_user_id, task.result)
         _l.info('handle_test_certificate_async task.status: ', task.status)
-
 
     if task.status == Task.STATUS_WAIT_RESPONSE:
         if self.request.is_eager:
@@ -354,6 +354,7 @@ def test_certificate_async(self, task_id):
         return
 
     return task_id
+
 
 @shared_task(name='integrations.download_currency_pricing_async', bind=True, ignore_result=False)
 def download_currency_pricing_async(self, task_id):
@@ -417,7 +418,6 @@ def download_currency_pricing_async(self, task_id):
 
 @shared_task(name='integrations.download_pricing_async', bind=True, ignore_result=False)
 def download_pricing_async(self, task_id):
-
     celery_logger.info('download pricing async')
     task = Task.objects.get(pk=task_id)
     _l.info('download_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
@@ -482,11 +482,11 @@ def download_pricing_async(self, task_id):
             currencies_default.add(i.id)
 
     _l.info('always: instruments=%s, currencies=%s',
-             sorted(instruments_always), sorted(currencies_always))
+            sorted(instruments_always), sorted(currencies_always))
 
     balance_date = parse_date_iso(options['balance_date'])
     _l.info('calculate position report on %s for: instruments=%s, currencies=%s',
-             balance_date, sorted(instruments_if_open), sorted(currencies_if_open))
+            balance_date, sorted(instruments_if_open), sorted(currencies_if_open))
 
     if balance_date and (instruments_if_open or currencies_if_open):
         owner_or_admin = task.master_user.members.filter(Q(is_owner=True) | Q(is_admin=True)).first()
@@ -661,7 +661,6 @@ def download_pricing_async(self, task_id):
 
 @shared_task(name='integrations.download_pricing_wait', bind=True, ignore_result=False)
 def download_pricing_wait(self, sub_tasks_id, task_id):
-
     celery_logger.info('download pricing wait')
     task = Task.objects.get(pk=task_id)
     _l.info('download_pricing_wait: master_user_id=%s, task=%s', task.master_user_id, task.info)
@@ -999,7 +998,6 @@ def _create_instrument_manual_prices(options, instruments):
 
 
 def test_certificate(master_user=None, member=None, task=None):
-
     _l.info('test_certificate: master_user_id=%s, task=%s',
             getattr(master_user, 'id', None), getattr(task, 'info', None))
     if task is None:
@@ -1031,13 +1029,12 @@ def test_certificate(master_user=None, member=None, task=None):
 
 def download_pricing(master_user=None, member=None, date_from=None, date_to=None, is_yesterday=None, balance_date=None,
                      fill_days=None, override_existed=None, task=None):
-
     celery_logger.info('download pricing')
 
     _l.info('download_pricing: master_user_id=%s, task=%s, date_from=%s, date_to=%s, is_yesterday=%s,'
-             ' balance_date=%s, fill_days=%s, override_existed=%s',
-             getattr(master_user, 'id', None), getattr(task, 'info', None), date_from, date_to, is_yesterday,
-             balance_date, fill_days, override_existed)
+            ' balance_date=%s, fill_days=%s, override_existed=%s',
+            getattr(master_user, 'id', None), getattr(task, 'info', None), date_from, date_to, is_yesterday,
+            balance_date, fill_days, override_existed)
     if task is None:
         with transaction.atomic():
             options = {
@@ -1114,7 +1111,7 @@ def download_pricing_auto_scheduler(self):
             next_run_at = timezone.localtime(s.next_run_at)
             s.schedule(save=True)
             _l.info('pricing_auto: master_user=%s, next_run_at=%s',
-                     master_user.id, s.next_run_at)
+                    master_user.id, s.next_run_at)
         download_pricing_auto.apply_async(kwargs={'master_user_id': master_user.id})
     _l.info('finished')
 
@@ -1152,8 +1149,8 @@ def complex_transaction_csv_file_import(self, instance):
     #                 scheme.rules.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()}
 
     _l.info('scheme %s - inputs=%s, rules=%s', scheme,
-             [(i.name, i.column) for i in scheme_inputs],
-             [(r.value, r.transaction_type.user_code) for r in scheme_rules])
+            [(i.name, i.column) for i in scheme_inputs],
+            [(r.value, r.transaction_type.user_code) for r in scheme_rules])
 
     mapping_map = {
         Account: AccountMapping,
@@ -1319,8 +1316,8 @@ def complex_transaction_csv_file_import(self, instance):
                 error_rows['level'] = 'error'
 
                 error_rows['error_message'] = error_rows['error_message'] + str(
-                    ugettext('Can\'t process inputs: %(inputs)s') % {
-                        'inputs': ', '.join('[' + i.name + ']' for i in inputs_error)
+                    ugettext('Can\'t process fields: %(inputs)s') % {
+                        'inputs': ', '.join('[' + i.name + '] (Can\'t find input)' for i in inputs_error)
                     })
                 instance.error_rows.append(error_rows)
                 if instance.break_on_error:
@@ -1351,8 +1348,10 @@ def complex_transaction_csv_file_import(self, instance):
                 error_rows['level'] = 'error'
 
                 error_rows['error_message'] = error_rows['error_message'] + str(
-                    ugettext('Can\'t process conversion inputs: %(inputs)s') % {
-                        'inputs': ', '.join('[' + i.name + ']' for i in inputs_conversion_error)
+                    ugettext('Can\'t process fields: %(inputs)s') % {
+                        'inputs': ', '.join(
+                            '[' + i.name + '] (Imported column conversion expression, value; "' + i.name_exp + '")' for
+                            i in inputs_conversion_error)
                     })
                 instance.error_rows.append(error_rows)
                 if instance.break_on_error:
@@ -1548,8 +1547,8 @@ def complex_transaction_csv_file_import_validate(self, instance):
     scheme_rules = scheme.rules.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()
 
     _l.info('scheme %s - inputs=%s, rules=%s', scheme,
-             [(i.name, i.column) for i in scheme_inputs],
-             [(r.value, r.transaction_type.user_code) for r in scheme_rules])
+            [(i.name, i.column) for i in scheme_inputs],
+            [(r.value, r.transaction_type.user_code) for r in scheme_rules])
 
     mapping_map = {
         Account: AccountMapping,
@@ -1643,8 +1642,8 @@ def complex_transaction_csv_file_import_validate(self, instance):
                     else:
                         error_rows['error_message'] = error_rows[
                                                           'error_message'] + ' Can\'t find relation of ' + \
-                                                      '[' + field.transaction_type_input.name + ']' + ' (value:' + \
-                                                      value + '). '
+                                                      '[' + field.transaction_type_input.name + ']' + ' (Imported column, value: "' + \
+                                                      value + '"). '
 
             if not v:
                 raise ValueError('Can\'t find Relation.')
@@ -1836,11 +1835,16 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                         _l.info(error_rows['error_message'])
 
+                        inputs_messages = []
+
+                        for field_error in fields_error:
+                            message = '[' + field_error.transaction_type_input.name + '] ' + '( TType Input, TType ' + rule.transaction_type.name + ' [' + rule.transaction_type.user_code + '] )'
+
+                            inputs_messages.append(message)
+
                         error_rows['error_message'] = error_rows['error_message'] + str(
-                            ugettext('Can\'t process fields: %(fields)s') % {
-                                'fields': ', '.join(
-                                    '[' + f.transaction_type_input.name + '] ' + '( TType: ' + rule_value + ')' for f in
-                                    fields_error)
+                            ugettext('Can\'t process fields: %(messages)s') % {
+                                'messages': ', '.join(str(m) for m in inputs_messages)
                             })
 
                         error_rows['level'] = 'error'

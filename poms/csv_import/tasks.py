@@ -230,9 +230,17 @@ def process_csv_file(master_user,
                     error_row['error_data']['data']['converted_imported_columns'].append(value)
 
                 if len(conversion_errors) > 0:
+
+                    inputs_messages = []
+
+                    for input_error in inputs_error:
+                        message = '[{0}] (Imported column conversion expression, value: "{1}")'.format(input_error['field'].name, input_error['reason'])
+
+                        inputs_messages.append(message)
+
                     error_row['error_message'] = error_row['error_message'] + '\n' + '\n' + ugettext(
-                        'Can\'t process conversion expression: %(columns)s') % {
-                                                     'columns': ', '.join(i['name'] for i in conversion_errors)
+                        'Can\'t process fields: %(messages)s') % {
+                                                     'messages': ', '.join(str(m) for m in inputs_messages)
                                                  }
 
                     if error_handler == 'break':
@@ -482,17 +490,13 @@ def process_csv_file(master_user,
                     inputs_messages = []
 
                     for input_error in inputs_error:
-                        message = '{0} ({1})'.format(input_error['field'].name, input_error['reason'])
-
-                        # _l.info(message)
+                        message = '[{0}] ({1})'.format(input_error['field'].name, input_error['reason'])
 
                         inputs_messages.append(message)
 
-                    # _l.info(inputs_messages)
-
                     error_row['level'] = 'error'
                     error_row['error_message'] = error_row['error_message'] + '\n' + '\n' + ugettext(
-                        'Can\'t process field: %(inputs)s') % {
+                        'Can\'t process fields: %(inputs)s') % {
                                                      'inputs': ', '.join(str(m) for m in inputs_messages)}
 
                     error_row['error_reaction'] = 'Continue import'
