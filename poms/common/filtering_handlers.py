@@ -18,6 +18,7 @@ import time
 class ValueType:
     STRING = '10'
     NUMBER = '20'
+    CLASSIFIER = '30'
     DATE = '40'
     FIELD = 'field'
 
@@ -51,75 +52,97 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
 
     attributes_qs = GenericAttribute.objects.filter(attribute_type=attribute_type)
 
+    print('attribute_type.value_type %s' % attribute_type.value_type)
+    print('value_type %s' % value_type)
+
+    # CLASSIFIER FILTERS START
+
+    if filter_type == FilterType.CONTAINS and value_type == ValueType.CLASSIFIER:
+
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
+
+        if value:
+
+            options = {}
+            options['classifier__name__icontains'] = value
+
+            include_null_options = {}
+            if not exclude_empty_cells:
+                include_null_options['classifier__isnull'] = True
+                include_null_options['value_string__isnull'] = True
+                include_null_options['value_float__isnull'] = True
+                include_null_options['value_date__isnull'] = True
+
+            attributes_qs = attributes_qs.filter(Q(**options) | Q(**include_null_options))
+
+    if filter_type == FilterType.DOES_NOT_CONTAINS and value_type == ValueType.CLASSIFIER:
+
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
+
+        if value:
+
+            options = {}
+            options['classifier__name__icontains'] = value
+
+            exclude_empty_cells_options = {}
+            if exclude_empty_cells:
+                exclude_empty_cells_options['classifier__isnull'] = True
+
+            attributes_qs = attributes_qs.exclude(Q(**options) | Q(**exclude_empty_cells_options))
+
+    if filter_type == FilterType.EMPTY and value_type == ValueType.CLASSIFIER:
+
+        include_null_options = {}
+        include_empty_string_options = {}
+
+        include_null_options['value_string__isnull'] = True
+        include_empty_string_options['value_string'] = ''
+
+        attributes_qs = attributes_qs.filter(Q(**include_null_options) | Q(**include_empty_string_options))
+
+    # CLASSIFIER FILTERS END
+
     # STRING FILTERS START
 
-    if filter_type == FilterType.CONTAINS and int(value_type) == ValueType.STRING:
+    if filter_type == FilterType.CONTAINS and value_type == ValueType.STRING:
 
         if len(filter_config['value']):
             value = filter_config['value'][0]
 
         if value:
 
-            if attribute_type.value_type == GenericAttributeType.CLASSIFIER:
+            options = {}
+            options['value_string__icontains'] = value
 
-                options = {}
-                options['classifier__name__icontains'] = value
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options['value_string__isnull'] = True
+                include_empty_string_options['value_string'] = ''
 
-                include_null_options = {}
-                if not exclude_empty_cells:
-                    include_null_options['classifier__isnull'] = True
-                    include_null_options['value_string__isnull'] = True
-                    include_null_options['value_float__isnull'] = True
-                    include_null_options['value_date__isnull'] = True
+            attributes_qs = attributes_qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
-
-                attributes_qs = attributes_qs.filter(Q(**options) | Q(**include_null_options))
-
-            else:
-
-                options = {}
-                options['value_string__icontains'] = value
-
-                include_null_options = {}
-                include_empty_string_options = {}
-                if not exclude_empty_cells:
-                    include_null_options['value_string__isnull'] = True
-                    include_empty_string_options['value_string'] = ''
-
-                attributes_qs = attributes_qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
-
-    if filter_type == FilterType.DOES_NOT_CONTAINS and int(value_type) == ValueType.STRING:
+    if filter_type == FilterType.DOES_NOT_CONTAINS and value_type == ValueType.STRING:
 
         if len(filter_config['value']):
             value = filter_config['value'][0]
 
         if value:
 
-            if attribute_type.value_type == GenericAttributeType.CLASSIFIER:
+            options = {}
+            options['value_string__icontains'] = value
 
-                options = {}
-                options['classifier__name__icontains'] = value
+            exclude_empty_cells_options = {}
+            exclude_null_options = {}
+            if exclude_empty_cells:
+                exclude_null_options['classifier__isnull'] = True
+                exclude_empty_cells_options['value_string'] = ''
 
-                exclude_empty_cells_options = {}
-                if exclude_empty_cells:
-                    exclude_empty_cells_options['classifier__isnull'] = True
+            attributes_qs = attributes_qs.exclude(Q(**options) | Q(**exclude_null_options) | Q(**exclude_empty_cells_options))
 
-                attributes_qs = attributes_qs.exclude(Q(**options) | Q(**exclude_empty_cells_options))
-
-            else:
-
-                options = {}
-                options['value_string__icontains'] = value
-
-                exclude_empty_cells_options = {}
-                exclude_null_options = {}
-                if exclude_empty_cells:
-                    exclude_null_options['classifier__isnull'] = True
-                    exclude_empty_cells_options['value_string'] = ''
-
-                attributes_qs = attributes_qs.exclude(Q(**options) | Q(**exclude_null_options) | Q(**exclude_empty_cells_options))
-
-    if filter_type == FilterType.EMPTY and int(value_type) == ValueType.STRING:
+    if filter_type == FilterType.EMPTY and value_type == ValueType.STRING:
 
         include_null_options = {}
         include_empty_string_options = {}
