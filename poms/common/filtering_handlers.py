@@ -164,7 +164,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
 
             options = {}
-            options['value_float__iexact'] = value
+            options['value_float__exact'] = value
 
             include_null_options = {}
             if not exclude_empty_cells:
@@ -180,7 +180,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
         if value:
 
             options = {}
-            options['value_float__iexact'] = value
+            options['value_float__exact'] = value
 
             exclude_empty_cells_options = {}
             if exclude_empty_cells:
@@ -540,7 +540,7 @@ def add_filter(qs, filter_config):
         if value:
 
             options = {}
-            options[key + '__iexact'] = value
+            options[key + '__exact'] = value
 
             include_null_options = {}
             if not exclude_empty_cells:
@@ -556,7 +556,7 @@ def add_filter(qs, filter_config):
         if value:
 
             options = {}
-            options[key + '__iexact'] = value
+            options[key + '__exact'] = value
 
             exclude_empty_cells_options = {}
             if exclude_empty_cells:
