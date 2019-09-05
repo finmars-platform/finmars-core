@@ -1,9 +1,11 @@
 import django_filters
 from django.contrib.contenttypes.models import ContentType
+from rest_framework.decorators import list_route, detail_route
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.filters import FilterSet
 
 from poms.common.filters import NoOpFilter, CharFilter, ModelExtWithPermissionMultipleChoiceFilter
+from poms.common.formula import safe_eval, ExpressionEvalError
 from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet
 from poms.obj_attrs.filters import OwnerByAttributeTypeFilter, AttributeTypeValueTypeFilter
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier, GenericAttribute
@@ -131,6 +133,7 @@ class GenericAttributeTypeViewSet(AbstractWithObjectPermissionViewSet):
     ]
     filter_class = GenericAttributeTypeFilterSet
     target_model = None
+    target_model_serializer = None
 
     def get_queryset(self):
         return super(GenericAttributeTypeViewSet, self).get_queryset().filter(
@@ -174,7 +177,7 @@ class GenericAttributeTypeViewSet(AbstractWithObjectPermissionViewSet):
 
             try:
                 exists = GenericAttribute.objects.get(attribute_type=attr_type, content_type=content_type,
-                                                object_id=item.pk)
+                                                      object_id=item.pk)
 
             except GenericAttribute.DoesNotExist:
 
@@ -183,3 +186,118 @@ class GenericAttributeTypeViewSet(AbstractWithObjectPermissionViewSet):
         GenericAttribute.objects.bulk_create(attrs)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def get_attributes_as_obj(self, instance):
+
+        result = {}
+
+        attributes = GenericAttribute.objects.filter(object_id=instance.id, content_type=self.target_model_content_type)
+
+        for attribute in attributes:
+
+            attribute_type = attribute.attribute_type
+
+            if attribute_type.value_type == 10:
+                result[attribute_type.user_code] = attribute.value_string
+
+            if attribute_type.value_type == 20:
+                result[attribute_type.user_code] = attribute.float
+
+            if attribute_type.value_type == 30:
+                if attribute.classifier:
+                    result[attribute_type.user_code] = attribute.classifier.name
+                else:
+                    result[attribute_type.user_code] = None
+
+            if attribute_type.value_type == 40:
+                result[attribute_type.user_code] = attribute.value_date
+
+        return result
+
+    def get_json_objs(self, master_user, context):
+
+        result = {}
+
+        instances = self.target_model.objects.filter(master_user=master_user)
+
+        for instance in instances:
+
+            serializer = self.target_model_serializer(instance=instance, context=context)
+
+            result[instance.id] = serializer.data
+
+            result[instance.id]['attributes'] = self.get_attributes_as_obj(instance)
+
+        return result
+
+    @detail_route(methods=['get'], url_path='objects-to-recalculate')
+    def objects_to_recalculate(self, request, pk):
+
+        master_user = request.user.master_user
+
+        attribute_type = GenericAttributeType.objects.get(id=pk, master_user=master_user)
+
+        if attribute_type.can_recalculate is False:
+            return Response({'count': 0})
+
+        objs_count = GenericAttribute.objects.filter(
+            attribute_type=attribute_type,
+            content_type=self.target_model_content_type).count()
+
+        return Response({'count': objs_count})
+
+    @detail_route(methods=['post'], url_path='recalculate')
+    def recalculate_attributes(self, request, pk):
+
+        master_user = request.user.master_user
+
+        attribute_type = GenericAttributeType.objects.get(id=pk, master_user=master_user)
+
+        attributes = GenericAttribute.objects.filter(
+            attribute_type=attribute_type,
+            content_type=self.target_model_content_type)
+
+        context = {'request': request}
+
+        json_objs = self.get_json_objs(master_user, context, )
+
+        for attr in attributes:
+
+            data = json_objs[attr.object_id]
+
+            try:
+                executed_expression = safe_eval(attribute_type.expr, names={'this': data}, context={})
+            except (ExpressionEvalError, TypeError, Exception, KeyError):
+                executed_expression = 'Invalid Expression'
+
+            if attr.attribute_type.value_type == GenericAttributeType.STRING:
+
+                if executed_expression == 'Invalid Expression':
+                    attr.value_string = None
+                else:
+                    attr.value_string = executed_expression
+
+            if attr.attribute_type.value_type == GenericAttributeType.NUMBER:
+
+                if executed_expression == 'Invalid Expression':
+                    attr.value_float = None
+                else:
+                    attr.value_float = executed_expression
+
+            if attr.attribute_type.value_type == GenericAttributeType.DATE:
+
+                if executed_expression == 'Invalid Expression':
+                    attr.value_date = None
+                else:
+                    attr.value_date = executed_expression
+
+            if attr.attribute_type.value_type == GenericAttributeType.CLASSIFIER:
+
+                if executed_expression == 'Invalid Expression':
+                    attr.classifier = None
+                else:
+                    attr.classifier = executed_expression
+
+            attr.save()
+
+        return Response({'status': 'ok'})

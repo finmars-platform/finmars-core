@@ -56,6 +56,7 @@ from poms.users.filters import OwnerByMasterUserFilter
 
 class CounterpartyAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Counterparty
+    target_model_serializer = CounterpartySerializer
 
 
 # class CounterpartyClassifierFilterSet(FilterSet):
@@ -249,6 +250,7 @@ class CounterpartyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cus
 
 class ResponsibleAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Responsible
+    target_model_serializer = ResponsibleSerializer
 
 
 # class ResponsibleClassifierFilterSet(FilterSet):

@@ -169,6 +169,7 @@ class TransactionTypeFilterSet(FilterSet):
 
 class TransactionTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = TransactionType
+    target_model_serializer = TransactionTypeSerializer
 
 
 class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
@@ -624,6 +625,7 @@ class TransactionTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, 
 
 class TransactionAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Transaction
+    target_model_serializer = TransactionSerializer
 
 
 class TransactionClassifierViewSet(GenericClassifierViewSet):
@@ -1079,6 +1081,7 @@ class TransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cust
 
 class ComplexTransactionAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = ComplexTransaction
+    target_model_serializer = ComplexTransactionSerializer
 
 
 class ComplexTransactionFilterSet(FilterSet):

@@ -225,7 +225,8 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
         self.create_attributes_if_not_exists(instance)
 
         self.save_attributes(instance, attributes, True)
-        self.calculate_attributes(instance, attributes, True)
+
+        self.calculate_attributes(instance)
 
         return instance
 
@@ -240,7 +241,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
         if attributes is not empty:
             self.save_attributes(instance, attributes, False)
 
-        self.calculate_attributes(instance, attributes, False)
+        self.calculate_attributes(instance)
 
         return instance
 
@@ -262,8 +263,10 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
             except (GenericAttribute.DoesNotExist, KeyError):
 
-                GenericAttribute.objects.create(attribute_type=attribute_type, content_type=content_type,
-                                            object_id=instance.id)
+                obj = GenericAttribute.objects.create(attribute_type=attribute_type, content_type=content_type,
+                                                object_id=instance.id)
+
+                obj.save()
 
     def recursive_calculation(self, attribute_types, executed_expressions, eval_data, current_index, limit):
 
@@ -271,31 +274,57 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
             if attribute_type.can_recalculate:
                 try:
-                    executed_expressions[attribute_type.id] = safe_eval(attribute_type.expr, names={'this': eval_data}, context={})
+                    executed_expressions[attribute_type.id] = safe_eval(attribute_type.expr, names={'this': eval_data},
+                                                                        context={})
                 except (ExpressionEvalError, TypeError, Exception, KeyError):
                     executed_expressions[attribute_type.id] = 'Invalid Expression'
                     return
+
+                eval_data['attributes'][attribute_type.user_code] = executed_expressions[attribute_type.id]
 
         current_index = current_index + 1
 
         if current_index < limit:
             self.recursive_calculation(attribute_types, executed_expressions, eval_data, current_index, limit)
 
-    def calculate_attributes(self, instance, attributes, created):
+    def get_attributes_as_obj(self, attributes):
+
+        attributes_converted = {}
+
+        for attr in attributes:
+
+            attribute_type = attr.attribute_type
+
+            if attribute_type.value_type == 10:
+                attributes_converted[attribute_type.user_code] = attr.value_string
+
+            if attribute_type.value_type == 20:
+                attributes_converted[attribute_type.user_code] = attr.value_float
+
+            if attribute_type.value_type == 30:
+                if attr.classifier:
+                    attributes_converted[attribute_type.user_code] = attr.classifier.name
+                else:
+                    attributes_converted[attribute_type.user_code] = None
+
+            if attribute_type.value_type == 40:
+                attributes_converted[attribute_type.user_code] = attr.value_date
+
+        return attributes_converted
+
+    def calculate_attributes(self, instance):
+
+        master_user = get_master_user_from_context(self.context)
+        content_type = ContentType.objects.get_for_model(instance)
+
+        attr_types_qs = GenericAttributeType.objects.filter(content_type=content_type, master_user=master_user)
+        attrs_qs = GenericAttribute.objects.filter(content_type=content_type, object_id=instance.id)
 
         data = super(ModelWithAttributesSerializer, self).to_representation(instance)
 
-        master_user = get_master_user_from_context(self.context)
-        ctype = ContentType.objects.get_for_model(instance)
-        # if hasattr(instance, 'attributes'):
-        #     attrs_qs = instance.attributes.all()
-        # else:
-        attr_types_qs = GenericAttributeType.objects.filter(content_type=ctype, master_user=master_user)
-        attrs_qs = GenericAttribute.objects.filter(content_type=ctype, object_id=instance.id)
+        data['attributes'] = self.get_attributes_as_obj(attrs_qs)
 
         executed_expressions = {}
-
-        # print('data %s' % data)
 
         self.recursive_calculation(attr_types_qs, executed_expressions, data, current_index=0, limit=4)
 
@@ -306,7 +335,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                 if attr.attribute_type.value_type == GenericAttributeType.STRING:
 
                     if executed_expressions[attr.attribute_type.id] == 'Invalid Expression':
-                        attr.value_string = 'Invalid Expression'
+                        attr.value_string = None
                     else:
                         attr.value_string = executed_expressions[attr.attribute_type.id]
 
@@ -332,7 +361,6 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                         attr.classifier = executed_expressions[attr.attribute_type.id]
 
                 attr.save()
-
 
     def save_attributes(self, instance, attributes, created):
         member = get_member_from_context(self.context)
@@ -400,7 +428,8 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                 pass
 
         processed.update(protected)
-        attrs_qs.exclude(attribute_type_id__in=processed).delete()
+
+        # attrs_qs.exclude(attribute_type_id__in=processed).delete()
 
 
 class GenericClassifierRecursiveField(serializers.Serializer):

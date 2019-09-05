@@ -25,6 +25,7 @@ from django.apps import apps
 
 _l = logging.getLogger('poms.transactions')
 
+
 # CONTEXT_PROPERTIES = {
 #     1: 'instrument',
 #     2: 'pricing_currency',
@@ -247,17 +248,20 @@ class TransactionTypeProcess(object):
                     print("Can't find context variable %s" % i.context_property)
 
                 if value:
-                        self.default_values[i.name] = value
+                    self.default_values[i.name] = value
 
             if i.value_type == TransactionTypeInput.RELATION:
+
                 model_class = i.content_type.model_class()
 
                 for k, v in self.default_values.items():
                     if isinstance(v, model_class):
                         value = v
                         break
+
                 if value is None:
                     value = _get_val_by_model_cls(i, model_class)
+
             else:
 
                 if i.name in self.default_values:
@@ -1453,12 +1457,6 @@ class TransactionTypeProcess(object):
                     errors = {}
                     try:
                         res = formula.safe_eval(inp.value_expr, names=self.values, now=self._now, context=self._context)
-
-                        print('relation input expr')
-                        print('relation input expr %s ' % inp.value_expr)
-                        print(inp.content_type)
-                        print('res %s' % res)
-                        print('name %s' % name)
 
                         Model = apps.get_model(app_label=inp.content_type.app_label, model_name=inp.content_type.model)
 

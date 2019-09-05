@@ -24,6 +24,7 @@ from poms.users.permissions import SuperUserOrReadOnly
 
 class CurrencyAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Currency
+    target_model_serializer = CurrencySerializer
 
 
 class CurrencyFilterSet(FilterSet):

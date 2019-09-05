@@ -56,7 +56,7 @@ router.register(r'users/ecosystem-default', users.EcosystemDefaultViewSet, 'ecos
 
 router.register(r'accounts/account-type-ev-group', accounts.AccountTypeEvGroupViewSet)
 router.register(r'accounts/account-type', accounts.AccountTypeViewSet)
-router.register(r'accounts/account-type-attribute-type', accounts.AccountTypeAttributeTypeViewSet)
+router.register(r'accounts/account-type-attribute-type', accounts.AccountTypeAttributeTypeViewSet, 'accounttypeattributetype')
 
 # router.register(r'accounts/account-attribute-type', accounts.AccountAttributeTypeViewSet)
 router.register(r'accounts/account-attribute-type', accounts.AccountAttributeTypeViewSet, 'accountattributetype')

@@ -67,6 +67,7 @@ from rest_framework.settings import api_settings
 
 class PortfolioAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Portfolio
+    target_model_serializer = PortfolioSerializer
 
 
 # class PortfolioClassifierFilterSet(FilterSet):

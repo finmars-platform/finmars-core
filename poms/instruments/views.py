@@ -129,6 +129,7 @@ class PricingPolicyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cu
 
 class InstrumentTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = InstrumentType
+    target_model_serializer = InstrumentTypeSerializer
 
 
 class InstrumentTypeFilterSet(FilterSet):
@@ -240,6 +241,7 @@ class InstrumentTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, C
 
 class InstrumentAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Instrument
+    target_model_serializer = InstrumentSerializer
 
 
 class InstrumentClassifierViewSet(GenericClassifierViewSet):

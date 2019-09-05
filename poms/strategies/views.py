@@ -168,6 +168,7 @@ class Strategy1FilterSet(FilterSet):
 
 class Strategy1AttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Strategy1
+    target_model_serializer = Strategy1Serializer
 
 
 class Strategy1ViewSet(AbstractWithObjectPermissionViewSet):
@@ -329,6 +330,7 @@ class Strategy2SubgroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet
 
 class Strategy2AttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Strategy2
+    target_model_serializer = Strategy2Serializer
 
 
 class Strategy2FilterSet(Strategy1FilterSet):
@@ -489,6 +491,7 @@ class Strategy3SubgroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet
 
 class Strategy3AttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Strategy3
+    target_model_serializer = Strategy3Serializer
 
 
 class Strategy3FilterSet(Strategy1FilterSet):

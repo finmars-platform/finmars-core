@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import django_filters
+from rest_framework.decorators import detail_route
 from rest_framework.filters import FilterSet
 from rest_framework.settings import api_settings
 
@@ -119,6 +120,7 @@ class AccountTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cust
 
 class AccountAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Account
+    target_model_serializer = AccountSerializer
 
 
 # class AccountClassifierFilterSet(FilterSet):
