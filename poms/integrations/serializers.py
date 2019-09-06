@@ -51,6 +51,9 @@ from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeField, TransactionTypeInputField
 from poms.users.fields import MasterUserField, MemberField, HiddenMemberField
 
+
+
+
 _l = getLogger('poms.integrations')
 
 
@@ -1247,6 +1250,7 @@ class ImportPricingSerializer(serializers.Serializer):
         instance = ImportPricingEntry(**validated_data)
 
         if instance.task:
+
             task, is_ready = download_pricing(
                 master_user=instance.master_user,
                 fill_days=instance.fill_days,
@@ -1266,6 +1270,7 @@ class ImportPricingSerializer(serializers.Serializer):
                 override_existed=instance.override_existed
             )
             instance.task_object = task
+
         return instance
 
 

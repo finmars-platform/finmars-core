@@ -104,7 +104,9 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
                     if celery_task:
                         celery_task.data = {
                             "total_rows": res.result['total_rows'],
-                            "processed_rows": res.result['processed_rows']
+                            "processed_rows": res.result['processed_rows'],
+                            "scheme_name": res.result['scheme_name'],
+                            "file_name": res.result['file_name']
                         }
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
@@ -169,6 +171,8 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
 
         signer = TimestampSigner()
 
+        print('validate instance %s' % instance.scheme)
+
         if task_id:
 
             res = AsyncResult(signer.unsign(task_id))
@@ -202,7 +206,9 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
                     if celery_task:
                         celery_task.data = {
                             "total_rows": res.result['total_rows'],
-                            "processed_rows": res.result['processed_rows']
+                            "processed_rows": res.result['processed_rows'],
+                            "scheme_name": res.result['scheme_name'],
+                            "file_name": res.result['file_name']
                         }
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))

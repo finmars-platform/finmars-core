@@ -21,6 +21,7 @@ from django.utils.translation import ugettext
 
 from poms.accounts.models import Account
 from poms.audit.models import AuthLogEntry
+from poms.celery_tasks.models import CeleryTask
 from poms.common import formula
 from poms.common.utils import date_now, isclose
 from poms.counterparties.models import Counterparty, Responsible
@@ -41,6 +42,9 @@ from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import EventClass
 from poms.users.models import MasterUser, EcosystemDefault
+
+from poms.common.utils import date_now, datetime_now
+
 
 from .models import ImportConfig
 
@@ -663,6 +667,7 @@ def download_pricing_async(self, task_id):
 def download_pricing_wait(self, sub_tasks_id, task_id):
     celery_logger.info('download pricing wait')
     task = Task.objects.get(pk=task_id)
+    celery_task = CeleryTask.objects.get(task_id=task_id, master_user=task.master_user)
     _l.info('download_pricing_wait: master_user_id=%s, task=%s', task.master_user_id, task.info)
 
     if task.status != Task.STATUS_WAIT_RESPONSE:
@@ -777,6 +782,9 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
         task.status = Task.STATUS_ERROR
         task.save()
 
+        celery_task.task_status = task.STATUS_ERROR
+        celery_task.save()
+
     if fill_days > 0:
         fill_date_from = date_to + timedelta(days=1)
         instrument_last_price = [p for p in instruments_prices if p.date == date_to]
@@ -875,6 +883,9 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
         task.result_object = result
         task.status = Task.STATUS_DONE
         task.save()
+
+        celery_task.task_status = Task.STATUS_DONE
+        celery_task.save()
 
     return task_id
 
@@ -1055,11 +1066,35 @@ def download_pricing(master_user=None, member=None, date_from=None, date_to=None
             task.options_object = options
             task.save()
 
+            if member:
+                celery_task = CeleryTask.objects.create(master_user=master_user,
+                                                    member=member,
+                                                    task_status=task.status,
+                                                    started_at=datetime_now(),
+                                                    task_type='user_download_pricing', task_id=task.id)
+            else:
+                celery_task = CeleryTask.objects.create(master_user=master_user,
+                                                        task_status=task.status,
+                                                        started_at=datetime_now(),
+                                                        task_type='automated_download_pricing', task_id=task.id)
+
+            celery_task.save()
+
             # transaction.on_commit(lambda: download_pricing_async.apply_async(kwargs={'task_id': task.id}, countdown=1))
             transaction.on_commit(lambda: download_pricing_async.apply_async(kwargs={'task_id': task.id}))
         return task, False
     else:
         if task.status == Task.STATUS_DONE:
+
+            try:
+                celery_task = CeleryTask.objects.get(master_user=master_user, task_id=task.id, task_type='user_download_pricing')
+
+                celery_task.task_status = Task.STATUS_DONE
+                celery_task.save()
+
+            except CeleryTask.DoesNotExist:
+                celery_task = None
+
             return task, True
         return task, False
 
@@ -1074,6 +1109,8 @@ def download_pricing_auto(self, master_user_id):
         # from poms.integrations.handlers import pricing_auto_cancel
         # pricing_auto_cancel(master_user_id)
         return
+
+    # _l.info('settings.PRICING_AUTO_DOWNLOAD_DISABLED %s' % settings.PRICING_AUTO_DOWNLOAD_DISABLED)
 
     with timezone.override(master_user.timezone or settings.TIME_ZONE):
         if settings.PRICING_AUTO_DOWNLOAD_DISABLED:
@@ -1104,6 +1141,9 @@ def download_pricing_auto_scheduler(self):
     schedule_qs = PricingAutomatedSchedule.objects.select_related('master_user').filter(
         is_enabled=True, next_run_at__lte=timezone.now()
     )
+    # schedule_qs = PricingAutomatedSchedule.objects.select_related('master_user').filter(
+    #     is_enabled=True
+    # )
     _l.info('count=%s', schedule_qs.count())
     for s in schedule_qs:
         master_user = s.master_user
@@ -1463,7 +1503,8 @@ def complex_transaction_csv_file_import(self, instance):
                             # instance.save()
                             self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
                                               meta={'processed_rows': instance.processed_rows,
-                                                    'total_rows': instance.total_rows})
+                                                    'total_rows': instance.total_rows,
+                                                    'scheme_name': instance.scheme.scheme_name, 'file_name': instance.file.name})
 
 
                         except:
@@ -1514,7 +1555,7 @@ def complex_transaction_csv_file_import(self, instance):
                 with open(tmpf.name, mode='rt', encoding=instance.encoding) as cfr:
                     instance.total_rows = _row_count(cfr)
                     self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                                      meta={'total_rows': instance.total_rows})
+                                      meta={'total_rows': instance.total_rows, 'scheme_name': instance.scheme.scheme_name, 'file_name': instance.file.name})
                     # instance.save()
                 with open(tmpf.name, mode='rt', encoding=instance.encoding) as cf:
                     _process_csv_file(cf)
@@ -1887,7 +1928,8 @@ def complex_transaction_csv_file_import_validate(self, instance):
             # instance.save()
             self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
                               meta={'processed_rows': instance.processed_rows,
-                                    'total_rows': instance.total_rows})
+                                    'total_rows': instance.total_rows,
+                                    'scheme_name': instance.scheme.scheme_name, 'file_name': instance.file.name})
 
             _l.info('instance', instance)
 
@@ -1911,7 +1953,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
                     instance.total_rows = _row_count(cfr)
                     # instance.save()
                     self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                                      meta={'total_rows': instance.total_rows})
+                                      meta={'total_rows': instance.total_rows, 'scheme_name': instance.scheme.scheme_name, 'file_name': instance.file.name})
 
                 with open(tmpf.name, mode='rt', encoding=instance.encoding) as cf:
                     _validate_process_csv_file(cf)

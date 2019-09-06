@@ -219,8 +219,6 @@ class CsvDataImportSerializer(serializers.Serializer):
 
     def create(self, validated_data):
 
-        print('validated_data %s' % validated_data )
-
         if validated_data.get('task_id', None):
             validated_data.pop('file', None)
 

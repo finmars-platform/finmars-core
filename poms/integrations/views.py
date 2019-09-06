@@ -58,6 +58,8 @@ from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.models import Member
 from poms.users.permissions import SuperUserOrReadOnly, SuperUserOnly
 
+
+
 from rest_framework import permissions, status
 from rest_framework.exceptions import PermissionDenied
 
@@ -971,7 +973,9 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
                     if celery_task:
                         celery_task.data = {
                             "total_rows": res.result['total_rows'],
-                            "processed_rows": res.result['processed_rows']
+                            "processed_rows": res.result['processed_rows'],
+                            "scheme_name": res.result['scheme_name'],
+                            "file_name": res.result['file_name']
                         }
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
@@ -1062,7 +1066,9 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
                     if celery_task:
                         celery_task.data = {
                             "total_rows": res.result['total_rows'],
-                            "processed_rows": res.result['processed_rows']
+                            "processed_rows": res.result['processed_rows'],
+                            "scheme_name": res.result['scheme_name'],
+                            "file_name": res.result['file_name']
                         }
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))

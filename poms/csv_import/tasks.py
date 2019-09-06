@@ -539,7 +539,7 @@ def process_csv_file(master_user,
 
         update_state(task_id=task_instance.task_id, state=Task.STATUS_PENDING,
                      meta={'processed_rows': task_instance.processed_rows,
-                           'total_rows': task_instance.total_rows})
+                           'total_rows': task_instance.total_rows, 'scheme_name': scheme.scheme_name, 'file_name': task_instance.file.name})
 
     return results, errors
 
@@ -713,6 +713,8 @@ class ValidateHandler:
 
         rows = []
 
+        print('instance.file filename %s' % instance.file.name)
+
         scsv = instance.file.read().decode('utf-8-sig')
 
         f = StringIO(scsv)
@@ -725,7 +727,7 @@ class ValidateHandler:
         instance.total_rows = len(rows)
 
         update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                          meta={'total_rows': instance.total_rows})
+                          meta={'total_rows': instance.total_rows, 'scheme_name': scheme.scheme_name, 'file_name': instance.file.name})
 
         # context = super(CsvDataImportValidateViewSet, self).get_serializer_context()
 
@@ -969,7 +971,7 @@ class ImportHandler:
         instance.total_rows = len(rows)
 
         update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                          meta={'total_rows': instance.total_rows})
+                          meta={'total_rows': instance.total_rows, 'scheme_name': scheme.scheme_name, 'file_name': instance.file.name})
 
         context = {}
 
