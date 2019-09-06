@@ -201,7 +201,7 @@ class GenericAttributeTypeViewSet(AbstractWithObjectPermissionViewSet):
                 result[attribute_type.user_code] = attribute.value_string
 
             if attribute_type.value_type == 20:
-                result[attribute_type.user_code] = attribute.float
+                result[attribute_type.user_code] = attribute.value_float
 
             if attribute_type.value_type == 30:
                 if attribute.classifier:
