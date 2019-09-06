@@ -502,10 +502,20 @@ def _get_fx_rate(evaluator, date, currency, pricing_policy, default_value=0):
     context = evaluator.context
     master_user = get_master_user_from_context(context)
 
+    currency = _safe_get_currency(evaluator, currency)
+    pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
+
     # TODO need master user check, security hole
 
-    result = CurrencyHistory.objects.get(date=date, currency=currency,
+    print('date %s' % date)
+    print('pricing_policy %s' % pricing_policy)
+    print('currency %s' % currency)
+
+    try:
+        result = CurrencyHistory.objects.get(date=date, currency=currency,
                                          pricing_policy=pricing_policy)
+    except (CurrencyHistory.DoesNotExist, KeyError):
+        result = None
 
     if result:
         return result.fx_rate
@@ -523,12 +533,14 @@ def _add_fx_history(evaluator, date, currency, pricing_policy, fx_rate=0, overwr
     context = evaluator.context
     master_user = get_master_user_from_context(context)
 
+    pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
+    currency = _safe_get_currency(evaluator, currency)
+
     # TODO need master user check, security hole
 
-    result = CurrencyHistory.objects.get(date=date, currency=currency,
+    try:
+        result = CurrencyHistory.objects.get(date=date, currency=currency,
                                          pricing_policy=pricing_policy)
-
-    if result:
 
         if overwrite:
             result.fx_rate = fx_rate
@@ -537,10 +549,12 @@ def _add_fx_history(evaluator, date, currency, pricing_policy, fx_rate=0, overwr
         else:
             return False
 
-    else:
+    except CurrencyHistory.DoesNotExist:
 
         result = CurrencyHistory.objects.create(date=date, currency=currency,
                                                 pricing_policy=pricing_policy, fx_rate=fx_rate)
+
+        result.save()
 
     return True
 
@@ -555,12 +569,14 @@ def _add_price_history(evaluator, date, instrument, pricing_policy, principal_pr
     context = evaluator.context
     master_user = get_master_user_from_context(context)
 
+    instrument = _safe_get_instrument(evaluator, instrument)
+    pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
+
     # TODO need master user check, security hole
 
-    result = PriceHistory.objects.get(date=date, instrument=instrument,
+    try:
+        result = PriceHistory.objects.get(date=date, instrument=instrument,
                                       pricing_policy=pricing_policy)
-
-    if result:
 
         if overwrite:
             result.principal_price = principal_price
@@ -570,11 +586,14 @@ def _add_price_history(evaluator, date, instrument, pricing_policy, principal_pr
 
         else:
             return False
-    else:
+
+    except PriceHistory.DoesNotExist:
 
         result = PriceHistory.objects.create(date=date, instrument=instrument,
                                              pricing_policy=pricing_policy, principal_price=principal_price,
                                              accrued_price=accrued_price)
+
+        result.save()
 
     return True
 
@@ -591,39 +610,20 @@ def _get_price_history_principal_price(evaluator, date, instrument, pricing_poli
 
     # TODO need master user check, security hole
 
-    if isinstance(instrument, dict):
-        instrument_pk = int(instrument['id'])
-
-    elif isinstance(instrument, (int, float)):
-        instrument_pk = int(instrument)
-
-    elif isinstance(instrument, str):
-        instrument_pk = Instrument.objects.get(master_user=master_user, user_code=instrument).id
-
-    if instrument_pk is None:
-        raise ExpressionEvalError('Invalid Instrument')
-
-    pricing_policy_pk = None
-
-    if isinstance(pricing_policy, dict):
-        pricing_policy_pk = int(pricing_policy['id'])
-
-    elif isinstance(pricing_policy, (int, float)):
-        pricing_policy_pk = int(pricing_policy)
-
-    elif isinstance(pricing_policy, str):
-        pricing_policy_pk = PricingPolicy.objects.get(master_user=master_user, user_code=pricing_policy).id
+    instrument = _safe_get_instrument(evaluator, instrument)
+    pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
 
     try:
 
-        result = PriceHistory.objects.get(date=date, instrument=instrument_pk,
-                                          pricing_policy=pricing_policy_pk)
+        result = PriceHistory.objects.get(date=date, instrument=instrument,
+                                          pricing_policy=pricing_policy)
 
         return result.principal_price
 
     except PriceHistory.DoesNotExist:
+        print("Price history is not found")
 
-        return default_value
+    return default_value
 
 
 _get_price_history_principal_price.evaluator = True
@@ -638,21 +638,9 @@ def _get_price_history_accrued_price(evaluator, date, instrument, pricing_policy
 
     # TODO need master user check, security hole
 
-    instrument_pk = None
+    instrument = _safe_get_instrument(evaluator, instrument)
 
     master_user = get_master_user_from_context(context)
-
-    if isinstance(instrument, dict):
-        instrument_pk = int(instrument['id'])
-
-    elif isinstance(instrument, (int, float)):
-        instrument_pk = int(instrument)
-
-    elif isinstance(instrument, str):
-        instrument_pk = Instrument.objects.get(master_user=master_user, user_code=instrument).id
-
-    if instrument_pk is None:
-        raise ExpressionEvalError('Invalid Instrument')
 
     pricing_policy_pk = None
 
@@ -672,7 +660,7 @@ def _get_price_history_accrued_price(evaluator, date, instrument, pricing_policy
 
     try:
 
-        result = PriceHistory.objects.get(date=date, instrument=instrument_pk,
+        result = PriceHistory.objects.get(date=date, instrument=instrument,
                                           pricing_policy=pricing_policy_pk)
 
         return result.accrued_price
@@ -692,9 +680,16 @@ def _get_factor_schedule(evaluator, date, instrument, default_value=0):
     context = evaluator.context
     master_user = get_master_user_from_context(context)
 
+    instrument = _safe_get_instrument(evaluator, instrument)
+
     # TODO need master user check, security hole
 
-    result = InstrumentFactorSchedule.objects.get(effective_date=date, instrument=instrument)
+    try:
+        result = InstrumentFactorSchedule.objects.get(effective_date=date, instrument=instrument)
+    except (InstrumentFactorSchedule.DoesNotExist, KeyError):
+        result = None
+
+    print('result %s' % result)
 
     if result:
         return result.factor_value
@@ -704,6 +699,100 @@ def _get_factor_schedule(evaluator, date, instrument, default_value=0):
 
 _get_factor_schedule.evaluator = True
 
+
+def _safe_get_pricing_policy(evaluator, pricing_policy):
+    from poms.users.utils import get_master_user_from_context, get_member_from_context
+    from poms.instruments.models import PricingPolicy
+
+    if isinstance(pricing_policy, PricingPolicy):
+        return pricing_policy
+
+    context = evaluator.context
+
+    if context is None:
+        raise InvalidExpression('Context must be specified')
+
+    pk = None
+    user_code = None
+
+    if isinstance(pricing_policy, dict):
+        pk = int(pricing_policy['id'])
+
+    elif isinstance(pricing_policy, (int, float)):
+        pk = int(pricing_policy)
+
+    elif isinstance(pricing_policy, str):
+        user_code = pricing_policy
+
+    if id is None and user_code is None:
+        raise ExpressionEvalError('Invalid pricing policy')
+
+    master_user = get_master_user_from_context(context)
+    member = get_member_from_context(context)
+
+    if master_user is None:
+        raise ExpressionEvalError('master user in context does not find')
+
+    pricing_policy_qs = PricingPolicy.objects.filter(master_user=master_user)
+
+    try:
+        if pk is not None:
+            pricing_policy = pricing_policy_qs.get(pk=pk)
+
+        elif user_code is not None:
+            pricing_policy = pricing_policy_qs.get(user_code=user_code)
+
+    except PricingPolicy.DoesNotExist:
+        raise ExpressionEvalError()
+
+    return pricing_policy
+
+def _safe_get_currency(evaluator, currency):
+    from poms.users.utils import get_master_user_from_context, get_member_from_context
+    from poms.currencies.models import Currency
+
+    if isinstance(currency, Currency):
+        return currency
+
+    context = evaluator.context
+
+    if context is None:
+        raise InvalidExpression('Context must be specified')
+
+    pk = None
+    user_code = None
+
+    if isinstance(currency, dict):
+        pk = int(currency['id'])
+
+    elif isinstance(currency, (int, float)):
+        pk = int(currency)
+
+    elif isinstance(currency, str):
+        user_code = currency
+
+    if id is None and user_code is None:
+        raise ExpressionEvalError('Invalid currency')
+
+    master_user = get_master_user_from_context(context)
+    member = get_member_from_context(context)
+
+    if master_user is None:
+        raise ExpressionEvalError('master user in context does not find')
+
+    currency_qs = Currency.objects.filter(master_user=master_user)
+
+    try:
+        if pk is not None:
+            currency = currency_qs.get(pk=pk)
+
+        elif user_code is not None:
+            currency = currency_qs.get(user_code=user_code)
+
+    except Currency.DoesNotExist:
+        raise ExpressionEvalError()
+
+    return currency
 
 def _safe_get_instrument(evaluator, instrument):
     from poms.users.utils import get_master_user_from_context, get_member_from_context
