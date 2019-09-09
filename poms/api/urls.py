@@ -208,6 +208,7 @@ router.register(r'transactions/complex-transaction', transactions.ComplexTransac
 
 router.register(r'ui/portal-interface-access', ui.PortalInterfaceAccessViewSet)
 router.register(r'ui/list-layout', ui.ListLayoutViewSet)
+router.register(r'ui/dashboard-layout', ui.DashboardLayoutViewSet)
 router.register(r'ui/edit-layout', ui.EditLayoutViewSet)
 router.register(r'ui/template-list-layout', ui.TemplateListLayoutViewSet)
 router.register(r'ui/template-edit-layout', ui.TemplateEditLayoutViewSet)

@@ -254,13 +254,16 @@ class TransactionTypeProcess(object):
 
                 model_class = i.content_type.model_class()
 
-                for k, v in self.default_values.items():
-                    if isinstance(v, model_class):
-                        value = v
-                        break
+                if i.is_fill_from_context:
 
-                if value is None:
-                    value = _get_val_by_model_cls(i, model_class)
+                    for k, v in self.default_values.items():
+                        if isinstance(v, model_class):
+                            value = v
+                            break
+                else: 
+
+                    if value is None:
+                        value = _get_val_by_model_cls(i, model_class)
 
             else:
 

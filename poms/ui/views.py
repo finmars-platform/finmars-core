@@ -5,10 +5,12 @@ from rest_framework.filters import FilterSet
 from poms.common.filters import NoOpFilter, CharFilter
 from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet
 from poms.ui.models import TemplateListLayout, TemplateEditLayout, ListLayout, EditLayout, Bookmark, Configuration, \
-    ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel
+    ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
+    DashboardLayout
 from poms.ui.serializers import TemplateListLayoutSerializer, ListLayoutSerializer, TemplateEditLayoutSerializer, \
     EditLayoutSerializer, BookmarkSerializer, ConfigurationSerializer, ConfigurationExportLayoutSerializer, \
-    TransactionUserFieldSerializer, InstrumentUserFieldSerializer, PortalInterfaceAccessModelSerializer
+    TransactionUserFieldSerializer, InstrumentUserFieldSerializer, PortalInterfaceAccessModelSerializer, \
+    DashboardLayoutSerializer
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 from poms.users.permissions import SuperUserOnly
 
@@ -142,6 +144,30 @@ class ListLayoutViewSet(AbstractModelViewSet):
     filter_class = ListLayoutFilterSet
     ordering_fields = [
         'content_type', 'name', 'is_default'
+    ]
+
+
+class DashboardLayoutFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_default = django_filters.BooleanFilter()
+    is_active = django_filters.BooleanFilter()
+    name = CharFilter()
+
+    class Meta:
+        model = DashboardLayout
+        fields = []
+
+
+class DashboardLayoutViewSet(AbstractModelViewSet):
+    queryset = DashboardLayout.objects.select_related(
+        'member'
+    )
+    serializer_class = DashboardLayoutSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMemberFilter,
+    ]
+    filter_class = DashboardLayoutFilterSet
+    ordering_fields = ['name', 'is_default'
     ]
 
 

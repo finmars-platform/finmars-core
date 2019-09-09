@@ -51,9 +51,6 @@ from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeField, TransactionTypeInputField
 from poms.users.fields import MasterUserField, MemberField, HiddenMemberField
 
-
-
-
 _l = getLogger('poms.integrations')
 
 
@@ -1088,7 +1085,6 @@ class ImportTestCertificate(object):
 
     def __init__(self, master_user=None, member=None,
                  provider_id=None, task=None):
-
         self.master_user = master_user
         self.member = member
         self.provider_id = provider_id
@@ -1511,9 +1507,11 @@ class ComplexTransactionCsvFileImport:
                  scheme=None, file_path=None, skip_first_line=None, delimiter=None, quotechar=None, encoding=None,
                  error_handling=None, missing_data_handler=None, error=None, error_message=None, error_row_index=None,
                  error_rows=None,
-                 total_rows=None, processed_rows=None):
+                 total_rows=None, processed_rows=None, filename=None):
         self.task_id = task_id
         self.task_status = task_status
+
+        self.filename = filename
 
         self.master_user = master_user
         self.member = member
@@ -1580,6 +1578,19 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
     scheme_object = ComplexTransactionImportSchemeSerializer(source='scheme', read_only=True)
 
     def create(self, validated_data):
+
+        filetmp = file = validated_data.get('file', None)
+
+        print('filetmp %s' % filetmp)
+
+        filename = None
+        if filetmp:
+            filename = filetmp.name
+
+            print('filename %s' % filename)
+
+            validated_data['filename'] = filename
+
         if validated_data.get('task_id', None):
             validated_data.pop('file', None)
         else:

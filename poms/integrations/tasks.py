@@ -1504,7 +1504,7 @@ def complex_transaction_csv_file_import(self, instance):
                             self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
                                               meta={'processed_rows': instance.processed_rows,
                                                     'total_rows': instance.total_rows,
-                                                    'scheme_name': instance.scheme.scheme_name, 'file_name': instance.file.name})
+                                                    'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
 
 
                         except:
@@ -1555,7 +1555,7 @@ def complex_transaction_csv_file_import(self, instance):
                 with open(tmpf.name, mode='rt', encoding=instance.encoding) as cfr:
                     instance.total_rows = _row_count(cfr)
                     self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                                      meta={'total_rows': instance.total_rows, 'scheme_name': instance.scheme.scheme_name, 'file_name': instance.file.name})
+                                      meta={'total_rows': instance.total_rows, 'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
                     # instance.save()
                 with open(tmpf.name, mode='rt', encoding=instance.encoding) as cf:
                     _process_csv_file(cf)
@@ -1929,7 +1929,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
             self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
                               meta={'processed_rows': instance.processed_rows,
                                     'total_rows': instance.total_rows,
-                                    'scheme_name': instance.scheme.scheme_name, 'file_name': instance.file.name})
+                                    'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
 
             _l.info('instance', instance)
 
@@ -1953,7 +1953,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
                     instance.total_rows = _row_count(cfr)
                     # instance.save()
                     self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                                      meta={'total_rows': instance.total_rows, 'scheme_name': instance.scheme.scheme_name, 'file_name': instance.file.name})
+                                      meta={'total_rows': instance.total_rows, 'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
 
                 with open(tmpf.name, mode='rt', encoding=instance.encoding) as cf:
                     _validate_process_csv_file(cf)

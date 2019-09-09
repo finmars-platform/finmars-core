@@ -98,19 +98,21 @@ class PortalInterfaceAccessModel(AbstractClassModel):
         (1007, REPORT_EVENT, 'report_event', ugettext_lazy("Reporting layer: Event")),
         (1008, REPORT_BOOKMARK, 'report_bookmark', ugettext_lazy("Reporting layer: Bookmark")),
         (1009, REPORT_INSTRUMENT_AUDIT, 'report_instrument_audit', ugettext_lazy("Reporting layer: Instrument Audit")),
-        (1010, REPORT_TRANSACTION_AUDIT, 'report_transaction_audit', ugettext_lazy("Reporting layer: Transaction Audit")),
+        (1010, REPORT_TRANSACTION_AUDIT, 'report_transaction_audit',
+         ugettext_lazy("Reporting layer: Transaction Audit")),
         (1011, REPORT_BASE_TRANSACTION, 'report_base_transaction', ugettext_lazy("Reporting layer: Base Transaction")),
         (1012, REPORT_ACTIVITY_LOG, 'report_activity_log', ugettext_lazy("Reporting layer: Activity Log")),
         (1013, REPORT_FORUM, 'report_forum', ugettext_lazy("Reporting layer: Forum")),
 
-        (2001, CONFIGURATION_ACCOUNT_TYPE, 'configuration_account_type', ugettext_lazy("Configurations layer: Account Type")),
+        (2001, CONFIGURATION_ACCOUNT_TYPE, 'configuration_account_type',
+         ugettext_lazy("Configurations layer: Account Type")),
         (2002, CONFIGURATION_INSTRUMENT_TYPE, 'configuration_instrument_type',
          ugettext_lazy("Configurations layer: Instrument Type")),
         (2003, CONFIGURATION_TRANSACTION_TYPE, 'configuration_transaction_type',
          ugettext_lazy("Configurations layer: Transaction Type")),
         (2004, CONFIGURATION_PRICING_POLICY, 'configuration_pricing_policy',
          ugettext_lazy("Configurations layer: Pricing Policy")),
-        (2005 ,CONFIGURATION_PRICE_DOWNLOAD_SCHEME, 'configuration_price_download_scheme',
+        (2005, CONFIGURATION_PRICE_DOWNLOAD_SCHEME, 'configuration_price_download_scheme',
          ugettext_lazy("Configurations layer: Price Download Scheme")),
         (2006, CONFIGURATION_INSTRUMENT_DOWNLOAD_SCHEME, 'configuration_instrument_download_scheme',
          ugettext_lazy("Configurations layer: Instrument Download Scheme")),
@@ -144,7 +146,8 @@ class PortalInterfaceAccessModel(AbstractClassModel):
         (3009, SETTINGS_NEW_OBJECTS_PERMISSION, 'settings_new_objects_permission',
          ugettext_lazy("Settings layer: New Objects Permission")),
         (3010, SETTINGS_TIMEZONE, 'settings_timezone', ugettext_lazy("Settings layer: Timezone")),
-        (3011, SETTINGS_ECOSYSTEM_DEFAULT, 'settings_ecosystem_default', ugettext_lazy("Settings layer: Ecosystem Default")),
+        (3011, SETTINGS_ECOSYSTEM_DEFAULT, 'settings_ecosystem_default',
+         ugettext_lazy("Settings layer: Ecosystem Default")),
 
         (4001, ACCOUNT_SETTINGS, 'account_settigns', ugettext_lazy("Account layer: Settings")),
         (4002, ACCOUNT_PERSONAL_DATA, 'account_personal_data', ugettext_lazy("Account layer: Personal Data")),
@@ -263,6 +266,36 @@ class ListLayout(BaseLayout):
             qs.update(is_active=False)
 
         return super(ListLayout, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
+class DashboardLayout(BaseUIModel):
+    member = models.ForeignKey(Member, related_name='dashboard_layouts', verbose_name=ugettext_lazy('member'))
+    name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
+    is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
+    is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('is active'))
+
+    class Meta(BaseLayout.Meta):
+        unique_together = [
+            ['member', 'name'],
+        ]
+        ordering = ['name']
+
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            qs = DashboardLayout.objects.filter(member=self.member, is_default=True)
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            qs.update(is_default=False)
+
+            qs = DashboardLayout.objects.filter(member=self.member, is_active=True)
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            qs.update(is_active=False)
+
+        return super(DashboardLayout, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.name
