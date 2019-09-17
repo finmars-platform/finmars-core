@@ -150,7 +150,7 @@ class TransactionTypeFilterSet(FilterSet):
     public_name = CharFilter()
     group = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionTypeGroup)
     # portfolio = ModelExtWithPermissionMultipleChoiceFilter(model=Portfolio, name='portfolios')
-    portfolio = ModelExtWithAllWithPermissionMultipleChoiceFilter(model=Portfolio, field_name='portfolios',
+    portfolio = ModelExtWithAllWithPermissionMultipleChoiceFilter(model=Portfolio, field_name='portfolio',
                                                                   all_field_name='is_valid_for_all_portfolios')
     # instrument_type = ModelExtWithPermissionMultipleChoiceFilter(model=InstrumentType, name='instrument_types')
     instrument_type = ModelExtWithAllWithPermissionMultipleChoiceFilter(model=InstrumentType, field_name='instrument_types',
@@ -545,7 +545,9 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
 
         print("context_values %s" % context_values)
 
-        instance = TransactionTypeProcess(process_mode='book', transaction_type=self.get_object(),
+        transaction_type = TransactionType.objects.get(pk=pk)
+
+        instance = TransactionTypeProcess(process_mode='book', transaction_type=transaction_type,
                                           context=self.get_serializer_context(), context_values=context_values,
                                           default_values=default_values,
                                           complex_transaction_status=complex_transaction_status)
@@ -573,7 +575,9 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
 
         complex_transaction_status = ComplexTransaction.PENDING
 
-        instance = TransactionTypeProcess(process_mode='book', transaction_type=self.get_object(),
+        transaction_type = TransactionType.objects.get(pk=pk)
+
+        instance = TransactionTypeProcess(process_mode='book', transaction_type=transaction_type,
                                           context=self.get_serializer_context(),
                                           complex_transaction_status=complex_transaction_status)
 
