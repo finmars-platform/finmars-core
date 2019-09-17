@@ -2,7 +2,8 @@ from __future__ import unicode_literals
 
 import django_filters
 from django.db.models import Prefetch
-from rest_framework.filters import FilterSet
+from django_filters.rest_framework import FilterSet
+
 from rest_framework.settings import api_settings
 
 from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMultipleChoiceFilter, AttributeFilter, \

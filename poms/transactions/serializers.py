@@ -44,6 +44,8 @@ from poms.transactions.models import TransactionClass, Transaction, TransactionT
     TransactionTypeActionInstrumentEventScheduleAction
 from poms.users.fields import MasterUserField
 
+from django.core.validators import RegexValidator
+
 from poms.common.utils import date_now
 
 
@@ -114,7 +116,7 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
     name = serializers.CharField(max_length=255, allow_null=False, allow_blank=False,
                                  validators=[
-                                     serializers.RegexValidator(regex='\A[a-zA-Z_][a-zA-Z0-9_]*\Z'),
+                                     RegexValidator(regex='\A[a-zA-Z_][a-zA-Z0-9_]*\Z'),
                                  ])
     content_type = TransactionTypeInputContentTypeField(required=False, allow_null=True, allow_empty=True)
     can_recalculate = serializers.BooleanField(read_only=True)

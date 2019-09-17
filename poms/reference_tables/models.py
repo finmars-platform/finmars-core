@@ -6,7 +6,7 @@ from django.utils.translation import ugettext_lazy
 
 class ReferenceTable(models.Model):
     master_user = models.ForeignKey('users.MasterUser', related_name='reference_tables',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'))
 
     class Meta:

@@ -31,11 +31,11 @@ currencies_data = SimpleLazyObject(_load_currencies_data)
 
 
 class Currency(NamedModelAutoMapping, FakeDeletableModel):
-    master_user = models.ForeignKey(MasterUser, related_name='currencies', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey(MasterUser, related_name='currencies', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     reference_for_pricing = models.CharField(max_length=100, blank=True, default='',
                                              verbose_name=ugettext_lazy('reference for pricing'))
     daily_pricing_model = models.ForeignKey('instruments.DailyPricingModel', null=True, blank=True,
-                                            verbose_name=ugettext_lazy('daily pricing model'))
+                                            verbose_name=ugettext_lazy('daily pricing model'), on_delete=models.CASCADE)
     price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.PROTECT, null=True,
                                               blank=True, verbose_name=ugettext_lazy('price download scheme'))
 
@@ -48,7 +48,7 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel):
         verbose_name = ugettext_lazy('currency')
         verbose_name_plural = ugettext_lazy('currencies')
         permissions = [
-            ('view_currency', 'Can view currency'),
+            # ('view_currency', 'Can view currency'),
             ('manage_currency', 'Can manage currency'),
         ]
 
@@ -83,7 +83,7 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel):
 # RUB -> USD
 # ...
 class CurrencyHistory(models.Model):
-    currency = models.ForeignKey(Currency, related_name='histories', verbose_name=ugettext_lazy('currency'))
+    currency = models.ForeignKey(Currency, related_name='histories', verbose_name=ugettext_lazy('currency'), on_delete=models.CASCADE)
     pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.PROTECT, null=True, blank=True,
                                        verbose_name=ugettext_lazy('pricing policy'))
     date = models.DateField(db_index=True, default=date_now, verbose_name=ugettext_lazy('date'))

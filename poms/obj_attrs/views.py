@@ -1,8 +1,8 @@
 import django_filters
 from django.contrib.contenttypes.models import ContentType
-from rest_framework.decorators import list_route, detail_route
+from django_filters.rest_framework import FilterSet
+from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed
-from rest_framework.filters import FilterSet
 
 from poms.common.filters import NoOpFilter, CharFilter, ModelExtWithPermissionMultipleChoiceFilter
 from poms.common.formula import safe_eval, ExpressionEvalError
@@ -230,7 +230,7 @@ class GenericAttributeTypeViewSet(AbstractWithObjectPermissionViewSet):
 
         return result
 
-    @detail_route(methods=['get'], url_path='objects-to-recalculate')
+    @action(detail=True, methods=['get'], url_path='objects-to-recalculate')
     def objects_to_recalculate(self, request, pk):
 
         master_user = request.user.master_user
@@ -246,7 +246,7 @@ class GenericAttributeTypeViewSet(AbstractWithObjectPermissionViewSet):
 
         return Response({'count': objs_count})
 
-    @detail_route(methods=['post'], url_path='recalculate')
+    @action(detail=True, methods=['post'], url_path='recalculate')
     def recalculate_attributes(self, request, pk):
 
         master_user = request.user.master_user

@@ -12,7 +12,7 @@ from poms.notifications.models import Notification
 class DbStorage(BaseStorage):
     def _get(self, *args, **kwargs):
         user = self.request.user
-        if user.is_authenticated():
+        if user.is_authenticated:
             queryset = Notification.objects.filter(read_date__isnull=True)
             ret = []
             for n in queryset:
@@ -27,7 +27,7 @@ class DbStorage(BaseStorage):
     def _store(self, messages, response, *args, **kwargs):
         user = self.request.user
         if messages:
-            if user.is_authenticated():
+            if user.is_authenticated:
                 for message in messages:
                     if not hasattr(message, 'id'):
                         Notification.objects.create(recipient=user, level=message.level, message=message)

@@ -50,14 +50,14 @@ from poms.users.models import Member, Group
 
 
 class GenericObjectPermission(models.Model):
-    group = models.ForeignKey(Group, null=True, blank=True, verbose_name=ugettext_lazy('group'))
-    member = models.ForeignKey(Member, null=True, blank=True, verbose_name=ugettext_lazy('member'))
+    group = models.ForeignKey(Group, null=True, blank=True, verbose_name=ugettext_lazy('group'), on_delete=models.CASCADE)
+    member = models.ForeignKey(Member, null=True, blank=True, verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
 
-    content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'))
+    content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'), on_delete=models.CASCADE)
     object_id = models.BigIntegerField(verbose_name=ugettext_lazy('object id'))
     content_object = GenericForeignKey('content_type', 'object_id')
 
-    permission = models.ForeignKey(Permission, verbose_name=ugettext_lazy('permission'))
+    permission = models.ForeignKey(Permission, verbose_name=ugettext_lazy('permission'), on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = ugettext_lazy('object permission')

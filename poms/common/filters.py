@@ -2,7 +2,8 @@ from functools import partial
 
 import django_filters
 from django.db.models import F
-from rest_framework.filters import BaseFilterBackend, FilterSet
+from django_filters.rest_framework import FilterSet
+from rest_framework.filters import BaseFilterBackend
 from rest_framework.settings import api_settings
 
 from poms.common.middleware import get_request
@@ -136,7 +137,7 @@ class ByIsDeletedFilterBackend(BaseFilterBackend):
         return queryset
 
 
-class NoOpFilter(django_filters.MethodFilter):
+class NoOpFilter(django_filters.Filter):
     # For UI only, real filtering in some AbstractRelatedFilterBackend
     def filter(self, qs, value):
         return qs

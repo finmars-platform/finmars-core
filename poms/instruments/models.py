@@ -292,7 +292,7 @@ class PricingPolicy(NamedModel):
     # )
 
     master_user = models.ForeignKey(MasterUser, related_name='pricing_policies',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     # type = models.PositiveIntegerField(default=DISABLED, choices=TYPES)
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='', blank=True,
                             verbose_name=ugettext_lazy('expression'))
@@ -304,7 +304,7 @@ class PricingPolicy(NamedModel):
 
 class InstrumentType(NamedModelAutoMapping, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='instrument_types',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     instrument_class = models.ForeignKey(InstrumentClass, related_name='instrument_types', on_delete=models.PROTECT,
                                          verbose_name=ugettext_lazy('instrument class'))
 
@@ -329,7 +329,7 @@ class InstrumentType(NamedModelAutoMapping, FakeDeletableModel):
         verbose_name = ugettext_lazy('instrument type')
         verbose_name_plural = ugettext_lazy('instrument types')
         permissions = [
-            ('view_instrumenttype', 'Can view instrument type'),
+            # ('view_instrumenttype', 'Can view instrument type'),
             ('manage_instrumenttype', 'Can manage instrument type'),
         ]
 
@@ -342,7 +342,7 @@ class InstrumentType(NamedModelAutoMapping, FakeDeletableModel):
 
 
 class Instrument(NamedModelAutoMapping, FakeDeletableModel):
-    master_user = models.ForeignKey(MasterUser, related_name='instruments', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey(MasterUser, related_name='instruments', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     instrument_type = models.ForeignKey(InstrumentType, on_delete=models.PROTECT,
                                         verbose_name=ugettext_lazy('instrument type'))
@@ -370,7 +370,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel):
     reference_for_pricing = models.CharField(max_length=100, blank=True, default='',
                                              verbose_name=ugettext_lazy('reference for pricing'))
     daily_pricing_model = models.ForeignKey(DailyPricingModel, null=True, blank=True,
-                                            verbose_name=ugettext_lazy('daily pricing model'))
+                                            verbose_name=ugettext_lazy('daily pricing model'), on_delete=models.SET_NULL)
     price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.PROTECT, null=True,
                                               blank=True, verbose_name=ugettext_lazy('price download scheme'))
     maturity_date = models.DateField(default=date.max, verbose_name=ugettext_lazy('maturity date'))
@@ -384,7 +384,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel):
         verbose_name = ugettext_lazy('instrument')
         verbose_name_plural = ugettext_lazy('instruments')
         permissions = [
-            ('view_instrument', 'Can view instrument'),
+            # ('view_instrument', 'Can view instrument'),
             ('manage_instrument', 'Can manage instrument'),
         ]
         ordering = ['user_code']
@@ -731,6 +731,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel):
         return 0.0, False
 
     def get_future_coupons(self, begin_date=None, with_maturity=False, factor=False):
+
         res = []
         accruals = self.get_accrual_calculation_schedules_all()
         for accrual in accruals:
@@ -792,7 +793,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel):
 
 class ManualPricingFormula(models.Model):
     instrument = models.ForeignKey(Instrument, related_name='manual_pricing_formulas',
-                                   verbose_name=ugettext_lazy('instrument'))
+                                   verbose_name=ugettext_lazy('instrument'), on_delete=models.CASCADE)
     pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.PROTECT, related_name='manual_pricing_formulas',
                                        verbose_name=ugettext_lazy('pricing policy'))
     expr = models.CharField(max_length=255, blank=True, default='', verbose_name=ugettext_lazy('expression'))
@@ -811,7 +812,7 @@ class ManualPricingFormula(models.Model):
 
 
 class PriceHistory(models.Model):
-    instrument = models.ForeignKey(Instrument, related_name='prices', verbose_name=ugettext_lazy('instrument'))
+    instrument = models.ForeignKey(Instrument, related_name='prices', verbose_name=ugettext_lazy('instrument'), on_delete=models.CASCADE)
     pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.PROTECT, null=True, blank=True,
                                        verbose_name=ugettext_lazy('pricing policy'))
     date = models.DateField(db_index=True, default=date_now, verbose_name=ugettext_lazy('date'))
@@ -834,7 +835,7 @@ class PriceHistory(models.Model):
 
 class AccrualCalculationSchedule(models.Model):
     instrument = models.ForeignKey(Instrument, related_name='accrual_calculation_schedules',
-                                   verbose_name=ugettext_lazy('instrument'))
+                                   verbose_name=ugettext_lazy('instrument'), on_delete=models.CASCADE)
     accrual_start_date = models.DateField(default=date_now, verbose_name=ugettext_lazy('accrual start date'))
     accrual_end_date = None  # excluded date
     first_payment_date = models.DateField(default=date_now, verbose_name=ugettext_lazy('first payment date'))
@@ -858,7 +859,7 @@ class AccrualCalculationSchedule(models.Model):
 
 class InstrumentFactorSchedule(models.Model):
     instrument = models.ForeignKey(Instrument, related_name='factor_schedules',
-                                   verbose_name=ugettext_lazy('instrument'))
+                                   verbose_name=ugettext_lazy('instrument'), on_delete=models.CASCADE)
     effective_date = models.DateField(default=date_now, verbose_name=ugettext_lazy('effective date'))
     factor_value = models.FloatField(default=0., verbose_name=ugettext_lazy('factor value'))
 
@@ -872,7 +873,7 @@ class InstrumentFactorSchedule(models.Model):
 
 
 class EventSchedule(models.Model):
-    instrument = models.ForeignKey(Instrument, related_name='event_schedules', verbose_name=ugettext_lazy('instrument'))
+    instrument = models.ForeignKey(Instrument, related_name='event_schedules', verbose_name=ugettext_lazy('instrument'), on_delete=models.CASCADE)
 
     # T O D O: name & description is expression
     # T O D O: default settings.POMS_EVENT_*
@@ -903,10 +904,10 @@ class EventSchedule(models.Model):
                                                      related_name='event_schedules',
                                                      verbose_name=ugettext_lazy('accrual calculation schedule'),
                                                      help_text=ugettext_lazy(
-                                                         'Used for store link when is_auto_generated is True'))
+                                                         'Used for store link when is_auto_generated is True'), on_delete=models.SET_NULL)
     factor_schedule = models.ForeignKey(InstrumentFactorSchedule, null=True, blank=True, editable=False,
                                         related_name='event_schedules', verbose_name=ugettext_lazy('factor schedule'),
-                                        help_text=ugettext_lazy('Used for store link when is_auto_generated is True'))
+                                        help_text=ugettext_lazy('Used for store link when is_auto_generated is True'), on_delete=models.SET_NULL)
 
     class Meta:
         verbose_name = ugettext_lazy('event schedule')
@@ -1023,7 +1024,7 @@ class EventSchedule(models.Model):
 class EventScheduleAction(models.Model):
     # TODO: for auto generated always one
     event_schedule = models.ForeignKey(EventSchedule, related_name='actions',
-                                       verbose_name=ugettext_lazy('event schedule'))
+                                       verbose_name=ugettext_lazy('event schedule'), on_delete=models.CASCADE)
     transaction_type = models.ForeignKey('transactions.TransactionType', on_delete=models.PROTECT,
                                          verbose_name=ugettext_lazy('transaction type'))
     # T O D O: on auto generate fill 'Book: ' + transaction_type
@@ -1072,7 +1073,7 @@ class GeneratedEvent(models.Model):
     )
 
     master_user = models.ForeignKey(MasterUser, related_name='generated_events',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     effective_date = models.DateField(default=date_now, db_index=True, verbose_name=ugettext_lazy('effective date'))
     effective_date_notified = models.BooleanField(default=False, db_index=True,
@@ -1237,7 +1238,7 @@ class GeneratedEvent(models.Model):
 
 class EventScheduleConfig(models.Model):
     master_user = models.OneToOneField('users.MasterUser', related_name='instrument_event_schedule_config',
-                                       verbose_name=ugettext_lazy('master user'))
+                                       verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     name = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                             verbose_name=ugettext_lazy('name'))

@@ -2,13 +2,13 @@ import copy
 import logging
 
 import time
-from django.db.models import Q
+from django.db.models import Q, prefetch_related_objects, Prefetch
 from django.utils.functional import cached_property
 
 from poms.accounts.models import Account, AccountType
 from poms.counterparties.models import Responsible, ResponsibleGroup, Counterparty, CounterpartyGroup
 from poms.currencies.models import Currency
-from poms.instruments.models import Instrument, InstrumentType
+from poms.instruments.models import Instrument, InstrumentType, AccrualCalculationSchedule, InstrumentFactorSchedule
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.portfolios.models import Portfolio
@@ -187,10 +187,15 @@ class BaseReportBuilder:
         )
 
     def _trn_qs_prefetch(self, qs):
-        return qs.select_related(
+
+        _qs_st = time.perf_counter()
+
+        qs = qs.select_related(
             'complex_transaction',
             'complex_transaction__transaction_type',
             'transaction_class',
+
+            'instrument',
             'instrument__instrument_type',
             'instrument__instrument_type__instrument_class',
             'instrument__pricing_currency',
@@ -213,12 +218,24 @@ class BaseReportBuilder:
             'linked_instrument__instrument_type',
             'allocation_balance',
             'allocation_pl',
-        ).prefetch_related(
-            'instrument__accrual_calculation_schedules',
-            'instrument__accrual_calculation_schedules__accrual_calculation_model',
-            'instrument__accrual_calculation_schedules__periodicity',
-            'instrument__factor_schedules',
         )
+
+        _l.debug('_trn_qs_prefetch  done: %s', (time.perf_counter() - _qs_st))
+
+        return qs
+
+        # TODO !!! WARNING ITS NOT WORKING
+        # TODO !!! SOMEHOW NESTED PREFETCH IS NOT RESOLVING CORRECTLY
+        # TODO !!! IT RESULTS INTO len(transactions) ADDITIONAL QUERIES
+        # TODO !!! SEE SIMILAR PROBLEM BELOW
+        # TODO !!! https://code.djangoproject.com/ticket/26318
+        # ).prefetch_related(
+        #     'instrument'
+        #     'instrument__accrual_calculation_schedules',
+        #     'instrument__accrual_calculation_schedules__accrual_calculation_model',
+        #     'instrument__accrual_calculation_schedules__periodicity',
+        #     'instrument__factor_schedules',
+        # )
 
     def _trn_qs_filter(self, qs):
         return qs
@@ -337,6 +354,10 @@ class BaseReportBuilder:
 
         qs = self._queryset if self._queryset is not None else Transaction.objects
 
+        qs = self._trn_qs_prefetch(qs)
+
+        # qs = self._prefetch_instruments_data(qs)
+
         complex_qs = ComplexTransaction.objects.filter(status=ComplexTransaction.PRODUCTION,
                                                        master_user=self.instance.master_user, is_deleted=False)
 
@@ -369,14 +390,6 @@ class BaseReportBuilder:
                            strategy3_cash__in=self.instance.strategies3)
 
         qs = self._trn_qs_filter(qs)
-
-        qs = self._trn_qs_prefetch(qs)
-
-        # len_qs = str(len(qs))
-        #
-        # str_qs = '_trn_qs_optimized len ' + len_qs
-
-        # _l.debug(str_qs)
 
         result = qs
 

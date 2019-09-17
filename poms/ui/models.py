@@ -164,7 +164,7 @@ class PortalInterfaceAccessModel(AbstractClassModel):
 
 class TransactionUserFieldModel(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='transaction_user_fields',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     key = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('key'))
     name = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('name'))
@@ -172,7 +172,7 @@ class TransactionUserFieldModel(models.Model):
 
 class InstrumentUserFieldModel(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='instrument_user_fields',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     key = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('key'))
     name = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('name'))
@@ -203,7 +203,7 @@ class BaseUIModel(models.Model):
 
 
 class BaseLayout(BaseUIModel):
-    content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'))
+    content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'), on_delete=models.CASCADE)
 
     class Meta:
         abstract = True
@@ -211,7 +211,7 @@ class BaseLayout(BaseUIModel):
 
 class TemplateListLayout(BaseLayout):
     master_user = models.ForeignKey(MasterUser, related_name='template_list_layouts',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
     is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
 
@@ -232,7 +232,7 @@ class TemplateListLayout(BaseLayout):
 
 
 class TemplateEditLayout(BaseLayout):
-    master_user = models.ForeignKey(MasterUser, related_name='edit_layouts', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey(MasterUser, related_name='edit_layouts', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     class Meta(BaseLayout.Meta):
         unique_together = [
@@ -242,7 +242,7 @@ class TemplateEditLayout(BaseLayout):
 
 
 class ListLayout(BaseLayout):
-    member = models.ForeignKey(Member, related_name='template_list_layouts', verbose_name=ugettext_lazy('member'))
+    member = models.ForeignKey(Member, related_name='template_list_layouts', verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
     is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
     is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('is active'))
@@ -272,7 +272,7 @@ class ListLayout(BaseLayout):
 
 
 class DashboardLayout(BaseUIModel):
-    member = models.ForeignKey(Member, related_name='dashboard_layouts', verbose_name=ugettext_lazy('member'))
+    member = models.ForeignKey(Member, related_name='dashboard_layouts', verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
     is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
     is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('is active'))
@@ -303,7 +303,7 @@ class DashboardLayout(BaseUIModel):
 
 class ConfigurationExportLayout(BaseUIModel):
     member = models.ForeignKey(Member, related_name='configuration_export_layouts',
-                               verbose_name=ugettext_lazy('member'))
+                               verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
     is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
 
@@ -326,7 +326,7 @@ class ConfigurationExportLayout(BaseUIModel):
 
 
 class EditLayout(BaseLayout):
-    member = models.ForeignKey(Member, related_name='edit_layouts', verbose_name=ugettext_lazy('member'))
+    member = models.ForeignKey(Member, related_name='edit_layouts', verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
 
     class Meta(BaseLayout.Meta):
         unique_together = [
@@ -336,9 +336,9 @@ class EditLayout(BaseLayout):
 
 
 class Bookmark(BaseUIModel, MPTTModel):
-    member = models.ForeignKey(Member, related_name='bookmarks', verbose_name=ugettext_lazy('member'))
+    member = models.ForeignKey(Member, related_name='bookmarks', verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True,
-                            verbose_name=ugettext_lazy('parent'))
+                            verbose_name=ugettext_lazy('parent'), on_delete=models.CASCADE)
     name = models.CharField(max_length=100, verbose_name=ugettext_lazy('name'))
     uri = models.CharField(max_length=256, null=True, blank=True, verbose_name=ugettext_lazy('uri'))
     list_layout = models.ForeignKey(ListLayout, null=True, blank=True, related_name='bookmarks',
@@ -357,7 +357,7 @@ class Bookmark(BaseUIModel, MPTTModel):
 
 
 class Dashboard(models.Model):
-    member = models.ForeignKey(Member, related_name='dashboards', verbose_name=ugettext_lazy('member'))
+    member = models.ForeignKey(Member, related_name='dashboards', verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = ugettext_lazy('dashboard')
@@ -366,7 +366,7 @@ class Dashboard(models.Model):
 
 class Configuration(BaseUIModel):
     master_user = models.ForeignKey(MasterUser, related_name='configuration_files',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
     description = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('description'))
 

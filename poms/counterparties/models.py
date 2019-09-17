@@ -15,7 +15,7 @@ from poms.users.models import MasterUser, Member
 
 class CounterpartyGroup(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='counterparty_groups',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
@@ -24,7 +24,7 @@ class CounterpartyGroup(NamedModel, FakeDeletableModel):
         verbose_name = ugettext_lazy('counterparty group')
         verbose_name_plural = ugettext_lazy('counterparty groups')
         permissions = [
-            ('view_counterpartygroup', 'Can view counterparty group'),
+            # ('view_counterpartygroup', 'Can view counterparty group'),
             ('manage_counterpartygroup', 'Can manage counterparty group'),
         ]
 
@@ -53,9 +53,9 @@ class CounterpartyGroup(NamedModel, FakeDeletableModel):
 
 class Counterparty(NamedModelAutoMapping, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='counterparties',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     group = models.ForeignKey(CounterpartyGroup, related_name='counterparties', null=True, blank=True,
-                              verbose_name=ugettext_lazy('group'))
+                              verbose_name=ugettext_lazy('group'), on_delete=models.SET_NULL)
     is_valid_for_all_portfolios = models.BooleanField(default=True,
                                                       verbose_name=ugettext_lazy('is valid for all portfolios'))
 
@@ -68,7 +68,7 @@ class Counterparty(NamedModelAutoMapping, FakeDeletableModel):
         verbose_name_plural = ugettext_lazy('counterparties')
         ordering = ['user_code']
         permissions = [
-            ('view_counterparty', 'Can view counterparty'),
+            # ('view_counterparty', 'Can view counterparty'),
             ('manage_counterparty', 'Can manage counterparty'),
         ]
 
@@ -165,7 +165,7 @@ class Counterparty(NamedModelAutoMapping, FakeDeletableModel):
 
 class ResponsibleGroup(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='responsible_groups',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
@@ -174,7 +174,7 @@ class ResponsibleGroup(NamedModel, FakeDeletableModel):
         verbose_name = ugettext_lazy('responsible group')
         verbose_name_plural = ugettext_lazy('responsible groups')
         permissions = [
-            ('view_responsiblegroup', 'Can view responsible group'),
+            # ('view_responsiblegroup', 'Can view responsible group'),
             ('manage_responsiblegroup', 'Can manage responsible group'),
         ]
 
@@ -202,9 +202,9 @@ class ResponsibleGroup(NamedModel, FakeDeletableModel):
 
 
 class Responsible(NamedModelAutoMapping, FakeDeletableModel):
-    master_user = models.ForeignKey(MasterUser, related_name='responsibles', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey(MasterUser, related_name='responsibles', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     group = models.ForeignKey(ResponsibleGroup, related_name='responsibles', null=True, blank=True,
-                              verbose_name=ugettext_lazy('group'))
+                              verbose_name=ugettext_lazy('group'), on_delete=models.SET_NULL)
     is_valid_for_all_portfolios = models.BooleanField(default=True,
                                                       verbose_name=ugettext_lazy('is valid for all portfolios'))
 
@@ -217,7 +217,7 @@ class Responsible(NamedModelAutoMapping, FakeDeletableModel):
         verbose_name_plural = ugettext_lazy('responsibles')
         ordering = ['user_code']
         permissions = [
-            ('view_responsible', 'Can view responsible'),
+            # ('view_responsible', 'Can view responsible'),
             ('manage_responsible', 'Can manage responsible'),
         ]
 

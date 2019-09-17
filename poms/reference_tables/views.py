@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from rest_framework.filters import FilterSet
+from django_filters.rest_framework import FilterSet
 
 from poms.common.filters import CharFilter, NoOpFilter
 from poms.common.views import AbstractModelViewSet

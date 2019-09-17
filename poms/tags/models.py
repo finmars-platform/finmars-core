@@ -10,7 +10,7 @@ from poms.obj_perms.models import GenericObjectPermission
 
 
 class Tag(NamedModel):
-    master_user = models.ForeignKey('users.MasterUser', related_name='tags', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey('users.MasterUser', related_name='tags', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     content_types = models.ManyToManyField(ContentType, related_name='tags', blank=True,
                                            verbose_name=ugettext_lazy('content types'))
 
@@ -74,7 +74,7 @@ class Tag(NamedModel):
         verbose_name = ugettext_lazy('tag')
         verbose_name_plural = ugettext_lazy('tags')
         permissions = [
-            ('view_tag', 'Can view tag'),
+            # ('view_tag', 'Can view tag'),
             ('manage_tag', 'Can manage tag'),
         ]
 
@@ -98,9 +98,9 @@ class Tag(NamedModel):
 
 
 class TagLink(models.Model):
-    tag = models.ForeignKey(Tag, related_name='links', verbose_name=ugettext_lazy('tag'))
+    tag = models.ForeignKey(Tag, related_name='links', verbose_name=ugettext_lazy('tag'), on_delete=models.CASCADE)
 
-    content_type = models.ForeignKey(ContentType, null=True, blank=True, verbose_name=ugettext_lazy('content type'))
+    content_type = models.ForeignKey(ContentType, null=True, blank=True, verbose_name=ugettext_lazy('content type'), on_delete=models.CASCADE)
     object_id = models.BigIntegerField(verbose_name=ugettext_lazy('object id'))
     content_object = GenericForeignKey('content_type', 'object_id')
 

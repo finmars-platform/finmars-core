@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 import django_filters
-from rest_framework.filters import FilterSet
+from django_filters.rest_framework import FilterSet
 
 from poms.audit.filters import ObjectHistory4ContentTypeMultipleChoiceFilter
 from poms.audit.models import AuthLogEntry, ObjectHistory4Entry
@@ -46,7 +46,7 @@ class ObjectHistory4EntryFilterSet(FilterSet):
     content_type = ObjectHistory4ContentTypeMultipleChoiceFilter()
     object_id = django_filters.NumberFilter()
     object_repr = CharFilter()
-    field_name = django_filters.CharFilter()
+    # field_name = django_filters.CharFilter()
     value = CharFilter()
     value_content_type = ObjectHistory4ContentTypeMultipleChoiceFilter()
     value_object_id = django_filters.NumberFilter()

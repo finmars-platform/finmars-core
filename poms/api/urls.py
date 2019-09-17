@@ -307,7 +307,7 @@ router.register(r'import/configuration/check-duplicates', configuration_export.C
                 'configuration_import_check_duplicates')
 
 urlpatterns = [
-    url(r'^v1/', include(router.urls, namespace='v1')),
+    url(r'^v1/', include(router.urls)),
 ]
 
 if settings.DEV:
@@ -318,4 +318,11 @@ if settings.DEV:
 if 'rest_framework_swagger' in settings.INSTALLED_APPS:
     urlpatterns += [
         url(r'^schema/', api.SchemaViewSet.as_view()),
+    ]
+
+if settings.DEBUG:
+    import debug_toolbar
+
+    urlpatterns += [
+        url('__debug__/', include(debug_toolbar.urls)),
     ]

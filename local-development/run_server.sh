@@ -9,4 +9,5 @@ RDS_PASSWORD=postgres \
 RDS_HOSTNAME=localhost \
 RDS_PORT=5434 \
 POMS_PRICING_AUTO_DOWNLOAD_DISABLED=False \
+DEBUG=True \
 BACKEND_ROLES="ALL" python manage.py runserver

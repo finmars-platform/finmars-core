@@ -51,6 +51,8 @@ from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeField, TransactionTypeInputField
 from poms.users.fields import MasterUserField, MemberField, HiddenMemberField
 
+from django.core.validators import RegexValidator
+
 _l = getLogger('poms.integrations')
 
 
@@ -1315,7 +1317,7 @@ class ComplexTransactionImportSchemeInputSerializer(serializers.ModelSerializer)
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
     name = serializers.CharField(max_length=255, allow_null=False, allow_blank=False,
                                  validators=[
-                                     serializers.RegexValidator(regex='\A[a-zA-Z_][a-zA-Z0-9_]*\Z'),
+                                     RegexValidator(regex='\A[a-zA-Z_][a-zA-Z0-9_]*\Z'),
                                  ])
 
     name_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)

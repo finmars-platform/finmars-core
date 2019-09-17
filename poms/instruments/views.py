@@ -5,10 +5,12 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Prefetch, Q, Case, When, Value, BooleanField
 from django.utils import timezone
+from django_filters.rest_framework import FilterSet
 from rest_framework import serializers
-from rest_framework.decorators import list_route, detail_route
+from rest_framework.decorators import action
+
 from rest_framework.exceptions import MethodNotAllowed, PermissionDenied, ValidationError
-from rest_framework.filters import FilterSet
+
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 
@@ -351,7 +353,7 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
         'maturity_date',
     ]
 
-    @list_route(methods=['post'], url_path='rebuild-events', serializer_class=serializers.Serializer)
+    @action(detail=False, methods=['post'], url_path='rebuild-events', serializer_class=serializers.Serializer)
     def rebuild_all_events(self, request):
         queryset = self.filter_queryset(self.get_queryset())
         processed = 0
@@ -363,7 +365,7 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
             processed += 1
         return Response({'processed': processed})
 
-    @detail_route(methods=['put', 'patch'], url_path='rebuild-events', serializer_class=serializers.Serializer)
+    @action(detail=True, methods=['put', 'patch'], url_path='rebuild-events', serializer_class=serializers.Serializer)
     def rebuild_events(self, request, pk):
         instance = self.get_object()
         try:
@@ -372,7 +374,7 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
             pass
         return Response({'processed': 1})
 
-    @list_route(methods=['post'], url_path='generate-events', serializer_class=serializers.Serializer)
+    @action(detail=False, methods=['post'], url_path='generate-events', serializer_class=serializers.Serializer)
     def generate_events(self, request):
         ret = generate_events.apply_async(kwargs={'master_users': [request.user.master_user.pk]})
         return Response({
@@ -380,7 +382,7 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
             'task_id': ret.id,
         })
 
-    @list_route(methods=['post'], url_path='system-generate-and-process', serializer_class=serializers.Serializer)
+    @action(detail=False, methods=['post'], url_path='system-generate-and-process', serializer_class=serializers.Serializer)
     def system_generate_and_process(self, request):
 
         ret = generate_events_do_not_inform_apply_default.apply_async()
@@ -389,7 +391,7 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
             'task_id': ret.id,
         })
 
-    @list_route(methods=['post'], url_path='generate-events-range', serializer_class=serializers.Serializer)
+    @action(detail=False, methods=['post'], url_path='generate-events-range', serializer_class=serializers.Serializer)
     def generate_events_range(self, request):
 
         date_from_string = request.query_params.get('effective_date_0', None)
@@ -420,7 +422,7 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
             'tasks_ids': tasks_ids
         })
 
-    @list_route(methods=['post'], url_path='process-events', serializer_class=serializers.Serializer)
+    @action(detail=False, methods=['post'], url_path='process-events', serializer_class=serializers.Serializer)
     def process_events(self, request):
         ret = process_events.apply_async(kwargs={'master_users': [request.user.master_user.pk]})
         return Response({
@@ -428,7 +430,7 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
             'task_id': ret.id,
         })
 
-    @list_route(methods=['post'], url_path='recalculate-prices-accrued-price',
+    @action(detail=False, methods=['post'], url_path='recalculate-prices-accrued-price',
                 serializer_class=InstrumentCalculatePricesAccruedPriceSerializer)
     def calculate_prices_accrued_price(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -695,7 +697,7 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
         )
         return qs
 
-    @detail_route(methods=['get', 'put'], url_path='book', serializer_class=TransactionTypeProcessSerializer)
+    @action(detail=True, methods=['get', 'put'], url_path='book', serializer_class=TransactionTypeProcessSerializer)
     def process(self, request, pk=None):
         generated_event = self.get_object()
 
@@ -755,7 +757,7 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
                 if instance.has_errors:
                     transaction.set_rollback(True)
 
-    @detail_route(methods=['put'], url_path='informed')
+    @action(detail=True, methods=['put'], url_path='informed')
     def ignore(self, request, pk=None):
         generated_event = self.get_object()
 
@@ -770,7 +772,7 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
         serializer = self.get_serializer(instance=generated_event)
         return Response(serializer.data)
 
-    @detail_route(methods=['put'], url_path='error')
+    @action(detail=True, methods=['put'], url_path='error')
     def error(self, request, pk=None):
         generated_event = self.get_object()
 

@@ -9,7 +9,7 @@ from django.conf import settings
 from django.db.models import Q
 
 from poms.common.utils import isclose, force_qs_evaluation
-from poms.instruments.models import CostMethod, InstrumentClass
+from poms.instruments.models import CostMethod, InstrumentClass, Instrument
 from poms.reports.builders.balance_item import ReportItem, Report
 from poms.reports.builders.balance_virt_trn import VirtualTransaction
 from poms.reports.builders.base_builder import BaseReportBuilder
@@ -17,7 +17,7 @@ from poms.reports.builders.pricing import FakeInstrumentPricingProvider, FakeCur
     CurrencyFxRateProvider
 from poms.reports.builders.pricing import InstrumentPricingProvider
 from poms.reports.models import BalanceReportCustomField
-from poms.transactions.models import TransactionClass
+from poms.transactions.models import TransactionClass, Transaction, ComplexTransaction
 
 _l = logging.getLogger('poms.reports')
 
@@ -522,12 +522,54 @@ class ReportBuilder(BaseReportBuilder):
 
         # self.transaction_qs = self._trn_qs()
 
-        trn_qs = self._trn_qs()
+        # TODO DO OWN FETCH TRANSACTIONS HERE
+        # trn_qs = self._trn_qs()
+
+        complex_qs = ComplexTransaction.objects.filter(status=ComplexTransaction.PRODUCTION,
+                                                       master_user=self.instance.master_user, is_deleted=False)
+
+        trn_qs = Transaction.objects.select_related(
+            'complex_transaction',
+            'complex_transaction__transaction_type',
+            'transaction_class',
+
+            'instrument',
+            'instrument__instrument_type',
+            'instrument__instrument_type__instrument_class',
+            'instrument__pricing_currency',
+            'instrument__accrued_currency',
+
+            'transaction_currency',
+            'settlement_currency',
+            'portfolio',
+            'account_position',
+            'account_cash',
+            'account_interim',
+            'strategy1_position',
+            'strategy1_cash',
+            'strategy2_position',
+            'strategy2_cash',
+            'strategy3_position',
+            'strategy3_cash',
+            'responsible',
+            'counterparty',
+            'linked_instrument__instrument_type',
+            'allocation_balance',
+            'allocation_pl').prefetch_related('instrument__factor_schedules',
+                                             'instrument__accrual_calculation_schedules').all()
+
+        trn_qs = trn_qs.filter(complex_transaction__in=complex_qs)
+
+        trn_qs = self._trn_qs_filter(trn_qs)
 
         _l.debug('_load_transactions trn_qs_st done: %s', (time.perf_counter() - trn_qs_st))
 
-        if len(trn_qs) == 0:
+        if trn_qs.count() == 0:
             return
+
+        print('trn_qs %s ' % len(list(trn_qs)))
+
+        _l.debug('_load_transactions trn_qs_st len done: %s', (time.perf_counter() - trn_qs_st))
 
         overrides = {}
 
@@ -567,12 +609,13 @@ class ReportBuilder(BaseReportBuilder):
         _pricing_provider = self.pricing_provider
         _fx_rate_provider = self.fx_rate_provider
 
-        _l.debug('_pricing_provider %s' % _pricing_provider)
-        _l.debug('_fx_rate_provider %s' % _fx_rate_provider)
+        # _l.debug('_pricing_provider %s' % _pricing_provider)
+        # _l.debug('_fx_rate_provider %s' % _fx_rate_provider)
 
         iteration_st = time.perf_counter()
 
         for t in trn_qs:
+
             trn = _trn_cls_create(
                 report=_instance,
                 pricing_provider=_pricing_provider,
@@ -589,8 +632,10 @@ class ReportBuilder(BaseReportBuilder):
             #     fx_rate_provider=_fx_rate_provider,
             #     trn=t,
             # )
-            #
+
             # _original_transactions_append(otrn)
+
+        _l.debug('_self._transactions len %s' % len(self._transactions))
 
         _l.debug('_load_transactions iteration_st done: %s', (time.perf_counter() - iteration_st))
 

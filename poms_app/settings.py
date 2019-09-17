@@ -49,6 +49,10 @@ DEBUG = True
 if os.environ.get('DEBUG') == 'False':
     DEBUG = False
 
+# DEBUG = False # TODO do not forget to turn of before push
+
+print('DEBUG %s' % DEBUG)
+
 DEV = True
 if os.environ.get('POMS_DEV') == 'False':
     DEBUG = False
@@ -82,6 +86,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+
+    'django_filters',
 
     'mptt',
 
@@ -127,10 +133,11 @@ INSTALLED_APPS = [
     # 'two_factor',
     'django_celery_results',
     'django_celery_beat',
-    # 'debug_toolbar',
+    'debug_toolbar',
 ]
 
-MIDDLEWARE_CLASSES = [
+# MIDDLEWARE_CLASSES = [
+MIDDLEWARE = [
     'poms.common.middleware.CommonMiddleware',
     # 'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.gzip.GZipMiddleware',
@@ -145,7 +152,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'corsheaders.middleware.CorsPostCsrfMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
+    # 'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     # 'django_otp.middleware.OTPMiddleware',
     # 'poms.users.middleware.AuthenticationMiddleware',
     # 'poms.users.middleware.TimezoneMiddleware',
@@ -154,7 +161,7 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # 'poms.notifications.middleware.NotificationMiddleware',
     # 'django.middleware.cache.FetchFromCacheMiddleware',
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'poms_app.urls'
@@ -778,7 +785,7 @@ BLOOMBERG_SANDBOX_WAIT_FAIL = False
 
 # ----
 
-INSTRUMENT_EVENTS_REGULAR_MAX_INTERVALS = 1000
+INSTRUMENT_EVENTS_REGULAR_MAX_INTERVALS =    1000
 try:
     from poms_app.settings_local import *
 except ImportError:
@@ -789,6 +796,16 @@ def show_toolbar(request):
     return True
 
 
-DEBUG_TOOLBAR_CONFIG = {
-    "SHOW_TOOLBAR_CALLBACK": show_toolbar,
-}
+INTERNAL_IPS = [
+    # ...
+    '127.0.0.1',
+    '0.0.0.0'
+    'localhost'
+    # ...
+]
+
+if DEBUG:
+
+    DEBUG_TOOLBAR_CONFIG = {
+        "SHOW_TOOLBAR_CALLBACK": show_toolbar,
+    }

@@ -62,8 +62,8 @@ def import_cert_upload_to(instance, filename):
 
 class ImportConfig(models.Model):
     master_user = models.ForeignKey('users.MasterUser', related_name='import_configs',
-                                    verbose_name=ugettext_lazy('master user'))
-    provider = models.ForeignKey(ProviderClass, verbose_name=ugettext_lazy('provider'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+    provider = models.ForeignKey(ProviderClass, verbose_name=ugettext_lazy('provider'), on_delete=models.CASCADE)
     p12cert = models.FileField(null=True, blank=True, upload_to=import_cert_upload_to, storage=import_config_storage,
                                verbose_name=ugettext_lazy('p12cert'))
     password = models.CharField(max_length=64, null=True, blank=True, verbose_name=ugettext_lazy('password'))
@@ -133,9 +133,9 @@ class InstrumentDownloadScheme(models.Model):
         'user_text_1', 'user_text_2', 'user_text_3',
     ]
 
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     scheme_name = models.CharField(max_length=255, verbose_name=ugettext_lazy('scheme name'))
-    provider = models.ForeignKey(ProviderClass, verbose_name=ugettext_lazy('provider'))
+    provider = models.ForeignKey(ProviderClass, verbose_name=ugettext_lazy('provider'), on_delete=models.PROTECT)
 
     reference_for_pricing = models.CharField(max_length=255, blank=True, default='',
                                              verbose_name=ugettext_lazy('reference for pricing'))
@@ -172,17 +172,17 @@ class InstrumentDownloadScheme(models.Model):
     payment_size_detail = models.ForeignKey('instruments.PaymentSizeDetail', on_delete=models.PROTECT,
                                             null=True, blank=True, verbose_name=ugettext_lazy('payment size detail'))
     daily_pricing_model = models.ForeignKey('instruments.DailyPricingModel', null=True, blank=True,
-                                            verbose_name=ugettext_lazy('daily pricing model'))
+                                            verbose_name=ugettext_lazy('daily pricing model'), on_delete=models.SET_NULL)
     price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.PROTECT, null=True,
                                               blank=True, verbose_name=ugettext_lazy('price download scheme'))
     default_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('default price'))
     default_accrued = models.FloatField(default=0.0, verbose_name=ugettext_lazy('default accrued'))
 
     factor_schedule_method = models.ForeignKey(FactorScheduleDownloadMethod, null=True, blank=True,
-                                               verbose_name=ugettext_lazy('factor schedule method'))
+                                               verbose_name=ugettext_lazy('factor schedule method'), on_delete=models.SET_NULL)
     accrual_calculation_schedule_method = models.ForeignKey(AccrualScheduleDownloadMethod, null=True, blank=True,
                                                             verbose_name=ugettext_lazy(
-                                                                'accrual calculation schedule method'))
+                                                                'accrual calculation schedule method'), on_delete=models.SET_NULL)
 
     class Meta:
         verbose_name = ugettext_lazy('instrument download scheme')
@@ -208,7 +208,7 @@ class InstrumentDownloadScheme(models.Model):
 
 
 class InstrumentDownloadSchemeInput(models.Model):
-    scheme = models.ForeignKey(InstrumentDownloadScheme, related_name='inputs', verbose_name=ugettext_lazy('scheme'))
+    scheme = models.ForeignKey(InstrumentDownloadScheme, related_name='inputs', verbose_name=ugettext_lazy('scheme') , on_delete=models.CASCADE)
     name = models.CharField(max_length=32, blank=True, default='', verbose_name=ugettext_lazy('name'))
     field = models.CharField(max_length=32, blank=True, default='', verbose_name=ugettext_lazy('field'))
     name_expr = models.CharField(max_length=1000, blank=True, default='', verbose_name=ugettext_lazy('name expression'))
@@ -233,9 +233,9 @@ class InstrumentDownloadSchemeInput(models.Model):
 
 class InstrumentDownloadSchemeAttribute(models.Model):
     scheme = models.ForeignKey(InstrumentDownloadScheme, related_name='attributes',
-                               verbose_name=ugettext_lazy('scheme'))
+                               verbose_name=ugettext_lazy('scheme') , on_delete=models.CASCADE)
     attribute_type = models.ForeignKey('obj_attrs.GenericAttributeType', null=True, blank=True,
-                                       verbose_name=ugettext_lazy('attribute_ type'))
+                                       verbose_name=ugettext_lazy('attribute_ type'), on_delete=models.SET_NULL)
     value = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                              verbose_name=ugettext_lazy('value'))
 
@@ -253,9 +253,9 @@ class InstrumentDownloadSchemeAttribute(models.Model):
 
 
 class PriceDownloadScheme(models.Model):
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     scheme_name = models.CharField(max_length=255, verbose_name=ugettext_lazy('scheme name'))
-    provider = models.ForeignKey(ProviderClass, verbose_name=ugettext_lazy('provider'))
+    provider = models.ForeignKey(ProviderClass, verbose_name=ugettext_lazy('provider'), on_delete=models.PROTECT)
 
     bid0 = models.CharField(max_length=50, blank=True, verbose_name=ugettext_lazy('bid0'))
     bid1 = models.CharField(max_length=50, blank=True, verbose_name=ugettext_lazy('bid1'))
@@ -327,8 +327,8 @@ class PriceDownloadScheme(models.Model):
 
 
 class AbstractMapping(models.Model):
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'))
-    provider = models.ForeignKey(ProviderClass, verbose_name=ugettext_lazy('provider'))
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+    provider = models.ForeignKey(ProviderClass, verbose_name=ugettext_lazy('provider'), on_delete=models.CASCADE)
     value = models.CharField(max_length=255, blank=True, default='', verbose_name=ugettext_lazy('value'))
 
     class Meta:
@@ -340,7 +340,7 @@ class AbstractMapping(models.Model):
 
 
 class CurrencyMapping(AbstractMapping):
-    content_object = models.ForeignKey('currencies.Currency', verbose_name=ugettext_lazy('currency'))
+    content_object = models.ForeignKey('currencies.Currency', verbose_name=ugettext_lazy('currency'), on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('currency mapping')
@@ -354,7 +354,7 @@ class CurrencyMapping(AbstractMapping):
 
 
 class PricingPolicyMapping(AbstractMapping):
-    content_object = models.ForeignKey('instruments.PricingPolicy', verbose_name=ugettext_lazy('pricing policy'))
+    content_object = models.ForeignKey('instruments.PricingPolicy', verbose_name=ugettext_lazy('pricing policy'), on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('pricing policy mapping')
@@ -368,7 +368,7 @@ class PricingPolicyMapping(AbstractMapping):
 
 
 class InstrumentTypeMapping(AbstractMapping):
-    content_object = models.ForeignKey('instruments.InstrumentType', verbose_name=ugettext_lazy('instrument type'))
+    content_object = models.ForeignKey('instruments.InstrumentType', verbose_name=ugettext_lazy('instrument type'), on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('instrument type mapping')
@@ -382,7 +382,7 @@ class InstrumentTypeMapping(AbstractMapping):
 
 
 class AccountTypeMapping(AbstractMapping):
-    content_object = models.ForeignKey('accounts.AccountType', verbose_name=ugettext_lazy('account type'))
+    content_object = models.ForeignKey('accounts.AccountType', verbose_name=ugettext_lazy('account type'), on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('account type mapping')
@@ -419,7 +419,7 @@ class InstrumentAttributeValueMapping(AbstractMapping):
 
 class AccrualCalculationModelMapping(AbstractMapping):
     content_object = models.ForeignKey('instruments.AccrualCalculationModel',
-                                       verbose_name=ugettext_lazy('accrual calculation model'))
+                                       verbose_name=ugettext_lazy('accrual calculation model'), on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('accrual calculation model mapping')
@@ -433,7 +433,7 @@ class AccrualCalculationModelMapping(AbstractMapping):
 
 
 class PeriodicityMapping(AbstractMapping):
-    content_object = models.ForeignKey('instruments.Periodicity', verbose_name=ugettext_lazy('periodicity'))
+    content_object = models.ForeignKey('instruments.Periodicity', verbose_name=ugettext_lazy('periodicity'), on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('periodicity mapping')
@@ -448,7 +448,7 @@ class PeriodicityMapping(AbstractMapping):
 
 
 class AccountMapping(AbstractMapping):
-    content_object = models.ForeignKey('accounts.Account', verbose_name=ugettext_lazy('account'))
+    content_object = models.ForeignKey('accounts.Account', verbose_name=ugettext_lazy('account'), on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('account mapping')
@@ -462,8 +462,8 @@ class AccountMapping(AbstractMapping):
 
 
 class AccountClassifierMapping(AbstractMapping):
-    attribute_type = models.ForeignKey(GenericAttributeType)
-    content_object = models.ForeignKey(GenericClassifier)
+    attribute_type = models.ForeignKey(GenericAttributeType, on_delete=models.CASCADE)
+    content_object = models.ForeignKey(GenericClassifier, on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('account classifier mapping')
@@ -477,7 +477,7 @@ class AccountClassifierMapping(AbstractMapping):
 
 
 class InstrumentMapping(AbstractMapping):
-    content_object = models.ForeignKey('instruments.Instrument', verbose_name=ugettext_lazy('instrument'))
+    content_object = models.ForeignKey('instruments.Instrument', verbose_name=ugettext_lazy('instrument'), on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('instrument mapping')
@@ -491,8 +491,8 @@ class InstrumentMapping(AbstractMapping):
 
 
 class InstrumentClassifierMapping(AbstractMapping):
-    attribute_type = models.ForeignKey(GenericAttributeType)
-    content_object = models.ForeignKey(GenericClassifier)
+    attribute_type = models.ForeignKey(GenericAttributeType, on_delete=models.CASCADE)
+    content_object = models.ForeignKey(GenericClassifier, on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('instrument classifier mapping')
@@ -506,7 +506,7 @@ class InstrumentClassifierMapping(AbstractMapping):
 
 
 class CounterpartyMapping(AbstractMapping):
-    content_object = models.ForeignKey('counterparties.Counterparty', verbose_name=ugettext_lazy('counterparty'))
+    content_object = models.ForeignKey('counterparties.Counterparty', verbose_name=ugettext_lazy('counterparty'), on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('counterparty mapping')
@@ -520,8 +520,8 @@ class CounterpartyMapping(AbstractMapping):
 
 
 class CounterpartyClassifierMapping(AbstractMapping):
-    attribute_type = models.ForeignKey(GenericAttributeType)
-    content_object = models.ForeignKey(GenericClassifier)
+    attribute_type = models.ForeignKey(GenericAttributeType, on_delete=models.CASCADE)
+    content_object = models.ForeignKey(GenericClassifier, on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('responsible classifier mapping')
@@ -535,7 +535,7 @@ class CounterpartyClassifierMapping(AbstractMapping):
 
 
 class ResponsibleMapping(AbstractMapping):
-    content_object = models.ForeignKey('counterparties.Responsible', verbose_name=ugettext_lazy('responsible'))
+    content_object = models.ForeignKey('counterparties.Responsible', verbose_name=ugettext_lazy('responsible'), on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('responsible mapping')
@@ -549,8 +549,8 @@ class ResponsibleMapping(AbstractMapping):
 
 
 class ResponsibleClassifierMapping(AbstractMapping):
-    attribute_type = models.ForeignKey(GenericAttributeType)
-    content_object = models.ForeignKey(GenericClassifier)
+    attribute_type = models.ForeignKey(GenericAttributeType, on_delete=models.CASCADE)
+    content_object = models.ForeignKey(GenericClassifier, on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('responsible classifier mapping')
@@ -564,7 +564,7 @@ class ResponsibleClassifierMapping(AbstractMapping):
 
 
 class PortfolioMapping(AbstractMapping):
-    content_object = models.ForeignKey('portfolios.Portfolio', verbose_name=ugettext_lazy('portfolio'))
+    content_object = models.ForeignKey('portfolios.Portfolio', verbose_name=ugettext_lazy('portfolio'), on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('portfolio mapping')
@@ -578,8 +578,8 @@ class PortfolioMapping(AbstractMapping):
 
 
 class PortfolioClassifierMapping(AbstractMapping):
-    attribute_type = models.ForeignKey(GenericAttributeType)
-    content_object = models.ForeignKey(GenericClassifier)
+    attribute_type = models.ForeignKey(GenericAttributeType, on_delete=models.CASCADE)
+    content_object = models.ForeignKey(GenericClassifier, on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('portfolio classifier mapping')
@@ -593,7 +593,7 @@ class PortfolioClassifierMapping(AbstractMapping):
 
 
 class Strategy1Mapping(AbstractMapping):
-    content_object = models.ForeignKey('strategies.Strategy1', verbose_name=ugettext_lazy('strategy1'))
+    content_object = models.ForeignKey('strategies.Strategy1', verbose_name=ugettext_lazy('strategy1'), on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('strategy1 mapping')
@@ -607,7 +607,7 @@ class Strategy1Mapping(AbstractMapping):
 
 
 class Strategy2Mapping(AbstractMapping):
-    content_object = models.ForeignKey('strategies.Strategy2', verbose_name=ugettext_lazy('strategy2'))
+    content_object = models.ForeignKey('strategies.Strategy2', verbose_name=ugettext_lazy('strategy2'), on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('strategy2 mapping')
@@ -621,7 +621,7 @@ class Strategy2Mapping(AbstractMapping):
 
 
 class Strategy3Mapping(AbstractMapping):
-    content_object = models.ForeignKey('strategies.Strategy3', verbose_name=ugettext_lazy('strategy3'))
+    content_object = models.ForeignKey('strategies.Strategy3', verbose_name=ugettext_lazy('strategy3'), on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('strategy3 mapping')
@@ -636,7 +636,7 @@ class Strategy3Mapping(AbstractMapping):
 
 class DailyPricingModelMapping(AbstractMapping):
     content_object = models.ForeignKey('instruments.DailyPricingModel',
-                                       verbose_name=ugettext_lazy('daily pricing model'))
+                                       verbose_name=ugettext_lazy('daily pricing model'), on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('daily pricing model mapping')
@@ -651,7 +651,7 @@ class DailyPricingModelMapping(AbstractMapping):
 
 class PaymentSizeDetailMapping(AbstractMapping):
     content_object = models.ForeignKey('instruments.PaymentSizeDetail',
-                                       verbose_name=ugettext_lazy('payment size detail'))
+                                       verbose_name=ugettext_lazy('payment size detail'), on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('payment size detail mapping')
@@ -666,7 +666,7 @@ class PaymentSizeDetailMapping(AbstractMapping):
 
 class PriceDownloadSchemeMapping(AbstractMapping):
     content_object = models.ForeignKey('integrations.PriceDownloadScheme',
-                                       verbose_name=ugettext_lazy('price download scheme'))
+                                       verbose_name=ugettext_lazy('price download scheme'), on_delete=models.CASCADE)
 
     class Meta(AbstractMapping.Meta):
         verbose_name = ugettext_lazy('price download scheme mapping')
@@ -701,12 +701,12 @@ class Task(TimeStampedModel):
         (STATUS_TIMEOUT, 'TIMEOUT'),
     )
 
-    master_user = models.ForeignKey('users.MasterUser', related_name='tasks', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey('users.MasterUser', related_name='tasks', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     member = models.ForeignKey('users.Member', related_name='tasks', null=True, blank=True,
-                               verbose_name=ugettext_lazy('member'))
+                               verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
 
     provider = models.ForeignKey(ProviderClass, null=True, blank=True, db_index=True,
-                                 verbose_name=ugettext_lazy('provider'))
+                                 verbose_name=ugettext_lazy('provider'), on_delete=models.SET_NULL)
     action = models.CharField(max_length=20, db_index=True, verbose_name=ugettext_lazy('action'))
     status = models.CharField(max_length=1, default=STATUS_PENDING, choices=STATUS_CHOICES,
                               verbose_name=ugettext_lazy('status'))
@@ -714,7 +714,7 @@ class Task(TimeStampedModel):
     celery_tasks_id = models.CharField(max_length=255, blank=True, default='',
                                        verbose_name=ugettext_lazy('celery tasks id'))
     parent = models.ForeignKey('self', null=True, blank=True, related_name='children',
-                               verbose_name=ugettext_lazy('parent'))
+                               verbose_name=ugettext_lazy('parent'), on_delete=models.SET_NULL)
 
     options = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('options'))
     result = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('result'))
@@ -818,7 +818,7 @@ def validate_crontab(value):
 
 class PricingAutomatedSchedule(models.Model):
     master_user = models.OneToOneField('users.MasterUser', related_name='pricing_automated_schedule',
-                                       verbose_name=ugettext_lazy('master user'))
+                                       verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     is_enabled = models.BooleanField(default=True, verbose_name=ugettext_lazy('is enabled'))
     cron_expr = models.CharField(max_length=255, blank=True, default='', validators=[validate_crontab],
@@ -890,7 +890,7 @@ class PricingAutomatedSchedule(models.Model):
 
 
 class ComplexTransactionImportScheme(models.Model):
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     scheme_name = models.CharField(max_length=255, verbose_name=ugettext_lazy('scheme name'))
     rule_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('rule expressions'))
 
@@ -904,7 +904,7 @@ class ComplexTransactionImportScheme(models.Model):
 
 class ComplexTransactionImportSchemeInput(models.Model):
     scheme = models.ForeignKey(ComplexTransactionImportScheme, related_name='inputs',
-                               verbose_name=ugettext_lazy('scheme'))
+                               verbose_name=ugettext_lazy('scheme'), on_delete=models.CASCADE)
     # order = models.SmallIntegerField(default=0)
     name = models.CharField(max_length=255)
     column = models.SmallIntegerField()
@@ -923,7 +923,7 @@ class ComplexTransactionImportSchemeInput(models.Model):
 
 class ComplexTransactionImportSchemeRule(models.Model):
     scheme = models.ForeignKey(ComplexTransactionImportScheme, related_name='rules',
-                               verbose_name=ugettext_lazy('scheme'))
+                               verbose_name=ugettext_lazy('scheme'), on_delete=models.CASCADE)
     # order = models.SmallIntegerField(default=0)
     value = models.CharField(max_length=255, blank=True, default='', verbose_name=ugettext_lazy('mapping value'))
     transaction_type = models.ForeignKey('transactions.TransactionType', on_delete=models.CASCADE,
@@ -943,7 +943,7 @@ class ComplexTransactionImportSchemeField(models.Model):
     # for simpler admin
     # scheme = models.ForeignKey(ComplexTransactionImportScheme, verbose_name=ugettext_lazy('scheme'))
     rule = models.ForeignKey(ComplexTransactionImportSchemeRule, related_name='fields',
-                             verbose_name=ugettext_lazy('rule'))
+                             verbose_name=ugettext_lazy('rule'), on_delete=models.CASCADE)
     # order = models.SmallIntegerField(default=0)
     # name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'))
     transaction_type_input = models.ForeignKey('transactions.TransactionTypeInput', on_delete=models.CASCADE,

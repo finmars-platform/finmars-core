@@ -1,12 +1,11 @@
 from celery.result import AsyncResult
 from django.core.signing import TimestampSigner
+from django_filters.rest_framework import FilterSet
 
 from rest_framework.response import Response
 from rest_framework import status
 
 from poms.common.utils import date_now, datetime_now
-
-from rest_framework.filters import FilterSet
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet
@@ -29,7 +28,7 @@ _l = getLogger('poms.csv_import')
 
 
 class SchemeFilterSet(FilterSet):
-    content_type = SchemeContentTypeFilter(name='content_type')
+    content_type = SchemeContentTypeFilter(field_name='content_type')
 
     class Meta:
         model = CsvImportScheme

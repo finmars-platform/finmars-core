@@ -265,7 +265,7 @@ class PeriodicityGroup(AbstractClassModel):
 
 class TransactionTypeGroup(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='transaction_type_groups',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
@@ -274,7 +274,7 @@ class TransactionTypeGroup(NamedModel, FakeDeletableModel):
         verbose_name = ugettext_lazy('transaction type group')
         verbose_name_plural = ugettext_lazy('transaction type groups')
         permissions = [
-            ('view_transactiontypegroup', 'Can view transaction type group'),
+            # ('view_transactiontypegroup', 'Can view transaction type group'),
             ('manage_transactiontypegroup', 'Can manage transaction type group'),
         ]
 
@@ -299,7 +299,7 @@ class TransactionTypeGroup(NamedModel, FakeDeletableModel):
 
 class TransactionType(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='transaction_types',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     group = models.ForeignKey(TransactionTypeGroup, null=True, blank=True, on_delete=models.PROTECT,
                               verbose_name=ugettext_lazy('group'))
     date_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
@@ -399,7 +399,7 @@ class TransactionType(NamedModel, FakeDeletableModel):
         verbose_name = ugettext_lazy('transaction type')
         verbose_name_plural = ugettext_lazy('transaction types')
         permissions = [
-            ('view_transactiontype', 'Can view transaction type'),
+            # ('view_transactiontype', 'Can view transaction type'),
             ('manage_transactiontype', 'Can manage transaction type'),
         ]
         ordering = ['user_code']
@@ -496,12 +496,12 @@ class TransactionTypeInput(models.Model):
     )
 
     transaction_type = models.ForeignKey(TransactionType, related_name='inputs',
-                                         verbose_name=ugettext_lazy('transaction type'))
+                                         verbose_name=ugettext_lazy('transaction type'), on_delete=models.CASCADE)
     name = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('name'))
     verbose_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('verbose name'))
     value_type = models.PositiveSmallIntegerField(default=NUMBER, choices=TYPES,
                                                   verbose_name=ugettext_lazy('value type'))
-    content_type = models.ForeignKey(ContentType, null=True, blank=True, verbose_name=ugettext_lazy('content type'))
+    content_type = models.ForeignKey(ContentType, null=True, blank=True, verbose_name=ugettext_lazy('content type'), on_delete=models.SET_NULL)
 
     reference_table = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('reference table'))
 
@@ -1047,7 +1047,7 @@ class TransactionTypeActionInstrumentEventScheduleAction(TransactionTypeAction):
     #  on_delete=models.PROTECT, TODO check later phantom permossions
     event_schedule_phantom = models.ForeignKey(TransactionTypeActionInstrumentEventSchedule, null=True, blank=True,
                                                related_name='+',
-                                               verbose_name=ugettext_lazy('event schedule phantom'))
+                                               verbose_name=ugettext_lazy('event schedule phantom'), on_delete=models.SET_NULL)
 
     transaction_type_from_instrument_type = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='',
                                                              verbose_name=ugettext_lazy('text'))
@@ -1076,7 +1076,7 @@ class TransactionTypeActionInstrumentEventScheduleAction(TransactionTypeAction):
 
 class EventToHandle(NamedModel):
     master_user = models.ForeignKey(MasterUser, related_name='events_to_handle',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     transaction_type = models.ForeignKey(TransactionType, on_delete=models.PROTECT,
                                          verbose_name=ugettext_lazy('transaction type'))
     notification_date = models.DateField(null=True, blank=True,
@@ -1098,7 +1098,7 @@ class ComplexTransaction(FakeDeletableModel):
     )
 
     master_user = models.ForeignKey(MasterUser, related_name='complex_transactions',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     transaction_type = models.ForeignKey(TransactionType, on_delete=models.PROTECT,
                                          verbose_name=ugettext_lazy('transaction type'))
@@ -1250,7 +1250,7 @@ class ComplexTransactionInput(models.Model):
 
 
 class Transaction(FakeDeletableModel):
-    master_user = models.ForeignKey(MasterUser, related_name='transactions', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey(MasterUser, related_name='transactions', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     complex_transaction = models.ForeignKey(ComplexTransaction, on_delete=models.SET_NULL, null=True, blank=True,
                                             related_name='transactions',
                                             verbose_name=ugettext_lazy('complex transaction'))
@@ -1520,7 +1520,7 @@ class Transaction(FakeDeletableModel):
 
 class ExternalCashFlow(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='external_cash_flows',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     date = models.DateField(default=date_now, db_index=True,
                             verbose_name=ugettext_lazy("date"))
     portfolio = models.ForeignKey(Portfolio, related_name='external_cash_flows', on_delete=models.PROTECT,
@@ -1544,7 +1544,7 @@ class ExternalCashFlow(models.Model):
 
 class ExternalCashFlowStrategy(models.Model):
     external_cash_flow = models.ForeignKey(ExternalCashFlow, related_name='strategies',
-                                           verbose_name=ugettext_lazy("external cash flow"))
+                                           verbose_name=ugettext_lazy("external cash flow"), on_delete=models.CASCADE)
     order = models.IntegerField(default=0, verbose_name=ugettext_lazy("order"))
     strategy1 = models.ForeignKey(Strategy1, on_delete=models.PROTECT, null=True, blank=True,
                                   related_name="external_cash_flow_strategies1",

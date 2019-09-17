@@ -18,7 +18,7 @@ from poms.users.models import MasterUser
 
 class Strategy1Group(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategy1_groups',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
@@ -28,7 +28,7 @@ class Strategy1Group(NamedModel, FakeDeletableModel):
         verbose_name_plural = ugettext_lazy('strategy1 groups')
         ordering = ['user_code']
         permissions = [
-            ('view_strategy1group', 'Can view strategy1 group'),
+            # ('view_strategy1group', 'Can view strategy1 group'),
             ('manage_strategy1group', 'Can manage strategy1 group'),
         ]
         # unique_together = [
@@ -60,7 +60,7 @@ class Strategy1Group(NamedModel, FakeDeletableModel):
 
 class Strategy1Subgroup(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategy1_subgroups',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     group = models.ForeignKey(Strategy1Group, null=True, blank=True, on_delete=models.PROTECT, related_name='subgroups')
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
@@ -71,7 +71,7 @@ class Strategy1Subgroup(NamedModel, FakeDeletableModel):
         verbose_name_plural = ugettext_lazy('strategy1 subgroups')
         ordering = ['user_code']
         permissions = [
-            ('view_strategy1subgroup', 'Can view strategy1 subgroup'),
+            # ('view_strategy1subgroup', 'Can view strategy1 subgroup'),
             ('manage_strategy1subgroup', 'Can manage strategy1 subgroup'),
         ]
         # unique_together = [
@@ -102,7 +102,7 @@ class Strategy1Subgroup(NamedModel, FakeDeletableModel):
 
 
 class Strategy1(NamedModelAutoMapping, FakeDeletableModel):
-    master_user = models.ForeignKey(MasterUser, related_name='strategies1', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey(MasterUser, related_name='strategies1', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     subgroup = models.ForeignKey(Strategy1Subgroup, null=True, blank=True, on_delete=models.PROTECT,
                                  related_name='strategies')
 
@@ -116,7 +116,7 @@ class Strategy1(NamedModelAutoMapping, FakeDeletableModel):
         verbose_name_plural = ugettext_lazy('strategies1')
         ordering = ['user_code']
         permissions = [
-            ('view_strategy1', 'Can view strategy1'),
+            # ('view_strategy1', 'Can view strategy1'),
             ('manage_strategy1', 'Can manage strategy1'),
         ]
         # unique_together = [
@@ -151,7 +151,7 @@ class Strategy1(NamedModelAutoMapping, FakeDeletableModel):
 
 class Strategy2Group(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategy2_groups',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
@@ -161,7 +161,7 @@ class Strategy2Group(NamedModel, FakeDeletableModel):
         verbose_name_plural = ugettext_lazy('strategy2 groups')
         ordering = ['user_code']
         permissions = [
-            ('view_strategy2group', 'Can view strategy2 group'),
+            # ('view_strategy2group', 'Can view strategy2 group'),
             ('manage_strategy2group', 'Can manage strategy2 group'),
         ]
         # unique_together = [
@@ -193,7 +193,7 @@ class Strategy2Group(NamedModel, FakeDeletableModel):
 
 class Strategy2Subgroup(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategy2_subgroups',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     group = models.ForeignKey(Strategy2Group, null=True, blank=True, on_delete=models.PROTECT, related_name='subgroups')
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
@@ -204,7 +204,7 @@ class Strategy2Subgroup(NamedModel, FakeDeletableModel):
         verbose_name_plural = ugettext_lazy('strategy2 subgroups')
         ordering = ['user_code']
         permissions = [
-            ('view_strategy2subgroup', 'Can view strategy2 subgroup'),
+            # ('view_strategy2subgroup', 'Can view strategy2 subgroup'),
             ('manage_strategy2subgroup', 'Can manage strategy2 subgroup'),
         ]
         # unique_together = [
@@ -235,7 +235,7 @@ class Strategy2Subgroup(NamedModel, FakeDeletableModel):
 
 
 class Strategy2(NamedModelAutoMapping, FakeDeletableModel):
-    master_user = models.ForeignKey(MasterUser, related_name='strategies2', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey(MasterUser, related_name='strategies2', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     subgroup = models.ForeignKey(Strategy2Subgroup, null=True, blank=True, on_delete=models.PROTECT,
                                  related_name='strategies')
 
@@ -249,7 +249,7 @@ class Strategy2(NamedModelAutoMapping, FakeDeletableModel):
         verbose_name_plural = ugettext_lazy('strategies2')
         ordering = ['user_code']
         permissions = [
-            ('view_strategy2', 'Can view strategy2'),
+            # ('view_strategy2', 'Can view strategy2'),
             ('manage_strategy2', 'Can manage strategy2'),
         ]
         # unique_together = [
@@ -284,7 +284,7 @@ class Strategy2(NamedModelAutoMapping, FakeDeletableModel):
 
 class Strategy3Group(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategy3_groups',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
@@ -294,7 +294,7 @@ class Strategy3Group(NamedModel, FakeDeletableModel):
         verbose_name_plural = ugettext_lazy('strategy3 groups')
         ordering = ['user_code']
         permissions = [
-            ('view_strategy3group', 'Can view strategy3 group'),
+            # ('view_strategy3group', 'Can view strategy3 group'),
             ('manage_strategy3group', 'Can manage strategy3 group'),
         ]
         # unique_together = [
@@ -326,7 +326,7 @@ class Strategy3Group(NamedModel, FakeDeletableModel):
 
 class Strategy3Subgroup(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategy3_subgroups',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     group = models.ForeignKey(Strategy3Group, null=True, blank=True, on_delete=models.PROTECT, related_name='subgroups')
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
@@ -337,7 +337,7 @@ class Strategy3Subgroup(NamedModel, FakeDeletableModel):
         verbose_name_plural = ugettext_lazy('strategy3 subgroups')
         ordering = ['user_code']
         permissions = [
-            ('view_strategy3subgroup', 'Can view strategy3 subgroup'),
+            # ('view_strategy3subgroup', 'Can view strategy3 subgroup'),
             ('manage_strategy3subgroup', 'Can manage strategy3 subgroup'),
         ]
         # unique_together = [
@@ -368,7 +368,7 @@ class Strategy3Subgroup(NamedModel, FakeDeletableModel):
 
 
 class Strategy3(NamedModelAutoMapping, FakeDeletableModel):
-    master_user = models.ForeignKey(MasterUser, related_name='strategies3', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey(MasterUser, related_name='strategies3', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     subgroup = models.ForeignKey(Strategy3Subgroup, null=True, blank=True, on_delete=models.PROTECT,
                                  related_name='strategies')
 
@@ -382,7 +382,7 @@ class Strategy3(NamedModelAutoMapping, FakeDeletableModel):
         verbose_name_plural = ugettext_lazy('strategies3')
         ordering = ['user_code']
         permissions = [
-            ('view_strategy3', 'Can view strategy3'),
+            # ('view_strategy3', 'Can view strategy3'),
             ('manage_strategy3', 'Can manage strategy3'),
         ]
         # unique_together = [

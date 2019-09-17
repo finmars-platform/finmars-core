@@ -15,7 +15,7 @@ from poms.users.models import MasterUser, Member
 
 
 class AccountType(NamedModel, FakeDeletableModel):
-    master_user = models.ForeignKey(MasterUser, related_name='account_types', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey(MasterUser, related_name='account_types', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     show_transaction_details = models.BooleanField(default=False,
                                                    verbose_name=ugettext_lazy('show transaction details'))
     transaction_details_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True,
@@ -30,7 +30,7 @@ class AccountType(NamedModel, FakeDeletableModel):
         verbose_name = ugettext_lazy('account type')
         verbose_name_plural = ugettext_lazy('account types')
         permissions = [
-            ('view_accounttype', 'Can view account type'),
+            # ('view_accounttype', 'Can view account type'),
             ('manage_accounttype', 'Can manage account type'),
         ]
 
@@ -58,7 +58,7 @@ class AccountType(NamedModel, FakeDeletableModel):
 
 
 class Account(NamedModelAutoMapping, FakeDeletableModel):
-    master_user = models.ForeignKey(MasterUser, related_name='accounts', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey(MasterUser, related_name='accounts', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     type = models.ForeignKey(AccountType, on_delete=models.PROTECT, null=True, blank=True,
                              verbose_name=ugettext_lazy('account type'))
     is_valid_for_all_portfolios = models.BooleanField(default=True,
@@ -72,7 +72,7 @@ class Account(NamedModelAutoMapping, FakeDeletableModel):
         verbose_name = ugettext_lazy('account')
         verbose_name_plural = ugettext_lazy('accounts')
         permissions = [
-            ('view_account', 'Can view account'),
+            # ('view_account', 'Can view account'),
             ('manage_account', 'Can manage account'),
         ]
 

@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from datetime import timedelta, date
 
+import time
 from django.conf import settings
 from django.utils.translation import ugettext_lazy, ugettext
 from rest_framework import serializers
@@ -494,13 +495,16 @@ class ReportSerializer(serializers.Serializer):
         return Report(**validated_data)
 
     def to_representation(self, instance):
+
+        st = time.perf_counter()
+
         data = super(ReportSerializer, self).to_representation(instance)
 
-        print('here? to_representation')
+        # print('here? to_representation')
 
         custom_fields = data['custom_fields_object']
 
-        print('custom_fields %s' % custom_fields)
+        # print('custom_fields %s' % custom_fields)
 
         if custom_fields:
             items = data['items']
@@ -625,6 +629,8 @@ class ReportSerializer(serializers.Serializer):
                             })
 
                 item['custom_fields'] = cfv
+
+        print('ReportSerializer to_representation done: %s' % (time.perf_counter() - st))
 
         return data
 

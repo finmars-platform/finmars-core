@@ -13,10 +13,10 @@ from poms.users.models import MasterUser
 
 class Session(AbstractBaseSession):
     id = models.UUIDField(unique=True, default=uuid.uuid4, verbose_name=ugettext_lazy('public id'))
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, verbose_name=ugettext_lazy('user'))
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, verbose_name=ugettext_lazy('user'), on_delete=models.CASCADE)
     user_agent = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user agent'))
     user_ip = models.GenericIPAddressField(null=True, blank=True, verbose_name=ugettext_lazy('user ip'))
-    current_master_user = models.ForeignKey(MasterUser, null=True, blank=True, verbose_name=ugettext_lazy('master user'))
+    current_master_user = models.ForeignKey(MasterUser, null=True, blank=True, verbose_name=ugettext_lazy('master user'),  on_delete=models.CASCADE)
 
     class Meta(AbstractBaseSession.Meta):
         ordering = ['expire_date']

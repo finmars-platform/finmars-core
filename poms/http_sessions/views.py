@@ -1,7 +1,8 @@
 from __future__ import unicode_literals
 
 import django_filters
-from rest_framework.filters import FilterSet
+from django_filters.rest_framework import FilterSet
+
 from rest_framework.mixins import DestroyModelMixin
 
 from poms.common.filters import CharFilter

@@ -13,7 +13,7 @@ from poms.users.models import MasterUser, Member
 
 
 class Portfolio(NamedModelAutoMapping, FakeDeletableModel):
-    master_user = models.ForeignKey(MasterUser, related_name='portfolios', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey(MasterUser, related_name='portfolios', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     accounts = models.ManyToManyField('accounts.Account', related_name='portfolios', blank=True,
                                       verbose_name=ugettext_lazy('accounts'))
     responsibles = models.ManyToManyField('counterparties.Responsible', related_name='portfolios', blank=True,
@@ -32,7 +32,7 @@ class Portfolio(NamedModelAutoMapping, FakeDeletableModel):
         verbose_name = ugettext_lazy('portfolio')
         verbose_name_plural = ugettext_lazy('portfolios')
         permissions = (
-            ('view_portfolio', 'Can view portfolio'),
+            # ('view_portfolio', 'Can view portfolio'),
             ('manage_portfolio', 'Can manage portfolio'),
         )
 

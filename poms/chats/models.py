@@ -17,7 +17,7 @@ from poms.users.models import MasterUser, Member
 
 class ThreadGroup(FakeDeletableModel, models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='chat_thread_groups',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'))
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
@@ -28,7 +28,7 @@ class ThreadGroup(FakeDeletableModel, models.Model):
         verbose_name_plural = ugettext_lazy('thread groups')
         ordering = ['name', ]
         permissions = [
-            ('view_threadgroup', 'Can view thread group'),
+            # ('view_threadgroup', 'Can view thread group'),
             ('manage_threadgroup', 'Can manage thread group'),
         ]
 
@@ -55,9 +55,9 @@ class ThreadGroup(FakeDeletableModel, models.Model):
 
 
 class Thread(TimeStampedModel, FakeDeletableModel):
-    master_user = models.ForeignKey(MasterUser, related_name='chat_threads', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey(MasterUser, related_name='chat_threads', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     thread_group = models.ForeignKey(ThreadGroup, related_name='groups', null=True, blank=True,
-                                     verbose_name=ugettext_lazy('thread group'))
+                                     verbose_name=ugettext_lazy('thread group'), on_delete=models.CASCADE)
     subject = models.CharField(max_length=255, verbose_name=ugettext_lazy('subject'))
     is_closed = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is closed'))
     closed = models.DateTimeField(null=True, blank=True, db_index=True, verbose_name=ugettext_lazy('closed'))
@@ -70,7 +70,7 @@ class Thread(TimeStampedModel, FakeDeletableModel):
         verbose_name_plural = ugettext_lazy('threads')
         ordering = ['subject', ]
         permissions = [
-            ('view_thread', 'Can view thread'),
+            # ('view_thread', 'Can view thread'),
             ('manage_thread', 'Can manage thread'),
         ]
 
@@ -97,8 +97,8 @@ class Thread(TimeStampedModel, FakeDeletableModel):
 
 
 class Message(TimeStampedModel):
-    thread = models.ForeignKey(Thread, related_name='messages', verbose_name=ugettext_lazy('thread'))
-    sender = models.ForeignKey(Member, related_name='chat_sent_messages', verbose_name=ugettext_lazy('sender'))
+    thread = models.ForeignKey(Thread, related_name='messages', verbose_name=ugettext_lazy('thread'), on_delete=models.CASCADE)
+    sender = models.ForeignKey(Member, related_name='chat_sent_messages', verbose_name=ugettext_lazy('sender'), on_delete=models.CASCADE)
     text = models.TextField(verbose_name=ugettext_lazy('text'))
 
     class Meta(TimeStampedModel.Meta):

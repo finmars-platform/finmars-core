@@ -1,6 +1,5 @@
 from logging import getLogger
 
-from rest_framework.decorators import list_route
 from rest_framework.response import Response
 
 from poms.common.views import AbstractModelViewSet, AbstractEvGroupViewSet

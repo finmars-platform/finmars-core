@@ -7,7 +7,7 @@ from poms.users.models import MasterUser
 
 class ComplexImportScheme(models.Model):
     scheme_name = models.CharField(max_length=255)
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     class Meta:
         unique_together = (
@@ -83,8 +83,8 @@ class ComplexImportSchemeActionTransactionImport(ComplexImportSchemeAction):
 
 
 class ComplexImport(models.Model):
-    master_user = models.ForeignKey(MasterUser, blank=True, null=True)
-    complex_import_scheme = models.ForeignKey(ComplexImportScheme)
+    master_user = models.ForeignKey(MasterUser, blank=True, null=True, on_delete=models.CASCADE)
+    complex_import_scheme = models.ForeignKey(ComplexImportScheme, on_delete=models.CASCADE)
     status = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     filename = models.CharField(max_length=255)

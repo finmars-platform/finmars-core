@@ -1,6 +1,6 @@
 import django_filters
 from django_filters.fields import Lookup
-from rest_framework.filters import FilterSet
+from django_filters.rest_framework import FilterSet
 
 from poms.common.filters import NoOpFilter, CharFilter
 from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet

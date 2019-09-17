@@ -16,7 +16,7 @@ register = template.Library()
 #         return master_user
 
 
-@register.assignment_tag(takes_context=True)
+@register.simple_tag(takes_context=True)
 def get_admin_master_user(context):
     from poms.common.admin import AbstractModelAdmin
     request = context['request']

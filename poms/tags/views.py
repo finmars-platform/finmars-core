@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from rest_framework.filters import FilterSet
+from django_filters.rest_framework import FilterSet
 
 from poms.common.filters import CharFilter, NoOpFilter
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
@@ -19,7 +19,7 @@ class TagFilterSet(FilterSet):
     name = CharFilter()
     short_name = CharFilter()
     public_name = CharFilter()
-    content_type = TagContentTypeFilter(name='content_types')
+    content_type = TagContentTypeFilter(field_name='content_types')
     member = ObjectPermissionMemberFilter(object_permission_model=Tag)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Tag)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Tag)

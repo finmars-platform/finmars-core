@@ -23,7 +23,7 @@ class BalanceReportCustomField(models.Model):
         (DATE, ugettext_lazy('Date')),
     )
 
-    master_user = models.ForeignKey(MasterUser, related_name='balance_report_custom_fields', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey(MasterUser, related_name='balance_report_custom_fields', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'))
     user_code = models.CharField(max_length=255, verbose_name=ugettext_lazy('user code'))
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('expression'))
@@ -54,7 +54,7 @@ class PLReportCustomField(models.Model):
         (DATE, ugettext_lazy('Date')),
     )
 
-    master_user = models.ForeignKey(MasterUser, related_name='pl_report_custom_fields', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey(MasterUser, related_name='pl_report_custom_fields', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'))
     user_code = models.CharField(max_length=255, verbose_name=ugettext_lazy('user code'))
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('expression'))
@@ -85,7 +85,7 @@ class TransactionReportCustomField(models.Model):
         (DATE, ugettext_lazy('Date')),
     )
 
-    master_user = models.ForeignKey(MasterUser, related_name='transaction_report_custom_fields', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey(MasterUser, related_name='transaction_report_custom_fields', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'))
     user_code = models.CharField(max_length=255, verbose_name=ugettext_lazy('user code'))
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('expression'))
@@ -106,7 +106,7 @@ class TransactionReportCustomField(models.Model):
 
 class BalanceReport(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='balance_reports',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = ugettext_lazy('balance report')
@@ -114,7 +114,7 @@ class BalanceReport(models.Model):
 
 
 class PLReport(models.Model):
-    master_user = models.ForeignKey(MasterUser, related_name='pl_reports', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey(MasterUser, related_name='pl_reports', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = ugettext_lazy('p&l report')
@@ -123,7 +123,7 @@ class PLReport(models.Model):
 
 class PerformanceReport(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='performance_reports',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = ugettext_lazy('performance report')
@@ -132,7 +132,7 @@ class PerformanceReport(models.Model):
 
 class CashFlowReport(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='cashflow_reports',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = ugettext_lazy('cash flow report')
@@ -141,7 +141,7 @@ class CashFlowReport(models.Model):
 
 class TransactionReport(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='transaction_reports',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = ugettext_lazy('transaction report')

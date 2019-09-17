@@ -146,8 +146,8 @@ class GenericAttributeType(NamedModel):
         (CLASSIFIER, ugettext_lazy('Classifier')),
     )
 
-    master_user = models.ForeignKey(MasterUser, verbose_name=ugettext_lazy('master user'))
-    content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'))
+    master_user = models.ForeignKey(MasterUser, verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'), on_delete=models.CASCADE)
     value_type = models.PositiveSmallIntegerField(choices=VALUE_TYPES, default=STRING,
                                                   verbose_name=ugettext_lazy('value type'))
 
@@ -188,8 +188,8 @@ class GenericAttributeType(NamedModel):
 
 class GenericAttributeTypeOption(models.Model):
     attribute_type = models.ForeignKey(GenericAttributeType, related_name='options',
-                                       verbose_name=ugettext_lazy('attribute type'))
-    member = models.ForeignKey(Member, verbose_name=ugettext_lazy('member'))
+                                       verbose_name=ugettext_lazy('attribute type'), on_delete=models.CASCADE)
+    member = models.ForeignKey(Member, verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
     is_hidden = models.BooleanField(default=False, verbose_name=ugettext_lazy('is hidden'))
 
     class Meta:
@@ -204,10 +204,10 @@ class GenericAttributeTypeOption(models.Model):
 
 class GenericClassifier(MPTTModel):
     attribute_type = models.ForeignKey(GenericAttributeType, related_name='classifiers',
-                                       verbose_name=ugettext_lazy('attribute type'))
+                                       verbose_name=ugettext_lazy('attribute type'), on_delete=models.CASCADE)
 
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True,
-                            verbose_name=ugettext_lazy('parent'))
+                            verbose_name=ugettext_lazy('parent'), on_delete=models.CASCADE)
 
     name = models.CharField(max_length=255, blank=True, verbose_name=ugettext_lazy('name'))
 
@@ -224,9 +224,9 @@ class GenericClassifier(MPTTModel):
 
 
 class GenericAttribute(models.Model):
-    attribute_type = models.ForeignKey(GenericAttributeType, verbose_name=ugettext_lazy('attribute type'))
+    attribute_type = models.ForeignKey(GenericAttributeType, verbose_name=ugettext_lazy('attribute type'), on_delete=models.CASCADE)
 
-    content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'))
+    content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'), on_delete=models.CASCADE)
     object_id = models.BigIntegerField(db_index=True, verbose_name=ugettext_lazy('object id'))
     content_object = GenericForeignKey('content_type', 'object_id')
 

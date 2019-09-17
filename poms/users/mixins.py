@@ -10,7 +10,7 @@ from rest_framework.response import Response
 # class PomsModelPermissionMixin(object):
 #     def initial(self, request, *args, **kwargs):
 #         super(PomsModelPermissionMixin, self).initial(request, *args, **kwargs)
-#         if request.user.is_authenticated():
+#         if request.user.is_authenticated:
 #             request.user.current_master_user = get_master_user(request)
 #             request.user.current_member = get_member(request)
 #

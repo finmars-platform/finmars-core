@@ -3,9 +3,9 @@ from __future__ import unicode_literals
 import django_filters
 from django.db import transaction
 from django.db.models import Prefetch, Q
-from rest_framework.decorators import detail_route
+from django_filters.rest_framework import FilterSet
+from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.filters import FilterSet
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 
@@ -533,7 +533,7 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
 
         return context_values
 
-    @detail_route(methods=['get', 'put'], url_path='book', serializer_class=TransactionTypeProcessSerializer)
+    @action(detail=True, methods=['get', 'put'], url_path='book', serializer_class=TransactionTypeProcessSerializer)
     def book(self, request, pk=None):
 
         complex_transaction_status = ComplexTransaction.PRODUCTION
@@ -568,7 +568,7 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
                 if instance.has_errors:
                     transaction.set_rollback(True)
 
-    @detail_route(methods=['get', 'put'], url_path='book-pending', serializer_class=TransactionTypeProcessSerializer)
+    @action(detail=True, methods=['get', 'put'], url_path='book-pending', serializer_class=TransactionTypeProcessSerializer)
     def book_pending(self, request, pk=None):
 
         complex_transaction_status = ComplexTransaction.PENDING
@@ -637,7 +637,7 @@ class TransactionFilterSet(FilterSet):
 
     complex_transaction__code = django_filters.RangeFilter()
     complex_transaction__date = django_filters.DateFromToRangeFilter()
-    complex_transaction__transaction_type = django_filters.Filter(name='complex_transaction__transaction_type')
+    complex_transaction__transaction_type = django_filters.Filter(field_name='complex_transaction__transaction_type')
 
     complex_transaction = ModelExtMultipleChoiceFilter(model=ComplexTransaction, field_name='id',
                                                        master_user_path='transaction_type__master_user')
@@ -1127,7 +1127,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
             is_deleted=instance.is_deleted
         )
 
-    @detail_route(methods=['get', 'put'], url_path='rebook', serializer_class=TransactionTypeProcessSerializer)
+    @action(detail=True, methods=['get', 'put'], url_path='rebook', serializer_class=TransactionTypeProcessSerializer)
     def rebook(self, request, pk=None):
         complex_transaction = self.get_object()
 
@@ -1161,7 +1161,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
                 if instance.has_errors:
                     transaction.set_rollback(True)
 
-    @detail_route(methods=['get', 'put'], url_path='rebook-pending', serializer_class=TransactionTypeProcessSerializer)
+    @action(detail=True, methods=['get', 'put'], url_path='rebook-pending', serializer_class=TransactionTypeProcessSerializer)
     def rebook_pending(self, request, pk=None):
 
         complex_transaction = self.get_object()

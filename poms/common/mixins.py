@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist, FieldDoesNotExist
 from django.db.models import ProtectedError
 from django.utils.translation import ugettext_lazy
 from rest_framework import status
-from rest_framework.decorators import list_route
+from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed, ValidationError, PermissionDenied
 from rest_framework.mixins import UpdateModelMixin, DestroyModelMixin, CreateModelMixin
 from rest_framework.response import Response
@@ -67,7 +67,7 @@ class UpdateModelMixinExt(UpdateModelMixin):
 
 
 class BulkCreateModelMixin(CreateModelMixin):
-    @list_route(methods=['post'], url_path='bulk-create')
+    @action(detail=False, methods=['post'], url_path='bulk-create')
     def bulk_create(self, request):
         data = request.data
         if not isinstance(data, list):
@@ -96,7 +96,7 @@ class BulkCreateModelMixin(CreateModelMixin):
 
 
 class BulkUpdateModelMixin(UpdateModelMixin):
-    @list_route(methods=['put', 'patch'], url_path='bulk-update')
+    @action(detail=False, methods=['put', 'patch'], url_path='bulk-update')
     def bulk_update(self, request):
         data = request.data
         if not isinstance(data, list):
@@ -147,7 +147,7 @@ class BulkUpdateModelMixin(UpdateModelMixin):
 
 
 class BulkSaveModelMixin(CreateModelMixin, UpdateModelMixin):
-    @list_route(methods=['post', 'put', 'patch'], url_path='bulk-save')
+    @action(detail=False, methods=['post', 'put', 'patch'], url_path='bulk-save')
     def bulk_save(self, request):
         data = request.data
         if not isinstance(data, list):
@@ -206,7 +206,7 @@ class BulkSaveModelMixin(CreateModelMixin, UpdateModelMixin):
 
 
 class BulkDestroyModelMixin(DestroyModelMixin):
-    @list_route(methods=['get', 'delete'], url_path='bulk-delete')
+    @action(detail=False, methods=['get', 'delete'], url_path='bulk-delete')
     def bulk_delete(self, request):
         if request.method.lower() == 'get':
             return self.list(request)
@@ -227,7 +227,7 @@ class BulkDestroyModelMixin(DestroyModelMixin):
 
 # BulkSaveModelMixin have some problem with permissions
 class BulkModelMixin(BulkCreateModelMixin, BulkUpdateModelMixin, BulkDestroyModelMixin):
-    @list_route(methods=['post', 'put', 'patch', 'delete'], url_path='bulk')
+    @action(detail=False, methods=['post', 'put', 'patch', 'delete'], url_path='bulk')
     def bulk_dispatch(self, request):
         method = request.method.lower()
 

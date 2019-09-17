@@ -9,10 +9,11 @@ from django.core.signing import TimestampSigner
 from django.db import transaction
 from django.utils import timezone
 from django_celery_results.models import TaskResult
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, status
-from rest_framework.decorators import list_route
+from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.filters import DjangoFilterBackend, OrderingFilter
+from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -38,7 +39,7 @@ _l = logging.getLogger('poms.common')
 class AbstractApiView(APIView):
     def perform_authentication(self, request):
         super(AbstractApiView, self).perform_authentication(request)
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             try:
                 request.user.member, request.user.master_user = get_master_user_and_member(request)
             except TypeError:
@@ -48,7 +49,7 @@ class AbstractApiView(APIView):
         super(AbstractApiView, self).initial(request, *args, **kwargs)
 
         timezone.activate(settings.TIME_ZONE)
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
 
             if hasattr(request.user, 'master_user'):
 
@@ -153,7 +154,7 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
 
         return Response(filtered_qs)
 
-    @list_route(methods=['post'], url_path='filtered')
+    @action(detail=False, methods=['post'], url_path='filtered')
     def filtered_list(self, request, *args, **kwargs):
 
         start_time = time.time()
@@ -232,7 +233,7 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    @list_route(methods=['post'], url_path='filtered')
+    @action(detail=False, methods=['post'], url_path='filtered')
     def filtered_list(self, request, *args, **kwargs):
 
         start_time = time.time()

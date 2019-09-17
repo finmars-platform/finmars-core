@@ -8,11 +8,13 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django_filters.rest_framework import FilterSet
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.serializers import AuthTokenSerializer
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import action
+
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.filters import FilterSet
+
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.viewsets import ViewSet, ModelViewSet, ViewSetMixin
@@ -76,8 +78,8 @@ class PingViewSet(AbstractApiView, ViewSet):
         serializer = PingSerializer(instance={
             'message': 'pong',
             'version': request.version,
-            'is_authenticated': request.user.is_authenticated(),
-            'is_anonymous': request.user.is_anonymous(),
+            'is_authenticated': request.user.is_authenticated,
+            'is_anonymous': request.user.is_anonymous,
             'now': timezone.template_localtime(timezone.now()),
         })
         return Response(serializer.data)
@@ -305,7 +307,7 @@ class UserViewSet(AbstractModelViewSet):
     def create(self, request, *args, **kwargs):
         raise PermissionDenied()
 
-    @detail_route(methods=('PUT',), url_path='set-password', serializer_class=UserSetPasswordSerializer)
+    @action(detail=True, methods=('PUT',), url_path='set-password', serializer_class=UserSetPasswordSerializer)
     def set_password(self, request, pk=None):
         # user = self.get_object()
         serializer = self.get_serializer(data=request.data)
@@ -314,7 +316,7 @@ class UserViewSet(AbstractModelViewSet):
         # return Response(serializer.data)
         return Response()
 
-    @detail_route(methods=('PUT',), url_path='unsubscribe', serializer_class=UserUnsubscribeSerializer)
+    @action(detail=True, methods=('PUT',), url_path='unsubscribe', serializer_class=UserUnsubscribeSerializer)
     def unsubscribe(self, request, pk=None):
         # user = self.get_object()
         serializer = self.get_serializer(data=request.data)
@@ -434,7 +436,7 @@ class MasterUserViewSet(AbstractModelViewSet):
     def create(self, request, *args, **kwargs):
         raise PermissionDenied()
 
-    @detail_route(methods=('PUT', 'PATCH',), url_path='set-current', permission_classes=[IsAuthenticated],
+    @action(detail=True, methods=('PUT', 'PATCH',), url_path='set-current', permission_classes=[IsAuthenticated],
                   serializer_class=MasterUserSetCurrentSerializer)
     def set_current(self, request, pk=None):
         instance = self.get_object()

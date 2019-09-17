@@ -3,8 +3,10 @@ from __future__ import unicode_literals
 import django_filters
 from django.db.models import Count, Prefetch
 from django.utils import timezone
-from rest_framework.decorators import detail_route
-from rest_framework.filters import FilterSet
+from django_filters.rest_framework import FilterSet
+from rest_framework.decorators import action
+
+
 from rest_framework.response import Response
 
 from poms.chats.filters import MessagePermissionFilter, DirectMessagePermissionFilter
@@ -109,7 +111,7 @@ class ThreadViewSet(AbstractWithObjectPermissionViewSet):
         'thread_group', 'thread_group__name',
     ]
 
-    @detail_route(url_path='close',
+    @action(detail=True, url_path='close',
                   permission_classes=AbstractWithObjectPermissionViewSet.permission_classes + [SuperUserOnly, ])
     def close(self, request, pk=None):
         instance = self.get_object()
@@ -119,7 +121,7 @@ class ThreadViewSet(AbstractWithObjectPermissionViewSet):
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
 
-    @detail_route(url_path='reopen',
+    @action(detail=True, url_path='reopen',
                   permission_classes=AbstractWithObjectPermissionViewSet.permission_classes + [SuperUserOnly, ])
     def reopen(self, request, pk=None):
         instance = self.get_object()

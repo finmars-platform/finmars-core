@@ -3,10 +3,11 @@ from __future__ import unicode_literals
 import django_filters
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
+from django_filters.rest_framework import FilterSet
 from django_filters.widgets import BooleanWidget
 from rest_framework import serializers
-from rest_framework.decorators import list_route, detail_route
-from rest_framework.filters import FilterSet
+from rest_framework.decorators import action
+
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -57,20 +58,20 @@ class NotificationViewSet(AbstractReadOnlyModelViewSet):
         'create_date', 'read_date',
     ]
 
-    @list_route(methods=['get'], url_path='status', serializer_class=serializers.Serializer)
+    @action(detail=False, methods=['get'], url_path='status', serializer_class=serializers.Serializer)
     def get_status(self, request, pk=None):
         unread_count = request.user.notifications.filter(read_date__isnull=True).count()
         return Response({
             "unread_count": unread_count
         })
 
-    @list_route(methods=['post'], url_path='mark-all-as-read', serializer_class=serializers.Serializer)
+    @action(detail=False, methods=['post'], url_path='mark-all-as-read', serializer_class=serializers.Serializer)
     def mark_all_as_read(self, request, pk=None):
         request.user.notifications.filter(read_date__isnull=True).update(read_date=timezone.now())
         serializer = self.get_serializer(instance=[], many=True)
         return Response(serializer.data)
 
-    @detail_route(methods=['post'], url_path='mark-as-read', serializer_class=serializers.Serializer)
+    @action(detail=True, methods=['post'], url_path='mark-as-read', serializer_class=serializers.Serializer)
     def mark_as_read(self, request, pk=None):
         instance = self.get_object()
         instance.mark_as_read()

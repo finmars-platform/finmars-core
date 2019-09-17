@@ -7,8 +7,8 @@ from poms.users.models import MasterUser
 
 class CsvImportScheme(models.Model):
     scheme_name = models.CharField(max_length=255)
-    content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'))
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'))
+    content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user') , on_delete=models.CASCADE)
 
     filter_expr = models.CharField(max_length=1000, default='', blank=True, null=True, verbose_name=ugettext_lazy('filter expression'))
 
@@ -87,8 +87,8 @@ CLASSIFIER_HANDLER = [
 
 
 class CsvDataImport(models.Model):
-    master_user = models.ForeignKey(MasterUser, blank=True, null=True)
-    scheme = models.ForeignKey(CsvImportScheme)
+    master_user = models.ForeignKey(MasterUser, blank=True, null=True, on_delete=models.CASCADE)
+    scheme = models.ForeignKey(CsvImportScheme, on_delete=models.CASCADE)
     task_id = models.CharField(max_length=255, blank=True, null=True)
     task_status = models.CharField(max_length=255, blank=True, null=True)
 

@@ -472,7 +472,7 @@ class MasterUser(models.Model):
 
 class EcosystemDefault(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='ecosystem_default',
-                                    verbose_name=ugettext_lazy('master user'))
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE,)
 
     account_type = models.ForeignKey('accounts.AccountType', null=True, blank=True, on_delete=models.PROTECT,
                                      verbose_name=ugettext_lazy('account type'))
@@ -581,7 +581,7 @@ class Member(FakeDeletableModel):
         (SHOW_ONLY, ugettext_lazy('Show notifications')),
     )
 
-    master_user = models.ForeignKey(MasterUser, related_name='members', verbose_name=ugettext_lazy('master user'))
+    master_user = models.ForeignKey(MasterUser, related_name='members', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
                              related_name='members', verbose_name=ugettext_lazy('user'))
 
@@ -648,9 +648,9 @@ class InviteStatusChoice():
 
 class InviteToMasterUser(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='invites_to_master_user',
-                             verbose_name=ugettext_lazy('user'))
+                             verbose_name=ugettext_lazy('user'), on_delete=models.CASCADE)
     from_member = models.ForeignKey(Member, related_name="invites_to_users",
-                                    verbose_name=ugettext_lazy('from_member'))
+                                    verbose_name=ugettext_lazy('from_member'), on_delete=models.CASCADE)
 
     status = models.IntegerField(default=0, choices=InviteStatusChoice.choices)
 
@@ -664,7 +664,7 @@ class InviteToMasterUser(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='profile',
-                                verbose_name=ugettext_lazy('user'))
+                                verbose_name=ugettext_lazy('user'), on_delete=models.CASCADE)
     language = models.CharField(max_length=LANGUAGE_MAX_LENGTH, default=settings.LANGUAGE_CODE,
                                 verbose_name=ugettext_lazy('language'))
     timezone = models.CharField(max_length=TIMEZONE_MAX_LENGTH, default=settings.TIME_ZONE,
@@ -679,7 +679,7 @@ class UserProfile(models.Model):
 
 
 class Group(models.Model):
-    master_user = models.ForeignKey(MasterUser, related_name='groups', verbose_name=ugettext_lazy('master user'), )
+    master_user = models.ForeignKey(MasterUser, related_name='groups', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE )
     name = models.CharField(max_length=80, verbose_name=ugettext_lazy('name'))
 
     # permissions = models.ManyToManyField(Permission, verbose_name=ugettext_lazy('permissions'), blank=True,
@@ -702,7 +702,7 @@ class Group(models.Model):
 
 class FakeSequence(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='fake_sequences',
-                                    verbose_name=ugettext_lazy('master user'), )
+                                    verbose_name=ugettext_lazy('master user'),on_delete=models.CASCADE )
     name = models.CharField(max_length=80, verbose_name=ugettext_lazy('name'))
     value = models.PositiveIntegerField(default=0, verbose_name=ugettext_lazy('value'))
 

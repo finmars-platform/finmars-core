@@ -1,7 +1,8 @@
 from __future__ import unicode_literals
 
 import django_filters
-from rest_framework.filters import FilterSet
+from django_filters.rest_framework import FilterSet
+
 from rest_framework.settings import api_settings
 
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, AttributeFilter, \
@@ -343,6 +344,7 @@ class Strategy2FilterSet(Strategy1FilterSet):
 
     class Meta:
         model = Strategy2
+        fields = []
 
 
 class Strategy2ViewSet(Strategy1ViewSet):
@@ -504,6 +506,7 @@ class Strategy3FilterSet(Strategy1FilterSet):
 
     class Meta:
         model = Strategy3
+        fields = []
 
 
 class Strategy3ViewSet(Strategy1ViewSet):

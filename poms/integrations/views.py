@@ -5,8 +5,8 @@ from celery.result import AsyncResult
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.signing import TimestampSigner
 from django.db.models import Prefetch
+from django_filters.rest_framework import FilterSet
 from rest_framework.exceptions import MethodNotAllowed
-from rest_framework.filters import FilterSet
 from rest_framework.response import Response
 
 from poms.common.utils import date_now, datetime_now

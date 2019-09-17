@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import django_filters
 
 from django.db.models import Prefetch, FieldDoesNotExist
-from rest_framework.filters import FilterSet
+from django_filters.rest_framework import FilterSet
 from rest_framework.viewsets import ModelViewSet
 
 from poms.accounts.models import Account, AccountType

@@ -6,8 +6,8 @@ from django.core.serializers.json import DjangoJSONEncoder
 
 
 class CeleryTask(models.Model):
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'))
-    member = models.ForeignKey('users.Member', verbose_name=ugettext_lazy('member'), null=True, blank=True)
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+    member = models.ForeignKey('users.Member', verbose_name=ugettext_lazy('member'), null=True, blank=True, on_delete=models.SET_NULL)
 
     started_at = models.DateTimeField(blank=True, null=True)
     finished_at = models.DateTimeField(blank=True, null=True)

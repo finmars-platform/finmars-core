@@ -68,7 +68,7 @@ def tags_choices(model=None):
 class TagFilter(django_filters.MultipleChoiceFilter):
     def __init__(self, *args, **kwargs):
         model = kwargs.pop('model')
-        kwargs['name'] = 'tags__tag'
+        kwargs['field_name'] = 'tags__tag'
         kwargs['choices'] = partial(tags_choices, model=model)
         super(TagFilter, self).__init__(*args, **kwargs)
 

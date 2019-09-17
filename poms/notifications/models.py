@@ -16,12 +16,12 @@ from poms.notifications import LEVELS
 
 
 class NotificationSetting(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='notification_settings')
-    member = models.ForeignKey('users.Member', related_name='notification_settings', null=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='notification_settings', on_delete=models.CASCADE)
+    member = models.ForeignKey('users.Member', related_name='notification_settings', null=True, on_delete=models.SET_NULL)
 
-    actor_content_type = models.ForeignKey(ContentType, related_name='notify_actor', null=True, blank=True)
-    target_content_type = models.ForeignKey(ContentType, related_name='notify_actor', null=True, blank=True)
-    action_object_content_type = models.ForeignKey(ContentType, related_name='notify_actor', null=True, blank=True)
+    actor_content_type = models.ForeignKey(ContentType, related_name='notify_actor', null=True, blank=True, on_delete=models.SET_NULL)
+    target_content_type = models.ForeignKey(ContentType, related_name='notify_actor', null=True, blank=True, on_delete=models.SET_NULL)
+    action_object_content_type = models.ForeignKey(ContentType, related_name='notify_actor', null=True, blank=True, on_delete=models.SET_NULL)
 
     level = models.PositiveSmallIntegerField(choices=LEVELS, default=messages.INFO)
     is_email_enabled = models.BooleanField(default=True)
@@ -39,9 +39,9 @@ class NotificationSetting(models.Model):
 # Target        :  The object to which the activity was performed.
 class Notification(models.Model):
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='notifications', blank=False,
-                                  verbose_name=ugettext_lazy('recipient'))
+                                  verbose_name=ugettext_lazy('recipient'), on_delete=models.CASCADE)
     recipient_member = models.ForeignKey('users.Member', related_name='notifications', null=True, blank=True,
-                                         verbose_name=ugettext_lazy('recipient member'))
+                                         verbose_name=ugettext_lazy('recipient member'), on_delete=models.CASCADE)
 
     # level = models.PositiveSmallIntegerField(choices=LEVELS, default=messages.INFO)
     # type = models.CharField(max_length=30, null=True, blank=True)
@@ -49,7 +49,7 @@ class Notification(models.Model):
     message = models.TextField(blank=True, null=True, verbose_name=ugettext_lazy('message'))
 
     actor_content_type = models.ForeignKey(ContentType, related_name='+', null=True, blank=True,
-                                           verbose_name=ugettext_lazy('actor content type'))
+                                           verbose_name=ugettext_lazy('actor content type'), on_delete=models.SET_NULL)
     actor_object_id = models.CharField(max_length=255, null=True, blank=True,
                                        verbose_name=ugettext_lazy('actor object id'))
     actor = GenericForeignKey('actor_content_type', 'actor_object_id')
@@ -57,13 +57,13 @@ class Notification(models.Model):
     verb = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('verb'))
 
     action_object_content_type = models.ForeignKey(ContentType, blank=True, null=True, related_name='+',
-                                                   verbose_name=ugettext_lazy('action object content type'))
+                                                   verbose_name=ugettext_lazy('action object content type'), on_delete=models.SET_NULL)
     action_object_object_id = models.CharField(max_length=255, blank=True, null=True,
                                                verbose_name=ugettext_lazy('action object object id'))
     action_object = GenericForeignKey('action_object_content_type', 'action_object_object_id')
 
     target_content_type = models.ForeignKey(ContentType, blank=True, null=True, related_name='+',
-                                            verbose_name=ugettext_lazy('target content type'))
+                                            verbose_name=ugettext_lazy('target content type'), on_delete=models.SET_NULL)
     target_object_id = models.CharField(max_length=255, blank=True, null=True,
                                         verbose_name=ugettext_lazy('target object id'))
     target = GenericForeignKey('target_content_type', 'target_object_id')
@@ -136,8 +136,8 @@ class Notification4Class(models.Model):
 
 
 class Notification4Setting(models.Model):
-    member = models.ForeignKey('users.Member', related_name='notification4_settings')
-    notification_class = models.ForeignKey(Notification4Class)
+    member = models.ForeignKey('users.Member', related_name='notification4_settings', on_delete=models.CASCADE)
+    notification_class = models.ForeignKey(Notification4Class, on_delete=models.SET_NULL)
 
     is_email_enabled = models.BooleanField(default=True)
 
@@ -161,7 +161,7 @@ class Notification4Setting(models.Model):
 
 
 class Notification4(models.Model):
-    recipient = models.ForeignKey('users.Member', related_name='notifications4')
+    recipient = models.ForeignKey('users.Member', related_name='notifications4', on_delete=models.SET_NULL)
     notification_class = models.ForeignKey(Notification4Class, related_name='notifications4', on_delete=models.PROTECT)
     message = models.TextField(blank=True, null=True)
     create_date = models.DateTimeField(default=timezone.now, db_index=True)
@@ -170,7 +170,7 @@ class Notification4(models.Model):
     data = models.TextField(blank=True, null=True)
 
     # linked object
-    content_type = models.ForeignKey(ContentType, null=True, blank=True)
+    content_type = models.ForeignKey(ContentType, null=True, blank=True, on_delete=models.SET_NULL)
     object_id = models.IntegerField(max_length=255, null=True, blank=True)
     content_object = GenericForeignKey()
 

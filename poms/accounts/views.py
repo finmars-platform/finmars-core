@@ -1,8 +1,7 @@
 from __future__ import unicode_literals
 
 import django_filters
-from rest_framework.decorators import detail_route
-from rest_framework.filters import FilterSet
+from django_filters.rest_framework import FilterSet
 from rest_framework.settings import api_settings
 
 from poms.accounts.models import Account, AccountType

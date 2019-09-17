@@ -37,7 +37,7 @@ def set_master_user(request, master_user):
 
 def get_master_user_and_member(request):
     user = request.user
-    if not user.is_authenticated():
+    if not user.is_authenticated:
         raise PermissionDenied()
 
     # master_user_id = request.query_params.get('master_user_id', None)
@@ -78,7 +78,7 @@ def get_master_user_and_member(request):
 
 # def get_master_user(request):
 #     user = request.user
-#     if not user.is_authenticated():
+#     if not user.is_authenticated:
 #         raise PermissionDenied()
 #
 #     master_user_id = request.GET.get('master_user_id', None)
@@ -101,7 +101,7 @@ def get_master_user_and_member(request):
 #
 # def get_member(request):
 #     user = request.user
-#     if not user.is_authenticated():
+#     if not user.is_authenticated:
 #         raise PermissionDenied()
 #
 #     master_user = user.master_user

@@ -1,5 +1,5 @@
+from django_filters.rest_framework import FilterSet
 from rest_framework.parsers import MultiPartParser
-from rest_framework.filters import FilterSet
 
 from poms.common.filters import NoOpFilter, CharFilter
 from poms.complex_import.serializers import ComplexImportSchemeSerializer, ComplexImportSerializer

@@ -2,7 +2,7 @@ from __future__ import unicode_literals, print_function
 
 from django import forms
 from django.contrib import admin
-from django.core.urlresolvers import reverse_lazy
+from django.urls import reverse_lazy
 from django.utils.html import escape
 from django.utils.translation import ugettext_lazy
 
