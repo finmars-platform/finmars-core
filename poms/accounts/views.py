@@ -152,7 +152,7 @@ class AccountFilterSet(FilterSet):
     public_name = CharFilter()
     is_valid_for_all_portfolios = django_filters.BooleanFilter()
     type = ModelExtWithPermissionMultipleChoiceFilter(model=AccountType)
-    portfolio = ModelExtWithPermissionMultipleChoiceFilter(model=Portfolio, name='portfolios')
+    portfolio = ModelExtWithPermissionMultipleChoiceFilter(model=Portfolio, field_name='portfolios')
     tag = TagFilter(model=Account)
     member = ObjectPermissionMemberFilter(object_permission_model=Account)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Account)

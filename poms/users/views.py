@@ -540,7 +540,7 @@ class MemberFilterSet(FilterSet):
     first_name = CharFilter()
     last_name = CharFilter()
     email = CharFilter()
-    group = ModelExtMultipleChoiceFilter(model=Group, name='groups')
+    group = ModelExtMultipleChoiceFilter(model=Group, field_name='groups')
 
     class Meta:
         model = Member
@@ -577,7 +577,8 @@ class MemberViewSet(AbstractModelViewSet):
 class GroupFilterSet(FilterSet):
     id = NoOpFilter()
     name = CharFilter()
-    member = ModelExtMultipleChoiceFilter(model=Member, field_name='username', name='members')
+    member = ModelExtMultipleChoiceFilter(model=Member, field_name='username')
+    # member = ModelExtMultipleChoiceFilter(model=Member, field_name='username', name='members')
 
     class Meta:
         model = Group
@@ -606,8 +607,8 @@ class GroupViewSet(AbstractModelViewSet):
 
 class InviteToMasterUserFilterSet(FilterSet):
     id = NoOpFilter()
-    to_user = ModelExtMultipleChoiceFilter(model=User, field_name='to_user', name='users')
-    from_member = ModelExtMultipleChoiceFilter(model=Member, field_name='from_member', name='members')
+    to_user = ModelExtMultipleChoiceFilter(model=User, field_name='to_user',)
+    from_member = ModelExtMultipleChoiceFilter(model=Member, field_name='from_member',)
 
     class Meta:
         model = InviteToMasterUser
