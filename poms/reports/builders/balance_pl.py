@@ -168,10 +168,6 @@ class ReportBuilder(BaseReportBuilder):
         _refresh_st = time.perf_counter()
 
         if self.instance.pl_first_date and self.instance.pl_first_date != date.min:
-
-            print('here? %s ' % self.instance.pl_first_date)
-            print('date? %s ' % date.min)
-
             self._build_on_pl_first_date()
         if full:
             self._refresh_with_perms()
@@ -556,7 +552,7 @@ class ReportBuilder(BaseReportBuilder):
             'linked_instrument__instrument_type',
             'allocation_balance',
             'allocation_pl').prefetch_related('instrument__factor_schedules',
-                                             'instrument__accrual_calculation_schedules').all()
+                                              'instrument__accrual_calculation_schedules').all()
 
         trn_qs = trn_qs.filter(complex_transaction__in=complex_qs)
 
@@ -571,39 +567,12 @@ class ReportBuilder(BaseReportBuilder):
 
         _l.debug('_load_transactions trn_qs_st len done: %s', (time.perf_counter() - trn_qs_st))
 
-        overrides = {}
 
-        if self.instance.portfolio_mode == Report.MODE_IGNORE:
-            overrides['portfolio'] = self.instance.master_user.portfolio
-
-        if self.instance.account_mode == Report.MODE_IGNORE:
-            overrides['account_position'] = self.instance.master_user.account
-            overrides['account_cash'] = self.instance.master_user.account
-            overrides['account_interim'] = self.instance.master_user.account
-
-        if self.instance.strategy1_mode == Report.MODE_IGNORE:
-            overrides['strategy1_position'] = self.instance.master_user.strategy1
-            overrides['strategy1_cash'] = self.instance.master_user.strategy1
-
-        if self.instance.strategy2_mode == Report.MODE_IGNORE:
-            overrides['strategy2_position'] = self.instance.master_user.strategy2
-            overrides['strategy2_cash'] = self.instance.master_user.strategy2
-
-        if self.instance.strategy3_mode == Report.MODE_IGNORE:
-            overrides['strategy3_position'] = self.instance.master_user.strategy3
-            overrides['strategy3_cash'] = self.instance.master_user.strategy3
-
-        if self.instance.allocation_mode == Report.MODE_IGNORE:
-            overrides['allocation_balance'] = self.instance.master_user.instrument
-            overrides['allocation_pl'] = self.instance.master_user.instrument
 
         # total_st = 0
         # total_items = 0
 
-        _transactions_append = self._transactions.append
-        _original_transactions_append = self._original_transactions.append
-
-        _trn_cls_create = self.trn_cls
+        # _l.debug('overrides %s' % overrides['portfolio'].name)
 
         _instance = self.instance
         _pricing_provider = self.pricing_provider
@@ -616,7 +585,33 @@ class ReportBuilder(BaseReportBuilder):
 
         for t in trn_qs:
 
-            trn = _trn_cls_create(
+            overrides = {}
+
+            if self.instance.portfolio_mode == Report.MODE_IGNORE:
+                overrides['portfolio'] = self.instance.master_user.portfolio
+
+            if self.instance.account_mode == Report.MODE_IGNORE:
+                overrides['account_position'] = self.instance.master_user.account
+                overrides['account_cash'] = self.instance.master_user.account
+                overrides['account_interim'] = self.instance.master_user.account
+
+            if self.instance.strategy1_mode == Report.MODE_IGNORE:
+                overrides['strategy1_position'] = self.instance.master_user.strategy1
+                overrides['strategy1_cash'] = self.instance.master_user.strategy1
+
+            if self.instance.strategy2_mode == Report.MODE_IGNORE:
+                overrides['strategy2_position'] = self.instance.master_user.strategy2
+                overrides['strategy2_cash'] = self.instance.master_user.strategy2
+
+            if self.instance.strategy3_mode == Report.MODE_IGNORE:
+                overrides['strategy3_position'] = self.instance.master_user.strategy3
+                overrides['strategy3_cash'] = self.instance.master_user.strategy3
+
+            if self.instance.allocation_mode == Report.MODE_IGNORE:
+                overrides['allocation_balance'] = self.instance.master_user.instrument
+                overrides['allocation_pl'] = self.instance.master_user.instrument
+
+            trn = self.trn_cls(
                 report=_instance,
                 pricing_provider=_pricing_provider,
                 fx_rate_provider=_fx_rate_provider,
@@ -624,16 +619,16 @@ class ReportBuilder(BaseReportBuilder):
                 overrides=overrides
             )
 
-            _transactions_append(trn)
+            self._transactions.append(trn)
 
-            # otrn = _trn_cls_create(
+            # otrn = self.trn_cls(
             #     report=_instance,
             #     pricing_provider=_pricing_provider,
             #     fx_rate_provider=_fx_rate_provider,
             #     trn=t,
             # )
 
-            # _original_transactions_append(otrn)
+            # self._original_transactions.append(otrn)
 
         _l.debug('_self._transactions len %s' % len(self._transactions))
 
@@ -1075,11 +1070,18 @@ class ReportBuilder(BaseReportBuilder):
         aggr_items = []
 
         sorted_items = sorted(self._items, key=lambda x: self._item_group_key(x))
+
+        # _l.debug('_aggregate_items sorted_items[0] %s ' % sorted_items[0])
+        # _l.debug('_aggregate_items sorted_items len %s ' % len(sorted_items))
+        #
+        # _l.debug('_aggregate_items self._items before len %s ' % len(self._items))
+
         for k, g in groupby(sorted_items, key=lambda x: self._item_group_key(x)):
             # _l.debug('items - aggregate - group=%s', k)
             res_item = None
 
             for item in g:
+
                 if item.type in [ReportItem.TYPE_INSTRUMENT, ReportItem.TYPE_CURRENCY, ReportItem.TYPE_TRANSACTION_PL,
                                  ReportItem.TYPE_FX_TRADE, ReportItem.TYPE_CASH_IN_OUT, ]:
                     if res_item is None:
@@ -1095,6 +1097,8 @@ class ReportBuilder(BaseReportBuilder):
                 aggr_items.append(res_item)
 
         self._items = aggr_items
+
+        # _l.debug('_aggregate_items self._items after len %s ' % len(self._items))
 
         # _l.debug('items - len=%s', len(self._items))
 

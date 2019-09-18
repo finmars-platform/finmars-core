@@ -495,34 +495,34 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
 
     def override(self, overrides):
 
-        if hasattr(overrides, 'portfolio'):
+        if 'portfolio' in overrides:
             self.prtfl = overrides['portfolio']
 
-        if hasattr(overrides, 'account_position'):
+        if 'account_position' in overrides:
             self.acc_pos = overrides['account_position']
-        if hasattr(overrides, 'account_cash'):
+        if 'account_cash' in overrides:
             self.acc_cash = overrides['account_cash']
-        if hasattr(overrides, 'account_interim'):
+        if 'account_interim' in overrides:
             self.acc_interim = overrides['account_interim']
 
-        if hasattr(overrides, 'strategy1_position'):
+        if 'strategy1_position' in overrides:
             self.str1_pos = overrides['strategy1_position']
-        if hasattr(overrides, 'strategy1_cash'):
+        if 'strategy1_cash' in overrides:
             self.str1_cash = overrides['strategy1_cash']
 
-        if hasattr(overrides, 'strategy2_position'):
+        if 'strategy2_position' in overrides:
             self.str2_pos = overrides['strategy2_position']
-        if hasattr(overrides, 'strategy2_cash'):
+        if 'strategy2_cash' in overrides:
             self.str2_cash = overrides['strategy2_cash']
 
-        if hasattr(overrides, 'strategy3_position'):
+        if 'strategy3_position' in overrides:
             self.str3_pos = overrides['strategy3_position']
-        if hasattr(overrides, 'strategy3_cash'):
+        if 'strategy3_cash' in overrides:
             self.str3_cash = overrides['strategy3_cash']
 
-        if hasattr(overrides, 'allocation_balance'):
+        if 'allocation_balance' in overrides:
             self.alloc_bl = overrides['allocation_balance']
-        if hasattr(overrides, 'allocation_pl'):
+        if 'allocation_pl' in overrides:
             self.alloc_pl = overrides['allocation_pl']
 
     @property
