@@ -124,19 +124,29 @@ class UserRegisterViewSet(AbstractApiView, ViewSet):
 
 class MasterUserCreateViewSet(ViewSet):
     serializer_class = MasterUserCreateSerializer
-    authentication_classes = [IsAuthenticated]
+    # authentication_classes = [IsAuthenticated]
+    # authentication_classes = []
+    permission_classes = [
+        IsAuthenticated
+    ]
 
     def create(self, request, *args, **kwargs):
+
+        print('here?')
+
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.save()
         name = validated_data['name']
+
+        print('here? %s' % request.user)
 
         master_user = MasterUser.objects.create_master_user(
             user=request.user,
             language=translation.get_language(), name=name)
 
         member = Member.objects.create(user=request.user, master_user=master_user, is_owner=True, is_admin=True)
+        member.save()
 
         return Response({'success': True})
 
