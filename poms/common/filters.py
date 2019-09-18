@@ -162,7 +162,7 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
     def filter_queryset(self, request, queryset, view):
 
-        print('GroupsAttributeFilter')
+        # print('GroupsAttributeFilter')
 
         start_time = time.time()
 
@@ -284,7 +284,7 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
                 i = i + 1
 
-        # print("GroupsAttributeFilter.filter_queryset %s seconds " % (time.time() - start_time))
+        print("GroupsAttributeFilter done in %s seconds " % (time.time() - start_time))
 
         return queryset
 

@@ -7,7 +7,7 @@ from django.utils.translation import ugettext
 
 from poms.accounts.models import Account
 from poms.common import formula
-from poms.common.utils import date_now
+from poms.common.utils import date_now, format_float
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDetail, PricingPolicy, Periodicity, \
@@ -1216,7 +1216,7 @@ class TransactionTypeProcess(object):
             elif ti.value_type == TransactionTypeInput.NUMBER:
                 if val is None:
                     val = 0.0
-                ci.value_float = val
+                ci.value_float = format_float(val)
             elif ti.value_type == TransactionTypeInput.DATE:
                 if val is None:
                     val = date.min

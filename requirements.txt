@@ -1,4 +1,4 @@
-amqp==2.4.2
+amqp==2.5.1
 anyjson==0.3.3
 appdirs==1.4.3
 Babel==2.3.4
@@ -6,7 +6,7 @@ billiard==3.5.0.2
 boto==2.46.1
 boto3==1.9.15
 botocore==1.12.16
-celery==4.2.0
+celery==4.0.2
 cffi==1.9.1
 coreapi==2.3.0
 coreschema==0.0.4
@@ -35,7 +35,7 @@ idna==2.2
 itypes==1.1.0
 Jinja2==2.9.6
 jmespath==0.9.1
-kombu==4.4.0
+kombu==4.0.2
 MarkupSafe==1.0
 maxminddb==1.2.3
 mpmath==0.19
@@ -51,7 +51,7 @@ pyparsing==2.2.0
 python-dateutil==2.6.0
 pytz==2017.2
 qrcode==5.3
-redis==3.2.0
+redis==2.10.6
 requests==2.13.0
 s3transfer==0.1.10
 scipy==0.18.1

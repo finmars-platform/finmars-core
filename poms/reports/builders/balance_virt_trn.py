@@ -2,6 +2,8 @@ import uuid
 
 import time
 import logging
+
+from poms.common.utils import format_float
 from poms.reports.builders.balance_item import Report
 from poms.reports.builders.base_item import BaseReportItem, YTMMixin
 from poms.transactions.models import TransactionClass
@@ -685,213 +687,201 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
         except ArithmeticError:
             return 0
 
-    def format_float(seff, val):
-
-        # 0.000050000892 -> 0.0000500009
-        # 0.005623 -> 0.005623
-        # 0.005623000551 -> 0.0056230006
-
-        try:
-            float(val)
-        except ValueError:
-            return val
-
-        return float(format(round(val, 10), '.10f').rstrip("0").rstrip('.'))
 
     def round_after_calc(self):
-        self.avco_multiplier = self.format_float(self.avco_multiplier)
-        self.avco_rolling_pos_size = self.format_float(self.avco_rolling_pos_size)
-        self.fifo_multiplier = self.format_float(self.fifo_multiplier)
-        self.fifo_rolling_pos_size = self.format_float(self.fifo_rolling_pos_size)
-        self.multiplier = self.format_float(self.multiplier)
-        self.rolling_pos_size = self.format_float(self.rolling_pos_size)
+        self.avco_multiplier = format_float(self.avco_multiplier)
+        self.avco_rolling_pos_size = format_float(self.avco_rolling_pos_size)
+        self.fifo_multiplier = format_float(self.fifo_multiplier)
+        self.fifo_rolling_pos_size = format_float(self.fifo_rolling_pos_size)
+        self.multiplier = format_float(self.multiplier)
+        self.rolling_pos_size = format_float(self.rolling_pos_size)
 
-        self.pos_size = self.format_float(self.pos_size)
+        self.pos_size = format_float(self.pos_size)
 
-        self.cash = self.format_float(self.cash)
+        self.cash = format_float(self.cash)
 
         # P&L related
-        self.principal = self.format_float(self.principal)
-        self.carry = self.format_float(self.carry)
-        self.overheads = self.format_float(self.overheads)
+        self.principal = format_float(self.principal)
+        self.carry = format_float(self.carry)
+        self.overheads = format_float(self.overheads)
 
-        self.ref_fx = self.format_float(self.ref_fx)
-        self.trade_price = self.format_float(self.trade_price)
+        self.ref_fx = format_float(self.ref_fx)
+        self.trade_price = format_float(self.trade_price)
 
-        self.report_ccy_cur_fx = self.format_float(self.report_ccy_cur_fx)
-        self.report_ccy_cash_hist_fx = self.format_float(self.report_ccy_cash_hist_fx)
-        self.report_ccy_acc_hist_fx = self.format_float(self.report_ccy_acc_hist_fx)
+        self.report_ccy_cur_fx = format_float(self.report_ccy_cur_fx)
+        self.report_ccy_cash_hist_fx = format_float(self.report_ccy_cash_hist_fx)
+        self.report_ccy_acc_hist_fx = format_float(self.report_ccy_acc_hist_fx)
 
         # report ccy
 
-        self.pricing_ccy_cur_fx = self.format_float(self.pricing_ccy_cur_fx)
-        self.pricing_ccy_cash_hist_fx = self.format_float(self.pricing_ccy_cash_hist_fx)
-        self.pricing_ccy_acc_hist_fx = self.format_float(self.pricing_ccy_acc_hist_fx)
+        self.pricing_ccy_cur_fx = format_float(self.pricing_ccy_cur_fx)
+        self.pricing_ccy_cash_hist_fx = format_float(self.pricing_ccy_cash_hist_fx)
+        self.pricing_ccy_acc_hist_fx = format_float(self.pricing_ccy_acc_hist_fx)
 
         # instr
 
-        self.instr_price_cur_principal_price = self.format_float(self.instr_price_cur_principal_price)
-        self.instr_price_cur_accrued_price = self.format_float(self.instr_price_cur_accrued_price)
-        self.instr_pricing_ccy_cur_fx = self.format_float(self.instr_pricing_ccy_cur_fx)
-        self.instr_accrued_ccy_cur_fx = self.format_float(self.instr_accrued_ccy_cur_fx)
+        self.instr_price_cur_principal_price = format_float(self.instr_price_cur_principal_price)
+        self.instr_price_cur_accrued_price = format_float(self.instr_price_cur_accrued_price)
+        self.instr_pricing_ccy_cur_fx = format_float(self.instr_pricing_ccy_cur_fx)
+        self.instr_accrued_ccy_cur_fx = format_float(self.instr_accrued_ccy_cur_fx)
 
         # trn ccy
 
-        self.trn_ccy_cash_hist_fx = self.format_float(self.trn_ccy_cash_hist_fx)
-        self.trn_ccy_cash_hist_fx_loc = self.format_float(self.trn_ccy_cash_hist_fx_loc)
+        self.trn_ccy_cash_hist_fx = format_float(self.trn_ccy_cash_hist_fx)
+        self.trn_ccy_cash_hist_fx_loc = format_float(self.trn_ccy_cash_hist_fx_loc)
 
-        self.trn_ccy_acc_hist_fx = self.format_float(self.trn_ccy_acc_hist_fx)
-        self.trn_ccy_acc_hist_fx_loc = self.format_float(self.trn_ccy_acc_hist_fx_loc)
+        self.trn_ccy_acc_hist_fx = format_float(self.trn_ccy_acc_hist_fx)
+        self.trn_ccy_acc_hist_fx_loc = format_float(self.trn_ccy_acc_hist_fx_loc)
 
-        self.trn_ccy_cur_fx = self.format_float(self.trn_ccy_cur_fx)
-        self.trn_ccy_cur_fx_loc = self.format_float(self.trn_ccy_cur_fx_loc)
+        self.trn_ccy_cur_fx = format_float(self.trn_ccy_cur_fx)
+        self.trn_ccy_cur_fx_loc = format_float(self.trn_ccy_cur_fx_loc)
 
         # stl ccy
-        self.stl_ccy_cash_hist_fx = self.format_float(self.stl_ccy_cash_hist_fx)
-        self.stl_ccy_cash_hist_fx_loc = self.format_float(self.stl_ccy_cash_hist_fx_loc)
-        self.stl_ccy_acc_hist_fx = self.format_float(self.stl_ccy_acc_hist_fx)
-        self.stl_ccy_acc_hist_fx_loc = self.format_float(self.stl_ccy_acc_hist_fx_loc)
-        self.stl_ccy_cur_fx = self.format_float(self.stl_ccy_cur_fx)
-        self.stl_ccy_cur_fx_loc = self.format_float(self.stl_ccy_cur_fx_loc)
+        self.stl_ccy_cash_hist_fx = format_float(self.stl_ccy_cash_hist_fx)
+        self.stl_ccy_cash_hist_fx_loc = format_float(self.stl_ccy_cash_hist_fx_loc)
+        self.stl_ccy_acc_hist_fx = format_float(self.stl_ccy_acc_hist_fx)
+        self.stl_ccy_acc_hist_fx_loc = format_float(self.stl_ccy_acc_hist_fx_loc)
+        self.stl_ccy_cur_fx = format_float(self.stl_ccy_cur_fx)
+        self.stl_ccy_cur_fx_loc = format_float(self.stl_ccy_cur_fx_loc)
 
         # general
 
-        self.mismatch = self.format_float(self.mismatch)
+        self.mismatch = format_float(self.mismatch)
 
-        self.instr_principal = self.format_float(self.instr_principal)
-        self.instr_principal_res = self.format_float(self.instr_principal_res)
-        self.instr_accrued = self.format_float(self.instr_accrued)
-        self.instr_accrued_res = self.format_float(self.instr_accrued_res)
+        self.instr_principal = format_float(self.instr_principal)
+        self.instr_principal_res = format_float(self.instr_principal_res)
+        self.instr_accrued = format_float(self.instr_accrued)
+        self.instr_accrued_res = format_float(self.instr_accrued_res)
 
-        self.cost_res = self.format_float(self.cost_res)
-        self.gross_cost_res = self.format_float(self.gross_cost_res)
-        self.gross_cost_loc = self.format_float(self.gross_cost_loc)
-        self.net_cost_res = self.format_float(self.net_cost_res)
-        self.net_cost_loc = self.format_float(self.net_cost_loc)
-        self.principal_invested_res = self.format_float(self.principal_invested_res)
-        self.principal_invested_loc = self.format_float(self.principal_invested_loc)
-        self.amount_invested_res = self.format_float(self.amount_invested_res)
-        self.amount_invested_loc = self.format_float(self.amount_invested_loc)
+        self.cost_res = format_float(self.cost_res)
+        self.gross_cost_res = format_float(self.gross_cost_res)
+        self.gross_cost_loc = format_float(self.gross_cost_loc)
+        self.net_cost_res = format_float(self.net_cost_res)
+        self.net_cost_loc = format_float(self.net_cost_loc)
+        self.principal_invested_res = format_float(self.principal_invested_res)
+        self.principal_invested_loc = format_float(self.principal_invested_loc)
+        self.amount_invested_res = format_float(self.amount_invested_res)
+        self.amount_invested_loc = format_float(self.amount_invested_loc)
 
-        self.balance_pos_size = self.format_float(self.balance_pos_size)
-        self.sum_remaining_pos_size = self.format_float(self.sum_remaining_pos_size)   # sum of remaining_pos_size by trns before current
-        self.remaining_pos_size = self.format_float(self.remaining_pos_size)
-        self.remaining_pos_size_percent = self.format_float(self.remaining_pos_size_percent)   # calculated in second pass
-        self.ytm = self.format_float(self.ytm)
-        self.time_invested_days = self.format_float(self.time_invested_days)
-        self.time_invested = self.format_float(self.time_invested)
-        self.weighted_ytm = self.format_float(self.weighted_ytm)   # calculated in second pass
-        self.weighted_time_invested_days = self.format_float(self.weighted_time_invested_days)   # calculated in second pass
-        self.weighted_time_invested = self.format_float(self.weighted_time_invested)   # calculated in second pass
+        self.balance_pos_size = format_float(self.balance_pos_size)
+        self.sum_remaining_pos_size = format_float(self.sum_remaining_pos_size)   # sum of remaining_pos_size by trns before current
+        self.remaining_pos_size = format_float(self.remaining_pos_size)
+        self.remaining_pos_size_percent = format_float(self.remaining_pos_size_percent)   # calculated in second pass
+        self.ytm = format_float(self.ytm)
+        self.time_invested_days = format_float(self.time_invested_days)
+        self.time_invested = format_float(self.time_invested)
+        self.weighted_ytm = format_float(self.weighted_ytm)   # calculated in second pass
+        self.weighted_time_invested_days = format_float(self.weighted_time_invested_days)   # calculated in second pass
+        self.weighted_time_invested = format_float(self.weighted_time_invested)   # calculated in second pass
 
         # Cash related
 
-        self.cash_res = self.format_float(self.cash_res)
+        self.cash_res = format_float(self.cash_res)
 
         # full P&L related
-        self.total = self.format_float(self.total)
+        self.total = format_float(self.total)
 
-        self.principal_res = self.format_float(self.principal_res)
-        self.carry_res = self.format_float(self.carry_res)
-        self.overheads_res = self.format_float(self.overheads_res)
-        self.total_res = self.format_float(self.total_res)
+        self.principal_res = format_float(self.principal_res)
+        self.carry_res = format_float(self.carry_res)
+        self.overheads_res = format_float(self.overheads_res)
+        self.total_res = format_float(self.total_res)
 
-        self.principal_loc = self.format_float(self.principal_loc)
-        self.carry_loc = self.format_float(self.carry_loc)
-        self.overheads_loc = self.format_float(self.overheads_loc)
-        self.total_loc = self.format_float(self.total_loc)
+        self.principal_loc = format_float(self.principal_loc)
+        self.carry_loc = format_float(self.carry_loc)
+        self.overheads_loc = format_float(self.overheads_loc)
+        self.total_loc = format_float(self.total_loc)
 
         # full / closed
-        self.principal_closed_res = self.format_float(self.principal_closed_res)
-        self.carry_closed_res = self.format_float(self.carry_closed_res)
-        self.overheads_closed_res = self.format_float(self.overheads_closed_res)
-        self.total_closed_res = self.format_float(self.total_closed_res)
+        self.principal_closed_res = format_float(self.principal_closed_res)
+        self.carry_closed_res = format_float(self.carry_closed_res)
+        self.overheads_closed_res = format_float(self.overheads_closed_res)
+        self.total_closed_res = format_float(self.total_closed_res)
 
-        self.principal_closed_loc = self.format_float(self.principal_closed_loc)
-        self.carry_closed_loc = self.format_float(self.carry_closed_loc)
-        self.overheads_closed_loc = self.format_float(self.overheads_closed_loc)
-        self.total_closed_loc = self.format_float(self.total_closed_loc)
+        self.principal_closed_loc = format_float(self.principal_closed_loc)
+        self.carry_closed_loc = format_float(self.carry_closed_loc)
+        self.overheads_closed_loc = format_float(self.overheads_closed_loc)
+        self.total_closed_loc = format_float(self.total_closed_loc)
 
         # full / opened
-        self.principal_opened_res = self.format_float(self.principal_opened_res)
-        self.carry_opened_res = self.format_float(self.carry_opened_res)
-        self.overheads_opened_res = self.format_float(self.overheads_opened_res)
-        self.total_opened_res = self.format_float(self.total_opened_res)
+        self.principal_opened_res = format_float(self.principal_opened_res)
+        self.carry_opened_res = format_float(self.carry_opened_res)
+        self.overheads_opened_res = format_float(self.overheads_opened_res)
+        self.total_opened_res = format_float(self.total_opened_res)
 
-        self.principal_opened_loc = self.format_float(self.principal_opened_loc)
-        self.carry_opened_loc = self.format_float(self.carry_opened_loc)
-        self.overheads_opened_loc = self.format_float(self.overheads_opened_loc)
-        self.total_opened_loc = self.format_float(self.total_opened_loc)
+        self.principal_opened_loc = format_float(self.principal_opened_loc)
+        self.carry_opened_loc = format_float(self.carry_opened_loc)
+        self.overheads_opened_loc = format_float(self.overheads_opened_loc)
+        self.total_opened_loc = format_float(self.total_opened_loc)
 
         # fx
-        self.pl_fx_mul = self.format_float(self.pl_fx_mul)
-        self.principal_fx_res = self.format_float(self.principal_fx_res)
-        self.carry_fx_res = self.format_float(self.carry_fx_res)
-        self.overheads_fx_res = self.format_float(self.overheads_fx_res)
-        self.total_fx_res = self.format_float(self.total_fx_res)
+        self.pl_fx_mul = format_float(self.pl_fx_mul)
+        self.principal_fx_res = format_float(self.principal_fx_res)
+        self.carry_fx_res = format_float(self.carry_fx_res)
+        self.overheads_fx_res = format_float(self.overheads_fx_res)
+        self.total_fx_res = format_float(self.total_fx_res)
 
-        self.pl_fx_mul_loc = self.format_float(self.pl_fx_mul_loc)
-        self.principal_fx_loc = self.format_float(self.principal_fx_loc)
-        self.carry_fx_loc = self.format_float(self.carry_fx_loc)
-        self.overheads_fx_loc = self.format_float(self.overheads_fx_loc)
-        self.total_fx_loc = self.format_float(self.total_fx_loc)
+        self.pl_fx_mul_loc = format_float(self.pl_fx_mul_loc)
+        self.principal_fx_loc = format_float(self.principal_fx_loc)
+        self.carry_fx_loc = format_float(self.carry_fx_loc)
+        self.overheads_fx_loc = format_float(self.overheads_fx_loc)
+        self.total_fx_loc = format_float(self.total_fx_loc)
 
         # fx / closed
-        self.principal_fx_closed_res = self.format_float(self.principal_fx_closed_res)
-        self.carry_fx_closed_res = self.format_float(self.carry_fx_closed_res)
-        self.overheads_fx_closed_res = self.format_float(self.overheads_fx_closed_res)
-        self.total_fx_closed_res = self.format_float(self.total_fx_closed_res)
+        self.principal_fx_closed_res = format_float(self.principal_fx_closed_res)
+        self.carry_fx_closed_res = format_float(self.carry_fx_closed_res)
+        self.overheads_fx_closed_res = format_float(self.overheads_fx_closed_res)
+        self.total_fx_closed_res = format_float(self.total_fx_closed_res)
 
-        self.principal_fx_closed_loc = self.format_float(self.principal_fx_closed_loc)
-        self.carry_fx_closed_loc = self.format_float(self.carry_fx_closed_loc)
-        self.overheads_fx_closed_loc = self.format_float(self.overheads_fx_closed_loc)
-        self.total_fx_closed_loc = self.format_float(self.total_fx_closed_loc)
+        self.principal_fx_closed_loc = format_float(self.principal_fx_closed_loc)
+        self.carry_fx_closed_loc = format_float(self.carry_fx_closed_loc)
+        self.overheads_fx_closed_loc = format_float(self.overheads_fx_closed_loc)
+        self.total_fx_closed_loc = format_float(self.total_fx_closed_loc)
 
         # fx / opened
-        self.principal_fx_opened_res = self.format_float(self.principal_fx_opened_res)
-        self.carry_fx_opened_res = self.format_float(self.carry_fx_opened_res)
-        self.overheads_fx_opened_res = self.format_float(self.overheads_fx_opened_res)
-        self.total_fx_opened_res = self.format_float(self.total_fx_opened_res)
+        self.principal_fx_opened_res = format_float(self.principal_fx_opened_res)
+        self.carry_fx_opened_res = format_float(self.carry_fx_opened_res)
+        self.overheads_fx_opened_res = format_float(self.overheads_fx_opened_res)
+        self.total_fx_opened_res = format_float(self.total_fx_opened_res)
 
-        self.principal_fx_opened_loc = self.format_float(self.principal_fx_opened_loc)
-        self.carry_fx_opened_loc = self.format_float(self.carry_fx_opened_loc)
-        self.overheads_fx_opened_loc = self.format_float(self.overheads_fx_opened_loc)
-        self.total_fx_opened_loc = self.format_float(self.total_fx_opened_loc)
+        self.principal_fx_opened_loc = format_float(self.principal_fx_opened_loc)
+        self.carry_fx_opened_loc = format_float(self.carry_fx_opened_loc)
+        self.overheads_fx_opened_loc = format_float(self.overheads_fx_opened_loc)
+        self.total_fx_opened_loc = format_float(self.total_fx_opened_loc)
 
         # fixed
-        self.pl_fixed_mul = self.format_float(self.pl_fixed_mul)
-        self.principal_fixed_res = self.format_float(self.principal_fixed_res)
-        self.carry_fixed_res = self.format_float(self.carry_fixed_res)
-        self.overheads_fixed_res = self.format_float(self.overheads_fixed_res)
-        self.total_fixed_res = self.format_float(self.total_fixed_res)
+        self.pl_fixed_mul = format_float(self.pl_fixed_mul)
+        self.principal_fixed_res = format_float(self.principal_fixed_res)
+        self.carry_fixed_res = format_float(self.carry_fixed_res)
+        self.overheads_fixed_res = format_float(self.overheads_fixed_res)
+        self.total_fixed_res = format_float(self.total_fixed_res)
 
-        self.pl_fixed_mul_loc = self.format_float(self.pl_fixed_mul_loc)
-        self.principal_fixed_loc = self.format_float(self.principal_fixed_loc)
-        self.carry_fixed_loc = self.format_float(self.carry_fixed_loc)
-        self.overheads_fixed_loc = self.format_float(self.overheads_fixed_loc)
-        self.total_fixed_loc = self.format_float(self.total_fixed_loc)
+        self.pl_fixed_mul_loc = format_float(self.pl_fixed_mul_loc)
+        self.principal_fixed_loc = format_float(self.principal_fixed_loc)
+        self.carry_fixed_loc = format_float(self.carry_fixed_loc)
+        self.overheads_fixed_loc = format_float(self.overheads_fixed_loc)
+        self.total_fixed_loc = format_float(self.total_fixed_loc)
 
         # fixed / closed
-        self.principal_fixed_closed_res = self.format_float(self.principal_fixed_closed_res)
-        self.carry_fixed_closed_res = self.format_float(self.carry_fixed_closed_res)
-        self.overheads_fixed_closed_res = self.format_float(self.overheads_fixed_closed_res)
-        self.total_fixed_closed_res = self.format_float(self.total_fixed_closed_res)
+        self.principal_fixed_closed_res = format_float(self.principal_fixed_closed_res)
+        self.carry_fixed_closed_res = format_float(self.carry_fixed_closed_res)
+        self.overheads_fixed_closed_res = format_float(self.overheads_fixed_closed_res)
+        self.total_fixed_closed_res = format_float(self.total_fixed_closed_res)
 
-        self.principal_fixed_closed_loc = self.format_float(self.principal_fixed_closed_loc)
-        self.carry_fixed_closed_loc = self.format_float(self.carry_fixed_closed_loc)
-        self.overheads_fixed_closed_loc = self.format_float(self.overheads_fixed_closed_loc)
-        self.total_fixed_closed_loc = self.format_float(self.total_fixed_closed_loc)
+        self.principal_fixed_closed_loc = format_float(self.principal_fixed_closed_loc)
+        self.carry_fixed_closed_loc = format_float(self.carry_fixed_closed_loc)
+        self.overheads_fixed_closed_loc = format_float(self.overheads_fixed_closed_loc)
+        self.total_fixed_closed_loc = format_float(self.total_fixed_closed_loc)
 
         # fixed / opened
-        self.principal_fixed_opened_res = self.format_float(self.principal_fixed_opened_res)
-        self.carry_fixed_opened_res = self.format_float(self.carry_fixed_opened_res)
-        self.overheads_fixed_opened_res = self.format_float(self.overheads_fixed_opened_res)
-        self.total_fixed_opened_res = self.format_float(self.total_fixed_opened_res)
+        self.principal_fixed_opened_res = format_float(self.principal_fixed_opened_res)
+        self.carry_fixed_opened_res = format_float(self.carry_fixed_opened_res)
+        self.overheads_fixed_opened_res = format_float(self.overheads_fixed_opened_res)
+        self.total_fixed_opened_res = format_float(self.total_fixed_opened_res)
 
-        self.principal_fixed_opened_loc = self.format_float(self.principal_fixed_opened_loc)
-        self.carry_fixed_opened_loc = self.format_float(self.carry_fixed_opened_loc)
-        self.overheads_fixed_opened_loc = self.format_float(self.overheads_fixed_opened_loc)
-        self.total_fixed_opened_loc = self.format_float(self.total_fixed_opened_loc)
+        self.principal_fixed_opened_loc = format_float(self.principal_fixed_opened_loc)
+        self.carry_fixed_opened_loc = format_float(self.carry_fixed_opened_loc)
+        self.overheads_fixed_opened_loc = format_float(self.overheads_fixed_opened_loc)
+        self.total_fixed_opened_loc = format_float(self.total_fixed_opened_loc)
 
     def calc(self):
             # if not self.is_hidden:

@@ -4,7 +4,8 @@ from celery import Celery
 from django.conf import settings
 from poms.common.kombu_serializers import register_pickle_signed
 
-register_pickle_signed(salt='poms-pickle-signed', compress=True)
+# register_pickle_signed(salt='poms-pickle-signed', compress=True)
+# register_pickle_signed(salt='poms-pickle-signed', compress=False)
 
 app = Celery('poms.backend')
 

@@ -797,7 +797,7 @@ def is_dynamic_attribute_filter(filter_config):
 
 def handle_filters(qs, filter_settings, master_user, content_type):
 
-    print('Handle filters %s' % filter_settings)
+    # print('Handle filters %s' % filter_settings)
 
     start_time = time.time()
 
@@ -809,6 +809,6 @@ def handle_filters(qs, filter_settings, master_user, content_type):
             else:
                 qs = add_filter(qs, filter_config)
 
-    print("handle_filters %s seconds " % (time.time() - start_time))
+    print("handle_filters done in %s seconds " % (time.time() - start_time))
 
     return qs

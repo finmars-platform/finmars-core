@@ -1,5 +1,6 @@
 import sys
 
+import time
 from django.core.paginator import InvalidPage
 from rest_framework.exceptions import NotFound
 from rest_framework.pagination import PageNumberPagination
@@ -24,15 +25,14 @@ class PageNumberPaginationExt(PageNumberPagination):
 
     def post_paginate_queryset(self, queryset, request, view=None):
 
-        page_size = request.data.get('page_size', self.page_size)
+        start_time = time.time()
 
+        page_size = request.data.get('page_size', self.page_size)
         if not page_size:
             return None
 
         paginator = self.django_paginator_class(queryset, page_size)
-
         page_number = request.data.get('page', 1)
-
         if page_number in self.last_page_strings:
             page_number = paginator.num_pages
 
@@ -40,7 +40,7 @@ class PageNumberPaginationExt(PageNumberPagination):
             self.page = paginator.page(page_number)
         except InvalidPage as exc:
             msg = self.invalid_page_message.format(
-                page_number=page_number, message=six.text_type(exc)
+                page_number=page_number, message=str(exc)
             )
             raise NotFound(msg)
 
@@ -49,7 +49,13 @@ class PageNumberPaginationExt(PageNumberPagination):
             self.display_page_controls = True
 
         self.request = request
-        return list(self.page)
+
+        res = list(self.page)
+
+        print("post_paginate_queryset done %s seconds " % (time.time() - start_time))
+
+        return res
+
 
 class BigPagination(PageNumberPagination):
     page_size_query_param = 'page_size'

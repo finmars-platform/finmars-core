@@ -150,11 +150,11 @@ class TransactionTypeFilterSet(FilterSet):
     public_name = CharFilter()
     group = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionTypeGroup)
     # portfolio = ModelExtWithPermissionMultipleChoiceFilter(model=Portfolio, name='portfolios')
-    portfolio = ModelExtWithAllWithPermissionMultipleChoiceFilter(model=Portfolio, field_name='portfolio',
-                                                                  all_field_name='is_valid_for_all_portfolios')
+    # portfolio = ModelExtWithAllWithPermissionMultipleChoiceFilter(model=Portfolio, field_name='portfolios',
+    #                                                               all_field_name='is_valid_for_all_portfolios')
     # instrument_type = ModelExtWithPermissionMultipleChoiceFilter(model=InstrumentType, name='instrument_types')
-    instrument_type = ModelExtWithAllWithPermissionMultipleChoiceFilter(model=InstrumentType, field_name='instrument_types',
-                                                                        all_field_name='is_valid_for_all_instruments')
+    # instrument_type = ModelExtWithAllWithPermissionMultipleChoiceFilter(model=InstrumentType, field_name='instrument_types',
+    #                                                                     all_field_name='is_valid_for_all_instruments')
     is_valid_for_all_portfolios = django_filters.BooleanFilter()
     is_valid_for_all_instruments = django_filters.BooleanFilter()
     tag = TagFilter(model=TransactionType)
@@ -216,27 +216,27 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
                 'periodicity',
                 'accrual_calculation_model'
             ).prefetch_related(
-                *get_permissions_prefetch_lookups(
-                    ('account', Account),
-                    ('account__type', AccountType),
-                    ('instrument_type', InstrumentType),
-                    ('instrument', Instrument),
-                    ('instrument__instrument_type', InstrumentType),
-                    ('counterparty', Counterparty),
-                    ('counterparty__group', CounterpartyGroup),
-                    ('responsible', Responsible),
-                    ('responsible__group', ResponsibleGroup),
-                    ('portfolio', Portfolio),
-                    ('strategy1', Strategy1),
-                    ('strategy1__subgroup', Strategy1Subgroup),
-                    ('strategy1__subgroup__group', Strategy1Group),
-                    ('strategy2', Strategy2),
-                    ('strategy2__subgroup', Strategy2Subgroup),
-                    ('strategy2__subgroup__group', Strategy2Group),
-                    ('strategy3', Strategy3),
-                    ('strategy3__subgroup', Strategy3Subgroup),
-                    ('strategy3__subgroup__group', Strategy3Group),
-                )
+                # *get_permissions_prefetch_lookups(
+                #     ('account', Account),
+                #     ('account__type', AccountType),
+                #     ('instrument_type', InstrumentType),
+                #     ('instrument', Instrument),
+                #     ('instrument__instrument_type', InstrumentType),
+                #     ('counterparty', Counterparty),
+                #     ('counterparty__group', CounterpartyGroup),
+                #     ('responsible', Responsible),
+                #     ('responsible__group', ResponsibleGroup),
+                #     ('portfolio', Portfolio),
+                #     ('strategy1', Strategy1),
+                #     ('strategy1__subgroup', Strategy1Subgroup),
+                #     ('strategy1__subgroup__group', Strategy1Group),
+                #     ('strategy2', Strategy2),
+                #     ('strategy2__subgroup', Strategy2Subgroup),
+                #     ('strategy2__subgroup__group', Strategy2Group),
+                #     ('strategy3', Strategy3),
+                #     ('strategy3__subgroup', Strategy3Subgroup),
+                #     ('strategy3__subgroup__group', Strategy3Group),
+                # )
             )
         ),
         Prefetch(
@@ -344,73 +344,73 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
                 # 'transactiontypeactioninstrumentaccrualcalculationschedules__accrual_calculation_model_input',
 
             ).prefetch_related(
-                *get_permissions_prefetch_lookups(
-                    ('transactiontypeactioninstrument__instrument_type', InstrumentType),
-
-                    ('transactiontypeactiontransaction__portfolio', Portfolio),
-                    ('transactiontypeactiontransaction__instrument', Instrument),
-                    ('transactiontypeactiontransaction__instrument__instrument_type', InstrumentType),
-                    ('transactiontypeactiontransaction__account_position', Account),
-                    ('transactiontypeactiontransaction__account_position__type', AccountType),
-                    ('transactiontypeactiontransaction__account_cash', Account),
-                    ('transactiontypeactiontransaction__account_cash__type', AccountType),
-                    ('transactiontypeactiontransaction__account_interim', Account),
-                    ('transactiontypeactiontransaction__account_interim__type', AccountType),
-                    ('transactiontypeactiontransaction__strategy1_position', Strategy1),
-                    ('transactiontypeactiontransaction__strategy1_position__subgroup', Strategy1Subgroup),
-                    ('transactiontypeactiontransaction__strategy1_position__subgroup__group', Strategy1Group),
-                    ('transactiontypeactiontransaction__strategy1_cash', Strategy1),
-                    ('transactiontypeactiontransaction__strategy1_cash__subgroup', Strategy1Subgroup),
-                    ('transactiontypeactiontransaction__strategy1_cash__subgroup__group', Strategy1Group),
-                    ('transactiontypeactiontransaction__strategy2_position', Strategy2),
-                    ('transactiontypeactiontransaction__strategy2_position__subgroup', Strategy2Subgroup),
-                    ('transactiontypeactiontransaction__strategy2_position__subgroup__group', Strategy2Group),
-                    ('transactiontypeactiontransaction__strategy2_cash', Strategy2),
-                    ('transactiontypeactiontransaction__strategy2_cash__subgroup', Strategy2Subgroup),
-                    ('transactiontypeactiontransaction__strategy2_cash__subgroup__group', Strategy2Group),
-                    ('transactiontypeactiontransaction__strategy3_position', Strategy3),
-                    ('transactiontypeactiontransaction__strategy3_position__subgroup', Strategy3Subgroup),
-                    ('transactiontypeactiontransaction__strategy3_position__subgroup__group', Strategy3Group),
-                    ('transactiontypeactiontransaction__strategy3_cash', Strategy3),
-                    ('transactiontypeactiontransaction__strategy3_cash__subgroup', Strategy3Subgroup),
-                    ('transactiontypeactiontransaction__strategy3_cash__subgroup__group', Strategy3Group),
-                    ('transactiontypeactiontransaction__counterparty', Counterparty),
-                    ('transactiontypeactiontransaction__counterparty__group', CounterpartyGroup),
-                    ('transactiontypeactiontransaction__responsible__group', ResponsibleGroup),
-                    ('transactiontypeactiontransaction__responsible', Responsible),
-                    ('transactiontypeactiontransaction__linked_instrument', Instrument),
-                    ('transactiontypeactiontransaction__linked_instrument__instrument_type', InstrumentType),
-                    ('transactiontypeactiontransaction__allocation_balance', Instrument),
-                    ('transactiontypeactiontransaction__allocation_balance__instrument_type', InstrumentType),
-                    ('transactiontypeactiontransaction__allocation_pl', Instrument),
-                    ('transactiontypeactiontransaction__allocation_pl__instrument_type', InstrumentType),
-
-                    # ('transactiontypeactioninstrumentfactorschedule__instrument', Instrument),
-                    # ('transactiontypeactioninstrumentfactorschedule__instrument__instrument_type', InstrumentType),
-                    #
-                    # ('transactiontypeactioninstrumentmanualpricingformula__instrument', Instrument),
-                    # (
-                    #     'transactiontypeactioninstrumentmanualpricingformula__instrument__instrument_type',
-                    #     InstrumentType),
-                    # ('transactiontypeactioninstrumentmanualpricingformula__pricing_policy', PricingPolicy),
-
-                    # ('transactiontypeactioninstrumentaccrualcalculationschedules__instrument', Instrument),
-                    # ('transactiontypeactioninstrumentaccrualcalculationschedules__instrument__instrument_type',
-                    #  InstrumentType),
-
-                    # ('transactiontypeactioninstrumentaccrualcalculationschedules__periodicity', Periodicity),
-                    # ('transactiontypeactioninstrumentaccrualcalculationschedules__accrual_calculation_model',
-                    #  AccrualCalculationModel),
-
-                )
+                # *get_permissions_prefetch_lookups(
+                #     ('transactiontypeactioninstrument__instrument_type', InstrumentType),
+                #
+                #     ('transactiontypeactiontransaction__portfolio', Portfolio),
+                #     ('transactiontypeactiontransaction__instrument', Instrument),
+                #     ('transactiontypeactiontransaction__instrument__instrument_type', InstrumentType),
+                #     ('transactiontypeactiontransaction__account_position', Account),
+                #     ('transactiontypeactiontransaction__account_position__type', AccountType),
+                #     ('transactiontypeactiontransaction__account_cash', Account),
+                #     ('transactiontypeactiontransaction__account_cash__type', AccountType),
+                #     ('transactiontypeactiontransaction__account_interim', Account),
+                #     ('transactiontypeactiontransaction__account_interim__type', AccountType),
+                #     ('transactiontypeactiontransaction__strategy1_position', Strategy1),
+                #     ('transactiontypeactiontransaction__strategy1_position__subgroup', Strategy1Subgroup),
+                #     ('transactiontypeactiontransaction__strategy1_position__subgroup__group', Strategy1Group),
+                #     ('transactiontypeactiontransaction__strategy1_cash', Strategy1),
+                #     ('transactiontypeactiontransaction__strategy1_cash__subgroup', Strategy1Subgroup),
+                #     ('transactiontypeactiontransaction__strategy1_cash__subgroup__group', Strategy1Group),
+                #     ('transactiontypeactiontransaction__strategy2_position', Strategy2),
+                #     ('transactiontypeactiontransaction__strategy2_position__subgroup', Strategy2Subgroup),
+                #     ('transactiontypeactiontransaction__strategy2_position__subgroup__group', Strategy2Group),
+                #     ('transactiontypeactiontransaction__strategy2_cash', Strategy2),
+                #     ('transactiontypeactiontransaction__strategy2_cash__subgroup', Strategy2Subgroup),
+                #     ('transactiontypeactiontransaction__strategy2_cash__subgroup__group', Strategy2Group),
+                #     ('transactiontypeactiontransaction__strategy3_position', Strategy3),
+                #     ('transactiontypeactiontransaction__strategy3_position__subgroup', Strategy3Subgroup),
+                #     ('transactiontypeactiontransaction__strategy3_position__subgroup__group', Strategy3Group),
+                #     ('transactiontypeactiontransaction__strategy3_cash', Strategy3),
+                #     ('transactiontypeactiontransaction__strategy3_cash__subgroup', Strategy3Subgroup),
+                #     ('transactiontypeactiontransaction__strategy3_cash__subgroup__group', Strategy3Group),
+                #     ('transactiontypeactiontransaction__counterparty', Counterparty),
+                #     ('transactiontypeactiontransaction__counterparty__group', CounterpartyGroup),
+                #     ('transactiontypeactiontransaction__responsible__group', ResponsibleGroup),
+                #     ('transactiontypeactiontransaction__responsible', Responsible),
+                #     ('transactiontypeactiontransaction__linked_instrument', Instrument),
+                #     ('transactiontypeactiontransaction__linked_instrument__instrument_type', InstrumentType),
+                #     ('transactiontypeactiontransaction__allocation_balance', Instrument),
+                #     ('transactiontypeactiontransaction__allocation_balance__instrument_type', InstrumentType),
+                #     ('transactiontypeactiontransaction__allocation_pl', Instrument),
+                #     ('transactiontypeactiontransaction__allocation_pl__instrument_type', InstrumentType),
+                #
+                #     # ('transactiontypeactioninstrumentfactorschedule__instrument', Instrument),
+                #     # ('transactiontypeactioninstrumentfactorschedule__instrument__instrument_type', InstrumentType),
+                #     #
+                #     # ('transactiontypeactioninstrumentmanualpricingformula__instrument', Instrument),
+                #     # (
+                #     #     'transactiontypeactioninstrumentmanualpricingformula__instrument__instrument_type',
+                #     #     InstrumentType),
+                #     # ('transactiontypeactioninstrumentmanualpricingformula__pricing_policy', PricingPolicy),
+                #
+                #     # ('transactiontypeactioninstrumentaccrualcalculationschedules__instrument', Instrument),
+                #     # ('transactiontypeactioninstrumentaccrualcalculationschedules__instrument__instrument_type',
+                #     #  InstrumentType),
+                #
+                #     # ('transactiontypeactioninstrumentaccrualcalculationschedules__periodicity', Periodicity),
+                #     # ('transactiontypeactioninstrumentaccrualcalculationschedules__accrual_calculation_model',
+                #     #  AccrualCalculationModel),
+                #
+                # )
             )
         ),
-        *get_permissions_prefetch_lookups(
-            (None, TransactionType),
-            ('group', TransactionTypeGroup),
-            ('portfolios', Portfolio),
-            ('instrument_types', InstrumentType),
-        )
+        # *get_permissions_prefetch_lookups(
+        #     (None, TransactionType),
+        #     ('group', TransactionTypeGroup),
+        #     ('portfolios', Portfolio),
+        #     ('instrument_types', InstrumentType),
+        # )
     )
     # prefetch_permissions_for = (
     #     ('group', TransactionTypeGroup),

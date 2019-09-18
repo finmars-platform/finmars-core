@@ -251,21 +251,26 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
 
         ordering = request.data.get('ordering', None)
 
-        print('ordering %s' % ordering)
+        # print('ordering %s' % ordering)
 
         if ordering:
             queryset = sort_by_dynamic_attrs(queryset, ordering, master_user, content_type)
 
         page = self.paginator.post_paginate_queryset(queryset, request)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(queryset, many=True)
+        # if page is not None:
+
+        serializer = self.get_serializer(page, many=True)
 
         print("Filtered List %s seconds " % (time.time() - start_time))
 
-        return Response(serializer.data)
+        return self.get_paginated_response(serializer.data)
+
+        # serializer = self.get_serializer(queryset, many=True)
+        #
+        # print("Filtered List %s seconds " % (time.time() - start_time))
+        #
+        # return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
 

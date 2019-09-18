@@ -18,6 +18,8 @@ from .filters import SchemeContentTypeFilter
 from .models import CsvDataImport, CsvImportScheme
 from .serializers import CsvDataImportSerializer, CsvImportSchemeSerializer
 
+from django.forms.models import model_to_dict
+
 from rest_framework.exceptions import PermissionDenied
 
 import time
@@ -149,6 +151,11 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+def dump(obj):
+    for attr in dir(obj):
+        print("obj.%s = %r" % (attr, getattr(obj, attr)))
+
+
 class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
     serializer_class = CsvDataImportSerializer
     celery_task = data_csv_file_import_validate
@@ -233,6 +240,15 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         else:
+
+
+
+            # delattr(instance, 'file')
+
+            dump(instance)
+
+            print('instance %s' % instance)
+
 
             res = self.celery_task.apply_async(kwargs={'instance': instance})
             instance.task_id = signer.sign('%s' % res.id)

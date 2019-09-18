@@ -68,7 +68,6 @@ ADMIN = True
 
 ALLOWED_HOSTS = ['*']
 
-
 BACKEND_ROLES = ['ALL']
 
 if os.environ.get('BACKEND_ROLES'):
@@ -659,12 +658,16 @@ CELERY_BROKER_URL = 'redis://%s/1' % REDIS_HOST
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ENABLE_UTC = True
 CELERY_TIMEZONE = 'UTC'
-# CELERY_ACCEPT_CONTENT = ['json', 'pickle']
-# CELERY_TASK_SERIALIZER = 'pickle'
-# CELERY_RESULT_SERIALIZER = 'pickle'
-CELERY_ACCEPT_CONTENT = ['json', 'pickle-signed']
-CELERY_TASK_SERIALIZER = 'pickle-signed'
-CELERY_RESULT_SERIALIZER = 'pickle-signed'
+
+# CELERY_ACCEPT_CONTENT = ['json', 'json']
+# CELERY_TASK_SERIALIZER = 'json'
+# CELERY_RESULT_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ['json', 'pickle']
+CELERY_TASK_SERIALIZER = 'pickle'
+CELERY_RESULT_SERIALIZER = 'pickle'
+# CELERY_ACCEPT_CONTENT = ['json', 'pickle-signed']
+# CELERY_TASK_SERIALIZER = 'pickle-signed'
+# CELERY_RESULT_SERIALIZER = 'pickle-signed'
 
 CELERYD_CONCURRENCY = 8  # Defaults to the number of available CPUs, but I prefer doubling it.
 CELERYD_TASK_SOFT_TIME_LIMIT = 60 * 20
