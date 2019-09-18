@@ -37,13 +37,18 @@ class CurrentMemberDefault(object):
         # return self._member
         return getattr(self, '_member', None)
 
-
-class HiddenMemberField(serializers.PrimaryKeyRelatedField):
+class HiddenMemberField(serializers.HiddenField):
     def __init__(self, **kwargs):
         kwargs['default'] = CurrentMemberDefault()
-        # kwargs['read_only'] = True
-        kwargs.setdefault('read_only', True)
         super(HiddenMemberField, self).__init__(**kwargs)
+
+# TODO deprecated from django 1.10
+# class HiddenMemberField(serializers.PrimaryKeyRelatedField):
+#     def __init__(self, **kwargs):
+#         kwargs['default'] = CurrentMemberDefault()
+#         # kwargs['read_only'] = True
+#         kwargs.setdefault('read_only', True)
+#         super(HiddenMemberField, self).__init__(**kwargs)
 
 
 class HiddenUserField(serializers.PrimaryKeyRelatedField):
