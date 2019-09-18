@@ -15,7 +15,7 @@ cryptography==1.7.2
 Cython==0.25.2
 Django==2.2.5
 django-celery-beat==1.5.0
-django-celery-results==1.0.1
+django-celery-results==1.0.4
 django-cors-headers==2.0.2
 django-crispy-forms==1.7.2
 django-debug-toolbar==2.0
