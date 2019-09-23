@@ -43,7 +43,7 @@ from poms.users.permissions import SuperUserOrReadOnly, IsCurrentMasterUser, IsC
 from poms.users.serializers import GroupSerializer, UserSerializer, MasterUserSerializer, MemberSerializer, \
     PingSerializer, UserSetPasswordSerializer, MasterUserSetCurrentSerializer, UserUnsubscribeSerializer, \
     UserRegisterSerializer, MasterUserCreateSerializer, EmailSerializer, PasswordTokenSerializer, \
-    InviteToMasterUserSerializer, InviteCreateSerializer, EcosystemDefaultSerializer
+    InviteToMasterUserSerializer, InviteCreateSerializer, EcosystemDefaultSerializer, MasterUserLightSerializer
 from poms.users.utils import set_master_user
 
 from datetime import timedelta
@@ -444,6 +444,39 @@ class MasterUserViewSet(AbstractModelViewSet):
 
     @action(detail=True, methods=('PUT', 'PATCH',), url_path='set-current', permission_classes=[IsAuthenticated],
                   serializer_class=MasterUserSetCurrentSerializer)
+    def set_current(self, request, pk=None):
+        instance = self.get_object()
+        set_master_user(request, instance)
+        return Response({'success': True})
+
+
+class MasterUserLightViewSet(AbstractModelViewSet):
+    queryset = MasterUser.objects.prefetch_related('members')
+    serializer_class = MasterUserLightSerializer
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        IsCurrentMasterUser,
+        SuperUserOrReadOnly,
+    ]
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        MasterUserFilter,
+    ]
+    ordering_fields = [
+        'name',
+    ]
+    pagination_class = BigPagination
+
+    def get_object(self):
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        lookup_value = self.kwargs[lookup_url_kwarg]
+        if lookup_value == '0':
+            return self.request.user.master_user
+        return super(MasterUserLightViewSet, self).get_object()
+
+    def create(self, request, *args, **kwargs):
+        raise PermissionDenied()
+
+    @action(detail=True, methods=('PUT', 'PATCH',), url_path='set-current', permission_classes=[IsAuthenticated],
+            serializer_class=MasterUserSetCurrentSerializer)
     def set_current(self, request, pk=None):
         instance = self.get_object()
         set_master_user(request, instance)

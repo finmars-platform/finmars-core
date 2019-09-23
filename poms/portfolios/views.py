@@ -149,7 +149,7 @@ class PortfolioViewSet(AbstractWithObjectPermissionViewSet):
         AttributeFilter,
         GroupsAttributeFilter,
     ]
-    filter_class = PortfolioFilterSet
+    # filter_class = PortfolioFilterSet
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
     ]
@@ -164,7 +164,7 @@ class PortfolioEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Custom
 
     serializer_class = PortfolioSerializer
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_class = PortfolioFilterSet
+    # filter_class = PortfolioFilterSet
 
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,

@@ -70,6 +70,7 @@ class CurrencyViewSet(AbstractModelViewSet):
         'price_download_scheme', 'price_download_scheme__scheme_name',
     ]
 
+
 class CurrencyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Currency.objects.select_related(
         'master_user',

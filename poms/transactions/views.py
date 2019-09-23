@@ -39,7 +39,7 @@ from poms.transactions.models import TransactionClass, Transaction, TransactionT
 from poms.transactions.permissions import TransactionObjectPermission, ComplexTransactionPermission
 from poms.transactions.serializers import TransactionClassSerializer, TransactionSerializer, TransactionTypeSerializer, \
     TransactionTypeProcessSerializer, TransactionTypeGroupSerializer, ComplexTransactionSerializer, \
-    EventClassSerializer, NotificationClassSerializer
+    EventClassSerializer, NotificationClassSerializer, TransactionTypeLightSerializer
 from poms.users.filters import OwnerByMasterUserFilter
 
 
@@ -172,6 +172,62 @@ class TransactionTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model_serializer = TransactionTypeSerializer
 
 
+class TransactionTypeLightViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = TransactionType.objects.select_related('group').prefetch_related(
+        'portfolios',
+        'instrument_types',
+        get_attributes_prefetch(),
+        get_tag_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, TransactionType),
+            ('group', TransactionTypeGroup),
+        )
+    )
+    serializer_class = TransactionTypeLightSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+    ]
+    ordering_fields = [
+        'user_code',
+        'name',
+        'short_name',
+        'public_name',
+        'group',
+        'group__user_code',
+        'group__name',
+        'group__short_name',
+        'group__public_name',
+    ]
+
+
+class TransactionTypeLightEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
+    queryset = TransactionType.objects.select_related(
+        'group'
+    ).prefetch_related(
+        'portfolios',
+        get_tag_prefetch(),
+        Prefetch(
+            'instrument_types',
+            queryset=InstrumentType.objects.select_related('instrument_class')
+        ),
+        *get_permissions_prefetch_lookups(
+            (None, TransactionType),
+            ('group', TransactionTypeGroup),
+            ('portfolios', Portfolio),
+            ('instrument_types', InstrumentType),
+        )
+    )
+    serializer_class = TransactionTypeLightSerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    # filter_class = TransactionTypeFilterSet
+
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter
+    ]
+
 class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
     queryset = TransactionType.objects.select_related(
         'group'
@@ -216,27 +272,27 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
                 'periodicity',
                 'accrual_calculation_model'
             ).prefetch_related(
-                # *get_permissions_prefetch_lookups(
-                #     ('account', Account),
-                #     ('account__type', AccountType),
-                #     ('instrument_type', InstrumentType),
-                #     ('instrument', Instrument),
-                #     ('instrument__instrument_type', InstrumentType),
-                #     ('counterparty', Counterparty),
-                #     ('counterparty__group', CounterpartyGroup),
-                #     ('responsible', Responsible),
-                #     ('responsible__group', ResponsibleGroup),
-                #     ('portfolio', Portfolio),
-                #     ('strategy1', Strategy1),
-                #     ('strategy1__subgroup', Strategy1Subgroup),
-                #     ('strategy1__subgroup__group', Strategy1Group),
-                #     ('strategy2', Strategy2),
-                #     ('strategy2__subgroup', Strategy2Subgroup),
-                #     ('strategy2__subgroup__group', Strategy2Group),
-                #     ('strategy3', Strategy3),
-                #     ('strategy3__subgroup', Strategy3Subgroup),
-                #     ('strategy3__subgroup__group', Strategy3Group),
-                # )
+                *get_permissions_prefetch_lookups(
+                    ('account', Account),
+                    ('account__type', AccountType),
+                    ('instrument_type', InstrumentType),
+                    ('instrument', Instrument),
+                    ('instrument__instrument_type', InstrumentType),
+                    ('counterparty', Counterparty),
+                    ('counterparty__group', CounterpartyGroup),
+                    ('responsible', Responsible),
+                    ('responsible__group', ResponsibleGroup),
+                    ('portfolio', Portfolio),
+                    ('strategy1', Strategy1),
+                    ('strategy1__subgroup', Strategy1Subgroup),
+                    ('strategy1__subgroup__group', Strategy1Group),
+                    ('strategy2', Strategy2),
+                    ('strategy2__subgroup', Strategy2Subgroup),
+                    ('strategy2__subgroup__group', Strategy2Group),
+                    ('strategy3', Strategy3),
+                    ('strategy3__subgroup', Strategy3Subgroup),
+                    ('strategy3__subgroup__group', Strategy3Group),
+                )
             )
         ),
         Prefetch(
@@ -423,7 +479,7 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
         AttributeFilter,
         GroupsAttributeFilter,
     ]
-    filter_class = TransactionTypeFilterSet
+    # filter_class = TransactionTypeFilterSet
     ordering_fields = [
         'user_code',
         'name',
@@ -619,7 +675,7 @@ class TransactionTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, 
     )
     serializer_class = TransactionTypeSerializer
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_class = TransactionTypeFilterSet
+    # filter_class = TransactionTypeFilterSet
 
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -947,7 +1003,7 @@ class TransactionViewSet(AbstractModelViewSet):
     permission_classes = AbstractModelViewSet.permission_classes + [
         TransactionObjectPermission,
     ]
-    filter_class = TransactionFilterSet
+    # filter_class = TransactionFilterSet
     ordering_fields = [
         'complex_transaction',
         'complex_transaction__code',
@@ -1075,7 +1131,7 @@ class TransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cust
     queryset = get_transaction_queryset(select_related=False, complex_transaction_transactions=True)
     serializer_class = TransactionSerializer
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_class = TransactionFilterSet
+    # filter_class = TransactionFilterSet
 
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -1111,7 +1167,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         AttributeFilter,
         GroupsAttributeFilter,
     ]
-    filter_class = ComplexTransactionFilterSet
+    # filter_class = ComplexTransactionFilterSet
     ordering_fields = [
         'date',
         'code',
@@ -1199,7 +1255,7 @@ class ComplexTransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSe
     queryset = get_complex_transaction_queryset(select_related=False, transactions=True)
     serializer_class = ComplexTransactionSerializer
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_class = ComplexTransactionFilterSet
+    # filter_class = ComplexTransactionFilterSet
 
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         ComplexTransactionPermissionFilter,

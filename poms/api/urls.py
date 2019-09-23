@@ -43,6 +43,7 @@ router.register(r'users/master-user-create', users.MasterUserCreateViewSet, 'mas
 router.register(r'users/user', users.UserViewSet)
 router.register(r'users/user-member', users.UserMemberViewSet, 'usermember')
 router.register(r'users/master-user', users.MasterUserViewSet)
+router.register(r'users/master-user-light', users.MasterUserLightViewSet, 'masteruserlight')
 router.register(r'users/master-user-leave', users.LeaveMasterUserViewSet, 'masteruserleave')
 router.register(r'users/master-user-delete', users.DeleteMasterUserViewSet, 'masteruserdelete')
 router.register(r'users/get-current-master-user', users.GetCurrentMasterUserViewSet, 'getcurrentmasteruser')
@@ -187,7 +188,11 @@ router.register(r'transactions/transaction-type-group-ev-group', transactions.Tr
 router.register(r'transactions/transaction-type-group', transactions.TransactionTypeGroupViewSet)
 router.register(r'transactions/transaction-type-ev-group', transactions.TransactionTypeEvGroupViewSet,
                 'transactiontypeevgroup')
+router.register(r'transactions/transaction-type-light-ev-group', transactions.TransactionTypeLightEvGroupViewSet,
+                'transactiontypelightevgroup')
+
 router.register(r'transactions/transaction-type', transactions.TransactionTypeViewSet)
+router.register(r'transactions/transaction-type-light', transactions.TransactionTypeLightViewSet, 'transactiontypelight')
 router.register(r'transactions/transaction-type-attribute-type', transactions.TransactionTypeAttributeTypeViewSet)
 # router.register(r'transactions/transaction-attribute-type', transactions.TransactionAttributeTypeViewSet)
 router.register(r'transactions/transaction-attribute-type', transactions.TransactionAttributeTypeViewSet,

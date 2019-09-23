@@ -62,7 +62,7 @@ class AccountTypeViewSet(AbstractWithObjectPermissionViewSet):
         GroupsAttributeFilter,
         # TagFilterBackend,
     ]
-    filter_class = AccountTypeFilterSet
+    # filter_class = AccountTypeFilterSet
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name', 'show_transaction_details'
     ]
@@ -79,7 +79,7 @@ class AccountTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cust
     )
     serializer_class = AccountTypeSerializer
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_class = AccountTypeFilterSet
+    # filter_class = AccountTypeFilterSet
 
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -197,7 +197,7 @@ class AccountViewSet(AbstractWithObjectPermissionViewSet):
         AttributeFilter
         # TagFilterBackend,
     ]
-    filter_class = AccountFilterSet
+    # filter_class = AccountFilterSet
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name', 'is_valid_for_all_portfolios',
         'type', 'type__user_code', 'type__name', 'type__short_name', 'type__public_name',
@@ -221,7 +221,7 @@ class AccountEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPa
     )
     serializer_class = AccountSerializer
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_class = AccountFilterSet
+    # filter_class = AccountFilterSet
 
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,

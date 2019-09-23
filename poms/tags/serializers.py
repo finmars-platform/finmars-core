@@ -80,16 +80,16 @@ class TagField(serializers.RelatedField):
         queryset = obj_perms_filter_objects_for_view(member, queryset)
         return queryset
 
-    def to_representation(self, value):
-        if isinstance(value, Tag):
-            tag = value
-        else:
-            tag = value.tag
-        member = get_member_from_context(self.context)
-        if has_view_perms(member, tag):
-            return tag.id
-        else:
-            return None
+    # def to_representation(self, value):
+    #     if isinstance(value, Tag):
+    #         tag = value
+    #     else:
+    #         tag = value.tag
+    #     member = get_member_from_context(self.context)
+    #     if has_view_perms(member, tag):
+    #         return tag.id
+    #     else:
+    #         return None
 
     def to_internal_value(self, data):
         try:
@@ -169,9 +169,9 @@ class ModelWithTagSerializer(serializers.ModelSerializer):
 
         tag_link_qs.filter(tag_id__in=tags_qs).exclude(tag_id__in=processed).delete()
 
-    def to_representation(self, instance):
-        ret = super(ModelWithTagSerializer, self).to_representation(instance)
-        tags = ret.get('tags')
-        if tags:
-            ret['tags'] = [t for t in tags if t is not None]
-        return ret
+    # def to_representation(self, instance):
+    #     ret = super(ModelWithTagSerializer, self).to_representation(instance)
+    #     tags = ret.get('tags')
+    #     if tags:
+    #         ret['tags'] = [t for t in tags if t is not None]
+    #     return ret

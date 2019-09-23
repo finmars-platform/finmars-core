@@ -829,6 +829,105 @@ class TransactionTypeActionSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
+                                ModelWithTagSerializer, ModelWithAttributesSerializer):
+    master_user = MasterUserField()
+    group = TransactionTypeGroupField(required=False, allow_null=False)
+    date_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                allow_null=True, default='now()')
+    display_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+
+    user_text_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_4 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_5 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_6 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_7 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_8 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_9 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_10 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+
+    user_number_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_4 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_5 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_6 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_7 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_8 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_9 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_10 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                     allow_null=True, default='')
+
+    user_date_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_date_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_date_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_date_4 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_date_5 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+
+    instrument_types = InstrumentTypeField(required=False, allow_null=True, many=True)
+    portfolios = PortfolioField(required=False, allow_null=True, many=True)
+
+    group_object = TransactionTypeGroupViewSerializer(source='group', read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        super(TransactionTypeLightSerializer, self).__init__(*args, **kwargs)
+
+        from poms.instruments.serializers import InstrumentTypeViewSerializer
+        from poms.portfolios.serializers import PortfolioViewSerializer
+
+        self.fields['instrument_types_object'] = InstrumentTypeViewSerializer(source='instrument_types', many=True,
+                                                                              read_only=True)
+        self.fields['portfolios_object'] = PortfolioViewSerializer(source='portfolios', many=True, read_only=True)
+
+    class Meta:
+        model = TransactionType
+        fields = [
+            'id', 'master_user', 'group',
+            'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'date_expr', 'display_expr',
+
+            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
+            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
+
+            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
+            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+
+            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
+
+            'is_valid_for_all_portfolios', 'is_valid_for_all_instruments', 'is_deleted',
+
+            'instrument_types', 'portfolios',
+            'group_object',
+        ]
+
+
 class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
                                 ModelWithTagSerializer, ModelWithAttributesSerializer):
     master_user = MasterUserField()

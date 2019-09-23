@@ -32,8 +32,8 @@ def get_tag_prefetch(path='tags'):
             'tag'
         ).prefetch_related(
             'content_object',
-            *get_permissions_prefetch_lookups(
-                ('tag', Tag)
-            )
+            # *get_permissions_prefetch_lookups(
+            #     ('tag', Tag)
+            # )
         )
     )

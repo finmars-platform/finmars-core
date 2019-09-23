@@ -368,6 +368,57 @@ class MasterUserSerializer(serializers.ModelSerializer):
         return member.is_owner
 
 
+class MasterUserLightSerializer(serializers.ModelSerializer):
+    # url = serializers.HyperlinkedIdentityField(view_name='masteruser-detail')
+    language = serializers.ChoiceField(choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE)
+    timezone = serializers.ChoiceField(choices=TIMEZONE_CHOICES)
+    is_current = serializers.SerializerMethodField()
+    is_admin = serializers.SerializerMethodField()
+    is_owner = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MasterUser
+        fields = [
+            'id', 'name', 'description', 'is_current', 'is_admin', 'is_owner', 'language',
+            'timezone',
+
+        ]
+
+    def to_representation(self, instance):
+        ret = super(MasterUserLightSerializer, self).to_representation(instance)
+        is_current = self.get_is_current(instance)
+        is_admin = self.get_is_admin(instance)
+        is_owner = self.get_is_owner(instance)
+        if not is_current:
+            for k in list(ret.keys()):
+                if k not in ['id', 'name', 'is_current', 'description', 'is_admin', 'is_owner']:
+                    ret.pop(k)
+        return ret
+
+    def get_is_current(self, obj):
+        master_user = get_master_user_from_context(self.context)
+        return obj.id == master_user.id
+
+    def get_is_admin(self, obj):
+
+        # user = get_user_from_context(self.context)
+        #
+        # member = Member.objects.get(master_user=obj.id, user=user.id)
+        member = get_member_from_context(self.context)
+
+        return member.is_admin
+
+    def get_is_owner(self, obj):
+
+        # user = get_user_from_context(self.context)
+        #
+        # member = Member.objects.get(master_user=obj.id, user=user.id)
+
+        member = get_member_from_context(self.context)
+
+        return member.is_owner
+
+
 class EcosystemDefaultSerializer(serializers.ModelSerializer):
     currency = CurrencyField()
     account_type = AccountTypeField()
