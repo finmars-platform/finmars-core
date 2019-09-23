@@ -39,7 +39,7 @@ from poms.transactions.models import TransactionClass, Transaction, TransactionT
 from poms.transactions.permissions import TransactionObjectPermission, ComplexTransactionPermission
 from poms.transactions.serializers import TransactionClassSerializer, TransactionSerializer, TransactionTypeSerializer, \
     TransactionTypeProcessSerializer, TransactionTypeGroupSerializer, ComplexTransactionSerializer, \
-    EventClassSerializer, NotificationClassSerializer, TransactionTypeLightSerializer
+    EventClassSerializer, NotificationClassSerializer, TransactionTypeLightSerializer, ComplexTransactionLightSerializer
 from poms.users.filters import OwnerByMasterUserFilter
 
 
@@ -227,6 +227,7 @@ class TransactionTypeLightEvGroupViewSet(AbstractEvGroupWithObjectPermissionView
         OwnerByMasterUserFilter,
         AttributeFilter
     ]
+
 
 class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
     queryset = TransactionType.objects.select_related(
@@ -1254,6 +1255,47 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
 class ComplexTransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = get_complex_transaction_queryset(select_related=False, transactions=True)
     serializer_class = ComplexTransactionSerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    # filter_class = ComplexTransactionFilterSet
+
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        ComplexTransactionPermissionFilter,
+        AttributeFilter
+    ]
+
+
+class ComplexTransactionLightViewSet(AbstractModelViewSet):
+    queryset = qs = ComplexTransaction.objects.select_related(
+        'transaction_type',
+        'transaction_type__group',
+    ).prefetch_related(
+        get_attributes_prefetch(),
+        *get_permissions_prefetch_lookups(
+            ('transaction_type', TransactionType),
+            ('transaction_type__group', TransactionTypeGroup),
+        )
+    )
+
+    serializer_class = ComplexTransactionLightSerializer
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        # ComplexTransactionPermission
+    ]
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        ComplexTransactionPermissionFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+    ]
+    # filter_class = ComplexTransactionFilterSet
+    ordering_fields = [
+        'date',
+        'code',
+        'is_deleted',
+    ]
+
+
+class ComplexTransactionLightEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
+    queryset = get_complex_transaction_queryset(select_related=False, transactions=True)
+    serializer_class = ComplexTransactionLightSerializer
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
     # filter_class = ComplexTransactionFilterSet
 
