@@ -132,7 +132,7 @@ INSTALLED_APPS = [
     # 'two_factor',
     'django_celery_results',
     'django_celery_beat',
-    'debug_toolbar',
+    # 'debug_toolbar',
 ]
 
 # MIDDLEWARE_CLASSES = [
@@ -160,7 +160,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # 'poms.notifications.middleware.NotificationMiddleware',
     # 'django.middleware.cache.FetchFromCacheMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'poms_app.urls'
