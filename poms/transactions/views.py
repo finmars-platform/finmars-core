@@ -189,6 +189,7 @@ class TransactionTypeLightViewSet(AbstractWithObjectPermissionViewSet):
         AttributeFilter,
         GroupsAttributeFilter,
     ]
+    filter_class = TransactionTypeFilterSet
     ordering_fields = [
         'user_code',
         'name',
@@ -480,7 +481,7 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
         AttributeFilter,
         GroupsAttributeFilter,
     ]
-    # filter_class = TransactionTypeFilterSet
+    filter_class = TransactionTypeFilterSet
     ordering_fields = [
         'user_code',
         'name',

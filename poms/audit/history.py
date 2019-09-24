@@ -300,8 +300,8 @@ def _instance_post_save(sender, instance=None, created=None, **kwargs):
     if not hasattr(instance, '_poms_history_initial_state'):
         return
 
-    _l.debug('post_save: sender=%s, instance=%s, created=%s, kwargs=%s',
-             sender, instance, created, kwargs)
+    # _l.debug('post_save: sender=%s, instance=%s, created=%s, kwargs=%s',
+    #          sender, instance, created, kwargs)
 
     if created:
         e4 = ObjectHistory4Entry(
