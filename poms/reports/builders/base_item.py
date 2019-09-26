@@ -204,16 +204,16 @@ class YTMMixin:
 
         data = self.get_instr_ytm_data()
 
-        _l.debug('data %s' % self.instr.name)
-        _l.debug(data)
+        # _l.debug('data %s' % self.instr.name)
+        # _l.debug(data)
 
         if data:
             ytm = f_xirr(data, x0=x0)
         else:
             ytm = 0.0
 
-        _l.debug(ytm)
-        _l.debug('{:f}'.format(ytm))
+        # _l.debug(ytm)
+        # _l.debug('{:f}'.format(ytm))
         # _l.debug('get_instr_ytm: %s', ytm)
         return ytm
 
