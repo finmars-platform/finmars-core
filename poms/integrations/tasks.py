@@ -1538,9 +1538,17 @@ def complex_transaction_csv_file_import(self, instance):
             instance.error_rows.append(error_rows)
 
     def _row_count(file):
-        for i, l in enumerate(file):
+
+        delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
+
+        reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
+                            strict=False, skipinitialspace=True)
+
+        row_index = 0
+
+        for row_index, row in enumerate(reader):
             pass
-        return i
+        return row_index
 
     instance.error_rows = []
     try:
@@ -1552,12 +1560,12 @@ def complex_transaction_csv_file_import(self, instance):
                 for chunk in f.chunks():
                     tmpf.write(chunk)
                 tmpf.flush()
-                with open(tmpf.name, mode='rt', encoding=instance.encoding) as cfr:
+                with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
                     instance.total_rows = _row_count(cfr)
                     self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
                                       meta={'total_rows': instance.total_rows, 'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
                     # instance.save()
-                with open(tmpf.name, mode='rt', encoding=instance.encoding) as cf:
+                with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
                     _process_csv_file(cf)
     # except csv.Error:
     #     _l.info('Can\'t process file', exc_info=True)
@@ -1702,7 +1710,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
         for row_index, row in enumerate(reader):
 
-            _l.info('_validate_process_csv_file row: %s -> %s', row_index, row)
+            _l.debug('_validate_process_csv_file row: %s -> %s', row_index, row)
             if (row_index == 0 and instance.skip_first_line) or not row:
                 _l.info('skip first row')
                 continue
@@ -1934,9 +1942,17 @@ def complex_transaction_csv_file_import_validate(self, instance):
             _l.info('instance', instance)
 
     def _row_count(file):
-        for i, l in enumerate(file):
+
+        delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
+
+        reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
+                            strict=False, skipinitialspace=True)
+
+        row_index = 0
+
+        for row_index, row in enumerate(reader):
             pass
-        return i
+        return row_index
 
     instance.error_rows = []
 
@@ -1949,13 +1965,14 @@ def complex_transaction_csv_file_import_validate(self, instance):
                 for chunk in f.chunks():
                     tmpf.write(chunk)
                 tmpf.flush()
-                with open(tmpf.name, mode='rt', encoding=instance.encoding) as cfr:
+                # with open(tmpf.name, mode='rt', encoding=instance.encoding) as cfr:
+                with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
                     instance.total_rows = _row_count(cfr)
                     # instance.save()
                     self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
                                       meta={'total_rows': instance.total_rows, 'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
 
-                with open(tmpf.name, mode='rt', encoding=instance.encoding) as cf:
+                with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
                     _validate_process_csv_file(cf)
     # except csv.Error:
     #     _l.info('Can\'t process file', exc_info=True)
