@@ -858,7 +858,9 @@ class ReportItem(YTMMixin, BaseReportItem):
             self.src_trns_id.add(trn.trn.pk)
 
     def add(self, o):
-        self.add_src_trn(o.trn)
+
+        if o.trn:
+            self.add_src_trn(o.trn)
 
         # ------------------
         # P&L in report ccy

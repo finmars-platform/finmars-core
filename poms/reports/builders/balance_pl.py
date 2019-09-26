@@ -621,14 +621,14 @@ class ReportBuilder(BaseReportBuilder):
 
             self._transactions.append(trn)
 
-            # otrn = self.trn_cls(
-            #     report=_instance,
-            #     pricing_provider=_pricing_provider,
-            #     fx_rate_provider=_fx_rate_provider,
-            #     trn=t,
-            # )
+            otrn = self.trn_cls(
+                report=_instance,
+                pricing_provider=_pricing_provider,
+                fx_rate_provider=_fx_rate_provider,
+                trn=t,
+            )
 
-            # self._original_transactions.append(otrn)
+            self._original_transactions.append(otrn)
 
         _l.debug('_self._transactions len %s' % len(self._transactions))
 
