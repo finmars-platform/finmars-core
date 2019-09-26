@@ -520,12 +520,15 @@ class ReportSerializer(serializers.Serializer):
             item_instrument_pricings = {o['id']: o for o in data['item_instrument_pricings']}
             item_instrument_accruals = {o['id']: o for o in data['item_instrument_accruals']}
 
-            print('item_instrument_pricings %s ' % item_instrument_pricings)
-
             def _set_object(names, pk_attr, objs):
                 pk = names[pk_attr]
                 if pk is not None:
-                    names['%s_object' % pk_attr] = objs[pk]
+
+                    try:
+                        names['%s_object' % pk_attr] = objs[pk]
+                    except KeyError:
+                        print('pk %s' % pk)
+                        print('pk_attr %s' % pk_attr)
                     # names[pk_attr] = objs[pk]
 
             for item in items:
@@ -548,12 +551,10 @@ class ReportSerializer(serializers.Serializer):
                 _set_object(names, 'mismatch_account', item_accounts)
                 _set_object(names, 'report_currency_history', item_currency_fx_rates)
 
-                if item_instrument_pricings:
-                    _set_object(names, 'instrument_price_history', item_instrument_pricings)
 
-                if item_currency_fx_rates:
-                    _set_object(names, 'instrument_pricing_currency_history', item_currency_fx_rates)
-                    _set_object(names, 'instrument_accrued_currency_history', item_currency_fx_rates)
+                _set_object(names, 'instrument_price_history', item_instrument_pricings)
+                _set_object(names, 'instrument_pricing_currency_history', item_currency_fx_rates)
+                _set_object(names, 'instrument_accrued_currency_history', item_currency_fx_rates)
 
                 _set_object(names, 'currency_history', item_currency_fx_rates)
                 _set_object(names, 'pricing_currency_history', item_currency_fx_rates)
