@@ -215,6 +215,10 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
     ]
 
     def list(self, request, *args, **kwargs):
+
+        if not hasattr(request.user, 'master_user'):
+            return Response([])
+
         queryset = self.filter_queryset(self.get_queryset())
 
         content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
