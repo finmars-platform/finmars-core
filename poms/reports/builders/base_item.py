@@ -113,7 +113,10 @@ class YTMMixin:
             # _l.debug('get_instr_ytm_data: [], maturity_price rule')
             return []
 
-        d0, v0 = self.get_instr_ytm_data_d0_v0(dt)
+        try:
+            d0, v0 = self.get_instr_ytm_data_d0_v0(dt)
+        except ArithmeticError:
+            return None
         data = [(d0, v0)]
 
         # accruals = instr.get_accrual_calculation_schedules_all()

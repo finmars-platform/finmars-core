@@ -1024,10 +1024,8 @@ class ReportItem(YTMMixin, BaseReportItem):
 
         _l.debug('instr_pricing_ccy_cur_fx %s' % self.instr_pricing_ccy_cur_fx)
 
-        try:
-            v0 = -(self.instr_price_cur_principal_price * self.instr.price_multiplier * self.instr.get_factor(dt) + self.instr_price_cur_accrued_price * self.instr.accrued_multiplier * self.instr.get_factor(dt) * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx))
-        except ZeroDivisionError:
-            v0 = 0
+        v0 = -(self.instr_price_cur_principal_price * self.instr.price_multiplier * self.instr.get_factor(dt) + self.instr_price_cur_accrued_price * self.instr.accrued_multiplier * self.instr.get_factor(dt) * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx))
+
         return dt, v0
 
     def get_instr_ytm_x0(self, dt):
