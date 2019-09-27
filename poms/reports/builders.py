@@ -1877,16 +1877,74 @@ class ReportItem(_Base):
             except ArithmeticError:
                 self.net_pos_return_res = 0.0
 
+
+            # def get_future_accrual_payments(self, d0,v0):
+            #     //Если есть в кэше, взять оттуда
+            #     //if hasattr(self, '_instr_ytm_data'):
+            #         //    return self._instr_ytm_data
+            #
+            #     instr = self.instr
+            #
+            #     // Если нету maturity_date или maturity_price вернуть пустой список
+            #     if instr.maturity_date is None or instr.maturity_date == date.max:
+            #         return []
+            #     if instr.maturity_price is None or isnan(instr.maturity_price) or isclose(instr.maturity_price, 0.0):
+            #         return []
+            #
+            #     // Эту функцию я опишу в пункте 10
+            #     //d0, v0 = self.get_instr_ytm_data_d0_v0() - d0 , v0 уже переданы как аргументы
+            #
+            #     // d0 - это accounting_date
+            #     // v0 - это -(trade_price  price_multiplier  factor)
+            #
+            #     data = [(d0, v0)]
+            #
+            #     // Эту функцию я опишу в пункте 12
+            # for cpn_date, cpn_val in instr.get_future_coupons(begin_date=d0, with_maturity=False):
+            #     try:
+            #         // Эту функцию я опишу в пункте 11
+            #         factor = instr.get_factor(cpn_date)
+            #         k = instr.accrued_multiplier  factor \
+            #             (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
+            #     except ArithmeticError:
+            #         k = 0
+            #     data.append((cpn_date, cpn_val * k))
+            #
+            # prev_factor = None
+            # for factor in instr.factor_schedules.all():
+            #     if factor.effective_date < d0 or factor.effective_date > instr.maturity_date:
+            #         prev_factor = factor
+            #         continue
+            #
+            #     prev_factor_value = prev_factor.factor_value if prev_factor else 1.0
+            #     factor_value = factor.factor_value
+            #
+            #     k = (prev_factor_value - factor_value) * instr.price_multiplier
+            #     data.append((factor.effective_date, instr.maturity_price * k))
+            #
+            #     prev_factor = factor
+            #
+            # factor = instr.get_factor(instr.maturity_date)
+            # k = instr.price_multiplier * factor
+            # data.append((instr.maturity_date, instr.maturity_price * k))
+            #
+            # data.sort()
+            # //self._instr_ytm_data = data  -не уверен зачем это
+            #
+            #
+            # return data
+
             if self.instr:
                 # YTM/Duration - берем price из price history на дату репорта.
                 # Для записка итеративного алгоритма, для x0 из accrued schedule
                 # берем на текущую дату - (accrued_size * accrued_multiplier)/(price * price_multiplier).
+
+                v0 = -(self.instr_price_cur_principal_price * self.instr.price_multiplier * self.instr.get_factor(self.report.report_date) + self.instr_price_cur_accrued_price * self.instr.accrued_multiplier * self.instr.get_factor(self.report.report_date) * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx))
+
                 try:
                     future_accrual_payments = self.instr.get_future_accrual_payments(
                         d0=self.report.report_date,
-                        v0=self.instr_price_cur_principal_price,
-                        principal_ccy_fx=self.instr_pricing_ccy_cur_fx,
-                        accrual_ccy_fx=self.instr_accrued_ccy_cur_fx
+                        v0=v0
                     )
                 except (ValueError, TypeError):
                     future_accrual_payments = False

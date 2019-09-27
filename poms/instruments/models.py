@@ -658,6 +658,12 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel):
 
         return accrual.accrual_size
 
+    def get_future_accrual_payments(self, d0, v0):
+
+
+
+        pass
+
     def get_accrual_factor(self, price_date):
         from poms.common.formula_accruals import coupon_accrual_factor
 

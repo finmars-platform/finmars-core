@@ -674,13 +674,15 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
             self.stl_ccy_cur_fx = self.stl_ccy_cur.fx_rate * report_ccy_cur_fx
             self.stl_ccy_cur_fx_loc = self.stl_ccy_cur.fx_rate * pricing_ccy_cur_fx
 
-    def get_instr_ytm_data_d0_v0(self):
-        return self.acc_date, -(
-                self.trade_price * self.instr.price_multiplier * self.instr.get_factor(self.report.report_date))
+    def get_instr_ytm_data_d0_v0(self, dt):
+        # return self.acc_date, -(
+        #         self.trade_price * self.instr.price_multiplier * self.instr.get_factor(self.report.report_date))
+        return dt, -(
+                self.trade_price * self.instr.price_multiplier * self.instr.get_factor(dt))
 
-    def get_instr_ytm_x0(self):
+    def get_instr_ytm_x0(self, dt):
         try:
-            accrual_size = self.instr.get_accrual_size(self.report.report_date)
+            accrual_size = self.instr.get_accrual_size(dt)
             return (accrual_size * self.instr.accrued_multiplier) * \
                    (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx) / \
                    (self.instr_price_cur_principal_price * self.instr.price_multiplier)
@@ -1113,7 +1115,7 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
                         #     data=ytm_data,
                         #     x0=self.trade_price * self.instr.price_multiplier
                         # )
-                        self.ytm = self.get_instr_ytm()
+                        self.ytm = self.get_instr_ytm(self.acc_date)
 
                         self.time_invested_days = (self.report.report_date - self.acc_date).days
                         self.time_invested = self.time_invested_days / 365.0

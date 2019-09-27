@@ -1020,14 +1020,19 @@ class ReportItem(YTMMixin, BaseReportItem):
     #     elif self.type == ReportItem.TYPE_INSTRUMENT:
     #         self.pos_size += o.pos_size
 
-    def get_instr_ytm_data_d0_v0(self):
-        return self.report.report_date, -(
-                self.instr_price_cur_principal_price * self.instr.price_multiplier * self.instr.get_factor(
-            self.report.report_date))
+    def get_instr_ytm_data_d0_v0(self, dt):
 
-    def get_instr_ytm_x0(self):
+        _l.debug('instr_pricing_ccy_cur_fx %s' % self.instr_pricing_ccy_cur_fx)
+
         try:
-            accrual_size = self.instr.get_accrual_size(self.report.report_date)
+            v0 = -(self.instr_price_cur_principal_price * self.instr.price_multiplier * self.instr.get_factor(dt) + self.instr_price_cur_accrued_price * self.instr.accrued_multiplier * self.instr.get_factor(dt) * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx))
+        except ZeroDivisionError:
+            v0 = 0
+        return dt, v0
+
+    def get_instr_ytm_x0(self, dt):
+        try:
+            accrual_size = self.instr.get_accrual_size(dt)
             return (accrual_size * self.instr.accrued_multiplier) * \
                    (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx) / \
                    (self.instr_price_cur_principal_price * self.instr.price_multiplier)
@@ -1194,8 +1199,8 @@ class ReportItem(YTMMixin, BaseReportItem):
                 # x0 = self.instr.get_accrued_price(price_date=self.report.report_date) * self.instr.accrued_multiplier
                 # self.ytm = ReportBuilder.instr_ytm(instr=self.instr, data=ytm_data, x0=x0)
                 # self.modified_duration = ReportBuilder.instr_duration(instr=self.instr, data=ytm_data, ytm=self.ytm)
-                self.ytm = self.get_instr_ytm()
-                self.modified_duration = self.get_instr_duration()
+                self.ytm = self.get_instr_ytm(self.report.report_date)
+                self.modified_duration = self.get_instr_duration(self.report.report_date)
 
                 self.time_invested = self.time_invested_days / 365.0
 

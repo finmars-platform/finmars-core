@@ -97,10 +97,10 @@ class YTMMixin:
     # _instr_ytm_data
 
     @abstractmethod
-    def get_instr_ytm_data_d0_v0(self):
+    def get_instr_ytm_data_d0_v0(self, dt):
         return date.min, 0
 
-    def get_instr_ytm_data(self):
+    def get_instr_ytm_data(self, dt):
         if hasattr(self, '_instr_ytm_data'):
             return self._instr_ytm_data
 
@@ -113,7 +113,7 @@ class YTMMixin:
             # _l.debug('get_instr_ytm_data: [], maturity_price rule')
             return []
 
-        d0, v0 = self.get_instr_ytm_data_d0_v0()
+        d0, v0 = self.get_instr_ytm_data_d0_v0(dt)
         data = [(d0, v0)]
 
         # accruals = instr.get_accrual_calculation_schedules_all()
@@ -182,15 +182,15 @@ class YTMMixin:
         return data
 
     @abstractmethod
-    def get_instr_ytm_x0(self):
+    def get_instr_ytm_x0(self, dt):
         return 0
 
-    def get_instr_ytm(self):
+    def get_instr_ytm(self, dt):
         # _l.debug('get_instr_ytm: %s', self.__class__.__name__)
 
         if self.instr.maturity_date is None or self.instr.maturity_date == date.max:
             try:
-                accrual_size = self.instr.get_accrual_size(self.report.report_date)
+                accrual_size = self.instr.get_accrual_size(dt)
                 ytm = (accrual_size * self.instr.accrued_multiplier) * \
                       (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx) / \
                       (self.instr_price_cur_principal_price * self.instr.price_multiplier)
@@ -199,10 +199,10 @@ class YTMMixin:
             # _l.debug('get_instr_ytm.1: %s', ytm)
             return ytm
 
-        x0 = self.get_instr_ytm_x0()
+        x0 = self.get_instr_ytm_x0(dt)
         # _l.debug('get_instr_ytm: x0=%s', x0)
 
-        data = self.get_instr_ytm_data()
+        data = self.get_instr_ytm_data(dt)
 
         _l.debug('data %s' % self.instr.name)
         _l.debug(data)
@@ -217,7 +217,7 @@ class YTMMixin:
         # _l.debug('get_instr_ytm: %s', ytm)
         return ytm
 
-    def get_instr_duration(self):
+    def get_instr_duration(self, dt):
         if self.instr.maturity_date is None or self.instr.maturity_date == date.max:
             try:
                 duration = 1 / self.ytm
@@ -225,7 +225,7 @@ class YTMMixin:
                 duration = 0
             # _l.debug('get_instr_duration.1: %s', duration)
             return duration
-        data = self.get_instr_ytm_data()
+        data = self.get_instr_ytm_data(dt)
         if data:
             duration = f_duration(data, ytm=self.ytm)
         else:
