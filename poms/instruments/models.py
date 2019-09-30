@@ -588,9 +588,9 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel):
         if a:
             # a.accrual_end_date = self.maturity_date
 
-            print('self.maturity_date %s ' % self.maturity_date)
+            # print('self.maturity_date %s ' % self.maturity_date)
             a.accrual_end_date = self.maturity_date + timedelta(days=1)
-            print('a.accrual_end_date %s ' % a.accrual_end_date)
+            # print('a.accrual_end_date %s ' % a.accrual_end_date)
 
         return accruals
 
