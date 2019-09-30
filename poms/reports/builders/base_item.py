@@ -117,6 +117,7 @@ class YTMMixin:
             d0, v0 = self.get_instr_ytm_data_d0_v0(dt)
         except ArithmeticError:
             return None
+
         data = [(d0, v0)]
 
         # accruals = instr.get_accrual_calculation_schedules_all()
@@ -207,16 +208,16 @@ class YTMMixin:
 
         data = self.get_instr_ytm_data(dt)
 
-        _l.debug('data %s' % self.instr.name)
-        _l.debug(data)
+        # _l.debug('data %s' % self.instr.name)
+        # _l.debug(data)
 
         if data:
             ytm = f_xirr(data, x0=x0)
         else:
             ytm = 0.0
 
-        _l.debug(ytm)
-        _l.debug('{:f}'.format(ytm))
+        # _l.debug(ytm)
+        # _l.debug('{:f}'.format(ytm))
         # _l.debug('get_instr_ytm: %s', ytm)
         return ytm
 

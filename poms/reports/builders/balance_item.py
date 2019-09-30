@@ -1022,7 +1022,7 @@ class ReportItem(YTMMixin, BaseReportItem):
 
     def get_instr_ytm_data_d0_v0(self, dt):
 
-        _l.debug('instr_pricing_ccy_cur_fx %s' % self.instr_pricing_ccy_cur_fx)
+        # _l.debug('instr_pricing_ccy_cur_fx %s' % self.instr_pricing_ccy_cur_fx)
 
         v0 = -(self.instr_price_cur_principal_price * self.instr.price_multiplier * self.instr.get_factor(dt) + self.instr_price_cur_accrued_price * self.instr.accrued_multiplier * self.instr.get_factor(dt) * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx))
 
