@@ -142,6 +142,37 @@ class ModelExtWithAllWithPermissionMultipleChoiceFilter(ModelExtWithPermissionMu
         return qs.distinct() if self.distinct else qs
 
 
+class ModelExtWithAllWithMultipleChoiceFilter(ModelExtMultipleChoiceFilter):
+    all_field_name = None
+
+    def __init__(self, *args, **kwargs):
+        self.all_field_name = kwargs.pop('all_field_name')
+        super(ModelExtWithAllWithMultipleChoiceFilter, self).__init__(*args, **kwargs)
+
+    def filter(self, qs, value):
+
+        print('here? %s' % qs)
+        print('value %s' % value)
+
+        if not value:
+            return qs
+
+        if self.is_noop(qs, value):
+            return qs
+
+        q = Q()
+        for v in set(value):
+            predicate = self.get_filter_predicate(v)
+
+            print('predicate %s' % predicate)
+
+            q |= Q(**predicate)
+
+        qs = self.get_method(qs)(q | Q(**{self.all_field_name: True}))
+
+        return qs.distinct() if self.distinct else qs
+
+
 class TransactionTypeFilterSet(FilterSet):
     id = NoOpFilter()
     user_code = CharFilter()
@@ -150,11 +181,11 @@ class TransactionTypeFilterSet(FilterSet):
     public_name = CharFilter()
     group = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionTypeGroup)
     # portfolio = ModelExtWithPermissionMultipleChoiceFilter(model=Portfolio, name='portfolios')
-    # portfolio = ModelExtWithAllWithPermissionMultipleChoiceFilter(model=Portfolio, field_name='portfolios',
-    #                                                               all_field_name='is_valid_for_all_portfolios')
+    portfolios = ModelExtWithAllWithMultipleChoiceFilter(model=Portfolio,
+                                                                  all_field_name='is_valid_for_all_portfolios')
     # instrument_type = ModelExtWithPermissionMultipleChoiceFilter(model=InstrumentType, name='instrument_types')
-    # instrument_type = ModelExtWithAllWithPermissionMultipleChoiceFilter(model=InstrumentType, field_name='instrument_types',
-    #                                                                     all_field_name='is_valid_for_all_instruments')
+    instrument_types = ModelExtWithAllWithMultipleChoiceFilter(model=InstrumentType,
+                                                                        all_field_name='is_valid_for_all_instruments')
     is_valid_for_all_portfolios = django_filters.BooleanFilter()
     is_valid_for_all_instruments = django_filters.BooleanFilter()
     tag = TagFilter(model=TransactionType)

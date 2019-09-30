@@ -69,7 +69,9 @@ def is_scheme(item):
 
 def _model_choices(model, field_name, master_user_path):
     master_user = get_request().user.master_user
+
     qs = model.objects.filter(**{master_user_path: master_user}).order_by(field_name)
+
     for t in qs:
         yield t.id, getattr(t, field_name)
 

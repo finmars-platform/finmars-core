@@ -398,7 +398,8 @@ def _instance_m2m_changed(sender, instance=None, action=None, reverse=None, mode
                     attr = f.related_name
                     break
             else:
-                if f.rel.through == sender:
+                # if f.rel.through == sender:
+                if f.remote_field.through == sender:
                     attr = f.name
                     break
     if attr is None:
