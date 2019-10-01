@@ -4,6 +4,8 @@ from django.db import models
 from django.utils.text import Truncator
 from django.utils.translation import ugettext_lazy
 
+from poms.common import formula
+
 EXPRESSION_FIELD_LENGTH = 1024
 
 
@@ -14,6 +16,8 @@ class NamedModel(models.Model):
     public_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('public name'),
                                    help_text=ugettext_lazy('used if user does not have permissions to view object'))
     notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
+
+    is_enabled = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is enabled'))
 
     class Meta:
         abstract = True
@@ -71,6 +75,7 @@ class AbstractClassModel(models.Model):
 
 class FakeDeletableModel(models.Model):
     is_deleted = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is deleted'))
+    deleted_user_code =  models.CharField(max_length=25, null=True, blank=True, verbose_name=ugettext_lazy('deleted user code'))
 
     class Meta:
         abstract = True
@@ -79,5 +84,24 @@ class FakeDeletableModel(models.Model):
         ]
 
     def fake_delete(self):
+
         self.is_deleted = True
-        self.save(update_fields=['is_deleted'])
+
+        fields_to_update = ['is_deleted']
+
+        if hasattr(self, 'user_code'):
+            self.deleted_user_code = self.user_code
+            self.user_code = formula.safe_eval('generate_user_code("del", "", 0)', context={'master_user': self.master_user})
+
+            fields_to_update.append('user_code')
+            fields_to_update.append('deleted_user_code')
+
+        if hasattr(self, 'is_enabled'):
+            self.is_enabled = False
+            fields_to_update.append('is_enabled')
+
+        if hasattr(self, 'is_active'):  # instrument prop
+            self.is_active = False
+            fields_to_update.append('is_active')
+
+        self.save(update_fields=fields_to_update)

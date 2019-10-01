@@ -479,7 +479,7 @@ def _generate_user_code(evaluator, prefix='', suffix='', counter=0):
         raise InvalidExpression('Counter is lower than 0')
 
     if counter > 10:
-        raise InvalidExpression('Counter is greater than 100')
+        raise InvalidExpression('Counter is greater than 10')
 
     master_user.user_code_counters[counter] = master_user.user_code_counters[counter] + 1
     master_user.save()

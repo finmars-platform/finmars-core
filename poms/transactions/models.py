@@ -1102,6 +1102,10 @@ class ComplexTransaction(FakeDeletableModel):
 
     transaction_type = models.ForeignKey(TransactionType, on_delete=models.PROTECT,
                                          verbose_name=ugettext_lazy('transaction type'))
+
+    is_locked = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is locked'))
+    is_canceled = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is canceled'))
+
     date = models.DateField(default=date_now, db_index=True, verbose_name=ugettext_lazy("date"))
     status = models.PositiveSmallIntegerField(default=PRODUCTION, choices=STATUS_CHOICES, db_index=True,
                                               verbose_name=ugettext_lazy('status'))

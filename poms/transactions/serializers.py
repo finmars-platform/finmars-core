@@ -1747,6 +1747,8 @@ class ComplexTransactionSerializer(ModelWithAttributesSerializer):
         fields = [
             'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'transactions', 'master_user',
 
+            'is_locked', 'is_canceled',
+
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
 
@@ -2135,26 +2137,26 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
                 setattr(instance, key, value)
         instance.value_errors = []
 
-        if instance.is_book:
-            ctrn_values = validated_data.get('complex_transaction', None)
-            if ctrn_values:
-                ctrn_ser = ComplexTransactionSerializer(instance=instance.complex_transaction, context=self.context)
-                ctrn_values = ctrn_values.copy()
+        # if instance.is_book:
+        ctrn_values = validated_data.get('complex_transaction', None)
+        if ctrn_values:
+            ctrn_ser = ComplexTransactionSerializer(instance=instance.complex_transaction, context=self.context)
+            ctrn_values = ctrn_values.copy()
 
-                is_date_was_empty = False
-                if not ctrn_values.get('date', None):
-                    ctrn_values['date'] = datetime.date.min
-                    is_date_was_empty = True
+            is_date_was_empty = False
+            if not ctrn_values.get('date', None):
+                ctrn_values['date'] = datetime.date.min
+                is_date_was_empty = True
 
-                if instance.complex_transaction:
-                    ctrn = ctrn_ser.update(ctrn_ser.instance, ctrn_values)
-                else:
-                    ctrn = ctrn_ser.create(ctrn_values)
+            if instance.complex_transaction:
+                ctrn = ctrn_ser.update(ctrn_ser.instance, ctrn_values)
+            else:
+                ctrn = ctrn_ser.create(ctrn_values)
 
-                if is_date_was_empty:
-                    ctrn.date = None
+            if is_date_was_empty:
+                ctrn.date = None
 
-                instance.complex_transaction = ctrn
+            instance.complex_transaction = ctrn
 
         instance.process()
 

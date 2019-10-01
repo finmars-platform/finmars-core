@@ -1,6 +1,9 @@
 # Changelog
 
-## 23.052019
+## 01.10.2019
+- Delete methods
+
+## 23.05.2019
 - Custom Fields
 
 ## 17.05.2018
