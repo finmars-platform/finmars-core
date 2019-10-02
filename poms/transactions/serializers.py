@@ -1811,6 +1811,24 @@ class ComplexTransactionSerializer(ModelWithAttributesSerializer):
     #     return instance
 
 
+class ComplexTransactionSimpleSerializer(ModelWithAttributesSerializer):
+
+    class Meta:
+        model = ComplexTransaction
+        fields = [
+            'id', 'is_locked', 'is_canceled',
+        ]
+
+    def update(self, instance, validated_data):
+
+        print('here? %s' % validated_data)
+        print('instance? %s' % instance)
+
+        instance = super(ComplexTransactionSimpleSerializer, self).update(instance, validated_data)
+
+        return instance
+
+
 class ComplexTransactionEvalSerializer(ComplexTransactionSerializer):
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionEvalSerializer, self).__init__(*args, **kwargs)

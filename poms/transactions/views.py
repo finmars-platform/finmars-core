@@ -39,7 +39,8 @@ from poms.transactions.models import TransactionClass, Transaction, TransactionT
 from poms.transactions.permissions import TransactionObjectPermission, ComplexTransactionPermission
 from poms.transactions.serializers import TransactionClassSerializer, TransactionSerializer, TransactionTypeSerializer, \
     TransactionTypeProcessSerializer, TransactionTypeGroupSerializer, ComplexTransactionSerializer, \
-    EventClassSerializer, NotificationClassSerializer, TransactionTypeLightSerializer, ComplexTransactionLightSerializer
+    EventClassSerializer, NotificationClassSerializer, TransactionTypeLightSerializer, \
+    ComplexTransactionLightSerializer, ComplexTransactionSimpleSerializer
 from poms.users.filters import OwnerByMasterUserFilter
 
 
@@ -1283,6 +1284,23 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
                 if instance.has_errors:
                     transaction.set_rollback(True)
 
+    @action(detail=True, methods=['put'], url_path='update-properties', serializer_class=ComplexTransactionSimpleSerializer)
+    def update_properties(self, request, pk=None):
+        complex_transaction = self.get_object()
+
+        # if request.method != 'GET':
+        #     complex_transaction.status = ComplexTransaction.PRODUCTION
+
+        print('request.data %s' % request.data)
+        print('detail_route: /update_properties: process update_properties')
+
+        serializer = self.get_serializer(instance=complex_transaction, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        history.set_actor_content_object(complex_transaction)
+
+        return Response(serializer.data)
 
 class ComplexTransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = get_complex_transaction_queryset(select_related=False, transactions=True)
