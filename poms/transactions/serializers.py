@@ -158,8 +158,10 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
     class Meta:
         model = TransactionTypeInput
         fields = [
-            'id', 'name', 'verbose_name', 'value_type', 'reference_table', 'content_type', 'order', 'can_recalculate', 'value_expr',
-            'is_fill_from_context', 'context_property', 'value', 'account', 'instrument_type', 'instrument', 'currency', 'counterparty',
+            'id', 'name', 'verbose_name', 'value_type', 'reference_table', 'content_type', 'order', 'can_recalculate',
+            'value_expr',
+            'is_fill_from_context', 'context_property', 'value', 'account', 'instrument_type', 'instrument', 'currency',
+            'counterparty',
             'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3', 'daily_pricing_model',
             'payment_size_detail', 'price_download_scheme', 'pricing_policy', 'periodicity', 'accrual_calculation_model'
             # 'account_object',
@@ -830,7 +832,7 @@ class TransactionTypeActionSerializer(serializers.ModelSerializer):
 
 
 class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
-                                ModelWithTagSerializer, ModelWithAttributesSerializer):
+                                     ModelWithTagSerializer, ModelWithAttributesSerializer):
     master_user = MasterUserField()
     group = TransactionTypeGroupField(required=False, allow_null=False)
     date_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
@@ -1589,7 +1591,11 @@ class TransactionSerializer(ModelWithAttributesSerializer):
             'allocation_pl',
 
             'is_locked',
+            'is_canceled',
             'is_deleted',
+
+            'error_code',
+
             'factor',
             'trade_price',
             'position_amount',
@@ -1747,7 +1753,7 @@ class ComplexTransactionSerializer(ModelWithAttributesSerializer):
         fields = [
             'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'transactions', 'master_user',
 
-            'is_locked', 'is_canceled',
+            'is_locked', 'is_canceled', 'error_code',
 
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
@@ -1812,7 +1818,6 @@ class ComplexTransactionSerializer(ModelWithAttributesSerializer):
 
 
 class ComplexTransactionSimpleSerializer(ModelWithAttributesSerializer):
-
     class Meta:
         model = ComplexTransaction
         fields = [
@@ -1820,9 +1825,23 @@ class ComplexTransactionSimpleSerializer(ModelWithAttributesSerializer):
         ]
 
     def update(self, instance, validated_data):
+        # print('here? %s' % validated_data)
+        # print('instance? %s' % instance)
 
-        print('here? %s' % validated_data)
-        print('instance? %s' % instance)
+        transactions = Transaction.objects.filter(complex_transaction=instance.id)
+
+        print('validated_data %s' % validated_data)
+        print('transactions %s' % len(transactions))
+
+        for transaction in transactions:
+
+            if 'is_locked' in validated_data:
+                transaction.is_locked = validated_data['is_locked']
+                transaction.save()
+
+            if 'is_canceled' in validated_data:
+                transaction.is_canceled = validated_data['is_canceled']
+                transaction.save()
 
         instance = super(ComplexTransactionSimpleSerializer, self).update(instance, validated_data)
 

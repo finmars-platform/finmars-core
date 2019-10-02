@@ -1275,7 +1275,7 @@ class Transaction(FakeDeletableModel):
     transaction_class = models.ForeignKey(TransactionClass, on_delete=models.PROTECT,
                                           verbose_name=ugettext_lazy("transaction class"))
 
-    is_locked = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is locked'))
+    # is_locked = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is locked'))
     is_canceled = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is canceled'))
 
     error_code = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=ugettext_lazy('error code'))
