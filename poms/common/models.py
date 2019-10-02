@@ -93,7 +93,12 @@ class FakeDeletableModel(models.Model):
             self.deleted_user_code = self.user_code
             self.user_code = formula.safe_eval('generate_user_code("del", "", 0)', context={'master_user': self.master_user})
 
+            self.name = '(del) ' + self.name
+            self.short_name = '(del) ' + self.short_name
+
             fields_to_update.append('user_code')
+            fields_to_update.append('name')
+            fields_to_update.append('short_name')
             fields_to_update.append('deleted_user_code')
 
         if hasattr(self, 'is_enabled'):

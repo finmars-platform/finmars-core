@@ -501,9 +501,11 @@ class TransactionTypeInput(models.Model):
     verbose_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('verbose name'))
     value_type = models.PositiveSmallIntegerField(default=NUMBER, choices=TYPES,
                                                   verbose_name=ugettext_lazy('value type'))
-    content_type = models.ForeignKey(ContentType, null=True, blank=True, verbose_name=ugettext_lazy('content type'), on_delete=models.SET_NULL)
+    content_type = models.ForeignKey(ContentType, null=True, blank=True, verbose_name=ugettext_lazy('content type'),
+                                     on_delete=models.SET_NULL)
 
-    reference_table = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('reference table'))
+    reference_table = models.CharField(max_length=255, null=True, blank=True,
+                                       verbose_name=ugettext_lazy('reference table'))
 
     order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
     value_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True,
@@ -511,7 +513,8 @@ class TransactionTypeInput(models.Model):
                                   help_text=ugettext_lazy('this is expression for recalculate value'))
 
     is_fill_from_context = models.BooleanField(default=False, verbose_name=ugettext_lazy('is fill from context'))
-    context_property = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('context property'))
+    context_property = models.CharField(max_length=255, null=True, blank=True,
+                                        verbose_name=ugettext_lazy('context property'))
 
     value = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True,
                              verbose_name=ugettext_lazy('value'),
@@ -591,18 +594,19 @@ class TransactionTypeInput(models.Model):
     @property
     def can_recalculate(self):
 
-        return bool(self.value_expr) and self.value_type in [TransactionTypeInput.STRING, TransactionTypeInput.SELECTOR,  TransactionTypeInput.DATE,
+        return bool(self.value_expr) and self.value_type in [TransactionTypeInput.STRING, TransactionTypeInput.SELECTOR,
+                                                             TransactionTypeInput.DATE,
                                                              TransactionTypeInput.NUMBER, TransactionTypeInput.RELATION]
 
 
 class RebookReactionChoice():
-    CREATE = 0 # Used in Instrument Action
+    CREATE = 0  # Used in Instrument Action
     SKIP = 1  # is not in use
-    OVERWRITE = 2 # Used in Instrument Action
+    OVERWRITE = 2  # Used in Instrument Action
     CLEAR_AND_WRITE = 3
     CREATE_IF_NOT_EXIST = 4
 
-    FIND_OR_CREATE = 5 # Used in Instrument Action
+    FIND_OR_CREATE = 5  # Used in Instrument Action
     CLEAR_AND_WRITE_OR_SKIP = 6
     CLEAR = 7
 
@@ -679,7 +683,8 @@ class TransactionTypeActionInstrument(TransactionTypeAction):
     payment_size_detail = models.ForeignKey('instruments.PaymentSizeDetail', null=True, blank=True,
                                             on_delete=models.SET_NULL, related_name='+',
                                             verbose_name=ugettext_lazy('payment size detail'))
-    payment_size_detail_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
+    payment_size_detail_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True,
+                                                  on_delete=models.SET_NULL,
                                                   related_name='+',
                                                   verbose_name=ugettext_lazy('payment size detail input'))
 
@@ -700,7 +705,8 @@ class TransactionTypeActionInstrument(TransactionTypeAction):
     daily_pricing_model = models.ForeignKey('instruments.DailyPricingModel', null=True, blank=True,
                                             on_delete=models.SET_NULL, related_name='+',
                                             verbose_name=ugettext_lazy('daily pricing model'))
-    daily_pricing_model_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
+    daily_pricing_model_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True,
+                                                  on_delete=models.SET_NULL,
                                                   related_name='+',
                                                   verbose_name=ugettext_lazy('daily pricing model input'))
     price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.SET_NULL, null=True,
@@ -744,7 +750,8 @@ class TransactionTypeActionTransaction(TransactionTypeAction):
 
     settlement_currency = models.ForeignKey(Currency, null=True, blank=True, on_delete=models.SET_NULL,
                                             related_name='+', verbose_name=ugettext_lazy('settlement currency'))
-    settlement_currency_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
+    settlement_currency_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True,
+                                                  on_delete=models.SET_NULL,
                                                   related_name='+',
                                                   verbose_name=ugettext_lazy('settlement currency input'))
 
@@ -815,7 +822,8 @@ class TransactionTypeActionTransaction(TransactionTypeAction):
     strategy3_cash_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                              related_name='+', verbose_name=ugettext_lazy('strategy 3 cash input'))
 
-    linked_instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
+    linked_instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.SET_NULL,
+                                          related_name='+',
                                           verbose_name=ugettext_lazy('linked instrument'))
     linked_instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                                 related_name='+', verbose_name=ugettext_lazy('linked instrument input'))
@@ -1047,7 +1055,8 @@ class TransactionTypeActionInstrumentEventScheduleAction(TransactionTypeAction):
     #  on_delete=models.PROTECT, TODO check later phantom permossions
     event_schedule_phantom = models.ForeignKey(TransactionTypeActionInstrumentEventSchedule, null=True, blank=True,
                                                related_name='+',
-                                               verbose_name=ugettext_lazy('event schedule phantom'), on_delete=models.SET_NULL)
+                                               verbose_name=ugettext_lazy('event schedule phantom'),
+                                               on_delete=models.SET_NULL)
 
     transaction_type_from_instrument_type = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='',
                                                              verbose_name=ugettext_lazy('text'))
@@ -1105,6 +1114,7 @@ class ComplexTransaction(FakeDeletableModel):
 
     is_locked = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is locked'))
     is_canceled = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is canceled'))
+    error_code = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=ugettext_lazy('error code'))
 
     date = models.DateField(default=date_now, db_index=True, verbose_name=ugettext_lazy("date"))
     status = models.PositiveSmallIntegerField(default=PRODUCTION, choices=STATUS_CHOICES, db_index=True,
@@ -1254,7 +1264,8 @@ class ComplexTransactionInput(models.Model):
 
 
 class Transaction(FakeDeletableModel):
-    master_user = models.ForeignKey(MasterUser, related_name='transactions', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey(MasterUser, related_name='transactions', verbose_name=ugettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
     complex_transaction = models.ForeignKey(ComplexTransaction, on_delete=models.SET_NULL, null=True, blank=True,
                                             related_name='transactions',
                                             verbose_name=ugettext_lazy('complex transaction'))
@@ -1263,6 +1274,11 @@ class Transaction(FakeDeletableModel):
     transaction_code = models.IntegerField(default=0, verbose_name=ugettext_lazy('transaction code'))
     transaction_class = models.ForeignKey(TransactionClass, on_delete=models.PROTECT,
                                           verbose_name=ugettext_lazy("transaction class"))
+
+    is_locked = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is locked'))
+    is_canceled = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is canceled'))
+
+    error_code = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=ugettext_lazy('error code'))
 
     # Position related
     instrument = models.ForeignKey(Instrument, related_name='transactions', on_delete=models.PROTECT, null=True,
