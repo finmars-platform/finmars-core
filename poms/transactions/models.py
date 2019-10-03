@@ -1377,6 +1377,10 @@ class Transaction(FakeDeletableModel):
                                help_text=ugettext_lazy('Multiplier (for calculations on the form)'))
     trade_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy("trade price"),
                                     help_text=ugettext_lazy('Price (for calculations on the form)'))
+
+    ytm_at_cost = models.FloatField(default=0.0, verbose_name=ugettext_lazy("YTM at cost"),
+                                    help_text=ugettext_lazy('YTM at cost'))
+
     position_amount = models.FloatField(default=0.0, verbose_name=ugettext_lazy("position amount"),
                                         help_text=ugettext_lazy(
                                             'Absolute value of Position with Sign (for calculations on the form)'))

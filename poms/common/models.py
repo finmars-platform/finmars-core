@@ -17,7 +17,7 @@ class NamedModel(models.Model):
                                    help_text=ugettext_lazy('used if user does not have permissions to view object'))
     notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
 
-    is_enabled = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is enabled'))
+    is_enabled = models.BooleanField(default=True, db_index=True, verbose_name=ugettext_lazy('is enabled'))
 
     class Meta:
         abstract = True

@@ -260,7 +260,7 @@ class TransactionTypeProcess(object):
                         if isinstance(v, model_class):
                             value = v
                             break
-                else: 
+                else:
 
                     if value is None:
                         value = _get_val_by_model_cls(i, model_class)
@@ -1174,13 +1174,29 @@ class TransactionTypeProcess(object):
                                   target=transaction, target_attr_name='notes',
                                   source=action_transaction, source_attr_name='notes')
 
+                transaction_date_source = 'null'
+
                 if transaction.accounting_date is None:
                     transaction.accounting_date = self._now
+                else:
+                    transaction_date_source = 'accounting_date'
+
                 if transaction.cash_date is None:
                     transaction.cash_date = self._now
+                else:
+                    transaction_date_source = 'cash_date'
+
+                # Set transaction date below
+
+                if transaction_date_source == 'accounting_date':
+                    transaction.transaction_date = transaction.accounting_date
+                elif transaction_date_source == 'cash_date':
+                    transaction.transaction_date = transaction.cash_date
+                elif transaction_date_source == 'null':
+                    transaction.transaction_date = min(transaction.accounting_date, transaction.cash_date)
 
                 try:
-                    transaction.transaction_date = min(transaction.accounting_date, transaction.cash_date)
+                    # transaction.transaction_date = min(transaction.accounting_date, transaction.cash_date)
                     transaction.save()
 
                 except (ValueError, TypeError, IntegrityError):
