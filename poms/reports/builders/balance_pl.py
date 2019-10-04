@@ -521,8 +521,8 @@ class ReportBuilder(BaseReportBuilder):
         # TODO DO OWN FETCH TRANSACTIONS HERE
         # trn_qs = self._trn_qs()
 
-        complex_qs = ComplexTransaction.objects.filter(status=ComplexTransaction.PRODUCTION,
-                                                       master_user=self.instance.master_user, is_deleted=False)
+        # complex_qs = ComplexTransaction.objects.filter(status=ComplexTransaction.PRODUCTION,
+        #                                                master_user=self.instance.master_user, is_deleted=False)
 
         trn_qs = Transaction.objects.select_related(
             'complex_transaction',
@@ -554,7 +554,8 @@ class ReportBuilder(BaseReportBuilder):
             'allocation_pl').prefetch_related('instrument__factor_schedules',
                                               'instrument__accrual_calculation_schedules').all()
 
-        trn_qs = trn_qs.filter(complex_transaction__in=complex_qs)
+        # trn_qs = trn_qs.filter(complex_transaction__in=complex_qs)
+        trn_qs = trn_qs.filter(master_user=self.instance.master_user, is_canceled=False)
 
         trn_qs = self._trn_qs_filter(trn_qs)
 
@@ -563,7 +564,7 @@ class ReportBuilder(BaseReportBuilder):
         if trn_qs.count() == 0:
             return
 
-        print('trn_qs %s ' % len(list(trn_qs)))
+        # print('trn_qs %s ' % len(list(trn_qs)))
 
         _l.debug('_load_transactions trn_qs_st len done: %s', (time.perf_counter() - trn_qs_st))
 
