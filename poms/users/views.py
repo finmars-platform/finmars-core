@@ -144,7 +144,7 @@ class MasterUserCreateViewSet(ViewSet):
         member = Member.objects.create(user=request.user, master_user=master_user, is_owner=True, is_admin=True)
         member.save()
 
-        return Response({'success': True})
+        return Response({'id': master_user.id, 'name': master_user.name})
 
 
 def get_password_reset_token_expiry_time():
