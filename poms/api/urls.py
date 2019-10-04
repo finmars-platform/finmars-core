@@ -29,7 +29,12 @@ import poms.celery_tasks.views as celery_tasks
 import poms.configuration_export.views as configuration_export
 import poms.complex_import.views as complex_import
 
+import poms.system.views as system
+
 router = routers.DefaultRouter()
+
+router.register(r'system/ecosystem-configuration', system.EcosystemConfigurationViewSet, 'ecosystemconfiguration')
+
 router.register(r'users/login', users.LoginViewSet, 'login')
 router.register(r'users/logout', users.LogoutViewSet, 'logout')
 router.register(r'users/ping', users.PingViewSet, "ping")

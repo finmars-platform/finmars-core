@@ -90,6 +90,7 @@ INSTALLED_APPS = [
 
     'mptt',
 
+    'poms.system',
     'poms.http_sessions',
     'poms.users',
     'poms.audit',
