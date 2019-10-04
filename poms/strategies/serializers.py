@@ -23,6 +23,7 @@ class Strategy1GroupSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
         model = Strategy1Group
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_deleted',
+            'is_enabled'
             # 'tags', 'tags_object'
         ]
 
@@ -48,7 +49,7 @@ class Strategy1SubgroupSerializer(ModelWithObjectPermissionSerializer, ModelWith
         model = Strategy1Subgroup
         fields = [
             'id', 'master_user', 'group', 'user_code', 'name', 'short_name', 'public_name', 'is_deleted', 'notes',
-            'group_object',
+            'group_object', 'is_enabled'
             # 'tags', 'tags_object',
         ]
 
@@ -60,7 +61,7 @@ class Strategy1SubgroupViewSerializer(ModelWithObjectPermissionSerializer):
         model = Strategy1Subgroup
         fields = [
             'id', 'group', 'user_code', 'name', 'short_name', 'public_name', 'is_deleted', 'notes',
-            'group_object',
+            'group_object', 'is_enabled'
         ]
 
 
@@ -76,7 +77,7 @@ class Strategy1Serializer(ModelWithObjectPermissionSerializer, ModelWithUserCode
         model = Strategy1
         fields = [
             'id', 'master_user', 'subgroup', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_deleted',
-            'subgroup_object',
+            'subgroup_object', 'is_enabled'
             # 'tags', 'tags_object'
         ]
 

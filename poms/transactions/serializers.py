@@ -75,6 +75,7 @@ class TransactionTypeGroupSerializer(ModelWithObjectPermissionSerializer, ModelW
         model = TransactionTypeGroup
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_deleted',
+            'is_enabled'
             # 'tags', 'tags_object',
         ]
 
@@ -1035,6 +1036,8 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             'instrument_types', 'portfolios',
             'inputs', 'actions',
             'group_object',
+
+            'is_enabled'
         ]
 
     def validate(self, attrs):

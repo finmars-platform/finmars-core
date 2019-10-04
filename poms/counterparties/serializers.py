@@ -50,7 +50,7 @@ class CounterpartyGroupSerializer(ModelWithObjectPermissionSerializer, ModelWith
         model = CounterpartyGroup
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes',
-            'is_default', 'is_deleted',
+            'is_default', 'is_deleted', 'is_enabled'
             # 'tags', 'tags_object',
         ]
 
@@ -79,6 +79,7 @@ class CounterpartySerializer(ModelWithObjectPermissionSerializer, ModelWithAttri
         fields = [
             'id', 'master_user', 'group', 'group_object', 'user_code', 'name', 'short_name', 'public_name',
             'notes', 'is_default', 'is_valid_for_all_portfolios', 'is_deleted', 'portfolios', 'portfolios_object',
+            'is_enabled'
             # 'attributes',
             # 'tags', 'tags_object'
         ]
@@ -148,7 +149,7 @@ class ResponsibleGroupSerializer(ModelWithObjectPermissionSerializer, ModelWithU
         model = ResponsibleGroup
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_default',
-            'is_deleted',
+            'is_deleted', 'is_enabled'
             # 'tags', 'tags_object',
         ]
 
@@ -179,6 +180,7 @@ class ResponsibleSerializer(ModelWithObjectPermissionSerializer, ModelWithAttrib
         fields = [
             'id', 'master_user', 'group', 'group_object', 'user_code', 'name', 'short_name', 'public_name',
             'notes', 'is_default', 'is_valid_for_all_portfolios', 'is_deleted', 'portfolios', 'portfolios_object',
+            'is_enabled'
             # 'attributes',
             # 'tags', 'tags_object',
         ]

@@ -62,7 +62,8 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
         model = Portfolio
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_default',
-            'is_deleted', 'accounts', 'responsibles', 'counterparties', 'transaction_types'
+            'is_deleted', 'accounts', 'responsibles', 'counterparties', 'transaction_types',
+            'is_enabled'
             # 'attributes',
             # 'tags', 'tags_object',
         ]
