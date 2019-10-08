@@ -15,7 +15,8 @@ class OwnerByAttributeTypeFilter(BaseFilterBackend):
         # queryset = queryset.filter(attribute_type__master_user=master_user)
         # queryset = obj_perms_filter_objects(request.user.member, get_view_perms(queryset.model), queryset)
 
-        attribute_type_model = queryset.model._meta.get_field('attribute_type').rel.to
+        # attribute_type_model = queryset.model._meta.get_field('attribute_type').rel.to
+        attribute_type_model = queryset.model._meta.get_field('attribute_type').remote_field.model
         attribute_type_queryset = attribute_type_model.objects.filter(master_user=master_user)
         attribute_type_queryset = obj_perms_filter_objects(request.user.member, get_view_perms(attribute_type_model),
                                                            attribute_type_queryset)
