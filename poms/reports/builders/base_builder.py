@@ -358,10 +358,12 @@ class BaseReportBuilder:
 
         # qs = self._prefetch_instruments_data(qs)
 
-        complex_qs = ComplexTransaction.objects.filter(status=ComplexTransaction.PRODUCTION,
-                                                       master_user=self.instance.master_user, is_deleted=False)
+        # complex_qs = ComplexTransaction.objects.filter(status=ComplexTransaction.PRODUCTION,
+        #                                                master_user=self.instance.master_user, is_deleted=False)
 
-        qs = qs.filter(complex_transaction__in=complex_qs)
+        # qs = qs.filter(complex_transaction__in=complex_qs)
+
+        qs = qs.filter(master_user=self.instance.master_user, is_canceled=False)
 
         if self.instance.portfolios:
             qs = qs.filter(portfolio__in=self.instance.portfolios)
