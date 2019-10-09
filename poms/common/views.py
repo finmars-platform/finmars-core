@@ -5,6 +5,7 @@ from collections import OrderedDict
 
 from celery.result import AsyncResult
 from django.conf import settings
+from django.core.exceptions import FieldDoesNotExist
 from django.core.signing import TimestampSigner
 from django.db import transaction
 from django.utils import timezone
@@ -21,7 +22,8 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
 
 from poms.audit.mixins import HistoricalModelMixin
 from poms.common.filtering_handlers import handle_filters
-from poms.common.filters import ByIdFilterBackend, ByIsDeletedFilterBackend, OrderingPostFilter
+from poms.common.filters import ByIdFilterBackend, ByIsDeletedFilterBackend, OrderingPostFilter, \
+    ByIsEnabledFilterBackend
 from poms.common.mixins import BulkModelMixin, DestroyModelFakeMixin, UpdateModelMixinExt
 from poms.common.sorting import sort_by_dynamic_attrs
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
@@ -143,6 +145,15 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
         if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy']:
             filtered_qs = filtered_qs.filter(is_deleted=False)
 
+        try:
+            filtered_qs.model._meta.get_field('is_enabled')
+        except FieldDoesNotExist:
+            pass
+        else:
+            is_enabled = self.request.query_params.get('is_enabled', 'true')
+            if is_enabled == 'true':
+                filtered_qs = filtered_qs.filter(is_enabled=True)
+
         filtered_qs = handle_groups(filtered_qs, request, self.get_queryset(), content_type)
 
         page = self.paginate_queryset(filtered_qs)
@@ -185,7 +196,15 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
         if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy']:
             filtered_qs = filtered_qs.filter(is_deleted=False)
 
-        filtered_qs = handle_groups(filtered_qs, groups_types, groups_values, groups_order, master_user, self.get_queryset(), content_type)
+        if content_type.model not in ['currencyhistory', 'pricehistory']:
+
+            is_enabled = request.data.get('is_enabled', 'true')
+
+            if is_enabled == 'true':
+                filtered_qs = filtered_qs.filter(is_enabled=True)
+
+        filtered_qs = handle_groups(filtered_qs, groups_types, groups_values, groups_order, master_user,
+                                    self.get_queryset(), content_type)
 
         # print('len after handle groups %s' % len(filtered_qs))
 
@@ -209,6 +228,7 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
     filter_backends = [
         ByIdFilterBackend,
         ByIsDeletedFilterBackend,
+        ByIsEnabledFilterBackend,
         DjangoFilterBackend,
         OrderingFilter,
         OrderingPostFilter
@@ -228,6 +248,15 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
 
         if ordering:
             queryset = sort_by_dynamic_attrs(queryset, ordering, master_user, content_type)
+
+        try:
+            queryset.model._meta.get_field('is_enabled')
+        except FieldDoesNotExist:
+            pass
+        else:
+            is_enabled = self.request.query_params.get('is_enabled', 'true')
+            if is_enabled == 'true':
+                queryset = queryset.filter(is_enabled=True)
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -250,6 +279,13 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
 
         if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy']:
             queryset = queryset.filter(is_deleted=False)
+
+        if content_type.model not in ['currencyhistory', 'pricehistory']:
+
+            is_enabled = request.data.get('is_enabled', 'true')
+
+            if is_enabled == 'true':
+                queryset = queryset.filter(is_enabled=True)
 
         queryset = handle_filters(queryset, filter_settings, master_user, content_type)
 
@@ -340,7 +376,6 @@ class AbstractAsyncViewSet(AbstractViewSet):
             st = time.perf_counter()
 
             if res.ready():
-
                 instance = res.result
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
@@ -390,7 +425,6 @@ class AbstractSyncViewSet(AbstractViewSet):
 
         res.task_id = 1
         res.task_status = "SUCCESS"
-
 
         print('res.task_id %s' % res.task_id)
         print('res.task_status %s' % res.task_status)

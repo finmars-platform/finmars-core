@@ -6,7 +6,7 @@ from django.utils.translation import ugettext_lazy
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed, ValidationError, PermissionDenied
-from rest_framework.mixins import UpdateModelMixin, DestroyModelMixin, CreateModelMixin
+from rest_framework.mixins import UpdateModelMixin, DestroyModelMixin, CreateModelMixin, ListModelMixin
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 
@@ -232,7 +232,6 @@ class BulkDestroyModelMixin(DestroyModelMixin):
 
             except ObjectDoesNotExist:
                 print("object does not exist")
-
 
         # if not is_fake:
         #     for instance in queryset:

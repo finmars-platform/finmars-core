@@ -139,6 +139,17 @@ class ByIsDeletedFilterBackend(BaseFilterBackend):
         return queryset
 
 
+class ByIsEnabledFilterBackend(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        if getattr(view, 'has_feature_is_enabled', False):
+            if getattr(view, 'action', '') == 'list':
+                value = request.query_params.get('is_enabled', None)
+                if value is None:
+                    is_enabled = value in (True, 'True', 'true', '1')
+                    queryset = queryset.filter(is_enabled=is_enabled)
+        return queryset
+
+
 class NoOpFilter(django_filters.Filter):
     # For UI only, real filtering in some AbstractRelatedFilterBackend
     def filter(self, qs, value):
