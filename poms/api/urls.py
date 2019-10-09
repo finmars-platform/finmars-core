@@ -27,6 +27,7 @@ import poms.reference_tables.views as reference_table
 import poms.celery_tasks.views as celery_tasks
 
 import poms.configuration_export.views as configuration_export
+import poms.configuration_import.views as configuration_import
 import poms.complex_import.views as complex_import
 
 import poms.system.views as system
@@ -314,6 +315,7 @@ router.register(r'import/csv-validate', csv_import.CsvDataImportValidateViewSet,
 router.register(r'import/complex/scheme', complex_import.ComplexImportSchemeViewSet, 'import_complex_scheme')
 router.register(r'import/complex', complex_import.ComplexImportViewSet, 'import_complex')
 
+router.register(r'import/configuration-json', configuration_import.ConfigurationImportAsJsonViewSet, 'configuration_import')
 router.register(r'export/configuration', configuration_export.ConfigurationExportViewSet, 'configuration_export')
 router.register(r'export/mapping', configuration_export.MappingExportViewSet, 'mapping_export')
 router.register(r'import/configuration/check-duplicates', configuration_export.ConfigurationDuplicateCheckViewSet,

@@ -113,6 +113,7 @@ INSTALLED_APPS = [
     'poms.csv_import',
     'poms.complex_import',
     'poms.configuration_export',
+    'poms.configuration_import',
     'poms.reference_tables',
     'poms.celery_tasks',
 

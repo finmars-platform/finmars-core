@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import datetime
 
+import time
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -1045,11 +1046,17 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
         return attrs
 
     def create(self, validated_data):
+
+        st = time.perf_counter()
+
         inputs = validated_data.pop('inputs', None)
         actions = validated_data.pop('actions', None)
         instance = super(TransactionTypeSerializer, self).create(validated_data)
         inputs = self.save_inputs(instance, inputs)
         self.save_actions(instance, actions, inputs)
+
+        # print('Transaction Type Serializer create %s' % (time.perf_counter() - st))
+
         return instance
 
     def update(self, instance, validated_data):
@@ -1070,7 +1077,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
         cur_inputs = {i.id: i for i in instance.inputs.all()}
         new_inputs = []
 
-        print('instance %s' % instance)
+        # print('instance %s' % instance)
 
         for order, inp_data in enumerate(inputs_data):
             # name = inp_data['name']

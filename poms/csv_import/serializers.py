@@ -12,10 +12,9 @@ from .fields import CsvImportContentTypeField, CsvImportSchemeField
 
 class CsvDataFileImport:
     def __init__(self, task_id=None, task_status=None, master_user=None, status=None,
-                 scheme=None, file=None,  delimiter=None, mode=None,
+                 scheme=None, file=None, delimiter=None, mode=None,
                  error_handler=None, missing_data_handler=None, classifier_handler=None,
                  total_rows=None, processed_rows=None, stats=None, imported=None):
-
         self.task_id = task_id
         self.task_status = task_status
 
@@ -38,6 +37,7 @@ class CsvDataFileImport:
 
     def __str__(self):
         return '%s:%s' % (getattr(self.master_user, 'name', None), getattr(self.scheme, 'scheme_name', None))
+
 
 class CsvFieldSerializer(serializers.ModelSerializer):
     name_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
@@ -81,7 +81,12 @@ class CsvImportSchemeSerializer(serializers.ModelSerializer):
                        'transactions_account_cash', 'transactions_account_interim', 'accountmapping',
                        'is_valid_for_all_portfolios', 'transactions',
                        'master_user_mismatch_portfolio', 'external_cash_flows', 'attrs', 'object_permissions',
-                       'attributes', 'tags']
+                       'attributes', 'tags', 'ecosystemdefault', 'is_enabled', 'deleted_user_code', 'instrumentmapping',
+                       'factor_schedules', 'event_schedules', 'manual_pricing_formulas', 'transactions_linked',
+                       'accrual_calculation_schedules', 'transactions_allocation_balance', 'transactions_allocation_pl',
+                       'prices']
+
+
 
         for model_field in model_fields:
 
@@ -106,6 +111,8 @@ class CsvImportSchemeSerializer(serializers.ModelSerializer):
 
     def set_entity_fields_mapping(self, scheme, entity_fields):
 
+        EntityField.objects.filter(scheme=scheme, dynamic_attribute_id__isnull=True).delete()
+
         self.create_entity_fields_if_not_exist(scheme)
 
         for entity_field in entity_fields:
@@ -123,8 +130,10 @@ class CsvImportSchemeSerializer(serializers.ModelSerializer):
 
                 except EntityField.DoesNotExist:
 
-                    raise ValidationError("Entity with id {} is not exist ".format(entity_field.get(
-                        'system_property_key')))
+                    print("Unknown entity %s" % entity_field.get(
+                        'system_property_key'))
+                    # raise ValidationError("Entity with id {} is not exist ".format(entity_field.get(
+                    #     'system_property_key')))
 
     def set_dynamic_attributes_mapping(self, scheme, entity_fields):
 
@@ -176,7 +185,6 @@ class CsvImportSchemeSerializer(serializers.ModelSerializer):
 
 
 class CsvDataImportSerializer(serializers.Serializer):
-
     task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     task_status = serializers.ReadOnlyField()
 
@@ -208,7 +216,6 @@ class CsvDataImportSerializer(serializers.Serializer):
         required=False, initial='skip', default='skip'
     )
 
-
     stats = serializers.ReadOnlyField()
     imported = serializers.ReadOnlyField()
 
@@ -218,13 +225,12 @@ class CsvDataImportSerializer(serializers.Serializer):
     scheme_object = CsvImportSchemeSerializer(source='scheme', read_only=True)
 
     def create(self, validated_data):
-
         if validated_data.get('task_id', None):
             validated_data.pop('file', None)
 
-        return  CsvDataFileImport(**validated_data)
+        return CsvDataFileImport(**validated_data)
 
     # class Meta:
     #     model = CsvDataImport
 
-        # fields = ('file', 'scheme', 'error_handler', 'mode', 'delimiter', 'missing_data_handler', 'classifier_handler', 'task_id', 'task_status', 'stats', 'imported', 'total_rows', 'processed_rows')
+    # fields = ('file', 'scheme', 'error_handler', 'mode', 'delimiter', 'missing_data_handler', 'classifier_handler', 'task_id', 'task_status', 'stats', 'imported', 'total_rows', 'processed_rows')
