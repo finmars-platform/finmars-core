@@ -4,6 +4,7 @@ import django_filters
 from django.db import transaction
 from django.db.models import Prefetch, Q
 from django_filters.rest_framework import FilterSet
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
@@ -1214,12 +1215,12 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
     #     return super(ComplexTransactionViewSet, self).perform_update(serializer)
 
     def perform_destroy(self, instance):
-        super(ComplexTransactionViewSet, self).perform_destroy(instance)
+
         Transaction.objects.filter(
             complex_transaction=instance
-        ).update(
-            is_deleted=instance.is_deleted
-        )
+        ).delete()
+
+        ComplexTransaction.objects.get(id=instance.id).delete()
 
     @action(detail=True, methods=['get', 'put'], url_path='rebook', serializer_class=TransactionTypeProcessSerializer)
     def rebook(self, request, pk=None):
