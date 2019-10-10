@@ -56,9 +56,11 @@ class PasswordTokenSerializer(serializers.Serializer):
 
 class MasterUserCreateSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255, required=True)
+    description = serializers.CharField()
 
     def create(self, validated_data):
         name = validated_data.get('name')
+        description = validated_data.get('description')
 
         if MasterUser.objects.filter(name=name).exists():
             error = {"name": [ugettext_lazy('Name already in use.')]}

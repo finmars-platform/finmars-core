@@ -136,15 +136,16 @@ class MasterUserCreateViewSet(ViewSet):
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.save()
         name = validated_data['name']
+        description = validated_data['description']
 
         master_user = MasterUser.objects.create_master_user(
             user=request.user,
-            language=translation.get_language(), name=name)
+            language=translation.get_language(), name=name, description=description)
 
         member = Member.objects.create(user=request.user, master_user=master_user, is_owner=True, is_admin=True)
         member.save()
 
-        return Response({'id': master_user.id, 'name': master_user.name})
+        return Response({'id': master_user.id, 'name': master_user.name, 'description': master_user.description})
 
 
 def get_password_reset_token_expiry_time():
