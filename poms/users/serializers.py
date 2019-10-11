@@ -56,7 +56,7 @@ class PasswordTokenSerializer(serializers.Serializer):
 
 class MasterUserCreateSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255, required=True)
-    description = serializers.CharField()
+    description = serializers.CharField(allow_blank=True)
 
     def create(self, validated_data):
         name = validated_data.get('name')

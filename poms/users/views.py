@@ -148,6 +148,28 @@ class MasterUserCreateViewSet(ViewSet):
         return Response({'id': master_user.id, 'name': master_user.name, 'description': master_user.description})
 
 
+class MasterUserCreateCheckUniquenessViewSet(ViewSet):
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+    def list(self, request, *args, **kwargs):
+
+        result = True
+
+        name = request.query_params.get('name')
+
+        try:
+            master_user = MasterUser.objects.get(name=name)
+
+            result = False
+
+        except MasterUser.DoesNotExist:
+            result = True
+
+        return Response({'unique': result})
+
+
 def get_password_reset_token_expiry_time():
     """
     Returns the password reset token expirty time in hours (default: 24)
