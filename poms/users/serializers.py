@@ -694,8 +694,10 @@ class InviteToMasterUserSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         if validated_data['status'] == InviteStatusChoice.ACCEPTED:
             user = get_user_from_context(self.context)
-            Member.objects.create(user=user, master_user=instance.from_member.master_user,
-                                  is_admin=True)  # TODO permission logic?
+            # Member.objects.create(user=user, master_user=instance.from_member.master_user,
+            #                       is_admin=True)  # TODO permission logic?
+
+            Member.objects.create(user=user, master_user=instance.from_member.master_user)  # TODO permission logic?
 
         return super(InviteToMasterUserSerializer, self).update(instance, validated_data)
 
