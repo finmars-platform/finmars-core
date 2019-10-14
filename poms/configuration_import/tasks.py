@@ -117,6 +117,9 @@ class ImportManager(object):
 
         self.instance.processed_rows = self.instance.processed_rows + 1
 
+        if self.instance.processed_rows > self.instance.total_rows:  # TODO  Somehow processed rows become bigger then total total rows, check for duplicate
+            self.instance.processed_rows = self.instance.total_rows
+
         self.update_task_state(task_id=self.instance.task_id, state=Task.STATUS_PENDING,
                                meta={'total_rows': self.instance.total_rows,
                                      'processed_rows': self.instance.processed_rows})
@@ -541,11 +544,15 @@ class ImportManager(object):
                             group = TransactionTypeGroup.objects.get(master_user=self.master_user,
                                                                      user_code=content_object['___group__user_code'])
                             content_object['group'] = group.pk
-                        except TransactionTypeGroup.DoesNotExist:
+                        except (KeyError, TransactionTypeGroup.DoesNotExist):
                             content_object['group'] = self.ecosystem_default.transaction_type_group.pk
 
-                        self.sync_transaction_type_inputs(content_object)
-                        self.sync_transaction_type_actions(content_object)
+                        if 'inputs' in content_object:
+                            self.sync_transaction_type_inputs(content_object)
+
+                        if 'actions' in content_object:
+                            self.sync_transaction_type_actions(content_object)
+
 
                         serializer = TransactionTypeSerializer(data=content_object,
                                                                context=self.get_serializer_context())
@@ -747,18 +754,26 @@ class ImportManager(object):
                     for content_object in item['content']:
                         content_object['member'] = self.member.pk
 
-                        for component_type in content_object['data']['components_types']:
-                            self.sync_dashboard_layout_component_type_settings(component_type)
+                        if 'data' in content_object:
 
-                        for tab in content_object['data']['tabs']:
-                            for row in tab['layout']['rows']:
-                                for column in row['columns']:
-                                    self.sync_dashboard_layout_component_type_settings(column['data'])
+                            if 'components_types' in content_object['data']:
 
-                        if 'layout' in content_object['data']['fixed_area']:
-                            for row in content_object['fixed_area']['rows']:
-                                for column in row['columns']:
-                                    self.sync_dashboard_layout_component_type_settings(column['data'])
+                                for component_type in content_object['data']['components_types']:
+                                    self.sync_dashboard_layout_component_type_settings(component_type)
+
+                            if 'tabs' in content_object['data']:
+
+                                for tab in content_object['data']['tabs']:
+                                    for row in tab['layout']['rows']:
+                                        for column in row['columns']:
+                                            self.sync_dashboard_layout_component_type_settings(column['data'])
+
+                            if 'fixed_area' in content_object['data']:
+
+                                if 'layout' in content_object['data']['fixed_area']:
+                                    for row in content_object['data']['fixed_area']['layout']['rows']:
+                                        for column in row['columns']:
+                                            self.sync_dashboard_layout_component_type_settings(column['data'])
 
                         serializer = DashboardLayoutSerializer(data=content_object,
                                                                context=self.get_serializer_context())

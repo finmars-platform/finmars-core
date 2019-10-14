@@ -1049,11 +1049,13 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
 
         st = time.perf_counter()
 
-        inputs = validated_data.pop('inputs', None)
-        actions = validated_data.pop('actions', None)
+        inputs = validated_data.pop('inputs', empty)
+        actions = validated_data.pop('actions', empty)
         instance = super(TransactionTypeSerializer, self).create(validated_data)
-        inputs = self.save_inputs(instance, inputs)
-        self.save_actions(instance, actions, inputs)
+        if inputs is not empty:
+            inputs = self.save_inputs(instance, inputs)
+        if actions is not empty:
+            self.save_actions(instance, actions, inputs)
 
         # print('Transaction Type Serializer create %s' % (time.perf_counter() - st))
 

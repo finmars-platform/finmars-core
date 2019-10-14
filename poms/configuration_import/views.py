@@ -71,17 +71,20 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
 
                 if res.result:
 
-                    if 'processed_rows' in res.result:
-                        instance.processed_rows = res.result['processed_rows']
-                    if 'total_rows' in res.result:
-                        instance.total_rows = res.result['total_rows']
+                    try:
+                        if 'processed_rows' in res.result:
+                            instance.processed_rows = res.result['processed_rows']
+                        if 'total_rows' in res.result:
+                            instance.total_rows = res.result['total_rows']
 
-                    if celery_task:
-                        celery_task.data = {
-                            "total_rows": res.result['total_rows'],
-                            "processed_rows": res.result['processed_rows'],
-                            "file_name": res.result['file_name']
-                        }
+                        if celery_task:
+                            celery_task.data = {
+                                "total_rows": res.result['total_rows'],
+                                "processed_rows": res.result['processed_rows'],
+                                "file_name": res.result['file_name']
+                            }
+                    except TypeError:
+                        print('Type erro')
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
 
