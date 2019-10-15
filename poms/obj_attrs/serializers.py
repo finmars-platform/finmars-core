@@ -274,13 +274,12 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
             if attribute_type.can_recalculate:
                 try:
-                    executed_expressions[attribute_type.id] = safe_eval(attribute_type.expr, names={'this': eval_data},
+                    executed_expressions[attribute_type.user_code] = safe_eval(attribute_type.expr, names={'this': eval_data},
                                                                         context={})
                 except (ExpressionEvalError, TypeError, Exception, KeyError):
-                    executed_expressions[attribute_type.id] = 'Invalid Expression'
-                    return
+                    executed_expressions[attribute_type.user_code] = 'Invalid Expression'
 
-                eval_data['attributes'][attribute_type.user_code] = executed_expressions[attribute_type.id]
+                eval_data['attributes'][attribute_type.user_code] = executed_expressions[attribute_type.user_code]
 
         current_index = current_index + 1
 
@@ -328,37 +327,38 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
         self.recursive_calculation(attr_types_qs, executed_expressions, data, current_index=0, limit=4)
 
+
         for attr in attrs_qs:
 
             if attr.attribute_type.can_recalculate:
 
                 if attr.attribute_type.value_type == GenericAttributeType.STRING:
 
-                    if executed_expressions[attr.attribute_type.id] == 'Invalid Expression':
+                    if executed_expressions[attr.attribute_type.user_code] == 'Invalid Expression':
                         attr.value_string = None
                     else:
-                        attr.value_string = executed_expressions[attr.attribute_type.id]
+                        attr.value_string = executed_expressions[attr.attribute_type.user_code]
 
                 if attr.attribute_type.value_type == GenericAttributeType.NUMBER:
 
-                    if executed_expressions[attr.attribute_type.id] == 'Invalid Expression':
+                    if executed_expressions[attr.attribute_type.user_code] == 'Invalid Expression':
                         attr.value_float = None
                     else:
-                        attr.value_float = executed_expressions[attr.attribute_type.id]
+                        attr.value_float = executed_expressions[attr.attribute_type.user_code]
 
                 if attr.attribute_type.value_type == GenericAttributeType.DATE:
 
-                    if executed_expressions[attr.attribute_type.id] == 'Invalid Expression':
+                    if executed_expressions[attr.attribute_type.user_code] == 'Invalid Expression':
                         attr.value_date = None
                     else:
-                        attr.value_date = executed_expressions[attr.attribute_type.id]
+                        attr.value_date = executed_expressions[attr.attribute_type.user_code]
 
                 if attr.attribute_type.value_type == GenericAttributeType.CLASSIFIER:
 
-                    if executed_expressions[attr.attribute_type.id] == 'Invalid Expression':
+                    if executed_expressions[attr.attribute_type.user_code] == 'Invalid Expression':
                         attr.classifier = None
                     else:
-                        attr.classifier = executed_expressions[attr.attribute_type.id]
+                        attr.classifier = executed_expressions[attr.attribute_type.user_code]
 
                 attr.save()
 
