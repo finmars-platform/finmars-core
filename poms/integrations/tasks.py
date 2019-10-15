@@ -1148,7 +1148,7 @@ def download_pricing_auto_scheduler(self):
 
     # TODO tmp limit
 
-    limit = 20
+    limit = 10
     index = 0
 
     for s in schedule_qs:
