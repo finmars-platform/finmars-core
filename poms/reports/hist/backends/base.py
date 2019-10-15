@@ -8,7 +8,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.functional import cached_property
 
-from poms.common.utils import isclose
+from poms.common.utils import isclose, format_float
 from poms.currencies.models import CurrencyHistory
 from poms.instruments.models import PriceHistory, CostMethod
 from poms.transactions.models import Transaction, TransactionClass
@@ -452,7 +452,7 @@ class BaseReport2Builder(object):
                 i_not_closed = not_closed.get(t_key, [])
                 if i_not_closed:  # есть прошлые продажи, которые надо закрыть
                     if position_size_with_sign + rolling_position >= 0.0:  # все есть
-                        t.avco_multiplier = abs(rolling_position / position_size_with_sign)
+                        t.avco_multiplier = format_float(abs(rolling_position / position_size_with_sign))
                         for t0 in i_not_closed:
                             t0.avco_multiplier = 1.0
                         in_stock[t_key] = in_stock.get(t_key, []) + [t]
@@ -476,7 +476,7 @@ class BaseReport2Builder(object):
                             t0.avco_multiplier += abs(
                                 (1.0 - t0.avco_multiplier) * position_size_with_sign / rolling_position)
                     else:  # только частично
-                        t.avco_multiplier = abs(rolling_position / position_size_with_sign)
+                        t.avco_multiplier = format_float(abs(rolling_position / position_size_with_sign))
                         for t0 in i_in_stock:
                             t0.avco_multiplier = 1.0
                         not_closed[t_key] = not_closed.get(t_key, []) + [t]
