@@ -516,8 +516,14 @@ def generate_events_do_not_inform_apply_default(master_users=None):
     if master_users:
         master_user_qs = master_user_qs.filter(pk__in=master_users)
 
+    limit = 5
+    index = 0
+
     for master_user in master_user_qs:
-        generate_events_do_not_inform_apply_default0.apply_async(kwargs={'master_user': master_user})
+
+        index = index + 1
+        if index < limit:
+            generate_events_do_not_inform_apply_default0.apply_async(kwargs={'master_user': master_user})
 
 
 @shared_task(name='instruments.process_events_do_not_inform_apply_default0', ignore_result=True)
