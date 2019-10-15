@@ -407,8 +407,12 @@ class ReportBuilder(BaseReportBuilder):
         # print('self.instance.pl_first_date')
         # print(self.instance.pl_first_date)
 
-        if self.instance.pl_first_date:
-            filters &= Q(**{'%s__gt' % self.instance.date_field: self.instance.pl_first_date})
+        if self.instance.report_type == Report.TYPE_PL:
+            filters = Q(**{'accounting_date__lte': self.instance.report_date})
+
+        # TODO pl_first_date is not used as a parameter, instead it passed as report_date
+        # if self.instance.pl_first_date:
+        #     filters &= Q(**{'%s__gt' % self.instance.date_field: self.instance.pl_first_date})
 
         if self.instance.instruments:
             # kw_filters['instrument__in'] = self.instance.instruments
