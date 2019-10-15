@@ -712,6 +712,32 @@ class ImportManager(object):
                     for content_object in item['content']:
                         content_object['member'] = self.member.pk
 
+                        if 'data' in content_object:
+
+
+                            if 'reportOptions' in content_object['data']:
+
+                                print(content_object['data']['reportOptions'])
+
+                                if 'pricing_policy' in content_object['data']['reportOptions']:
+
+                                    try:
+                                        content_object['data']['reportOptions']['pricing_policy'] = PricingPolicy.objects.get(master_user=self.master_user, user_code=content_object['data']['reportOptions']['pricing_policy_object']['user_code']).pk
+                                    except (KeyError, PricingPolicy.DoesNotExist):
+                                        print("Pricing Policy does not exist")
+                                        pass
+
+                                if 'report_currency' in content_object['data']['reportOptions']:
+
+                                    try:
+                                        content_object['data']['reportOptions']['report_currency'] = Currency.objects.get(master_user=self.master_user, user_code=content_object['data']['reportOptions']['report_currency_object']['user_code']).pk
+                                    except (KeyError, Currency.DoesNotExist):
+                                        print("Currency does not exist")
+                                        pass
+
+
+
+
                         serializer = ListLayoutSerializer(data=content_object,
                                                           context=self.get_serializer_context())
                         serializer.is_valid(raise_exception=True)
