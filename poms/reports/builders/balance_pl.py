@@ -422,6 +422,7 @@ class ReportBuilder(BaseReportBuilder):
 
         print(values_list)
         print(trn_qs[0])
+        print(o.__dict__)
 
         for tuple_trn in trn_qs:
 
@@ -436,7 +437,11 @@ class ReportBuilder(BaseReportBuilder):
                 index = index + 1
 
             setattr(t, 'transaction_class', transaction_classes_dict[tuple_trn[o.transaction_class_id]])
-            setattr(t, 'instrument', instruments_dict[tuple_trn[o.instrument_id]])
+            try:
+                setattr(t, 'instrument', instruments_dict[tuple_trn[o.instrument_id]])
+            except KeyError:
+                print("Instrument not found")
+                print(tuple_trn)
 
             setattr(t, 'linked_instrument', instruments_dict[tuple_trn[o.linked_instrument_id]])
             setattr(t, 'allocation_balance', instruments_dict[tuple_trn[o.allocation_balance_id]])
