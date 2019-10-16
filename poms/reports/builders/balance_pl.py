@@ -165,18 +165,16 @@ class ReportBuilder(BaseReportBuilder):
 
         _l.debug('build _concat_st done: %s', (time.perf_counter() - _concat_st))
 
-        _refresh_st = time.perf_counter()
-
         if self.instance.pl_first_date and self.instance.pl_first_date != date.min:
             self._build_on_pl_first_date()
+
         if full:
+            _refresh_st = time.perf_counter()
             self._refresh_with_perms()
+            _l.debug('build _refresh_st done: %s', (time.perf_counter() - _refresh_st))
 
         self.instance.custom_fields = BalanceReportCustomField.objects.filter(master_user=self.instance.master_user)
 
-        _l.debug('build _refresh_st done: %s', (time.perf_counter() - _refresh_st))
-
-        _l.debug('finalize report')
         self.instance.close()
 
         _l.debug('done: %s', (time.perf_counter() - st))
@@ -250,162 +248,8 @@ class ReportBuilder(BaseReportBuilder):
         return self._transactions
 
     def _trn_qs_filter(self, qs):
-        # if self._queryset is None:
-        #     qs = Transaction.objects.all()
-        # else:
-        #     qs = self._queryset
-        #
-        # # permissions and attributes refreshed after build report
-        # qs = qs.prefetch_related(
-        #     'master_user',
-        #     # 'complex_transaction',
-        #     # 'complex_transaction__transaction_type',
-        #     'transaction_class',
-        #     'instrument',
-        #     'instrument__instrument_type',
-        #     'instrument__instrument_type__instrument_class',
-        #     'instrument__pricing_currency',
-        #     'instrument__accrued_currency',
-        #     'instrument__accrual_calculation_schedules',
-        #     'instrument__accrual_calculation_schedules__accrual_calculation_model',
-        #     'instrument__accrual_calculation_schedules__periodicity',
-        #     'instrument__factor_schedules',
-        #     'transaction_currency',
-        #     'settlement_currency',
-        #     'portfolio',
-        #     'account_cash',
-        #     # 'account_cash__type',
-        #     'account_position',
-        #     # 'account_position__type',
-        #     'account_interim',
-        #     # 'account_interim__type',
-        #     'strategy1_position',
-        #     # 'strategy1_position__subgroup',
-        #     # 'strategy1_position__subgroup__group',
-        #     'strategy1_cash',
-        #     # 'strategy1_cash__subgroup',
-        #     # 'strategy1_cash__subgroup__group',
-        #     'strategy2_position',
-        #     # 'strategy2_position__subgroup',
-        #     # 'strategy2_position__subgroup__group',
-        #     'strategy2_cash',
-        #     # 'strategy2_cash__subgroup',
-        #     # 'strategy2_cash__subgroup__group',
-        #     'strategy3_position',
-        #     # 'strategy3_position__subgroup',
-        #     # 'strategy3_position__subgroup__group',
-        #     'strategy3_cash',
-        #     # 'strategy3_cash__subgroup',
-        #     # 'strategy3_cash__subgroup__group',
-        #     # 'responsible',
-        #     # 'responsible__group',
-        #     # 'counterparty',
-        #     # 'counterparty__group',
-        #     'linked_instrument',
-        #     # 'linked_instrument__instrument_type',
-        #     # 'linked_instrument__instrument_type__instrument_class',
-        #     'linked_instrument__pricing_currency',
-        #     'linked_instrument__accrued_currency',
-        #     # 'linked_instrument__accrual_calculation_schedules',
-        #     # 'linked_instrument__accrual_calculation_schedules__accrual_calculation_model',
-        #     # 'linked_instrument__accrual_calculation_schedules__periodicity',
-        #     'allocation_balance',
-        #     # 'allocation_balance__instrument_type',
-        #     # 'allocation_balance__instrument_type__instrument_class',
-        #     # 'allocation_balance__pricing_currency',
-        #     # 'allocation_balance__accrued_currency',
-        #     # 'allocation_balance__accrual_calculation_schedules',
-        #     # 'allocation_balance__accrual_calculation_schedules__accrual_calculation_model',
-        #     # 'allocation_balance__accrual_calculation_schedules__periodicity',
-        #     'allocation_pl',
-        #     # 'allocation_pl__instrument_type',
-        #     # 'allocation_pl__instrument_type__instrument_class',
-        #     # 'allocation_pl__pricing_currency',
-        #     # 'allocation_pl__accrued_currency',
-        #     # 'allocation_pl__accrual_calculation_schedules',
-        #     # 'allocation_pl__accrual_calculation_schedules__accrual_calculation_model',
-        #     # 'allocation_pl__accrual_calculation_schedules__periodicity',
-        #
-        #     # get_attributes_prefetch(path='portfolio__attributes'),
-        #     # get_attributes_prefetch(path='instrument__attributes'),
-        #     # get_attributes_prefetch(path='instrument__pricing_currency__attributes'),
-        #     # get_attributes_prefetch(path='instrument__accrued_currency__attributes'),
-        #     # get_attributes_prefetch(path='account_cash__attributes'),
-        #     # get_attributes_prefetch(path='account_position__attributes'),
-        #     # get_attributes_prefetch(path='account_interim__attributes'),
-        #     # get_attributes_prefetch(path='transaction_currency__attributes'),
-        #     # get_attributes_prefetch(path='settlement_currency__attributes'),
-        #     # get_attributes_prefetch(path='linked_instrument__attributes'),
-        #     # get_attributes_prefetch(path='linked_instrument__pricing_currency__attributes'),
-        #     # get_attributes_prefetch(path='linked_instrument__accrued_currency__attributes'),
-        #     # get_attributes_prefetch(path='allocation_balance__attributes'),
-        #     # get_attributes_prefetch(path='allocation_balance__pricing_currency__attributes'),
-        #     # get_attributes_prefetch(path='allocation_balance__accrued_currency__attributes'),
-        #     # get_attributes_prefetch(path='allocation_pl__attributes'),
-        #     # get_attributes_prefetch(path='allocation_pl__pricing_currency__attributes'),
-        #     # get_attributes_prefetch(path='allocation_pl__accrued_currency__attributes'),
-        #     # *get_permissions_prefetch_lookups(
-        #     #     ('portfolio', Portfolio),
-        #     #     ('instrument', Instrument),
-        #     #     ('instrument__instrument_type', InstrumentType),
-        #     #     ('account_cash', Account),
-        #     #     ('account_cash__type', AccountType),
-        #     #     ('account_position', Account),
-        #     #     ('account_position__type', AccountType),
-        #     #     ('account_interim', Account),
-        #     #     ('account_interim__type', AccountType),
-        #     #     ('strategy1_position', Strategy1),
-        #     #     ('strategy1_position__subgroup', Strategy1Subgroup),
-        #     #     ('strategy1_position__subgroup__group', Strategy1Group),
-        #     #     ('strategy1_cash', Strategy1),
-        #     #     ('strategy1_cash__subgroup', Strategy1Subgroup),
-        #     #     ('strategy1_cash__subgroup__group', Strategy1Group),
-        #     #     ('strategy2_position', Strategy2),
-        #     #     ('strategy2_position__subgroup', Strategy2Subgroup),
-        #     #     ('strategy2_position__subgroup__group', Strategy2Group),
-        #     #     ('strategy2_cash', Strategy2),
-        #     #     ('strategy2_cash__subgroup', Strategy2Subgroup),
-        #     #     ('strategy2_cash__subgroup__group', Strategy2Group),
-        #     #     ('strategy3_position', Strategy3),
-        #     #     ('strategy3_position__subgroup', Strategy3Subgroup),
-        #     #     ('strategy3_position__subgroup__group', Strategy3Group),
-        #     #     ('strategy3_cash', Strategy3),
-        #     #     ('strategy3_cash__subgroup', Strategy3Subgroup),
-        #     #     ('strategy3_cash__subgroup__group', Strategy3Group),
-        #     #     ('responsible', Responsible),
-        #     #     ('responsible__group', ResponsibleGroup),
-        #     #     ('counterparty', Counterparty),
-        #     #     ('counterparty__group', CounterpartyGroup),
-        #     #     ('linked_instrument', Instrument),
-        #     #     ('linked_instrument__instrument_type', InstrumentType),
-        #     #     ('allocation_balance', Instrument),
-        #     #     ('allocation_balance__instrument_type', InstrumentType),
-        #     #     ('allocation_pl', Instrument),
-        #     #     ('allocation_pl__instrument_type', InstrumentType),
-        #     # )
-        # )
-        #
-        # a_filters = [
-        #     Q(complex_transaction__isnull=True) | Q(complex_transaction__status=ComplexTransaction.PRODUCTION,
-        #                                             complex_transaction__is_deleted=False)
-        # ]
-        #
-        # kw_filters = {
-        #     'master_user': self.instance.master_user,
-        #     'is_deleted': False,
-        #     '%s__lt' % self.instance.date_field: self.instance.report_date
-        # }
-        # qs = super(ReportBuilder, self)._trn_qs()
 
         filters = Q(**{'%s__lte' % self.instance.date_field: self.instance.report_date})
-        # filters = Q(**{'%s__lt' % self.instance.date_field: self.instance.report_date})
-
-        # print('date field')
-        # print(qs[0].__dict__)
-        # print(self.instance.date_field)
-        #
-        # print('self.instance.pl_first_date')
-        # print(self.instance.pl_first_date)
 
         if self.instance.report_type == Report.TYPE_PL:
             filters = Q(**{'accounting_date__lte': self.instance.report_date})
@@ -418,37 +262,9 @@ class ReportBuilder(BaseReportBuilder):
             # kw_filters['instrument__in'] = self.instance.instruments
             filters &= Q(instrument__in=self.instance.instruments)
 
-        # if self.instance.portfolios:
-        #     kw_filters['portfolio__in'] = self.instance.portfolios
-        #
-        # if self.instance.accounts:
-        #     kw_filters['account_position__in'] = self.instance.accounts
-        #     kw_filters['account_cash__in'] = self.instance.accounts
-        #     kw_filters['account_interim__in'] = self.instance.accounts
-        #
-        # if self.instance.accounts_position:
-        #     kw_filters['account_position__in'] = self.instance.accounts_position
-        #
-        # if self.instance.accounts_cash:
-        #     kw_filters['account_cash__in'] = self.instance.accounts_cash
-        #
-        # if self.instance.strategies1:
-        #     kw_filters['strategy1_position__in'] = self.instance.strategies1
-        #     kw_filters['strategy1_cash__in'] = self.instance.strategies1
-        #
-        # if self.instance.strategies2:
-        #     kw_filters['strategy2_position__in'] = self.instance.strategies2
-        #     kw_filters['strategy2_cash__in'] = self.instance.strategies2
-        #
-        # if self.instance.strategies3:
-        #     kw_filters['strategy3_position__in'] = self.instance.strategies3
-        #     kw_filters['strategy3_cash__in'] = self.instance.strategies3
 
         if self.instance.transaction_classes:
-            # kw_filters['transaction_class__in'] = self.instance.transaction_classes
             filters &= Q(transaction_class__in=self.instance.transaction_classes)
-
-        print(filters)
 
         qs = qs.filter(filters)
 
@@ -510,6 +326,205 @@ class ReportBuilder(BaseReportBuilder):
             self._fx_rate_provider = p
         return self._fx_rate_provider
 
+    def list_as_dict(self, list):
+
+        result = {}
+
+        for item in list:
+            result[item.pk] = item
+
+        return result
+
+    def inject_relations(self, trn_qs):
+
+        result = [];
+
+        st = time.perf_counter()
+
+        from poms.currencies.models import Currency
+        from poms.portfolios.models import Portfolio
+        from poms.accounts.models import Account
+        from poms.accounts.models import AccountType
+
+        from poms.strategies.models import Strategy1
+        from poms.strategies.models import Strategy2
+        from poms.strategies.models import Strategy3
+
+        from poms.obj_perms.utils import get_permissions_prefetch_lookups
+
+        transaction_classes_list = TransactionClass.objects.all()
+
+        transaction_classes_dict = self.list_as_dict(transaction_classes_list)
+
+        instruments_list = Instrument.objects.select_related(
+            'instrument_type',
+            'pricing_currency',
+            'accrued_currency'
+        ).prefetch_related(
+            'factor_schedules',
+            'accrual_calculation_schedules',
+            # *get_permissions_prefetch_lookups(
+            #     (None, Instrument),
+            # )
+
+        ).filter(master_user=self.instance.master_user).defer('object_permissions')
+
+        instruments_dict = self.list_as_dict(instruments_list)
+
+        currencies_list = Currency.objects.filter(master_user=self.instance.master_user)
+
+        currencies_dict = self.list_as_dict(currencies_list)
+
+        portfolios_list = Portfolio.objects.prefetch_related(
+            # *get_permissions_prefetch_lookups(
+            #     (None, Portfolio),
+            # )
+
+        ).filter(master_user=self.instance.master_user).defer('object_permissions')
+
+        portfolios_dict = self.list_as_dict(portfolios_list)
+
+        accounts_list = Account.objects.select_related(
+            'type'
+        ).prefetch_related(
+            # *get_permissions_prefetch_lookups(
+            #     (None, Account),
+            #     ('type', AccountType),
+            #     ('portfolios', Portfolio),
+            # )
+
+        ).filter(master_user=self.instance.master_user).defer('object_permissions')
+
+        accounts_dict = self.list_as_dict(accounts_list)
+
+        strategies1_list = Strategy1.objects.select_related(
+            'subgroup',
+            'subgroup__group'
+        ).filter(master_user=self.instance.master_user).defer('object_permissions')
+        strategies1_dict = self.list_as_dict(strategies1_list)
+
+        strategies2_list = Strategy2.objects.select_related(
+            'subgroup',
+            'subgroup__group'
+        ).filter(master_user=self.instance.master_user).defer('object_permissions')
+        strategies2_dict = self.list_as_dict(strategies2_list)
+
+        strategies3_list = Strategy3.objects.select_related(
+            'subgroup',
+            'subgroup__group'
+        ).filter(master_user=self.instance.master_user).defer('object_permissions')
+        strategies3_dict = self.list_as_dict(strategies3_list)
+
+
+        values_list = self.get_trn_values_list()
+        o = self.get_trn_values_list_keys_as_obj(values_list)
+
+        class Trn:
+            pass
+
+        for tuple_trn in trn_qs:
+
+            t = Trn()
+
+            # Set non-relation props
+            index = 0
+            for val in tuple_trn:
+                setattr(t, values_list[index], val)
+                index = index + 1
+
+            setattr(t, 'transaction_class', transaction_classes_dict[tuple_trn[o.transaction_class_id]])
+
+            setattr(t, 'instrument', instruments_dict[tuple_trn[o.instrument_id]])
+            setattr(t, 'linked_instrument', instruments_dict[tuple_trn[o.linked_instrument_id]])
+            setattr(t, 'allocation_balance', instruments_dict[tuple_trn[o.allocation_balance_id]])
+            setattr(t, 'allocation_pl', instruments_dict[tuple_trn[o.allocation_pl_id]])
+
+            setattr(t, 'transaction_currency', currencies_dict[tuple_trn[o.transaction_currency_id]])
+            setattr(t, 'settlement_currency', currencies_dict[tuple_trn[o.settlement_currency_id]])
+            setattr(t, 'portfolio', portfolios_dict[tuple_trn[o.portfolio_id]])
+
+            setattr(t, 'account_cash', accounts_dict[tuple_trn[o.account_cash_id]])
+            setattr(t, 'account_position', accounts_dict[tuple_trn[o.account_position_id]])
+            setattr(t, 'account_interim', accounts_dict[tuple_trn[o.account_interim_id]])
+
+            setattr(t, 'strategy1_position', strategies1_dict[tuple_trn[o.strategy1_position_id]])
+            setattr(t, 'strategy1_cash', strategies1_dict[tuple_trn[o.strategy1_cash_id]])
+
+            setattr(t, 'strategy2_position', strategies2_dict[tuple_trn[o.strategy2_position_id]])
+            setattr(t, 'strategy2_cash', strategies2_dict[tuple_trn[o.strategy2_cash_id]])
+
+            setattr(t, 'strategy3_position', strategies3_dict[tuple_trn[o.strategy3_position_id]])
+            setattr(t, 'strategy3_cash', strategies3_dict[tuple_trn[o.strategy3_cash_id]])
+
+            result.append(t)
+
+        _l.debug('_load_transactions inject relations done: %s', (time.perf_counter() - st))
+
+        return result
+
+    def get_trn_values_list(self):
+
+        return ["pk",
+                "is_deleted",
+                "deleted_user_code",
+                "master_user_id",
+                "complex_transaction_id",
+                "complex_transaction_order",
+                "transaction_code",
+                "transaction_class_id",
+                "is_canceled",
+                "error_code",
+                "instrument_id",
+                "transaction_currency_id",
+                "position_size_with_sign",
+                "settlement_currency_id",
+                "cash_consideration",
+                "principal_with_sign",
+                "carry_with_sign",
+                "overheads_with_sign",
+                "transaction_date",
+                "accounting_date",
+                "cash_date",
+                "portfolio_id",
+                "account_position_id",
+                "account_cash_id",
+                "account_interim_id",
+                "strategy1_position_id",
+                "strategy1_cash_id",
+                "strategy2_position_id",
+                "strategy2_cash_id",
+                "strategy3_position_id",
+                "strategy3_cash_id",
+                "responsible_id",
+                "counterparty_id",
+                "linked_instrument_id",
+                "allocation_balance_id",
+                "allocation_pl_id",
+                "reference_fx_rate",
+                "is_locked",
+                "factor",
+                "trade_price",
+                "ytm_at_cost",
+                "position_amount",
+                "principal_amount",
+                "carry_amount",
+                "overheads",
+                "notes"]
+
+    def get_trn_values_list_keys_as_obj(self, values_list):
+
+        class Trn:
+            pass
+
+        result = Trn()
+
+        index = 0
+        for item in values_list:
+            setattr(result, item, index)
+            index = index + 1
+
+        return result
+
     def _load_transactions(self):
         _l.debug('transactions - load')
 
@@ -528,35 +543,37 @@ class ReportBuilder(BaseReportBuilder):
         # complex_qs = ComplexTransaction.objects.filter(status=ComplexTransaction.PRODUCTION,
         #                                                master_user=self.instance.master_user, is_deleted=False)
 
-        trn_qs = Transaction.objects.select_related(
-            'complex_transaction',
-            'complex_transaction__transaction_type',
-            'transaction_class',
+        trn_qs = Transaction.objects
 
-            'instrument',
-            'instrument__instrument_type',
-            'instrument__instrument_type__instrument_class',
-            'instrument__pricing_currency',
-            'instrument__accrued_currency',
-
-            'transaction_currency',
-            'settlement_currency',
-            'portfolio',
-            'account_position',
-            'account_cash',
-            'account_interim',
-            'strategy1_position',
-            'strategy1_cash',
-            'strategy2_position',
-            'strategy2_cash',
-            'strategy3_position',
-            'strategy3_cash',
-            'responsible',
-            'counterparty',
-            'linked_instrument__instrument_type',
-            'allocation_balance',
-            'allocation_pl').prefetch_related('instrument__factor_schedules',
-                                              'instrument__accrual_calculation_schedules').all()
+        # trn_qs = Transaction.objects.select_related(
+        #     'complex_transaction',
+        #     'complex_transaction__transaction_type',
+        #     'transaction_class',
+        #
+        #     'instrument',
+        #     'instrument__instrument_type',
+        #     'instrument__instrument_type__instrument_class',
+        #     'instrument__pricing_currency',
+        #     'instrument__accrued_currency',
+        #
+        #     'transaction_currency',
+        #     'settlement_currency',
+        #     'portfolio',
+        #     'account_position',
+        #     'account_cash',
+        #     'account_interim',
+        #     'strategy1_position',
+        #     'strategy1_cash',
+        #     'strategy2_position',
+        #     'strategy2_cash',
+        #     'strategy3_position',
+        #     'strategy3_cash',
+        #     'responsible',
+        #     'counterparty',
+        #     'linked_instrument__instrument_type',
+        #     'allocation_balance',
+        #     'allocation_pl').prefetch_related('instrument__factor_schedules',
+        #                                       'instrument__accrual_calculation_schedules').all()
 
         # trn_qs = trn_qs.filter(complex_transaction__in=complex_qs)
         trn_qs = trn_qs.filter(master_user=self.instance.master_user, is_canceled=False)
@@ -568,25 +585,19 @@ class ReportBuilder(BaseReportBuilder):
         if trn_qs.count() == 0:
             return
 
-        # print('trn_qs %s ' % len(list(trn_qs)))
+        val_list = self.get_trn_values_list()
 
-        _l.debug('_load_transactions trn_qs_st len done: %s', (time.perf_counter() - trn_qs_st))
+        trn_qs = trn_qs.values_list(*val_list)
 
+        # trn_qs = trn_qs[:1]
 
-
-        # total_st = 0
-        # total_items = 0
-
-        # _l.debug('overrides %s' % overrides['portfolio'].name)
+        trn_qs = self.inject_relations(trn_qs)
 
         _instance = self.instance
         _pricing_provider = self.pricing_provider
         _fx_rate_provider = self.fx_rate_provider
 
-        # _l.debug('_pricing_provider %s' % _pricing_provider)
-        # _l.debug('_fx_rate_provider %s' % _fx_rate_provider)
-
-        iteration_st = time.perf_counter()
+        _iteration_st = time.perf_counter()
 
         for t in trn_qs:
 
@@ -635,9 +646,9 @@ class ReportBuilder(BaseReportBuilder):
 
             self._original_transactions.append(otrn)
 
-        _l.debug('_self._transactions len %s' % len(self._transactions))
+        _l.debug('_load_transactions iteration done: %s', (time.perf_counter() - _iteration_st))
 
-        _l.debug('_load_transactions iteration_st done: %s', (time.perf_counter() - iteration_st))
+        _l.debug('_self._transactions len %s' % len(self._transactions))
 
         _l.debug('_load_transactions done: %s', (time.perf_counter() - _load_transactions_st))
 
@@ -1387,8 +1398,21 @@ class ReportBuilder(BaseReportBuilder):
         else:
             raise RuntimeError('Invalid transaction case: %s' % trn.case)
 
+    def _get_member_permissions(self):
+
+        result = []
+
+        from poms.obj_perms.models import GenericObjectPermission
+        result = GenericObjectPermission.objects.filter(member=self.instance.member)
+
+        print('Member permissions %s ' % len(result))
+
+        return result
+
     def _refresh_with_perms(self):
         # _l.debug('items - refresh all objects with permissions')
+
+        # member_permissions = self._get_member_permissions()
 
         self.instance.portfolios = self._refresh_portfolios(
             master_user=self.instance.master_user,

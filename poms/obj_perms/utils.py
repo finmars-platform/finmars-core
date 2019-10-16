@@ -52,7 +52,7 @@ def obj_perms_filter_objects(member, perms, queryset, model_cls=None, prefetch=T
     # group_lookup_name, group_obj_perms_model = get_group_obj_perms_model(model)
     ctype = ContentType.objects.get_for_model(model)
 
-    print('perms %s ' % perms)
+    # print('perms %s ' % perms)
 
     codenames = set()
     for perm in perms:

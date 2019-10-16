@@ -2,6 +2,8 @@ import copy
 import logging
 
 import time
+
+from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Q, prefetch_related_objects, Prefetch
 from django.utils.functional import cached_property
 
@@ -223,19 +225,6 @@ class BaseReportBuilder:
         _l.debug('_trn_qs_prefetch  done: %s', (time.perf_counter() - _qs_st))
 
         return qs
-
-        # TODO !!! WARNING ITS NOT WORKING
-        # TODO !!! SOMEHOW NESTED PREFETCH IS NOT RESOLVING CORRECTLY
-        # TODO !!! IT RESULTS INTO len(transactions) ADDITIONAL QUERIES
-        # TODO !!! SEE SIMILAR PROBLEM BELOW
-        # TODO !!! https://code.djangoproject.com/ticket/26318
-        # ).prefetch_related(
-        #     'instrument'
-        #     'instrument__accrual_calculation_schedules',
-        #     'instrument__accrual_calculation_schedules__accrual_calculation_model',
-        #     'instrument__accrual_calculation_schedules__periodicity',
-        #     'instrument__factor_schedules',
-        # )
 
     def _trn_qs_filter(self, qs):
         return qs
@@ -498,6 +487,27 @@ class BaseReportBuilder:
         )
 
     def _refresh_instruments(self, master_user, items, attrs, objects=None):
+        
+        # return Instrument.objects.filter(
+        #     master_user=master_user
+        # ).prefetch_related(
+        #     'master_user',
+        #     'instrument_type',
+        #     'instrument_type__instrument_class',
+        #     'pricing_currency',
+        #     'accrued_currency',
+        #     'payment_size_detail',
+        #     'daily_pricing_model',
+        #     'price_download_scheme',
+        #     'price_download_scheme__provider',
+        #     get_attributes_prefetch(),
+        #     get_tag_prefetch(),
+        #     *get_permissions_prefetch_lookups(
+        #         (None, Instrument),
+        #         ('instrument_type', InstrumentType),
+        #     )
+        # )
+        #
         return self._refresh_attrs(
             items=items,
             attrs=attrs,
@@ -536,19 +546,30 @@ class BaseReportBuilder:
         )
 
     def _refresh_portfolios(self, master_user, items, attrs, objects=None):
-        return self._refresh_attrs(
-            items=items,
-            attrs=attrs,
-            objects=objects,
-            queryset=Portfolio.objects.filter(
-                master_user=master_user,
-            ).prefetch_related(
-                get_attributes_prefetch(),
-                *get_permissions_prefetch_lookups(
-                    (None, Portfolio),
-                )
+
+        return Portfolio.objects.filter(
+            master_user=master_user,
+        ).prefetch_related(
+            get_attributes_prefetch(),
+            *get_permissions_prefetch_lookups(
+                (None, Portfolio),
             )
         )
+
+
+        # return self._refresh_attrs(
+        #     items=items,
+        #     attrs=attrs,
+        #     objects=objects,
+        #     queryset=Portfolio.objects.filter(
+        #         master_user=master_user,
+        #     ).prefetch_related(
+        #         get_attributes_prefetch(),
+        #         *get_permissions_prefetch_lookups(
+        #             (None, Portfolio),
+        #         )
+        #     )
+        # )
 
     def _refresh_accounts(self, master_user, items, attrs, objects=None):
         return self._refresh_attrs(

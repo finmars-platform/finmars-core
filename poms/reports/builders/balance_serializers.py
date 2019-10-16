@@ -527,8 +527,9 @@ class ReportSerializer(serializers.Serializer):
                     try:
                         names['%s_object' % pk_attr] = objs[pk]
                     except KeyError:
-                        print('pk %s' % pk)
-                        print('pk_attr %s' % pk_attr)
+                        pass
+                        # print('pk %s' % pk)
+                        # print('pk_attr %s' % pk_attr)
                     # names[pk_attr] = objs[pk]
 
             for item in items:
