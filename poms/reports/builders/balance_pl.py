@@ -427,6 +427,8 @@ class ReportBuilder(BaseReportBuilder):
         # print('ecoded')
         # print(str(trn_qs[0]).encode("utf-8"))
 
+        print(o.instrument_id)
+
         for tuple_trn in trn_qs:
 
             # _l.debug(tuple_trn)
@@ -440,33 +442,87 @@ class ReportBuilder(BaseReportBuilder):
                 index = index + 1
 
             setattr(t, 'transaction_class', transaction_classes_dict[tuple_trn[o.transaction_class_id]])
+
             try:
                 setattr(t, 'instrument', instruments_dict[tuple_trn[o.instrument_id]])
             except KeyError:
-                print("Instrument not found")
-                print(str(tuple_trn).encode("utf-8"))
+                setattr(t, 'instrument', None)
 
-            setattr(t, 'linked_instrument', instruments_dict[tuple_trn[o.linked_instrument_id]])
-            setattr(t, 'allocation_balance', instruments_dict[tuple_trn[o.allocation_balance_id]])
-            setattr(t, 'allocation_pl', instruments_dict[tuple_trn[o.allocation_pl_id]])
+            try:
+                setattr(t, 'linked_instrument', instruments_dict[tuple_trn[o.linked_instrument_id]])
+            except KeyError:
+                setattr(t, 'linked_instrument', None)
+
+            try:
+                setattr(t, 'allocation_balance', instruments_dict[tuple_trn[o.allocation_balance_id]])
+            except KeyError:
+                setattr(t, 'allocation_balance', None)
+
+            try:
+                setattr(t, 'allocation_pl', instruments_dict[tuple_trn[o.allocation_pl_id]])
+            except KeyError:
+                setattr(t, 'allocation_pl', None)
 
 
-            setattr(t, 'transaction_currency', currencies_dict[tuple_trn[o.transaction_currency_id]])
-            setattr(t, 'settlement_currency', currencies_dict[tuple_trn[o.settlement_currency_id]])
-            setattr(t, 'portfolio', portfolios_dict[tuple_trn[o.portfolio_id]])
+            try:
+                setattr(t, 'transaction_currency', currencies_dict[tuple_trn[o.transaction_currency_id]])
+            except KeyError:
+                setattr(t, 'transaction_currency', None)
 
-            setattr(t, 'account_cash', accounts_dict[tuple_trn[o.account_cash_id]])
-            setattr(t, 'account_position', accounts_dict[tuple_trn[o.account_position_id]])
-            setattr(t, 'account_interim', accounts_dict[tuple_trn[o.account_interim_id]])
+            try:
+                setattr(t, 'settlement_currency', currencies_dict[tuple_trn[o.settlement_currency_id]])
+            except KeyError:
+                setattr(t, 'settlement_currency', None)
 
-            setattr(t, 'strategy1_position', strategies1_dict[tuple_trn[o.strategy1_position_id]])
-            setattr(t, 'strategy1_cash', strategies1_dict[tuple_trn[o.strategy1_cash_id]])
+            try:
+                setattr(t, 'portfolio', portfolios_dict[tuple_trn[o.portfolio_id]])
+            except KeyError:
+                setattr(t, 'portfolio', None)
 
-            setattr(t, 'strategy2_position', strategies2_dict[tuple_trn[o.strategy2_position_id]])
-            setattr(t, 'strategy2_cash', strategies2_dict[tuple_trn[o.strategy2_cash_id]])
+            try:
+                setattr(t, 'account_cash', accounts_dict[tuple_trn[o.account_cash_id]])
+            except KeyError:
+                setattr(t, 'account_cash', None)
 
-            setattr(t, 'strategy3_position', strategies3_dict[tuple_trn[o.strategy3_position_id]])
-            setattr(t, 'strategy3_cash', strategies3_dict[tuple_trn[o.strategy3_cash_id]])
+            try:
+                setattr(t, 'account_position', accounts_dict[tuple_trn[o.account_position_id]])
+            except KeyError:
+                setattr(t, 'account_position', None)
+
+            try:
+                setattr(t, 'account_interim', accounts_dict[tuple_trn[o.account_interim_id]])
+            except KeyError:
+                setattr(t, 'account_interim', None)
+
+            try:
+                setattr(t, 'strategy1_position', strategies1_dict[tuple_trn[o.strategy1_position_id]])
+            except KeyError:
+                setattr(t, 'strategy1_position', None)
+
+            try:
+                setattr(t, 'strategy1_cash', strategies1_dict[tuple_trn[o.strategy1_cash_id]])
+            except KeyError:
+                setattr(t, 'strategy1_cash', None)
+
+            try:
+                setattr(t, 'strategy2_position', strategies2_dict[tuple_trn[o.strategy2_position_id]])
+            except KeyError:
+                setattr(t, 'strategy2_position', None)
+
+            try:
+                setattr(t, 'strategy2_cash', strategies2_dict[tuple_trn[o.strategy2_cash_id]])
+            except KeyError:
+                setattr(t, 'strategy2_cash', None)
+
+            try:
+                setattr(t, 'strategy3_position', strategies3_dict[tuple_trn[o.strategy3_position_id]])
+            except KeyError:
+                setattr(t, 'strategy3_position', None)
+
+            try:
+                setattr(t, 'strategy3_cash', strategies3_dict[tuple_trn[o.strategy3_cash_id]])
+            except KeyError:
+                setattr(t, 'strategy3_cash', None)
 
             result.append(t)
 
