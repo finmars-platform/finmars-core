@@ -420,14 +420,14 @@ class ReportBuilder(BaseReportBuilder):
         class Trn:
             pass
 
-        print(values_list)
-        print(trn_qs[0])
-        print(o.__dict__)
+        # print(values_list)
+        # print(trn_qs[0])
+        # print(o.__dict__)
 
         # print('ecoded')
         # print(str(trn_qs[0]).encode("utf-8"))
 
-        print(o.instrument_id)
+        # print(o.instrument_id)
 
         for tuple_trn in trn_qs:
 
