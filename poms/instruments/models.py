@@ -589,7 +589,13 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel):
             # a.accrual_end_date = self.maturity_date
 
             # print('self.maturity_date %s ' % self.maturity_date)
-            a.accrual_end_date = self.maturity_date + timedelta(days=1)
+            try:
+                a.accrual_end_date = self.maturity_date + timedelta(days=1)
+            except OverflowError:
+
+                print("Overflow Error %s %s" % self.maturity_date)
+
+                a.accrual_end_date = self.maturity_date
             # print('a.accrual_end_date %s ' % a.accrual_end_date)
 
         return accruals
