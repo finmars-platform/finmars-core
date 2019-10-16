@@ -424,6 +424,9 @@ class ReportBuilder(BaseReportBuilder):
         print(trn_qs[0])
         print(o.__dict__)
 
+        # print('ecoded')
+        # print(str(trn_qs[0]).encode("utf-8"))
+
         for tuple_trn in trn_qs:
 
             # _l.debug(tuple_trn)
@@ -441,7 +444,7 @@ class ReportBuilder(BaseReportBuilder):
                 setattr(t, 'instrument', instruments_dict[tuple_trn[o.instrument_id]])
             except KeyError:
                 print("Instrument not found")
-                print(tuple_trn)
+                print(str(tuple_trn).encode("utf-8"))
 
             setattr(t, 'linked_instrument', instruments_dict[tuple_trn[o.linked_instrument_id]])
             setattr(t, 'allocation_balance', instruments_dict[tuple_trn[o.allocation_balance_id]])
