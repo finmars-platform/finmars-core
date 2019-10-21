@@ -20,7 +20,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.viewsets import ViewSet, ModelViewSet, ViewSetMixin
 
 from poms.accounts.models import AccountType, Account
-from poms.chats.models import ThreadGroup
+from poms.chats.models import ThreadGroup, Thread
 from poms.common.filters import CharFilter, NoOpFilter, ModelExtMultipleChoiceFilter
 from poms.common.mixins import UpdateModelMixinExt
 from poms.common.pagination import BigPagination
@@ -30,12 +30,15 @@ from poms.counterparties.models import CounterpartyGroup, Counterparty, Responsi
 from poms.currencies.models import Currency
 from poms.instruments.models import InstrumentType, Instrument
 from poms.integrations.models import InstrumentDownloadScheme
-from poms.obj_perms.utils import get_permissions_prefetch_lookups
+from poms.obj_attrs.models import GenericAttributeType
+from poms.obj_perms.models import GenericObjectPermission
+from poms.obj_perms.utils import get_permissions_prefetch_lookups, assign_perms3, \
+    get_view_perms, get_all_perms
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy1Group, Strategy2Subgroup, Strategy2Group, \
     Strategy2, Strategy3, Strategy3Subgroup, Strategy3Group
 from poms.transactions.models import TransactionType, TransactionTypeInput, TransactionTypeAction, \
-    TransactionTypeActionInstrument, Transaction, ComplexTransaction
+    TransactionTypeActionInstrument, Transaction, ComplexTransaction, TransactionTypeGroup
 from poms.users.filters import OwnerByMasterUserFilter, MasterUserFilter, OwnerByUserFilter, InviteToMasterUserFilter, \
     IsMemberFilterBackend
 from poms.users.models import MasterUser, Member, Group, ResetPasswordToken, InviteToMasterUser, EcosystemDefault
@@ -666,6 +669,73 @@ class GroupViewSet(AbstractModelViewSet):
     ]
     pagination_class = BigPagination
 
+    def grant_all_permissions_to_model_objects(self, model, master_user, group):
+
+        for item in model.objects.filter(master_user=master_user):
+
+            perms = []
+
+            for p in get_all_perms(item):
+
+                perms.append({'group': group, 'permission': p})
+
+            assign_perms3(item, perms=perms)
+
+    def grant_all_permissions_to_public_group(self, instance, request):
+
+        master_user = request.user.master_user
+
+        self.grant_all_permissions_to_model_objects(Account, master_user, instance)
+        self.grant_all_permissions_to_model_objects(AccountType, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(Strategy1Group, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Strategy1Subgroup, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Strategy1, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(Strategy2Group, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Strategy2Subgroup, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Strategy2, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(Strategy3Group, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Strategy3Subgroup, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Strategy3, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(GenericAttributeType, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(InstrumentType, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Instrument, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(TransactionTypeGroup, master_user, instance)
+        self.grant_all_permissions_to_model_objects(TransactionType, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(ThreadGroup, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Thread, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(Portfolio, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(CounterpartyGroup, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Counterparty, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(ResponsibleGroup, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Responsible, master_user, instance)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        if request.data.get('is_public', None):
+            self.grant_all_permissions_to_public_group(instance, request)
+
+        return Response(serializer.data)
+
+    def perform_destroy(self, instance):
+
+        # TODO important to know: Deletion of the group leads to GenericObjectPermission deletion
+
+        super(GroupViewSet, self).perform_destroy(instance)
+
+        GenericObjectPermission.objects.filter(group=instance).delete()
 
 class InviteToMasterUserFilterSet(FilterSet):
     id = NoOpFilter()

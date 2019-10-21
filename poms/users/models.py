@@ -310,6 +310,7 @@ class MasterUser(models.Model):
 
         if user:
             Member.objects.create(user=user, master_user=self, is_owner=True, is_admin=True)
+
         group = Group.objects.create(master_user=self, name='%s' % ugettext_lazy('Default'))
 
         bloomberg = ProviderClass.objects.get(pk=ProviderClass.BLOOMBERG)

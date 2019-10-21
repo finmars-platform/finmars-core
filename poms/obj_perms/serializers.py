@@ -100,8 +100,8 @@ class ModelWithObjectPermissionSerializer(serializers.ModelSerializer):
         self.fields['display_name'] = serializers.SerializerMethodField()
 
         self.fields['granted_permissions'] = GrantedPermissionField()
-        self.fields['user_object_permissions'] = UserObjectPermissionSerializer(many=True, required=False,
-                                                                                allow_null=True)
+        # self.fields['user_object_permissions'] = UserObjectPermissionSerializer(many=True, required=False,
+        #                                                                         allow_null=True)
         self.fields['group_object_permissions'] = GroupObjectPermissionSerializer(many=True, required=False,
                                                                                   allow_null=True)
         self.fields['object_permissions'] = GenericObjectPermissionSerializer(many=True, required=False,
