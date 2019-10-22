@@ -197,7 +197,14 @@ class TransactionReportSerializer(serializers.Serializer):
             def _set_object(names, pk_attr, objs):
                 pk = names[pk_attr]
                 if pk is not None:
-                    names['%s_object' % pk_attr] = objs[pk]
+
+                    try:
+                        names['%s_object' % pk_attr] = objs[pk]
+                    except KeyError:
+                        pass
+                        # print('pk %s' % pk)
+                        # print('pk_attr %s' % pk_attr)
+                    # names[pk_attr] = objs[pk]
 
             for item in items:
 

@@ -3,6 +3,7 @@ import logging
 
 import time
 
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Q, prefetch_related_objects, Prefetch
 from django.utils.functional import cached_property
@@ -12,6 +13,7 @@ from poms.counterparties.models import Responsible, ResponsibleGroup, Counterpar
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, InstrumentType, AccrualCalculationSchedule, InstrumentFactorSchedule
 from poms.obj_attrs.utils import get_attributes_prefetch
+from poms.obj_perms.models import GenericObjectPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.portfolios.models import Portfolio
 from poms.reports.models import BalanceReportCustomField
@@ -188,6 +190,30 @@ class BaseReportBuilder:
             )
         )
 
+    def _trn_qs_permission_filter(self, qs):
+
+        if self.instance.member is None:
+            return qs
+
+        if self.instance.member.is_superuser:
+            return qs
+
+        ctype = ContentType.objects.get_for_model(Transaction)
+        codename = 'view_transaction'
+
+        # _l.debug('Before permission filter len %s' % len(qs))
+
+        ids = GenericObjectPermission.objects.filter(
+            content_type=ctype, permission__content_type=ctype, permission__codename=codename,
+            group__in=self.instance.member.groups.all()
+        ).values_list('object_id', flat=True)
+
+        qs = qs.filter(pk__in=ids)
+
+        # _l.debug('After permission filter len %s' % len(qs))
+
+        return qs
+
     def _trn_qs_prefetch(self, qs):
 
         _qs_st = time.perf_counter()
@@ -222,7 +248,7 @@ class BaseReportBuilder:
             'allocation_pl',
         )
 
-        _l.debug('_trn_qs_prefetch  done: %s', (time.perf_counter() - _qs_st))
+        # _l.debug('_trn_qs_prefetch  done: %s', (time.perf_counter() - _qs_st))
 
         return qs
 
@@ -354,6 +380,10 @@ class BaseReportBuilder:
 
         qs = qs.filter(master_user=self.instance.master_user, is_canceled=False)
 
+
+        # TODO USED AS BACKEND FILTERS FOR REPORTS
+        # TODO MAYBE WILL BE USED IN FUTURE
+
         if self.instance.portfolios:
             qs = qs.filter(portfolio__in=self.instance.portfolios)
 
@@ -384,7 +414,7 @@ class BaseReportBuilder:
 
         result = qs
 
-        _l.debug('_trn_qs_optimized  done: %s', (time.perf_counter() - _trn_qs_st))
+        # _l.debug('_trn_qs_optimized  done: %s', (time.perf_counter() - _trn_qs_st))
 
         return result
 

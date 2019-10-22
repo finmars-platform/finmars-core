@@ -5,10 +5,10 @@ from collections import Counter, defaultdict
 from datetime import date
 from itertools import groupby
 
-from django.conf import settings
+
 from django.db.models import Q
 
-from poms.common.utils import isclose, force_qs_evaluation
+from poms.common.utils import isclose
 from poms.instruments.models import CostMethod, InstrumentClass, Instrument
 from poms.reports.builders.balance_item import ReportItem, Report
 from poms.reports.builders.balance_virt_trn import VirtualTransaction
@@ -17,7 +17,7 @@ from poms.reports.builders.pricing import FakeInstrumentPricingProvider, FakeCur
     CurrencyFxRateProvider
 from poms.reports.builders.pricing import InstrumentPricingProvider
 from poms.reports.models import BalanceReportCustomField
-from poms.transactions.models import TransactionClass, Transaction, ComplexTransaction
+from poms.transactions.models import TransactionClass, Transaction
 
 _l = logging.getLogger('poms.reports')
 
@@ -105,7 +105,7 @@ class ReportBuilder(BaseReportBuilder):
 
         self._load_transactions()
 
-        _l.debug('build load_transactions_st done: %s', (time.perf_counter() - load_transactions_st))
+        # _l.debug('build load_transactions_st done: %s', (time.perf_counter() - load_transactions_st))
 
         transactions_pricing_st = time.perf_counter()
 
@@ -170,6 +170,7 @@ class ReportBuilder(BaseReportBuilder):
 
         if full:
             _refresh_st = time.perf_counter()
+            # self._refresh_with_perms_optimized()
             self._refresh_with_perms()
             _l.debug('build _refresh_st done: %s', (time.perf_counter() - _refresh_st))
 
@@ -334,9 +335,9 @@ class ReportBuilder(BaseReportBuilder):
 
         return result
 
-    def inject_relations(self, trn_qs):
+    def _inject_relations(self, trn_qs):
 
-        result = [];
+        result = []
 
         st = time.perf_counter()
 
@@ -355,6 +356,8 @@ class ReportBuilder(BaseReportBuilder):
 
         transaction_classes_dict = self.list_as_dict(transaction_classes_list)
 
+        instrument_st = time.perf_counter()
+
         instruments_list = Instrument.objects.select_related(
             'instrument_type',
             'pricing_currency',
@@ -370,9 +373,17 @@ class ReportBuilder(BaseReportBuilder):
 
         instruments_dict = self.list_as_dict(instruments_list)
 
+        _l.debug('_inject_relations load instruments done: %s', (time.perf_counter() - instrument_st))
+
+        currency_st = time.perf_counter()
+
         currencies_list = Currency.objects.filter(master_user=self.instance.master_user)
 
         currencies_dict = self.list_as_dict(currencies_list)
+
+        _l.debug('_inject_relations load currency done: %s', (time.perf_counter() - currency_st))
+
+        portfolio_st = time.perf_counter()
 
         portfolios_list = Portfolio.objects.prefetch_related(
             # *get_permissions_prefetch_lookups(
@@ -383,8 +394,12 @@ class ReportBuilder(BaseReportBuilder):
 
         portfolios_dict = self.list_as_dict(portfolios_list)
 
+        _l.debug('_inject_relations load portfolio done: %s', (time.perf_counter() - portfolio_st))
+
+        account_st = time.perf_counter()
+
         accounts_list = Account.objects.select_related(
-            'type'
+            # 'type'
         ).prefetch_related(
             # *get_permissions_prefetch_lookups(
             #     (None, Account),
@@ -392,27 +407,33 @@ class ReportBuilder(BaseReportBuilder):
             #     ('portfolios', Portfolio),
             # )
 
-        ).filter(master_user=self.instance.master_user).defer('object_permissions')
+        ).filter(master_user_id=self.instance.master_user.pk).defer('object_permissions')
 
         accounts_dict = self.list_as_dict(accounts_list)
 
+        _l.debug('_inject_relations load account done: %s', (time.perf_counter() - account_st))
+
+        strategy_st = time.perf_counter()
+
         strategies1_list = Strategy1.objects.select_related(
-            'subgroup',
-            'subgroup__group'
+            # 'subgroup',
+            # 'subgroup__group'
         ).filter(master_user=self.instance.master_user).defer('object_permissions')
         strategies1_dict = self.list_as_dict(strategies1_list)
 
         strategies2_list = Strategy2.objects.select_related(
-            'subgroup',
-            'subgroup__group'
+            # 'subgroup',
+            # 'subgroup__group'
         ).filter(master_user=self.instance.master_user).defer('object_permissions')
         strategies2_dict = self.list_as_dict(strategies2_list)
 
         strategies3_list = Strategy3.objects.select_related(
-            'subgroup',
-            'subgroup__group'
+            # 'subgroup',
+            # 'subgroup__group'
         ).filter(master_user=self.instance.master_user).defer('object_permissions')
         strategies3_dict = self.list_as_dict(strategies3_list)
+
+        _l.debug('_inject_relations load strategy 1-3 done: %s', (time.perf_counter() - strategy_st))
 
         values_list = self.get_trn_values_list()
         o = self.get_trn_values_list_keys_as_obj(values_list)
@@ -420,14 +441,7 @@ class ReportBuilder(BaseReportBuilder):
         class Trn:
             pass
 
-        # print(values_list)
-        # print(trn_qs[0])
-        # print(o.__dict__)
-
-        # print('ecoded')
-        # print(str(trn_qs[0]).encode("utf-8"))
-
-        # print(o.instrument_id)
+        iteration_st = time.perf_counter()
 
         for tuple_trn in trn_qs:
 
@@ -526,7 +540,9 @@ class ReportBuilder(BaseReportBuilder):
 
             result.append(t)
 
-        _l.debug('_load_transactions inject relations done: %s', (time.perf_counter() - st))
+        _l.debug('_inject_relations create transactions done: %s', (time.perf_counter() - iteration_st))
+
+        _l.debug('_inject_relations done: %s', (time.perf_counter() - st))
 
         return result
 
@@ -641,6 +657,7 @@ class ReportBuilder(BaseReportBuilder):
         # trn_qs = trn_qs.filter(complex_transaction__in=complex_qs)
         trn_qs = trn_qs.filter(master_user=self.instance.master_user, is_canceled=False)
 
+        trn_qs = self._trn_qs_permission_filter(trn_qs)
         trn_qs = self._trn_qs_filter(trn_qs)
 
         _l.debug('_load_transactions trn_qs_st done: %s', (time.perf_counter() - trn_qs_st))
@@ -654,7 +671,7 @@ class ReportBuilder(BaseReportBuilder):
 
         # trn_qs = trn_qs[:1]
 
-        trn_qs = self.inject_relations(trn_qs)
+        trn_qs = self._inject_relations(trn_qs)
 
         _instance = self.instance
         _pricing_provider = self.pricing_provider
@@ -711,7 +728,7 @@ class ReportBuilder(BaseReportBuilder):
 
         _l.debug('_load_transactions iteration done: %s', (time.perf_counter() - _iteration_st))
 
-        _l.debug('_self._transactions len %s' % len(self._transactions))
+        _l.debug('_load_transactions len %s' % len(self._transactions))
 
         _l.debug('_load_transactions done: %s', (time.perf_counter() - _load_transactions_st))
 
@@ -1471,6 +1488,9 @@ class ReportBuilder(BaseReportBuilder):
         print('Member permissions %s ' % len(result))
 
         return result
+
+    def _refresh_with_perms_optimized(self):
+        pass
 
     def _refresh_with_perms(self):
         # _l.debug('items - refresh all objects with permissions')

@@ -268,6 +268,9 @@ class TransactionReportBuilder(BaseReportBuilder):
         _l.debug('> _load')
 
         qs = self._trn_qs()
+
+        qs = self._trn_qs_permission_filter(qs)
+
         self._transactions = list(qs)
 
         _l.debug('< _load: %s', len(self._transactions))

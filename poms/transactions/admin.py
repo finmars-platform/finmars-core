@@ -412,7 +412,7 @@ class ComplexTransactionAdmin(AbstractModelAdmin):
     list_filter = ['is_deleted', 'date', ]
     search_fields = ['id']
     raw_id_fields = ['transaction_type']
-    inlines = [GenericAttributeInline, TransactionInline, ComplexTransactionInputInline, ]
+    inlines = [GenericAttributeInline, TransactionInline, ComplexTransactionInputInline,GenericObjectPermissionInline, ]
     save_as = True
 
     def master_user(self, obj):
@@ -496,6 +496,7 @@ class TransactionAdmin(AbstractModelAdmin):
     inlines = [
         # AbstractAttributeInline,
         GenericAttributeInline,
+        GenericObjectPermissionInline,
     ]
     fields = (
         'master_user',

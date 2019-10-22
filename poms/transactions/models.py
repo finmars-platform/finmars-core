@@ -1175,6 +1175,8 @@ class ComplexTransaction(FakeDeletableModel):
 
     attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
 
+    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
+
     class Meta:
         verbose_name = ugettext_lazy('complex transaction')
         verbose_name_plural = ugettext_lazy('complex transactions')
@@ -1397,6 +1399,10 @@ class Transaction(FakeDeletableModel):
     notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
+
+
+
+    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
 
     class Meta:
         verbose_name = ugettext_lazy('transaction')

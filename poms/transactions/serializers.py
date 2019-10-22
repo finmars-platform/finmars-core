@@ -1519,7 +1519,7 @@ class TransactionTypeViewSerializer(ModelWithObjectPermissionSerializer):
 #         fields = AbstractAttributeSerializer.Meta.fields + ['attribute_type', 'classifier']
 
 
-class TransactionSerializer(ModelWithAttributesSerializer):
+class TransactionSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer):
     master_user = MasterUserField()
     complex_transaction = serializers.PrimaryKeyRelatedField(read_only=True)
     complex_transaction_order = serializers.IntegerField(read_only=True)
@@ -1562,7 +1562,7 @@ class TransactionSerializer(ModelWithAttributesSerializer):
 
     # attributes = TransactionAttributeSerializer(many=True, required=False, allow_null=True)
 
-    class Meta:
+    class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = Transaction
         fields = [
             'id',
@@ -1745,7 +1745,7 @@ class ComplexTransactionMixin:
         return data
 
 
-class ComplexTransactionSerializer(ModelWithAttributesSerializer):
+class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer):
     # text = serializers.SerializerMethodField()
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -1760,7 +1760,7 @@ class ComplexTransactionSerializer(ModelWithAttributesSerializer):
         self.fields['transactions_object'] = TransactionSerializer(
             source='transactions', many=True, read_only=True)
 
-    class Meta:
+    class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = ComplexTransaction
         fields = [
             'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'transactions', 'master_user',
@@ -1891,7 +1891,7 @@ class ComplexTransactionViewSerializer(ComplexTransactionMixin, serializers.Mode
         return data
 
 
-class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
+class ComplexTransactionLightSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer):
     # text = serializers.SerializerMethodField()
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -1902,7 +1902,7 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
         self.fields['transaction_type_object'] = TransactionTypeViewSerializer(
             source='transaction_type', read_only=True)
 
-    class Meta:
+    class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = ComplexTransaction
         fields = [
             'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'master_user',

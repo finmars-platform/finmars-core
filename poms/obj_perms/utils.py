@@ -65,36 +65,27 @@ def obj_perms_filter_objects(member, perms, queryset, model_cls=None, prefetch=T
         codenames.add(codename)
 
     if codenames:
-        # f = Q()
-        # if user_obj_perms_model:
-        #     user_obj_perms_qs = user_obj_perms_model.objects.filter(
-        #         member=member,
-        #         permission__content_type=ctype,
-        #         permission__codename__in=codenames
-        #     )
-        #     f |= Q(pk__in=user_obj_perms_qs.values_list('content_object__id', flat=True))
-        # if group_obj_perms_model:
-        #     group_obj_perms_qs = group_obj_perms_model.objects.filter(
-        #         group__in=member.groups.all(),
-        #         permission__content_type=ctype,
-        #         permission__codename__in=codenames
-        #     )
-        #     f |= Q(pk__in=group_obj_perms_qs.values_list('content_object__id', flat=True))
-        # if f:
-        #     queryset = queryset.filter(f)
 
-        queryset = queryset.filter(
-            pk__in=GenericObjectPermission.objects.filter(
-                content_type=ctype, permission__content_type=ctype, permission__codename__in=codenames
-            ).filter(
-                Q(member=member) | Q(group__in=member.groups.all())
-            ).values_list('object_id', flat=True)
-        )
-        # queryset = queryset.filter(object_permissions__permission__content_type=ctype,
-        #                            object_permissions__permission__codename__in=codenames)
+        # print('ctype %s' % ctype)
+        # print('codenames %s' % codenames)
+        #
+        # print("Queryset before permissions filter len %s" % len(queryset))
+
+        ids = GenericObjectPermission.objects.filter(
+            content_type=ctype, permission__content_type=ctype, permission__codename__in=codenames
+        ).filter(
+            # Q(member=member) | Q(group__in=member.groups.all())
+            Q(group__in=member.groups.all())
+        ).values_list('object_id', flat=True)
+
+        # print('ids %s' % ids)
+
+        queryset = queryset.filter(pk__in=ids)
 
         if prefetch:
             queryset = obj_perms_prefetch(queryset, my=True)
+
+        # print("Queryset after permissions filter len %s" % len(queryset))
 
         return queryset
     else:

@@ -280,7 +280,7 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy']:
             queryset = queryset.filter(is_deleted=False)
 
-        if content_type.model not in ['currencyhistory', 'pricehistory']:
+        if content_type.model not in ['currencyhistory', 'pricehistory', 'complextransaction', 'transaction']:
 
             is_enabled = request.data.get('is_enabled', 'true')
 

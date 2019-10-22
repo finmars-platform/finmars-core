@@ -1191,14 +1191,14 @@ class ComplexTransactionFilterSet(FilterSet):
         fields = []
 
 
-class ComplexTransactionViewSet(AbstractModelViewSet):
+# class ComplexTransactionViewSet(AbstractModelViewSet):
+class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
     queryset = get_complex_transaction_queryset(select_related=False, transactions=True)
     serializer_class = ComplexTransactionSerializer
-    permission_classes = AbstractModelViewSet.permission_classes + [
-        # ComplexTransactionPermission
-    ]
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        ComplexTransactionPermissionFilter,
+
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        # ComplexTransactionPermissionFilter,
+        OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
     ]
@@ -1310,12 +1310,13 @@ class ComplexTransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSe
     # filter_class = ComplexTransactionFilterSet
 
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        ComplexTransactionPermissionFilter,
+        # ComplexTransactionPermissionFilter,
+        OwnerByMasterUserFilter,
         AttributeFilter
     ]
 
 
-class ComplexTransactionLightViewSet(AbstractModelViewSet):
+class ComplexTransactionLightViewSet(AbstractWithObjectPermissionViewSet):
     queryset = qs = ComplexTransaction.objects.select_related(
         'transaction_type',
         'transaction_type__group',
@@ -1328,11 +1329,10 @@ class ComplexTransactionLightViewSet(AbstractModelViewSet):
     )
 
     serializer_class = ComplexTransactionLightSerializer
-    permission_classes = AbstractModelViewSet.permission_classes + [
-        # ComplexTransactionPermission
-    ]
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        ComplexTransactionPermissionFilter,
+
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        # ComplexTransactionPermissionFilter,
+        OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
     ]
@@ -1351,6 +1351,7 @@ class ComplexTransactionLightEvGroupViewSet(AbstractEvGroupWithObjectPermissionV
     # filter_class = ComplexTransactionFilterSet
 
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        ComplexTransactionPermissionFilter,
+        # ComplexTransactionPermissionFilter,
+        OwnerByMasterUserFilter,
         AttributeFilter
     ]
