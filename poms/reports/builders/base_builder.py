@@ -12,7 +12,8 @@ from poms.accounts.models import Account, AccountType
 from poms.counterparties.models import Responsible, ResponsibleGroup, Counterparty, CounterpartyGroup
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, InstrumentType, AccrualCalculationSchedule, InstrumentFactorSchedule
-from poms.obj_attrs.utils import get_attributes_prefetch
+from poms.obj_attrs.models import GenericAttributeType
+from poms.obj_attrs.utils import get_attributes_prefetch, get_attributes_prefetch_simple
 from poms.obj_perms.models import GenericObjectPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.portfolios.models import Portfolio
@@ -380,7 +381,6 @@ class BaseReportBuilder:
 
         qs = qs.filter(master_user=self.instance.master_user, is_canceled=False)
 
-
         # TODO USED AS BACKEND FILTERS FOR REPORTS
         # TODO MAYBE WILL BE USED IN FUTURE
 
@@ -443,7 +443,14 @@ class BaseReportBuilder:
                     if obj:
                         pks.add(obj.id)
 
+        # query_st = time.perf_counter()
+
         objs = queryset.in_bulk(pks)
+
+        # _l.debug('_refresh_attrs len %s' % len(list(objs)))
+        #
+        # _l.debug('_refresh_attrs query done: %s', (time.perf_counter() - query_st))
+
         # _l.debug('objs: %s', objs.keys())
 
         if objects is not None:
@@ -517,7 +524,7 @@ class BaseReportBuilder:
         )
 
     def _refresh_instruments(self, master_user, items, attrs, objects=None):
-        
+
         # return Instrument.objects.filter(
         #     master_user=master_user
         # ).prefetch_related(
@@ -545,7 +552,7 @@ class BaseReportBuilder:
             queryset=Instrument.objects.filter(
                 master_user=master_user
             ).prefetch_related(
-                'master_user',
+                # 'master_user',
                 'instrument_type',
                 'instrument_type__instrument_class',
                 'pricing_currency',
@@ -555,7 +562,7 @@ class BaseReportBuilder:
                 'price_download_scheme',
                 'price_download_scheme__provider',
                 get_attributes_prefetch(),
-                get_tag_prefetch(),
+                # get_tag_prefetch(),
                 *get_permissions_prefetch_lookups(
                     (None, Instrument),
                     ('instrument_type', InstrumentType),
@@ -577,29 +584,19 @@ class BaseReportBuilder:
 
     def _refresh_portfolios(self, master_user, items, attrs, objects=None):
 
-        return Portfolio.objects.filter(
-            master_user=master_user,
-        ).prefetch_related(
-            get_attributes_prefetch(),
-            *get_permissions_prefetch_lookups(
-                (None, Portfolio),
+        return self._refresh_attrs(
+            items=items,
+            attrs=attrs,
+            objects=objects,
+            queryset=Portfolio.objects.filter(
+                master_user=master_user,
+            ).prefetch_related(
+                get_attributes_prefetch(),
+                *get_permissions_prefetch_lookups(
+                    (None, Portfolio),
+                )
             )
         )
-
-
-        # return self._refresh_attrs(
-        #     items=items,
-        #     attrs=attrs,
-        #     objects=objects,
-        #     queryset=Portfolio.objects.filter(
-        #         master_user=master_user,
-        #     ).prefetch_related(
-        #         get_attributes_prefetch(),
-        #         *get_permissions_prefetch_lookups(
-        #             (None, Portfolio),
-        #         )
-        #     )
-        # )
 
     def _refresh_accounts(self, master_user, items, attrs, objects=None):
         return self._refresh_attrs(
@@ -615,7 +612,7 @@ class BaseReportBuilder:
                     (None, Account),
                     ('type', AccountType),
                 )
-            )
+            ).defer('object_permissions')
         )
 
     def _refresh_strategies1(self, master_user, items, attrs, objects=None):
@@ -630,8 +627,8 @@ class BaseReportBuilder:
                 'subgroup__group',
                 *get_permissions_prefetch_lookups(
                     (None, Strategy1),
-                    ('subgroup', Strategy1Subgroup),
-                    ('subgroup__group', Strategy1Group),
+                    # ('subgroup', Strategy1Subgroup),
+                    # ('subgroup__group', Strategy1Group),
                 )
             )
         )
@@ -648,8 +645,8 @@ class BaseReportBuilder:
                 'subgroup__group',
                 *get_permissions_prefetch_lookups(
                     (None, Strategy2),
-                    ('subgroup', Strategy2Subgroup),
-                    ('subgroup__group', Strategy2Group),
+                    # ('subgroup', Strategy2Subgroup),
+                    # ('subgroup__group', Strategy2Group),
                 )
             )
         )
@@ -666,8 +663,8 @@ class BaseReportBuilder:
                 'subgroup__group',
                 *get_permissions_prefetch_lookups(
                     (None, Strategy3),
-                    ('subgroup', Strategy3Subgroup),
-                    ('subgroup__group', Strategy3Group),
+                    # ('subgroup', Strategy3Subgroup),
+                    # ('subgroup__group', Strategy3Group),
                 )
             )
         )
@@ -684,7 +681,7 @@ class BaseReportBuilder:
                 get_attributes_prefetch(),
                 *get_permissions_prefetch_lookups(
                     (None, Responsible),
-                    ('group', ResponsibleGroup),
+                    # ('group', ResponsibleGroup),
                 )
             )
         )
@@ -701,7 +698,7 @@ class BaseReportBuilder:
                 get_attributes_prefetch(),
                 *get_permissions_prefetch_lookups(
                     (None, Counterparty),
-                    ('group', CounterpartyGroup),
+                    # ('group', CounterpartyGroup),
                 )
             )
         )
@@ -714,3 +711,89 @@ class BaseReportBuilder:
 
     def _refresh_item_instrument_accruals(self, master_user, items, attrs, objects=None):
         return self._refresh_attrs_simple(items=items, attrs=attrs, objects=objects)
+
+    # SZ LOGIC BELOW
+
+    def _get_relation_permissions(self, groups, app_label, model):
+
+        content_type = ContentType.objects.get(app_label=app_label, model=model)
+
+        codename = 'view_' + model
+
+        return GenericObjectPermission.objects.filter(group__in=groups, content_type=content_type,
+                                                      permission__codename=codename)
+
+    def _get_relations_ids_from_items(self, items, attrs):
+
+        result = set()
+
+        for item in items:
+            for attr in attrs:
+                obj = getattr(item, attr, None)
+                if obj:
+                    result.add(obj.id)
+
+        return result
+
+    def _get_attribute_types(self, master_user):
+
+        return list(GenericAttributeType.objects.prefetch_related('classifiers').defer('object_permissions').filter(
+            master_user=master_user))
+
+    def _set_attribute_types_in_relations(self, items, attribute_types):
+
+        for item in items:
+
+            if item.attributes:
+
+                for attribute in item.attributes.all():
+
+                    for attribute_type in attribute_types:
+
+                        if attribute_type.id == attribute.attribute_type_id:
+                            setattr(attribute, 'attribute_type', attribute_type)
+
+        return items
+
+    def _get_permissioned_accounts(self, ids):
+
+        return Account.objects.select_related('type').prefetch_related(
+            # get_attributes_prefetch_simple(),
+            'attributes',
+            *get_permissions_prefetch_lookups(
+                ('type', AccountType),
+            )
+        ).defer('object_permissions').filter(id__in=ids)
+
+    def _get_permissioned_currencies(self, ids):
+
+        return Currency.objects.prefetch_related(
+            get_attributes_prefetch_simple()
+        ).filter(id__in=ids)
+
+    def _get_permissioned_portfolios(self, ids):
+
+        return Portfolio.objects.prefetch_related(
+            # get_attributes_prefetch_simple()
+            'attributes'
+        ).defer('object_permissions', 'responsibles', 'counterparties', 'transaction_types', 'accounts', 'tags').filter(
+            id__in=ids)
+
+    def _get_permissioned_instruments(self, ids):
+
+        return Instrument.objects.select_related(
+            'instrument_type',
+            'instrument_type__instrument_class',
+            'pricing_currency',
+            'accrued_currency',
+            'payment_size_detail',
+            'daily_pricing_model',
+            'price_download_scheme',
+            'price_download_scheme__provider',
+        ).prefetch_related(
+            # get_attributes_prefetch_simple(),
+            'attributes',
+            *get_permissions_prefetch_lookups(
+                ('instrument_type', InstrumentType),
+            )
+        ).filter(id__in=ids)

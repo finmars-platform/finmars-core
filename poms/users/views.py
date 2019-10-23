@@ -719,6 +719,9 @@ class GroupViewSet(AbstractModelViewSet):
         self.grant_all_permissions_to_model_objects(ResponsibleGroup, master_user, instance)
         self.grant_all_permissions_to_model_objects(Responsible, master_user, instance)
 
+        self.grant_all_permissions_to_model_objects(ComplexTransaction, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Transaction, master_user, instance)
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -733,9 +736,9 @@ class GroupViewSet(AbstractModelViewSet):
 
         # TODO important to know: Deletion of the group leads to GenericObjectPermission deletion
 
-        super(GroupViewSet, self).perform_destroy(instance)
-
         GenericObjectPermission.objects.filter(group=instance).delete()
+        instance.delete()
+
 
 class InviteToMasterUserFilterSet(FilterSet):
     id = NoOpFilter()

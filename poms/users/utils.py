@@ -6,7 +6,6 @@ from poms.users.models import Member, MasterUser
 
 
 def set_master_user(request, master_user):
-
     session = Session.objects.get(session_key=request.session.session_key)
 
     master_user_id = master_user.id
@@ -46,28 +45,30 @@ def get_master_user_and_member(request):
 
     session = Session.objects.get(session_key=request.session.session_key)
 
-    master_user_id = session.current_master_user
+    master_user_id = session.current_master_user_id
 
     # print('request.session.get master_user_id %s' % master_user_id)
 
     if master_user_id is None:
         master_user_id = request.query_params.get('master_user_id', None)
 
-    member_qs = Member.objects.select_related('master_user').prefetch_related('groups').filter(user=user,
-                                                                                               is_deleted=False)
+    member_qs = Member.objects.prefetch_related('groups').filter(user=user, is_deleted=False)
 
     # print('get_master_user_and_member.master_user_id %s' % master_user_id)
 
     if master_user_id is not None:
+
+        master_user = MasterUser.objects.get(id=master_user_id)
+
         try:
             member = member_qs.get(master_user=master_user_id)
-            return member, member.master_user
+
+            return member, master_user
         except ObjectDoesNotExist:
             pass
 
     member = member_qs.first()
     if member:
-
         session.current_master_user = member.master_user
         session.save()
         # request.session['master_user_id'] = member.master_user.id

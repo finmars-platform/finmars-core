@@ -10,13 +10,13 @@ from poms.users.fields import MasterUserField
 
 
 class BalanceReportCustomFieldSerializer(serializers.ModelSerializer):
-    master_user = MasterUserField()
+    # master_user = MasterUserField()
     expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='""')
 
     class Meta:
         model = BalanceReportCustomField
         fields = [
-            'id', 'master_user', 'name', 'user_code', 'expr', 'value_type', 'notes'
+            'id',  'name', 'user_code', 'expr', 'value_type', 'notes'
         ]
 
 

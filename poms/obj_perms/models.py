@@ -63,7 +63,8 @@ class GenericObjectPermission(models.Model):
         verbose_name = ugettext_lazy('object permission')
         verbose_name_plural = ugettext_lazy('object permissions')
         index_together = [
-            ['content_type', 'object_id']
+            ['content_type', 'object_id'],
+            ['content_type', 'group']
         ]
 
     def __str__(self):

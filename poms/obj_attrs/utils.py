@@ -94,3 +94,15 @@ def get_attributes_prefetch(path='attributes'):
             )
         )
     )
+
+
+def get_attributes_prefetch_simple(path='attributes'):
+    return Prefetch(
+        path,
+        queryset=GenericAttribute.objects.select_related(
+            'attribute_type',
+        ).prefetch_related(
+            'attribute_type__options',
+            'attribute_type__classifiers',
+        )
+    )

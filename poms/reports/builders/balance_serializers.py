@@ -496,15 +496,15 @@ class ReportSerializer(serializers.Serializer):
 
     def to_representation(self, instance):
 
-        st = time.perf_counter()
+        to_representation_st = time.perf_counter()
 
         data = super(ReportSerializer, self).to_representation(instance)
 
-        # print('here? to_representation')
+        print('ReportSerializer to_representation_st done: %s' % (time.perf_counter() - to_representation_st))
+
+        st = time.perf_counter()
 
         custom_fields = data['custom_fields_object']
-
-        # print('custom_fields %s' % custom_fields)
 
         if custom_fields:
             items = data['items']
@@ -639,7 +639,7 @@ class ReportSerializer(serializers.Serializer):
 
                 item['custom_fields'] = cfv
 
-        print('ReportSerializer to_representation done: %s' % (time.perf_counter() - st))
+        print('ReportSerializer custom fields execution done: %s' % (time.perf_counter() - st))
 
         return data
 

@@ -5,7 +5,6 @@ from collections import Counter, defaultdict
 from datetime import date
 from itertools import groupby
 
-
 from django.db.models import Q
 
 from poms.common.utils import isclose
@@ -101,11 +100,9 @@ class ReportBuilder(BaseReportBuilder):
         st = time.perf_counter()
         _l.debug('build report: %s', self.instance)
 
-        load_transactions_st = time.perf_counter()
+        _calculations_st = time.perf_counter()
 
         self._load_transactions()
-
-        # _l.debug('build load_transactions_st done: %s', (time.perf_counter() - load_transactions_st))
 
         transactions_pricing_st = time.perf_counter()
 
@@ -168,10 +165,12 @@ class ReportBuilder(BaseReportBuilder):
         if self.instance.pl_first_date and self.instance.pl_first_date != date.min:
             self._build_on_pl_first_date()
 
+        _l.debug('build calculations done: %s', (time.perf_counter() - _calculations_st))
+
         if full:
             _refresh_st = time.perf_counter()
-            # self._refresh_with_perms_optimized()
-            self._refresh_with_perms()
+            self._refresh_with_perms_optimized()
+            # self._refresh_with_perms()
             _l.debug('build _refresh_st done: %s', (time.perf_counter() - _refresh_st))
 
         self.instance.custom_fields = BalanceReportCustomField.objects.filter(master_user=self.instance.master_user)
@@ -337,6 +336,8 @@ class ReportBuilder(BaseReportBuilder):
 
     def _inject_relations(self, trn_qs):
 
+        # Prefetch Related Objects
+
         result = []
 
         st = time.perf_counter()
@@ -369,7 +370,7 @@ class ReportBuilder(BaseReportBuilder):
             #     (None, Instrument),
             # )
 
-        ).filter(master_user=self.instance.master_user).defer('object_permissions')
+        ).defer('object_permissions').filter(master_user=self.instance.master_user)
 
         instruments_dict = self.list_as_dict(instruments_list)
 
@@ -377,7 +378,7 @@ class ReportBuilder(BaseReportBuilder):
 
         currency_st = time.perf_counter()
 
-        currencies_list = Currency.objects.filter(master_user=self.instance.master_user)
+        currencies_list = Currency.objects.only('id').filter(master_user=self.instance.master_user)
 
         currencies_dict = self.list_as_dict(currencies_list)
 
@@ -390,7 +391,7 @@ class ReportBuilder(BaseReportBuilder):
             #     (None, Portfolio),
             # )
 
-        ).filter(master_user=self.instance.master_user).defer('object_permissions')
+        ).only('id').filter(master_user=self.instance.master_user)
 
         portfolios_dict = self.list_as_dict(portfolios_list)
 
@@ -407,7 +408,7 @@ class ReportBuilder(BaseReportBuilder):
             #     ('portfolios', Portfolio),
             # )
 
-        ).filter(master_user_id=self.instance.master_user.pk).defer('object_permissions')
+        ).only('id').filter(master_user_id=self.instance.master_user.pk)
 
         accounts_dict = self.list_as_dict(accounts_list)
 
@@ -418,19 +419,19 @@ class ReportBuilder(BaseReportBuilder):
         strategies1_list = Strategy1.objects.select_related(
             # 'subgroup',
             # 'subgroup__group'
-        ).filter(master_user=self.instance.master_user).defer('object_permissions')
+        ).only('id').filter(master_user_id=self.instance.master_user.pk)
         strategies1_dict = self.list_as_dict(strategies1_list)
 
         strategies2_list = Strategy2.objects.select_related(
             # 'subgroup',
             # 'subgroup__group'
-        ).filter(master_user=self.instance.master_user).defer('object_permissions')
+        ).only('id').filter(master_user_id=self.instance.master_user.pk)
         strategies2_dict = self.list_as_dict(strategies2_list)
 
         strategies3_list = Strategy3.objects.select_related(
             # 'subgroup',
             # 'subgroup__group'
-        ).filter(master_user=self.instance.master_user).defer('object_permissions')
+        ).only('id').filter(master_user_id=self.instance.master_user.pk)
         strategies3_dict = self.list_as_dict(strategies3_list)
 
         _l.debug('_inject_relations load strategy 1-3 done: %s', (time.perf_counter() - strategy_st))
@@ -476,7 +477,6 @@ class ReportBuilder(BaseReportBuilder):
                 setattr(t, 'allocation_pl', instruments_dict[tuple_trn[o.allocation_pl_id]])
             except KeyError:
                 setattr(t, 'allocation_pl', None)
-
 
             try:
                 setattr(t, 'transaction_currency', currencies_dict[tuple_trn[o.transaction_currency_id]])
@@ -543,6 +543,152 @@ class ReportBuilder(BaseReportBuilder):
         _l.debug('_inject_relations create transactions done: %s', (time.perf_counter() - iteration_st))
 
         _l.debug('_inject_relations done: %s', (time.perf_counter() - st))
+
+        return result
+
+    def _inject_relations_ids_only(self, trn_qs):
+
+        from poms.currencies.models import Currency
+        from poms.portfolios.models import Portfolio
+        from poms.accounts.models import Account
+        from poms.accounts.models import AccountType
+
+        from poms.strategies.models import Strategy1
+        from poms.strategies.models import Strategy2
+        from poms.strategies.models import Strategy3
+
+        # WE DO NOT NEED FULL OBJECTS ON REPORT CALCULATION LEVEL
+        # SO, WE CRATE OBJECTS THAT ONLY HAVE ID FIELD
+
+        # Need to define new Classes for Entites to reduce time to create new Objects with id only property
+
+        result = []
+
+        st = time.perf_counter()
+
+        values_list = self.get_trn_values_list()
+        o = self.get_trn_values_list_keys_as_obj(values_list)
+
+        instrument_st = time.perf_counter()
+
+        instruments_list = Instrument.objects.select_related(
+            'instrument_type',
+            'pricing_currency',
+            'accrued_currency'
+        ).prefetch_related(
+            'factor_schedules',
+            'accrual_calculation_schedules',
+            # *get_permissions_prefetch_lookups(
+            #     (None, Instrument),
+            # )
+
+        ).filter(master_user=self.instance.master_user).defer('object_permissions')
+
+        instruments_dict = self.list_as_dict(instruments_list)
+
+        _l.debug('_inject_relations_ids_only load instruments done: %s', (time.perf_counter() - instrument_st))
+
+        class Trn:
+            pass
+
+        iteration_st = time.perf_counter()
+
+        for tuple_trn in trn_qs:
+
+            t = Trn()
+
+            index = 0
+            for val in tuple_trn:
+                setattr(t, values_list[index], val)
+                index = index + 1
+
+            setattr(t, 'transaction_class', TransactionClass(id=o.transaction_class_id))
+
+            try:
+                setattr(t, 'instrument', instruments_dict[tuple_trn[o.instrument_id]])
+            except KeyError:
+                setattr(t, 'instrument', None)
+
+            try:
+                setattr(t, 'linked_instrument', instruments_dict[tuple_trn[o.linked_instrument_id]])
+            except KeyError:
+                setattr(t, 'linked_instrument', None)
+
+            try:
+                setattr(t, 'allocation_balance', instruments_dict[tuple_trn[o.allocation_balance_id]])
+            except KeyError:
+                setattr(t, 'allocation_balance', None)
+
+            try:
+                setattr(t, 'allocation_pl', instruments_dict[tuple_trn[o.allocation_pl_id]])
+            except KeyError:
+                setattr(t, 'allocation_pl', None)
+
+            try:
+                setattr(t, 'transaction_currency', Currency(id=o.transaction_currency_id))
+            except KeyError:
+                setattr(t, 'transaction_currency', None)
+
+            try:
+                setattr(t, 'settlement_currency', Currency(id=o.settlement_currency_id))
+            except KeyError:
+                setattr(t, 'settlement_currency', None)
+
+            try:
+                setattr(t, 'portfolio', Portfolio(id=o.portfolio_id))
+            except KeyError:
+                setattr(t, 'portfolio', None)
+
+            try:
+                setattr(t, 'account_cash', Account(id=o.account_cash_id))
+            except KeyError:
+                setattr(t, 'account_cash', None)
+
+            try:
+                setattr(t, 'account_position', Account(id=o.account_position_id))
+            except KeyError:
+                setattr(t, 'account_position', None)
+
+            try:
+                setattr(t, 'account_interim', Account(id=o.account_interim_id))
+            except KeyError:
+                setattr(t, 'account_interim', None)
+
+            try:
+                setattr(t, 'strategy1_position', Strategy1(id=o.strategy1_position_id))
+            except KeyError:
+                setattr(t, 'strategy1_position', None)
+
+            try:
+                setattr(t, 'strategy1_cash', Strategy1(id=o.strategy1_cash_id))
+            except KeyError:
+                setattr(t, 'strategy1_cash', None)
+
+            try:
+                setattr(t, 'strategy2_position', Strategy2(id=o.strategy2_position_id))
+            except KeyError:
+                setattr(t, 'strategy2_position', None)
+
+            try:
+                setattr(t, 'strategy2_cash', Strategy2(id=o.strategy2_cash_id))
+            except KeyError:
+                setattr(t, 'strategy2_cash', None)
+
+            try:
+                setattr(t, 'strategy3_position', Strategy3(id=o.strategy3_position_id))
+            except KeyError:
+                setattr(t, 'strategy3_position', None)
+
+            try:
+                setattr(t, 'strategy3_cash', Strategy3(id=o.strategy3_cash_id))
+            except KeyError:
+                setattr(t, 'strategy3_cash', None)
+
+            result.append(t)
+
+        _l.debug('_inject_relations_ids_only create transactions done: %s', (time.perf_counter() - iteration_st))
+
+        _l.debug('_inject_relations_ids_only done: %s', (time.perf_counter() - st))
 
         return result
 
@@ -672,6 +818,7 @@ class ReportBuilder(BaseReportBuilder):
         # trn_qs = trn_qs[:1]
 
         trn_qs = self._inject_relations(trn_qs)
+        # trn_qs = self._inject_relations_ids_only(trn_qs) # Uncomment when refresh attrs will be optimized
 
         _instance = self.instance
         _pricing_provider = self.pricing_provider
@@ -1490,6 +1637,143 @@ class ReportBuilder(BaseReportBuilder):
         return result
 
     def _refresh_with_perms_optimized(self):
+
+        instance_relations_st = time.perf_counter()
+
+        # TODO START HERE
+        # TODO USED AS BACKEND FILTERS FOR REPORTS
+        # TODO MAYBE WILL BE USED IN FUTURE
+
+        self.instance.portfolios = self._refresh_portfolios(
+            master_user=self.instance.master_user,
+            items=None,
+            attrs=None,
+            objects=self.instance.portfolios
+        )
+        self.instance.accounts = self._refresh_accounts(
+            master_user=self.instance.master_user,
+            items=None,
+            attrs=None,
+            objects=self.instance.accounts
+        )
+        self.instance.accounts_position = self._refresh_accounts(
+            master_user=self.instance.master_user,
+            items=None,
+            attrs=None,
+            objects=self.instance.accounts_position
+        )
+        self.instance.accounts_cash = self._refresh_accounts(
+            master_user=self.instance.master_user,
+            items=None,
+            attrs=None,
+            objects=self.instance.accounts_cash
+        )
+        self.instance.strategies1 = self._refresh_strategies1(
+            master_user=self.instance.master_user,
+            items=None,
+            attrs=None,
+            objects=self.instance.strategies1
+        )
+        self.instance.strategies2 = self._refresh_strategies2(
+            master_user=self.instance.master_user,
+            items=None,
+            attrs=None,
+            objects=self.instance.strategies2
+        )
+        self.instance.strategies3 = self._refresh_strategies3(
+            master_user=self.instance.master_user,
+            items=None,
+            attrs=None,
+            objects=self.instance.strategies3
+        )
+
+        # TODO END HERE
+
+        _l.debug('_refresh_with_perms_optimized instance relations done: %s', (time.perf_counter() - instance_relations_st))
+
+        permissions_st = time.perf_counter()
+
+        groups = self.instance.member.groups.all()
+
+        accounts_permissions = self._get_relation_permissions(groups=groups,
+                                                              app_label='accounts', model='account')
+        currencies_permissions = self._get_relation_permissions(groups=groups,
+                                                                app_label='currencies', model='currency')
+        portfolios_permissions = self._get_relation_permissions(groups=groups,
+                                                                app_label='portfolios', model='portfolio')
+        instruments_permissions = self._get_relation_permissions(groups=groups,
+                                                                 app_label='instruments', model='instrument')
+
+        _l.debug('_refresh_with_perms_optimized permissions done: %s', (time.perf_counter() - permissions_st))
+
+        item_relations_st = time.perf_counter()
+
+        item_accounts_st = time.perf_counter()
+
+        accounts_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['acc', 'mismatch_acc'])
+        accounts_ids = set()
+        for item in accounts_permissions:
+            if item.object_id in accounts_items_ids:
+                accounts_ids.add(item.object_id)
+
+        self.instance.item_accounts = self._get_permissioned_accounts(ids=accounts_ids)
+
+        _l.debug('_refresh_with_perms_optimized item_accounts done: %s', (time.perf_counter() - item_accounts_st))
+
+        item_currencies_st = time.perf_counter()
+
+        currencies_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['ccy', 'pricing_ccy'])
+        currencies_ids = set()
+        for item in currencies_permissions:
+            if item.object_id in currencies_items_ids:
+                currencies_ids.add(item.object_id)
+
+        self.instance.item_currencies = self._get_permissioned_currencies(ids=currencies_ids)
+
+        _l.debug('_refresh_with_perms_optimized item_currencies done: %s', (time.perf_counter() - item_currencies_st))
+
+        item_portfolios_st = time.perf_counter()
+
+        portfolios_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['prtfl', 'mismatch_prtfl'])
+        portfolios_ids = set()
+        for item in portfolios_permissions:
+            if item.object_id in portfolios_items_ids:
+                portfolios_ids.add(item.object_id)
+
+        self.instance.item_portfolios = self._get_permissioned_portfolios(ids=portfolios_ids)
+
+        _l.debug('_refresh_with_perms_optimized item_portfolios done: %s', (time.perf_counter() - item_portfolios_st))
+
+        item_instruments_st = time.perf_counter()
+
+        instruments_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['instr', 'alloc'])
+        instruments_ids = set()
+        for item in instruments_permissions:
+            if item.object_id in instruments_items_ids:
+                instruments_ids.add(item.object_id)
+
+        self.instance.item_instruments = self._get_permissioned_instruments(ids=instruments_ids)
+
+        _l.debug('_refresh_with_perms_optimized item_instruments done: %s', (time.perf_counter() - item_instruments_st))
+
+        # _l.debug('_refresh_with_perms_optimized item_accounts len %s' % len(self.instance.item_accounts))
+        # _l.debug('_refresh_with_perms_optimized item_currencies len %s' % len(self.instance.item_currencies))
+        # _l.debug('_refresh_with_perms_optimized item_portfolios len %s' % len(self.instance.item_portfolios))
+        # _l.debug('_refresh_with_perms_optimized item_instruments len %s' % len(self.instance.item_instruments))
+
+        attribute_types_st = time.perf_counter()
+
+        attribute_types = self._get_attribute_types(self.instance.master_user)
+
+        self.instance.item_accounts = self._set_attribute_types_in_relations(self.instance.item_accounts, attribute_types)
+        self.instance.item_portfolios = self._set_attribute_types_in_relations(self.instance.item_portfolios, attribute_types)
+        self.instance.item_currencies = self._set_attribute_types_in_relations(self.instance.item_currencies, attribute_types)
+        self.instance.item_instruments = self._set_attribute_types_in_relations(self.instance.item_instruments, attribute_types)
+
+        _l.debug('_refresh_with_perms_optimized set attribute types done: %s', (time.perf_counter() - attribute_types_st))
+
+        _l.debug('_refresh_with_perms_optimized item relations done: %s', (time.perf_counter() - item_relations_st))
+
         pass
 
     def _refresh_with_perms(self):

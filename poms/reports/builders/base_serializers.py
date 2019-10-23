@@ -3,13 +3,24 @@ from __future__ import unicode_literals
 from django.utils.functional import cached_property
 from rest_framework import serializers
 
+from poms.accounts.models import Account
 from poms.accounts.serializers import AccountSerializer
+from poms.common.serializers import ModelWithUserCodeSerializer
 from poms.counterparties.serializers import ResponsibleSerializer, \
     CounterpartySerializer
+from poms.currencies.models import CurrencyHistory
 from poms.currencies.serializers import CurrencySerializer, CurrencyHistorySerializer
+from poms.instruments.models import Instrument, InstrumentType
 from poms.instruments.serializers import InstrumentSerializer, PriceHistorySerializer, \
-    AccrualCalculationScheduleSerializer
-from poms.obj_attrs.serializers import GenericAttributeTypeSerializer, GenericAttributeSerializer
+    AccrualCalculationScheduleSerializer, InstrumentTypeViewSerializer, PaymentSizeDetailSerializer, \
+    DailyPricingModelSerializer, InstrumentClassSerializer
+from poms.integrations.fields import PriceDownloadSchemeField
+from poms.obj_attrs.fields import GenericClassifierField
+from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
+from poms.obj_attrs.serializers import GenericAttributeTypeSerializer, GenericAttributeSerializer, \
+    ModelWithAttributesSerializer, GenericClassifierSerializer, GenericClassifierWithoutChildrenSerializer, \
+    GenericClassifierViewSerializer
+from poms.portfolios.models import Portfolio
 from poms.portfolios.serializers import PortfolioSerializer
 from poms.reports.serializers import BalanceReportCustomFieldSerializer, TransactionReportCustomFieldSerializer
 from poms.strategies.serializers import Strategy1Serializer, Strategy2Serializer, Strategy3Serializer
@@ -27,64 +38,46 @@ from poms.users.fields import MasterUserField
 #         ]
 
 
-class ReportGenericAttributeTypeSerializer(GenericAttributeTypeSerializer):
+# TODO IMPORTANT
+# TODO HERE WE HAVE ONLY OBJECTS THAT ALREADY PASSED PERMISSIONS CHEC
+# TODO SO, WE DEFINE HERE OWN SERIALIZERS WITHOUT ModelWithObjectPermissionSerializer
+
+class ReportGenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
+
+    classifiers = GenericClassifierSerializer(required=False, allow_null=True, many=True)
+    classifiers_flat = GenericClassifierWithoutChildrenSerializer(source='classifiers', read_only=True, many=True)
+
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('read_only', True)
-
         super(ReportGenericAttributeTypeSerializer, self).__init__(*args, **kwargs)
-        # self.fields.pop('user_object_permissions')
-        # self.fields.pop('group_object_permissions')
-        # self.fields.pop('object_permissions')
+
+    class Meta:
+        model = GenericAttributeType
+        fields = ['id', 'user_code', 'name', 'short_name', 'public_name', 'notes',
+                  'value_type', 'order', 'classifiers', 'classifiers_flat']
 
 
-class ReportGenericAttributeSerializer(GenericAttributeSerializer):
+class ReportGenericAttributeSerializer(serializers.ModelSerializer):
+
     attribute_type_object = ReportGenericAttributeTypeSerializer(source='attribute_type', read_only=True)
+    classifier_object = GenericClassifierViewSerializer(source='classifier', read_only=True)
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('read_only', True)
 
         super(ReportGenericAttributeSerializer, self).__init__(*args, **kwargs)
 
-        # if self.context.get('attributes_hide_objects', False):
-        #     self.fields.pop('attribute_type_object')
-        #     self.fields.pop('classifier_object')
-
-    # @cached_property
-    # def _readable_fields(self):
-    #     attributes_hide_objects = self.context.get('attributes_hide_objects', False)
-    #     return [
-    #         field for field in self.fields.values()
-    #         if not field.write_only and (
-    #             not attributes_hide_objects or field.field_name not in ('attribute_type_object', 'classifier_object'))
-    #         ]
 
 
-class ReportInstrumentSerializer(InstrumentSerializer):
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault('read_only', True)
+    class Meta:
+        model = GenericAttribute
+        fields = [
+            'id',  'value_string', 'value_float', 'value_date',
+            'classifier', 'classifier_object',
+            'attribute_type', 'attribute_type_object',
+        ]
 
-        super(ReportInstrumentSerializer, self).__init__(*args, **kwargs)
 
-        self.fields['attributes'] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
-
-        self.fields.pop('manual_pricing_formulas')
-        self.fields.pop('accrual_calculation_schedules')
-        self.fields.pop('factor_schedules')
-        self.fields.pop('event_schedules')
-
-        # self.fields.pop('user_object_permissions')
-        # self.fields.pop('group_object_permissions')
-        # self.fields.pop('object _permissions')
-
-        self.fields.pop('tags')
-        self.fields.pop('tags_object')
-
-        # self.fields.pop('payment_size_detail')
-        # self.fields.pop('payment_size_detail_object')
-        self.fields.pop('price_download_scheme')
-        self.fields.pop('price_download_scheme_object')
-        # self.fields.pop('daily_pricing_model')
-        # self.fields.pop('daily_pricing_model_object')
 
 
 class ReportAccrualCalculationScheduleSerializer(AccrualCalculationScheduleSerializer):
@@ -113,8 +106,7 @@ class ReportCurrencySerializer(CurrencySerializer):
 
         super(ReportCurrencySerializer, self).__init__(*args, **kwargs)
 
-        # self.fields['attributes'] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
-        # self.fields.pop('attributes')
+        self.fields['attributes'] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
 
         self.fields.pop('tags')
         self.fields.pop('tags_object')
@@ -127,20 +119,81 @@ class ReportCurrencySerializer(CurrencySerializer):
         self.fields.pop('is_default')
 
 
-class ReportCurrencyHistorySerializer(CurrencyHistorySerializer):
+class ReportInstrumentTypeSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
+
+    instrument_class_object = InstrumentClassSerializer(source='instrument_class', read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('read_only', True)
+
+        super(ReportInstrumentTypeSerializer, self).__init__(*args, **kwargs)
+
+        self.fields['attributes'] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
+
+    class Meta:
+        model = InstrumentType
+        fields = [
+            'id', 'instrument_class', 'instrument_class_object',
+            'user_code', 'name', 'short_name', 'public_name',
+            'notes', 'is_default', 'is_deleted'
+        ]
+
+
+class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
+
+    # instrument_type_object = ReportInstrumentTypeSerializer(source='instrument_type', read_only=True) # TODO Improve later, create separte Serializer without permission check
+
+    payment_size_detail_object = PaymentSizeDetailSerializer(source='payment_size_detail', read_only=True)
+    daily_pricing_model_object = DailyPricingModelSerializer(source='daily_pricing_model', read_only=True)
+    price_download_scheme = PriceDownloadSchemeField(allow_null=True, required=False)
+    price_download_scheme_object = serializers.PrimaryKeyRelatedField(source='price_download_scheme', read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('read_only', True)
+
+        super(ReportInstrumentSerializer, self).__init__(*args, **kwargs)
+
+        self.fields['attributes'] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
+
+        # self.fields.pop('payment_size_detail')
+        # self.fields.pop('payment_size_detail_object')
+        self.fields.pop('price_download_scheme')
+        self.fields.pop('price_download_scheme_object')
+        # self.fields.pop('daily_pricing_model')
+        # self.fields.pop('daily_pricing_model_object')
+
+    class Meta:
+        model = Instrument
+        fields = [
+            'id', 'instrument_type',  'user_code', 'name', 'short_name',
+            'public_name', 'notes', 'is_active', 'is_deleted',
+            'pricing_currency', 'price_multiplier',
+            'accrued_currency',  'accrued_multiplier',
+            'payment_size_detail', 'payment_size_detail_object', 'default_price', 'default_accrued',
+            'user_text_1', 'user_text_2', 'user_text_3',
+            'reference_for_pricing', 'daily_pricing_model', 'daily_pricing_model_object',
+            'price_download_scheme', 'price_download_scheme_object',
+            'maturity_date', 'maturity_price',
+            'is_enabled'
+
+        ]
+
+
+class ReportCurrencyHistorySerializer(serializers.ModelSerializer):
+
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('read_only', True)
 
         super(ReportCurrencyHistorySerializer, self).__init__(*args, **kwargs)
 
-        self.fields.pop('currency')
-        self.fields.pop('currency_object')
+    class Meta:
+        model = CurrencyHistory
+        fields = [
+            'id', 'currency', 'pricing_policy', 'date', 'fx_rate'
+        ]
 
-        self.fields.pop('pricing_policy')
-        self.fields.pop('pricing_policy_object')
 
-
-class ReportPortfolioSerializer(PortfolioSerializer):
+class ReportPortfolioSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('read_only', True)
 
@@ -148,26 +201,16 @@ class ReportPortfolioSerializer(PortfolioSerializer):
 
         self.fields['attributes'] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
 
-        self.fields.pop('accounts')
-        self.fields.pop('accounts_object')
-        self.fields.pop('responsibles')
-        self.fields.pop('responsibles_object')
-        self.fields.pop('counterparties')
-        self.fields.pop('counterparties_object')
-        self.fields.pop('transaction_types')
-        self.fields.pop('transaction_types_object')
+    class Meta:
+        model = Portfolio
+        fields = [
+            'id', 'user_code', 'name', 'short_name', 'public_name', 'notes',
 
-        # self.fields.pop('user_object_permissions')
-        # self.fields.pop('group_object_permissions')
-        # self.fields.pop('object_permissions')
-
-        self.fields.pop('tags')
-        self.fields.pop('tags_object')
-
-        self.fields.pop('is_default')
+        ]
 
 
-class ReportAccountSerializer(AccountSerializer):
+class ReportAccountSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
+
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('read_only', True)
 
@@ -175,17 +218,12 @@ class ReportAccountSerializer(AccountSerializer):
 
         self.fields['attributes'] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
 
-        self.fields.pop('portfolios')
-        self.fields.pop('portfolios_object')
-
-        # self.fields.pop('user_object_permissions')
-        # self.fields.pop('group_object_permissions')
-        # self.fields.pop('object_permissions')
-
-        self.fields.pop('tags')
-        self.fields.pop('tags_object')
-
-        self.fields.pop('is_default')
+    class Meta:
+        model = Account
+        fields = [
+            'id', 'type', 'user_code', 'name', 'short_name', 'public_name',
+            'notes',
+        ]
 
 
 class ReportStrategy1Serializer(Strategy1Serializer):

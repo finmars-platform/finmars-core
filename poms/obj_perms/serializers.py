@@ -78,6 +78,7 @@ class ModelWithObjectPermissionViewListSerializer(serializers.ListSerializer):
     def get_attribute(self, instance):
         objects = super(ModelWithObjectPermissionViewListSerializer, self).get_attribute(instance)
         objects = objects.all() if isinstance(objects, models.Manager) else objects
+
         member = get_member_from_context(self.context)
         return [o for o in objects if has_view_perms(member, o)]
         # member = get_member_from_context(self.context)
