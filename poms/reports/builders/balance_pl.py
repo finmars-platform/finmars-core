@@ -1713,7 +1713,7 @@ class ReportBuilder(BaseReportBuilder):
         accounts_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['acc', 'mismatch_acc'])
 
 
-        if self.instance.member && self.instance.member.is_superuser:
+        if self.instance.member and self.instance.member.is_superuser:
             self.instance.item_accounts = self._get_permissioned_accounts(ids=accounts_items_ids)
         else:
             accounts_ids = set()
@@ -1729,7 +1729,7 @@ class ReportBuilder(BaseReportBuilder):
 
         currencies_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['ccy', 'pricing_ccy'])
 
-        if self.instance.member && self.instance.member.is_superuser:
+        if self.instance.member and self.instance.member.is_superuser:
             self.instance.item_currencies = self._get_permissioned_currencies(ids=currencies_items_ids)
         else:
 
@@ -1746,7 +1746,7 @@ class ReportBuilder(BaseReportBuilder):
 
         portfolios_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['prtfl', 'mismatch_prtfl'])
 
-        if self.instance.member && self.instance.member.is_superuser:
+        if self.instance.member and self.instance.member.is_superuser:
             self.instance.item_portfolios = self._get_permissioned_portfolios(ids=portfolios_items_ids)
         else:
             portfolios_ids = set()
@@ -1762,7 +1762,7 @@ class ReportBuilder(BaseReportBuilder):
 
         instruments_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['instr', 'alloc'])
 
-        if self.instance.member && self.instance.member.is_superuser:
+        if self.instance.member and self.instance.member.is_superuser:
             self.instance.item_instruments = self._get_permissioned_instruments(ids=instruments_items_ids)
         else:
 
