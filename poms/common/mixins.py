@@ -103,7 +103,8 @@ class BulkUpdateModelMixin(UpdateModelMixin):
             raise ValidationError(ugettext_lazy('Required list'))
 
         partial = request.method.lower() == 'patch'
-        queryset = self.filter_queryset(self.get_queryset())
+        # queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.get_queryset()
 
         has_error = False
         serializers = []

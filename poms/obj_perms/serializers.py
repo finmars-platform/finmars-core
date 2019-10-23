@@ -100,11 +100,11 @@ class ModelWithObjectPermissionSerializer(serializers.ModelSerializer):
 
         self.fields['display_name'] = serializers.SerializerMethodField()
 
-        self.fields['granted_permissions'] = GrantedPermissionField()
+        # self.fields['granted_permissions'] = GrantedPermissionField()
         # self.fields['user_object_permissions'] = UserObjectPermissionSerializer(many=True, required=False,
         #                                                                         allow_null=True)
-        self.fields['group_object_permissions'] = GroupObjectPermissionSerializer(many=True, required=False,
-                                                                                  allow_null=True)
+        # self.fields['group_object_permissions'] = GroupObjectPermissionSerializer(many=True, required=False,
+        #                                                                           allow_null=True)
         self.fields['object_permissions'] = GenericObjectPermissionSerializer(many=True, required=False,
                                                                               allow_null=True)
 
@@ -225,6 +225,9 @@ class ModelWithObjectPermissionSerializer(serializers.ModelSerializer):
     #             assign_perms2(instance, group_perms=group_object_permissions)
 
     def _merge_permissions(self, instance, object_permissions, user_object_permissions, group_object_permissions):
+
+        print('_merge_permissions %s ' % object_permissions)
+
         if user_object_permissions is not empty or group_object_permissions is not empty:
             object_permissions = []
 
