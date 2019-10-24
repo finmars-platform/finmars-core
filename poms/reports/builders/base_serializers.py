@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import time
+
 from django.utils.functional import cached_property
 from rest_framework import serializers
 
@@ -10,9 +12,9 @@ from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import ModelWithUserCodeSerializer
 from poms.counterparties.serializers import ResponsibleSerializer, \
     CounterpartySerializer
-from poms.currencies.models import CurrencyHistory
+from poms.currencies.models import CurrencyHistory, Currency
 from poms.currencies.serializers import CurrencySerializer, CurrencyHistorySerializer
-from poms.instruments.models import Instrument, InstrumentType
+from poms.instruments.models import Instrument, InstrumentType, PriceHistory
 from poms.instruments.serializers import InstrumentSerializer, PriceHistorySerializer, \
     AccrualCalculationScheduleSerializer, InstrumentTypeViewSerializer, PaymentSizeDetailSerializer, \
     DailyPricingModelSerializer, InstrumentClassSerializer
@@ -25,7 +27,9 @@ from poms.obj_attrs.serializers import GenericAttributeTypeSerializer, GenericAt
 from poms.portfolios.models import Portfolio
 from poms.portfolios.serializers import PortfolioSerializer
 from poms.reports.serializers import BalanceReportCustomFieldSerializer, TransactionReportCustomFieldSerializer
-from poms.strategies.serializers import Strategy1Serializer, Strategy2Serializer, Strategy3Serializer
+from poms.strategies.models import Strategy1, Strategy2, Strategy3
+from poms.strategies.serializers import Strategy1Serializer, Strategy2Serializer, Strategy3Serializer, \
+    Strategy2SubgroupViewSerializer, Strategy1SubgroupViewSerializer, Strategy3SubgroupViewSerializer
 from poms.transactions.serializers import ComplexTransactionSerializer, TransactionTypeViewSerializer
 from poms.users.fields import MasterUserField
 
@@ -58,6 +62,8 @@ class ReportGenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
         fields = ['id', 'user_code', 'name', 'short_name', 'public_name', 'notes',
                   'value_type', 'order', 'classifiers', 'classifiers_flat']
 
+        read_only_fields = fields
+
 
 class ReportGenericAttributeSerializer(serializers.ModelSerializer):
 
@@ -79,7 +85,7 @@ class ReportGenericAttributeSerializer(serializers.ModelSerializer):
             'attribute_type', 'attribute_type_object',
         ]
 
-
+        read_only_fields = fields
 
 
 class ReportAccrualCalculationScheduleSerializer(AccrualCalculationScheduleSerializer):
@@ -89,20 +95,22 @@ class ReportAccrualCalculationScheduleSerializer(AccrualCalculationScheduleSeria
         super(AccrualCalculationScheduleSerializer, self).__init__(*args, **kwargs)
 
 
-class ReportPriceHistorySerializer(PriceHistorySerializer):
+class ReportPriceHistorySerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('read_only', True)
 
         super(ReportPriceHistorySerializer, self).__init__(*args, **kwargs)
 
-        self.fields.pop('instrument')
-        self.fields.pop('instrument_object')
+    class Meta:
+        model = PriceHistory
+        fields = [
+            'id', 'instrument', 'pricing_policy',
+            'date', 'principal_price', 'accrued_price'
+        ],
+        read_only_fields = fields
 
-        self.fields.pop('pricing_policy')
-        self.fields.pop('pricing_policy_object')
 
-
-class ReportCurrencySerializer(CurrencySerializer):
+class ReportCurrencySerializer(ModelWithUserCodeSerializer, ModelWithAttributesSerializer):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('read_only', True)
 
@@ -110,15 +118,15 @@ class ReportCurrencySerializer(CurrencySerializer):
 
         self.fields['attributes'] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
 
-        self.fields.pop('tags')
-        self.fields.pop('tags_object')
 
-        self.fields.pop('price_download_scheme')
-        self.fields.pop('price_download_scheme_object')
-        self.fields.pop('daily_pricing_model')
-        self.fields.pop('daily_pricing_model_object')
-
-        self.fields.pop('is_default')
+    class Meta:
+        model = Currency
+        fields = [
+            'id', 'user_code', 'name', 'short_name', 'notes',
+            'reference_for_pricing', 'daily_pricing_model',
+            'price_download_scheme', 'default_fx_rate',
+        ]
+        read_only_fields = fields
 
 
 class ReportInstrumentTypeSerializer(ModelWithUserCodeSerializer):
@@ -137,6 +145,7 @@ class ReportInstrumentTypeSerializer(ModelWithUserCodeSerializer):
             'user_code', 'name', 'short_name', 'public_name',
             'notes',
         ]
+        read_only_fields = fields
 
 
 class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
@@ -173,11 +182,10 @@ class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCod
             'user_text_1', 'user_text_2', 'user_text_3',
             'reference_for_pricing', 'daily_pricing_model', 'daily_pricing_model_object',
             'price_download_scheme', 'price_download_scheme_object',
-            'maturity_date', 'maturity_price',
-            'is_enabled'
+            'maturity_date', 'maturity_price'
 
         ]
-
+        read_only_fields = fields
 
 class ReportCurrencyHistorySerializer(serializers.ModelSerializer):
 
@@ -191,6 +199,7 @@ class ReportCurrencyHistorySerializer(serializers.ModelSerializer):
         fields = [
             'id', 'currency', 'pricing_policy', 'date', 'fx_rate'
         ]
+        read_only_fields = fields
 
 
 class ReportPortfolioSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
@@ -207,6 +216,8 @@ class ReportPortfolioSerializer(ModelWithAttributesSerializer, ModelWithUserCode
             'id', 'user_code', 'name', 'short_name', 'public_name', 'notes',
 
         ]
+        read_only_fields = fields
+
 
 class ReportAccountTypeSerializer(ModelWithUserCodeSerializer):
 
@@ -224,6 +235,7 @@ class ReportAccountTypeSerializer(ModelWithUserCodeSerializer):
             'id', 'user_code', 'name', 'short_name', 'public_name', 'notes',
             'show_transaction_details', 'transaction_details_expr',
         ]
+        read_only_fields = fields
 
 
 class ReportAccountSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
@@ -241,54 +253,61 @@ class ReportAccountSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSe
             'id', 'type', 'user_code', 'name', 'short_name', 'public_name',
             'notes',
         ]
+        read_only_fields = fields
 
 
-class ReportStrategy1Serializer(Strategy1Serializer):
+class ReportStrategy1Serializer(ModelWithUserCodeSerializer):
+
+    # subgroup_object = Strategy1SubgroupViewSerializer(source='subgroup', read_only=True)
+
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('read_only', True)
 
         super(ReportStrategy1Serializer, self).__init__(*args, **kwargs)
 
-        # self.fields.pop('user_object_permissions')
-        # self.fields.pop('group_object_permissions')
-        # self.fields.pop('object_permissions')
+    class Meta:
+        model = Strategy1
+        fields = [
+            'id',  'subgroup', 'user_code', 'name', 'short_name', 'public_name', 'notes',
+            # 'subgroup_object',
+        ]
+        read_only_fields = fields
 
-        self.fields.pop('tags')
-        self.fields.pop('tags_object')
 
-        # self.fields.pop('is_default')
+class ReportStrategy2Serializer(ModelWithUserCodeSerializer):
 
+    # subgroup_object = Strategy2SubgroupViewSerializer(source='subgroup', read_only=True)
 
-class ReportStrategy2Serializer(Strategy2Serializer):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('read_only', True)
 
         super(ReportStrategy2Serializer, self).__init__(*args, **kwargs)
 
-        # self.fields.pop('user_object_permissions')
-        # self.fields.pop('group_object_permissions')
-        # self.fields.pop('object_permissions')
+    class Meta:
+        model = Strategy2
+        fields = [
+            'id',  'subgroup', 'user_code', 'name', 'short_name', 'public_name', 'notes',
+            # 'subgroup_object',
+        ]
+        read_only_fields = fields
 
-        self.fields.pop('tags')
-        self.fields.pop('tags_object')
 
-        # self.fields.pop('is_default')
+class ReportStrategy3Serializer(ModelWithUserCodeSerializer):
 
+    # subgroup_object = Strategy3SubgroupViewSerializer(source='subgroup', read_only=True)
 
-class ReportStrategy3Serializer(Strategy3Serializer):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('read_only', True)
 
         super(ReportStrategy3Serializer, self).__init__(*args, **kwargs)
 
-        # self.fields.pop('user_object_permissions')
-        # self.fields.pop('group_object_permissions')
-        # self.fields.pop('object_permissions')
-
-        self.fields.pop('tags')
-        self.fields.pop('tags_object')
-
-        # self.fields.pop('is_default')
+    class Meta:
+        model = Strategy3
+        fields = [
+            'id',  'subgroup', 'user_code', 'name', 'short_name', 'public_name', 'notes',
+            # 'subgroup_object',
+        ]
+        read_only_fields = fields
 
 
 class ReportResponsibleSerializer(ResponsibleSerializer):

@@ -1,5 +1,6 @@
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import FieldDoesNotExist
 from django.db.models import Prefetch, Q
 from django.utils.functional import SimpleLazyObject
 
@@ -80,7 +81,13 @@ def obj_perms_filter_objects(member, perms, queryset, model_cls=None, prefetch=T
 
         # print('ids %s' % ids)
 
-        queryset = queryset.filter(pk__in=ids)
+        try:
+            queryset.model._meta.get_field('user_code')
+
+            queryset = queryset.filter(Q(pk__in=ids) | Q(user_code='-'))
+
+        except FieldDoesNotExist:
+            queryset = queryset.filter(pk__in=ids)
 
         if prefetch:
             queryset = obj_perms_prefetch(queryset, my=True)

@@ -501,6 +501,8 @@ class ReportSerializer(serializers.Serializer):
 
         to_representation_st = time.perf_counter()
 
+        instance.is_report = True
+
         data = super(ReportSerializer, self).to_representation(instance)
 
         print('ReportSerializer to_representation_st done: %s' % (time.perf_counter() - to_representation_st))

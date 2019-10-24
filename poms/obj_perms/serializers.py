@@ -136,7 +136,13 @@ class ModelWithObjectPermissionSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         ret = super(ModelWithObjectPermissionSerializer, self).to_representation(instance)
         member = get_member_from_context(self.context)
-        if not has_view_perms(member, instance):
+
+        is_default_obj = False
+
+        if hasattr(instance, 'user_code') and instance.user_code == '-':
+            is_default_obj = True
+
+        if not has_view_perms(member, instance) and not is_default_obj:
             for k in list(ret.keys()):
                 if k not in ['id', 'public_name', 'display_name', 'granted_permissions']:
                     ret.pop(k)

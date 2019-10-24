@@ -87,3 +87,64 @@ P.S. You also need to specify your nginx config to route correctly.
 
 Что можно сделать
 1) Сделать сборки локальной версии и той что на серверах максимально похожими (Сейчас очень сильно олтичаются Celery)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Usefull code: Replace to_representation in rest_framework/serializers.py with code below, and you will get time explanation of each field serializaton
+
+```
+def to_representation(self, instance):
+        """
+        Object instance -> Dict of primitive datatypes.
+        """
+        ret = OrderedDict()
+        fields = self._readable_fields
+
+        st = time.perf_counter()
+
+        for field in fields:
+            try:
+                attribute = field.get_attribute(instance)
+            except SkipField:
+                continue
+
+            field_st = time.perf_counter()
+
+            # We skip `to_representation` for `None` values so that fields do
+            # not have to explicitly deal with that case.
+            #
+            # For related fields with `use_pk_only_optimization` we need to
+            # resolve the pk value.
+            check_for_none = attribute.pk if isinstance(attribute, PKOnlyObject) else attribute
+            if check_for_none is None:
+                ret[field.field_name] = None
+            else:
+                ret[field.field_name] = field.to_representation(attribute)
+
+            if 'item_' in field.field_name:
+                if hasattr(instance, 'is_report'):
+                    print('Field %s ' % field.field_name)
+                    print('Field to representation done %s' % (time.perf_counter() - field_st))
+
+        if hasattr(instance, 'is_report'):
+            print('Report to representation done %s' % (time.perf_counter() - st))
+
+        return ret
+
+```
+
