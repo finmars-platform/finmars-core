@@ -226,8 +226,6 @@ class ModelWithObjectPermissionSerializer(serializers.ModelSerializer):
 
     def _merge_permissions(self, instance, object_permissions, user_object_permissions, group_object_permissions):
 
-        print('_merge_permissions %s ' % object_permissions)
-
         if user_object_permissions is not empty or group_object_permissions is not empty:
             object_permissions = []
 

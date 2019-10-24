@@ -681,6 +681,18 @@ class GroupViewSet(AbstractModelViewSet):
 
             assign_perms3(item, perms=perms)
 
+    def grant_view_permissions_to_model_objects(self, model, master_user, group):
+
+        for item in model.objects.filter(master_user=master_user):
+
+            perms = []
+
+            for p in get_view_perms(item):
+
+                perms.append({'group': group, 'permission': p})
+
+            assign_perms3(item, perms=perms)
+
     def grant_all_permissions_to_public_group(self, instance, request):
 
         master_user = request.user.master_user
@@ -720,7 +732,7 @@ class GroupViewSet(AbstractModelViewSet):
         self.grant_all_permissions_to_model_objects(Responsible, master_user, instance)
 
         self.grant_all_permissions_to_model_objects(ComplexTransaction, master_user, instance)
-        self.grant_all_permissions_to_model_objects(Transaction, master_user, instance)
+        self.grant_view_permissions_to_model_objects(Transaction, master_user, instance)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

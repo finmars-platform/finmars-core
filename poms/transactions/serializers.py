@@ -1518,8 +1518,15 @@ class TransactionTypeViewSerializer(ModelWithObjectPermissionSerializer):
 #         model = TransactionAttribute
 #         fields = AbstractAttributeSerializer.Meta.fields + ['attribute_type', 'classifier']
 
+class TransactionSimpleSerializer(ModelWithObjectPermissionSerializer):
+    class Meta:
+        model = Transaction
+        fields = [
+            'id',
+        ]
 
-class TransactionSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer):
+
+class TransactionSerializer(ModelWithObjectPermissionSerializer):
     master_user = MasterUserField()
     complex_transaction = serializers.PrimaryKeyRelatedField(read_only=True)
     complex_transaction_order = serializers.IntegerField(read_only=True)
@@ -1829,21 +1836,55 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
     #     return instance
 
 
-class ComplexTransactionSimpleSerializer(ModelWithAttributesSerializer):
+class ComplexTransactionSimpleSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer):
     class Meta:
         model = ComplexTransaction
         fields = [
             'id', 'is_locked', 'is_canceled',
         ]
 
+    def update_base_transactions_permissions(self, instance, complex_transaction_permissions):
+
+        # print('update_base_transactions_permissions complex_transaction_permissions %s ' % complex_transaction_permissions)
+
+        view_permissions = []
+
+        for perm in complex_transaction_permissions:
+
+            values = list(perm.values())
+
+            group = values[0]
+            member = values[1]
+            permission = values[2]
+
+            # if 'view' in permission.codename:
+            if 'change' in permission.codename:  # TODO we imply that if we can CHANGE, then we can also view it
+
+                if group:
+                    view_permissions.append({
+                        'member': None,
+                        'group': group.id,
+                        'permission': 'view_transaction'
+                    })
+
+        transactions = Transaction.objects.filter(complex_transaction__id=instance.id)
+
+        for transaction in transactions:
+            serializer = TransactionSimpleSerializer(instance=transaction,
+                                                     data={'object_permissions': view_permissions},
+                                                     context=self.context)
+
+            serializer.is_valid(raise_exception=True)
+
+            serializer.save()
+
+        pass
+
     def update(self, instance, validated_data):
         # print('here? %s' % validated_data)
         # print('instance? %s' % instance)
 
         transactions = Transaction.objects.filter(complex_transaction=instance.id)
-
-        print('validated_data %s' % validated_data)
-        print('transactions %s' % len(transactions))
 
         for transaction in transactions:
 
@@ -1854,6 +1895,9 @@ class ComplexTransactionSimpleSerializer(ModelWithAttributesSerializer):
             if 'is_canceled' in validated_data:
                 transaction.is_canceled = validated_data['is_canceled']
                 transaction.save()
+
+        if 'object_permissions' in validated_data:
+            self.update_base_transactions_permissions(instance, validated_data['object_permissions'])
 
         instance = super(ComplexTransactionSimpleSerializer, self).update(instance, validated_data)
 

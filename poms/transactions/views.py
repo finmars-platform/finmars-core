@@ -1,12 +1,14 @@
 from __future__ import unicode_literals
 
 import django_filters
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Prefetch, Q
+from django.utils.translation import ugettext_lazy
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 
@@ -1302,6 +1304,58 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
         history.set_actor_content_object(complex_transaction)
 
         return Response(serializer.data)
+
+    @action(detail=False, methods=['put', 'patch'], url_path='bulk-update-properties', serializer_class=ComplexTransactionSimpleSerializer)
+    def bulk_update_properties(self, request):
+        data = request.data
+        if not isinstance(data, list):
+            raise ValidationError(ugettext_lazy('Required list'))
+
+        partial = request.method.lower() == 'patch'
+        # queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.get_queryset()
+
+        has_error = False
+        serializers = []
+        for adata in data:
+            pk = adata['id']
+            try:
+                instance = queryset.get(pk=pk)
+            except ObjectDoesNotExist:
+                has_error = True
+                serializers.append(None)
+            else:
+                try:
+                    self.check_object_permissions(request, instance)
+                except PermissionDenied:
+                    raise
+
+                serializer = self.get_serializer(instance=instance, data=adata, partial=partial)
+                if not serializer.is_valid(raise_exception=False):
+                    has_error = True
+                serializers.append(serializer)
+
+        if has_error:
+            errors = []
+            for serializer in serializers:
+                if serializer:
+                    errors.append(serializer.errors)
+                else:
+                    errors.append({
+                        api_settings.NON_FIELD_ERRORS_KEY: ugettext_lazy('Not Found')
+                    })
+            raise ValidationError(errors)
+        else:
+            instances = []
+            for serializer in serializers:
+                self.perform_update(serializer)
+                instances.append(serializer.instance)
+
+            ret_serializer = self.get_serializer(
+                instance=queryset.filter(pk__in=(i.id for i in instances)), many=True)
+            return Response(list(ret_serializer.data), status=status.HTTP_200_OK)
+
+
 
 class ComplexTransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = get_complex_transaction_queryset(select_related=False, transactions=True)
