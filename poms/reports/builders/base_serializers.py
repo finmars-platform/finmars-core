@@ -3,8 +3,10 @@ from __future__ import unicode_literals
 from django.utils.functional import cached_property
 from rest_framework import serializers
 
-from poms.accounts.models import Account
+from poms.accounts.models import Account, AccountType
 from poms.accounts.serializers import AccountSerializer
+from poms.common.fields import ExpressionField
+from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import ModelWithUserCodeSerializer
 from poms.counterparties.serializers import ResponsibleSerializer, \
     CounterpartySerializer
@@ -119,7 +121,7 @@ class ReportCurrencySerializer(CurrencySerializer):
         self.fields.pop('is_default')
 
 
-class ReportInstrumentTypeSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
+class ReportInstrumentTypeSerializer(ModelWithUserCodeSerializer):
 
     instrument_class_object = InstrumentClassSerializer(source='instrument_class', read_only=True)
 
@@ -128,14 +130,12 @@ class ReportInstrumentTypeSerializer(ModelWithAttributesSerializer, ModelWithUse
 
         super(ReportInstrumentTypeSerializer, self).__init__(*args, **kwargs)
 
-        self.fields['attributes'] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
-
     class Meta:
         model = InstrumentType
         fields = [
             'id', 'instrument_class', 'instrument_class_object',
             'user_code', 'name', 'short_name', 'public_name',
-            'notes', 'is_default', 'is_deleted'
+            'notes',
         ]
 
 
@@ -206,6 +206,23 @@ class ReportPortfolioSerializer(ModelWithAttributesSerializer, ModelWithUserCode
         fields = [
             'id', 'user_code', 'name', 'short_name', 'public_name', 'notes',
 
+        ]
+
+class ReportAccountTypeSerializer(ModelWithUserCodeSerializer):
+
+    transaction_details_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                               allow_null=True, default='""')
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('read_only', True)
+
+        super(ReportAccountTypeSerializer, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = AccountType
+        fields = [
+            'id', 'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'show_transaction_details', 'transaction_details_expr',
         ]
 
 

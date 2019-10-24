@@ -1636,6 +1636,15 @@ class ReportBuilder(BaseReportBuilder):
 
         return result
 
+    def _ger_permissioned_ids(self, ids, permissions):
+
+        result = set()
+        for item in permissions:
+            if item.object_id in ids:
+                result.add(item.object_id)
+
+        return result
+
     def _refresh_with_perms_optimized(self):
 
         instance_relations_st = time.perf_counter()
@@ -1693,87 +1702,19 @@ class ReportBuilder(BaseReportBuilder):
 
         permissions_st = time.perf_counter()
 
-        groups = self.instance.member.groups.all()
-
-        accounts_permissions = self._get_relation_permissions(groups=groups,
-                                                              app_label='accounts', model='account')
-        currencies_permissions = self._get_relation_permissions(groups=groups,
-                                                                app_label='currencies', model='currency')
-        portfolios_permissions = self._get_relation_permissions(groups=groups,
-                                                                app_label='portfolios', model='portfolio')
-        instruments_permissions = self._get_relation_permissions(groups=groups,
-                                                                 app_label='instruments', model='instrument')
-
         _l.debug('_refresh_with_perms_optimized permissions done: %s', (time.perf_counter() - permissions_st))
 
         item_relations_st = time.perf_counter()
 
-        item_accounts_st = time.perf_counter()
-
-        accounts_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['acc', 'mismatch_acc'])
-
-
-        if self.instance.member and self.instance.member.is_superuser:
-            self.instance.item_accounts = self._get_permissioned_accounts(ids=accounts_items_ids)
-        else:
-            accounts_ids = set()
-            for item in accounts_permissions:
-                if item.object_id in accounts_items_ids:
-                    accounts_ids.add(item.object_id)
-
-            self.instance.item_accounts = self._get_permissioned_accounts(ids=accounts_ids)
-
-        _l.debug('_refresh_with_perms_optimized item_accounts done: %s', (time.perf_counter() - item_accounts_st))
-
-        item_currencies_st = time.perf_counter()
-
-        currencies_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['ccy', 'pricing_ccy'])
-
-        if self.instance.member and self.instance.member.is_superuser:
-            self.instance.item_currencies = self._get_permissioned_currencies(ids=currencies_items_ids)
-        else:
-
-            currencies_ids = set()
-            for item in currencies_permissions:
-                if item.object_id in currencies_items_ids:
-                    currencies_ids.add(item.object_id)
-
-            self.instance.item_currencies = self._get_permissioned_currencies(ids=currencies_ids)
-
-        _l.debug('_refresh_with_perms_optimized item_currencies done: %s', (time.perf_counter() - item_currencies_st))
-
-        item_portfolios_st = time.perf_counter()
-
-        portfolios_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['prtfl', 'mismatch_prtfl'])
-
-        if self.instance.member and self.instance.member.is_superuser:
-            self.instance.item_portfolios = self._get_permissioned_portfolios(ids=portfolios_items_ids)
-        else:
-            portfolios_ids = set()
-            for item in portfolios_permissions:
-                if item.object_id in portfolios_items_ids:
-                    portfolios_ids.add(item.object_id)
-
-            self.instance.item_portfolios = self._get_permissioned_portfolios(ids=portfolios_ids)
-
-        _l.debug('_refresh_with_perms_optimized item_portfolios done: %s', (time.perf_counter() - item_portfolios_st))
-
-        item_instruments_st = time.perf_counter()
-
-        instruments_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['instr', 'alloc'])
-
-        if self.instance.member and self.instance.member.is_superuser:
-            self.instance.item_instruments = self._get_permissioned_instruments(ids=instruments_items_ids)
-        else:
-
-            instruments_ids = set()
-            for item in instruments_permissions:
-                if item.object_id in instruments_items_ids:
-                    instruments_ids.add(item.object_id)
-
-            self.instance.item_instruments = self._get_permissioned_instruments(ids=instruments_ids)
-
-        _l.debug('_refresh_with_perms_optimized item_instruments done: %s', (time.perf_counter() - item_instruments_st))
+        self._refresh_item_accounts()
+        self._refresh_item_account_types()
+        self._refresh_item_currencies()
+        self._refresh_item_portfolios()
+        self._refresh_item_instruments()
+        self._refresh_item_instrument_types()
+        self._refresh_item_strategies1()
+        self._refresh_item_strategies2()
+        self._refresh_item_strategies3()
 
         # _l.debug('_refresh_with_perms_optimized item_accounts len %s' % len(self.instance.item_accounts))
         # _l.debug('_refresh_with_perms_optimized item_currencies len %s' % len(self.instance.item_currencies))
@@ -1794,6 +1735,249 @@ class ReportBuilder(BaseReportBuilder):
         _l.debug('_refresh_with_perms_optimized item relations done: %s', (time.perf_counter() - item_relations_st))
 
         pass
+
+    def _refresh_item_accounts(self):
+
+        # Handle item_accounts START
+
+        item_accounts_st = time.perf_counter()
+
+        groups = self.instance.member.groups.all()
+
+        accounts_permissions = self._get_relation_permissions(groups=groups,
+                                                              app_label='accounts', model='account')
+
+        accounts_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['acc', 'mismatch_acc'])
+
+        if self.instance.member and self.instance.member.is_superuser:
+
+            self.instance.item_accounts = self._get_accounts_by_ids(ids=accounts_items_ids)
+
+        else:
+
+            accounts_ids = self._ger_permissioned_ids(accounts_items_ids, accounts_permissions)
+
+            self.instance.item_accounts = self._get_accounts_by_ids(ids=accounts_ids)
+
+        _l.debug('_refresh_with_perms_optimized item_accounts done: %s', (time.perf_counter() - item_accounts_st))
+
+        # Handle item_accounts END
+
+    def _refresh_item_account_types(self):
+
+        # Handle item_account_types START
+
+        item_account_types_st = time.perf_counter()
+
+        groups = self.instance.member.groups.all()
+
+        account_types_permissions = self._get_relation_permissions(groups=groups,
+                                                                   app_label='accounts', model='accounttype')
+
+        account_types_items_ids = []
+
+        for account in self.instance.item_accounts:
+            account_types_items_ids.append(account.type_id)
+
+        if self.instance.member and self.instance.member.is_superuser:
+
+            self.instance.item_account_types = self._get_account_types_by_ids(ids=account_types_items_ids)
+
+        else:
+
+            account_types_ids = self._ger_permissioned_ids(account_types_items_ids, account_types_permissions)
+
+            self.instance.item_account_types = self._get_account_types_by_ids(ids=account_types_ids)
+
+        _l.debug('_refresh_with_perms_optimized item_account_types done: %s', (time.perf_counter() - item_account_types_st))
+
+        # Handle item_account_types END
+
+    def _refresh_item_currencies(self):
+
+        # Handle item_currencies START
+
+        item_currencies_st = time.perf_counter()
+
+        groups = self.instance.member.groups.all()
+
+        currencies_permissions = self._get_relation_permissions(groups=groups,
+                                                                app_label='currencies', model='currency')
+
+        currencies_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['ccy', 'pricing_ccy'])
+
+        if self.instance.member and self.instance.member.is_superuser:
+
+            self.instance.item_currencies = self._get_currencies_by_ids(ids=currencies_items_ids)
+
+        else:
+
+            currencies_ids = self._ger_permissioned_ids(currencies_items_ids, currencies_permissions)
+
+            self.instance.item_currencies = self._get_currencies_by_ids(ids=currencies_ids)
+
+        _l.debug('_refresh_with_perms_optimized item_currencies done: %s', (time.perf_counter() - item_currencies_st))
+
+        # Handle item_currencies END
+
+    def _refresh_item_portfolios(self):
+
+        # Handle item_portfolios START
+
+        item_portfolios_st = time.perf_counter()
+
+        groups = self.instance.member.groups.all()
+
+        portfolios_permissions = self._get_relation_permissions(groups=groups,
+                                                                app_label='portfolios', model='portfolio')
+
+        portfolios_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['prtfl', 'mismatch_prtfl'])
+
+        if self.instance.member and self.instance.member.is_superuser:
+            self.instance.item_portfolios = self._get_portfolios_by_ids(ids=portfolios_items_ids)
+        else:
+
+            portfolios_ids = self._ger_permissioned_ids(portfolios_items_ids, portfolios_permissions)
+
+            self.instance.item_portfolios = self._get_portfolios_by_ids(ids=portfolios_ids)
+
+        _l.debug('_refresh_with_perms_optimized item_portfolios done: %s', (time.perf_counter() - item_portfolios_st))
+
+        # Handle item_portfolios END
+
+    def _refresh_item_instruments(self):
+
+        # Handle item_instruments START
+
+        item_instruments_st = time.perf_counter()
+
+        groups = self.instance.member.groups.all()
+
+        instruments_permissions = self._get_relation_permissions(groups=groups,
+                                                                 app_label='instruments', model='instrument')
+
+        instruments_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['instr', 'alloc'])
+
+        if self.instance.member and self.instance.member.is_superuser:
+            self.instance.item_instruments = self._get_instruments_by_ids(ids=instruments_items_ids)
+        else:
+
+            instruments_ids = self._ger_permissioned_ids(instruments_items_ids, instruments_permissions)
+
+            self.instance.item_instruments = self._get_instruments_by_ids(ids=instruments_ids)
+
+        _l.debug('_refresh_with_perms_optimized item_instruments done: %s', (time.perf_counter() - item_instruments_st))
+
+        # Handle item_instruments END
+
+    def _refresh_item_instrument_types(self):
+
+        # Handle item_instrument_types START
+
+        item_instrument_types_st = time.perf_counter()
+
+        groups = self.instance.member.groups.all()
+
+        instrument_types_permissions = self._get_relation_permissions(groups=groups,
+                                                                      app_label='instruments', model='instrumenttype')
+
+        instrument_types_items_ids = []
+
+        for instrument in self.instance.item_instruments:
+            instrument_types_items_ids.append(instrument.instrument_type_id)
+
+        if self.instance.member and self.instance.member.is_superuser:
+            self.instance.item_instrument_types = self._get_instrument_types_by_ids(ids=instrument_types_items_ids)
+        else:
+
+            instrument_types_ids = self._ger_permissioned_ids(instrument_types_items_ids, instrument_types_permissions)
+
+            self.instance.item_instrument_types = self._get_instrument_types_by_ids(ids=instrument_types_ids)
+
+        _l.debug('_refresh_with_perms_optimized item_instrument_types done: %s', (time.perf_counter() - item_instrument_types_st))
+
+        # Handle item_instrument_types END
+
+    def _refresh_item_strategies1(self):
+
+        # Handle item_strategies1 START
+
+        item_strategies1_st = time.perf_counter()
+
+        groups = self.instance.member.groups.all()
+
+        strategy1_permissions = self._get_relation_permissions(groups=groups,
+                                                              app_label='strategies', model='strategy1')
+
+        strategy1_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['str1'])
+
+        if self.instance.member and self.instance.member.is_superuser:
+
+            self.instance.item_strategies1 = self._get_strategies1_by_ids(ids=strategy1_items_ids)
+
+        else:
+
+            strategy1_ids = self._ger_permissioned_ids(strategy1_items_ids, strategy1_permissions)
+
+            self.instance.item_strategies1 = self._get_strategies1_by_ids(ids=strategy1_ids)
+
+        _l.debug('_refresh_with_perms_optimized item_strategies1 done: %s', (time.perf_counter() - item_strategies1_st))
+
+        # Handle item_strategies1 END
+
+    def _refresh_item_strategies2(self):
+
+        # Handle item_strategies2 START
+
+        item_strategies2_st = time.perf_counter()
+
+        groups = self.instance.member.groups.all()
+
+        strategy2_permissions = self._get_relation_permissions(groups=groups,
+                                                               app_label='strategies', model='strategy2')
+
+        strategy2_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['str2'])
+
+        if self.instance.member and self.instance.member.is_superuser:
+
+            self.instance.item_strategies2 = self._get_strategies2_by_ids(ids=strategy2_items_ids)
+
+        else:
+
+            strategy2_ids = self._ger_permissioned_ids(strategy2_items_ids, strategy2_permissions)
+
+            self.instance.item_strategies2 = self._get_strategies2_by_ids(ids=strategy2_ids)
+
+        _l.debug('_refresh_with_perms_optimized item_strategies2 done: %s', (time.perf_counter() - item_strategies2_st))
+
+        # Handle item_strategies2 END
+
+    def _refresh_item_strategies3(self):
+
+        # Handle item_strategies3 START
+
+        item_strategies3_st = time.perf_counter()
+
+        groups = self.instance.member.groups.all()
+
+        strategy3_permissions = self._get_relation_permissions(groups=groups,
+                                                               app_label='strategies', model='strategy3')
+
+        strategy3_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['str3'])
+
+        if self.instance.member and self.instance.member.is_superuser:
+
+            self.instance.item_strategies3 = self._get_strategies3_by_ids(ids=strategy3_items_ids)
+
+        else:
+
+            strategy3_ids = self._ger_permissioned_ids(strategy3_items_ids, strategy3_permissions)
+
+            self.instance.item_strategies3 = self._get_strategies3_by_ids(ids=strategy3_ids)
+
+        _l.debug('_refresh_with_perms_optimized item_strategies3 done: %s', (time.perf_counter() - item_strategies3_st))
+
+        # Handle item_strategies2 END
 
     def _refresh_with_perms(self):
         # _l.debug('items - refresh all objects with permissions')

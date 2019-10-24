@@ -755,7 +755,7 @@ class BaseReportBuilder:
 
         return items
 
-    def _get_permissioned_accounts(self, ids):
+    def _get_accounts_by_ids(self, ids):
 
         return Account.objects.select_related('type').prefetch_related(
             # get_attributes_prefetch_simple(),
@@ -765,13 +765,13 @@ class BaseReportBuilder:
             )
         ).defer('object_permissions').filter(id__in=ids)
 
-    def _get_permissioned_currencies(self, ids):
+    def _get_currencies_by_ids(self, ids):
 
         return Currency.objects.prefetch_related(
             get_attributes_prefetch_simple()
         ).filter(id__in=ids)
 
-    def _get_permissioned_portfolios(self, ids):
+    def _get_portfolios_by_ids(self, ids):
 
         return Portfolio.objects.prefetch_related(
             # get_attributes_prefetch_simple()
@@ -779,7 +779,7 @@ class BaseReportBuilder:
         ).defer('object_permissions', 'responsibles', 'counterparties', 'transaction_types', 'accounts', 'tags').filter(
             id__in=ids)
 
-    def _get_permissioned_instruments(self, ids):
+    def _get_instruments_by_ids(self, ids):
 
         return Instrument.objects.select_related(
             'instrument_type',
@@ -797,3 +797,29 @@ class BaseReportBuilder:
                 ('instrument_type', InstrumentType),
             )
         ).filter(id__in=ids)
+
+    def _get_instrument_types_by_ids(self, ids):
+        return InstrumentType.objects.defer('object_permissions').filter(
+            id__in=ids)
+
+    def _get_account_types_by_ids(self, ids):
+        return AccountType.objects.defer('object_permissions').filter(
+            id__in=ids)
+
+    def _get_strategies1_by_ids(self, ids):
+        return Strategy1.objects.select_related(
+            'subgroup',
+            'subgroup__group').defer('object_permissions').filter(
+            id__in=ids)
+
+    def _get_strategies2_by_ids(self, ids):
+        return Strategy2.objects.select_related(
+            'subgroup',
+            'subgroup__group').defer('object_permissions').filter(
+            id__in=ids)
+
+    def _get_strategies3_by_ids(self, ids):
+        return Strategy3.objects.select_related(
+            'subgroup',
+            'subgroup__group').defer('object_permissions').filter(
+            id__in=ids)

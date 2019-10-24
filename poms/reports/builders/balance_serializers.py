@@ -23,7 +23,8 @@ from poms.reports.builders.balance_item import ReportItem, Report
 from poms.reports.builders.base_serializers import ReportPortfolioSerializer, \
     ReportAccountSerializer, ReportStrategy1Serializer, ReportStrategy2Serializer, ReportStrategy3Serializer, \
     ReportInstrumentSerializer, ReportCurrencySerializer, ReportCurrencyHistorySerializer, ReportPriceHistorySerializer, \
-    ReportAccrualCalculationScheduleSerializer, ReportItemBalanceReportCustomFieldSerializer
+    ReportAccrualCalculationScheduleSerializer, ReportItemBalanceReportCustomFieldSerializer, \
+    ReportInstrumentTypeSerializer, ReportAccountTypeSerializer
 # from poms.reports.fields import CustomFieldField
 from poms.reports.fields import BalanceReportCustomFieldField
 from poms.reports.serializers import BalanceReportCustomFieldSerializer
@@ -442,9 +443,11 @@ class ReportSerializer(serializers.Serializer):
     items = ReportItemSerializer(many=True, read_only=True)
 
     item_instruments = ReportInstrumentSerializer(many=True, read_only=True)
+    item_instrument_types = ReportInstrumentTypeSerializer(many=True, read_only=True)
     item_currencies = ReportCurrencySerializer(many=True, read_only=True)
     item_portfolios = ReportPortfolioSerializer(many=True, read_only=True)
     item_accounts = ReportAccountSerializer(many=True, read_only=True)
+    item_account_types = ReportAccountTypeSerializer(many=True, read_only=True)
     item_strategies1 = ReportStrategy1Serializer(many=True, read_only=True)
     item_strategies2 = ReportStrategy2Serializer(many=True, read_only=True)
     item_strategies3 = ReportStrategy3Serializer(many=True, read_only=True)
