@@ -268,6 +268,34 @@ def assign_perms3(obj, perms=None):
     perms_qs.exclude(pk__in=processed).delete()
 
 
+def append_perms3(obj, perms=None):
+    # GenericObjectPermission.objects.filter(content_object=obj).delete()
+    # obj.object_permissions2.delete()
+
+    ctype = ContentType.objects.get_for_model(obj)
+    perms_map = SimpleLazyObject(lambda: {p.codename: p for p in Permission.objects.filter(content_type=ctype)})
+
+    for op in perms:
+        p = op['permission']
+        if isinstance(p, str):
+            op['permission'] = perms_map[p]
+
+    perms_qs = GenericObjectPermission.objects.filter(
+        content_type=ContentType.objects.get_for_model(obj), object_id=obj.id)
+
+    for p in perms:
+        group = p.get('group', None)
+        member = p.get('member', None)
+        permission = p['permission']
+
+        op = GenericObjectPermission()
+        op.content_object = obj
+        op.group = group
+        op.member = member
+        op.permission = permission
+        op.save()
+
+
 def get_perms_codename(model, actions):
     params = {
         'action': None,

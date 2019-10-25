@@ -33,7 +33,7 @@ from poms.integrations.models import InstrumentDownloadScheme
 from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_perms.models import GenericObjectPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups, assign_perms3, \
-    get_view_perms, get_all_perms
+    get_view_perms, get_all_perms, append_perms3
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy1Group, Strategy2Subgroup, Strategy2Group, \
     Strategy2, Strategy3, Strategy3Subgroup, Strategy3Group
@@ -679,7 +679,7 @@ class GroupViewSet(AbstractModelViewSet):
 
                 perms.append({'group': group, 'permission': p})
 
-            assign_perms3(item, perms=perms)
+            append_perms3(item, perms=perms)
 
     def grant_view_permissions_to_model_objects(self, model, master_user, group):
 
@@ -691,7 +691,7 @@ class GroupViewSet(AbstractModelViewSet):
 
                 perms.append({'group': group, 'permission': p})
 
-            assign_perms3(item, perms=perms)
+            append_perms3(item, perms=perms)
 
     def grant_all_permissions_to_public_group(self, instance, request):
 
