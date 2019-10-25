@@ -186,7 +186,7 @@ class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCod
 
         result_st = time.perf_counter() - st
 
-        print('Instrument %s to representation done %s' % (instance.user_code, result_st))
+        # print('Instrument %s to representation done %s' % (instance.user_code, result_st))
 
         return res
 
