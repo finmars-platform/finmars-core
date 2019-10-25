@@ -1199,7 +1199,9 @@ class TransactionTypeProcess(object):
                     # transaction.transaction_date = min(transaction.accounting_date, transaction.cash_date)
                     transaction.save()
 
-                except (ValueError, TypeError, IntegrityError):
+                except (ValueError, TypeError, IntegrityError) as error:
+
+                    _l.debug(error)
 
                     self._add_err_msg(errors, 'non_field_errors',
                                       ugettext('Invalid transaction action fields (please, use type convertion).'))
