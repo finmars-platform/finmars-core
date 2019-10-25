@@ -524,7 +524,8 @@ class GenericAttributeTypeOptionIsHiddenField(serializers.BooleanField):
         return False
 
 
-class GenericAttributeTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+# class GenericAttributeTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
     is_hidden = GenericAttributeTypeOptionIsHiddenField()
     classifiers = GenericClassifierSerializer(required=False, allow_null=True, many=True)
@@ -803,6 +804,9 @@ class GenericAttributeSerializer(serializers.ModelSerializer):
                 for c in l:
                     self._attribute_type_classifiers[c.id] = c
                 get_cached_trees(l)
+
+            # print('_attribute_type_classifiers %s' % self._attribute_type_classifiers)
+
             instance.classifier = self._attribute_type_classifiers[instance.classifier_id]
 
         return super(GenericAttributeSerializer, self).to_representation(instance)

@@ -50,9 +50,6 @@ from poms.users.fields import MasterUserField
 
 class ReportGenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
 
-    classifiers = GenericClassifierSerializer(required=False, allow_null=True, many=True)
-    classifiers_flat = GenericClassifierWithoutChildrenSerializer(source='classifiers', read_only=True, many=True)
-
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('read_only', True)
         super(ReportGenericAttributeTypeSerializer, self).__init__(*args, **kwargs)
@@ -60,7 +57,7 @@ class ReportGenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
     class Meta:
         model = GenericAttributeType
         fields = ['id', 'user_code', 'name', 'short_name', 'public_name', 'notes',
-                  'value_type', 'order', 'classifiers', 'classifiers_flat']
+                  'value_type',]
 
         read_only_fields = fields
 
@@ -148,8 +145,8 @@ class ReportInstrumentTypeSerializer(ModelWithUserCodeSerializer):
         read_only_fields = fields
 
 
-# class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
-class ReportInstrumentSerializer(ModelWithUserCodeSerializer):
+class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
+# class ReportInstrumentSerializer(ModelWithUserCodeSerializer):
 
     # instrument_type_object = ReportInstrumentTypeSerializer(source='instrument_type', read_only=True) # TODO Improve later, create separte Serializer without permission check
 
@@ -161,7 +158,7 @@ class ReportInstrumentSerializer(ModelWithUserCodeSerializer):
 
         super(ReportInstrumentSerializer, self).__init__(*args, **kwargs)
 
-        # self.fields['attributes'] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
+        self.fields['attributes'] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
 
 
     class Meta:
