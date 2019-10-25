@@ -180,6 +180,18 @@ class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCod
         ]
         read_only_fields = fields
 
+    def to_representation(self, instance):
+
+        st = time.perf_counter()
+
+        res = super(ReportInstrumentSerializer, self).to_representation(instance)
+
+        result_st = time.perf_counter() - st
+
+        print('Instrument %s to representation done %s' % (instance.user_code, result_st))
+
+        return res
+
 
 class ReportCurrencyHistorySerializer(serializers.ModelSerializer):
 
