@@ -152,10 +152,8 @@ class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCod
 
     # instrument_type_object = ReportInstrumentTypeSerializer(source='instrument_type', read_only=True) # TODO Improve later, create separte Serializer without permission check
 
-    payment_size_detail_object = PaymentSizeDetailSerializer(source='payment_size_detail', read_only=True)
-    daily_pricing_model_object = DailyPricingModelSerializer(source='daily_pricing_model', read_only=True)
-    price_download_scheme = PriceDownloadSchemeField(allow_null=True, required=False)
-    price_download_scheme_object = serializers.PrimaryKeyRelatedField(source='price_download_scheme', read_only=True)
+    # payment_size_detail_object = PaymentSizeDetailSerializer(source='payment_size_detail', read_only=True)
+    # daily_pricing_model_object = DailyPricingModelSerializer(source='daily_pricing_model', read_only=True)
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('read_only', True)
@@ -164,28 +162,24 @@ class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCod
 
         self.fields['attributes'] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
 
-        # self.fields.pop('payment_size_detail')
-        # self.fields.pop('payment_size_detail_object')
-        self.fields.pop('price_download_scheme')
-        self.fields.pop('price_download_scheme_object')
-        # self.fields.pop('daily_pricing_model')
-        # self.fields.pop('daily_pricing_model_object')
 
     class Meta:
         model = Instrument
         fields = [
             'id', 'instrument_type',  'user_code', 'name', 'short_name',
-            'public_name', 'notes', 'is_active', 'is_deleted',
+            'public_name', 'notes',
             'pricing_currency', 'price_multiplier',
             'accrued_currency',  'accrued_multiplier',
-            'payment_size_detail', 'payment_size_detail_object', 'default_price', 'default_accrued',
+            'default_price', 'default_accrued',
             'user_text_1', 'user_text_2', 'user_text_3',
-            'reference_for_pricing', 'daily_pricing_model', 'daily_pricing_model_object',
-            'price_download_scheme', 'price_download_scheme_object',
+            'reference_for_pricing',
+            'payment_size_detail',
+            'daily_pricing_model',
             'maturity_date', 'maturity_price'
 
         ]
         read_only_fields = fields
+
 
 class ReportCurrencyHistorySerializer(serializers.ModelSerializer):
 
