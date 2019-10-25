@@ -148,7 +148,8 @@ class ReportInstrumentTypeSerializer(ModelWithUserCodeSerializer):
         read_only_fields = fields
 
 
-class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
+# class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
+class ReportInstrumentSerializer(ModelWithUserCodeSerializer):
 
     # instrument_type_object = ReportInstrumentTypeSerializer(source='instrument_type', read_only=True) # TODO Improve later, create separte Serializer without permission check
 
@@ -160,7 +161,7 @@ class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCod
 
         super(ReportInstrumentSerializer, self).__init__(*args, **kwargs)
 
-        self.fields['attributes'] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
+        # self.fields['attributes'] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
 
 
     class Meta:
