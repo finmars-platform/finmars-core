@@ -1294,7 +1294,7 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
         # if request.method != 'GET':
         #     complex_transaction.status = ComplexTransaction.PRODUCTION
 
-        print('request.data %s' % request.data)
+        # print('request.data %s' % request.data)
         print('detail_route: /update_properties: process update_properties')
 
         serializer = self.get_serializer(instance=complex_transaction, data=request.data)

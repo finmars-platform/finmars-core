@@ -1,6 +1,7 @@
 import logging
 from datetime import date, datetime
 
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError, IntegrityError
 from django.utils.translation import ugettext
@@ -15,12 +16,13 @@ from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDe
     EventScheduleAction
 from poms.instruments.models import InstrumentType
 from poms.integrations.models import PriceDownloadScheme
-from poms.obj_perms.utils import assign_perms3
+from poms.obj_perms.models import GenericObjectPermission
+from poms.obj_perms.utils import assign_perms3, get_view_perms
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import ComplexTransaction, TransactionTypeInput, Transaction, EventClass, \
     NotificationClass, RebookReactionChoice, ComplexTransactionInput
-from poms.users.models import EcosystemDefault
+from poms.users.models import EcosystemDefault, Group
 from django.apps import apps
 
 _l = logging.getLogger('poms.transactions')
@@ -93,6 +95,8 @@ class TransactionTypeProcess(object):
         if self.complex_transaction is None:
             self.complex_transaction = ComplexTransaction(transaction_type=self.transaction_type, date=None,
                                                           master_user=master_user)
+
+        self.complex_transaction.visibility_status = self.transaction_type.visibility_status
 
         if complex_transaction_status is not None:
             self.complex_transaction.status = complex_transaction_status
@@ -1032,6 +1036,112 @@ class TransactionTypeProcess(object):
                         _l.debug(errors)
                         # self.instruments_errors.append(errors)
 
+    def transaction_access_check(self, transaction, group, account_permissions, portfolio_permissions):
+
+        result = False
+
+        for perm in account_permissions:
+
+            if perm.group.id == group.id:
+
+                if transaction.account_position and transaction.account_position.id == perm.object_id:
+                    result = True
+
+                if transaction.account_cash and transaction.account_cash.id == perm.object_id:
+                    result = True
+
+        for perm in portfolio_permissions:
+
+            if perm.group.id == group.id:
+
+                if transaction.portfolio and transaction.portfolio.id == perm.object_id:
+                    result = True
+
+        return result
+
+    def assign_permissions_to_transaction(self, transaction):
+
+        perms = []
+
+        groups = Group.objects.filter(master_user=self.transaction_type.master_user)
+
+        account_codename = 'view_account'
+        portfolio_codename = 'view_portfolio'
+
+        account_permissions = GenericObjectPermission.objects.filter(group__in=groups,
+                                                                     permission__codename=account_codename)
+        portfolio_permissions = GenericObjectPermission.objects.filter(group__in=groups,
+                                                                       permission__codename=portfolio_codename)
+
+        for group in groups:
+
+            has_access = self.transaction_access_check(transaction, group, account_permissions,
+                                                       portfolio_permissions)
+
+            if has_access:
+
+                perms.append({'group': group, 'permission': 'view_transaction'})
+
+        _l.debug('perms %s' % perms)
+
+        assign_perms3(transaction, perms)
+
+    def assign_permissions_to_complex_transaction(self):
+
+        groups = Group.objects.filter(master_user=self.transaction_type.master_user)
+
+        perms = []
+
+        transactions = self.complex_transaction.transactions.all()
+
+        ttype_permissions = self.transaction_type.object_permissions.all()
+
+        permissions_total = len(transactions)
+
+        for group in groups:
+
+            codename = None
+
+            ttype_access = False
+
+            permissions_count = 0
+
+            for transaction in transactions:
+
+                for perm in transaction.object_permissions.all():
+
+                    if perm.group.id == group.id:
+
+                        permissions_count = permissions_count + 1
+
+            # _l.debug('groupid %s permissions_count %s' % (group.name, permissions_count))
+
+            if permissions_count == permissions_total:
+
+                codename = 'view_complextransaction'
+
+            if permissions_count < permissions_total and permissions_count != 0:
+
+                if self.complex_transaction.visibility_status == ComplexTransaction.SHOW_PARAMETERS:
+                    codename = 'view_complex_transaction_show_parameters'
+
+                if self.complex_transaction.visibility_status == ComplexTransaction.HIDE_PARAMETERS:
+                    codename = 'view_complex_transaction_hide_parameters'
+
+            for perm in ttype_permissions:
+                if perm.group.id == group.id and perm.permission.codename == 'view_transactiontype':
+                    ttype_access = True
+
+            _l.debug('complex_transaction.visibility_status %s' % self.complex_transaction.visibility_status)
+            _l.debug('group %s complex transactions perms ttype access %s' % (group.name, ttype_access))
+
+            if codename and ttype_access:
+                perms.append({'group': group, 'permission': codename})
+
+        _l.debug("complex transactions perms %s" % perms)
+
+        assign_perms3(self.complex_transaction, perms)
+
     def book_create_transactions(self, actions, master_user, instrument_map):
 
         for order, action in enumerate(actions):
@@ -1198,6 +1308,7 @@ class TransactionTypeProcess(object):
                 try:
                     # transaction.transaction_date = min(transaction.accounting_date, transaction.cash_date)
                     transaction.save()
+                    self.assign_permissions_to_transaction(transaction)
 
                 except (ValueError, TypeError, IntegrityError) as error:
 
@@ -1455,6 +1566,8 @@ class TransactionTypeProcess(object):
         self.execute_user_fields_expressions()
 
         self.complex_transaction.save()  # save executed text and date expression
+
+        self.assign_permissions_to_complex_transaction()
 
         if not self.has_errors and self.transactions:
             for trn in self.transactions:

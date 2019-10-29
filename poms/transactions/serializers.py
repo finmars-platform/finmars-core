@@ -1004,6 +1004,9 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
 
     group_object = TransactionTypeGroupViewSerializer(source='group', read_only=True)
 
+    visibility_status = serializers.ChoiceField(default=TransactionType.SHOW_PARAMETERS, initial=TransactionType.SHOW_PARAMETERS,
+                                                required=False, choices=TransactionType.VISIBILITY_STATUS_CHOICES)
+
     # instrument_types_object = serializers.PrimaryKeyRelatedField(source='instrument_types', many=True, read_only=True)
     # portfolios_object = serializers.PrimaryKeyRelatedField(source='portfolios', many=True, read_only=True)
 
@@ -1022,7 +1025,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
         fields = [
             'id', 'master_user', 'group',
             'user_code', 'name', 'short_name', 'public_name', 'notes',
-            'date_expr', 'display_expr',
+            'date_expr', 'display_expr', 'visibility_status',
 
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
@@ -1961,6 +1964,53 @@ class ComplexTransactionLightSerializer(ModelWithObjectPermissionSerializer, Mod
 
         ]
 
+    def to_representation(self, instance):
+
+        st = time.perf_counter()
+
+        instance.is_report = True
+
+        data = super(ComplexTransactionLightSerializer, self).to_representation(instance)
+
+        # print('instance.visibility_status %s' % instance.visibility_status)
+
+        if instance.visibility_status == ComplexTransaction.HIDE_PARAMETERS:
+
+            data.pop('date')
+            data.pop('text')
+
+            data.pop('user_text_1')
+            data.pop('user_text_2')
+            data.pop('user_text_3')
+            data.pop('user_text_4')
+            data.pop('user_text_5')
+            data.pop('user_text_6')
+            data.pop('user_text_7')
+            data.pop('user_text_8')
+            data.pop('user_text_9')
+            data.pop('user_text_10')
+
+            data.pop('user_number_1')
+            data.pop('user_number_2')
+            data.pop('user_number_3')
+            data.pop('user_number_4')
+            data.pop('user_number_5')
+            data.pop('user_number_6')
+            data.pop('user_number_7')
+            data.pop('user_number_8')
+            data.pop('user_number_9')
+            data.pop('user_number_10')
+
+            data.pop('user_date_1')
+            data.pop('user_date_2')
+            data.pop('user_date_3')
+            data.pop('user_date_4')
+            data.pop('user_date_5')
+
+        # print('ComplexTransactionLightSerializer visibility status done: %s' % (time.perf_counter() - st))
+
+        return data
+
 
 # TransactionType processing -------------------------------------------------------------------------------------------
 
@@ -2146,6 +2196,9 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
     status = serializers.ChoiceField(default=ComplexTransaction.PRODUCTION, initial=ComplexTransaction.PRODUCTION,
                                      required=False, choices=ComplexTransaction.STATUS_CHOICES)
 
+    visibility_status = serializers.ChoiceField(default=ComplexTransaction.SHOW_PARAMETERS, initial=ComplexTransaction.SHOW_PARAMETERS,
+                                                required=False, choices=ComplexTransaction.VISIBILITY_STATUS_CHOICES)
+
     def __init__(self, *args, **kwargs):
         super(TransactionTypeComplexTransactionSerializer, self).__init__(*args, **kwargs)
 
@@ -2160,7 +2213,7 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
         fields = [
             'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'transactions', 'master_user',
 
-            'is_locked', 'is_canceled', 'error_code',
+            'is_locked', 'is_canceled', 'error_code', 'visibility_status',
 
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
@@ -2172,6 +2225,52 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
 
         ]
 
+    def to_representation(self, instance):
+
+        st = time.perf_counter()
+
+        instance.is_report = True
+
+        data = super(TransactionTypeComplexTransactionSerializer, self).to_representation(instance)
+
+        print('instance.visibility_status %s' % instance.visibility_status)
+
+        if instance.visibility_status == ComplexTransaction.HIDE_PARAMETERS:
+
+            data.pop('date')
+            data.pop('text')
+
+            data.pop('user_text_1')
+            data.pop('user_text_2')
+            data.pop('user_text_3')
+            data.pop('user_text_4')
+            data.pop('user_text_5')
+            data.pop('user_text_6')
+            data.pop('user_text_7')
+            data.pop('user_text_8')
+            data.pop('user_text_9')
+            data.pop('user_text_10')
+
+            data.pop('user_number_1')
+            data.pop('user_number_2')
+            data.pop('user_number_3')
+            data.pop('user_number_4')
+            data.pop('user_number_5')
+            data.pop('user_number_6')
+            data.pop('user_number_7')
+            data.pop('user_number_8')
+            data.pop('user_number_9')
+            data.pop('user_number_10')
+
+            data.pop('user_date_1')
+            data.pop('user_date_2')
+            data.pop('user_date_3')
+            data.pop('user_date_4')
+            data.pop('user_date_5')
+
+        print('TransactionTypeComplexTransactionSerializer visibility status done: %s' % (time.perf_counter() - st))
+
+        return data
 
 class TransactionTypeProcessSerializer(serializers.Serializer):
     def __init__(self, **kwargs):

@@ -480,7 +480,7 @@ class OrderingPostFilter(BaseFilterBackend):
         specifying an `ORDERING_PARAM` value in the API settings.
         """
 
-        print('request.data %s' % request.data)
+        # print('request.data %s' % request.data)
 
         params = request.data.get(self.ordering_param)
         if params:

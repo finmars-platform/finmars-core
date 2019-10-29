@@ -298,6 +298,15 @@ class TransactionTypeGroup(NamedModel, FakeDeletableModel):
 
 
 class TransactionType(NamedModel, FakeDeletableModel):
+
+    SHOW_PARAMETERS = 1
+    HIDE_PARAMETERS = 2
+
+    VISIBILITY_STATUS_CHOICES = (
+        (SHOW_PARAMETERS, ugettext_lazy('Show Parameters')),
+        (HIDE_PARAMETERS, ugettext_lazy('Hide Parameters')),
+    )
+
     master_user = models.ForeignKey(MasterUser, related_name='transaction_types',
                                     verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     group = models.ForeignKey(TransactionTypeGroup, null=True, blank=True, on_delete=models.PROTECT,
@@ -316,6 +325,9 @@ class TransactionType(NamedModel, FakeDeletableModel):
                                                     verbose_name=ugettext_lazy('book transaction layout json'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
+
+    visibility_status = models.PositiveSmallIntegerField(default=SHOW_PARAMETERS, choices=VISIBILITY_STATUS_CHOICES, db_index=True,
+                                                         verbose_name=ugettext_lazy('visibility_status')) # settings for complex transaction
 
     user_text_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                    verbose_name=ugettext_lazy('user text 1'))
@@ -1106,6 +1118,15 @@ class ComplexTransaction(FakeDeletableModel):
         (PENDING, ugettext_lazy('Pending')),
     )
 
+    SHOW_PARAMETERS = 1
+    HIDE_PARAMETERS = 2
+
+    VISIBILITY_STATUS_CHOICES = (
+        (SHOW_PARAMETERS, ugettext_lazy('Show Parameters')),
+        (HIDE_PARAMETERS, ugettext_lazy('Hide Parameters')),
+    )
+
+
     master_user = models.ForeignKey(MasterUser, related_name='complex_transactions',
                                     verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
@@ -1119,6 +1140,10 @@ class ComplexTransaction(FakeDeletableModel):
     date = models.DateField(default=date_now, db_index=True, verbose_name=ugettext_lazy("date"))
     status = models.PositiveSmallIntegerField(default=PRODUCTION, choices=STATUS_CHOICES, db_index=True,
                                               verbose_name=ugettext_lazy('status'))
+
+    visibility_status = models.PositiveSmallIntegerField(default=SHOW_PARAMETERS, choices=VISIBILITY_STATUS_CHOICES, db_index=True,
+                                                           verbose_name=ugettext_lazy('visibility_status'))
+
     code = models.IntegerField(default=0, verbose_name=ugettext_lazy('code'))
 
     text = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('text'))
