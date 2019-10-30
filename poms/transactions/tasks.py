@@ -103,17 +103,19 @@ def recalculate_permissions_transaction(self, instance):
     accounts_permissions_grouped = {}
     portfolios_permissions_grouped = {}
 
-    for perm in accounts_permissions:
-        if perm['group'] not in accounts_permissions_grouped:
-            accounts_permissions_grouped[perm['group']] = []
+    for group in groups:
+        accounts_permissions_grouped[group] = []
+        portfolios_permissions_grouped[group] = []
 
+    for perm in accounts_permissions:
         accounts_permissions_grouped[perm['group']].append(perm['object_id'])
 
-    for perm in portfolios_permissions:
-        if perm['group'] not in portfolios_permissions_grouped:
-            portfolios_permissions_grouped[perm['group']] = []
+    _l.debug("_recalculate_transactions accounts_permissions_grouped done")
 
+    for perm in portfolios_permissions:
         portfolios_permissions_grouped[perm['group']].append(perm['object_id'])
+
+    _l.debug("_recalculate_transactions portfolios_permissions_grouped done")
 
     permissions = []
 
