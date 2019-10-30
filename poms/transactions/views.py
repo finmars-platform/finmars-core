@@ -44,8 +44,9 @@ from poms.transactions.permissions import TransactionObjectPermission, ComplexTr
 from poms.transactions.serializers import TransactionClassSerializer, TransactionSerializer, TransactionTypeSerializer, \
     TransactionTypeProcessSerializer, TransactionTypeGroupSerializer, ComplexTransactionSerializer, \
     EventClassSerializer, NotificationClassSerializer, TransactionTypeLightSerializer, \
-    ComplexTransactionLightSerializer, ComplexTransactionSimpleSerializer, RecalculatePermissionSerializer
-from poms.transactions.tasks import recalculate_permissions_transaction
+    ComplexTransactionLightSerializer, ComplexTransactionSimpleSerializer, \
+    RecalculatePermissionTransactionSerializer, RecalculatePermissionComplexTransactionSerializer
+from poms.transactions.tasks import recalculate_permissions_transaction, recalculate_permissions_complex_transaction
 from poms.users.filters import OwnerByMasterUserFilter
 
 
@@ -1413,6 +1414,11 @@ class ComplexTransactionLightEvGroupViewSet(AbstractEvGroupWithObjectPermissionV
     ]
 
 
-class RecalculatePermissionViewSet(AbstractAsyncViewSet):
-    serializer_class = RecalculatePermissionSerializer
+class RecalculatePermissionTransactionViewSet(AbstractAsyncViewSet):
+    serializer_class = RecalculatePermissionTransactionSerializer
     celery_task = recalculate_permissions_transaction
+
+
+class RecalculatePermissionComplexTransactionViewSet(AbstractAsyncViewSet):
+    serializer_class = RecalculatePermissionComplexTransactionSerializer
+    celery_task = recalculate_permissions_complex_transaction

@@ -2544,7 +2544,7 @@ class RecalculatePermission:
         self.member = member
 
 
-class RecalculatePermissionSerializer(serializers.Serializer):
+class RecalculatePermissionTransactionSerializer(serializers.Serializer):
 
     task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     task_status = serializers.ReadOnlyField()
@@ -2557,3 +2557,19 @@ class RecalculatePermissionSerializer(serializers.Serializer):
     def create(self, validated_data):
 
         return RecalculatePermission(**validated_data)
+
+
+class RecalculatePermissionComplexTransactionSerializer(serializers.Serializer):
+
+    task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    task_status = serializers.ReadOnlyField()
+
+    master_user = MasterUserField()
+    member = HiddenMemberField()
+
+    content_type = serializers.ReadOnlyField()
+
+    def create(self, validated_data):
+
+        return RecalculatePermission(**validated_data)
+
