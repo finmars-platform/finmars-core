@@ -1210,6 +1210,11 @@ class ComplexTransaction(FakeDeletableModel):
         ]
         ordering = ['code']
 
+        permissions = (
+            ("view_complextransaction_show_parameters", "Show Parameters"),
+            ("view_complextransaction_hide_parameters", "Hide Parameters"),
+        )
+
     def __str__(self):
         return str(self.code)
 

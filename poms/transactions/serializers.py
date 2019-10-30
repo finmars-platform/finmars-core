@@ -43,7 +43,7 @@ from poms.transactions.models import TransactionClass, Transaction, TransactionT
     TransactionTypeActionInstrumentFactorSchedule, TransactionTypeActionInstrumentManualPricingFormula, \
     TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentEventSchedule, \
     TransactionTypeActionInstrumentEventScheduleAction
-from poms.users.fields import MasterUserField
+from poms.users.fields import MasterUserField, HiddenMemberField
 
 from django.core.validators import RegexValidator
 
@@ -2533,3 +2533,27 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
     #                 ci.notification_class = val
     #
     #         ci.save()
+
+
+class RecalculatePermission:
+    def __init__(self, task_id=None, task_status=None, master_user=None, member=None):
+        self.task_id = task_id
+        self.task_status = task_status
+
+        self.master_user = master_user
+        self.member = member
+
+
+class RecalculatePermissionSerializer(serializers.Serializer):
+
+    task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    task_status = serializers.ReadOnlyField()
+
+    master_user = MasterUserField()
+    member = HiddenMemberField()
+
+    content_type = serializers.ReadOnlyField()
+
+    def create(self, validated_data):
+
+        return RecalculatePermission(**validated_data)

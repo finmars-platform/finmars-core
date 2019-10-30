@@ -1123,10 +1123,10 @@ class TransactionTypeProcess(object):
             if permissions_count < permissions_total and permissions_count != 0:
 
                 if self.complex_transaction.visibility_status == ComplexTransaction.SHOW_PARAMETERS:
-                    codename = 'view_complex_transaction_show_parameters'
+                    codename = 'view_complextransaction_show_parameters'
 
                 if self.complex_transaction.visibility_status == ComplexTransaction.HIDE_PARAMETERS:
-                    codename = 'view_complex_transaction_hide_parameters'
+                    codename = 'view_complextransaction_hide_parameters'
 
             for perm in ttype_permissions:
                 if perm.group.id == group.id and perm.permission.codename == 'view_transactiontype':

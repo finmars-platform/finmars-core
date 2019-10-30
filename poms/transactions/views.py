@@ -17,10 +17,11 @@ from poms.audit import history
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, ModelExtMultipleChoiceFilter, \
     NoOpFilter, AttributeFilter, GroupsAttributeFilter
 from poms.common.pagination import CustomPaginationMixin
-from poms.common.views import AbstractClassModelViewSet, AbstractModelViewSet
+from poms.common.views import AbstractClassModelViewSet, AbstractModelViewSet, AbstractAsyncViewSet
 from poms.counterparties.models import Responsible, Counterparty, ResponsibleGroup, CounterpartyGroup
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, InstrumentType, PricingPolicy, Periodicity, AccrualCalculationModel
+from poms.integrations.tasks import complex_transaction_csv_file_import_validate
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
     GenericClassifierViewSet
@@ -43,7 +44,8 @@ from poms.transactions.permissions import TransactionObjectPermission, ComplexTr
 from poms.transactions.serializers import TransactionClassSerializer, TransactionSerializer, TransactionTypeSerializer, \
     TransactionTypeProcessSerializer, TransactionTypeGroupSerializer, ComplexTransactionSerializer, \
     EventClassSerializer, NotificationClassSerializer, TransactionTypeLightSerializer, \
-    ComplexTransactionLightSerializer, ComplexTransactionSimpleSerializer
+    ComplexTransactionLightSerializer, ComplexTransactionSimpleSerializer, RecalculatePermissionSerializer
+from poms.transactions.tasks import recalculate_permissions_transaction
 from poms.users.filters import OwnerByMasterUserFilter
 
 
@@ -1409,3 +1411,8 @@ class ComplexTransactionLightEvGroupViewSet(AbstractEvGroupWithObjectPermissionV
         OwnerByMasterUserFilter,
         AttributeFilter
     ]
+
+
+class RecalculatePermissionViewSet(AbstractAsyncViewSet):
+    serializer_class = RecalculatePermissionSerializer
+    celery_task = recalculate_permissions_transaction

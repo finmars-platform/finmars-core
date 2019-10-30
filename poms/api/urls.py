@@ -220,6 +220,7 @@ router.register(r'transactions/complex-transaction-light-ev-group', transactions
                 'complextransactionlightevgroup')
 router.register(r'transactions/complex-transaction', transactions.ComplexTransactionViewSet)
 router.register(r'transactions/complex-transaction-light', transactions.ComplexTransactionLightViewSet, 'complextransactionlight')
+router.register(r'transactions/recalculate-permissions', transactions.RecalculatePermissionViewSet, 'recalculatepermissions')
 
 router.register(r'ui/portal-interface-access', ui.PortalInterfaceAccessViewSet)
 router.register(r'ui/list-layout', ui.ListLayoutViewSet)
