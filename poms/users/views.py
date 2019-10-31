@@ -711,8 +711,11 @@ class GroupViewSet(AbstractModelViewSet):
 
         owner = Member.objects.get(master_user=request.user.master_user, is_owner=True)
 
-        if owner.id not in request.data['members']:
-            raise PermissionDenied()
+        admin_group = Group.objects.get(master_user=request.user.master_user, role=Group.ADMIN)
+
+        if request.data['id'] == admin_group.id:
+            if owner.id not in request.data['members']:
+                raise PermissionDenied()
 
         return super(GroupViewSet, self).update(request, *args, **kwargs)
 
