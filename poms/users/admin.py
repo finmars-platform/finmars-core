@@ -343,8 +343,8 @@ admin.site.register(FakeSequence, FakeSequenceAdmin)
 
 class InviteToMasterUserAdmin(AbstractModelAdmin):
     model = InviteToMasterUser
-    list_display = ['id', 'user', 'from_member', 'status', ]
-    list_select_related = ['user', 'from_member']
+    list_display = ['id', 'user', 'from_member', 'status', 'master_user' ]
+    list_select_related = ['user', 'from_member', 'master_user']
     list_filter = ['status', ]
     raw_id_fields = ['user', ]
 

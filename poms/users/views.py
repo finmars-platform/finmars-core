@@ -22,7 +22,7 @@ from rest_framework.viewsets import ViewSet, ModelViewSet, ViewSetMixin
 from poms.accounts.models import AccountType, Account
 from poms.chats.models import ThreadGroup, Thread
 from poms.common.filters import CharFilter, NoOpFilter, ModelExtMultipleChoiceFilter
-from poms.common.mixins import UpdateModelMixinExt
+from poms.common.mixins import UpdateModelMixinExt, DestroyModelFakeMixin
 from poms.common.pagination import BigPagination
 from poms.common.views import AbstractModelViewSet, AbstractApiView, AbstractViewSet
 from poms.complex_import.models import ComplexImportSchemeAction, ComplexImportScheme
@@ -147,6 +147,10 @@ class MasterUserCreateViewSet(ViewSet):
 
         member = Member.objects.create(user=request.user, master_user=master_user, is_owner=True, is_admin=True)
         member.save()
+
+        admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
+        admin_group.members.add(member.id)
+        admin_group.save()
 
         return Response({'id': master_user.id, 'name': master_user.name, 'description': master_user.description})
 
@@ -364,7 +368,6 @@ class UserMemberViewSet(AbstractModelViewSet):
     permission_classes = AbstractModelViewSet.permission_classes + [
     ]
     filter_backends = [IsMemberFilterBackend]
-
 
 class MasterUserViewSet(AbstractModelViewSet):
     queryset = MasterUser.objects.select_related(
@@ -638,6 +641,31 @@ class MemberViewSet(AbstractModelViewSet):
             return self.request.user.member
         return super(MemberViewSet, self).get_object()
 
+    def update(self, request, *args, **kwargs):
+
+        owner = Member.objects.get(master_user=request.user.master_user, is_owner=True)
+        admin_group = Group.objects.get(master_user=request.user.master_user, role=Group.ADMIN)
+
+        if not request.data and not request.data['id']:
+            raise PermissionDenied()
+
+        if owner.id == request.data['id']:
+
+            if not request.data['groups']:
+                raise PermissionDenied()
+
+            if admin_group.id not in request.data['groups']:
+                raise PermissionDenied()
+
+        return super(GroupViewSet).update(request, *args, **kwargs)
+
+    def perform_destroy(self, instance):
+
+        if instance.is_owner == True:
+            raise PermissionDenied()
+
+        return super(MemberViewSet, self).perform_destroy(instance)
+
 
 class GroupFilterSet(FilterSet):
     id = NoOpFilter()
@@ -669,84 +697,31 @@ class GroupViewSet(AbstractModelViewSet):
     ]
     pagination_class = BigPagination
 
-    def grant_all_permissions_to_model_objects(self, model, master_user, group):
-
-        for item in model.objects.filter(master_user=master_user):
-
-            perms = []
-
-            for p in get_all_perms(item):
-
-                perms.append({'group': group, 'permission': p})
-
-            append_perms3(item, perms=perms)
-
-    def grant_view_permissions_to_model_objects(self, model, master_user, group):
-
-        for item in model.objects.filter(master_user=master_user):
-
-            perms = []
-
-            for p in get_view_perms(item):
-
-                perms.append({'group': group, 'permission': p})
-
-            append_perms3(item, perms=perms)
-
-    def grant_all_permissions_to_public_group(self, instance, request):
-
-        master_user = request.user.master_user
-
-        self.grant_all_permissions_to_model_objects(Account, master_user, instance)
-        self.grant_all_permissions_to_model_objects(AccountType, master_user, instance)
-
-        self.grant_all_permissions_to_model_objects(Strategy1Group, master_user, instance)
-        self.grant_all_permissions_to_model_objects(Strategy1Subgroup, master_user, instance)
-        self.grant_all_permissions_to_model_objects(Strategy1, master_user, instance)
-
-        self.grant_all_permissions_to_model_objects(Strategy2Group, master_user, instance)
-        self.grant_all_permissions_to_model_objects(Strategy2Subgroup, master_user, instance)
-        self.grant_all_permissions_to_model_objects(Strategy2, master_user, instance)
-
-        self.grant_all_permissions_to_model_objects(Strategy3Group, master_user, instance)
-        self.grant_all_permissions_to_model_objects(Strategy3Subgroup, master_user, instance)
-        self.grant_all_permissions_to_model_objects(Strategy3, master_user, instance)
-
-        self.grant_all_permissions_to_model_objects(GenericAttributeType, master_user, instance)
-
-        self.grant_all_permissions_to_model_objects(InstrumentType, master_user, instance)
-        self.grant_all_permissions_to_model_objects(Instrument, master_user, instance)
-
-        self.grant_all_permissions_to_model_objects(TransactionTypeGroup, master_user, instance)
-        self.grant_all_permissions_to_model_objects(TransactionType, master_user, instance)
-
-        self.grant_all_permissions_to_model_objects(ThreadGroup, master_user, instance)
-        self.grant_all_permissions_to_model_objects(Thread, master_user, instance)
-
-        self.grant_all_permissions_to_model_objects(Portfolio, master_user, instance)
-
-        self.grant_all_permissions_to_model_objects(CounterpartyGroup, master_user, instance)
-        self.grant_all_permissions_to_model_objects(Counterparty, master_user, instance)
-
-        self.grant_all_permissions_to_model_objects(ResponsibleGroup, master_user, instance)
-        self.grant_all_permissions_to_model_objects(Responsible, master_user, instance)
-
-        self.grant_all_permissions_to_model_objects(ComplexTransaction, master_user, instance)
-        self.grant_view_permissions_to_model_objects(Transaction, master_user, instance)
-
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
         if request.data.get('is_public', None):
-            self.grant_all_permissions_to_public_group(instance, request)
+            instance.grant_all_permissions_to_public_group(instance, request.user.master_user)
 
         return Response(serializer.data)
+
+    def update(self, request, *args, **kwargs):
+
+        owner = Member.objects.get(master_user=request.user.master_user, is_owner=True)
+
+        if owner.id not in request.data['members']:
+            raise PermissionDenied()
+
+        return super(GroupViewSet, self).update(request, *args, **kwargs)
 
     def perform_destroy(self, instance):
 
         # TODO important to know: Deletion of the group leads to GenericObjectPermission deletion
+
+        if instance.role == Group.ADMIN:
+            raise PermissionDenied()
 
         GenericObjectPermission.objects.filter(group=instance).delete()
         instance.delete()
@@ -762,19 +737,34 @@ class InviteToMasterUserFilterSet(FilterSet):
         fields = []
 
 
-class InviteToMasterUserViewSet(AbstractApiView, UpdateModelMixinExt, ModelViewSet, ViewSetMixin):
+
+class InviteFromMasterUserViewSet(AbstractApiView, UpdateModelMixinExt, DestroyModelFakeMixin, ModelViewSet):
     queryset = InviteToMasterUser.objects.select_related(
-        'from_member'
+        'from_member',
     )
     serializer_class = InviteToMasterUserSerializer
     permission_classes = AbstractModelViewSet.permission_classes + []
-    filter_backends = AbstractModelViewSet.filter_backends + [
+    filter_backends = [
         OwnerByUserFilter,
-        InviteToMasterUserFilter
     ]
-    # filter_class = InviteToMasterUserFilterSet
+    filter_class = InviteToMasterUserFilterSet
     ordering_fields = [
-        'user',
+    ]
+    pagination_class = BigPagination
+
+
+
+class InviteToUserViewSet(AbstractApiView, UpdateModelMixinExt, DestroyModelFakeMixin, ModelViewSet):
+    queryset = InviteToMasterUser.objects.select_related(
+        'from_member',
+    )
+    serializer_class = InviteToMasterUserSerializer
+    permission_classes = AbstractModelViewSet.permission_classes + []
+    filter_backends = [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = InviteToMasterUserFilterSet
+    ordering_fields = [
     ]
     pagination_class = BigPagination
 

@@ -11,10 +11,12 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy
 
+
 from poms.common.models import NamedModel, FakeDeletableModel
 
 import binascii
 import os
+
 
 AVAILABLE_APPS = ['accounts', 'counterparties', 'currencies', 'instruments', 'portfolios', 'strategies', 'transactions',
                   'reports', 'users']
@@ -308,11 +310,6 @@ class MasterUser(models.Model):
         pricing_policy = PricingPolicy.objects.create(master_user=self, name='-', expr='(ask+bid)/2')
         pricing_policy_dft = PricingPolicy.objects.create(master_user=self, name='DFT', expr='(ask+bid)/2')
 
-        if user:
-            Member.objects.create(user=user, master_user=self, is_owner=True, is_admin=True)
-
-        group = Group.objects.create(master_user=self, name='%s' % ugettext_lazy('Default'))
-
         bloomberg = ProviderClass.objects.get(pk=ProviderClass.BLOOMBERG)
         # for dc in currencies_data.values():
         #     dc_user_code = dc['user_code']
@@ -393,6 +390,12 @@ class MasterUser(models.Model):
         ecosystem_defaults.save()
 
         self.create_user_fields()
+
+
+        group = Group.objects.create(master_user=self, name='%s' % ugettext_lazy('Admins'), role=Group.ADMIN)
+        group.grant_all_permissions_to_public_group(group, master_user=self)
+
+        group = Group.objects.create(master_user=self, name='%s' % ugettext_lazy('Guests'), role=Group.USER)
 
         self.save()
 
@@ -636,28 +639,34 @@ class Member(FakeDeletableModel):
             return self.username
 
 
-class InviteStatusChoice():
+class InviteToMasterUser(models.Model):
+
     SENT = 0
     ACCEPTED = 1
     DECLINED = 2
 
-    choices = ((SENT, 'Sent'),
+    STATUS_CHOICES = ((SENT, 'Sent'),
                (ACCEPTED, 'Accepted'),
                (DECLINED, 'Declined'),
                )
 
-
-class InviteToMasterUser(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='invites_to_master_user',
-                             verbose_name=ugettext_lazy('user'), on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='invites_to_master_user', verbose_name=ugettext_lazy('user'), on_delete=models.CASCADE)
     from_member = models.ForeignKey(Member, related_name="invites_to_users",
                                     verbose_name=ugettext_lazy('from_member'), on_delete=models.CASCADE)
 
-    status = models.IntegerField(default=0, choices=InviteStatusChoice.choices)
+    master_user = models.ForeignKey(MasterUser, related_name='invites_to_users', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+
+    groups = models.ManyToManyField('Group', blank=True, related_name='invites', verbose_name=ugettext_lazy('groups'))
+
+    status = models.IntegerField(default=0, choices=STATUS_CHOICES)
 
     class Meta:
         verbose_name = ugettext_lazy('invite to master user')
         verbose_name_plural = ugettext_lazy('invites to master user')
+
+        unique_together = [
+            ['user', 'master_user']
+        ]
 
     def __str__(self):
         return 'status: %s' % self.status
@@ -680,11 +689,23 @@ class UserProfile(models.Model):
 
 
 class Group(models.Model):
+
+    ADMIN = 1
+    USER = 2
+
+    # Only used in determine who can manage groups and users
+    # If user has is_admin: True he will see everything anyway
+
+    ROLE_CHOICES = (
+        (ADMIN, ugettext_lazy('Admin')),
+        (USER, ugettext_lazy('User')),
+    )
+
     master_user = models.ForeignKey(MasterUser, related_name='groups', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE )
     name = models.CharField(max_length=80, verbose_name=ugettext_lazy('name'))
 
-    # permissions = models.ManyToManyField(Permission, verbose_name=ugettext_lazy('permissions'), blank=True,
-    #                                      related_name='poms_groups')
+    role = models.PositiveSmallIntegerField(default=USER, choices=ROLE_CHOICES, db_index=True,
+                                                         verbose_name=ugettext_lazy('role'))
 
     class Meta:
         verbose_name = ugettext_lazy('group')
@@ -693,12 +714,86 @@ class Group(models.Model):
             ['master_user', 'name']
         ]
         ordering = ['name']
-        # permissions = [
-        #     ('view_group', 'Can view group')
-        # ]
 
     def __str__(self):
         return self.name
+
+    def grant_all_permissions_to_model_objects(self, model, master_user, group):
+
+        from poms.obj_perms.utils import get_view_perms, append_perms3, get_all_perms
+
+        for item in model.objects.filter(master_user=master_user):
+
+            perms = []
+
+            for p in get_all_perms(item):
+
+                perms.append({'group': group, 'permission': p})
+
+            append_perms3(item, perms=perms)
+
+    def grant_view_permissions_to_model_objects(self, model, master_user, group):
+
+        from poms.obj_perms.utils import get_view_perms, append_perms3, get_all_perms
+
+        for item in model.objects.filter(master_user=master_user):
+
+            perms = []
+
+            for p in get_view_perms(item):
+
+                perms.append({'group': group, 'permission': p})
+
+            append_perms3(item, perms=perms)
+
+    def grant_all_permissions_to_public_group(self, instance, master_user):
+
+        from poms.accounts.models import Account, AccountType
+        from poms.chats.models import ThreadGroup, Thread
+        from poms.counterparties.models import CounterpartyGroup, Counterparty, ResponsibleGroup, Responsible
+        from poms.instruments.models import InstrumentType, Instrument
+        from poms.obj_attrs.models import GenericAttributeType
+        from poms.portfolios.models import Portfolio
+        from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, Strategy2Subgroup, \
+            Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
+        from poms.transactions.models import TransactionTypeGroup, TransactionType, ComplexTransaction, Transaction
+
+        self.grant_all_permissions_to_model_objects(Account, master_user, instance)
+        self.grant_all_permissions_to_model_objects(AccountType, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(Strategy1Group, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Strategy1Subgroup, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Strategy1, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(Strategy2Group, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Strategy2Subgroup, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Strategy2, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(Strategy3Group, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Strategy3Subgroup, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Strategy3, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(GenericAttributeType, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(InstrumentType, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Instrument, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(TransactionTypeGroup, master_user, instance)
+        self.grant_all_permissions_to_model_objects(TransactionType, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(ThreadGroup, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Thread, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(Portfolio, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(CounterpartyGroup, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Counterparty, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(ResponsibleGroup, master_user, instance)
+        self.grant_all_permissions_to_model_objects(Responsible, master_user, instance)
+
+        self.grant_all_permissions_to_model_objects(ComplexTransaction, master_user, instance)
+        self.grant_view_permissions_to_model_objects(Transaction, master_user, instance)
 
 
 class FakeSequence(models.Model):

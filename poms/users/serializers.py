@@ -27,7 +27,7 @@ from poms.transactions.fields import TransactionTypeField
 from poms.ui.models import ListLayout, EditLayout
 from poms.users.fields import MasterUserField, MemberField, GroupField
 from poms.users.models import MasterUser, UserProfile, Group, Member, TIMEZONE_CHOICES, InviteToMasterUser, \
-    InviteStatusChoice, EcosystemDefault
+    EcosystemDefault
 from poms.users.utils import get_user_from_context, get_master_user_from_context, get_member_from_context
 
 from django.core.mail import send_mail
@@ -551,13 +551,13 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
         self.fields['mismatch_account_object'] = AccountViewSerializer(source='mismatch_account', read_only=True)
 
 
-
 class MasterUserSetCurrentSerializer(serializers.Serializer):
     def create(self, validated_data):
         return validated_data
 
     def update(self, instance, validated_data):
         return self.create(validated_data)
+
 
 # class MemberMiniSerializer(serializers.ModelSerializer):
 #     class Meta:
@@ -670,7 +670,7 @@ class GroupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Group
-        fields = ['id', 'master_user', 'name', 'members', 'members_object']
+        fields = ['id', 'master_user', 'name', 'members', 'members_object', 'role']
 
     def __init__(self, *args, **kwargs):
         super(GroupSerializer, self).__init__(*args, **kwargs)
@@ -687,32 +687,69 @@ class GroupViewSerializer(serializers.ModelSerializer):
 
 
 class InviteToMasterUserSerializer(serializers.ModelSerializer):
-    status = serializers.ChoiceField(choices=InviteStatusChoice.choices, default=InviteStatusChoice.SENT)
-    from_member = serializers.SerializerMethodField()
-    to_master_user = serializers.SerializerMethodField()
+    status = serializers.ChoiceField(choices=InviteToMasterUser.STATUS_CHOICES, default=InviteToMasterUser.SENT)
+
+    from_member_object = serializers.SerializerMethodField(read_only=True, )
+    user_object = serializers.SerializerMethodField(read_only=True, )
+    to_master_user = serializers.SerializerMethodField(read_only=True, )
+    to_master_user_object = serializers.SerializerMethodField(read_only=True, )
+
+    groups = serializers.SerializerMethodField()
+    groups_object = serializers.PrimaryKeyRelatedField(source='groups', read_only=True, many=True)
+
+    def __init__(self, *args, **kwargs):
+        super(InviteToMasterUserSerializer, self).__init__(*args, **kwargs)
+        self.fields['groups_object'] = GroupViewSerializer(source='groups', many=True, read_only=True)
 
     def update(self, instance, validated_data):
-        if validated_data['status'] == InviteStatusChoice.ACCEPTED:
-            user = get_user_from_context(self.context)
-            # Member.objects.create(user=user, master_user=instance.from_member.master_user,
-            #                       is_admin=True)  # TODO permission logic?
 
-            Member.objects.create(user=user, master_user=instance.from_member.master_user)  # TODO permission logic?
+        print('validated data %s' % validated_data)
+
+        print('hereeeee? %s' % instance.groups.all())
+
+        if validated_data['status'] == InviteToMasterUser.ACCEPTED:
+            user = get_user_from_context(self.context)
+
+            member = Member.objects.create(user=user, master_user=instance.master_user)
+            member.groups.set(instance.groups.all())
+            member.save()
 
         return super(InviteToMasterUserSerializer, self).update(instance, validated_data)
 
     class Meta:
         model = InviteToMasterUser
-        fields = ['id', 'from_member', 'status', 'to_master_user']
+        fields = ['id', 'status', 'from_member', 'from_member_object', 'user', 'user_object', 'groups', 'groups_object',
+                  'to_master_user', 'to_master_user_object']
 
-    def get_from_member(self, obj):
-        return obj.from_member.username
+    def get_from_member_object(self, obj):
+        return {
+            'id': obj.from_member.id,
+            'username': obj.from_member.username
+        }
 
     def get_to_master_user(self, obj):
+        return obj.master_user.id
+
+    def get_to_master_user_object(self, obj):
         return {
-            'id': obj.from_member.master_user.id,
-            'name': obj.from_member.master_user.name,
-            'description': obj.from_member.master_user.description
+            'id': obj.master_user.id,
+            'name': obj.master_user.name,
+            'description': obj.master_user.description
+        }
+
+    def get_groups(self, obj):
+
+        result = []
+
+        for group in obj.groups.all():
+            result.append(group.id)
+
+        return result
+
+    def get_user_object(self, obj):
+        return {
+            'id': obj.user.id,
+            'username': obj.user.username
         }
 
     def get_status(self, obj):
@@ -721,20 +758,25 @@ class InviteToMasterUserSerializer(serializers.ModelSerializer):
 
 class InviteCreateSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=30, required=True)
+    groups = GroupField(many=True, required=False)
 
     def create(self, validated_data):
         username = validated_data.get('username')
+        groups = validated_data.get('groups')
 
         member = get_member_from_context(self.context)
+        master_user = get_master_user_from_context(self.context)
         user_to = User.objects.get(username=username)
 
         if not user_to:
             raise serializers.ValidationError({'user_to': "User with this username does not exist"})
 
-        if InviteToMasterUser.objects.filter(user=user_to, from_member=member, status=InviteStatusChoice.SENT).exists():
+        if InviteToMasterUser.objects.filter(user=user_to, from_member=member, status=InviteToMasterUser.SENT).exists():
             raise serializers.ValidationError({'user_to': "User with this username already received invitation"})
 
-        invite = InviteToMasterUser.objects.create(user=user_to, from_member=member, )
+        invite = InviteToMasterUser.objects.create(user=user_to, from_member=member, master_user=master_user)
+        invite.groups.set(groups)
+        invite.save()
 
         message = "You have been invited to %s database. Check all your invitations at https://finmars.com/#!/profile" % member.master_user.name
 
