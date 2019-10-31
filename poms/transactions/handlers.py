@@ -1129,8 +1129,10 @@ class TransactionTypeProcess(object):
                     codename = 'view_complextransaction_hide_parameters'
 
             for perm in ttype_permissions:
-                if perm.group.id == group.id and perm.permission.codename == 'view_transactiontype':
-                    ttype_access = True
+
+                if perm.group:
+                    if perm.group.id == group.id and perm.permission.codename == 'view_transactiontype':
+                        ttype_access = True
 
             _l.debug('complex_transaction.visibility_status %s' % self.complex_transaction.visibility_status)
             _l.debug('group %s complex transactions perms ttype access %s' % (group.name, ttype_access))
