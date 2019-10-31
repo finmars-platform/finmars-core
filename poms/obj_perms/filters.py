@@ -25,7 +25,7 @@ class AllFakeFilter(django_filters.Filter):
 
 
 class ObjectPermissionBackend(BaseFilterBackend):
-    codename_set = ['view_%(model_name)s', 'change_%(model_name)s', 'manage_%(model_name)s']
+    codename_set = ['view_%(model_name)s', 'change_%(model_name)s', 'manage_%(model_name)s', 'view_%(model_name)s_show_parameters', 'view_%(model_name)s_hide_parameters']
 
     def get_codename_set(self, model_cls):
         kwargs = {
