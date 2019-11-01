@@ -35,11 +35,15 @@ class ObjectPermissionBackend(BaseFilterBackend):
         return {perm % kwargs for perm in self.codename_set}
 
     def filter_queryset(self, request, queryset, view):
+
+        # print('ObjectPermissionBackend.filter_queryset %s' % view.action)
+
         if view and view.action == 'retrieve':
             # any object can'be loaded even if not permission
             # result must be filtered in the serializer
             # return obj_perms_prefetch(queryset)
             return queryset
+
         return obj_perms_filter_objects(request.user.member, self.get_codename_set(queryset.model), queryset,
                                         prefetch=False)
 

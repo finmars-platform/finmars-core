@@ -42,6 +42,7 @@ from poms.obj_perms.models import GenericObjectPermission
 
 
 def obj_perms_filter_objects(member, perms, queryset, model_cls=None, prefetch=True):
+
     if member is None:
         return queryset
 
@@ -69,6 +70,10 @@ def obj_perms_filter_objects(member, perms, queryset, model_cls=None, prefetch=T
 
         # print('ctype %s' % ctype)
         # print('codenames %s' % codenames)
+        #
+        from poms.transactions.models import ComplexTransaction
+
+        # print('perms %s' % perms)
         #
         # print("Queryset before permissions filter len %s" % len(queryset))
 

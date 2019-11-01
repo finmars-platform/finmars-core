@@ -266,7 +266,6 @@ class GenericAttribute(models.Model):
 
     def set_value(self, value):
 
-        print('here?')
 
         t = self.attribute_type.value_type
         if t == GenericAttributeType.STRING:

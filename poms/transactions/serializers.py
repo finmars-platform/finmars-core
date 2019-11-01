@@ -1938,7 +1938,7 @@ class ComplexTransactionViewSerializer(ComplexTransactionMixin, serializers.Mode
         return data
 
 
-class ComplexTransactionLightSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer):
+class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
     # text = serializers.SerializerMethodField()
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -1949,7 +1949,7 @@ class ComplexTransactionLightSerializer(ModelWithObjectPermissionSerializer, Mod
         self.fields['transaction_type_object'] = TransactionTypeViewSerializer(
             source='transaction_type', read_only=True)
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = ComplexTransaction
         fields = [
             'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'master_user',
@@ -1969,8 +1969,6 @@ class ComplexTransactionLightSerializer(ModelWithObjectPermissionSerializer, Mod
     def to_representation(self, instance):
 
         st = time.perf_counter()
-
-        instance.is_report = True
 
         data = super(ComplexTransactionLightSerializer, self).to_representation(instance)
 
@@ -2227,8 +2225,6 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
     def to_representation(self, instance):
 
         st = time.perf_counter()
-
-        instance.is_report = True
 
         data = super(TransactionTypeComplexTransactionSerializer, self).to_representation(instance)
 

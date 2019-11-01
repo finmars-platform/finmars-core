@@ -158,8 +158,6 @@ class ModelExtWithAllWithMultipleChoiceFilter(ModelExtMultipleChoiceFilter):
 
     def filter(self, qs, value):
 
-        print('here? %s' % qs)
-        print('value %s' % value)
 
         if not value:
             return qs
