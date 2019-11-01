@@ -57,16 +57,13 @@ def get_complex_transaction_codename(group, complex_transaction, transaction_per
 
 
 def has_access(group, transaction, accounts_permissions_grouped, portfolios_permissions_grouped):
-    result = False
+    result = True
 
-    if transaction['portfolio_id'] in portfolios_permissions_grouped[group]:
-        result = True
+    if transaction['portfolio_id'] not in portfolios_permissions_grouped[group]:
+        result = False
 
-    if transaction['account_position_id'] in accounts_permissions_grouped[group]:
-        result = True
-
-    if transaction['account_cash_id'] in accounts_permissions_grouped[group]:
-        result = True
+    if transaction['account_position_id'] not in accounts_permissions_grouped[group] and transaction['account_cash_id'] not in accounts_permissions_grouped[group]:
+        result = False
 
     return result
 
