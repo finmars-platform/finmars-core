@@ -21,7 +21,7 @@ celery_logger = get_task_logger(__name__)
 
 
 def get_complex_transaction_codename(group, complex_transaction, transaction_per_complex,
-                                     transaction_permissions_grouped, transaction_type_permissions_grouped):
+                                     transaction_permissions_grouped, transaction_type_permissions_grouped, transaction_ctype):
     result = None
 
     transactions_total = transaction_per_complex[complex_transaction['id']]
@@ -29,9 +29,12 @@ def get_complex_transaction_codename(group, complex_transaction, transaction_per
 
     transaction_count = 0
 
+    transactions_ids = []
+
     for transaction in transactions_in_group:
         if transaction['complex_transaction_id'] == complex_transaction['id']:
             transaction_count = transaction_count + 1
+            transactions_ids.append(transaction['id'])
 
     if transaction_count == transactions_total:
         result = 'view_complextransaction'
@@ -46,6 +49,11 @@ def get_complex_transaction_codename(group, complex_transaction, transaction_per
 
     if complex_transaction['transaction_type_id'] not in transaction_type_permissions_grouped[group]:
         result = None
+
+    if result is None:
+        _l.debug("Remove all basic transaction permissions group %s complex transaction %s" % (group, complex_transaction['id']))
+        # If we do not have access to Complex Transaction, then remove permissions to it basic transactions
+        GenericObjectPermission.objects.filter(group=group, object_id__in=transactions_ids, content_type=transaction_ctype).delete()
 
     # _l.debug('transactions_in_group transactions_total %s ' % transactions_total)
     # _l.debug('transactions_in_group transaction_count %s ' % transaction_count)
@@ -239,7 +247,7 @@ def recalculate_permissions_complex_transaction(self, instance):
         for complex_transaction in complex_transactions:
 
             codename = get_complex_transaction_codename(group, complex_transaction, transaction_per_complex,
-                                                        transaction_permissions_grouped, transaction_type_permissions_grouped)
+                                                        transaction_permissions_grouped, transaction_type_permissions_grouped, transaction_ctype)
 
             if codename:
                 object_permission = GenericObjectPermission(group_id=group,
