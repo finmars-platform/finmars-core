@@ -1954,6 +1954,8 @@ class ComplexTransactionLightSerializer(ModelWithObjectPermissionSerializer, Mod
         fields = [
             'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'master_user',
 
+            'visibility_status',
+
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
 
@@ -1975,9 +1977,6 @@ class ComplexTransactionLightSerializer(ModelWithObjectPermissionSerializer, Mod
         # print('instance.visibility_status %s' % instance.visibility_status)
 
         if instance.visibility_status == ComplexTransaction.HIDE_PARAMETERS:
-
-            data.pop('date')
-            data.pop('text')
 
             data.pop('user_text_1')
             data.pop('user_text_2')
