@@ -47,6 +47,12 @@ def get_complex_transaction_codename(group, complex_transaction, transaction_per
     if complex_transaction['transaction_type_id'] not in transaction_type_permissions_grouped[group]:
         result = None
 
+    # _l.debug('transactions_in_group transactions_total %s ' % transactions_total)
+    # _l.debug('transactions_in_group transaction_count %s ' % transaction_count)
+    # _l.debug('complex transaction visibility_status %s ' % complex_transaction['visibility_status'])
+    # _l.debug('complex transaction transaction_type_id %s ' % complex_transaction['transaction_type_id'])
+    # _l.debug('complex transaction %s codename %s ' % (complex_transaction['id'], result))
+
     return result
 
 
@@ -158,6 +164,7 @@ def recalculate_permissions_transaction(self, instance):
 @shared_task(name='transactions.recalculate_permissions_complex_transaction', bind=True)
 def recalculate_permissions_complex_transaction(self, instance):
     st = time.perf_counter()
+    data_st = time.perf_counter()
 
     groups = list(Group.objects.filter(master_user_id=instance.master_user.id).values_list('id', flat=True))
     complex_transactions = ComplexTransaction.objects.filter(master_user_id=instance.master_user.id).values('id', 'visibility_status', 'transaction_type_id')
@@ -166,7 +173,7 @@ def recalculate_permissions_complex_transaction(self, instance):
                                                                                              'complex_transaction_id')
     transaction_ctype = ContentType.objects.get_for_model(Transaction)
     transaction_permissions = GenericObjectPermission.objects.filter(group__in=groups,
-                                                                          content_type=transaction_ctype).values('id',
+                                                                          content_type=transaction_ctype, permission__codename='view_transaction').values('id',
                                                                                                                  'group_id',
                                                                                                                  'object_id')
 
@@ -182,6 +189,9 @@ def recalculate_permissions_complex_transaction(self, instance):
     complex_transaction_ctype = ContentType.objects.get_for_model(ComplexTransaction)
     complex_transaction_view_permission = Permission.objects.filter(content_type=complex_transaction_ctype,
                                                                     codename__in=codenames)
+
+    _l.debug('_recalculate_transactions data load done: %s', (time.perf_counter() - data_st))
+    _l.debug('_recalculate_complex_transaction complex_transactions len %s' % len(list(complex_transactions)))
 
     codenames_dict = {}
 
@@ -215,12 +225,7 @@ def recalculate_permissions_complex_transaction(self, instance):
         transaction_permissions_grouped[group] = []
 
     for permission in transaction_permissions:
-
-        if permission['group_id'] not in transaction_permissions_grouped:
-            transaction_permissions_grouped[permission['group_id']] = []
-
         transaction_permissions_grouped[permission['group_id']].append(permission)
-
 
     transaction_type_permissions_grouped = {}
 
