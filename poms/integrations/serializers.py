@@ -939,9 +939,7 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObj
         self.fields.pop('tags')
         self.fields.pop('tags_object')
         # self.fields.pop('attributes')
-        self.fields.pop('granted_permissions')
-        self.fields.pop('user_object_permissions', None)
-        self.fields.pop('group_object_permissions', None)
+
 
     def get_accrual_calculation_schedules(self, obj):
         from poms.instruments.serializers import AccrualCalculationScheduleSerializer

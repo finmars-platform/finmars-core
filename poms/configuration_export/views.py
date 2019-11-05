@@ -50,7 +50,7 @@ import json
 
 from poms.transactions.serializers import TransactionTypeSerializer
 from poms.ui.models import EditLayout, ListLayout, Bookmark, TransactionUserFieldModel, InstrumentUserFieldModel, \
-    DashboardLayout
+    DashboardLayout, TemplateLayout
 
 from django.forms.models import model_to_dict
 
@@ -112,6 +112,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         transaction_type_groups = self.get_transaction_type_groups()
         edit_layouts = self.get_edit_layouts()
         list_layouts = self.get_list_layouts()
+        template_layouts = self.get_template_layouts()
         dashboard_layouts = self.get_dashboard_layouts()
         report_layouts = self.get_report_layouts()
         bookmarks = self.get_bookmarks()
@@ -156,6 +157,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration["body"].append(transaction_type_groups)
         configuration["body"].append(edit_layouts)
         configuration["body"].append(list_layouts)
+        configuration["body"].append(template_layouts)
         configuration["body"].append(dashboard_layouts)
         configuration["body"].append(report_layouts)
         configuration["body"].append(bookmarks)
@@ -880,6 +882,27 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         result = {
             "entity": "ui.dashboardlayout",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_template_layouts(self):
+
+        results = to_json_objects(TemplateLayout.objects.filter(member=self._member))
+
+        for template_layout_json in results:
+            template_layout_json["fields"]["data"] = TemplateLayout.objects.get(pk=template_layout_json["pk"]).data
+
+        results = unwrap_items(results)
+
+        delete_prop(results, 'json_data')
+
+        delete_prop(results, 'member')
+
+        result = {
+            "entity": "ui.templatelayout",
             "count": len(results),
             "content": results
         }

@@ -203,21 +203,21 @@ class BaseUIModel(models.Model):
 
 
 class TemplateLayout(BaseUIModel):
-    master_user = models.ForeignKey(MasterUser, related_name='template_layouts',
-                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+    member = models.ForeignKey(Member, related_name='template_layouts',
+                                    verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
     type = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('type'))
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
     is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
 
     class Meta(BaseUIModel.Meta):
         unique_together = [
-            ['master_user', 'type', 'name'],
+            ['member', 'type', 'name'],
         ]
         ordering = ['name']
 
     def save(self, *args, **kwargs):
         if self.is_default:
-            qs = TemplateLayout.objects.filter(master_user=self.master_user, type=self.type,
+            qs = TemplateLayout.objects.filter(master_user=self.member, type=self.type,
                                                    is_default=True)
             if self.pk:
                 qs = qs.exclude(pk=self.pk)

@@ -37,22 +37,22 @@ class InstrumentUserFieldSerializer(serializers.ModelSerializer):
 
 
 class TemplateLayoutSerializer(serializers.ModelSerializer):
-    master_user = MasterUserField()
+    member = HiddenMemberField()
     data = serializers.JSONField(allow_null=False)
 
     class Meta:
         model = TemplateLayout
-        fields = ['id', 'master_user', 'type', 'name', 'is_default', 'data']
+        fields = ['id', 'member', 'type', 'name', 'is_default', 'data']
 
 
 class TemplateListLayoutSerializer(serializers.ModelSerializer):
-    master_user = MasterUserField()
+    member = HiddenMemberField()
     content_type = LayoutContentTypeField()
     data = serializers.JSONField(allow_null=False)
 
     class Meta:
         model = TemplateListLayout
-        fields = ['id', 'master_user', 'content_type', 'name', 'is_default', 'data']
+        fields = ['id', 'member', 'content_type', 'name', 'is_default', 'data']
 
 
 class TemplateEditLayoutSerializer(serializers.ModelSerializer):

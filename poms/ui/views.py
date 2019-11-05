@@ -77,16 +77,13 @@ class TemplateLayoutFilterSet(FilterSet):
 
 class TemplateLayoutViewSet(AbstractModelViewSet):
     queryset = TemplateLayout.objects.select_related(
-        'master_user',
+        'member',
     )
     serializer_class = TemplateLayoutSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
+        OwnerByMemberFilter,
     ]
     filter_class = TemplateLayoutFilterSet
-    permission_classes = AbstractModelViewSet.permission_classes + [
-        SuperUserOnly,
-    ]
     ordering_fields = [
      'name', 'is_default',
     ]
