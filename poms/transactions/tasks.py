@@ -50,16 +50,19 @@ def get_complex_transaction_codename(group, complex_transaction, transaction_per
     if complex_transaction['transaction_type_id'] not in transaction_type_permissions_grouped[group] and result is not None:
         result = 'view_complextransaction_hide_parameters'
 
+    if transaction_count == 0:
+        result = None
+
     # if result is None: # Not Required
     #     _l.debug("Remove all basic transaction permissions group %s complex transaction %s" % (group, complex_transaction['id']))
     #     # If we do not have access to Complex Transaction, then remove permissions to it basic transactions
     #     GenericObjectPermission.objects.filter(group=group, object_id__in=transactions_ids, content_type=transaction_ctype).delete()
 
-    # _l.debug('transactions_in_group transactions_total %s ' % transactions_total)
-    # _l.debug('transactions_in_group transaction_count %s ' % transaction_count)
-    # _l.debug('complex transaction visibility_status %s ' % complex_transaction['visibility_status'])
-    # _l.debug('complex transaction transaction_type_id %s ' % complex_transaction['transaction_type_id'])
-    # _l.debug('complex transaction %s codename %s ' % (complex_transaction['id'], result))
+    _l.debug('transactions_in_group transactions_total %s ' % transactions_total)
+    _l.debug('transactions_in_group transaction_count %s ' % transaction_count)
+    _l.debug('complex transaction visibility_status %s ' % complex_transaction['visibility_status'])
+    _l.debug('complex transaction transaction_type_id %s ' % complex_transaction['transaction_type_id'])
+    _l.debug('complex transaction %s codename %s ' % (complex_transaction['id'], result))
 
     return result
 
