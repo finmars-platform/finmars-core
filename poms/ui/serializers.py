@@ -8,7 +8,7 @@ from rest_framework import serializers
 from poms.ui.fields import LayoutContentTypeField, ListLayoutField
 from poms.ui.models import TemplateListLayout, TemplateEditLayout, ListLayout, EditLayout, Bookmark, Configuration, \
     ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
-    DashboardLayout
+    DashboardLayout, TemplateLayout
 from poms.users.fields import MasterUserField, HiddenMemberField
 
 
@@ -34,6 +34,15 @@ class InstrumentUserFieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = InstrumentUserFieldModel
         fields = ['id', 'master_user', 'key', 'name']
+
+
+class TemplateLayoutSerializer(serializers.ModelSerializer):
+    master_user = MasterUserField()
+    data = serializers.JSONField(allow_null=False)
+
+    class Meta:
+        model = TemplateLayout
+        fields = ['id', 'master_user', 'type', 'name', 'is_default', 'data']
 
 
 class TemplateListLayoutSerializer(serializers.ModelSerializer):

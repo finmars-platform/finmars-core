@@ -6,11 +6,11 @@ from poms.common.filters import NoOpFilter, CharFilter
 from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet
 from poms.ui.models import TemplateListLayout, TemplateEditLayout, ListLayout, EditLayout, Bookmark, Configuration, \
     ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
-    DashboardLayout
+    DashboardLayout, TemplateLayout
 from poms.ui.serializers import TemplateListLayoutSerializer, ListLayoutSerializer, TemplateEditLayoutSerializer, \
     EditLayoutSerializer, BookmarkSerializer, ConfigurationSerializer, ConfigurationExportLayoutSerializer, \
     TransactionUserFieldSerializer, InstrumentUserFieldSerializer, PortalInterfaceAccessModelSerializer, \
-    DashboardLayoutSerializer
+    DashboardLayoutSerializer, TemplateLayoutSerializer
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 from poms.users.permissions import SuperUserOnly
 
@@ -62,6 +62,34 @@ class LayoutContentTypeFilter(django_filters.CharFilter):
             'content_type__model__%s' % lookup: model,
         })
         return qs
+
+
+class TemplateLayoutFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_default = django_filters.BooleanFilter()
+    name = CharFilter()
+    type = CharFilter()
+
+    class Meta:
+        model = TemplateLayout
+        fields = []
+
+
+class TemplateLayoutViewSet(AbstractModelViewSet):
+    queryset = TemplateLayout.objects.select_related(
+        'master_user',
+    )
+    serializer_class = TemplateLayoutSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = TemplateLayoutFilterSet
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        SuperUserOnly,
+    ]
+    ordering_fields = [
+     'name', 'is_default',
+    ]
 
 
 class TemplateListLayoutFilterSet(FilterSet):

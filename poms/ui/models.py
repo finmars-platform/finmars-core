@@ -202,6 +202,29 @@ class BaseUIModel(models.Model):
             self.json_data = None
 
 
+class TemplateLayout(BaseUIModel):
+    master_user = models.ForeignKey(MasterUser, related_name='template_layouts',
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+    type = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('type'))
+    name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
+    is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
+
+    class Meta(BaseUIModel.Meta):
+        unique_together = [
+            ['master_user', 'type', 'name'],
+        ]
+        ordering = ['name']
+
+    def save(self, *args, **kwargs):
+        if self.is_default:
+            qs = TemplateLayout.objects.filter(master_user=self.master_user, type=self.type,
+                                                   is_default=True)
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            qs.update(is_default=False)
+        return super(TemplateLayout, self).save(*args, **kwargs)
+
+
 class BaseLayout(BaseUIModel):
     content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'), on_delete=models.CASCADE)
 
