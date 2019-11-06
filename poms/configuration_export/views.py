@@ -2223,7 +2223,7 @@ class ConfigurationDuplicateCheckViewSet(AbstractModelViewSet):
 
                         else:
 
-                            if entity['entity'] in ['ui.bookmark', 'ui.listlayout', 'ui.reportlayout', 'ui.editlayout', 'ui.dashboardlayout',]:
+                            if entity['entity'] in ['ui.bookmark', 'ui.listlayout', 'ui.reportlayout', 'ui.editlayout', 'ui.dashboardlayout', 'ui.templatelayout']:
 
                                 if model.objects.filter(name=item['name'], member=member).exists():
                                     result_item['content'].append({'name': item['name'], 'is_duplicate': True})
