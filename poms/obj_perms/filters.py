@@ -36,8 +36,6 @@ class ObjectPermissionBackend(BaseFilterBackend):
 
     def filter_queryset(self, request, queryset, view):
 
-        # print('ObjectPermissionBackend.filter_queryset %s' % view.action)
-
         if view and view.action == 'retrieve':
             # any object can'be loaded even if not permission
             # result must be filtered in the serializer

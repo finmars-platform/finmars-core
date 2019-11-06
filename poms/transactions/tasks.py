@@ -58,11 +58,11 @@ def get_complex_transaction_codename(group, complex_transaction, transaction_per
     #     # If we do not have access to Complex Transaction, then remove permissions to it basic transactions
     #     GenericObjectPermission.objects.filter(group=group, object_id__in=transactions_ids, content_type=transaction_ctype).delete()
 
-    _l.debug('transactions_in_group transactions_total %s ' % transactions_total)
-    _l.debug('transactions_in_group transaction_count %s ' % transaction_count)
-    _l.debug('complex transaction visibility_status %s ' % complex_transaction['visibility_status'])
-    _l.debug('complex transaction transaction_type_id %s ' % complex_transaction['transaction_type_id'])
-    _l.debug('complex transaction %s codename %s ' % (complex_transaction['id'], result))
+    # _l.debug('transactions_in_group transactions_total %s ' % transactions_total)
+    # _l.debug('transactions_in_group transaction_count %s ' % transaction_count)
+    # _l.debug('complex transaction visibility_status %s ' % complex_transaction['visibility_status'])
+    # _l.debug('complex transaction transaction_type_id %s ' % complex_transaction['transaction_type_id'])
+    # _l.debug('complex transaction %s codename %s ' % (complex_transaction['id'], result))
 
     return result
 
@@ -149,8 +149,7 @@ def recalculate_permissions_transaction(self, instance):
 
     deletion_st = time.perf_counter()
 
-    GenericObjectPermission.objects.filter(group__in=groups, content_type=transaction_ctype,
-                                           permission=transaction_view_permission).delete()
+    GenericObjectPermission.objects.filter(group__in=groups, content_type=transaction_ctype).delete()
 
     _l.debug('_recalculate_transactions transaction deletion done: %s', (time.perf_counter() - deletion_st))
 
