@@ -15,6 +15,11 @@ class OwnerByInstrumentFilter(BaseFilterBackend):
         instruments = Instrument.objects.filter(master_user=request.user.master_user)
         return queryset.filter(instrument__in=instruments)
 
+class OwnerByPermissionedInstrumentFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        instruments = Instrument.objects.filter(master_user=request.user.master_user)
+        return queryset.filter(instrument__in=instruments)
+
 
 class OwnerByInstrumentTypeFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):

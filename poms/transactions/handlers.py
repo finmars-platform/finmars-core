@@ -1040,22 +1040,25 @@ class TransactionTypeProcess(object):
 
         result = False
 
+        account_result = False
+        portfolio_result = False
+
         for perm in account_permissions:
 
             if perm.group.id == group.id:
 
-                if transaction.account_position and transaction.account_position.id == perm.object_id:
-                    result = True
-
-                if transaction.account_cash and transaction.account_cash.id == perm.object_id:
-                    result = True
+                if (transaction.account_position and transaction.account_position.id == perm.object_id) and (transaction.account_cash and transaction.account_cash.id == perm.object_id):
+                    account_result = True
 
         for perm in portfolio_permissions:
 
             if perm.group.id == group.id:
 
                 if transaction.portfolio and transaction.portfolio.id == perm.object_id:
-                    result = True
+                    portfolio_result = True
+
+        if account_result and portfolio_result:
+            result = True
 
         return result
 
@@ -1128,16 +1131,22 @@ class TransactionTypeProcess(object):
                 if self.complex_transaction.visibility_status == ComplexTransaction.HIDE_PARAMETERS:
                     codename = 'view_complextransaction_hide_parameters'
 
+            if permissions_count == 0:
+                codename = None
+
             for perm in ttype_permissions:
 
                 if perm.group:
                     if perm.group.id == group.id and perm.permission.codename == 'view_transactiontype':
                         ttype_access = True
 
+            if not ttype_access and codename is not None:
+                codename = 'view_complextransaction_hide_parameters'
+
             _l.debug('complex_transaction.visibility_status %s' % self.complex_transaction.visibility_status)
             _l.debug('group %s complex transactions perms ttype access %s' % (group.name, ttype_access))
 
-            if codename and ttype_access:
+            if codename:
                 perms.append({'group': group, 'permission': codename})
 
         _l.debug("complex transactions perms %s" % perms)

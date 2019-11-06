@@ -1233,7 +1233,7 @@ class ComplexTransactionInput(models.Model):
     transaction_type_input = models.ForeignKey(TransactionTypeInput, on_delete=models.CASCADE, related_name='+',
                                                verbose_name=ugettext_lazy('transaction type input'))
 
-    value_string = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('value string'))
+    value_string = models.TextField(default='', blank=True, verbose_name=ugettext_lazy('value string'))
     value_float = models.FloatField(default=0.0, verbose_name=ugettext_lazy('value float'))
     value_date = models.DateField(default=date.min, verbose_name=ugettext_lazy('value date'))
 
