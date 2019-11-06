@@ -392,7 +392,7 @@ class MasterUser(models.Model):
         self.create_user_fields()
 
 
-        group = Group.objects.create(master_user=self, name='%s' % ugettext_lazy('Admins'), role=Group.ADMIN)
+        group = Group.objects.create(master_user=self, name='%s' % ugettext_lazy('Administrators'), role=Group.ADMIN)
         group.grant_all_permissions_to_public_group(group, master_user=self)
 
         group = Group.objects.create(master_user=self, name='%s' % ugettext_lazy('Guests'), role=Group.USER)

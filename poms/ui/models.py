@@ -55,6 +55,9 @@ class PortalInterfaceAccessModel(AbstractClassModel):
     CONFIGURATION_MAPPING_TABLES = 15
     CONFIGURATION_USER_ATTRIBUTES = 8
     CONFIGURATION_ALIASES = 8
+    CONFIGURATION_TEMPLATES = 15
+    CONFIGURATION_REFERENCE_TABLE = 15
+
 
     SETTINGS_NOTIFICATION = 1
     SETTINGS_EXPORT_CONFIGURATION = 15
@@ -131,6 +134,12 @@ class PortalInterfaceAccessModel(AbstractClassModel):
         (2013, CONFIGURATION_ALIASES, 'configuration_aliases',
          ugettext_lazy("Configurations layer: Aliases")),
 
+        (2014, CONFIGURATION_TEMPLATES, 'configuration_template',
+         ugettext_lazy("Configurations layer: Templates")),
+
+        (2015, CONFIGURATION_REFERENCE_TABLE, 'configuration_reference_table',
+         ugettext_lazy("Configurations layer: Reference Tables")),
+
         (3001, SETTINGS_NOTIFICATION, 'settings_notification', ugettext_lazy("Settings layer: Notification")),
         (3002, SETTINGS_EXPORT_CONFIGURATION, 'settings_export_configuration',
          ugettext_lazy("Settings layer: Export Configuration")),
@@ -149,7 +158,7 @@ class PortalInterfaceAccessModel(AbstractClassModel):
         (3011, SETTINGS_ECOSYSTEM_DEFAULT, 'settings_ecosystem_default',
          ugettext_lazy("Settings layer: Ecosystem Default")),
 
-        (4001, ACCOUNT_SETTINGS, 'account_settigns', ugettext_lazy("Account layer: Settings")),
+        (4001, ACCOUNT_SETTINGS, 'account_settings', ugettext_lazy("Account layer: Settings")),
         (4002, ACCOUNT_PERSONAL_DATA, 'account_personal_data', ugettext_lazy("Account layer: Personal Data")),
         (4003, ACCOUNT_ECOSYSTEM_MANAGEMENT, 'account_ecosystem_management',
          ugettext_lazy("Account layer: Ecosystem Management")),
