@@ -48,6 +48,7 @@ from poms.users.fields import MasterUserField, HiddenMemberField
 from django.core.validators import RegexValidator
 
 from poms.common.utils import date_now
+from poms.users.utils import get_member_from_context
 
 
 class EventClassSerializer(PomsClassSerializer):
@@ -1787,6 +1788,53 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
 
         ]
 
+    def to_representation(self, instance):
+
+        st = time.perf_counter()
+
+        data = super(ComplexTransactionSerializer, self).to_representation(instance)
+
+        # print('instance.visibility_status %s' % instance.visibility_status)
+
+        member = get_member_from_context(self.context)
+
+        if instance.visibility_status == ComplexTransaction.HIDE_PARAMETERS and not member.is_admin:
+
+            data.pop('date')
+            data.pop('text')
+
+            data.pop('user_text_1')
+            data.pop('user_text_2')
+            data.pop('user_text_3')
+            data.pop('user_text_4')
+            data.pop('user_text_5')
+            data.pop('user_text_6')
+            data.pop('user_text_7')
+            data.pop('user_text_8')
+            data.pop('user_text_9')
+            data.pop('user_text_10')
+
+            data.pop('user_number_1')
+            data.pop('user_number_2')
+            data.pop('user_number_3')
+            data.pop('user_number_4')
+            data.pop('user_number_5')
+            data.pop('user_number_6')
+            data.pop('user_number_7')
+            data.pop('user_number_8')
+            data.pop('user_number_9')
+            data.pop('user_number_10')
+
+            data.pop('user_date_1')
+            data.pop('user_date_2')
+            data.pop('user_date_3')
+            data.pop('user_date_4')
+            data.pop('user_date_5')
+
+        # print('TransactionTypeComplexTransactionSerializer visibility status done: %s' % (time.perf_counter() - st))
+
+        return data
+
     # def update(self, instance, validated_data):
     #
     #     print("HERE UPATE EXECUTE?")
@@ -1974,7 +2022,9 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
 
         # print('instance.visibility_status %s' % instance.visibility_status)
 
-        if instance.visibility_status == ComplexTransaction.HIDE_PARAMETERS:
+        member = get_member_from_context(self.context)
+
+        if instance.visibility_status == ComplexTransaction.HIDE_PARAMETERS and not member.is_admin:
 
             data.pop('user_text_1')
             data.pop('user_text_2')
@@ -2228,7 +2278,7 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
 
         data = super(TransactionTypeComplexTransactionSerializer, self).to_representation(instance)
 
-        print('instance.visibility_status %s' % instance.visibility_status)
+        # print('instance.visibility_status %s' % instance.visibility_status)
 
         if instance.visibility_status == ComplexTransaction.HIDE_PARAMETERS:
 
@@ -2263,7 +2313,7 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
             data.pop('user_date_4')
             data.pop('user_date_5')
 
-        print('TransactionTypeComplexTransactionSerializer visibility status done: %s' % (time.perf_counter() - st))
+        # print('TransactionTypeComplexTransactionSerializer visibility status done: %s' % (time.perf_counter() - st))
 
         return data
 
