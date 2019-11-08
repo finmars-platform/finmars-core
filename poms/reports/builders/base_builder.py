@@ -503,7 +503,7 @@ class BaseReportBuilder:
             attrs=attrs,
             objects=objects,
             queryset=ComplexTransaction.objects.filter(
-                transaction_type__master_user=master_user
+                master_user=master_user
             ).prefetch_related(
                 'transaction_type',
                 'transaction_type__group',

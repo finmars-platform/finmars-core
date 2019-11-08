@@ -311,6 +311,9 @@ def get_perms_codename(model, actions):
     for action in actions:
         params['action'] = action
         ret.append('%(action)s_%(model_name)s' % params)
+
+
+
     return ret
 
 
@@ -358,7 +361,13 @@ def has_any_perms(member, obj):
 def has_view_perms(member, obj):
     if member.is_superuser:
         return True
+
     perms = get_view_perms(obj)
+
+    if obj._meta.model_name == 'complextransaction':
+        perms.append('view_complextransaction_hide_parameters')
+        perms.append('view_complextransaction_show_parameters')
+
     return has_perms(member, obj, perms)
 
 
