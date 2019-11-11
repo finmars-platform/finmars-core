@@ -668,9 +668,11 @@ class GroupSerializer(serializers.ModelSerializer):
     members = MemberField(many=True, required=False)
     members_object = serializers.PrimaryKeyRelatedField(source='members', read_only=True, many=True)
 
+    permission_table = serializers.JSONField(allow_null=True)
+
     class Meta:
         model = Group
-        fields = ['id', 'master_user', 'name', 'members', 'members_object', 'role']
+        fields = ['id', 'master_user', 'name', 'members', 'members_object', 'role', 'permission_table']
 
     def __init__(self, *args, **kwargs):
         super(GroupSerializer, self).__init__(*args, **kwargs)
@@ -702,10 +704,6 @@ class InviteToMasterUserSerializer(serializers.ModelSerializer):
         self.fields['groups_object'] = GroupViewSerializer(source='groups', many=True, read_only=True)
 
     def update(self, instance, validated_data):
-
-        print('validated data %s' % validated_data)
-
-        print('hereeeee? %s' % instance.groups.all())
 
         if validated_data['status'] == InviteToMasterUser.ACCEPTED:
             user = get_user_from_context(self.context)

@@ -8,7 +8,7 @@ from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
 from poms.common.models import AbstractClassModel
-from poms.users.models import MasterUser, Member
+from poms.users.models import MasterUser, Member, Group
 
 
 class PortalInterfaceAccessModel(AbstractClassModel):

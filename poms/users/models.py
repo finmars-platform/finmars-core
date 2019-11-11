@@ -1,11 +1,14 @@
 from __future__ import unicode_literals
 
+import json
+
 import pytz
 from django.conf import settings
 from django.contrib.auth.models import User, Permission
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -707,6 +710,25 @@ class Group(models.Model):
     role = models.PositiveSmallIntegerField(default=USER, choices=ROLE_CHOICES, db_index=True,
                                                          verbose_name=ugettext_lazy('role'))
 
+    permission_table_json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+
+    @property
+    def permission_table(self):
+        if self.permission_table_json_data:
+            try:
+                return json.loads(self.permission_table_json_data)
+            except (ValueError, TypeError):
+                return None
+        else:
+            return None
+
+    @permission_table.setter
+    def permission_table(self, val):
+        if val:
+            self.permission_table_json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+        else:
+            self.permission_table_json_data = None
+
     class Meta:
         verbose_name = ugettext_lazy('group')
         verbose_name_plural = ugettext_lazy('groups')
@@ -794,6 +816,7 @@ class Group(models.Model):
 
         self.grant_all_permissions_to_model_objects(ComplexTransaction, master_user, instance)
         self.grant_view_permissions_to_model_objects(Transaction, master_user, instance)
+
 
 
 class FakeSequence(models.Model):
