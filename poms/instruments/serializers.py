@@ -159,18 +159,19 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
         self.fields['factor_down_object'] = TransactionTypeViewSerializer(source='factor_down', read_only=True)
 
     def validate(self, attrs):
-        instrument_class = attrs['instrument_class']
+        instrument_class = attrs.get('instrument_class', None)
         one_off_event = attrs.get('one_off_event', None)
         regular_event = attrs.get('regular_event', None)
 
-        errors = {}
-        if instrument_class.has_one_off_event and one_off_event is None:
-            errors['one_off_event'] = self.fields['one_off_event'].error_messages['required']
-        if instrument_class.has_regular_event and regular_event is None:
-            errors['regular_event'] = self.fields['regular_event'].error_messages['required']
+        if instrument_class:
+            errors = {}
+            if instrument_class.has_one_off_event and one_off_event is None:
+                errors['one_off_event'] = self.fields['one_off_event'].error_messages['required']
+            if instrument_class.has_regular_event and regular_event is None:
+                errors['regular_event'] = self.fields['regular_event'].error_messages['required']
 
-        if errors:
-            raise ValidationError(errors)
+            if errors:
+                raise ValidationError(errors)
 
         return attrs
 
