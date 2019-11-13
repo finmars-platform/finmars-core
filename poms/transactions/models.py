@@ -307,6 +307,14 @@ class TransactionType(NamedModel, FakeDeletableModel):
         (HIDE_PARAMETERS, ugettext_lazy('Hide Parameters')),
     )
 
+    TYPE_DEFAULT = 1
+    TYPE_PROCEDURE = 2  # Complex Transaction will not be created
+
+    TYPE_CHOICES = (
+        (TYPE_DEFAULT, ugettext_lazy('Default')),
+        (TYPE_PROCEDURE, ugettext_lazy('Procedure')),
+    )
+
     master_user = models.ForeignKey(MasterUser, related_name='transaction_types',
                                     verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     group = models.ForeignKey(TransactionTypeGroup, null=True, blank=True, on_delete=models.PROTECT,
@@ -328,6 +336,9 @@ class TransactionType(NamedModel, FakeDeletableModel):
 
     visibility_status = models.PositiveSmallIntegerField(default=SHOW_PARAMETERS, choices=VISIBILITY_STATUS_CHOICES, db_index=True,
                                                          verbose_name=ugettext_lazy('visibility_status')) # settings for complex transaction
+
+    type = models.PositiveSmallIntegerField(default=TYPE_DEFAULT, choices=TYPE_CHOICES, db_index=True,
+                                            verbose_name=ugettext_lazy('type'))
 
     user_text_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                    verbose_name=ugettext_lazy('user text 1'))
@@ -1093,6 +1104,19 @@ class TransactionTypeActionInstrumentEventScheduleAction(TransactionTypeAction):
 
     def __str__(self):
         return 'TransactionTypeActionInstrumentEventScheduleAction action #%s' % self.order
+
+
+class TransactionTypeActionExecuteCommand(TransactionTypeAction):
+
+    expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                            verbose_name=ugettext_lazy('expr'))
+
+    class Meta:
+        verbose_name = ugettext_lazy('transaction type action execute command action')
+        verbose_name_plural = ugettext_lazy('transaction type action execute command actions')
+
+    def __str__(self):
+        return 'TransactionTypeActionExecuteCommand action #%s' % self.order
 
 
 class EventToHandle(NamedModel):

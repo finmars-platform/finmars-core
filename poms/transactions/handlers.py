@@ -1036,6 +1036,41 @@ class TransactionTypeProcess(object):
                         _l.debug(errors)
                         # self.instruments_errors.append(errors)
 
+    def book_execute_commands(self, actions):
+
+        print('book_execute_commands %s' % actions)
+
+        for order, action in enumerate(actions):
+            try:
+                execute_command = action.transactiontypeactionexecutecommand
+            except ObjectDoesNotExist:
+                execute_command = None
+
+            if execute_command and self.execute_action_condition(execute_command):
+
+                # print('process execute command: %s', execute_command)
+                # print('process execute command expr: %s', execute_command.expr)
+
+                errors = {}
+
+                try:
+                    result = formula.safe_eval(execute_command.expr, names=self.values,
+                                               context=self._context)
+
+                    # print('result %s', result)
+
+                except (ValueError, TypeError, IntegrityError, formula.InvalidExpression):
+
+                    self._add_err_msg(errors, 'non_field_errors',
+                                      ugettext(
+                                          'Invalid execute command (Invalid Expression)'))
+                except DatabaseError:
+                    self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
+                finally:
+                    if bool(errors):
+                        _l.debug(errors)
+                        # self.instruments_errors.append(errors)
+
     def transaction_access_check(self, transaction, group, account_permissions, portfolio_permissions):
 
         result = False
@@ -1546,6 +1581,8 @@ class TransactionTypeProcess(object):
         event_schedules_map = self.book_create_event_schedules(actions, instrument_map, event_schedules_map)
 
         self.book_create_event_actions(actions, instrument_map, event_schedules_map)
+
+        self.book_execute_commands(actions)
 
         # complex_transaction
         complex_transaction_errors = {}

@@ -42,7 +42,7 @@ from poms.transactions.models import TransactionClass, Transaction, TransactionT
     ComplexTransaction, EventClass, NotificationClass, ComplexTransactionInput, \
     TransactionTypeActionInstrumentFactorSchedule, TransactionTypeActionInstrumentManualPricingFormula, \
     TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentEventSchedule, \
-    TransactionTypeActionInstrumentEventScheduleAction
+    TransactionTypeActionInstrumentEventScheduleAction, TransactionTypeActionExecuteCommand
 from poms.users.fields import MasterUserField, HiddenMemberField
 
 from django.core.validators import RegexValidator
@@ -789,6 +789,17 @@ class TransactionTypeActionInstrumentEventScheduleActionSerializer(serializers.M
         super(TransactionTypeActionInstrumentEventScheduleActionSerializer, self).__init__(*args, **kwargs)
 
 
+class TransactionTypeActionExecuteCommandSerializer(serializers.ModelSerializer):
+
+    expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+
+    class Meta:
+        model = TransactionTypeActionExecuteCommand
+        fields = [
+            'expr'
+        ]
+
+
 class TransactionTypeActionSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, allow_null=True)
 
@@ -822,12 +833,16 @@ class TransactionTypeActionSerializer(serializers.ModelSerializer):
         source='transactiontypeactioninstrumenteventscheduleaction', required=False, allow_null=True
     )
 
+    execute_command = TransactionTypeActionExecuteCommandSerializer(
+        source='transactiontypeactionexecutecommand', required=False,
+        allow_null=True)
+
     class Meta:
         model = TransactionTypeAction
         fields = ['id', 'order', 'rebook_reaction', 'condition_expr', 'action_notes', 'transaction', 'instrument',
                   'instrument_factor_schedule',
                   'instrument_manual_pricing_formula', 'instrument_accrual_calculation_schedules',
-                  'instrument_event_schedule', 'instrument_event_schedule_action']
+                  'instrument_event_schedule', 'instrument_event_schedule_action', 'execute_command']
 
     def validate(self, attrs):
         # TODO: transaction or instrument present
@@ -1008,6 +1023,9 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
     visibility_status = serializers.ChoiceField(default=TransactionType.SHOW_PARAMETERS, initial=TransactionType.SHOW_PARAMETERS,
                                                 required=False, choices=TransactionType.VISIBILITY_STATUS_CHOICES)
 
+    type = serializers.ChoiceField(default=TransactionType.TYPE_DEFAULT, initial=TransactionType.TYPE_DEFAULT,
+                                                required=False, choices=TransactionType.TYPE_CHOICES)
+
     # instrument_types_object = serializers.PrimaryKeyRelatedField(source='instrument_types', many=True, read_only=True)
     # portfolios_object = serializers.PrimaryKeyRelatedField(source='portfolios', many=True, read_only=True)
 
@@ -1026,7 +1044,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
         fields = [
             'id', 'master_user', 'group',
             'user_code', 'name', 'short_name', 'public_name', 'notes',
-            'date_expr', 'display_expr', 'visibility_status',
+            'date_expr', 'display_expr', 'visibility_status', 'type',
 
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
@@ -1069,6 +1087,9 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
         inputs = validated_data.pop('inputs', empty)
         actions = validated_data.pop('actions', empty)
         instance = super(TransactionTypeSerializer, self).update(instance, validated_data)
+
+        print('actions %s' % actions)
+
         if inputs is not empty:
             inputs = self.save_inputs(instance, inputs)
         if actions is not empty:
@@ -1229,6 +1250,39 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                         pass
                 if item is None:
                     item = TransactionTypeActionInstrumentFactorSchedule(
+                        transaction_type=instance)
+
+                for attr, value in item_data.items():
+                    setattr(item, attr, value)
+
+                item.order = order
+                item.rebook_reaction = action_data.get('rebook_reaction', item.rebook_reaction)
+                item.action_notes = action_data.get('action_notes',
+                                                    item.action_notes)
+                item.condition_expr = action_data.get('condition_expr', item.condition_expr)
+
+                item.save()
+                actions[order] = item
+
+    def save_actions_execute_command(self, instance, inputs, actions, existed_actions, actions_data):
+
+        for order, action_data in enumerate(actions_data):
+            pk = action_data.pop('id', None)
+            action = existed_actions.get(pk, None)
+
+            item_data = action_data.get('execute_command', action_data.get(
+                'transactiontypeactionexecutecommand'))
+            if item_data:
+
+
+                item = None
+                if action:
+                    try:
+                        item = action.transactiontypeactionexecutecommand
+                    except ObjectDoesNotExist:
+                        pass
+                if item is None:
+                    item = TransactionTypeActionExecuteCommand(
                         transaction_type=instance)
 
                 for attr, value in item_data.items():
@@ -1432,7 +1486,8 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             'transactiontypeactioninstrumentmanualpricingformula',
             'transactiontypeactioninstrumentaccrualcalculationschedules',
             'transactiontypeactioninstrumenteventschedule',
-            'transactiontypeactioninstrumenteventscheduleaction').order_by('order', 'id')
+            'transactiontypeactioninstrumenteventscheduleaction',
+            'transactiontypeactionexecutecommand').order_by('order', 'id')
         existed_actions = {a.id: a for a in actions_qs}
 
         if inputs is None or inputs is empty:
@@ -1456,6 +1511,8 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
         self.save_actions_instrument_event_schedule(instance, inputs, actions, existed_actions, actions_data)
 
         self.save_actions_instrument_event_schedule_action(instance, inputs, actions, existed_actions, actions_data)
+
+        self.save_actions_execute_command(instance, inputs, actions, existed_actions, actions_data)
 
         return actions
 

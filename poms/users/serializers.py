@@ -685,7 +685,7 @@ class GroupViewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Group
-        fields = ['id', 'name']
+        fields = ['id', 'name', 'permission_table']
 
 
 class InviteToMasterUserSerializer(serializers.ModelSerializer):
