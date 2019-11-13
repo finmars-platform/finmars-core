@@ -134,18 +134,18 @@ class ModelWithObjectPermissionSerializer(serializers.ModelSerializer):
 
     def save_object_permissions(self, instance, object_permissions=None, created=False):
         member = get_member_from_context(self.context)
-        # if created:
-        #     if object_permissions:
-        #         object_permissions = [uop for uop in object_permissions
-        #                               if 'member' in uop and getattr(uop['member'], 'id', None) != member.id]
-        #     else:
-        #         object_permissions = []
-        #     member_perms = [{'group': None, 'member': member, 'permission': p} for p in get_all_perms(instance)]
-        #     object_permissions += member_perms
-        #     assign_perms3(instance, perms=object_permissions)
-        # else:
-        if has_manage_perm(member, instance):
+        if created:
+            # if object_permissions:
+            #     object_permissions = [uop for uop in object_permissions
+            #                           if 'member' in uop and getattr(uop['member'], 'id', None) != member.id]
+            # else:
+            #     object_permissions = []
+            # member_perms = [{'group': None, 'member': member, 'permission': p} for p in get_all_perms(instance)]
+            # object_permissions += member_perms
             assign_perms3(instance, perms=object_permissions)
+        else:
+            if has_manage_perm(member, instance):
+                assign_perms3(instance, perms=object_permissions)
 
 
 class ModelWithObjectPermissionVewSerializer(serializers.ModelSerializer):
