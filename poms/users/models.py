@@ -204,18 +204,18 @@ class MasterUser(models.Model):
 
         from poms.ui.models import InstrumentUserFieldModel, TransactionUserFieldModel
 
-        for i in range(10):
+        for i in range(20):
             num = str(i + 1)
             TransactionUserFieldModel.objects.create(master_user=self, key='user_text_' + num, name='User Text ' + num)
 
-        for i in range(10):
+        for i in range(20):
             num = str(i + 1)
             TransactionUserFieldModel.objects.create(master_user=self, key='user_number_' + num,
                                                      name='User Number ' + num)
 
-        for i in range(10):
+        for i in range(5):
             num = str(i + 1)
-            TransactionUserFieldModel.objects.create(master_user=self, key='user_date_' + num, name='User Dext ' + num)
+            TransactionUserFieldModel.objects.create(master_user=self, key='user_date_' + num, name='User Date ' + num)
 
         for i in range(3):
             num = str(i + 1)

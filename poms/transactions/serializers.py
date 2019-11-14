@@ -879,6 +879,27 @@ class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelW
     user_text_10 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                    allow_null=True, default='')
 
+    user_text_11 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_12 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_13 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_14 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_15 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_16 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_17 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_18 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_19 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_20 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+
     user_number_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                     allow_null=True, default='')
     user_number_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
@@ -898,6 +919,27 @@ class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelW
     user_number_9 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                     allow_null=True, default='')
     user_number_10 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                     allow_null=True, default='')
+
+    user_number_11 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_12 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_13 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_14 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_15 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_16 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_17 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_18 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_19 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_20 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                      allow_null=True, default='')
 
     user_date_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
@@ -936,8 +978,14 @@ class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelW
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
 
+            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
+            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
+
             'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
             'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+
+            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
+            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
 
             'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
 
@@ -978,6 +1026,27 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
     user_text_10 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                    allow_null=True, default='')
 
+    user_text_11 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_12 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_13 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_14 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_15 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_16 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_17 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_18 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_19 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_20 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+
     user_number_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                     allow_null=True, default='')
     user_number_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
@@ -997,6 +1066,27 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
     user_number_9 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                     allow_null=True, default='')
     user_number_10 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                     allow_null=True, default='')
+
+    user_number_11 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_12 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_13 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_14 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_15 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_16 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_17 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_18 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_19 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_20 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                      allow_null=True, default='')
 
     user_date_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
@@ -1049,8 +1139,14 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
 
+            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
+            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
+
             'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
             'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+
+            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
+            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
 
             'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
 
@@ -1531,8 +1627,14 @@ class TransactionTypeViewSerializer(ModelWithObjectPermissionSerializer):
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
 
+            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
+            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
+
             'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
             'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+
+            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
+            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
 
             'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5'
 
@@ -1838,8 +1940,14 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
 
+            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
+            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
+
             'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
             'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+
+            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
+            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
 
             'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5'
 
@@ -1857,9 +1965,6 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
 
         if instance.visibility_status == ComplexTransaction.HIDE_PARAMETERS and not member.is_admin:
 
-            data.pop('date')
-            data.pop('text')
-
             data.pop('user_text_1')
             data.pop('user_text_2')
             data.pop('user_text_3')
@@ -1870,6 +1975,16 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
             data.pop('user_text_8')
             data.pop('user_text_9')
             data.pop('user_text_10')
+            data.pop('user_text_11')
+            data.pop('user_text_12')
+            data.pop('user_text_13')
+            data.pop('user_text_14')
+            data.pop('user_text_15')
+            data.pop('user_text_16')
+            data.pop('user_text_17')
+            data.pop('user_text_18')
+            data.pop('user_text_19')
+            data.pop('user_text_20')
 
             data.pop('user_number_1')
             data.pop('user_number_2')
@@ -1881,6 +1996,16 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
             data.pop('user_number_8')
             data.pop('user_number_9')
             data.pop('user_number_10')
+            data.pop('user_number_11')
+            data.pop('user_number_12')
+            data.pop('user_number_13')
+            data.pop('user_number_14')
+            data.pop('user_number_15')
+            data.pop('user_number_16')
+            data.pop('user_number_17')
+            data.pop('user_number_18')
+            data.pop('user_number_19')
+            data.pop('user_number_20')
 
             data.pop('user_date_1')
             data.pop('user_date_2')
@@ -2064,8 +2189,14 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
 
+            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
+            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
+
             'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
             'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+
+            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
+            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
 
             'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5'
 
@@ -2093,6 +2224,17 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
             data.pop('user_text_8')
             data.pop('user_text_9')
             data.pop('user_text_10')
+            data.pop('user_text_11')
+            data.pop('user_text_12')
+            data.pop('user_text_13')
+            data.pop('user_text_14')
+            data.pop('user_text_15')
+            data.pop('user_text_16')
+            data.pop('user_text_17')
+            data.pop('user_text_18')
+            data.pop('user_text_19')
+            data.pop('user_text_20')
+
 
             data.pop('user_number_1')
             data.pop('user_number_2')
@@ -2104,6 +2246,16 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
             data.pop('user_number_8')
             data.pop('user_number_9')
             data.pop('user_number_10')
+            data.pop('user_number_11')
+            data.pop('user_number_12')
+            data.pop('user_number_13')
+            data.pop('user_number_14')
+            data.pop('user_number_15')
+            data.pop('user_number_16')
+            data.pop('user_number_17')
+            data.pop('user_number_18')
+            data.pop('user_number_19')
+            data.pop('user_number_20')
 
             data.pop('user_date_1')
             data.pop('user_date_2')
@@ -2322,8 +2474,14 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
 
+            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
+            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
+
             'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
             'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+
+            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
+            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
 
             'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5'
 
@@ -2339,8 +2497,8 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
 
         if instance.visibility_status == ComplexTransaction.HIDE_PARAMETERS:
 
-            data.pop('date')
-            data.pop('text')
+            # data.pop('date')
+            # data.pop('text')
 
             data.pop('user_text_1')
             data.pop('user_text_2')
@@ -2352,6 +2510,16 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
             data.pop('user_text_8')
             data.pop('user_text_9')
             data.pop('user_text_10')
+            data.pop('user_text_11')
+            data.pop('user_text_12')
+            data.pop('user_text_13')
+            data.pop('user_text_14')
+            data.pop('user_text_15')
+            data.pop('user_text_16')
+            data.pop('user_text_17')
+            data.pop('user_text_18')
+            data.pop('user_text_19')
+            data.pop('user_text_20')
 
             data.pop('user_number_1')
             data.pop('user_number_2')
@@ -2363,6 +2531,16 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
             data.pop('user_number_8')
             data.pop('user_number_9')
             data.pop('user_number_10')
+            data.pop('user_number_11')
+            data.pop('user_number_12')
+            data.pop('user_number_13')
+            data.pop('user_number_14')
+            data.pop('user_number_15')
+            data.pop('user_number_16')
+            data.pop('user_number_17')
+            data.pop('user_number_18')
+            data.pop('user_number_19')
+            data.pop('user_number_20')
 
             data.pop('user_date_1')
             data.pop('user_date_2')
