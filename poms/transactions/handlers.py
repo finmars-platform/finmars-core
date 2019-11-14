@@ -21,7 +21,7 @@ from poms.obj_perms.utils import assign_perms3, get_view_perms
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import ComplexTransaction, TransactionTypeInput, Transaction, EventClass, \
-    NotificationClass, RebookReactionChoice, ComplexTransactionInput
+    NotificationClass, RebookReactionChoice, ComplexTransactionInput, TransactionType
 from poms.users.models import EcosystemDefault, Group
 from django.apps import apps
 
@@ -1623,6 +1623,9 @@ class TransactionTypeProcess(object):
 
         if self.complex_transaction.status == ComplexTransaction.PENDING:
             self.complex_transaction.transactions.all().delete()
+
+        if self.complex_transaction.transaction_type.type == TransactionType.TYPE_PROCEDURE:
+            self.complex_transaction.delete()
 
     def process_recalculate(self):
         if not self.recalculate_inputs:
