@@ -97,20 +97,20 @@ class ModelWithObjectPermissionSerializer(serializers.ModelSerializer):
                 if k not in ['id', 'public_name', 'display_name', 'granted_permissions']:
                     ret.pop(k)
 
-        if self.context.get('show_object_permissions', True):
-            if not has_manage_perm(member, instance):
-                # for k in list(ret.keys()):
-                #     if k in ['object_permissions', 'user_object_permissions', 'group_object_permissions']:
-                #         ret.pop(k)
-                ret.pop('object_permissions', None)
-                ret.pop('user_object_permissions', None)
-                ret.pop('group_object_permissions', None)
+        # if self.context.get('show_object_permissions', True): # TODO should we show permissions?
+        #     if not has_manage_perm(member, instance):
+        #         # for k in list(ret.keys()):
+        #         #     if k in ['object_permissions', 'user_object_permissions', 'group_object_permissions']:
+        #         #         ret.pop(k)
+        #         ret.pop('object_permissions', None)
+        #         ret.pop('user_object_permissions', None)
+        #         ret.pop('group_object_permissions', None)
+        # else:
+        #     ret.pop('granted_permissions', None)
+        #     ret.pop('object_permissions', None)
+        #     ret.pop('user_object_permissions', None)
+        #     ret.pop('group_object_permissions', None)
 
-        else:
-            ret.pop('granted_permissions', None)
-            ret.pop('object_permissions', None)
-            ret.pop('user_object_permissions', None)
-            ret.pop('group_object_permissions', None)
         return ret
 
     def create(self, validated_data):
