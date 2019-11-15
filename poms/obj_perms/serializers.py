@@ -97,6 +97,13 @@ class ModelWithObjectPermissionSerializer(serializers.ModelSerializer):
                 if k not in ['id', 'public_name', 'display_name', 'granted_permissions']:
                     ret.pop(k)
 
+            if 'name' in ret:
+                ret['name'] = ret['public_name']
+            if 'short_name' in ret:
+                ret['short_name'] = ret['public_name']
+            if 'user_code' in ret:
+                ret['user_code'] = ret['public_name']
+
         # if self.context.get('show_object_permissions', True): # TODO should we show permissions?
         #     if not has_manage_perm(member, instance):
         #         # for k in list(ret.keys()):
