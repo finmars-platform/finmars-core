@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django_filters.rest_framework import FilterSet
+from django_filters.rest_framework import FilterSet, DjangoFilterBackend
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.decorators import action
@@ -732,8 +732,9 @@ class GroupViewSet(AbstractModelViewSet):
 
 class InviteToMasterUserFilterSet(FilterSet):
     id = NoOpFilter()
-    to_user = ModelExtMultipleChoiceFilter(model=User, field_name='to_user',)
-    from_member = ModelExtMultipleChoiceFilter(model=Member, field_name='from_member',)
+    # to_user = ModelExtMultipleChoiceFilter(model=User, field_name='to_user',)
+    # from_member = ModelExtMultipleChoiceFilter(model=Member, field_name='from_member',)
+    status = CharFilter()
 
     class Meta:
         model = InviteToMasterUser
@@ -748,6 +749,7 @@ class InviteFromMasterUserViewSet(AbstractApiView, UpdateModelMixinExt, DestroyM
     serializer_class = InviteToMasterUserSerializer
     permission_classes = AbstractModelViewSet.permission_classes + []
     filter_backends = [
+        DjangoFilterBackend,
         OwnerByUserFilter,
     ]
     filter_class = InviteToMasterUserFilterSet
@@ -763,7 +765,8 @@ class InviteToUserViewSet(AbstractApiView, UpdateModelMixinExt, DestroyModelFake
     )
     serializer_class = InviteToMasterUserSerializer
     permission_classes = AbstractModelViewSet.permission_classes + []
-    filter_backends = [
+    filter_backends =  [
+        DjangoFilterBackend,
         OwnerByMasterUserFilter,
     ]
     filter_class = InviteToMasterUserFilterSet
