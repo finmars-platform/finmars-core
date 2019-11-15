@@ -27,7 +27,7 @@ from poms.instruments.serializers import PeriodicitySerializer, \
 from poms.integrations.fields import PriceDownloadSchemeField
 from poms.integrations.models import PriceDownloadScheme
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
-from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
+from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer, GenericObjectPermissionSerializer
 from poms.portfolios.fields import PortfolioField, PortfolioDefault
 from poms.portfolios.models import Portfolio
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field, Strategy1Default, Strategy2Default, \
@@ -1961,9 +1961,24 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
 
         # print('instance.visibility_status %s' % instance.visibility_status)
 
+        hide_parameters = False
+
         member = get_member_from_context(self.context)
 
-        if instance.visibility_status == ComplexTransaction.HIDE_PARAMETERS and not member.is_admin:
+        if 'object_permissions' in data:
+
+            for perm in data['object_permissions']:
+
+                if perm['permission'] == 'view_complextransaction_hide_parameters':
+
+                    if perm['group'] in member.groups:
+
+                        hide_parameters = True
+
+        if member.is_admin or member.is_owner:
+            hide_parameters = False
+
+        if hide_parameters:
 
             data.pop('user_text_1')
             data.pop('user_text_2')
@@ -2210,9 +2225,24 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
 
         # print('instance.visibility_status %s' % instance.visibility_status)
 
+        hide_parameters = False
+
         member = get_member_from_context(self.context)
 
-        if instance.visibility_status == ComplexTransaction.HIDE_PARAMETERS and not member.is_admin:
+        if 'object_permissions' in data:
+
+            for perm in data['object_permissions']:
+
+                if perm['permission'] == 'view_complextransaction_hide_parameters':
+
+                    if perm['group'] in member.groups:
+
+                        hide_parameters = True
+
+        if member.is_admin or member.is_owner:
+            hide_parameters = False
+
+        if hide_parameters:
 
             data.pop('user_text_1')
             data.pop('user_text_2')
@@ -2464,6 +2494,9 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
         self.fields['transactions_object'] = TransactionSerializer(
             source='transactions', many=True, read_only=True)
 
+        self.fields['object_permissions'] = GenericObjectPermissionSerializer(many=True, required=False,
+                                                                              allow_null=True, read_only=True)
+
     class Meta:
         model = ComplexTransaction
         fields = [
@@ -2483,7 +2516,8 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
             'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
             'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
 
-            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5'
+            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
+            'object_permissions'
 
         ]
 
@@ -2495,7 +2529,24 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
 
         # print('instance.visibility_status %s' % instance.visibility_status)
 
-        if instance.visibility_status == ComplexTransaction.HIDE_PARAMETERS:
+        hide_parameters = False
+
+        member = get_member_from_context(self.context)
+
+        if 'object_permissions' in data:
+
+            for perm in data['object_permissions']:
+
+                if perm['permission'] == 'view_complextransaction_hide_parameters':
+
+                    if perm['group'] in member.groups:
+
+                        hide_parameters = True
+
+        if member.is_admin or member.is_owner:
+            hide_parameters = False
+
+        if hide_parameters:
 
             # data.pop('date')
             # data.pop('text')
