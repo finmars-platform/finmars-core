@@ -149,7 +149,8 @@ class ModelWithObjectPermissionSerializer(serializers.ModelSerializer):
             #     object_permissions = []
             # member_perms = [{'group': None, 'member': member, 'permission': p} for p in get_all_perms(instance)]
             # object_permissions += member_perms
-            assign_perms3(instance, perms=object_permissions)
+            if object_permissions:
+                assign_perms3(instance, perms=object_permissions)
         else:
             if has_manage_perm(member, instance):
                 assign_perms3(instance, perms=object_permissions)
