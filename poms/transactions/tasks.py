@@ -21,7 +21,8 @@ celery_logger = get_task_logger(__name__)
 
 
 def get_complex_transaction_codename(group, complex_transaction, transaction_per_complex,
-                                     transaction_permissions_grouped, transaction_type_permissions_grouped, transaction_ctype):
+                                     transaction_permissions_grouped, transaction_type_permissions_grouped,
+                                     transaction_ctype):
     result = None
 
     transactions_total = transaction_per_complex[complex_transaction['id']]
@@ -47,7 +48,8 @@ def get_complex_transaction_codename(group, complex_transaction, transaction_per
         if complex_transaction['visibility_status'] == 2:
             result = 'view_complextransaction_hide_parameters'
 
-    if complex_transaction['transaction_type_id'] not in transaction_type_permissions_grouped[group] and result is not None:
+    if complex_transaction['transaction_type_id'] not in transaction_type_permissions_grouped[
+        group] and result is not None:
         result = 'view_complextransaction_hide_parameters'
 
     if transaction_count == 0:
@@ -67,14 +69,37 @@ def get_complex_transaction_codename(group, complex_transaction, transaction_per
     return result
 
 
-def has_access(group, transaction, accounts_permissions_grouped, portfolios_permissions_grouped):
-    result = True
+def get_transaction_access_type(group, transaction, accounts_permissions_grouped, portfolios_permissions_grouped):
 
-    if transaction['portfolio_id'] not in portfolios_permissions_grouped[group]:
-        result = False
+    result = None
 
-    if transaction['account_position_id'] not in accounts_permissions_grouped[group] and transaction['account_cash_id'] not in accounts_permissions_grouped[group]:
-        result = False
+    has_portfolio_access = False
+    has_account_position_access = False
+    has_account_cash_access = False
+
+    if transaction['portfolio_id'] in portfolios_permissions_grouped[group]:
+        has_portfolio_access = True
+
+    if transaction['account_position_id'] in accounts_permissions_grouped[group]:
+        has_account_position_access = True
+
+    if transaction['account_cash_id'] in accounts_permissions_grouped[group]:
+        has_account_cash_access = True
+
+    if not has_portfolio_access:
+        return result  # If we dont have access to portfolio, then we dont have access to transaction
+
+    if not has_account_position_access and not has_account_cash_access:
+        return result  # If we dont have access to both accounts, then we dont have access to transaction
+
+    if has_account_position_access:
+        result = 'partial_view'
+
+    if has_account_cash_access:
+        result = 'partial_view'
+
+    if has_account_position_access and has_account_cash_access and has_portfolio_access:
+        result = 'full_view'
 
     return result
 
@@ -94,6 +119,8 @@ def recalculate_permissions_transaction(self, instance):
                                                                                              'account_cash_id')
     transaction_ctype = ContentType.objects.get_for_model(Transaction)
     transaction_view_permission = Permission.objects.get(content_type=transaction_ctype, codename='view_transaction')
+    transaction_partial_view_permission = Permission.objects.get(content_type=transaction_ctype,
+                                                                 codename='partial_view_transaction')
 
     portfolio_ctype = ContentType.objects.get_for_model(Portfolio)
     portfolios_permissions = GenericObjectPermission.objects.filter(group__in=groups, content_type=portfolio_ctype,
@@ -137,13 +164,26 @@ def recalculate_permissions_transaction(self, instance):
 
         for transaction in transactions:
 
-            if has_access(group, transaction, accounts_permissions_grouped, portfolios_permissions_grouped):
-                object_permission = GenericObjectPermission(group_id=group,
-                                                            content_type=transaction_ctype,
-                                                            object_id=transaction['id'],
-                                                            permission=transaction_view_permission)
+            access_type = get_transaction_access_type(group, transaction, accounts_permissions_grouped,
+                                                      portfolios_permissions_grouped)
 
-                permissions.append(object_permission)
+            if access_type:
+
+                if access_type == 'full_view':
+                    object_permission = GenericObjectPermission(group_id=group,
+                                                                content_type=transaction_ctype,
+                                                                object_id=transaction['id'],
+                                                                permission=transaction_view_permission)
+
+                    permissions.append(object_permission)
+
+                if access_type == 'partial_view':
+                    object_permission = GenericObjectPermission(group_id=group,
+                                                                content_type=transaction_ctype,
+                                                                object_id=transaction['id'],
+                                                                permission=transaction_partial_view_permission)
+
+                    permissions.append(object_permission)
 
     _l.debug('_recalculate_transactions logic_st done: %s', (time.perf_counter() - logic_st))
 
@@ -174,21 +214,26 @@ def recalculate_permissions_complex_transaction(self, instance):
     data_st = time.perf_counter()
 
     groups = list(Group.objects.filter(master_user_id=instance.master_user.id).values_list('id', flat=True))
-    complex_transactions = ComplexTransaction.objects.filter(master_user_id=instance.master_user.id).values('id', 'visibility_status', 'transaction_type_id')
+    complex_transactions = ComplexTransaction.objects.filter(master_user_id=instance.master_user.id).values('id',
+                                                                                                            'visibility_status',
+                                                                                                            'transaction_type_id')
 
     transactions = Transaction.objects.filter(master_user_id=instance.master_user.id).values('id',
                                                                                              'complex_transaction_id')
     transaction_ctype = ContentType.objects.get_for_model(Transaction)
     transaction_permissions = GenericObjectPermission.objects.filter(group__in=groups,
-                                                                          content_type=transaction_ctype, permission__codename='view_transaction').values('id',
-                                                                                                                 'group_id',
-                                                                                                                 'object_id')
+                                                                     content_type=transaction_ctype,
+                                                                     permission__codename='view_transaction').values(
+        'id',
+        'group_id',
+        'object_id')
 
     transaction_type_ctype = ContentType.objects.get_for_model(TransactionType)
     transaction_type_permissions = GenericObjectPermission.objects.filter(group__in=groups,
-                                                                     content_type=transaction_type_ctype).values('id',
-                                                                                                            'group_id',
-                                                                                                            'object_id')
+                                                                          content_type=transaction_type_ctype).values(
+        'id',
+        'group_id',
+        'object_id')
 
     codenames = ['view_complextransaction', 'view_complextransaction_show_parameters',
                  'view_complextransaction_hide_parameters']
@@ -228,7 +273,6 @@ def recalculate_permissions_complex_transaction(self, instance):
     transaction_permissions_grouped = {}
 
     for group in groups:
-
         transaction_permissions_grouped[group] = []
 
     for permission in transaction_permissions:
@@ -237,11 +281,9 @@ def recalculate_permissions_complex_transaction(self, instance):
     transaction_type_permissions_grouped = {}
 
     for group in groups:
-
         transaction_type_permissions_grouped[group] = []
 
     for permission in transaction_type_permissions:
-
         transaction_type_permissions_grouped[permission['group_id']].append(permission['object_id'])
 
     for group in groups:
@@ -249,7 +291,8 @@ def recalculate_permissions_complex_transaction(self, instance):
         for complex_transaction in complex_transactions:
 
             codename = get_complex_transaction_codename(group, complex_transaction, transaction_per_complex,
-                                                        transaction_permissions_grouped, transaction_type_permissions_grouped, transaction_ctype)
+                                                        transaction_permissions_grouped,
+                                                        transaction_type_permissions_grouped, transaction_ctype)
 
             if codename:
                 object_permission = GenericObjectPermission(group_id=group,

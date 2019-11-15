@@ -1566,6 +1566,10 @@ class Transaction(FakeDeletableModel):
         ]
         ordering = ['transaction_date', 'transaction_code']
 
+        permissions = (
+            ("partial_view_transaction", "Partial View"),
+        )
+
     def __str__(self):
         return str(self.transaction_code)
 
