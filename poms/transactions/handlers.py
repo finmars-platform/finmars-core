@@ -1119,9 +1119,10 @@ class TransactionTypeProcess(object):
 
             try:
 
-                perm = GenericObjectPermission.objects.get(object_id=id, group=group.id)
+                perm = GenericObjectPermission.objects.filter(object_id=id, group=group.id)
 
-                count = count + 1
+                if len(perm):
+                    count = count + 1
 
             except GenericObjectPermission.DoesNotExist:
                 pass
@@ -1130,9 +1131,10 @@ class TransactionTypeProcess(object):
 
             try:
 
-                perm = GenericObjectPermission.objects.get(object_id=id, group=group.id)
+                perm = GenericObjectPermission.objects.filter(object_id=id, group=group.id)
 
-                count = count + 1
+                if len(perm):
+                    count = count + 1
 
             except GenericObjectPermission.DoesNotExist:
                 pass

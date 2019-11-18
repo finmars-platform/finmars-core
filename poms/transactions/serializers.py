@@ -1971,7 +1971,7 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
 
                 if perm['permission'] == 'view_complextransaction_hide_parameters':
 
-                    if perm['group'] in member.groups:
+                    if perm['group'] in member.groups.all():
 
                         hide_parameters = True
 
@@ -2235,7 +2235,7 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
 
                 if perm['permission'] == 'view_complextransaction_hide_parameters':
 
-                    if perm['group'] in member.groups:
+                    if perm['group'] in member.groups.all():
 
                         hide_parameters = True
 
@@ -2539,7 +2539,7 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
 
                 if perm['permission'] == 'view_complextransaction_hide_parameters':
 
-                    if perm['group'] in member.groups:
+                    if perm['group'] in member.groups.all():
 
                         hide_parameters = True
 
