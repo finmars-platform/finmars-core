@@ -8,7 +8,7 @@ from django.utils.translation import ugettext
 
 from poms.accounts.models import Account
 from poms.common import formula
-from poms.common.utils import date_now, format_float
+from poms.common.utils import date_now, format_float, format_float_to_2
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDetail, PricingPolicy, Periodicity, \
@@ -1415,6 +1415,12 @@ class TransactionTypeProcess(object):
                 self._set_val(errors=errors, values=self.values, default_value=0.0,
                               target=transaction, target_attr_name='overheads',
                               source=action_transaction, source_attr_name='overheads')
+
+                transaction.carry_with_sign = format_float_to_2(transaction.carry_with_sign)
+                transaction.principal_with_sign = format_float_to_2(transaction.principal_with_sign)
+                transaction.overheads_with_sign = format_float_to_2(transaction.overheads_with_sign)
+
+                transaction.cash_consideration = format_float_to_2(transaction.cash_consideration)
 
                 print('action_transaction.notes')
                 print(action_transaction.notes)

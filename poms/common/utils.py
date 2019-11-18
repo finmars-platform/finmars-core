@@ -210,3 +210,17 @@ def format_float(val):
         return val
 
     return float(format(round(val, 10), '.10f').rstrip("0").rstrip('.'))
+
+
+def format_float_to_2(val):
+
+    # 0.000050000892 -> 0.0000500009
+    # 0.005623 -> 0.005623
+    # 0.005623000551 -> 0.0056230006
+
+    try:
+        float(val)
+    except ValueError:
+        return val
+
+    return float(format(round(val, 2), '.2f').rstrip("0").rstrip('.'))
