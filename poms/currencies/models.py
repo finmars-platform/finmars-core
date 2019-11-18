@@ -13,6 +13,7 @@ from poms.common.models import NamedModel, FakeDeletableModel
 from poms.common.utils import date_now
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
+from poms.obj_perms.models import GenericObjectPermission
 from poms.tags.models import TagLink
 from poms.users.models import MasterUser
 
@@ -43,6 +44,8 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel):
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
 
     default_fx_rate = models.FloatField(default=1, verbose_name=ugettext_lazy('default fx rate'))
+
+    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = ugettext_lazy('currency')

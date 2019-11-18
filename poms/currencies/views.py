@@ -16,7 +16,7 @@ from poms.instruments.models import PricingPolicy, DailyPricingModel
 from poms.integrations.models import PriceDownloadScheme
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet
-from poms.obj_perms.views import AbstractEvGroupWithObjectPermissionViewSet
+from poms.obj_perms.views import AbstractEvGroupWithObjectPermissionViewSet, AbstractWithObjectPermissionViewSet
 from poms.tags.filters import TagFilter
 from poms.tags.utils import get_tag_prefetch
 from poms.users.filters import OwnerByMasterUserFilter
@@ -45,7 +45,8 @@ class CurrencyFilterSet(FilterSet):
         fields = []
 
 
-class CurrencyViewSet(AbstractModelViewSet):
+# class CurrencyViewSet(AbstractModelViewSet):
+class CurrencyViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Currency.objects.select_related(
         'master_user',
         'daily_pricing_model',
@@ -56,10 +57,10 @@ class CurrencyViewSet(AbstractModelViewSet):
         get_tag_prefetch()
     )
     serializer_class = CurrencySerializer
-    permission_classes = AbstractModelViewSet.permission_classes + [
-        # SuperUserOrReadOnly,
-    ]
-    filter_backends = AbstractModelViewSet.filter_backends + [
+    # permission_classes = AbstractModelViewSet.permission_classes + [
+    #     # SuperUserOrReadOnly,
+    # ]
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,

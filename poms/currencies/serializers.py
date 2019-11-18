@@ -9,11 +9,12 @@ from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.fields import PricingPolicyField
 from poms.integrations.fields import PriceDownloadSchemeField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
+from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.tags.serializers import ModelWithTagSerializer
 from poms.users.fields import MasterUserField
 
 
-class CurrencySerializer(ModelWithUserCodeSerializer, ModelWithAttributesSerializer, ModelWithTagSerializer):
+class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer, ModelWithAttributesSerializer, ModelWithTagSerializer):
     # url = serializers.HyperlinkedIdentityField(view_name='currency-detail')
     master_user = MasterUserField()
     price_download_scheme = PriceDownloadSchemeField(allow_null=True, required=False)
@@ -24,7 +25,7 @@ class CurrencySerializer(ModelWithUserCodeSerializer, ModelWithAttributesSeriali
     # tags = TagField(many=True, required=False, allow_null=True)
     # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
 
-    class Meta:
+    class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = Currency
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'notes',
