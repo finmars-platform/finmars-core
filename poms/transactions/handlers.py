@@ -1097,6 +1097,58 @@ class TransactionTypeProcess(object):
 
         return result
 
+
+    def get_access_to_inputs(self, group):
+
+        result = None
+
+        portfolios = []
+        accounts = []
+
+        for input in self.complex_transaction.inputs.all():
+
+            if input.portfolio:
+                portfolios.append(input.portfolio_id)
+
+            if input.account:
+                accounts.append(input.account_id)
+
+        count = 0
+
+        for id in portfolios:
+
+            try:
+
+                perm = GenericObjectPermission.objects.get(object_id=id, group=group.id)
+
+                count = count + 1
+
+            except GenericObjectPermission.DoesNotExist:
+                pass
+
+        for id in accounts:
+
+            try:
+
+                perm = GenericObjectPermission.objects.get(object_id=id, group=group.id)
+
+                count = count + 1
+
+            except GenericObjectPermission.DoesNotExist:
+                pass
+
+        if count == len(accounts) + len(portfolios):
+            result = True
+
+        if count > 0:
+            result = 'partial_view'
+
+        if count == 0:
+            result = False
+
+
+        return result
+
     def assign_permissions_to_transaction(self, transaction):
 
         perms = []
@@ -1142,6 +1194,8 @@ class TransactionTypeProcess(object):
 
             ttype_access = False
 
+            inputs_access = self.get_access_to_inputs(group)
+
             permissions_count = 0
 
             for transaction in transactions:
@@ -1178,6 +1232,14 @@ class TransactionTypeProcess(object):
             if not ttype_access and codename is not None:
                 codename = 'view_complextransaction_hide_parameters'
 
+            if inputs_access == 'partial_view':
+
+                if self.complex_transaction.visibility_status == ComplexTransaction.SHOW_PARAMETERS:
+                    codename = 'view_complextransaction_show_parameters'
+
+                if self.complex_transaction.visibility_status == ComplexTransaction.HIDE_PARAMETERS:
+                    codename = 'view_complextransaction_hide_parameters'
+
             _l.debug('complex_transaction.visibility_status %s' % self.complex_transaction.visibility_status)
             _l.debug('group %s complex transactions perms ttype access %s' % (group.name, ttype_access))
 
@@ -1185,6 +1247,37 @@ class TransactionTypeProcess(object):
                 perms.append({'group': group, 'permission': codename})
 
         _l.debug("complex transactions perms %s" % perms)
+
+        assign_perms3(self.complex_transaction, perms)
+
+    def assign_permissions_to_pending_complex_transaction(self):
+
+        groups = Group.objects.filter(master_user=self.transaction_type.master_user)
+
+        perms = []
+
+        for group in groups:
+
+            codename = None
+
+            inputs_access = self.get_access_to_inputs(group)
+
+            if inputs_access:
+
+                codename = 'view_complextransaction'
+
+            elif inputs_access == 'partial_view':
+
+                if self.complex_transaction.visibility_status == ComplexTransaction.SHOW_PARAMETERS:
+                    codename = 'view_complextransaction_show_parameters'
+
+                if self.complex_transaction.visibility_status == ComplexTransaction.HIDE_PARAMETERS:
+                    codename = 'view_complextransaction_hide_parameters'
+
+            if codename:
+                perms.append({'group': group, 'permission': codename})
+
+        _l.debug("complex transactions pending perms %s" % perms)
 
         assign_perms3(self.complex_transaction, perms)
 
@@ -1562,6 +1655,8 @@ class TransactionTypeProcess(object):
         self.complex_transaction.save()
 
         self._save_inputs()
+
+        self.assign_permissions_to_pending_complex_transaction()
 
     def process(self):
 

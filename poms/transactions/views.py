@@ -544,6 +544,11 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
         strategy2_id = request.query_params.get('strategy2', None)
         strategy3_id = request.query_params.get('strategy3', None)
 
+        currency_id = request.query_params.get('currency', None)
+        pricing_policy_id = request.query_params.get('pricing_policy', None)
+        allocation_balance_id = request.query_params.get('allocation_balance', None)
+        allocation_pl_id = request.query_params.get('allocation_pl', None)
+
         context_instrument = None
         context_pricing_currency = None
         context_accrued_currency = None
@@ -553,13 +558,43 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
         context_strategy2 = None
         context_strategy3 = None
 
+        context_currency = None
+        context_pricing_policy = None
+        context_allocation_balance = None
+        context_allocation_pl = None
+
         context_position = request.query_params.get('position', None)
         context_effective_date = request.query_params.get('effective_date', None)
         context_notification_date = request.query_params.get('notification_date', None)
         context_final_date = request.query_params.get('final_date', None)
         context_maturity_date = request.query_params.get('maturity_date', None)
 
-        print('strategy1_id %s' % strategy1_id)
+        context_report_date = request.query_params.get('report_date', None)
+        context_report_start_date = request.query_params.get('report_start_date', None)
+
+        if pricing_policy_id:
+            try:
+                context_pricing_policy = PricingPolicy.objects.get(master_user=master_user, id=pricing_policy_id)
+            except PricingPolicy.DoesNotExist:
+                context_pricing_policy = None
+
+        if currency_id:
+            try:
+                context_currency = Currency.objects.get(master_user=master_user, id=currency_id)
+            except Currency.DoesNotExist:
+                context_currency = None
+
+        if allocation_balance_id:
+            try:
+                context_allocation_balance = Instrument.objects.get(master_user=master_user, id=allocation_balance_id)
+            except Instrument.DoesNotExist:
+                context_allocation_balance = None
+
+        if allocation_pl_id:
+            try:
+                context_allocation_pl = Instrument.objects.get(master_user=master_user, id=allocation_pl_id)
+            except Instrument.DoesNotExist:
+                context_allocation_pl = None
 
         if instrument_id:
             try:
@@ -622,7 +657,14 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
             'effective_date': context_effective_date,
             # 'notification_date': context_notification_date, # not in context variables
             # 'final_date': context_final_date,
-            # 'maturity_date': context_maturity_date
+            # 'maturity_date': context_maturity_date,
+
+            'currency': context_currency,
+            'report_date': context_report_date,
+            'report_start_date': context_report_start_date,
+            'pricing_policy': context_pricing_policy,
+            'allocation_balance': context_allocation_balance,
+            'allocation_pl': context_allocation_pl
         })
 
         return context_values
