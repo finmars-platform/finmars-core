@@ -958,6 +958,8 @@ class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelW
 
     group_object = TransactionTypeGroupViewSerializer(source='group', read_only=True)
 
+    inputs = TransactionTypeInputSerializer(required=False, many=True)
+
     def __init__(self, *args, **kwargs):
         super(TransactionTypeLightSerializer, self).__init__(*args, **kwargs)
 
@@ -992,7 +994,7 @@ class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelW
             'is_valid_for_all_portfolios', 'is_valid_for_all_instruments', 'is_deleted',
 
             'instrument_types', 'portfolios',
-            'group_object',
+            'group_object', 'inputs'
         ]
 
 
