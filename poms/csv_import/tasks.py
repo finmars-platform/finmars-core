@@ -1,9 +1,11 @@
 from celery import shared_task, chord, current_task
+from django.contrib.auth.models import Permission
 from django.db import IntegrityError
 
 from poms.common.formula import safe_eval, ExpressionEvalError
+from poms.obj_perms.models import GenericObjectPermission
 
-from poms.users.models import EcosystemDefault
+from poms.users.models import EcosystemDefault, Group
 from django.apps import apps
 
 from poms.integrations.models import CounterpartyMapping, AccountMapping, ResponsibleMapping, PortfolioMapping, \
@@ -23,15 +25,13 @@ from poms.common import formula
 from django.core.exceptions import ValidationError as CoreValidationError
 from rest_framework.exceptions import ValidationError
 
-
-
 from .filters import SchemeContentTypeFilter
 from .models import CsvDataImport, CsvImportScheme
 from .serializers import CsvDataImportSerializer, CsvImportSchemeSerializer
 
-
 from django.utils.translation import ugettext
 from logging import getLogger
+
 _l = getLogger('poms.csv_import')
 
 from io import StringIO
@@ -128,7 +128,6 @@ def get_item(scheme, result):
             _l.info('result %s' % result)
 
             if 'user_code' in result:
-
                 item_result = Model.objects.get(master_user_id=result['master_user'], user_code=result['user_code'])
 
         except Model.DoesNotExist:
@@ -148,8 +147,7 @@ def process_csv_file(master_user,
                      task_instance,
                      update_state,
                      mode,
-                     process_result_handler):
-
+                     process_result_handler, member):
     csv_fields = scheme.csv_fields.all()
     entity_fields = scheme.entity_fields.all()
 
@@ -234,7 +232,8 @@ def process_csv_file(master_user,
                     inputs_messages = []
 
                     for input_error in inputs_error:
-                        message = '[{0}] (Imported column conversion expression, value: "{1}")'.format(input_error['field'].name, input_error['reason'])
+                        message = '[{0}] (Imported column conversion expression, value: "{1}")'.format(
+                            input_error['field'].name, input_error['reason'])
 
                         inputs_messages.append(message)
 
@@ -346,7 +345,8 @@ def process_csv_file(master_user,
 
                                             if missing_data_handler == 'set_defaults':
 
-                                                ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+                                                ecosystem_default = EcosystemDefault.objects.get(
+                                                    master_user=master_user)
 
                                                 if hasattr(ecosystem_default, key):
                                                     instance[key] = getattr(ecosystem_default, key)
@@ -502,7 +502,6 @@ def process_csv_file(master_user,
                     error_row['error_reaction'] = 'Continue import'
 
                     if error_handler == 'break':
-
                         error_row['level'] = 'error'
                         error_row['error_reaction'] = 'Break import'
                         errors.append(error_row)
@@ -515,7 +514,8 @@ def process_csv_file(master_user,
 
                     # error_row['error_reaction'] = 'Success'
 
-                    instance, error_row = process_result_handler(instance, error_row, scheme, error_handler, mode)
+                    instance, error_row = process_result_handler(instance, error_row, scheme, error_handler, mode,
+                                                                 member, master_user)
 
                     results.append(instance)
                     errors.append(error_row)
@@ -539,7 +539,8 @@ def process_csv_file(master_user,
 
         update_state(task_id=task_instance.task_id, state=Task.STATUS_PENDING,
                      meta={'processed_rows': task_instance.processed_rows,
-                           'total_rows': task_instance.total_rows, 'scheme_name': scheme.scheme_name, 'file_name': task_instance.file.name})
+                           'total_rows': task_instance.total_rows, 'scheme_name': scheme.scheme_name,
+                           'file_name': task_instance.file.name})
 
     return results, errors
 
@@ -622,8 +623,8 @@ class ValidateHandler:
             error_row['level'] = 'error'
             error_row['error_message'] = error_row['error_message'] + ugettext(
                 'Validation error %(error)s ') % {
-                                                         'error': e
-                                                     },
+                                             'error': e
+                                         },
 
     def instance_overwrite_full_clean(self, scheme, result, item, error_handler, error_row):
 
@@ -653,19 +654,19 @@ class ValidateHandler:
             error_row['level'] = 'error'
             error_row['error_message'] = error_row['error_message'] + ugettext(
                 'Validation error %(error)s ') % {
-                                                         'error': e
-                                                     }
+                                             'error': e
+                                         }
 
             if error_handler == 'break':
                 error_row['error_reaction'] = 'Break import'
 
-    def full_clean_result(self, result_item, error_row, scheme, error_handler, mode):
+    def full_clean_result(self, result_item, error_row, scheme, error_handler, mode, member, master_user):
 
         item = get_item(scheme, result_item)
 
         if mode == 'overwrite' and item:
 
-            self.instance_overwrite_full_clean(scheme, result_item, item,  error_handler, error_row)
+            self.instance_overwrite_full_clean(scheme, result_item, item, error_handler, error_row)
 
         elif mode == 'overwrite' and not item:
 
@@ -695,6 +696,7 @@ class ValidateHandler:
         delimiter = instance.delimiter
         mode = instance.mode
         master_user = instance.master_user
+        member = instance.member
 
         scheme = CsvImportScheme.objects.get(pk=scheme_id)
 
@@ -727,13 +729,14 @@ class ValidateHandler:
         instance.total_rows = len(rows)
 
         update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                          meta={'total_rows': instance.total_rows, 'scheme_name': scheme.scheme_name, 'file_name': instance.file.name})
+                     meta={'total_rows': instance.total_rows, 'scheme_name': scheme.scheme_name,
+                           'file_name': instance.file.name})
 
         # context = super(CsvDataImportValidateViewSet, self).get_serializer_context()
 
         context = {}
 
-        classifier_handler_skip = ' skip' # only for import
+        classifier_handler_skip = ' skip'  # only for import
 
         _l.info('ValidateHandler.process_csv_file: initialized')
 
@@ -745,7 +748,7 @@ class ValidateHandler:
                                                    classifier_handler_skip,
                                                    context,
                                                    instance,
-                                                   update_state, mode, self.full_clean_result)
+                                                   update_state, mode, self.full_clean_result, member)
 
         _l.info('ValidateHandler.process_csv_file: finished')
         _l.info('ValidateHandler.process_csv_file process_errors %s: ' % len(process_errors))
@@ -758,7 +761,6 @@ class ValidateHandler:
 
 @shared_task(name='csv_import.data_csv_file_import_validate', bind=True)
 def data_csv_file_import_validate(self, instance):
-
     handler = ValidateHandler()
 
     setattr(instance, 'task_id', current_task.request.id)
@@ -842,7 +844,84 @@ class ImportHandler:
 
         return instance
 
-    def save_instance(self, scheme, result, error_handler, error_row):
+    def add_permissions(self, instance, scheme, member, master_user):
+
+        groups = Group.objects.filter(master_user=master_user)
+
+        _l.debug('Add permissions for %s' % instance)
+
+        _l.debug('len groups for %s' % len(list(groups)))
+        _l.debug('len member groups for %s' % member.groups.all())
+
+        for group in groups:
+
+            permission_table = group.permission_table
+
+            if permission_table and 'data' in permission_table:
+
+                table = None
+
+                for item in permission_table['data']:
+                    if item['content_type'] == scheme.content_type.app_label + '.' + scheme.content_type.model:
+                        table = item['data']
+
+                _l.debug('content_type %s' % scheme.content_type.app_label + '.' + scheme.content_type.model)
+                _l.debug('table %s' % table)
+
+                if table:
+
+                    manage_codename = 'manage_' + scheme.content_type.model
+                    change_codename = 'change_' + scheme.content_type.model
+                    view_codename = 'view_' + scheme.content_type.model
+
+                    manage_permission = Permission.objects.get( content_type=scheme.content_type, codename=manage_codename)
+                    change_permission = Permission.objects.get( content_type=scheme.content_type, codename=change_codename)
+                    view_permission = Permission.objects.get( content_type=scheme.content_type, codename=view_codename)
+
+                    for member_group in member.groups.all():
+
+
+
+                        if member_group.id == group.id:
+
+                            if 'creator_manage' in table and table['creator_manage']:
+
+                                perm = GenericObjectPermission.objects.update_or_create(object_id=instance.id,
+                                                                              content_type=scheme.content_type,
+                                                                              group=group,
+                                                                              permission=manage_permission)
+
+                            if 'creator_change' in table and table['creator_change']:
+
+                                perm = GenericObjectPermission.objects.update_or_create(object_id=instance.id,
+                                                                              content_type=scheme.content_type,
+                                                                              group=group, permission=change_permission)
+
+                            if 'creator_view' in table and table['creator_view']:
+
+                                perm = GenericObjectPermission.objects.update_or_create(object_id=instance.id,
+                                                                              content_type=scheme.content_type,
+                                                                              group=group, permission=view_permission)
+                        else:
+
+                            if 'other_manage' in table and table['other_manage']:
+
+                                perm = GenericObjectPermission.objects.update_or_create(object_id=instance.id,
+                                                                                        content_type=scheme.content_type,
+                                                                                        group=group,
+                                                                                        permission=manage_permission)
+                            if 'other_change' in table and table['other_change']:
+
+                                perm = GenericObjectPermission.objects.update_or_create(object_id=instance.id,
+                                                                                        content_type=scheme.content_type,
+                                                                                        group=group, permission=change_permission)
+                            if 'other_view' in table and table['other_view']:
+
+                                perm = GenericObjectPermission.objects.update_or_create(object_id=instance.id,
+                                                                                        content_type=scheme.content_type,
+                                                                                        group=group, permission=view_permission)
+
+    def save_instance(self, scheme, result, error_handler, error_row, member, master_user):
 
         try:
 
@@ -855,6 +934,7 @@ class ImportHandler:
                 self.fill_with_relation_attributes(instance, result)
                 if scheme.content_type.model != 'pricehistory' and scheme.content_type.model != 'currencyhistory':
                     self.fill_with_dynamic_attributes(instance, result['attributes'])
+                    self.add_permissions(instance, scheme, member, master_user)
 
                 instance.save()
 
@@ -864,10 +944,10 @@ class ImportHandler:
             error_row['level'] = 'error'
             error_row['error_message'] = error_row['error_message'] + ugettext(
                 'Validation error %(error)s ') % {
-                                                         'error': e
-                                                     }
+                                             'error': e
+                                         }
 
-    def overwrite_instance(self, scheme, result, item, error_handler, error_row):
+    def overwrite_instance(self, scheme, result, item, error_handler, error_row, member, master_user):
 
         # _l.info('Overwrite item %s' % item)
 
@@ -889,6 +969,8 @@ class ImportHandler:
             if scheme.content_type.model != 'pricehistory' and scheme.content_type.model != 'currencyhistory':
                 self.delete_dynamic_attributes(item, result['attributes'])
                 self.fill_with_dynamic_attributes(item, result['attributes'])
+                self.add_permissions(item, scheme, member, master_user)
+
 
             item.save()
 
@@ -898,10 +980,10 @@ class ImportHandler:
             error_row['level'] = 'error'
             error_row['error_message'] = error_row['error_message'] + str(ugettext(
                 'Validation error %(error)s ') % {
-                                                                                                      'error': e
-                                                                                                  })
+                                                                              'error': e
+                                                                          })
 
-    def import_result(self, result_item, error_row, scheme, error_handler, mode):
+    def import_result(self, result_item, error_row, scheme, error_handler, mode, member, master_user):
 
         # _l.info('ImportHandler.result_item %s' % result_item)
 
@@ -911,19 +993,19 @@ class ImportHandler:
 
             # _l.info('Overwrite instance')
 
-            self.overwrite_instance(scheme, result_item, item, error_handler, error_row)
+            self.overwrite_instance(scheme, result_item, item, error_handler, error_row, member, master_user)
 
         elif mode == 'overwrite' and not item:
 
             _l.info('Create instance')
 
-            self.save_instance(scheme, result_item, error_handler, error_row)
+            self.save_instance(scheme, result_item, error_handler, error_row, member, master_user)
 
         elif mode == 'skip' and not item:
 
             _l.info('Create instance')
 
-            self.save_instance(scheme, result_item, error_handler, error_row)
+            self.save_instance(scheme, result_item, error_handler, error_row, member, master_user)
 
         elif mode == 'skip' and item:
 
@@ -946,6 +1028,7 @@ class ImportHandler:
         delimiter = instance.delimiter
         mode = instance.mode
         master_user = instance.master_user
+        member = instance.member
 
         _l.info('ImportHandler.mode %s' % mode)
 
@@ -971,7 +1054,8 @@ class ImportHandler:
         instance.total_rows = len(rows)
 
         update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                          meta={'total_rows': instance.total_rows, 'scheme_name': scheme.scheme_name, 'file_name': instance.file.name})
+                     meta={'total_rows': instance.total_rows, 'scheme_name': scheme.scheme_name,
+                           'file_name': instance.file.name})
 
         context = {}
 
@@ -980,7 +1064,7 @@ class ImportHandler:
 
         results, process_errors = process_csv_file(master_user, scheme, rows, error_handler, missing_data_handler,
                                                    classifier_handler,
-                                                   context, instance, update_state, mode, self.import_result)
+                                                   context, instance, update_state, mode, self.import_result, member)
 
         _l.info('ImportHandler.process_csv_file: finished')
         _l.info('ImportHandler.process_csv_file process_errors %s: ' % len(process_errors))
@@ -993,7 +1077,6 @@ class ImportHandler:
 
 @shared_task(name='csv_import.data_csv_file_import', bind=True)
 def data_csv_file_import(self, instance):
-
     handler = ImportHandler()
 
     setattr(instance, 'task_id', current_task.request.id)

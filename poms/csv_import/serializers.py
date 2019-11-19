@@ -5,13 +5,13 @@ from rest_framework.exceptions import ValidationError
 
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.users.fields import MasterUserField
+from poms.users.fields import MasterUserField, HiddenMemberField
 from .models import CsvField, EntityField, CsvDataImport, CsvImportScheme
 from .fields import CsvImportContentTypeField, CsvImportSchemeField
 
 
 class CsvDataFileImport:
-    def __init__(self, task_id=None, task_status=None, master_user=None, status=None,
+    def __init__(self, task_id=None, task_status=None, master_user=None, member=None, status=None,
                  scheme=None, file=None, delimiter=None, mode=None,
                  error_handler=None, missing_data_handler=None, classifier_handler=None,
                  total_rows=None, processed_rows=None, stats=None, imported=None):
@@ -20,6 +20,7 @@ class CsvDataFileImport:
 
         self.file = file
         self.master_user = master_user
+        self.member = member
         self.scheme = scheme
         self.status = status
         self.mode = mode
@@ -191,6 +192,7 @@ class CsvDataImportSerializer(serializers.Serializer):
     file = serializers.FileField(required=False, allow_null=True)
 
     master_user = MasterUserField()
+    member = HiddenMemberField()
 
     scheme = CsvImportSchemeField(required=False)
 
