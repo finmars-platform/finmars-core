@@ -717,6 +717,11 @@ class GroupViewSet(AbstractModelViewSet):
             if owner.id not in request.data['members']:
                 raise PermissionDenied()
 
+            members = Member.objects.filter(id__in=request.data['members'])
+            for item in members:
+                item.is_admin = True
+                item.save()
+
         return super(GroupViewSet, self).update(request, *args, **kwargs)
 
     def perform_destroy(self, instance):
