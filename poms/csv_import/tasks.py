@@ -921,6 +921,59 @@ class ImportHandler:
                                                                                         content_type=scheme.content_type,
                                                                                         group=group, permission=view_permission)
 
+    def is_inherit_rights(self, scheme, member):
+
+        result = False
+
+        if scheme.content_type.model == 'account' or scheme.content_type.model == 'instrument':
+
+            for group in member.groups.all():
+
+                permission_table = group.permission_table
+
+                if permission_table and 'data' in permission_table:
+
+                    table = None
+
+                    for item in permission_table['data']:
+                        if item['content_type'] == scheme.content_type.app_label + '.' + scheme.content_type.model:
+                            table = item['data']
+
+                    if table:
+
+                        if table['inherit_rights']:
+
+                            result = True
+
+        return result
+
+
+    def add_inherited_permissions(self, instance, scheme, member, master_user):
+
+        _l.debug('add_inherited_permissions')
+
+        if scheme.content_type.model == 'account':
+
+            if instance.type:
+                for perm in instance.type.object_permissions.all():
+
+                    type_codename = perm.permission.codename.split('_')[0]
+                    account_perm = Permission.objects.get(codename=type_codename + '_' + 'account')
+
+                    GenericObjectPermission.objects.create(group=perm.group, object_id=instance.id, content_type=scheme.content_type,
+                                                           permission=account_perm)
+
+        if scheme.content_type.model == 'instrument':
+            if instance.instrument_type:
+                for perm in instance.instrument_type.object_permissions.all():
+
+                    type_codename = perm.permission.codename.split('_')[0]
+                    account_perm = Permission.objects.get(codename=type_codename + '_' + 'instrument')
+
+                    GenericObjectPermission.objects.create(group=perm.group, object_id=instance.id, content_type=scheme.content_type,
+                                                           permission=account_perm)
+
+
     def save_instance(self, scheme, result, error_handler, error_row, member, master_user):
 
         try:
@@ -935,6 +988,9 @@ class ImportHandler:
                 if scheme.content_type.model != 'pricehistory' and scheme.content_type.model != 'currencyhistory':
                     self.fill_with_dynamic_attributes(instance, result['attributes'])
                     self.add_permissions(instance, scheme, member, master_user)
+
+                    if self.is_inherit_rights(scheme, member):
+                        self.add_inherited_permissions(instance, scheme, member, master_user)
 
                 instance.save()
 
