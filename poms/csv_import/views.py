@@ -11,6 +11,7 @@ from poms.celery_tasks.models import CeleryTask
 from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet
 
 from poms.csv_import.tasks import data_csv_file_import, data_csv_file_import_validate
+from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
 
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -49,11 +50,18 @@ class SchemeViewSet(AbstractModelViewSet):
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        PomsConfigurationPermission
+    ]
 
 
 class CsvDataImportViewSet(AbstractAsyncViewSet):
     serializer_class = CsvDataImportSerializer
     celery_task = data_csv_file_import
+
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        PomsFunctionPermission
+    ]
 
     def get_serializer_context(self):
         context = super(AbstractAsyncViewSet, self).get_serializer_context()
@@ -159,6 +167,10 @@ def dump(obj):
 class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
     serializer_class = CsvDataImportSerializer
     celery_task = data_csv_file_import_validate
+
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        PomsFunctionPermission
+    ]
 
     def get_serializer_context(self):
         context = super(AbstractAsyncViewSet, self).get_serializer_context()

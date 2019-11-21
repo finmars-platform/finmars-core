@@ -18,6 +18,7 @@ from poms.obj_attrs.views import AbstractAttributeTypeViewSet, AbstractClassifie
     GenericClassifierViewSet
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
     ObjectPermissionPermissionFilter
+from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
 from poms.portfolios.models import Portfolio
@@ -58,6 +59,10 @@ from poms.users.filters import OwnerByMasterUserFilter
 class CounterpartyAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Counterparty
     target_model_serializer = CounterpartySerializer
+
+    permission_classes = GenericAttributeTypeViewSet.permission_classes + [
+        PomsConfigurationPermission
+    ]
 
 
 # class CounterpartyClassifierFilterSet(FilterSet):
@@ -252,6 +257,10 @@ class CounterpartyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cus
 class ResponsibleAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Responsible
     target_model_serializer = ResponsibleSerializer
+
+    permission_classes = GenericAttributeTypeViewSet.permission_classes + [
+        PomsConfigurationPermission
+    ]
 
 
 # class ResponsibleClassifierFilterSet(FilterSet):

@@ -13,6 +13,7 @@ from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, GenericClassifierViewSet
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
     ObjectPermissionPermissionFilter
+from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
 from poms.portfolios.models import Portfolio
@@ -26,6 +27,10 @@ from rest_framework import viewsets, status
 
 class AccountTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = AccountType
+
+    permission_classes = GenericAttributeTypeViewSet.permission_classes + [
+        PomsConfigurationPermission
+    ]
 
 class AccountTypeFilterSet(FilterSet):
     id = NoOpFilter()
@@ -121,6 +126,9 @@ class AccountAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Account
     target_model_serializer = AccountSerializer
 
+    permission_classes = GenericAttributeTypeViewSet.permission_classes + [
+        PomsConfigurationPermission
+    ]
 
 # class AccountClassifierFilterSet(FilterSet):
 #     id = NoOpFilter()

@@ -19,6 +19,7 @@ from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
     GenericClassifierViewSet
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
     ObjectPermissionPermissionFilter
+from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
 from poms.portfolios.models import Portfolio
@@ -68,6 +69,10 @@ from rest_framework.settings import api_settings
 class PortfolioAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Portfolio
     target_model_serializer = PortfolioSerializer
+
+    permission_classes = GenericAttributeTypeViewSet.permission_classes + [
+        PomsConfigurationPermission
+    ]
 
 
 # class PortfolioClassifierFilterSet(FilterSet):

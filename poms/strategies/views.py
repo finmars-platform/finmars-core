@@ -11,6 +11,7 @@ from poms.common.pagination import CustomPaginationMixin
 from poms.obj_attrs.views import GenericAttributeTypeViewSet
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
     ObjectPermissionPermissionFilter
+from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
 from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, Strategy2Subgroup, \
@@ -170,6 +171,10 @@ class Strategy1FilterSet(FilterSet):
 class Strategy1AttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Strategy1
     target_model_serializer = Strategy1Serializer
+
+    permission_classes = GenericAttributeTypeViewSet.permission_classes + [
+        PomsConfigurationPermission
+    ]
 
 
 class Strategy1ViewSet(AbstractWithObjectPermissionViewSet):
@@ -333,6 +338,10 @@ class Strategy2AttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Strategy2
     target_model_serializer = Strategy2Serializer
 
+    permission_classes = GenericAttributeTypeViewSet.permission_classes + [
+        PomsConfigurationPermission
+    ]
+
 
 class Strategy2FilterSet(Strategy1FilterSet):
     tag = TagFilter(model=Strategy2)
@@ -494,6 +503,10 @@ class Strategy3SubgroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet
 class Strategy3AttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Strategy3
     target_model_serializer = Strategy3Serializer
+
+    permission_classes = GenericAttributeTypeViewSet.permission_classes + [
+        PomsConfigurationPermission
+    ]
 
 
 class Strategy3FilterSet(Strategy1FilterSet):

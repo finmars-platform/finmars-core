@@ -5,6 +5,7 @@ from poms.common.filters import NoOpFilter, CharFilter
 from poms.complex_import.serializers import ComplexImportSchemeSerializer, ComplexImportSerializer
 
 from poms.common.views import AbstractModelViewSet
+from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -32,6 +33,9 @@ class ComplexImportSchemeViewSet(AbstractModelViewSet):
     filter_class = ComplexImportSchemeFilterSet
     filter_backends = [
         OwnerByMasterUserFilter,
+    ]
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        PomsConfigurationPermission
     ]
 
 

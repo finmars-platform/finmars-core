@@ -45,6 +45,7 @@ from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
     GenericClassifierViewSet
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
     ObjectPermissionPermissionFilter
+from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
 from poms.portfolios.models import Portfolio
@@ -132,6 +133,10 @@ class PricingPolicyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cu
 class InstrumentTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = InstrumentType
     target_model_serializer = InstrumentTypeSerializer
+
+    permission_classes = GenericAttributeTypeViewSet.permission_classes + [
+        PomsConfigurationPermission
+    ]
 
 
 class InstrumentTypeFilterSet(FilterSet):
@@ -244,6 +249,10 @@ class InstrumentTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, C
 class InstrumentAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Instrument
     target_model_serializer = InstrumentSerializer
+
+    permission_classes = GenericAttributeTypeViewSet.permission_classes + [
+        PomsConfigurationPermission
+    ]
 
 
 class InstrumentClassifierViewSet(GenericClassifierViewSet):

@@ -16,6 +16,7 @@ from poms.instruments.models import PricingPolicy, DailyPricingModel
 from poms.integrations.models import PriceDownloadScheme
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet
+from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.obj_perms.views import AbstractEvGroupWithObjectPermissionViewSet, AbstractWithObjectPermissionViewSet
 from poms.tags.filters import TagFilter
 from poms.tags.utils import get_tag_prefetch
@@ -26,6 +27,10 @@ from poms.users.permissions import SuperUserOrReadOnly
 class CurrencyAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Currency
     target_model_serializer = CurrencySerializer
+
+    permission_classes = GenericAttributeTypeViewSet.permission_classes + [
+        PomsConfigurationPermission
+    ]
 
 
 class CurrencyFilterSet(FilterSet):

@@ -51,6 +51,7 @@ from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer
     InstrumentClassifierMappingSerializer, AccountTypeMappingSerializer, TestCertificateSerializer
 from poms.integrations.tasks import complex_transaction_csv_file_import, complex_transaction_csv_file_import_validate
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
+from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
@@ -126,9 +127,9 @@ class InstrumentDownloadSchemeViewSet(AbstractModelViewSet):
         )
     )
     serializer_class = InstrumentDownloadSchemeSerializer
-    # permission_classes = AbstractModelViewSet.permission_classes + [
-    #     SuperUserOrReadOnly,
-    # ]
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        PomsConfigurationPermission
+    ]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
@@ -164,6 +165,9 @@ class PriceDownloadSchemeViewSet(AbstractModelViewSet):
     ordering_fields = [
         'scheme_name',
         'provider', 'provider__name',
+    ]
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        PomsConfigurationPermission
     ]
 
 
@@ -348,6 +352,7 @@ class AbstractMappingViewSet(AbstractModelViewSet):
     serializer_class = None
     permission_classes = AbstractModelViewSet.permission_classes + [
         SuperUserOrReadOnly,
+        PomsConfigurationPermission
     ]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -817,6 +822,9 @@ class PricingAutomatedScheduleViewSet(AbstractModelViewSet):
 
 class ImportInstrumentViewSet(AbstractViewSet):
     serializer_class = ImportInstrumentSerializer
+    permission_classes = AbstractViewSet.permission_classes + [
+        PomsFunctionPermission
+    ]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -827,6 +835,9 @@ class ImportInstrumentViewSet(AbstractViewSet):
 
 class ImportPricingViewSet(AbstractViewSet):
     serializer_class = ImportPricingSerializer
+    permission_classes = AbstractViewSet.permission_classes + [
+        PomsFunctionPermission
+    ]
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -878,6 +889,9 @@ class ComplexTransactionImportSchemeViewSet(AbstractModelViewSet):
     ordering_fields = [
         'scheme_name',
     ]
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        PomsConfigurationPermission
+    ]
 
 
 # class TransactionFileImportSchemeFilterSet(FilterSet):
@@ -927,6 +941,10 @@ class ComplexTransactionImportSchemeViewSet(AbstractModelViewSet):
 class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
     celery_task = complex_transaction_csv_file_import
+
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        PomsFunctionPermission
+    ]
 
     def get_serializer_context(self):
         context = super(AbstractAsyncViewSet, self).get_serializer_context()
@@ -1020,6 +1038,10 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
 class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
     celery_task = complex_transaction_csv_file_import_validate
+
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        PomsFunctionPermission
+    ]
 
     def get_serializer_context(self):
         context = super(AbstractAsyncViewSet, self).get_serializer_context()
