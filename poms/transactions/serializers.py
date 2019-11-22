@@ -620,7 +620,7 @@ class TransactionTypeActionInstrumentManualPricingFormulaSerializer(serializers.
     pricing_policy_input = TransactionInputField(required=False, allow_null=True)
 
     expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False)
-    notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="")
+    notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="", allow_null=True, allow_blank=True)
 
     class Meta:
         model = TransactionTypeActionInstrumentFactorSchedule
@@ -660,7 +660,7 @@ class TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer(seria
     first_payment_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
     accrual_size = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
     periodicity_n = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
-    notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+    notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True)
 
     class Meta:
         model = TransactionTypeActionInstrumentFactorSchedule
