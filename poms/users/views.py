@@ -657,7 +657,11 @@ class MemberViewSet(AbstractModelViewSet):
             if admin_group.id not in request.data['groups']:
                 raise PermissionDenied()
 
-        return super(GroupViewSet).update(request, *args, **kwargs)
+        if admin_group.id in request.data['groups']:
+            request.data['is_admin'] = True
+
+
+        return super(MemberViewSet, self).update(request, *args, **kwargs)
 
     def perform_destroy(self, instance):
 

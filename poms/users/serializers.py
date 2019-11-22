@@ -710,6 +710,14 @@ class InviteToMasterUserSerializer(serializers.ModelSerializer):
 
             member = Member.objects.create(user=user, master_user=instance.master_user)
             member.groups.set(instance.groups.all())
+
+            admin_group = Group.objects.get(master_user=instance.master_user, role=Group.ADMIN)
+
+            for group in instance.groups.all():
+
+                if group.id == admin_group.id:
+                    member.is_admin = True
+
             member.save()
 
         return super(InviteToMasterUserSerializer, self).update(instance, validated_data)
