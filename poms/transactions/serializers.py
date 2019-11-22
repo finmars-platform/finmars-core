@@ -620,7 +620,8 @@ class TransactionTypeActionInstrumentManualPricingFormulaSerializer(serializers.
     pricing_policy_input = TransactionInputField(required=False, allow_null=True)
 
     expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False)
-    notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="", allow_null=True, allow_blank=True)
+    notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="", allow_null=True,
+                            allow_blank=True)
 
     class Meta:
         model = TransactionTypeActionInstrumentFactorSchedule
@@ -790,7 +791,6 @@ class TransactionTypeActionInstrumentEventScheduleActionSerializer(serializers.M
 
 
 class TransactionTypeActionExecuteCommandSerializer(serializers.ModelSerializer):
-
     expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
 
     class Meta:
@@ -880,23 +880,23 @@ class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelW
                                    allow_null=True, default='')
 
     user_text_11 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
+                                   allow_null=True, default='')
     user_text_12 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
+                                   allow_null=True, default='')
     user_text_13 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
+                                   allow_null=True, default='')
     user_text_14 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
+                                   allow_null=True, default='')
     user_text_15 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
+                                   allow_null=True, default='')
     user_text_16 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
+                                   allow_null=True, default='')
     user_text_17 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
+                                   allow_null=True, default='')
     user_text_18 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
+                                   allow_null=True, default='')
     user_text_19 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
+                                   allow_null=True, default='')
     user_text_20 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                    allow_null=True, default='')
 
@@ -922,23 +922,23 @@ class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelW
                                      allow_null=True, default='')
 
     user_number_11 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
+                                     allow_null=True, default='')
     user_number_12 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
+                                     allow_null=True, default='')
     user_number_13 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
+                                     allow_null=True, default='')
     user_number_14 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
+                                     allow_null=True, default='')
     user_number_15 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
+                                     allow_null=True, default='')
     user_number_16 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
+                                     allow_null=True, default='')
     user_number_17 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
+                                     allow_null=True, default='')
     user_number_18 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
+                                     allow_null=True, default='')
     user_number_19 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
+                                     allow_null=True, default='')
     user_number_20 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                      allow_null=True, default='')
 
@@ -958,8 +958,6 @@ class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelW
 
     group_object = TransactionTypeGroupViewSerializer(source='group', read_only=True)
 
-    inputs = TransactionTypeInputSerializer(required=False, many=True)
-
     def __init__(self, *args, **kwargs):
         super(TransactionTypeLightSerializer, self).__init__(*args, **kwargs)
 
@@ -971,6 +969,37 @@ class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelW
         self.fields['portfolios_object'] = PortfolioViewSerializer(source='portfolios', many=True, read_only=True)
 
     class Meta:
+        model = TransactionType
+        fields = [
+            'id', 'master_user', 'group',
+            'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'date_expr', 'display_expr',
+
+            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
+            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
+
+            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
+            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
+
+            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
+            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+
+            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
+            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
+
+            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
+
+            'is_valid_for_all_portfolios', 'is_valid_for_all_instruments', 'is_deleted',
+
+            'instrument_types', 'portfolios',
+            'group_object',
+        ]
+
+
+class TransactionTypeLightSerializerWithInputs(TransactionTypeLightSerializer):
+    inputs = TransactionTypeInputSerializer(required=False, many=True)
+
+    class Meta(TransactionTypeLightSerializer.Meta):
         model = TransactionType
         fields = [
             'id', 'master_user', 'group',
@@ -1029,23 +1058,23 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                                    allow_null=True, default='')
 
     user_text_11 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
+                                   allow_null=True, default='')
     user_text_12 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
+                                   allow_null=True, default='')
     user_text_13 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
+                                   allow_null=True, default='')
     user_text_14 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
+                                   allow_null=True, default='')
     user_text_15 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
+                                   allow_null=True, default='')
     user_text_16 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
+                                   allow_null=True, default='')
     user_text_17 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
+                                   allow_null=True, default='')
     user_text_18 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
+                                   allow_null=True, default='')
     user_text_19 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
+                                   allow_null=True, default='')
     user_text_20 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                    allow_null=True, default='')
 
@@ -1071,23 +1100,23 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                                      allow_null=True, default='')
 
     user_number_11 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
+                                     allow_null=True, default='')
     user_number_12 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
+                                     allow_null=True, default='')
     user_number_13 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
+                                     allow_null=True, default='')
     user_number_14 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
+                                     allow_null=True, default='')
     user_number_15 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
+                                     allow_null=True, default='')
     user_number_16 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
+                                     allow_null=True, default='')
     user_number_17 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
+                                     allow_null=True, default='')
     user_number_18 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
+                                     allow_null=True, default='')
     user_number_19 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
+                                     allow_null=True, default='')
     user_number_20 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                      allow_null=True, default='')
 
@@ -1112,11 +1141,12 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
 
     group_object = TransactionTypeGroupViewSerializer(source='group', read_only=True)
 
-    visibility_status = serializers.ChoiceField(default=TransactionType.SHOW_PARAMETERS, initial=TransactionType.SHOW_PARAMETERS,
+    visibility_status = serializers.ChoiceField(default=TransactionType.SHOW_PARAMETERS,
+                                                initial=TransactionType.SHOW_PARAMETERS,
                                                 required=False, choices=TransactionType.VISIBILITY_STATUS_CHOICES)
 
     type = serializers.ChoiceField(default=TransactionType.TYPE_DEFAULT, initial=TransactionType.TYPE_DEFAULT,
-                                                required=False, choices=TransactionType.TYPE_CHOICES)
+                                   required=False, choices=TransactionType.TYPE_CHOICES)
 
     # instrument_types_object = serializers.PrimaryKeyRelatedField(source='instrument_types', many=True, read_only=True)
     # portfolios_object = serializers.PrimaryKeyRelatedField(source='portfolios', many=True, read_only=True)
@@ -1371,7 +1401,6 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             item_data = action_data.get('execute_command', action_data.get(
                 'transactiontypeactionexecutecommand'))
             if item_data:
-
 
                 item = None
                 if action:
@@ -1974,14 +2003,12 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
                 if perm['permission'] == 'view_complextransaction_hide_parameters':
 
                     if perm['group'] in member.groups.all():
-
                         hide_parameters = True
 
         if member.is_admin or member.is_owner:
             hide_parameters = False
 
         if hide_parameters:
-
             data.pop('user_text_1')
             data.pop('user_text_2')
             data.pop('user_text_3')
@@ -2238,14 +2265,12 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
                 if perm['permission'] == 'view_complextransaction_hide_parameters':
 
                     if perm['group'] in member.groups.all():
-
                         hide_parameters = True
 
         if member.is_admin or member.is_owner:
             hide_parameters = False
 
         if hide_parameters:
-
             data.pop('user_text_1')
             data.pop('user_text_2')
             data.pop('user_text_3')
@@ -2266,7 +2291,6 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
             data.pop('user_text_18')
             data.pop('user_text_19')
             data.pop('user_text_20')
-
 
             data.pop('user_number_1')
             data.pop('user_number_2')
@@ -2473,7 +2497,6 @@ class PhantomTransactionSerializer(TransactionSerializer):
 
 
 class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer):
-
     # text = serializers.SerializerMethodField()
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -2484,7 +2507,8 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
     status = serializers.ChoiceField(default=ComplexTransaction.PRODUCTION, initial=ComplexTransaction.PRODUCTION,
                                      required=False, choices=ComplexTransaction.STATUS_CHOICES)
 
-    visibility_status = serializers.ChoiceField(default=ComplexTransaction.SHOW_PARAMETERS, initial=ComplexTransaction.SHOW_PARAMETERS,
+    visibility_status = serializers.ChoiceField(default=ComplexTransaction.SHOW_PARAMETERS,
+                                                initial=ComplexTransaction.SHOW_PARAMETERS,
                                                 required=False, choices=ComplexTransaction.VISIBILITY_STATUS_CHOICES)
 
     def __init__(self, *args, **kwargs):
@@ -2542,14 +2566,12 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
                 if perm['permission'] == 'view_complextransaction_hide_parameters':
 
                     if perm['group'] in member.groups.all():
-
                         hide_parameters = True
 
         if member.is_admin or member.is_owner:
             hide_parameters = False
 
         if hide_parameters:
-
             # data.pop('date')
             # data.pop('text')
 
@@ -2604,6 +2626,7 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
         # print('TransactionTypeComplexTransactionSerializer visibility status done: %s' % (time.perf_counter() - st))
 
         return data
+
 
 class TransactionTypeProcessSerializer(serializers.Serializer):
     def __init__(self, **kwargs):
@@ -2878,7 +2901,6 @@ class RecalculatePermission:
 
 
 class RecalculatePermissionTransactionSerializer(serializers.Serializer):
-
     task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     task_status = serializers.ReadOnlyField()
 
@@ -2888,12 +2910,10 @@ class RecalculatePermissionTransactionSerializer(serializers.Serializer):
     content_type = serializers.ReadOnlyField()
 
     def create(self, validated_data):
-
         return RecalculatePermission(**validated_data)
 
 
 class RecalculatePermissionComplexTransactionSerializer(serializers.Serializer):
-
     task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     task_status = serializers.ReadOnlyField()
 
@@ -2903,6 +2923,4 @@ class RecalculatePermissionComplexTransactionSerializer(serializers.Serializer):
     content_type = serializers.ReadOnlyField()
 
     def create(self, validated_data):
-
         return RecalculatePermission(**validated_data)
-

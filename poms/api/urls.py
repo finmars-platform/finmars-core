@@ -201,6 +201,7 @@ router.register(r'transactions/transaction-type-light-ev-group', transactions.Tr
 
 router.register(r'transactions/transaction-type', transactions.TransactionTypeViewSet)
 router.register(r'transactions/transaction-type-light', transactions.TransactionTypeLightViewSet, 'transactiontypelight')
+router.register(r'transactions/transaction-type-light-with-inputs', transactions.TransactionTypeLightWithInputsViewSet, 'transactiontypelightwithinputs')
 router.register(r'transactions/transaction-type-attribute-type', transactions.TransactionTypeAttributeTypeViewSet)
 # router.register(r'transactions/transaction-attribute-type', transactions.TransactionAttributeTypeViewSet)
 router.register(r'transactions/transaction-attribute-type', transactions.TransactionAttributeTypeViewSet,

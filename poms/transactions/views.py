@@ -46,7 +46,8 @@ from poms.transactions.serializers import TransactionClassSerializer, Transactio
     TransactionTypeProcessSerializer, TransactionTypeGroupSerializer, ComplexTransactionSerializer, \
     EventClassSerializer, NotificationClassSerializer, TransactionTypeLightSerializer, \
     ComplexTransactionLightSerializer, ComplexTransactionSimpleSerializer, \
-    RecalculatePermissionTransactionSerializer, RecalculatePermissionComplexTransactionSerializer
+    RecalculatePermissionTransactionSerializer, RecalculatePermissionComplexTransactionSerializer, \
+    TransactionTypeLightSerializerWithInputs
 from poms.transactions.tasks import recalculate_permissions_transaction, recalculate_permissions_complex_transaction
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -225,6 +226,36 @@ class TransactionTypeLightViewSet(AbstractWithObjectPermissionViewSet):
         )
     )
     serializer_class = TransactionTypeLightSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+    ]
+    filter_class = TransactionTypeFilterSet
+    ordering_fields = [
+        'user_code',
+        'name',
+        'short_name',
+        'public_name',
+        'group',
+        'group__user_code',
+        'group__name',
+        'group__short_name',
+        'group__public_name',
+    ]
+
+class TransactionTypeLightWithInputsViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = TransactionType.objects.select_related('group').prefetch_related(
+        'portfolios',
+        'instrument_types',
+        get_attributes_prefetch(),
+        get_tag_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, TransactionType),
+            ('group', TransactionTypeGroup),
+        )
+    )
+    serializer_class = TransactionTypeLightSerializerWithInputs
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         AttributeFilter,
