@@ -50,7 +50,7 @@ import json
 
 from poms.transactions.serializers import TransactionTypeSerializer
 from poms.ui.models import EditLayout, ListLayout, Bookmark, TransactionUserFieldModel, InstrumentUserFieldModel, \
-    DashboardLayout, TemplateLayout
+    DashboardLayout, TemplateLayout, ContextMenuLayout
 
 from django.forms.models import model_to_dict
 
@@ -113,6 +113,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         edit_layouts = self.get_edit_layouts()
         list_layouts = self.get_list_layouts()
         template_layouts = self.get_template_layouts()
+        context_menu_layouts = self.get_context_menu_layouts()
         dashboard_layouts = self.get_dashboard_layouts()
         report_layouts = self.get_report_layouts()
         bookmarks = self.get_bookmarks()
@@ -158,6 +159,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration["body"].append(edit_layouts)
         configuration["body"].append(list_layouts)
         configuration["body"].append(template_layouts)
+        configuration["body"].append(context_menu_layouts)
         configuration["body"].append(dashboard_layouts)
         configuration["body"].append(report_layouts)
         configuration["body"].append(bookmarks)
@@ -908,6 +910,28 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         }
 
         return result
+
+    def get_context_menu_layouts(self):
+
+        results = to_json_objects(ContextMenuLayout.objects.filter(member=self._member))
+
+        for template_layout_json in results:
+            template_layout_json["fields"]["data"] = ContextMenuLayout.objects.get(pk=template_layout_json["pk"]).data
+
+        results = unwrap_items(results)
+
+        delete_prop(results, 'json_data')
+
+        delete_prop(results, 'member')
+
+        result = {
+            "entity": "ui.contextmenulayout",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
 
     def get_list_layouts(self):
 
@@ -2223,7 +2247,7 @@ class ConfigurationDuplicateCheckViewSet(AbstractModelViewSet):
 
                         else:
 
-                            if entity['entity'] in ['ui.bookmark', 'ui.listlayout', 'ui.reportlayout', 'ui.editlayout', 'ui.dashboardlayout', 'ui.templatelayout']:
+                            if entity['entity'] in ['ui.bookmark', 'ui.listlayout', 'ui.reportlayout', 'ui.editlayout', 'ui.dashboardlayout', 'ui.templatelayout', 'ui.contextmenulayout']:
 
                                 if model.objects.filter(name=item['name'], member=member).exists():
                                     result_item['content'].append({'name': item['name'], 'is_duplicate': True})

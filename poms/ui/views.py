@@ -6,11 +6,11 @@ from poms.common.filters import NoOpFilter, CharFilter
 from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet
 from poms.ui.models import TemplateListLayout, TemplateEditLayout, ListLayout, EditLayout, Bookmark, Configuration, \
     ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
-    DashboardLayout, TemplateLayout
+    DashboardLayout, TemplateLayout, ContextMenuLayout
 from poms.ui.serializers import TemplateListLayoutSerializer, ListLayoutSerializer, TemplateEditLayoutSerializer, \
     EditLayoutSerializer, BookmarkSerializer, ConfigurationSerializer, ConfigurationExportLayoutSerializer, \
     TransactionUserFieldSerializer, InstrumentUserFieldSerializer, PortalInterfaceAccessModelSerializer, \
-    DashboardLayoutSerializer, TemplateLayoutSerializer
+    DashboardLayoutSerializer, TemplateLayoutSerializer, ContextMenuLayoutSerializer
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 from poms.users.permissions import SuperUserOnly
 
@@ -86,6 +86,30 @@ class TemplateLayoutViewSet(AbstractModelViewSet):
     filter_class = TemplateLayoutFilterSet
     ordering_fields = [
      'name', 'is_default',
+    ]
+
+
+class ContextMenuLayoutFilterSet(FilterSet):
+    id = NoOpFilter()
+    name = CharFilter()
+
+    class Meta:
+        model = ContextMenuLayout
+        fields = []
+
+
+class ContextMenuLayoutViewSet(AbstractModelViewSet):
+    queryset = ContextMenuLayout.objects
+    serializer_class = ContextMenuLayoutSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMemberFilter,
+    ]
+    filter_class = ContextMenuLayoutFilterSet
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        SuperUserOnly,
+    ]
+    ordering_fields = [
+        'type', 'name',
     ]
 
 

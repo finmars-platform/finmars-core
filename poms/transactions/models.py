@@ -329,6 +329,7 @@ class TransactionType(NamedModel, FakeDeletableModel):
                                                       verbose_name=ugettext_lazy('is valid for all portfolios'))
     is_valid_for_all_instruments = models.BooleanField(default=True,
                                                        verbose_name=ugettext_lazy('is valid for all instruments'))
+
     book_transaction_layout_json = models.TextField(null=True, blank=True,
                                                     verbose_name=ugettext_lazy('book transaction layout json'))
 

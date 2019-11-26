@@ -237,6 +237,7 @@ router.register(r'ui/configuration', ui.ConfigurationViewSet)
 router.register(r'ui/configuration-export-layout', ui.ConfigurationExportLayoutViewSet)
 router.register(r'ui/transaction-user-field', ui.TransactionUserFieldViewSet)
 router.register(r'ui/instrument-user-field', ui.InstrumentUserFieldViewSet)
+router.register(r'ui/context-menu-layout', ui.ContextMenuLayoutViewSet)
 
 router.register(r'reports/report', reports.BalanceReportViewSet, "report")
 router.register(r'reports/balance-report', reports.BalanceReportViewSet, "balance-report")

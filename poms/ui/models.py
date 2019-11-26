@@ -234,6 +234,16 @@ class TemplateLayout(BaseUIModel):
         return super(TemplateLayout, self).save(*args, **kwargs)
 
 
+class ContextMenuLayout(BaseUIModel):
+    member = models.ForeignKey(Member, related_name='context_menu_layouts', verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
+    type = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('type'))
+
+    class Meta(BaseUIModel.Meta):
+        unique_together = [
+            ['member', 'type', 'name'],
+        ]
+
 class BaseLayout(BaseUIModel):
     content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'), on_delete=models.CASCADE)
 
