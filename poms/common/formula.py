@@ -513,7 +513,7 @@ def _get_fx_rate(evaluator, date, currency, pricing_policy, default_value=0):
 
     try:
         result = CurrencyHistory.objects.get(date=date, currency=currency,
-                                         pricing_policy=pricing_policy)
+                                             pricing_policy=pricing_policy)
     except (CurrencyHistory.DoesNotExist, KeyError):
         result = None
 
@@ -540,7 +540,7 @@ def _add_fx_history(evaluator, date, currency, pricing_policy, fx_rate=0, overwr
 
     try:
         result = CurrencyHistory.objects.get(date=date, currency=currency,
-                                         pricing_policy=pricing_policy)
+                                             pricing_policy=pricing_policy)
 
         if overwrite:
             result.fx_rate = fx_rate
@@ -576,7 +576,7 @@ def _add_price_history(evaluator, date, instrument, pricing_policy, principal_pr
 
     try:
         result = PriceHistory.objects.get(date=date, instrument=instrument,
-                                      pricing_policy=pricing_policy)
+                                          pricing_policy=pricing_policy)
 
         if overwrite:
             result.principal_price = principal_price
@@ -673,7 +673,7 @@ def _get_price_history_accrued_price(evaluator, date, instrument, pricing_policy
 _get_price_history_accrued_price.evaluator = True
 
 
-def _get_factor_schedule(evaluator, date, instrument, default_value=0):
+def _get_factor_schedule(evaluator, date, instrument):
     from poms.users.utils import get_master_user_from_context
     from poms.instruments.models import InstrumentFactorSchedule
 
@@ -689,12 +689,16 @@ def _get_factor_schedule(evaluator, date, instrument, default_value=0):
     except (InstrumentFactorSchedule.DoesNotExist, KeyError):
         result = None
 
-    print('result %s' % result)
+    if result is None:
+        try:
+            result = InstrumentFactorSchedule.objects.filter(effective_date__lte=date, instrument=instrument)[0]
+        except (InstrumentFactorSchedule.DoesNotExist, KeyError):
+            result = None
 
     if result:
         return result.factor_value
 
-    return default_value
+    return 1
 
 
 _get_factor_schedule.evaluator = True
@@ -747,6 +751,7 @@ def _safe_get_pricing_policy(evaluator, pricing_policy):
 
     return pricing_policy
 
+
 def _safe_get_currency(evaluator, currency):
     from poms.users.utils import get_master_user_from_context, get_member_from_context
     from poms.currencies.models import Currency
@@ -793,6 +798,7 @@ def _safe_get_currency(evaluator, currency):
         raise ExpressionEvalError()
 
     return currency
+
 
 def _safe_get_instrument(evaluator, instrument):
     from poms.users.utils import get_master_user_from_context, get_member_from_context
@@ -852,6 +858,84 @@ def _safe_get_instrument(evaluator, instrument):
         context[('_instrument_get_accrued_price', None, instrument.user_code)] = instrument
 
     return instrument
+
+
+def _set_instrument_field(evaluator, instrument, parameter_name, parameter_value):
+
+    context = evaluator.context
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    try:
+        if isinstance(parameter_value, dict):
+            parameter_name = parameter_name + '_id'
+            parameter_value = parameter_value['id']
+
+        setattr(instrument, parameter_name, parameter_value)
+        instrument.save()
+    except AttributeError:
+
+        raise InvalidExpression('Invalid Property')
+
+
+_set_instrument_field.evaluator = True
+
+
+def _set_currency_field(evaluator, currency, parameter_name, parameter_value):
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+
+    currency = _safe_get_currency(evaluator, currency)
+
+    try:
+        setattr(currency, parameter_name, parameter_value)
+        currency.save()
+    except AttributeError:
+        raise InvalidExpression('Invalid Property')
+
+
+_set_currency_field.evaluator = True
+
+
+def _get_instrument_field(evaluator, instrument, parameter_name):
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    result = None
+
+    try:
+        result = getattr(instrument, parameter_name, None)
+    except AttributeError:
+        raise InvalidExpression('Invalid Property')
+
+    return result
+
+
+_get_instrument_field.evaluator = True
+
+
+def _get_currency_field(evaluator, currency, parameter_name):
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+
+    currency = _safe_get_currency(evaluator, currency)
+
+    result = None
+
+    try:
+        result = getattr(currency, parameter_name, None)
+    except AttributeError:
+        raise InvalidExpression('Invalid Property')
+
+    return result
+
+
+_get_currency_field.evaluator = True
 
 
 def _get_instrument_user_attribute_value(evaluator, instrument, attribute_user_code):
@@ -1276,6 +1360,14 @@ FUNCTIONS = [
     SimpleEval2Def('parse_number', _parse_number),
 
     SimpleEval2Def('simple_price', _simple_price),
+
+
+    SimpleEval2Def('get_currency_field', _get_currency_field),
+    SimpleEval2Def('set_currency_field', _set_currency_field),
+
+    SimpleEval2Def('get_instrument_field', _get_instrument_field),
+    SimpleEval2Def('set_instrument_field', _set_instrument_field),
+
 
     SimpleEval2Def('get_instrument_accrual_size', _get_instrument_accrual_size),
     SimpleEval2Def('get_instrument_accrual_factor', _get_instrument_accrual_factor),

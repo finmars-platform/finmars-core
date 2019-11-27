@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import date, datetime
 
@@ -1036,6 +1037,9 @@ class TransactionTypeProcess(object):
                         _l.debug(errors)
                         # self.instruments_errors.append(errors)
 
+    def to_dict(self, obj):
+        return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
+
     def book_execute_commands(self, actions):
 
         print('book_execute_commands %s' % actions)
@@ -1053,8 +1057,15 @@ class TransactionTypeProcess(object):
 
                 errors = {}
 
+                names = {}
+
+                for key, value in self.values.items():
+                    names[key] = value
+
+                names = self.to_dict(names)
+
                 try:
-                    result = formula.safe_eval(execute_command.expr, names=self.values,
+                    result = formula.safe_eval(execute_command.expr, names=names,
                                                context=self._context)
 
                     # print('result %s', result)
@@ -1082,7 +1093,8 @@ class TransactionTypeProcess(object):
 
             if perm.group.id == group.id:
 
-                if (transaction.account_position and transaction.account_position.id == perm.object_id) and (transaction.account_cash and transaction.account_cash.id == perm.object_id):
+                if (transaction.account_position and transaction.account_position.id == perm.object_id) and (
+                        transaction.account_cash and transaction.account_cash.id == perm.object_id):
                     account_result = True
 
         for perm in portfolio_permissions:
@@ -1096,7 +1108,6 @@ class TransactionTypeProcess(object):
             result = True
 
         return result
-
 
     def get_access_to_inputs(self, group):
 
@@ -1148,7 +1159,6 @@ class TransactionTypeProcess(object):
         if count == 0:
             result = False
 
-
         return result
 
     def assign_permissions_to_transaction(self, transaction):
@@ -1171,7 +1181,6 @@ class TransactionTypeProcess(object):
                                                        portfolio_permissions)
 
             if has_access:
-
                 perms.append({'group': group, 'permission': 'view_transaction'})
 
         _l.debug('perms %s' % perms)
@@ -1205,13 +1214,11 @@ class TransactionTypeProcess(object):
                 for perm in transaction.object_permissions.all():
 
                     if perm.group.id == group.id:
-
                         permissions_count = permissions_count + 1
 
             # _l.debug('groupid %s permissions_count %s' % (group.name, permissions_count))
 
             if permissions_count == permissions_total:
-
                 codename = 'view_complextransaction'
 
             if permissions_count < permissions_total and permissions_count != 0:
