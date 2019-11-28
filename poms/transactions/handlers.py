@@ -1038,8 +1038,8 @@ class TransactionTypeProcess(object):
                         _l.debug(errors)
                         # self.instruments_errors.append(errors)
 
-    def to_dict(self, obj):
-        return json.loads(json.dumps(obj, cls=DjangoJSONEncoder, sort_keys=True))
+    # def to_dict(self, obj):
+    #     return json.loads(json.dumps(obj, cls=DjangoJSONEncoder, sort_keys=True))
 
     def book_execute_commands(self, actions):
 
@@ -1061,9 +1061,9 @@ class TransactionTypeProcess(object):
                 names = {}
 
                 for key, value in self.values.items():
-                    names[key] = value
+                    names[key] = formula.value_prepare(value)
 
-                names = self.to_dict(names)
+                # names = self.to_dict(names)
 
                 try:
                     result = formula.safe_eval(execute_command.expr, names=names,
