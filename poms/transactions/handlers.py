@@ -4,6 +4,7 @@ from datetime import date, datetime
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import DatabaseError, IntegrityError
 from django.utils.translation import ugettext
 
@@ -1038,7 +1039,7 @@ class TransactionTypeProcess(object):
                         # self.instruments_errors.append(errors)
 
     def to_dict(self, obj):
-        return json.loads(json.dumps(obj))
+        return json.loads(json.dumps(obj, cls=DjangoJSONEncoder, sort_keys=True))
 
     def book_execute_commands(self, actions):
 
