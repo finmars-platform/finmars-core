@@ -134,7 +134,6 @@ class MasterUserCreateViewSet(ViewSet):
     ]
 
     def create(self, request, *args, **kwargs):
-
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.save()
@@ -369,6 +368,7 @@ class UserMemberViewSet(AbstractModelViewSet):
     ]
     filter_backends = [IsMemberFilterBackend]
 
+
 class MasterUserViewSet(AbstractModelViewSet):
     queryset = MasterUser.objects.select_related(
         'currency',
@@ -471,8 +471,31 @@ class MasterUserViewSet(AbstractModelViewSet):
     def create(self, request, *args, **kwargs):
         raise PermissionDenied()
 
+    def update(self, request, *args, **kwargs):
+
+        # Name and Description only available for change
+
+        user = request.user
+
+        try:
+            master_user = MasterUser.objects.get(id=request.data['id'])
+
+            member_qs = Member.objects.filter(master_user=master_user, user=user, is_admin=True)
+
+            if len(list(member_qs)):
+                master_user.name = request.data['name']
+                master_user.description = request.data['description']
+                master_user.save()
+            else:
+                raise PermissionDenied()
+
+        except MasterUser.DoesNotExist:
+            raise PermissionDenied()
+
+        return Response({'status': 'OK'})
+
     @action(detail=True, methods=('PUT', 'PATCH',), url_path='set-current', permission_classes=[IsAuthenticated],
-                  serializer_class=MasterUserSetCurrentSerializer)
+            serializer_class=MasterUserSetCurrentSerializer)
     def set_current(self, request, pk=None):
         instance = self.get_object()
         set_master_user(request, instance)
@@ -660,7 +683,6 @@ class MemberViewSet(AbstractModelViewSet):
         if admin_group.id in request.data['groups']:
             request.data['is_admin'] = True
 
-
         return super(MemberViewSet, self).update(request, *args, **kwargs)
 
     def perform_destroy(self, instance):
@@ -675,6 +697,7 @@ class GroupFilterSet(FilterSet):
     id = NoOpFilter()
     name = CharFilter()
     member = ModelExtMultipleChoiceFilter(model=Member, field_name='username')
+
     # member = ModelExtMultipleChoiceFilter(model=Member, field_name='username', name='members')
 
     class Meta:
@@ -750,7 +773,6 @@ class InviteToMasterUserFilterSet(FilterSet):
         fields = []
 
 
-
 class InviteFromMasterUserViewSet(AbstractApiView, UpdateModelMixinExt, DestroyModelFakeMixin, ModelViewSet):
     queryset = InviteToMasterUser.objects.select_related(
         'from_member',
@@ -767,14 +789,13 @@ class InviteFromMasterUserViewSet(AbstractApiView, UpdateModelMixinExt, DestroyM
     pagination_class = BigPagination
 
 
-
 class InviteToUserViewSet(AbstractApiView, UpdateModelMixinExt, DestroyModelFakeMixin, ModelViewSet):
     queryset = InviteToMasterUser.objects.select_related(
         'from_member',
     )
     serializer_class = InviteToMasterUserSerializer
     permission_classes = AbstractModelViewSet.permission_classes + []
-    filter_backends =  [
+    filter_backends = [
         DjangoFilterBackend,
         OwnerByMasterUserFilter,
     ]
