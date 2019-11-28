@@ -691,7 +691,7 @@ def _get_factor_schedule(evaluator, date, instrument):
 
     if result is None:
         try:
-            result = InstrumentFactorSchedule.objects.filter(effective_date__lte=date, instrument=instrument)[0]
+            result = InstrumentFactorSchedule.objects.filter(effective_date__lte=date, instrument=instrument).order_by('-effective_date')[0]
         except (InstrumentFactorSchedule.DoesNotExist, KeyError):
             result = None
 

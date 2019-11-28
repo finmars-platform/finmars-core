@@ -351,9 +351,9 @@ if not LOCAL:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     CSRF_COOKIE_DOMAIN = 'finmars.com'
-    CSRF_TRUSTED_ORIGINS = ['finmars.com', 'dev.finmars.com', 'localhost:8080', '0.0.0.0:8080', 'www.finmars.com']
+    CSRF_TRUSTED_ORIGINS = ['finmars.com', 'dev.finmars.com', 'localhost:8080', 'localhost:8081', '0.0.0.0:8080', 'www.finmars.com']
 
-CORS_ORIGIN_WHITELIST = ('dev.finmars.com', 'finmars.com', 'localhost:8080', '0.0.0.0:8080', 'www.finmars.com')
+CORS_ORIGIN_WHITELIST = ('dev.finmars.com', 'finmars.com', 'localhost:8080', 'localhost:8081', '0.0.0.0:8080', 'www.finmars.com')
 
 CORS_URLS_REGEX = r'^/api/.*$'
 CORS_REPLACE_HTTPS_REFERER = True
