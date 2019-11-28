@@ -1038,7 +1038,7 @@ class TransactionTypeProcess(object):
                         # self.instruments_errors.append(errors)
 
     def to_dict(self, obj):
-        return json.loads(json.dumps(obj, default=lambda o: o.__dict__))
+        return json.loads(json.dumps(obj))
 
     def book_execute_commands(self, actions):
 
