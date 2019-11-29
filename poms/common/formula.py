@@ -695,7 +695,7 @@ def _get_factor_schedule(evaluator, date, instrument):
         except (InstrumentFactorSchedule.DoesNotExist, KeyError):
             result = None
 
-    if result:
+    if result is not None:
         return result.factor_value
 
     return 1
