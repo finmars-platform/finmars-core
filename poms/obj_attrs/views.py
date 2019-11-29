@@ -114,7 +114,8 @@ class GenericAttributeTypeFilterSet(FilterSet):
         fields = []
 
 
-class GenericAttributeTypeViewSet(AbstractWithObjectPermissionViewSet):
+# class GenericAttributeTypeViewSet(AbstractWithObjectPermissionViewSet):
+class GenericAttributeTypeViewSet(AbstractModelViewSet):
     queryset = GenericAttributeType.objects.select_related(
         'master_user',
         'content_type'
@@ -124,7 +125,7 @@ class GenericAttributeTypeViewSet(AbstractWithObjectPermissionViewSet):
             (None, GenericAttributeType),
         )
     )
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+    filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
     serializer_class = GenericAttributeTypeSerializer
