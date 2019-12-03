@@ -719,15 +719,24 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
 
         transaction_type = TransactionType.objects.get(pk=pk)
 
-        instance = TransactionTypeProcess(process_mode='book', transaction_type=transaction_type,
-                                          context=self.get_serializer_context(), context_values=context_values,
-                                          default_values=default_values,
-                                          complex_transaction_status=complex_transaction_status)
+
 
         if request.method == 'GET':
+
+            instance = TransactionTypeProcess(process_mode='book', transaction_type=transaction_type,
+                                              context=self.get_serializer_context(), context_values=context_values,
+                                              default_values=default_values,
+                                              complex_transaction_status=complex_transaction_status)
+
             serializer = self.get_serializer(instance=instance)
             return Response(serializer.data)
         else:
+
+            instance = TransactionTypeProcess(process_mode=request.data['process_mode'], transaction_type=transaction_type,
+                                              context=self.get_serializer_context(), context_values=context_values,
+                                              default_values=default_values,
+                                              complex_transaction_status=complex_transaction_status)
+
             try:
                 history.set_flag_addition()
 
@@ -1222,14 +1231,23 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
 
         print('detail_route: /rebook: process rebook')
 
-        instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
-                                          process_mode='rebook',
-                                          complex_transaction=complex_transaction,
-                                          context=self.get_serializer_context())
+
         if request.method == 'GET':
+
+            instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
+                                              process_mode='rebook',
+                                              complex_transaction=complex_transaction,
+                                              context=self.get_serializer_context())
+
             serializer = self.get_serializer(instance=instance)
             return Response(serializer.data)
         else:
+
+            instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
+                                              process_mode=request.data['process_mode'],
+                                              complex_transaction=complex_transaction,
+                                              context=self.get_serializer_context())
+
             try:
                 history.set_flag_change()
 

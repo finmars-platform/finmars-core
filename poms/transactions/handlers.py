@@ -1677,7 +1677,9 @@ class TransactionTypeProcess(object):
     def process(self):
 
         if self.process_mode == self.MODE_RECALCULATE:
+
             return self.process_recalculate()
+
         _l.debug('process: %s, values=%s', self.transaction_type, self.values)
 
         print('process self.process_mode %s' % self.process_mode)
