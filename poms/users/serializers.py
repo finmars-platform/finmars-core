@@ -720,12 +720,15 @@ class InviteToMasterUserSerializer(serializers.ModelSerializer):
             member = Member.objects.create(user=user, master_user=instance.master_user)
             member.groups.set(instance.groups.all())
 
-            admin_group = Group.objects.get(master_user=instance.master_user, role=Group.ADMIN)
+            try:
+                admin_group = Group.objects.get(master_user=instance.master_user, role=Group.ADMIN)
 
-            for group in instance.groups.all():
+                for group in instance.groups.all():
 
-                if group.id == admin_group.id:
-                    member.is_admin = True
+                    if group.id == admin_group.id:
+                        member.is_admin = True
+            except Group.DoesNotExist:
+                print("Old ecosystem?")
 
             member.save()
 

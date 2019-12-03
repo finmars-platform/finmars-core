@@ -1,5 +1,8 @@
 # Changelog
 
+## 03.12.2019
+- Two Factor Auth
+
 ## 01.10.2019
 - Delete methods
 
