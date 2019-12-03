@@ -472,7 +472,7 @@ class TransactionAdmin(AbstractModelAdmin):
         # 'linked_instrument',
         # 'allocation_balance',
         # 'allocation_pl',
-        'is_deleted',
+        # 'is_deleted',
     ]
     list_select_related = [
         'master_user', 'complex_transaction', 'transaction_class',
@@ -483,7 +483,8 @@ class TransactionAdmin(AbstractModelAdmin):
         'linked_instrument',
         'allocation_balance', 'allocation_pl',
     ]
-    list_filter = ['is_deleted', 'transaction_date', ]
+    list_filter = [ 'transaction_date', ]
+    # list_filter = ['is_deleted', 'transaction_date', ]
     search_fields = ['id']
     date_hierarchy = 'transaction_date'
     raw_id_fields = [
@@ -516,7 +517,7 @@ class TransactionAdmin(AbstractModelAdmin):
         'linked_instrument',
         ('allocation_balance', 'allocation_pl'),
         'reference_fx_rate',
-        ('is_locked', 'is_deleted'),
+        # ('is_locked', 'is_deleted'),
         ('factor', 'trade_price'),
         'position_amount',
         ('principal_amount', 'carry_amount', 'overheads'),

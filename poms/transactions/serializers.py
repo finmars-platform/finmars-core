@@ -1803,9 +1803,9 @@ class TransactionSerializer(ModelWithObjectPermissionSerializer):
             'allocation_balance',
             'allocation_pl',
 
-            'is_locked',
+            # 'is_locked',
             'is_canceled',
-            'is_deleted',
+            # 'is_deleted',
 
             'error_code',
 

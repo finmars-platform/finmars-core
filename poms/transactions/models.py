@@ -1420,7 +1420,8 @@ class ComplexTransactionInput(models.Model):
         ]
 
 
-class Transaction(FakeDeletableModel):
+# class Transaction(FakeDeletableModel):
+class Transaction(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='transactions', verbose_name=ugettext_lazy('master user'),
                                     on_delete=models.CASCADE)
     complex_transaction = models.ForeignKey(ComplexTransaction, on_delete=models.SET_NULL, null=True, blank=True,
