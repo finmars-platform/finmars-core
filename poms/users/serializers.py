@@ -27,7 +27,7 @@ from poms.transactions.fields import TransactionTypeField
 from poms.ui.models import ListLayout, EditLayout
 from poms.users.fields import MasterUserField, MemberField, GroupField
 from poms.users.models import MasterUser, UserProfile, Group, Member, TIMEZONE_CHOICES, InviteToMasterUser, \
-    EcosystemDefault
+    EcosystemDefault, OtpToken
 from poms.users.utils import get_user_from_context, get_master_user_from_context, get_member_from_context
 
 from django.core.mail import send_mail
@@ -136,10 +136,11 @@ class UserRegisterSerializer(serializers.Serializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     language = serializers.ChoiceField(choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE)
     timezone = serializers.ChoiceField(choices=TIMEZONE_CHOICES)
+    two_factor_verification = serializers.BooleanField()
 
     class Meta:
         model = UserProfile
-        fields = ['language', 'timezone']
+        fields = ['language', 'timezone', 'two_factor_verification']
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -172,6 +173,7 @@ class UserSerializer(serializers.ModelSerializer):
             profile = instance.profile
             profile.language = profile_data.get('language', profile.language)
             profile.timezone = profile_data.get('timezone', profile.timezone)
+            profile.two_factor_verification = profile_data.get('two_factor_verification', profile.two_factor_verification)
             profile.save()
 
         return instance
@@ -420,6 +422,13 @@ class MasterUserLightSerializer(serializers.ModelSerializer):
 
         return member.is_owner
 
+class OtpTokenSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = OtpToken
+        fields = [
+            'id', 'name',
+        ]
 
 class EcosystemDefaultSerializer(serializers.ModelSerializer):
     currency = CurrencyField()

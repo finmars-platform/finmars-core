@@ -41,12 +41,14 @@ from poms.transactions.models import TransactionType, TransactionTypeInput, Tran
     TransactionTypeActionInstrument, Transaction, ComplexTransaction, TransactionTypeGroup
 from poms.users.filters import OwnerByMasterUserFilter, MasterUserFilter, OwnerByUserFilter, InviteToMasterUserFilter, \
     IsMemberFilterBackend
-from poms.users.models import MasterUser, Member, Group, ResetPasswordToken, InviteToMasterUser, EcosystemDefault
+from poms.users.models import MasterUser, Member, Group, ResetPasswordToken, InviteToMasterUser, EcosystemDefault, \
+    OtpToken
 from poms.users.permissions import SuperUserOrReadOnly, IsCurrentMasterUser, IsCurrentUser
 from poms.users.serializers import GroupSerializer, UserSerializer, MasterUserSerializer, MemberSerializer, \
     PingSerializer, UserSetPasswordSerializer, MasterUserSetCurrentSerializer, UserUnsubscribeSerializer, \
     UserRegisterSerializer, MasterUserCreateSerializer, EmailSerializer, PasswordTokenSerializer, \
-    InviteToMasterUserSerializer, InviteCreateSerializer, EcosystemDefaultSerializer, MasterUserLightSerializer
+    InviteToMasterUserSerializer, InviteCreateSerializer, EcosystemDefaultSerializer, MasterUserLightSerializer, \
+    OtpTokenSerializer
 from poms.users.utils import set_master_user
 
 from datetime import timedelta
@@ -58,6 +60,8 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy
 
 from django.core.mail import send_mail
+
+import pyotp
 
 
 class ObtainAuthTokenViewSet(AbstractApiView, ViewSet):
@@ -101,8 +105,29 @@ class LoginViewSet(ViewSet):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
-        login(request, user)
-        return Response({'success': True})
+
+        response = {'success': True, 'two_factor_check': False}
+
+        existing_user = None
+
+        try:
+            existing_user = User.objects.get(username=user)
+        except User.DoesNotExist:
+            raise PermissionDenied()
+
+        if existing_user.profile.two_factor_verification:
+
+            tokens = OtpToken.objects.filter(user=existing_user)
+
+            if len(list(tokens)):
+                response['two_factor_check'] = True
+            else:
+                response['two_factor_check'] = False
+
+        if not response['two_factor_check']:
+            login(request, user)
+
+        return Response(response)
 
 
 class LogoutViewSet(ViewSet):
@@ -534,6 +559,73 @@ class MasterUserLightViewSet(AbstractModelViewSet):
         set_master_user(request, instance)
         return Response({'success': True})
 
+
+class OtpTokenViewSet(AbstractModelViewSet):
+    queryset = OtpToken.objects
+    serializer_class = OtpTokenSerializer
+    permission_classes = AbstractModelViewSet.permission_classes + []
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByUserFilter
+    ]
+    ordering_fields = [
+        'name',
+    ]
+    pagination_class = BigPagination
+
+    @action(detail=False, methods=('PUT', 'PATCH',), url_path='generate-code', permission_classes=[IsAuthenticated])
+    def generate_code(self, request, pk=None):
+
+        secret = pyotp.random_base32()
+
+        user = request.user
+
+        token_name = 'Two Factor Auth ' + user.username
+
+        token = OtpToken.objects.create(user=user, secret=secret, name=token_name)
+        token.save()
+
+        name = 'user'
+
+        if user.email:
+            name = user.email
+        else:
+            name = user.username
+
+        totp = pyotp.TOTP(token.secret)
+
+        url = totp.provisioning_uri(name, "finmars.com") # u'otpauth://totp/finmars.com:szhitenev?secret=7PXELOEQIHBUKLYS&issuer=finmars.com'
+
+        return Response({'provisioning_uri': url})
+
+    @action(detail=False, methods=('PUT', 'PATCH',), url_path='validate-code', permission_classes=[])
+    def validate_code(self, request, pk=None):
+
+        code = request.data['code']
+        username = request.data['username']
+        result = False
+
+        user = None
+
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise PermissionDenied()
+
+        try:
+            token = OtpToken.objects.get(user=user)
+
+            totp = pyotp.TOTP(token.secret)
+
+            if totp.now() == code:
+                result = True
+
+        except OtpToken.DoesNotExist:
+            result = False
+
+        if result:
+            login(request, user)
+
+        return Response({'match': result})
 
 class EcosystemDefaultViewSet(AbstractModelViewSet):
     queryset = EcosystemDefault.objects.select_related(

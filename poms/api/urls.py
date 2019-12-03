@@ -40,6 +40,7 @@ router.register(r'users/login', users.LoginViewSet, 'login')
 router.register(r'users/logout', users.LogoutViewSet, 'logout')
 router.register(r'users/ping', users.PingViewSet, "ping")
 router.register(r'users/protected-ping', users.ProtectedPingViewSet, "protectedping")
+router.register(r'users/two-factor', users.OtpTokenViewSet, "otptoken")
 
 router.register(r'users/reset-password/confirm', users.ResetPasswordConfirmViewSet, "resetpasswordconfirm"),
 router.register(r'users/reset-password', users.ResetPasswordRequestTokenViewSet, "resetpasswordrequest"),

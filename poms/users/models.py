@@ -641,6 +641,16 @@ class Member(FakeDeletableModel):
         else:
             return self.username
 
+class OtpToken(models.Model):
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                             related_name='otp_tokens', verbose_name=ugettext_lazy('OTP Token'))
+
+    name = models.CharField(max_length=80, verbose_name=ugettext_lazy('name'))
+
+    secret = models.CharField(max_length=16, blank=True, default='', editable=False,
+                                verbose_name=ugettext_lazy('secret'))
+
 
 class InviteToMasterUser(models.Model):
 
@@ -682,6 +692,8 @@ class UserProfile(models.Model):
                                 verbose_name=ugettext_lazy('language'))
     timezone = models.CharField(max_length=TIMEZONE_MAX_LENGTH, default=settings.TIME_ZONE,
                                 verbose_name=ugettext_lazy('timezone'))
+
+    two_factor_verification = models.BooleanField(default=False, verbose_name=ugettext_lazy('two factor verification'))
 
     class Meta:
         verbose_name = ugettext_lazy('profile')

@@ -19,7 +19,7 @@ from poms.common.admin import AbstractModelAdmin
 from poms.instruments.models import EventScheduleConfig
 from poms.integrations.models import PricingAutomatedSchedule
 from poms.users.models import MasterUser, UserProfile, Member, Group, TIMEZONE_CHOICES, FakeSequence, \
-    InviteToMasterUser, EcosystemDefault
+    InviteToMasterUser, EcosystemDefault, OtpToken
 
 
 # from django.contrib.sessions.models import Session
@@ -322,6 +322,15 @@ class GroupAdmin(AbstractModelAdmin):
 
 
 admin.site.register(Group, GroupAdmin)
+
+
+class OtpTokenAdmin(AbstractModelAdmin):
+    model = OtpToken
+    list_display = ['id', 'user', 'name', ]
+    raw_id_fields = ['user']
+
+
+admin.site.register(OtpToken, OtpTokenAdmin)
 
 
 class FakeSequenceAdmin(AbstractModelAdmin):
