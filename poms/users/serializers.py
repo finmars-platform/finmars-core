@@ -405,20 +405,20 @@ class MasterUserLightSerializer(serializers.ModelSerializer):
 
     def get_is_admin(self, obj):
 
-        # user = get_user_from_context(self.context)
-        #
-        # member = Member.objects.get(master_user=obj.id, user=user.id)
-        member = get_member_from_context(self.context)
+        user = get_user_from_context(self.context)
+
+        member = Member.objects.get(master_user=obj.id, user=user.id)
+        # member = get_member_from_context(self.context)
 
         return member.is_admin
 
     def get_is_owner(self, obj):
 
-        # user = get_user_from_context(self.context)
-        #
-        # member = Member.objects.get(master_user=obj.id, user=user.id)
+        user = get_user_from_context(self.context)
 
-        member = get_member_from_context(self.context)
+        member = Member.objects.get(master_user=obj.id, user=user.id)
+
+        # member = get_member_from_context(self.context)
 
         return member.is_owner
 
