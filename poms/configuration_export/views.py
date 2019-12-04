@@ -32,6 +32,7 @@ from poms.integrations.models import InstrumentDownloadScheme, InstrumentDownloa
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_attrs.serializers import GenericClassifierViewSerializer, GenericClassifierNodeSerializer, \
     GenericAttributeTypeSerializer
+from poms.obj_perms.utils import obj_perms_filter_objects
 from poms.portfolios.models import Portfolio
 from poms.reference_tables.models import ReferenceTable, ReferenceTableRow
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
@@ -85,6 +86,67 @@ def unwrap_items(items):
     return result
 
 
+codename_set = ['view_%(model_name)s', 'change_%(model_name)s', 'manage_%(model_name)s',
+                'view_%(model_name)s_show_parameters', 'view_%(model_name)s_hide_parameters']
+
+
+def get_codename_set(model_cls):
+    kwargs = {
+        'app_label': model_cls._meta.app_label,
+        'model_name': model_cls._meta.model_name
+    }
+    return {perm % kwargs for perm in codename_set}
+
+
+def permission_filter(queryset, member):
+    return obj_perms_filter_objects(member, get_codename_set(queryset.model), queryset,
+                                    prefetch=False)
+
+
+def get_access_table(member):
+
+    result = {
+        'obj_attrs.attributetype': False,
+        'reference_tables.referencetable': False,
+        'ui.templatelayout': False,
+        'integrations.mappingtable': False,
+        'integrations.pricedownloadscheme': False,
+        'integrations.instrumentdownloadscheme': False,
+        'csv_import.csvimportscheme': False,
+        'integrations.complextransactionimportscheme': False,
+        'complex_import.compleximportscheme': False,
+        'ui.userfield': False
+    }
+
+    if member.is_admin:
+        result = {
+            'obj_attrs.attributetype': True,
+            'reference_tables.referencetable': True,
+            'ui.templatelayout': True,
+            'integrations.mappingtable': True,
+            'integrations.pricedownloadscheme': True,
+            'integrations.instrumentdownloadscheme': True,
+            'csv_import.csvimportscheme': True,
+            'integrations.complextransactionimportscheme': True,
+            'complex_import.compleximportscheme': True,
+            'ui.userfield': True
+        }
+
+    if not member.is_admin:
+        for group in member.groups.all():
+            if group.permission_table:
+
+                if group.permission_table['configuration']:
+
+                    for perm_config in group.permission_table['configuration']:
+
+                        if not result[perm_config['content_type']]:
+
+                            if perm_config['data']['creator_view']:
+                                result[perm_config['content_type']] = True
+
+    return result
+
 class ConfigurationExportViewSet(AbstractModelViewSet):
 
     def list(self, request):
@@ -92,6 +154,10 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         self._master_user = request.user.master_user
         self._member = request.user.member
         self._request = request
+
+        self.access_table = get_access_table(self._member)
+
+        print(self.access_table)
 
         response = HttpResponse(content_type='application/json')
         # response['Content-Disposition'] = 'attachment; filename="data-%s.json"' % str(datetime.now().date())
@@ -158,33 +224,49 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration["body"].append(transaction_type_groups)
         configuration["body"].append(edit_layouts)
         configuration["body"].append(list_layouts)
-        configuration["body"].append(template_layouts)
+
+        if self.access_table['ui.templatelayout']:
+            configuration["body"].append(template_layouts)
+
         configuration["body"].append(context_menu_layouts)
         configuration["body"].append(dashboard_layouts)
         configuration["body"].append(report_layouts)
         configuration["body"].append(bookmarks)
-        configuration["body"].append(csv_import_schemes)
-        configuration["body"].append(complex_import_schemes)
-        configuration["body"].append(price_download_schemes)
-        configuration["body"].append(instrument_download_schemes)
-        configuration["body"].append(complex_transaction_import_scheme)
+
+        if self.access_table['csv_import.csvimportscheme']:
+            configuration["body"].append(csv_import_schemes)
+
+        if self.access_table['complex_import.compleximportscheme']:
+            configuration["body"].append(complex_import_schemes)
+
+        if self.access_table['integrations.pricedownloadscheme']:
+            configuration["body"].append(price_download_schemes)
+
+        if self.access_table['integrations.instrumentdownloadscheme']:
+            configuration["body"].append(instrument_download_schemes)
+
+        if self.access_table['integrations.complextransactionimportscheme']:
+            configuration["body"].append(complex_transaction_import_scheme)
+
         configuration["body"].append(account_types)
         configuration["body"].append(currencies)
         configuration["body"].append(pricing_policies)
         configuration["body"].append(instrument_types)
         configuration["body"].append(pricing_automated_schedule)
 
-        configuration["body"].append(reference_tables)
+        if self.access_table['reference_tables.referencetable']:
+            configuration["body"].append(reference_tables)
 
-        configuration["body"].append(portfolio_attribute_types)
-        configuration["body"].append(currency_attribute_types)
-        configuration["body"].append(account_attribute_types)
-        configuration["body"].append(account_type_attribute_types)
-        configuration["body"].append(responsible_attribute_types)
-        configuration["body"].append(counterparty_attribute_types)
-        configuration["body"].append(instrument_attribute_types)
-        configuration["body"].append(instrument_type_attribute_types)
-        configuration["body"].append(transaction_type_attribute_types)
+        if self.access_table['obj_attrs.attributetype']:
+            configuration["body"].append(portfolio_attribute_types)
+            configuration["body"].append(currency_attribute_types)
+            configuration["body"].append(account_attribute_types)
+            configuration["body"].append(account_type_attribute_types)
+            configuration["body"].append(responsible_attribute_types)
+            configuration["body"].append(counterparty_attribute_types)
+            configuration["body"].append(instrument_attribute_types)
+            configuration["body"].append(instrument_type_attribute_types)
+            configuration["body"].append(transaction_type_attribute_types)
 
         configuration["body"].append(strategy1_attribute_types)
         configuration["body"].append(strategy2_attribute_types)
@@ -194,8 +276,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration["body"].append(pl_report_custom_fields)
         configuration["body"].append(transaction_report_custom_fields)
 
-        configuration["body"].append(get_transaction_user_fields)
-        configuration["body"].append(instrument_user_fields)
+        if self.access_table['ui.userfield']:
+            configuration["body"].append(get_transaction_user_fields)
+            configuration["body"].append(instrument_user_fields)
 
         return configuration
 
@@ -600,8 +683,12 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         return results
 
     def get_transaction_types(self):
-        transaction_types = to_json_objects(
-            TransactionType.objects.filter(master_user=self._master_user, is_deleted=False).exclude(user_code='-'))
+
+        qs = TransactionType.objects.filter(master_user=self._master_user, is_deleted=False).exclude(user_code='-')
+
+        qs = permission_filter(qs, self._member)
+
+        transaction_types = to_json_objects(qs)
         results = []
 
         for transaction_type in transaction_types:
@@ -676,8 +763,11 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         return result
 
     def get_account_types(self):
-        account_types = to_json_objects(
-            AccountType.objects.filter(master_user=self._master_user, is_deleted=False).exclude(user_code='-'))
+
+        qs = AccountType.objects.filter(master_user=self._master_user, is_deleted=False).exclude(user_code='-')
+        qs = permission_filter(qs, self._member)
+
+        account_types = to_json_objects(qs)
         results = []
 
         for account_type in account_types:
@@ -766,8 +856,11 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         return result
 
     def get_instrument_types(self):
-        instrument_types = to_json_objects(
-            InstrumentType.objects.filter(master_user=self._master_user, is_deleted=False).exclude(user_code='-'))
+
+        qs = InstrumentType.objects.filter(master_user=self._master_user, is_deleted=False).exclude(user_code='-')
+        qs = permission_filter(qs, self._member)
+
+        instrument_types = to_json_objects(qs)
         results = []
 
         for instrument_type in instrument_types:
@@ -932,7 +1025,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
-
     def get_list_layouts(self):
 
         content_types = ContentType.objects.exclude(app_label='reports')
@@ -974,7 +1066,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         delete_prop(results, 'reference_table')
 
         return results
-
 
     def get_reference_tables(self):
 
@@ -1589,6 +1680,8 @@ class MappingExportViewSet(AbstractModelViewSet):
         self._master_user = request.user.master_user
         self._member = request.user.member
 
+        self.access_table = get_access_table(self._member)
+
         response = HttpResponse(content_type='application/json')
         response['Content-Disposition'] = 'attachment; filename="mapping-%s.json"' % str(datetime.now().date())
 
@@ -1604,39 +1697,41 @@ class MappingExportViewSet(AbstractModelViewSet):
         configuration["head"]["date"] = str(datetime.now().date())
         configuration["body"] = []
 
-        portfolio_mapping = self.get_portfolio_mapping()
-        currency_mapping = self.get_currency_mapping()
-        instrument_type_mapping = self.get_instrument_type_mapping()
-        account_mapping = self.get_account_mapping()
-        account_type_mapping = self.get_account_type_mapping()
-        instrument_mapping = self.get_instrument_mapping()
-        counterparty_mapping = self.get_counterparty_mapping()
-        responsible_mapping = self.get_responsible_mapping()
-        strategy1_mapping = self.get_strategy1_mapping()
+        if self.access_table['integrations.mappingtable']:
 
-        pricing_policy_mapping = self.get_pricing_policy_mapping()
-        periodicity_mapping = self.get_periodicity_mapping()
-        daily_pricing_model_mapping = self.get_daily_pricing_model_mapping()
-        payment_size_detail_mapping = self.get_payment_size_detail_mapping()
-        accrual_calculation_model_mapping = self.get_accrual_calculation_model_mapping()
-        price_download_scheme_mapping = self.get_price_download_scheme_mapping()
+            portfolio_mapping = self.get_portfolio_mapping()
+            currency_mapping = self.get_currency_mapping()
+            instrument_type_mapping = self.get_instrument_type_mapping()
+            account_mapping = self.get_account_mapping()
+            account_type_mapping = self.get_account_type_mapping()
+            instrument_mapping = self.get_instrument_mapping()
+            counterparty_mapping = self.get_counterparty_mapping()
+            responsible_mapping = self.get_responsible_mapping()
+            strategy1_mapping = self.get_strategy1_mapping()
 
-        configuration["body"].append(account_type_mapping)
-        configuration["body"].append(portfolio_mapping)
-        configuration["body"].append(currency_mapping)
-        configuration["body"].append(instrument_type_mapping)
-        configuration["body"].append(account_mapping)
-        configuration["body"].append(instrument_mapping)
-        configuration["body"].append(counterparty_mapping)
-        configuration["body"].append(responsible_mapping)
-        configuration["body"].append(strategy1_mapping)
+            pricing_policy_mapping = self.get_pricing_policy_mapping()
+            periodicity_mapping = self.get_periodicity_mapping()
+            daily_pricing_model_mapping = self.get_daily_pricing_model_mapping()
+            payment_size_detail_mapping = self.get_payment_size_detail_mapping()
+            accrual_calculation_model_mapping = self.get_accrual_calculation_model_mapping()
+            price_download_scheme_mapping = self.get_price_download_scheme_mapping()
 
-        configuration["body"].append(pricing_policy_mapping)
-        configuration["body"].append(periodicity_mapping)
-        configuration["body"].append(daily_pricing_model_mapping)
-        configuration["body"].append(payment_size_detail_mapping)
-        configuration["body"].append(accrual_calculation_model_mapping)
-        configuration["body"].append(price_download_scheme_mapping)
+            configuration["body"].append(account_type_mapping)
+            configuration["body"].append(portfolio_mapping)
+            configuration["body"].append(currency_mapping)
+            configuration["body"].append(instrument_type_mapping)
+            configuration["body"].append(account_mapping)
+            configuration["body"].append(instrument_mapping)
+            configuration["body"].append(counterparty_mapping)
+            configuration["body"].append(responsible_mapping)
+            configuration["body"].append(strategy1_mapping)
+
+            configuration["body"].append(pricing_policy_mapping)
+            configuration["body"].append(periodicity_mapping)
+            configuration["body"].append(daily_pricing_model_mapping)
+            configuration["body"].append(payment_size_detail_mapping)
+            configuration["body"].append(accrual_calculation_model_mapping)
+            configuration["body"].append(price_download_scheme_mapping)
 
         return configuration
 
@@ -2242,12 +2337,12 @@ class ConfigurationDuplicateCheckViewSet(AbstractModelViewSet):
                         if entity['entity'] in ['ui.transactionuserfieldmodel', 'ui.instrumentuserfieldmodel']:
 
                             if model.objects.filter(key=item['key'], master_user=master_user).exists():
-
                                 result_item['content'].append({'name': item['name'], 'is_duplicate': True})
 
                         else:
 
-                            if entity['entity'] in ['ui.bookmark', 'ui.listlayout', 'ui.reportlayout', 'ui.editlayout', 'ui.dashboardlayout', 'ui.templatelayout', 'ui.contextmenulayout']:
+                            if entity['entity'] in ['ui.bookmark', 'ui.listlayout', 'ui.reportlayout', 'ui.editlayout',
+                                                    'ui.dashboardlayout', 'ui.templatelayout', 'ui.contextmenulayout']:
 
                                 if model.objects.filter(name=item['name'], member=member).exists():
                                     result_item['content'].append({'name': item['name'], 'is_duplicate': True})
