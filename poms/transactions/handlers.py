@@ -1151,14 +1151,14 @@ class TransactionTypeProcess(object):
             except GenericObjectPermission.DoesNotExist:
                 pass
 
-        if count == len(accounts) + len(portfolios):
-            result = True
+        if count == 0:
+            result = False
 
         if count > 0:
             result = 'partial_view'
 
-        if count == 0:
-            result = False
+        if count == len(accounts) + len(portfolios):
+            result = True
 
         return result
 
