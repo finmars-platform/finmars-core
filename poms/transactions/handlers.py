@@ -1219,6 +1219,9 @@ class TransactionTypeProcess(object):
 
             # _l.debug('groupid %s permissions_count %s' % (group.name, permissions_count))
 
+            print('permissions_count %s' % permissions_count)
+            print('permissions_total %s' % permissions_total)
+
             if permissions_count == permissions_total:
                 codename = 'view_complextransaction'
 
@@ -1242,6 +1245,9 @@ class TransactionTypeProcess(object):
             if not ttype_access and codename is not None:
                 codename = 'view_complextransaction_hide_parameters'
 
+            print('inputs_access %s' % inputs_access)
+            print('ttype_access %s' % ttype_access)
+
             if inputs_access == 'partial_view':
 
                 if self.complex_transaction.visibility_status == ComplexTransaction.SHOW_PARAMETERS:
@@ -1249,9 +1255,6 @@ class TransactionTypeProcess(object):
 
                 if self.complex_transaction.visibility_status == ComplexTransaction.HIDE_PARAMETERS:
                     codename = 'view_complextransaction_hide_parameters'
-
-            _l.debug('complex_transaction.visibility_status %s' % self.complex_transaction.visibility_status)
-            _l.debug('group %s complex transactions perms ttype access %s' % (group.name, ttype_access))
 
             if codename:
                 perms.append({'group': group, 'permission': codename})
