@@ -43,6 +43,7 @@ from poms.obj_perms.models import GenericObjectPermission
 
 def obj_perms_filter_objects(member, perms, queryset, model_cls=None, prefetch=True):
 
+
     if member is None:
         return queryset
 
@@ -50,10 +51,13 @@ def obj_perms_filter_objects(member, perms, queryset, model_cls=None, prefetch=T
         return queryset
 
     model = model_cls or queryset.model
+
     # user_lookup_name, user_obj_perms_model = get_user_obj_perms_model(model)
     # group_lookup_name, group_obj_perms_model = get_group_obj_perms_model(model)
     ctype = ContentType.objects.get_for_model(model)
 
+    if ctype.model == 'currency':
+        return queryset
     # print('perms %s ' % perms)
 
     codenames = set()
@@ -367,6 +371,9 @@ def has_view_perms(member, obj):
     if obj._meta.model_name == 'complextransaction':
         perms.append('view_complextransaction_hide_parameters')
         perms.append('view_complextransaction_show_parameters')
+
+    if obj._meta.model_name == 'currency':
+        return True
 
     return has_perms(member, obj, perms)
 

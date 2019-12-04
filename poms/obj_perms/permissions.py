@@ -35,6 +35,7 @@ class PomsObjectPermission(BasePermission):
         return self.simple_has_object_permission(request.user.member, request.method, obj)
 
     def simple_has_object_permission(self, member, http_method, obj):
+
         if member.is_superuser:
             return True
         req_perms = self.get_required_object_permissions(http_method, obj)
