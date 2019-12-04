@@ -9,6 +9,7 @@ from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 
@@ -1222,7 +1223,7 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
 
         ComplexTransaction.objects.get(id=instance.id).delete()
 
-    @action(detail=True, methods=['get', 'put'], url_path='rebook', serializer_class=TransactionTypeProcessSerializer)
+    @action(detail=True, methods=['get', 'put'], url_path='rebook', serializer_class=TransactionTypeProcessSerializer, permission_classes=[IsAuthenticated])
     def rebook(self, request, pk=None):
         complex_transaction = self.get_object()
 
@@ -1265,7 +1266,7 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
                 if instance.has_errors:
                     transaction.set_rollback(True)
 
-    @action(detail=True, methods=['get', 'put'], url_path='rebook-pending', serializer_class=TransactionTypeProcessSerializer)
+    @action(detail=True, methods=['get', 'put'], url_path='rebook-pending', serializer_class=TransactionTypeProcessSerializer, permission_classes=[IsAuthenticated])
     def rebook_pending(self, request, pk=None):
 
         complex_transaction = self.get_object()
