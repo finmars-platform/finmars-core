@@ -11,7 +11,7 @@ class ReferenceTableRowSerializer(serializers.ModelSerializer):
     class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = ReferenceTableRow
         fields = [
-            'id', 'key', 'value'
+            'id', 'key', 'value', 'order'
         ]
 
 

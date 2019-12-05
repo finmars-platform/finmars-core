@@ -26,6 +26,8 @@ class ReferenceTableRow(models.Model):
 
     value = models.CharField(max_length=255, verbose_name=ugettext_lazy('value'))
 
+    order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
+
     class Meta:
         unique_together = (
             ('reference_table', 'key')
