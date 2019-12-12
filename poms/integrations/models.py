@@ -953,7 +953,9 @@ class ComplexTransactionImportSchemeRuleScenario(models.Model):
         order_with_respect_to = 'scheme'
 
     def __str__(self):
-        return self.name
+        if self.name:
+            return self.name
+        return ''
 
 class ComplexTransactionImportSchemeField(models.Model):
     # for simpler admin
@@ -993,7 +995,9 @@ class ComplexTransactionImportSchemeReconScenario(models.Model):
         verbose_name_plural = ugettext_lazy('complex transaction import scheme recon scenarios')
 
     def __str__(self):
-        return self.name
+        if self.name:
+            return self.name
+        return ''
 
 class ComplexTransactionImportSchemeReconField(models.Model):
 
