@@ -937,7 +937,7 @@ class ComplexTransactionImportSchemeRuleScenario(models.Model):
                                verbose_name=ugettext_lazy('scheme'), on_delete=models.CASCADE)
     # order = models.SmallIntegerField(default=0)
 
-    name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'))
+    name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'), null=True, blank=True, )
     
     
     # value = models.CharField(max_length=255, blank=True, default='', verbose_name=ugettext_lazy('mapping value'))
@@ -982,7 +982,7 @@ class ComplexTransactionImportSchemeReconScenario(models.Model):
     scheme = models.ForeignKey(ComplexTransactionImportScheme, related_name='recon_scenarios',
                                verbose_name=ugettext_lazy('scheme'), on_delete=models.CASCADE)
 
-    name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'))
+    name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'), null=True, blank=True, )
     line_reference_id = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('line reference id'))
     reference_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('reference_date'))
 
