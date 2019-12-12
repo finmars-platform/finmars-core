@@ -28,7 +28,9 @@ from poms.integrations.models import InstrumentDownloadScheme, InstrumentDownloa
     PricingAutomatedSchedule, PortfolioMapping, CurrencyMapping, InstrumentTypeMapping, AccountMapping, \
     InstrumentMapping, CounterpartyMapping, ResponsibleMapping, Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, \
     PeriodicityMapping, DailyPricingModelMapping, PaymentSizeDetailMapping, AccrualCalculationModelMapping, \
-    PriceDownloadSchemeMapping, AccountTypeMapping, PricingPolicyMapping, ComplexTransactionImportSchemeRuleScenario
+    PriceDownloadSchemeMapping, AccountTypeMapping, PricingPolicyMapping, ComplexTransactionImportSchemeRuleScenario, \
+    ComplexTransactionImportSchemeReconScenario, ComplexTransactionImportSchemeReconField, \
+    ComplexTransactionImportSchemeSelectorValue
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_attrs.serializers import GenericClassifierViewSerializer, GenericClassifierNodeSerializer, \
     GenericAttributeTypeSerializer
@@ -1536,9 +1538,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
-    def get_complex_transaction_import_scheme_rule_fields(self, rule):
+    def get_complex_transaction_import_scheme_rule_fields(self, rule_scenario):
 
-        fields = to_json_objects(ComplexTransactionImportSchemeField.objects.filter(rule=rule["pk"]))
+        fields = to_json_objects(ComplexTransactionImportSchemeField.objects.filter(rule_scenario=rule_scenario["pk"]))
 
         results = unwrap_items(fields)
 
@@ -1546,7 +1548,49 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             item["___input__name"] = TransactionTypeInput.objects.get(pk=item["transaction_type_input"]).name
 
         delete_prop(results, 'transaction_type_input')
-        delete_prop(results, 'rule')
+        delete_prop(results, 'rule_scenario')
+
+        return results
+
+    def get_complex_transaction_import_scheme_recon_fields(self, recon_scenario):
+
+        fields = to_json_objects(ComplexTransactionImportSchemeReconField.objects.filter(recon_scenario=recon_scenario["pk"]))
+
+        results = unwrap_items(fields)
+
+        delete_prop(results, 'recon_scenario')
+
+        return results
+
+    def get_complex_transaction_import_scheme_recon_selector_values(self, recon_scenario):
+
+        instance = ComplexTransactionImportSchemeReconScenario.objects.get(id=recon_scenario['pk'])
+
+        result = []
+
+        for item in instance.selector_values.all():
+            result.append(item.value)
+
+        return result
+
+    def get_complex_transaction_import_scheme_rule_selector_values(self, rule_scenario):
+
+        instance = ComplexTransactionImportSchemeRuleScenario.objects.get(id=rule_scenario['pk'])
+
+        result = []
+
+        for item in instance.selector_values.all():
+            result.append(item.value)
+
+        return result
+
+    def get_complex_transaction_import_scheme_selector_values(self, scheme):
+
+        fields = to_json_objects(ComplexTransactionImportSchemeSelectorValue.objects.filter(scheme=scheme["pk"]))
+
+        results = unwrap_items(fields)
+
+        delete_prop(results, 'scheme')
 
         return results
 
@@ -1560,7 +1604,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return results
 
-    def get_complex_transaction_import_scheme_rules(self, scheme):
+    def get_complex_transaction_import_scheme_rule_scenarios(self, scheme):
 
         rules = to_json_objects(ComplexTransactionImportSchemeRuleScenario.objects.filter(scheme=scheme["pk"]))
 
@@ -1571,11 +1615,33 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         for rule in rules:
             result_item = rule["fields"]
 
-            rule["fields"]["fields"] = self.get_complex_transaction_import_scheme_rule_fields(rule)
+            result_item["fields"] = self.get_complex_transaction_import_scheme_rule_fields(rule)
+            result_item["selector_values"] =  self.get_complex_transaction_import_scheme_rule_selector_values(rule)
 
-            rule["fields"]["___transaction_type__user_code"] = TransactionType.objects.get(
+            result_item["___transaction_type__user_code"] = TransactionType.objects.get(
                 pk=rule["fields"]["transaction_type"]).user_code
-            rule["fields"].pop("transaction_type", None)
+            result_item.pop("transaction_type", None)
+
+            results.append(result_item)
+
+        delete_prop(results, 'scheme')
+
+        return results
+
+    def get_complex_transaction_import_scheme_recon_scenarios(self, scheme):
+
+        recon_scenarios = to_json_objects(ComplexTransactionImportSchemeReconScenario.objects.filter(scheme=scheme["pk"]))
+
+        # results = unwrap_items(rules)
+
+        results = []
+
+        for recon_scenario in recon_scenarios:
+            result_item = recon_scenario["fields"]
+
+            result_item["fields"] = self.get_complex_transaction_import_scheme_recon_fields(recon_scenario)
+
+            result_item["selector_values"] =  self.get_complex_transaction_import_scheme_recon_selector_values(recon_scenario)
 
             results.append(result_item)
 
@@ -1597,7 +1663,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             result_item.pop("master_user", None)
 
             result_item["inputs"] = self.get_complex_transaction_import_scheme_inputs(scheme)
-            result_item["rules"] = self.get_complex_transaction_import_scheme_rules(scheme)
+            result_item["selector_values"] = self.get_complex_transaction_import_scheme_selector_values(scheme)
+            result_item["rule_scenarios"] = self.get_complex_transaction_import_scheme_rule_scenarios(scheme)
+            result_item["recon_scenarios"] = self.get_complex_transaction_import_scheme_recon_scenarios(scheme)
 
             results.append(result_item)
 

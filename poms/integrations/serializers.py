@@ -1355,6 +1355,32 @@ class ComplexTransactionImportSchemeReconScenarioSerializer(serializers.ModelSer
         model = ComplexTransactionImportSchemeReconScenario
         fields = ['id', 'name', 'line_reference_id', 'reference_date', 'fields', 'selector_values']
 
+    def __init__(self, *args, **kwargs):
+        super(ComplexTransactionImportSchemeReconScenarioSerializer, self).__init__(*args, **kwargs)
+
+
+
+    def to_representation(self, instance):
+        ret = super(ComplexTransactionImportSchemeReconScenarioSerializer, self).to_representation(instance)
+
+        ret['selector_values'] = []
+
+        for item in list(instance.selector_values.all()):
+            ret['selector_values'].append(item.value)
+
+        return ret
+
+    def to_internal_value(self, data):
+
+        selector_values = data.pop('selector_values', [])
+
+        ret = super(ComplexTransactionImportSchemeReconScenarioSerializer, self).to_internal_value(data)
+
+        ret['selector_values'] = selector_values
+
+        return ret
+
+
 
 class ComplexTransactionImportSchemeFieldSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
@@ -1389,14 +1415,14 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
     transaction_type = TransactionTypeField()
     fields = ComplexTransactionImportSchemeFieldSerializer(many=True, read_only=False)
-    # selector_values = ComplexTransactionImportSchemeSelectorValueSerializer(many=True, read_only=False)
 
     class Meta:
         model = ComplexTransactionImportSchemeRuleScenario
-        fields = ['id', 'name' , 'selector_values', 'transaction_type', 'fields']
+        fields = ['id', 'name', 'selector_values', 'transaction_type', 'fields']
 
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionImportSchemeRuleScenarioSerializer, self).__init__(*args, **kwargs)
+
 
         # TODO: circular import error
         # from poms.transactions.serializers import TransactionTypeViewSerializer
@@ -1411,6 +1437,12 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
             from poms.transactions.serializers import TransactionTypeViewSerializer
             s = TransactionTypeViewSerializer(instance=instance.transaction_type, read_only=True, context=self.context)
             ret['transaction_type_object'] = s.data
+
+        ret['selector_values'] = []
+
+        for item in list(instance.selector_values.all()):
+            ret['selector_values'].append(item.value)
+
         return ret
 
         # def to_internal_value(self, data):
@@ -1422,6 +1454,16 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
         # def validate(self, attrs):
         #     _l.error('ComplexTransactionImportSchemeRuleSerializer.validate')
         #     return attrs
+
+    def to_internal_value(self, data):
+
+        selector_values = data.pop('selector_values', [])
+
+        ret = super(ComplexTransactionImportSchemeRuleScenarioSerializer, self).to_internal_value(data)
+
+        ret['selector_values'] = selector_values
+
+        return ret
 
 
 class ComplexTransactionImportSchemeSerializer(serializers.ModelSerializer):
@@ -1455,6 +1497,8 @@ class ComplexTransactionImportSchemeSerializer(serializers.ModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
+
+        print("Here update?s")
 
         inputs = validated_data.pop('inputs', empty)
         rule_scenarios = validated_data.pop('rule_scenarios', empty)
@@ -1515,6 +1559,8 @@ class ComplexTransactionImportSchemeSerializer(serializers.ModelSerializer):
     def save_rule_scenarios(self, instance, rules):
         pk_set = set()
         for rule_values in rules:
+
+
             rule_id = rule_values.pop('id', None)
             rule0 = None
             if rule_id:
@@ -1526,11 +1572,25 @@ class ComplexTransactionImportSchemeSerializer(serializers.ModelSerializer):
                 rule0 = ComplexTransactionImportSchemeRuleScenario(scheme=instance)
 
             fields = rule_values.pop('fields', empty) or []
-            selector_values = rule_values.pop('selector_values', empty) or []
+            selector_values = rule_values.pop('selector_values', []) or []
             for name, value in rule_values.items():
                 setattr(rule0, name, value)
             rule0.save()
-            rule0.selector_values.set(selector_values)
+
+            print("save_rule_scenarios selector_values %s" % selector_values)
+
+            selector_values_instances = []
+
+            if selector_values:
+                for val in selector_values:
+
+                    try:
+                        selector = ComplexTransactionImportSchemeSelectorValue.objects.get(scheme=instance, value=val)
+                        selector_values_instances.append(selector.id)
+                    except ComplexTransactionImportSchemeSelectorValue.DoesNotExist:
+                        pass
+
+                rule0.selector_values.set(selector_values_instances)
             self.save_fields(rule0, fields)
             # self.save_rule_selector_values(rule0, selector_values)
             pk_set.add(rule0.id)
@@ -1550,12 +1610,25 @@ class ComplexTransactionImportSchemeSerializer(serializers.ModelSerializer):
                 recon0 = ComplexTransactionImportSchemeReconScenario(scheme=instance)
 
             fields = recon_values.pop('fields', empty) or []
-            selector_values = recon_values.pop('selector_values', empty) or []
+            selector_values = recon_values.pop('selector_values', []) or []
             for name, value in recon_values.items():
                 setattr(recon0, name, value)
 
             recon0.save()
-            recon0.selector_values.set(selector_values)
+
+            selector_values_instances = []
+
+            if selector_values:
+                for val in selector_values:
+
+                    try:
+                        selector = ComplexTransactionImportSchemeSelectorValue.objects.get(scheme=instance, value=val)
+                        selector_values_instances.append(selector.id)
+                    except ComplexTransactionImportSchemeSelectorValue.DoesNotExist:
+                        pass
+
+                recon0.selector_values.set(selector_values_instances)
+
             self.save_recon_fields(recon0, fields)
             pk_set.add(recon0.id)
         instance.recon_scenarios.exclude(pk__in=pk_set).delete()
