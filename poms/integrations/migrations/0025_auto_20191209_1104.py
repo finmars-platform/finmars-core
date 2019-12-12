@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
             name='ComplexTransactionImportSchemeReconScenario',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255, verbose_name='name')),
+                ('name', models.CharField(max_length=255, verbose_name='name', blank=True, null=True)),
                 ('line_reference_id', models.CharField(max_length=1024, verbose_name='line reference id')),
                 ('reference_date', models.CharField(max_length=1024, verbose_name='reference_date')),
                 ('scheme', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='recon_scenarios', to='integrations.ComplexTransactionImportScheme', verbose_name='scheme')),
@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='complextransactionimportschemerulescenario',
             name='name',
-            field=models.CharField(max_length=255, verbose_name='name'),
+            field=models.CharField(max_length=255, verbose_name='name', blank=True, null=True),
         ),
         migrations.RemoveField(
             model_name='complextransactionimportschemerulescenario',

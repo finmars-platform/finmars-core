@@ -1,5 +1,8 @@
 # Changelog
 
+## 12.12.2019
+- Reconciliation update
+
 ## 03.12.2019
 - Two Factor Auth
 
