@@ -870,17 +870,18 @@ class ComplexTransactionImportSchemeFilterSet(FilterSet):
 
 
 class ComplexTransactionImportSchemeViewSet(AbstractModelViewSet):
-    queryset = ComplexTransactionImportScheme.objects.select_related(
-    ).prefetch_related(
-        'inputs',
-        'rules',
-        'rules__transaction_type',
-        'rules__fields',
-        'rules__fields__transaction_type_input',
-        *get_permissions_prefetch_lookups(
-            ('rules__transaction_type', GenericAttributeType),
-        )
-    )
+    queryset = ComplexTransactionImportScheme.objects
+    # queryset = ComplexTransactionImportScheme.objects.select_related(
+    # ).prefetch_related(
+    #     'inputs',
+    #     'rules',
+    #     'rules__transaction_type',
+    #     'rules__fields',
+    #     'rules__fields__transaction_type_input',
+    #     *get_permissions_prefetch_lookups(
+    #         ('rules__transaction_type', GenericAttributeType),
+    #     )
+    # )
     serializer_class = ComplexTransactionImportSchemeSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,

@@ -21,6 +21,7 @@ import poms.tags.views as tags
 import poms.transactions.views as transactions
 import poms.ui.views as ui
 import poms.users.views as users
+import poms.reconciliation.views as reconciliation
 
 import poms.csv_import.views as csv_import
 import poms.reference_tables.views as reference_table
@@ -328,6 +329,12 @@ router.register(r'export/configuration', configuration_export.ConfigurationExpor
 router.register(r'export/mapping', configuration_export.MappingExportViewSet, 'mapping_export')
 router.register(r'import/configuration/check-duplicates', configuration_export.ConfigurationDuplicateCheckViewSet,
                 'configuration_import_check_duplicates')
+
+
+router.register(r'reconciliation/process-bank-file', reconciliation.ProcessBankFileForReconcileViewSet, 'process_bank_file_for_reconcile')
+router.register(r'reconciliation/bank-field', reconciliation.ReconciliationBankFileFieldViewSet, 'bank_fields')
+router.register(r'reconciliation/complex-transaction-field', reconciliation.ReconciliationComplexTransactionFieldViewSet, 'complex_transaction_fields')
+
 
 urlpatterns = [
     url(r'^v1/', include(router.urls)),

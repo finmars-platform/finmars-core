@@ -14,8 +14,9 @@ from poms.integrations.models import Task, ImportConfig, ProviderClass, Currency
     CounterpartyMapping, ResponsibleMapping, PortfolioMapping, Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, \
     DailyPricingModelMapping, PaymentSizeDetailMapping, PriceDownloadSchemeMapping, InstrumentAttributeValueMapping, \
     ComplexTransactionImportScheme, ComplexTransactionImportSchemeField, ComplexTransactionImportSchemeInput, \
-    ComplexTransactionImportSchemeRule, PortfolioClassifierMapping, AccountClassifierMapping, \
-    CounterpartyClassifierMapping, ResponsibleClassifierMapping, InstrumentClassifierMapping
+    PortfolioClassifierMapping, AccountClassifierMapping, \
+    CounterpartyClassifierMapping, ResponsibleClassifierMapping, InstrumentClassifierMapping, \
+    ComplexTransactionImportSchemeRuleScenario
 
 admin.site.register(ProviderClass, ClassModelAdmin)
 admin.site.register(FactorScheduleDownloadMethod, ClassModelAdmin)
@@ -295,8 +296,8 @@ class ComplexTransactionImportSchemeInputInline(admin.TabularInline):
     extra = 0
 
 
-class ComplexTransactionImportSchemeRuleInline(admin.TabularInline):
-    model = ComplexTransactionImportSchemeRule
+class ComplexTransactionImportSchemeRuleScenarioInline(admin.TabularInline):
+    model = ComplexTransactionImportSchemeRuleScenario
     raw_id_fields = ['transaction_type']
     show_change_link = True
     extra = 0
@@ -304,7 +305,7 @@ class ComplexTransactionImportSchemeRuleInline(admin.TabularInline):
 
 class ComplexTransactionImportSchemeFieldInline(admin.TabularInline):
     model = ComplexTransactionImportSchemeField
-    raw_id_fields = ['rule', 'transaction_type_input']
+    raw_id_fields = ['rule_scenario', 'transaction_type_input']
     extra = 0
 
 
@@ -317,7 +318,7 @@ class ComplexTransactionImportSchemeAdmin(AbstractModelAdmin):
     raw_id_fields = ['master_user']
     save_as = True
     inlines = [
-        ComplexTransactionImportSchemeInputInline, ComplexTransactionImportSchemeRuleInline,
+        ComplexTransactionImportSchemeInputInline, ComplexTransactionImportSchemeRuleScenarioInline,
     ]
 
 
@@ -341,10 +342,10 @@ admin.site.register(ComplexTransactionImportScheme, ComplexTransactionImportSche
 # admin.site.register(ComplexTransactionImportSchemeInput, ComplexTransactionImportSchemeInputdmin)
 
 
-class ComplexTransactionImportSchemeRuledmin(AbstractModelAdmin):
-    model = ComplexTransactionImportSchemeRule
+class ComplexTransactionImportSchemeRuleScenarioAdmin(AbstractModelAdmin):
+    model = ComplexTransactionImportSchemeRuleScenario
     master_user_path = 'scheme__master_user'
-    list_display = ['id', 'master_user', 'scheme', 'value', 'transaction_type']
+    list_display = ['id', 'master_user', 'scheme','transaction_type']
     list_select_related = ['scheme', 'scheme__master_user', ]
     search_fields = ['id', 'scheme__scheme_name', ]
     raw_id_fields = ['scheme', 'transaction_type']
@@ -358,8 +359,7 @@ class ComplexTransactionImportSchemeRuledmin(AbstractModelAdmin):
     master_user.admin_order_field = 'scheme__master_user'
 
 
-admin.site.register(ComplexTransactionImportSchemeRule, ComplexTransactionImportSchemeRuledmin)
-
+admin.site.register(ComplexTransactionImportSchemeRuleScenario, ComplexTransactionImportSchemeRuleScenarioAdmin)
 
 # class ComplexTransactionImportSchemeFieldAdmin(AbstractModelAdmin):
 #     model = ComplexTransactionImportSchemeField

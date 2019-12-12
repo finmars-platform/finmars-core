@@ -539,6 +539,7 @@ class TransactionType(NamedModel, FakeDeletableModel):
 # )
 
 
+
 class TransactionTypeInput(models.Model):
     STRING = 10
     NUMBER = 20
@@ -1418,7 +1419,6 @@ class ComplexTransactionInput(models.Model):
         unique_together = [
             ['complex_transaction', 'transaction_type_input', ]
         ]
-
 
 # class Transaction(FakeDeletableModel):
 class Transaction(models.Model):

@@ -25,11 +25,14 @@ from poms.instruments.models import Instrument, InstrumentType, DailyPricingMode
 from poms.instruments.serializers import PeriodicitySerializer, \
     AccrualCalculationModelSerializer
 from poms.integrations.fields import PriceDownloadSchemeField
-from poms.integrations.models import PriceDownloadScheme
+from poms.integrations.models import PriceDownloadScheme, ComplexTransactionImportSchemeReconField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer, GenericObjectPermissionSerializer
 from poms.portfolios.fields import PortfolioField, PortfolioDefault
 from poms.portfolios.models import Portfolio
+from poms.reconciliation.models import TransactionTypeReconField
+from poms.reconciliation.serializers import TransactionTypeReconFieldSerializer, \
+    ReconciliationComplexTransactionFieldSerializer
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field, Strategy1Default, Strategy2Default, \
     Strategy3Default
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
@@ -849,6 +852,9 @@ class TransactionTypeActionSerializer(serializers.ModelSerializer):
         return attrs
 
 
+
+
+
 class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
                                      ModelWithTagSerializer, ModelWithAttributesSerializer):
     master_user = MasterUserField()
@@ -1136,6 +1142,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
     # tags = TagField(required=False, many=True, allow_null=True)
     # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
     inputs = TransactionTypeInputSerializer(required=False, many=True)
+    recon_fields = TransactionTypeReconFieldSerializer(required=False, many=True)
     actions = TransactionTypeActionSerializer(required=False, many=True, read_only=False)
     book_transaction_layout = serializers.JSONField(required=False, allow_null=True)
 
@@ -1185,7 +1192,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             'is_valid_for_all_portfolios', 'is_valid_for_all_instruments', 'is_deleted',
             'book_transaction_layout',
             'instrument_types', 'portfolios',
-            'inputs', 'actions',
+            'inputs', 'actions', 'recon_fields',
             'group_object',
 
             'is_enabled'
@@ -1201,11 +1208,14 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
 
         inputs = validated_data.pop('inputs', empty)
         actions = validated_data.pop('actions', empty)
+        recon_fields = validated_data.pop('recon_fields', empty)
         instance = super(TransactionTypeSerializer, self).create(validated_data)
         if inputs is not empty:
             inputs = self.save_inputs(instance, inputs)
         if actions is not empty:
             self.save_actions(instance, actions, inputs)
+        if recon_fields is not empty:
+            self.save_recon_fields(instance, recon_fields)
 
         # print('Transaction Type Serializer create %s' % (time.perf_counter() - st))
 
@@ -1214,6 +1224,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
     def update(self, instance, validated_data):
         inputs = validated_data.pop('inputs', empty)
         actions = validated_data.pop('actions', empty)
+        recon_fields = validated_data.pop('recon_fields', empty)
         instance = super(TransactionTypeSerializer, self).update(instance, validated_data)
 
         print('actions %s' % actions)
@@ -1222,10 +1233,16 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             inputs = self.save_inputs(instance, inputs)
         if actions is not empty:
             actions = self.save_actions(instance, actions, inputs)
+        if recon_fields is not empty:
+            recon_fields = self.save_recon_fields(instance, recon_fields)
+
+
         if inputs is not empty:
             instance.inputs.exclude(id__in=[i.id for i in inputs]).delete()
         if actions is not empty:
             instance.actions.exclude(id__in=[a.id for a in actions]).delete()
+        if recon_fields is not empty:
+            instance.recon_fields.exclude(id__in=[a.id for a in recon_fields]).delete()
         return instance
 
     def save_inputs(self, instance, inputs_data):
@@ -1250,6 +1267,28 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             inp.save()
             new_inputs.append(inp)
         return new_inputs
+
+    def save_recon_fields(self, instance, recon_fields_data):
+        cur_recon_fields = {i.id: i for i in instance.recon_fields.all()}
+        new_recon_fields = []
+
+        # print('instance %s' % instance)
+
+        for order, rec_field_data in enumerate(recon_fields_data):
+            # name = inp_data['name']
+            pk = rec_field_data.pop('id', None)
+            recon_field = cur_recon_fields.pop(pk, None)
+            if recon_field is None:
+                try:
+                    recon_field = TransactionTypeReconField.objects.get(transaction_type=instance, reference_name=rec_field_data['reference_name'])
+                except TransactionTypeReconField.DoesNotExist:
+                    recon_field = TransactionTypeReconField(transaction_type=instance)
+
+            for attr, value in rec_field_data.items():
+                setattr(recon_field, attr, value)
+            recon_field.save()
+            new_recon_fields.append(recon_field)
+        return new_recon_fields
 
     def save_actions_instrument(self, instance, inputs, actions, existed_actions, actions_data):
 
@@ -1952,6 +1991,8 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
     transactions = serializers.PrimaryKeyRelatedField(read_only=True, many=True)
 
+    recon_fields = ReconciliationComplexTransactionFieldSerializer(required=False, many=True)
+
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionSerializer, self).__init__(*args, **kwargs)
 
@@ -1980,7 +2021,9 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
             'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
             'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
 
-            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5'
+            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
+
+            'recon_fields'
 
         ]
 
@@ -2216,6 +2259,7 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
     # text = serializers.SerializerMethodField()
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
+    recon_fields = ReconciliationComplexTransactionFieldSerializer(required=False, many=True)
 
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionLightSerializer, self).__init__(*args, **kwargs)
@@ -2242,7 +2286,8 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
             'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
             'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
 
-            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5'
+            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
+            'recon_fields'
 
         ]
 
@@ -2511,6 +2556,8 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
                                                 initial=ComplexTransaction.SHOW_PARAMETERS,
                                                 required=False, choices=ComplexTransaction.VISIBILITY_STATUS_CHOICES)
 
+    recon_fields = ReconciliationComplexTransactionFieldSerializer(read_only=True, many=True)
+
     def __init__(self, *args, **kwargs):
         super(TransactionTypeComplexTransactionSerializer, self).__init__(*args, **kwargs)
 
@@ -2543,7 +2590,9 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
             'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
 
             'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
-            'object_permissions'
+            'object_permissions',
+
+            'recon_fields'
 
         ]
 

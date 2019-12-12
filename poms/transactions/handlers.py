@@ -21,6 +21,7 @@ from poms.integrations.models import PriceDownloadScheme
 from poms.obj_perms.models import GenericObjectPermission
 from poms.obj_perms.utils import assign_perms3, get_view_perms
 from poms.portfolios.models import Portfolio
+from poms.reconciliation.models import TransactionTypeReconField
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import ComplexTransaction, TransactionTypeInput, Transaction, EventClass, \
     NotificationClass, RebookReactionChoice, ComplexTransactionInput, TransactionType
@@ -1599,6 +1600,58 @@ class TransactionTypeProcess(object):
                 except formula.InvalidExpression:
                     setattr(self.complex_transaction, field_key, '<InvalidExpression>')
 
+    def execute_recon_fields_expressions(self):
+
+        from poms.reconciliation.models import ReconciliationComplexTransactionField
+
+        ctrn = formula.value_prepare(self.complex_transaction)
+        trns = self.complex_transaction.transactions.all()
+
+        names = {
+            'complex_transaction': ctrn,
+            'transactions': trns,
+        }
+
+        for key, value in self.values.items():
+            names[key] = value
+
+        ReconciliationComplexTransactionField.objects.filter(
+            master_user=self.transaction_type.master_user,
+            complex_transaction=self.complex_transaction).delete()
+
+        ttype_fields = TransactionTypeReconField.objects.filter(
+            transaction_type=self.transaction_type)
+
+        for ttype_field in ttype_fields:
+
+            field = ReconciliationComplexTransactionField(master_user=self.transaction_type.master_user,
+                                                          complex_transaction=self.complex_transaction)
+
+            if ttype_field.value_string:
+                try:
+                    field.value_string = formula.safe_eval(ttype_field.value_string, names=names,
+                        context=self._context)
+                except formula.InvalidExpression:
+                    field.value_string = '<InvalidExpression>'
+            if ttype_field.value_float:
+                try:
+                    field.value_float = formula.safe_eval(ttype_field.value_float, names=names,
+                                                           context=self._context)
+                except formula.InvalidExpression:
+                    pass
+
+            if ttype_field.value_date:
+                try:
+                    field.value_date = formula.safe_eval(ttype_field.value_date, names=names,
+                                                           context=self._context)
+                except formula.InvalidExpression:
+                    pass
+
+            field.reference_name = ttype_field.reference_name
+            field.description = ttype_field.description
+            field.save()
+
+
     def execute_complex_transaction_text_and_date(self):
 
         print('execute_complex_transaction_text_and_date')
@@ -1734,6 +1787,8 @@ class TransactionTypeProcess(object):
         self.execute_complex_transaction_text_and_date()
 
         self.execute_user_fields_expressions()
+
+        self.execute_recon_fields_expressions()
 
         self.complex_transaction.save()  # save executed text and date expression
 

@@ -24,11 +24,11 @@ from poms.instruments.models import InstrumentType, Instrument, Periodicity, Dai
     AccrualCalculationModel, PricingPolicy
 from poms.integrations.models import InstrumentDownloadScheme, InstrumentDownloadSchemeInput, \
     InstrumentDownloadSchemeAttribute, PriceDownloadScheme, ComplexTransactionImportScheme, \
-    ComplexTransactionImportSchemeInput, ComplexTransactionImportSchemeRule, ComplexTransactionImportSchemeField, \
+    ComplexTransactionImportSchemeInput, ComplexTransactionImportSchemeField, \
     PricingAutomatedSchedule, PortfolioMapping, CurrencyMapping, InstrumentTypeMapping, AccountMapping, \
     InstrumentMapping, CounterpartyMapping, ResponsibleMapping, Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, \
     PeriodicityMapping, DailyPricingModelMapping, PaymentSizeDetailMapping, AccrualCalculationModelMapping, \
-    PriceDownloadSchemeMapping, AccountTypeMapping, PricingPolicyMapping
+    PriceDownloadSchemeMapping, AccountTypeMapping, PricingPolicyMapping, ComplexTransactionImportSchemeRuleScenario
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_attrs.serializers import GenericClassifierViewSerializer, GenericClassifierNodeSerializer, \
     GenericAttributeTypeSerializer
@@ -1562,7 +1562,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
     def get_complex_transaction_import_scheme_rules(self, scheme):
 
-        rules = to_json_objects(ComplexTransactionImportSchemeRule.objects.filter(scheme=scheme["pk"]))
+        rules = to_json_objects(ComplexTransactionImportSchemeRuleScenario.objects.filter(scheme=scheme["pk"]))
 
         # results = unwrap_items(rules)
 

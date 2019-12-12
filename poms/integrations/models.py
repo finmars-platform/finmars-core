@@ -889,6 +889,7 @@ class PricingAutomatedSchedule(models.Model):
 # ----------------------------------------
 
 
+
 class ComplexTransactionImportScheme(models.Model):
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     scheme_name = models.CharField(max_length=255, verbose_name=ugettext_lazy('scheme name'))
@@ -921,13 +922,29 @@ class ComplexTransactionImportSchemeInput(models.Model):
         return self.name
 
 
-class ComplexTransactionImportSchemeRule(models.Model):
-    scheme = models.ForeignKey(ComplexTransactionImportScheme, related_name='rules',
+class ComplexTransactionImportSchemeSelectorValue(models.Model):
+
+    scheme = models.ForeignKey(ComplexTransactionImportScheme, related_name='selector_values',
+                               verbose_name=ugettext_lazy('scheme'), on_delete=models.CASCADE)
+
+    value = models.CharField(max_length=1000, verbose_name=ugettext_lazy('value '))
+    notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
+
+
+
+class ComplexTransactionImportSchemeRuleScenario(models.Model):
+    scheme = models.ForeignKey(ComplexTransactionImportScheme, related_name='rule_scenarios',
                                verbose_name=ugettext_lazy('scheme'), on_delete=models.CASCADE)
     # order = models.SmallIntegerField(default=0)
-    value = models.CharField(max_length=255, blank=True, default='', verbose_name=ugettext_lazy('mapping value'))
+
+    name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'))
+    
+    
+    # value = models.CharField(max_length=255, blank=True, default='', verbose_name=ugettext_lazy('mapping value'))
     transaction_type = models.ForeignKey('transactions.TransactionType', on_delete=models.CASCADE,
                                          verbose_name=ugettext_lazy('transaction type'))
+
+    selector_values = models.ManyToManyField('ComplexTransactionImportSchemeSelectorValue', blank=True, related_name='rule_selector_values', verbose_name=ugettext_lazy('selector values'))
 
     class Meta:
         verbose_name = ugettext_lazy('complex transaction import scheme rule')
@@ -936,14 +953,14 @@ class ComplexTransactionImportSchemeRule(models.Model):
         order_with_respect_to = 'scheme'
 
     def __str__(self):
-        return self.value
-
+        return self.name
 
 class ComplexTransactionImportSchemeField(models.Model):
     # for simpler admin
     # scheme = models.ForeignKey(ComplexTransactionImportScheme, verbose_name=ugettext_lazy('scheme'))
-    rule = models.ForeignKey(ComplexTransactionImportSchemeRule, related_name='fields',
-                             verbose_name=ugettext_lazy('rule'), on_delete=models.CASCADE)
+    rule_scenario = models.ForeignKey(ComplexTransactionImportSchemeRuleScenario, related_name='fields',
+                                      null=True,
+                                      verbose_name=ugettext_lazy('rule scenario'), on_delete=models.CASCADE)
     # order = models.SmallIntegerField(default=0)
     # name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'))
     transaction_type_input = models.ForeignKey('transactions.TransactionTypeInput', on_delete=models.CASCADE,
@@ -954,7 +971,32 @@ class ComplexTransactionImportSchemeField(models.Model):
         verbose_name = ugettext_lazy('complex transaction import scheme field')
         verbose_name_plural = ugettext_lazy('complex transaction import scheme fields')
         # ordering = ['order']
-        order_with_respect_to = 'rule'
+        # order_with_respect_to = 'rule_scenario'
 
     def __str__(self):
-        return '%s - %s' % (self.rule, self.transaction_type_input,)
+        return '%s - %s' % (self.rule_scenario, self.transaction_type_input,)
+
+
+class ComplexTransactionImportSchemeReconScenario(models.Model):
+
+    scheme = models.ForeignKey(ComplexTransactionImportScheme, related_name='recon_scenarios',
+                               verbose_name=ugettext_lazy('scheme'), on_delete=models.CASCADE)
+
+    name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'))
+    line_reference_id = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('line reference id'))
+    reference_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('reference_date'))
+
+    selector_values = models.ManyToManyField('ComplexTransactionImportSchemeSelectorValue', blank=True, related_name='recon_selector_values', verbose_name=ugettext_lazy('selector values'))
+
+
+class ComplexTransactionImportSchemeReconField(models.Model):
+
+    recon_scenario = models.ForeignKey(ComplexTransactionImportSchemeReconScenario, related_name='fields',
+                               verbose_name=ugettext_lazy('recon scenario'), on_delete=models.CASCADE)
+
+    reference_name = models.CharField(max_length=255, verbose_name=ugettext_lazy('reference name '))
+    description = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('description'))
+
+    value_string = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('value string'))
+    value_float = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('value float'))
+    value_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('value date'))

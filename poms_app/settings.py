@@ -117,6 +117,8 @@ INSTALLED_APPS = [
     'poms.reference_tables',
     'poms.celery_tasks',
 
+    'poms.reconciliation',
+
     'django.contrib.admin',
     'django.contrib.admindocs',
 

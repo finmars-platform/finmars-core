@@ -1193,14 +1193,14 @@ def complex_transaction_csv_file_import(self, instance):
     scheme = instance.scheme
     scheme_inputs = list(scheme.inputs.all())
 
-    scheme_rules = scheme.rules.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()
+    scheme_rules = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()
 
     # scheme_rules = {r.value: r for r in
     #                 scheme.rules.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()}
 
     _l.info('scheme %s - inputs=%s, rules=%s', scheme,
             [(i.name, i.column) for i in scheme_inputs],
-            [(r.value, r.transaction_type.user_code) for r in scheme_rules])
+            [(r.transaction_type.user_code) for r in scheme_rules])
 
     mapping_map = {
         Account: AccountMapping,
@@ -1435,30 +1435,17 @@ def complex_transaction_csv_file_import(self, instance):
 
             for scheme_rule in scheme_rules:
 
-                if scheme_rule.value == rule_value:
+                selector_values = scheme_rule.selector_values.all()
 
-                    matched_rule = True
+                for selector_value in selector_values:
 
-                    try:
-                        # rule = scheme_rules[rule_value]
-                        rule = scheme_rule
-                    except:
+                    if selector_value.value == rule_value:
 
-                        error_rows['level'] = 'error'
+                        matched_rule = True
 
-                        _l.info('rule does not find: %s', rule_value, exc_info=True)
-                        error_rows['error_message'] = error_rows['error_message'] + '\n' + '\n' + str(ugettext(
-                            'Can\'t find transaction type by "%(value)s"') % {
-                                                                                                          'value': rule_value
-                                                                                                      })
-                        instance.error_rows.append(error_rows)
-                        if instance.break_on_error:
-                            instance.error_row_index = row_index
-                            error_rows['error_reaction'] = 'Break'
-                            return
-                        else:
-                            continue
-                    _l.info('founded rule: %s -> %s', rule, rule.transaction_type)
+                if matched_rule:
+
+                    rule = scheme_rule
 
                     fields = {}
                     fields_error = []
@@ -1603,11 +1590,11 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
     scheme = instance.scheme
     scheme_inputs = list(scheme.inputs.all())
-    scheme_rules = scheme.rules.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()
+    scheme_rules = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()
 
     _l.info('scheme %s - inputs=%s, rules=%s', scheme,
             [(i.name, i.column) for i in scheme_inputs],
-            [(r.value, r.transaction_type.user_code) for r in scheme_rules])
+            [(r.transaction_type.user_code) for r in scheme_rules])
 
     mapping_map = {
         Account: AccountMapping,
