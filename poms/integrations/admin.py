@@ -16,7 +16,8 @@ from poms.integrations.models import Task, ImportConfig, ProviderClass, Currency
     ComplexTransactionImportScheme, ComplexTransactionImportSchemeField, ComplexTransactionImportSchemeInput, \
     PortfolioClassifierMapping, AccountClassifierMapping, \
     CounterpartyClassifierMapping, ResponsibleClassifierMapping, InstrumentClassifierMapping, \
-    ComplexTransactionImportSchemeRuleScenario
+    ComplexTransactionImportSchemeRuleScenario, ComplexTransactionImportSchemeReconScenario, \
+    ComplexTransactionImportSchemeReconField
 
 admin.site.register(ProviderClass, ClassModelAdmin)
 admin.site.register(FactorScheduleDownloadMethod, ClassModelAdmin)
@@ -309,6 +310,11 @@ class ComplexTransactionImportSchemeFieldInline(admin.TabularInline):
     extra = 0
 
 
+class ComplexTransactionImportSchemeReconFieldInline(admin.TabularInline):
+    model = ComplexTransactionImportSchemeReconField
+    raw_id_fields = ['recon_scenario']
+    extra = 0
+
 class ComplexTransactionImportSchemeAdmin(AbstractModelAdmin):
     model = ComplexTransactionImportScheme
     master_user_path = 'master_user'
@@ -360,6 +366,26 @@ class ComplexTransactionImportSchemeRuleScenarioAdmin(AbstractModelAdmin):
 
 
 admin.site.register(ComplexTransactionImportSchemeRuleScenario, ComplexTransactionImportSchemeRuleScenarioAdmin)
+
+
+class ComplexTransactionImportSchemeReconScenarioAdmin(AbstractModelAdmin):
+    model = ComplexTransactionImportSchemeReconScenario
+    master_user_path = 'scheme__master_user'
+    list_display = ['id', 'master_user', 'scheme']
+    list_select_related = ['scheme', 'scheme__master_user', ]
+    search_fields = ['id', 'scheme__scheme_name', ]
+    raw_id_fields = ['scheme',]
+    inlines = [
+        ComplexTransactionImportSchemeReconFieldInline
+    ]
+
+    def master_user(self, obj):
+        return obj.scheme.master_user
+
+    master_user.admin_order_field = 'scheme__master_user'
+
+
+admin.site.register(ComplexTransactionImportSchemeReconScenario, ComplexTransactionImportSchemeReconScenarioAdmin)
 
 # class ComplexTransactionImportSchemeFieldAdmin(AbstractModelAdmin):
 #     model = ComplexTransactionImportSchemeField

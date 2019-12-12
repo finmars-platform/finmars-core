@@ -947,8 +947,8 @@ class ComplexTransactionImportSchemeRuleScenario(models.Model):
     selector_values = models.ManyToManyField('ComplexTransactionImportSchemeSelectorValue', blank=True, related_name='rule_selector_values', verbose_name=ugettext_lazy('selector values'))
 
     class Meta:
-        verbose_name = ugettext_lazy('complex transaction import scheme rule')
-        verbose_name_plural = ugettext_lazy('complex transaction import scheme rules')
+        verbose_name = ugettext_lazy('complex transaction import scheme rule scenario')
+        verbose_name_plural = ugettext_lazy('complex transaction import scheme rules scenarios')
         # ordering = ['order']
         order_with_respect_to = 'scheme'
 
@@ -988,6 +988,12 @@ class ComplexTransactionImportSchemeReconScenario(models.Model):
 
     selector_values = models.ManyToManyField('ComplexTransactionImportSchemeSelectorValue', blank=True, related_name='recon_selector_values', verbose_name=ugettext_lazy('selector values'))
 
+    class Meta:
+        verbose_name = ugettext_lazy('complex transaction import scheme recon scenario')
+        verbose_name_plural = ugettext_lazy('complex transaction import scheme recon scenarios')
+
+    def __str__(self):
+        return self.name
 
 class ComplexTransactionImportSchemeReconField(models.Model):
 
