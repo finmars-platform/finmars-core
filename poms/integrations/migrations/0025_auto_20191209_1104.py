@@ -71,16 +71,16 @@ class Migration(migrations.Migration):
                 ('recon_scenario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='fields', to='integrations.ComplexTransactionImportSchemeReconScenario', verbose_name='recon scenario')),
             ],
         ),
-        migrations.RenameField(
-            model_name='complextransactionimportschemefield',
-            old_name='rule',
-            new_name='rule_scenario'
-        ),
-        migrations.AlterField(
-            model_name='complextransactionimportschemefield',
-            name='rule_scenario',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fields', to='integrations.ComplexTransactionImportSchemeRuleScenario', verbose_name='rule scenario'),
-        ),
+        # migrations.RenameField(
+        #     model_name='complextransactionimportschemefield',
+        #     old_name='rule',
+        #     new_name='rule_scenario'
+        # ),
+        # migrations.AlterField(
+        #     model_name='complextransactionimportschemefield',
+        #     name='rule_scenario',
+        #     field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fields', to='integrations.ComplexTransactionImportSchemeRuleScenario', verbose_name='rule scenario'),
+        # ),
         migrations.AlterOrderWithRespectTo(
             name='complextransactionimportschemefield',
             order_with_respect_to=None,
