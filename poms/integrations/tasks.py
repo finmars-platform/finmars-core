@@ -1431,9 +1431,9 @@ def complex_transaction_csv_file_import(self, instance):
                     continue
             _l.info('rule value: %s', rule_value)
 
-            matched_rule = False
-
             for scheme_rule in scheme_rules:
+
+                matched_rule = False
 
                 selector_values = scheme_rule.selector_values.all()
 

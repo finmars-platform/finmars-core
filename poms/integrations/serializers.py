@@ -1376,6 +1376,7 @@ class ComplexTransactionImportSchemeReconScenarioSerializer(serializers.ModelSer
 
         ret = super(ComplexTransactionImportSchemeReconScenarioSerializer, self).to_internal_value(data)
 
+        # Special thing to ignore selector values type check
         ret['selector_values'] = selector_values
 
         return ret
@@ -1461,6 +1462,7 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
 
         ret = super(ComplexTransactionImportSchemeRuleScenarioSerializer, self).to_internal_value(data)
 
+        # Special thing to ignore selector values type check
         ret['selector_values'] = selector_values
 
         return ret
