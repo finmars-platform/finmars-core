@@ -160,7 +160,12 @@ def process_bank_file_for_reconcile(self, instance):
                     continue
             _l.info('selector_value value: %s', selector_value)
 
+            matched_selector = False
+            processed_scenarios = 0
+
             for scheme_recon in recon_scenarios:
+
+                matched_selector = False
 
                 selector_values = scheme_recon.selector_values.all()
 
@@ -170,6 +175,8 @@ def process_bank_file_for_reconcile(self, instance):
                         matched_selector = True
 
                 if matched_selector:
+
+                    processed_scenarios = processed_scenarios + 1
 
                     result_row = {}
 
@@ -252,7 +259,7 @@ def process_bank_file_for_reconcile(self, instance):
 
                     instance.results.append(result_row)
 
-            if matched_selector == False:
+            if processed_scenarios == 0:
                 error_rows['level'] = 'error'
 
                 if instance.break_on_error:

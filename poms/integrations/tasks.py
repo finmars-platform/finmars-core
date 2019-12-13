@@ -1193,14 +1193,14 @@ def complex_transaction_csv_file_import(self, instance):
     scheme = instance.scheme
     scheme_inputs = list(scheme.inputs.all())
 
-    scheme_rules = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()
+    rule_scenarios = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()
 
     # scheme_rules = {r.value: r for r in
     #                 scheme.rules.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()}
 
     _l.info('scheme %s - inputs=%s, rules=%s', scheme,
             [(i.name, i.column) for i in scheme_inputs],
-            [(r.transaction_type.user_code) for r in scheme_rules])
+            [(r.transaction_type.user_code) for r in rule_scenarios])
 
     mapping_map = {
         Account: AccountMapping,
@@ -1431,9 +1431,12 @@ def complex_transaction_csv_file_import(self, instance):
                     continue
             _l.info('rule value: %s', rule_value)
 
-            for scheme_rule in scheme_rules:
+            matched_selector = False
+            processed_scenarios = 0
 
-                matched_rule = False
+            for scheme_rule in rule_scenarios:
+
+                matched_selector = False
 
                 selector_values = scheme_rule.selector_values.all()
 
@@ -1441,9 +1444,11 @@ def complex_transaction_csv_file_import(self, instance):
 
                     if selector_value.value == rule_value:
 
-                        matched_rule = True
+                        matched_selector = True
 
-                if matched_rule:
+                if matched_selector:
+
+                    processed_scenarios = processed_scenarios + 1
 
                     rule = scheme_rule
 
@@ -1521,7 +1526,7 @@ def complex_transaction_csv_file_import(self, instance):
                             # if settings.DEBUG:
                             #     transaction.set_rollback(True)
 
-            if matched_rule == False:
+            if processed_scenarios == 0:
                 error_rows['level'] = 'error'
 
                 if instance.break_on_error:
@@ -1590,11 +1595,11 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
     scheme = instance.scheme
     scheme_inputs = list(scheme.inputs.all())
-    scheme_rules = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()
+    rule_scenarios = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()
 
     _l.info('scheme %s - inputs=%s, rules=%s', scheme,
             [(i.name, i.column) for i in scheme_inputs],
-            [(r.transaction_type.user_code) for r in scheme_rules])
+            [(r.transaction_type.user_code) for r in rule_scenarios])
 
     mapping_map = {
         Account: AccountMapping,
@@ -1806,13 +1811,24 @@ def complex_transaction_csv_file_import_validate(self, instance):
                     continue
             _l.info('rule value: %s', rule_value)
 
+            processed_scenarios = 0
             matched_rule = False
 
-            for scheme_rule in scheme_rules:
+            for scheme_rule in rule_scenarios:
 
-                if scheme_rule.value == rule_value:
+                matched_selector = False
 
-                    matched_rule = True
+                selector_values = scheme_rule.selector_values.all()
+
+                for selector_value in selector_values:
+
+                    if selector_value.value == rule_value:
+
+                        matched_selector = True
+
+                if matched_selector:
+
+                    processed_scenarios = processed_scenarios + 1
 
                     error_rows['error_data']['columns']['transaction_type_selector'].append('TType Selector')
 
@@ -1906,7 +1922,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
             print('matched_rule %s' % matched_rule)
 
-            if matched_rule == False:
+            if processed_scenarios == 0:
                 error_rows['level'] = 'error'
 
                 if instance.break_on_error:
