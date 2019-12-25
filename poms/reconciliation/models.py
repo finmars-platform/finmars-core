@@ -25,10 +25,14 @@ class ReconciliationComplexTransactionField(models.Model):
 
     MATCHED = 1
     UNMATCHED = 2
+    AUTO_MATCHED = 3
+    IGNORE = 4
 
     STATUS_CHOICES = (
         (MATCHED, ugettext_lazy('Matched')),
         (UNMATCHED, ugettext_lazy('Unmatched')),
+        (AUTO_MATCHED, ugettext_lazy('Auto Matched')),
+        (IGNORE, ugettext_lazy('Ignore')),
     )
 
     master_user = models.ForeignKey(MasterUser, verbose_name=ugettext_lazy('master user'),
@@ -43,8 +47,6 @@ class ReconciliationComplexTransactionField(models.Model):
     value_string = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('value string'))
     value_float = models.IntegerField(default=0, verbose_name=ugettext_lazy('value float'))
     value_date = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("value date"))
-
-    is_canceled = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is canceled'))
 
     status = models.PositiveSmallIntegerField(default=UNMATCHED, choices=STATUS_CHOICES, db_index=True,
                                               verbose_name=ugettext_lazy('status'))
@@ -63,10 +65,14 @@ class ReconciliationBankFileField(models.Model):
     MATCHED = 1
     CONFLICT = 2
     RESOLVED = 3
+    IGNORE = 4
+    AUTO_MATCHED = 5
     STATUS_CHOICES = (
         (MATCHED, ugettext_lazy('Matched')),
         (CONFLICT, ugettext_lazy('Conflict')),
         (RESOLVED, ugettext_lazy('Resolved')),
+        (IGNORE, ugettext_lazy('Ignore')),
+        (AUTO_MATCHED, ugettext_lazy('Auto Matched')),
     )
 
     master_user = models.ForeignKey(MasterUser, verbose_name=ugettext_lazy('master user'),
@@ -94,9 +100,16 @@ class ReconciliationBankFileField(models.Model):
 
     notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
 
+    linked_complex_transaction_field = models.ForeignKey(ReconciliationComplexTransactionField, null=True, blank=True, on_delete=models.SET_NULL,
+                                             related_name='bank_file_fields', verbose_name=ugettext_lazy('linked complex transaction field'))
+
     class Meta:
         verbose_name = ugettext_lazy('reconciliation bank file field')
         verbose_name_plural = ugettext_lazy('reconciliation bank file fields')
+
+        unique_together = [
+            ['master_user', 'source_id', 'reference_name', 'import_scheme_name'],
+        ]
 
 
 class ReconciliationNewBankFileField(models.Model):

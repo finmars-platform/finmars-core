@@ -17,8 +17,8 @@ from poms.reconciliation.serializers import ProcessBankFileForReconcileSerialize
     ReconciliationNewBankFileFieldSerializer, ReconciliationComplexTransactionFieldSerializer, \
     ReconciliationBankFileFieldSerializer
 from poms.reconciliation.tasks import process_bank_file_for_reconcile
-from django_filters.rest_framework import FilterSet
-from poms.common.filters import CharFilter
+from django_filters.rest_framework import FilterSet, ModelChoiceFilter
+from poms.common.filters import CharFilter, NoOpFilter, ModelExtMultipleChoiceFilter
 
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -42,6 +42,7 @@ class ReconciliationComplexTransactionFieldViewSet(AbstractModelViewSet):
 
 class ReconciliationBankFileFieldFilterSet(FilterSet):
     reference_name = CharFilter()
+    linked_complex_transaction_field = ModelChoiceFilter(queryset=ReconciliationComplexTransactionField.objects.all())
 
     class Meta:
         model = ReconciliationBankFileField

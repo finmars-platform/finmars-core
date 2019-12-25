@@ -225,8 +225,6 @@ def process_bank_file_for_reconcile(self, instance):
                             except formula.InvalidExpression:
                                 pass
 
-                        new_bank_file_field.save()
-
                         try:
 
                             existed_bank_file_field = ReconciliationBankFileField.objects.get(
@@ -239,9 +237,11 @@ def process_bank_file_for_reconcile(self, instance):
 
                         except ReconciliationBankFileField.DoesNotExist:
 
+                            new_bank_file_field.save()
+
+                            print('id %s' % new_bank_file_field.id)
+
                             serializer = ReconciliationNewBankFileFieldSerializer(new_bank_file_field)
-
-
 
                         result_row['fields'].append(serializer.data)
 

@@ -307,6 +307,15 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
 class AttributeFilter(BaseFilterBackend):
 
+    def format_groups(self, group_type, master_user, content_type):
+        if 'attributes.' in group_type:
+            attribute_type = GenericAttributeType.objects.get(user_code__exact=group_type.split('attributes.')[1],
+                                                              master_user=master_user, content_type=content_type)
+
+            return str(attribute_type.id)
+
+        return group_type
+
     def filter_queryset(self, request, queryset, view):
 
         print('Attributes Filter')
@@ -328,6 +337,17 @@ class AttributeFilter(BaseFilterBackend):
 
         # print('AttributeFilter.groups_types %s' % groups_types)
         # print('AttributeFilter.groups_values %s' % groups_values)
+
+        master_user = request.user.master_user
+
+        if hasattr(view.serializer_class, 'Meta'):
+            model = view.serializer_class.Meta.model
+        else:
+            return queryset
+
+        content_type = ContentType.objects.get_for_model(model, for_concrete_model=False)
+
+        groups_types = list(map(lambda x: self.format_groups(x, master_user, content_type), groups_types))
 
         if len(groups_types) and len(groups_values):
 

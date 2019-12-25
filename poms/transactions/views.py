@@ -1027,8 +1027,8 @@ def get_complex_transaction_queryset(select_related=True, transactions=False):
 
 
 class TransactionViewSet(AbstractWithObjectPermissionViewSet):
-    # queryset = get_transaction_queryset(select_related=False, complex_transaction_transactions=True)
-    queryset = get_transaction_queryset(select_related=False, complex_transaction_transactions=False)
+    queryset = get_transaction_queryset(select_related=False, complex_transaction_transactions=True)
+    # queryset = get_transaction_queryset(select_related=False, complex_transaction_transactions=False)
     serializer_class = TransactionSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,

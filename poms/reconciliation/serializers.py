@@ -36,7 +36,6 @@ class ReconciliationComplexTransactionFieldSerializer(serializers.ModelSerialize
         model = ReconciliationComplexTransactionField
         fields = (
             'id', 'master_user', 'complex_transaction', 'description', 'value_string', 'value_float', 'value_date',
-            'is_canceled',
             'status', 'reference_name')
 
 
@@ -54,6 +53,7 @@ class ReconciliationBankFileFieldSerializer(serializers.ModelSerializer):
             'status',
             'file_name', 'import_scheme_name',
             'reference_date', 'reference_name',
+            'linked_complex_transaction_field',
             'type')
 
     def get_type(self, obj):

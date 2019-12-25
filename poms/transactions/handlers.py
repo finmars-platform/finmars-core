@@ -1185,7 +1185,7 @@ class TransactionTypeProcess(object):
             if has_access:
                 perms.append({'group': group, 'permission': 'view_transaction'})
 
-        _l.debug('perms %s' % perms)
+        print("perms %s" % perms)
 
         assign_perms3(transaction, perms)
 
@@ -1220,6 +1220,7 @@ class TransactionTypeProcess(object):
 
             # _l.debug('groupid %s permissions_count %s' % (group.name, permissions_count))
 
+            print('self.transaction_type user_code %s' % self.transaction_type.user_code)
             print('permissions_count %s' % permissions_count)
             print('permissions_total %s' % permissions_total)
 

@@ -931,7 +931,6 @@ class ComplexTransactionImportSchemeSelectorValue(models.Model):
     notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
 
 
-
 class ComplexTransactionImportSchemeRuleScenario(models.Model):
     scheme = models.ForeignKey(ComplexTransactionImportScheme, related_name='rule_scenarios',
                                verbose_name=ugettext_lazy('scheme'), on_delete=models.CASCADE)
@@ -956,6 +955,7 @@ class ComplexTransactionImportSchemeRuleScenario(models.Model):
         if self.name:
             return self.name
         return ''
+
 
 class ComplexTransactionImportSchemeField(models.Model):
     # for simpler admin
@@ -998,6 +998,7 @@ class ComplexTransactionImportSchemeReconScenario(models.Model):
         if self.name:
             return self.name
         return ''
+
 
 class ComplexTransactionImportSchemeReconField(models.Model):
 

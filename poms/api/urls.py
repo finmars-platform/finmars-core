@@ -333,6 +333,7 @@ router.register(r'import/configuration/check-duplicates', configuration_export.C
 
 router.register(r'reconciliation/process-bank-file', reconciliation.ProcessBankFileForReconcileViewSet, 'process_bank_file_for_reconcile')
 router.register(r'reconciliation/bank-field', reconciliation.ReconciliationBankFileFieldViewSet, 'bank_fields')
+router.register(r'reconciliation/new-bank-field', reconciliation.ReconciliationNewBankFileFieldViewSet, 'new_bank_fields')
 router.register(r'reconciliation/complex-transaction-field', reconciliation.ReconciliationComplexTransactionFieldViewSet, 'complex_transaction_fields')
 
 
