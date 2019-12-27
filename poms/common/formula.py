@@ -601,6 +601,27 @@ def _add_price_history(evaluator, date, instrument, pricing_policy, principal_pr
 _add_price_history.evaluator = True
 
 
+def _get_latest_principal_price(evaluator, date_from, date_to, instrument, pricing_policy, default_value):
+    from poms.users.utils import get_master_user_from_context
+    from poms.instruments.models import PriceHistory
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+    pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
+
+    results = PriceHistory.objects.filter(date__gte=date_from, date__lte=date_to, instrument=instrument,
+                                          pricing_policy=pricing_policy).order_by('-date')
+
+    if len(list(results)):
+        return results[0].principal_price
+
+    return default_value
+
+
+_get_latest_principal_price.evaluator = True
+
 def _get_price_history_principal_price(evaluator, date, instrument, pricing_policy, default_value=0):
     from poms.users.utils import get_master_user_from_context
     from poms.instruments.models import PriceHistory, Instrument, PricingPolicy
@@ -1383,6 +1404,8 @@ FUNCTIONS = [
     SimpleEval2Def('add_fx_history', _add_fx_history),
     SimpleEval2Def('add_price_history', _add_price_history),
     SimpleEval2Def('generate_user_code', _generate_user_code),
+    SimpleEval2Def('get_latest_principal_price', _get_latest_principal_price),
+
 
     SimpleEval2Def('get_instrument_user_attribute_value', _get_instrument_user_attribute_value),
 
