@@ -622,6 +622,7 @@ def _get_latest_principal_price(evaluator, date_from, date_to, instrument, prici
 
 _get_latest_principal_price.evaluator = True
 
+
 def _get_price_history_principal_price(evaluator, date, instrument, pricing_policy, default_value=0):
     from poms.users.utils import get_master_user_from_context
     from poms.instruments.models import PriceHistory, Instrument, PricingPolicy
@@ -711,11 +712,15 @@ def _get_factor_schedule(evaluator, date, instrument):
         result = None
 
     if result is None:
-        try:
-            result = InstrumentFactorSchedule.objects.filter(effective_date__lte=date, instrument=instrument).order_by('-effective_date')[0]
-        except (InstrumentFactorSchedule.DoesNotExist, KeyError):
-            result = None
 
+        results = InstrumentFactorSchedule.objects.filter(effective_date__lte=date, instrument=instrument).order_by(
+            '-effective_date')
+
+        if len(list(results)):
+            result = results[0]
+        else:
+            result = None
+        
     if result is not None:
         return result.factor_value
 
@@ -882,7 +887,6 @@ def _safe_get_instrument(evaluator, instrument):
 
 
 def _set_instrument_field(evaluator, instrument, parameter_name, parameter_value):
-
     context = evaluator.context
 
     instrument = _safe_get_instrument(evaluator, instrument)
@@ -1382,13 +1386,11 @@ FUNCTIONS = [
 
     SimpleEval2Def('simple_price', _simple_price),
 
-
     SimpleEval2Def('get_currency_field', _get_currency_field),
     SimpleEval2Def('set_currency_field', _set_currency_field),
 
     SimpleEval2Def('get_instrument_field', _get_instrument_field),
     SimpleEval2Def('set_instrument_field', _set_instrument_field),
-
 
     SimpleEval2Def('get_instrument_accrual_size', _get_instrument_accrual_size),
     SimpleEval2Def('get_instrument_accrual_factor', _get_instrument_accrual_factor),
@@ -1405,7 +1407,6 @@ FUNCTIONS = [
     SimpleEval2Def('add_price_history', _add_price_history),
     SimpleEval2Def('generate_user_code', _generate_user_code),
     SimpleEval2Def('get_latest_principal_price', _get_latest_principal_price),
-
 
     SimpleEval2Def('get_instrument_user_attribute_value', _get_instrument_user_attribute_value),
 
