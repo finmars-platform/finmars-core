@@ -30,6 +30,7 @@ class ComplexImportSchemeActionTransactionImportSerializer(serializers.ModelSeri
 
 class ComplexImportSchemeActionSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False, allow_null=True)
+    skip = serializers.BooleanField(required=False)
 
     complex_transaction_import_scheme = ComplexImportSchemeActionTransactionImportSerializer(
         source='compleximportschemeactiontransactionimport',
@@ -42,7 +43,7 @@ class ComplexImportSchemeActionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComplexImportSchemeAction
         fields = (
-            'id', 'action_notes', 'order', 'csv_import_scheme', 'complex_transaction_import_scheme')
+            'id', 'action_notes', 'order', 'skip', 'csv_import_scheme', 'complex_transaction_import_scheme')
 
 
 class ComplexImportSchemeSerializer(serializers.ModelSerializer):
@@ -94,6 +95,11 @@ class ComplexImportSchemeSerializer(serializers.ModelSerializer):
 
                 action_csv_import_scheme.action_notes = action_data.get('action_notes',
                                                                         action_csv_import_scheme.action_notes)
+
+                action_csv_import_scheme.skip = action_data.get('skip',
+                                                                                action_csv_import_scheme.skip)
+
+
                 for attr, value in action_csv_import_scheme_data.items():
                     setattr(action_csv_import_scheme, attr, value)
 
@@ -125,6 +131,10 @@ class ComplexImportSchemeSerializer(serializers.ModelSerializer):
 
                 action_complex_transaction_import_scheme.action_notes = action_data.get('action_notes',
                                                                                         action_complex_transaction_import_scheme.action_notes)
+
+                action_complex_transaction_import_scheme.skip = action_data.get('skip',
+                                                                                        action_complex_transaction_import_scheme.skip)
+
                 for attr, value in action_complex_transaction_import_scheme_data.items():
                     setattr(action_complex_transaction_import_scheme, attr, value)
 
