@@ -1389,6 +1389,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             action = {
                 "action_notes": order.action_notes,
                 "order": order.order,
+                "skip": order.skip,
                 "csv_import_scheme": None,
                 "complex_transaction_import_scheme": None
             }

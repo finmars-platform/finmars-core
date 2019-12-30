@@ -33,6 +33,8 @@ import poms.complex_import.views as complex_import
 
 import poms.system.views as system
 
+import poms.file_reports.views as file_reports
+
 router = routers.DefaultRouter()
 
 router.register(r'system/ecosystem-configuration', system.EcosystemConfigurationViewSet, 'ecosystemconfiguration')
@@ -335,6 +337,8 @@ router.register(r'reconciliation/process-bank-file', reconciliation.ProcessBankF
 router.register(r'reconciliation/bank-field', reconciliation.ReconciliationBankFileFieldViewSet, 'bank_fields')
 router.register(r'reconciliation/new-bank-field', reconciliation.ReconciliationNewBankFileFieldViewSet, 'new_bank_fields')
 router.register(r'reconciliation/complex-transaction-field', reconciliation.ReconciliationComplexTransactionFieldViewSet, 'complex_transaction_fields')
+
+router.register(r'file-reports/file-report', file_reports.FileReportViewSet, 'file_reports')
 
 
 urlpatterns = [
