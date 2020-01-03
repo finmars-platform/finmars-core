@@ -125,7 +125,14 @@ def generate_file_report(instance, master_user):
     result.append(columnRow)
 
     for contentRow in rows_content:
-        result.append(','.join(str(contentRow)))
+
+        contentRowStr = list(map(str, contentRow))
+
+        # _l.debug('contentRowStr %s ' % contentRowStr)
+
+        result.append(','.join(contentRowStr))
+
+    # _l.debug('result %s ' % result)
 
     result = '\n'.join(result)
 
