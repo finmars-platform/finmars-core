@@ -7,6 +7,12 @@ from poms.users.models import MasterUser
 
 import io
 
+from logging import getLogger
+
+
+_l = getLogger('poms.file_reports')
+
+
 
 class FileReport(models.Model):
     name = models.CharField(max_length=255)
@@ -32,7 +38,10 @@ class FileReport(models.Model):
 
         file = io.StringIO(text)
 
-        file_reports_storage.save(file_url, file)
+        try:
+            file_reports_storage.save(file_url, file)
+        except Exception as e:
+            _l.debug('Exception %s' % e)
 
         self.file_url = file_url
 

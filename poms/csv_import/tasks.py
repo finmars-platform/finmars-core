@@ -135,6 +135,8 @@ def generate_file_report(instance, master_user):
 
     file_report = FileReport()
 
+    _l.debug('generate_file_report uploading file ')
+
     file_report.upload_file(file_name=file_name, text=result, master_user=master_user)
     file_report.master_user = master_user
     file_report.name = "Simple Data Import Validation %s" % current_date_time
