@@ -9,12 +9,9 @@ import io
 
 from logging import getLogger
 
-
 _l = getLogger('poms.file_reports')
 
 from tempfile import NamedTemporaryFile
-
-
 
 
 class FileReport(models.Model):
@@ -39,13 +36,19 @@ class FileReport(models.Model):
 
         file_url = self._get_path(master_user, file_name)
 
-
         try:
+
+            encoded_text = text.encode('utf-8')
 
             with NamedTemporaryFile() as tmpf:
 
-                file_reports_storage.save(file_url, tmpf)
+                tmpf.write(encoded_text)
 
+                tmpf.flush()
+
+                _l.debug(tmpf)
+
+                file_reports_storage.save(file_url, tmpf)
 
         except Exception as e:
             _l.debug('Exception %s' % e)
