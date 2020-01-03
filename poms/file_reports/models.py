@@ -46,7 +46,6 @@ class FileReport(models.Model):
 
                 file_reports_storage.save(file_url, tmpf)
 
-                tmpf.flush()
 
         except Exception as e:
             _l.debug('Exception %s' % e)
