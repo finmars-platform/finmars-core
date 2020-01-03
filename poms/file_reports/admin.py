@@ -9,8 +9,8 @@ from .models import FileReport
 class FileReportAdmin(admin.ModelAdmin):
     model = FileReport
     master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'content_type', 'type', 'name', 'notes', 'file_url']
+    list_display = ['id', 'master_user', 'type', 'name', 'notes', 'file_url']
     search_fields = ['id', 'name']
-    raw_id_fields = ['master_user', 'content_type']
+    raw_id_fields = ['master_user']
 
 admin.site.register(FileReport, FileReportAdmin)

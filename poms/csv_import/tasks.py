@@ -1,8 +1,11 @@
 from celery import shared_task, chord, current_task
 from django.contrib.auth.models import Permission
 from django.db import IntegrityError
+from django.utils.timezone import now
 
 from poms.common.formula import safe_eval, ExpressionEvalError
+from poms.common.utils import date_now
+from poms.file_reports.models import FileReport
 from poms.obj_perms.models import GenericObjectPermission
 
 from poms.users.models import EcosystemDefault, Group
@@ -34,8 +37,117 @@ from logging import getLogger
 
 _l = getLogger('poms.csv_import')
 
+from datetime import date, datetime
+
 from io import StringIO
 import csv
+
+
+def generate_file_report(instance, master_user):
+
+    _l.debug('instance %s' % instance)
+
+    columns = ['Row number']
+
+    columns = columns + instance.stats[0]['error_data']['columns']['imported_columns']
+    columns = columns + instance.stats[0]['error_data']['columns']['data_matching']
+
+    columns.append('Error Message')
+    columns.append('Reaction')
+
+    rows_content = []
+
+    for errorRow in instance.stats:
+
+        localResult = []
+
+        localResult.append(errorRow['original_row_index'])
+
+        localResult = localResult + errorRow['error_data']['data']['imported_columns']
+        localResult = localResult + errorRow['error_data']['data']['data_matching']
+
+        localResult.append('"' + errorRow['error_message'] + '"')
+        localResult.append(errorRow['error_reaction'])
+
+        rows_content.append(localResult)
+
+    columnRow = ','.join(columns)
+
+    result = []
+
+    result.append('Type, ' + 'Transaction Import')
+    result.append('Error handle, ' + instance.error_handler)
+    result.append('Filename, ' + instance.file.name)
+    result.append('Mode, ' + instance.mode)
+    result.append('Import Rules - if object is not found, ' + instance.missing_data_handler)
+    # result.push('Entity, ' + vm.scheme.content_type)
+
+    result.append('Rows total, ' + str(instance.total_rows - 1))
+
+    rowsSuccessTotal = 0
+    rowsSkippedCount = 0
+    rowsFailedCount = 0
+
+    # rowsSkippedCount = instance.stats.filter(function (item) {
+    # return item.error_reaction === 'Skipped';
+    # }).length
+    #
+    #  rowsFailedCount = instance.stats.filter(function (item) {
+    # return item.error_reaction !== 'Skipped';
+    # }).length
+
+    for item in instance.stats:
+        if item['error_reaction'] == 'Skipped':
+            rowsSkippedCount = rowsSkippedCount + 1
+
+    for item in instance.stats:
+        if item['error_reaction'] != 'Skipped':
+            rowsFailedCount = rowsFailedCount + 1
+
+    if instance.error_handler == 'break':
+
+        index = instance.stats[0]['original_row_index']
+
+        rowsSuccessTotal = index - 1  # get row before error
+        rowsSuccessTotal = rowsSuccessTotal - 1  # exclude headers
+
+    else:
+        rowsSuccessTotal = instance.total_rows - 1 - rowsFailedCount - rowsSkippedCount
+
+    if rowsSuccessTotal < 0:
+        rowsSuccessTotal = 0
+
+    result.append('Rows success import, ' + str(rowsSuccessTotal))
+    result.append('Rows omitted, ' + str(rowsSkippedCount))
+    result.append('Rows fail import, ' + str(rowsFailedCount))
+
+    result.append('\n')
+    result.append(columnRow)
+
+    for contentRow in rows_content:
+        result.append(','.join(str(contentRow)))
+
+    result = '\n'.join(result)
+
+    current_date_time = now().strftime("%Y-%m-%d-%H-%m")
+
+    file_name = 'file_report_%s.csv' % current_date_time
+
+    file_report = FileReport()
+
+    file_report.upload_file(file_name=file_name, text=result, master_user=master_user)
+    file_report.master_user = master_user
+    file_report.name = "Simple Data Import Validation %s" % current_date_time
+    file_report.file_name = file_name
+    file_report.type = 'csv_import.validate'
+    file_report.notes = 'System File'
+
+    file_report.save()
+
+    _l.debug('file_report %s' % file_report)
+    _l.debug('file_report %s' % file_report.file_url)
+
+    return file_report.file_url
 
 
 def get_row_data(row, csv_fields):
@@ -755,6 +867,7 @@ class ValidateHandler:
 
         instance.imported = len(results)
         instance.stats = process_errors
+        instance.stats_url = generate_file_report(instance, master_user)
 
         return instance
 
@@ -874,52 +987,50 @@ class ImportHandler:
                     change_codename = 'change_' + scheme.content_type.model
                     view_codename = 'view_' + scheme.content_type.model
 
-                    manage_permission = Permission.objects.get( content_type=scheme.content_type, codename=manage_codename)
-                    change_permission = Permission.objects.get( content_type=scheme.content_type, codename=change_codename)
-                    view_permission = Permission.objects.get( content_type=scheme.content_type, codename=view_codename)
+                    manage_permission = Permission.objects.get(content_type=scheme.content_type,
+                                                               codename=manage_codename)
+                    change_permission = Permission.objects.get(content_type=scheme.content_type,
+                                                               codename=change_codename)
+                    view_permission = Permission.objects.get(content_type=scheme.content_type, codename=view_codename)
 
                     for member_group in member.groups.all():
-
-
 
                         if member_group.id == group.id:
 
                             if 'creator_manage' in table and table['creator_manage']:
-
                                 perm = GenericObjectPermission.objects.update_or_create(object_id=instance.id,
-                                                                              content_type=scheme.content_type,
-                                                                              group=group,
-                                                                              permission=manage_permission)
+                                                                                        content_type=scheme.content_type,
+                                                                                        group=group,
+                                                                                        permission=manage_permission)
 
                             if 'creator_change' in table and table['creator_change']:
-
                                 perm = GenericObjectPermission.objects.update_or_create(object_id=instance.id,
-                                                                              content_type=scheme.content_type,
-                                                                              group=group, permission=change_permission)
+                                                                                        content_type=scheme.content_type,
+                                                                                        group=group,
+                                                                                        permission=change_permission)
 
                             if 'creator_view' in table and table['creator_view']:
-
                                 perm = GenericObjectPermission.objects.update_or_create(object_id=instance.id,
-                                                                              content_type=scheme.content_type,
-                                                                              group=group, permission=view_permission)
+                                                                                        content_type=scheme.content_type,
+                                                                                        group=group,
+                                                                                        permission=view_permission)
                         else:
 
                             if 'other_manage' in table and table['other_manage']:
-
                                 perm = GenericObjectPermission.objects.update_or_create(object_id=instance.id,
                                                                                         content_type=scheme.content_type,
                                                                                         group=group,
                                                                                         permission=manage_permission)
                             if 'other_change' in table and table['other_change']:
-
                                 perm = GenericObjectPermission.objects.update_or_create(object_id=instance.id,
                                                                                         content_type=scheme.content_type,
-                                                                                        group=group, permission=change_permission)
+                                                                                        group=group,
+                                                                                        permission=change_permission)
                             if 'other_view' in table and table['other_view']:
-
                                 perm = GenericObjectPermission.objects.update_or_create(object_id=instance.id,
                                                                                         content_type=scheme.content_type,
-                                                                                        group=group, permission=view_permission)
+                                                                                        group=group,
+                                                                                        permission=view_permission)
 
     def is_inherit_rights(self, scheme, member):
 
@@ -942,11 +1053,9 @@ class ImportHandler:
                     if table:
 
                         if table['inherit_rights']:
-
                             result = True
 
         return result
-
 
     def add_inherited_permissions(self, instance, scheme, member, master_user):
 
@@ -956,23 +1065,22 @@ class ImportHandler:
 
             if instance.type:
                 for perm in instance.type.object_permissions.all():
-
                     type_codename = perm.permission.codename.split('_')[0]
                     account_perm = Permission.objects.get(codename=type_codename + '_' + 'account')
 
-                    GenericObjectPermission.objects.create(group=perm.group, object_id=instance.id, content_type=scheme.content_type,
+                    GenericObjectPermission.objects.create(group=perm.group, object_id=instance.id,
+                                                           content_type=scheme.content_type,
                                                            permission=account_perm)
 
         if scheme.content_type.model == 'instrument':
             if instance.instrument_type:
                 for perm in instance.instrument_type.object_permissions.all():
-
                     type_codename = perm.permission.codename.split('_')[0]
                     account_perm = Permission.objects.get(codename=type_codename + '_' + 'instrument')
 
-                    GenericObjectPermission.objects.create(group=perm.group, object_id=instance.id, content_type=scheme.content_type,
+                    GenericObjectPermission.objects.create(group=perm.group, object_id=instance.id,
+                                                           content_type=scheme.content_type,
                                                            permission=account_perm)
-
 
     def save_instance(self, scheme, result, error_handler, error_row, member, master_user):
 
@@ -1026,7 +1134,6 @@ class ImportHandler:
                 self.delete_dynamic_attributes(item, result['attributes'])
                 self.fill_with_dynamic_attributes(item, result['attributes'])
                 self.add_permissions(item, scheme, member, master_user)
-
 
             item.save()
 

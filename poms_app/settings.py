@@ -745,6 +745,14 @@ if LOCAL:
         }
     }
 
+    FILE_REPORTS_STORAGE = {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        'KWARGS': {
+            'location': '/home/szhitenev/projects/finmars/file_reports',
+            'base_url': '/api/file-reports/'
+        }
+    }
+
 else:
 
     IMPORT_CONFIG_STORAGE = {
@@ -766,6 +774,18 @@ else:
             'custom_domain': None
         }
     }
+
+    FILE_REPORTS_STORAGE = {
+        'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
+        'KWARGS': {
+            'acl': 'private',
+            'bucket': os.environ.get('AWS_STORAGE_FILE_REPORTS_BUCKET_NAME', None),
+            'querystring_expire': 10,
+            'custom_domain': None
+        }
+    }
+
+
 
 PRICING_AUTO_DOWNLOAD_DISABLED = True
 if os.environ.get('POMS_PRICING_AUTO_DOWNLOAD_DISABLED') == 'False':
