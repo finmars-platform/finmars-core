@@ -136,7 +136,7 @@ def generate_file_report(instance, master_user):
 
     result = '\n'.join(result)
 
-    current_date_time = now().strftime("%Y-%m-%d-%H-%m")
+    current_date_time = now().strftime("%Y-%m-%d-%H-%M")
 
     file_name = 'file_report_%s.csv' % current_date_time
 
