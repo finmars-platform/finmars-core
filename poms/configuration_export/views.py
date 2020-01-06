@@ -403,10 +403,15 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                                 key = '___{}__{}'
                                 key = key.format(input_prop['prop'], input_prop['code'])
 
-                                obj = model.objects.get(
-                                    pk=getattr(input_model, input_model.content_type.model).pk)
+                                try:
 
-                                input_json["fields"][key] = getattr(obj, input_prop['code'])
+                                    obj = model.objects.get(
+                                        pk=getattr(input_model, input_model.content_type.model).pk)
+
+                                    input_json["fields"][key] = getattr(obj, input_prop['code'])
+
+                                except AttributeError:
+                                    input_json["fields"][key] = None
 
         results = unwrap_items(inputs)
 
