@@ -2272,7 +2272,7 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
         fields = [
             'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'master_user',
 
-            'visibility_status',
+            'visibility_status', 'is_locked', 'is_canceled',
 
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
