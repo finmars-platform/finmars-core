@@ -1183,7 +1183,7 @@ def download_pricing_auto_scheduler(self):
 #             _l.info('schedule_file_import_delete: path=%s, countdown=%s', path, countdown)
 #             file_import_delete_async.apply_async(kwargs={'path': path}, countdown=countdown)
 
-def generate_file_report(instance, master_user):
+def generate_file_report(instance, master_user, type, name):
 
     def get_unique_columns(instance):
 
@@ -1318,9 +1318,9 @@ def generate_file_report(instance, master_user):
 
     file_report.upload_file(file_name=file_name, text=result, master_user=master_user)
     file_report.master_user = master_user
-    file_report.name = "Transaction Import Validation %s" % current_date_time
+    file_report.name = "%s %s" % (name, current_date_time)
     file_report.file_name = file_name
-    file_report.type = 'transaction_import.validate'
+    file_report.type = type
     file_report.notes = 'System File'
 
     file_report.save()
@@ -1734,6 +1734,8 @@ def complex_transaction_csv_file_import(self, instance):
         import_file_storage.delete(instance.file_path)
 
     instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
+
+    instance.stats_url = generate_file_report(instance, master_user, 'transaction_import.import', 'Transaction Import');
 
     return instance
 
@@ -2155,6 +2157,6 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
     instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
 
-    instance.stats_url = generate_file_report(instance, master_user)
+    instance.stats_url = generate_file_report(instance, master_user, 'transaction_import.validate', 'Transaction Import Validation');
 
     return instance

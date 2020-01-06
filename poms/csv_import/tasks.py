@@ -43,8 +43,7 @@ from io import StringIO
 import csv
 
 
-def generate_file_report(instance, master_user):
-
+def generate_file_report(instance, master_user, type, name):
     _l.debug('instance %s' % instance)
 
     columns = ['Row number']
@@ -58,7 +57,6 @@ def generate_file_report(instance, master_user):
     rows_content = []
 
     for errorRow in instance.stats:
-
         localResult = []
 
         localResult.append(errorRow['original_row_index'])
@@ -125,7 +123,6 @@ def generate_file_report(instance, master_user):
     result.append(columnRow)
 
     for contentRow in rows_content:
-
         contentRowStr = list(map(str, contentRow))
 
         # _l.debug('contentRowStr %s ' % contentRowStr)
@@ -146,9 +143,9 @@ def generate_file_report(instance, master_user):
 
     file_report.upload_file(file_name=file_name, text=result, master_user=master_user)
     file_report.master_user = master_user
-    file_report.name = "Simple Data Import Validation %s" % current_date_time
+    file_report.name = "%s %s" % (name, current_date_time)
     file_report.file_name = file_name
-    file_report.type = 'csv_import.validate'
+    file_report.type = type
     file_report.notes = 'System File'
 
     file_report.save()
@@ -876,7 +873,8 @@ class ValidateHandler:
 
         instance.imported = len(results)
         instance.stats = process_errors
-        instance.stats_file_report = generate_file_report(instance, master_user)
+        instance.stats_file_report = generate_file_report(instance, master_user, 'csv_import.validate',
+                                                          'Simple Data Import Validation')
 
         return instance
 
@@ -1243,6 +1241,9 @@ class ImportHandler:
 
         instance.imported = len(results)
         instance.stats = process_errors
+
+        instance.stats_file_report = generate_file_report(instance, master_user, 'csv_import.import',
+                                                          'Simple Data Import')
 
         return instance
 
