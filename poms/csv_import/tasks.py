@@ -156,7 +156,7 @@ def generate_file_report(instance, master_user):
     _l.debug('file_report %s' % file_report)
     _l.debug('file_report %s' % file_report.file_url)
 
-    return file_report.file_url
+    return file_report.pk
 
 
 def get_row_data(row, csv_fields):
@@ -876,7 +876,7 @@ class ValidateHandler:
 
         instance.imported = len(results)
         instance.stats = process_errors
-        instance.stats_url = generate_file_report(instance, master_user)
+        instance.stats_file_report = generate_file_report(instance, master_user)
 
         return instance
 

@@ -17,6 +17,7 @@ from django.core.mail import send_mail as django_send_mail, send_mass_mail as dj
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.timezone import now
 from django.utils.translation import ugettext
 
 from poms.accounts.models import Account
@@ -26,6 +27,7 @@ from poms.common import formula
 from poms.common.utils import date_now, isclose
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency, CurrencyHistory
+from poms.file_reports.models import FileReport
 from poms.instruments.models import Instrument, DailyPricingModel, PricingPolicy, PriceHistory, InstrumentType, \
     PaymentSizeDetail, Periodicity, AccrualCalculationModel
 from poms.integrations.models import Task, PriceDownloadScheme, InstrumentDownloadScheme, PricingAutomatedSchedule, \
@@ -1181,6 +1183,154 @@ def download_pricing_auto_scheduler(self):
 #             _l.info('schedule_file_import_delete: path=%s, countdown=%s', path, countdown)
 #             file_import_delete_async.apply_async(kwargs={'path': path}, countdown=countdown)
 
+def generate_file_report(instance, master_user):
+
+    def get_unique_columns(instance):
+
+        unique_columns = []
+
+        for item in instance.error_rows:
+
+            for item_column in item['error_data']['columns']['executed_input_expressions']:
+
+                column = item_column + ':' + item['error_data']['data']['transaction_type_selector'][0];
+
+                if column not in unique_columns:
+                    unique_columns.append(column)
+
+        return unique_columns
+
+    def generate_columns_for_file(instance):
+
+            columns = ['Row number']
+
+            columns = columns + instance.error_rows[0]['error_data']['columns']['imported_columns']
+            columns = columns + instance.error_rows[0]['error_data']['columns']['converted_imported_columns']
+            columns = columns + instance.error_rows[0]['error_data']['columns']['transaction_type_selector']
+
+            unique_columns = get_unique_columns(instance)
+
+            for unique_column in unique_columns:
+                columns.append(unique_column)
+
+            columns.append('Error Message')
+            columns.append('Reaction')
+
+            return columns
+
+    def generate_columns_data_for_file(instance, error_row):
+
+        result = []
+        unique_columns = get_unique_columns(instance)
+
+        index = 0
+
+        for unique_column in unique_columns:
+
+            result.append('') # result[index] = ''
+
+            item_column_index = 0
+
+            for item_column in error_row['error_data']['columns']['executed_input_expressions']:
+
+                column = item_column + ':' + error_row['error_data']['data']['transaction_type_selector'][0]
+
+                if column == unique_column:
+
+                    if error_row['error_data']['data']['executed_input_expressions'][item_column_index]:
+                        result[index] = error_row['error_data']['data']['executed_input_expressions'][item_column_index]
+
+                item_column_index = item_column_index + 1
+
+            index = index + 1
+
+        return result
+
+    result = []
+    error_rows = []
+
+    for item in instance.error_rows:
+        if item['level'] == 'error':
+            error_rows.append(item)
+
+    result.append('Type, ' + 'Transaction Import')
+    result.append('Error handle, ' + instance.error_handling)
+    # result.append('Filename, ' + instance.file.name)
+    result.append('Import Rules - if object is not found, ' + instance.missing_data_handler);
+
+    rowsSuccessCount = 0
+
+    if instance.error_handling == 'break':
+        rowsSuccessCount = instance.error_row_index - 1
+    else:
+        rowsSuccessCount = instance.total_rows - len(error_rows)
+
+
+    result.append('Rows total, ' + str(instance.total_rows))
+    result.append('Rows success import, ' + str(rowsSuccessCount))
+    result.append('Rows fail import, ' + str(len(error_rows)))
+
+    columns = generate_columns_for_file(instance)
+
+    column_row_list = []
+
+    for item in columns:
+
+        column_row_list.append('"' + str(item) + '"')
+
+    column_row = ','.join(column_row_list)
+
+    result.append(column_row)
+
+    for error_row in instance.error_rows:
+
+        content = []
+
+        content.append(error_row['original_row_index'])
+
+        content = content + error_row['error_data']['data']['imported_columns']
+        content = content + error_row['error_data']['data']['converted_imported_columns']
+        content = content + error_row['error_data']['data']['transaction_type_selector']
+        content = content + generate_columns_data_for_file(instance, error_row)
+
+        content.append(error_row['error_message'])
+        content.append(error_row['error_reaction'])
+
+        content_row_list = []
+
+        for item in content:
+
+            content_row_list.append('"' + str(item) + '"')
+
+        content_row = ','.join(content_row_list)
+
+        result.append(content_row)
+
+    result = '\n'.join(result)
+
+    current_date_time = now().strftime("%Y-%m-%d-%H-%M")
+
+    file_name = 'file_report_%s.csv' % current_date_time
+
+    file_report = FileReport()
+
+    _l.debug('generate_file_report uploading file ')
+
+    file_report.upload_file(file_name=file_name, text=result, master_user=master_user)
+    file_report.master_user = master_user
+    file_report.name = "Transaction Import Validation %s" % current_date_time
+    file_report.file_name = file_name
+    file_report.type = 'transaction_import.validate'
+    file_report.notes = 'System File'
+
+    file_report.save()
+
+    _l.debug('file_report %s' % file_report)
+    _l.debug('file_report %s' % file_report.file_url)
+
+    return file_report.pk
+
+
 
 @shared_task(name='integrations.complex_transaction_csv_file_import', bind=True)
 def complex_transaction_csv_file_import(self, instance):
@@ -1192,6 +1342,8 @@ def complex_transaction_csv_file_import(self, instance):
 
     scheme = instance.scheme
     scheme_inputs = list(scheme.inputs.all())
+
+    master_user = instance.master_user
 
     rule_scenarios = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()
 
@@ -1601,6 +1753,8 @@ def complex_transaction_csv_file_import_validate(self, instance):
             [(i.name, i.column) for i in scheme_inputs],
             [(r.transaction_type.user_code) for r in rule_scenarios])
 
+    master_user = instance.master_user
+
     mapping_map = {
         Account: AccountMapping,
         Currency: CurrencyMapping,
@@ -2000,5 +2154,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
         import_file_storage.delete(instance.file_path)
 
     instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
+
+    instance.stats_url = generate_file_report(instance, master_user)
 
     return instance

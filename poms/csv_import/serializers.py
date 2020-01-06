@@ -14,7 +14,7 @@ class CsvDataFileImport:
     def __init__(self, task_id=None, task_status=None, master_user=None, member=None, status=None,
                  scheme=None, file=None, delimiter=None, mode=None,
                  error_handler=None, missing_data_handler=None, classifier_handler=None,
-                 total_rows=None, processed_rows=None, stats=None, imported=None):
+                 total_rows=None, processed_rows=None, stats=None, imported=None, stats_file_report=None):
         self.task_id = task_id
         self.task_status = task_status
 
@@ -35,6 +35,8 @@ class CsvDataFileImport:
 
         self.total_rows = total_rows
         self.processed_rows = processed_rows
+
+        self.stats_file_report = stats_file_report
 
     def __str__(self):
         return '%s:%s' % (getattr(self.master_user, 'name', None), getattr(self.scheme, 'scheme_name', None))
@@ -219,6 +221,7 @@ class CsvDataImportSerializer(serializers.Serializer):
     )
 
     stats = serializers.ReadOnlyField()
+    stats_file_report = serializers.ReadOnlyField()
     imported = serializers.ReadOnlyField()
 
     processed_rows = serializers.ReadOnlyField()

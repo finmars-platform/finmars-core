@@ -1685,7 +1685,7 @@ class ComplexTransactionCsvFileImport:
                  scheme=None, file_path=None, skip_first_line=None, delimiter=None, quotechar=None, encoding=None,
                  error_handling=None, missing_data_handler=None, error=None, error_message=None, error_row_index=None,
                  error_rows=None,
-                 total_rows=None, processed_rows=None, filename=None):
+                 total_rows=None, processed_rows=None, filename=None, stats_file_report=None):
         self.task_id = task_id
         self.task_status = task_status
 
@@ -1709,6 +1709,7 @@ class ComplexTransactionCsvFileImport:
         self.error_rows = error_rows
         self.total_rows = total_rows
         self.processed_rows = processed_rows
+        self.stats_file_report = stats_file_report
 
     def __str__(self):
         return '%s-%s:%s' % (getattr(self.master_user, 'id', None), getattr(self.member, 'id', None), self.file_path)
@@ -1754,6 +1755,8 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
     total_rows = serializers.ReadOnlyField()
 
     scheme_object = ComplexTransactionImportSchemeSerializer(source='scheme', read_only=True)
+
+    stats_file_report = serializers.ReadOnlyField()
 
     def create(self, validated_data):
 
