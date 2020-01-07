@@ -56,8 +56,12 @@ class TransactionReportBuilder(BaseReportBuilder):
                 _l.debug('build load_st done: %s', (time.perf_counter() - load_st))
 
                 # self._set_trns_refs(self._transactions)
+
+                to_transaction_report_item_st = time.perf_counter()
+
                 self._items = [TransactionReportItem(self.instance, trn=t) for t in self._transactions]
                 self.instance.items = self._items
+                _l.debug('build to_transaction_report_item done: %s', (time.perf_counter() - to_transaction_report_item_st))
 
                 _refresh_from_db_st = time.perf_counter()
 
@@ -74,31 +78,6 @@ class TransactionReportBuilder(BaseReportBuilder):
 
                 _l.debug('build close_st done: %s', (time.perf_counter() - close_st))
 
-                # if settings.DEBUG:
-                #     _l.debug('> pickle')
-                #     import pickle
-                #     data = pickle.dumps(self.instance, protocol=pickle.HIGHEST_PROTOCOL)
-                #     _l.debug('< pickle: %s', len(data))
-                #     _l.debug('> pickle.zlib')
-                #     import zlib
-                #     data1 = zlib.compress(data)
-                #     _l.debug('< pickle.zlib: %s', len(data1))
-                #
-                #     _l.debug('> json')
-                #     from poms.reports.serializers import TransactionReportSerializer
-                #     from rest_framework.renderers import JSONRenderer
-                #     s = TransactionReportSerializer(instance=self.instance, context={
-                #         'master_user': self.instance.master_user,
-                #         'member': self.instance.member,
-                #     })
-                #     data_dict = s.data
-                #     r = JSONRenderer()
-                #     data = r.render(data_dict)
-                #     _l.debug('< json: %s', len(data))
-                #     _l.debug('> json.zlib')
-                #     import zlib
-                #     data1 = zlib.compress(data)
-                #     _l.debug('< json.zlib: %s', len(data1))
             finally:
                 transaction.set_rollback(True)
 
