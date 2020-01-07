@@ -760,47 +760,8 @@ class ReportBuilder(BaseReportBuilder):
 
         trn_qs_st = time.perf_counter()
 
-        # self.transaction_qs = self._trn_qs()
-
-        # TODO DO OWN FETCH TRANSACTIONS HERE
-        # trn_qs = self._trn_qs()
-
-        # complex_qs = ComplexTransaction.objects.filter(status=ComplexTransaction.PRODUCTION,
-        #                                                master_user=self.instance.master_user, is_deleted=False)
-
         trn_qs = Transaction.objects
 
-        # trn_qs = Transaction.objects.select_related(
-        #     'complex_transaction',
-        #     'complex_transaction__transaction_type',
-        #     'transaction_class',
-        #
-        #     'instrument',
-        #     'instrument__instrument_type',
-        #     'instrument__instrument_type__instrument_class',
-        #     'instrument__pricing_currency',
-        #     'instrument__accrued_currency',
-        #
-        #     'transaction_currency',
-        #     'settlement_currency',
-        #     'portfolio',
-        #     'account_position',
-        #     'account_cash',
-        #     'account_interim',
-        #     'strategy1_position',
-        #     'strategy1_cash',
-        #     'strategy2_position',
-        #     'strategy2_cash',
-        #     'strategy3_position',
-        #     'strategy3_cash',
-        #     'responsible',
-        #     'counterparty',
-        #     'linked_instrument__instrument_type',
-        #     'allocation_balance',
-        #     'allocation_pl').prefetch_related('instrument__factor_schedules',
-        #                                       'instrument__accrual_calculation_schedules').all()
-
-        # trn_qs = trn_qs.filter(complex_transaction__in=complex_qs)
         trn_qs = trn_qs.filter(master_user=self.instance.master_user, is_canceled=False)
 
         trn_qs = self._trn_qs_permission_filter(trn_qs)

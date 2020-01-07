@@ -364,6 +364,7 @@ class BaseReportBuilder:
 
         return result
 
+    # DEPRECATED
     def _trn_qs(self):
 
         _trn_qs_st = time.perf_counter()

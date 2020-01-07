@@ -127,151 +127,87 @@ class TransactionReportBuilder(BaseReportBuilder):
             for a in obj.attributes.all():
                 self._set_ref(a, 'attribute_type', clazz=GenericAttributeType)
 
-    def _trn_qs(self):
-        # from poms.obj_attrs.utils import get_attributes_prefetch
-        #
-        # qs = Transaction.objects.prefetch_related(
-        #     'complex_transaction',
-        #     'transaction_class',
-        #     'instrument',
-        #     'transaction_currency',
-        #     'settlement_currency',
-        #     'portfolio',
-        #     'account_position',
-        #     'account_cash',
-        #     'account_interim',
-        #     'strategy1_position',
-        #     'strategy1_cash',
-        #     'strategy2_position',
-        #     'strategy2_cash',
-        #     'strategy3_position',
-        #     'strategy3_cash',
-        #     'responsible',
-        #     'counterparty',
-        #     'linked_instrument',
-        #     'allocation_balance',
-        #     'allocation_pl',
-        #     get_attributes_prefetch(),
-        #     get_attributes_prefetch('complex_transaction__attributes'),
-        #     get_attributes_prefetch('instrument__attributes'),
-        #     get_attributes_prefetch('transaction_currency__attributes'),
-        #     get_attributes_prefetch('settlement_currency__attributes'),
-        #     get_attributes_prefetch('portfolio__attributes'),
-        #     get_attributes_prefetch('account_position__attributes'),
-        #     get_attributes_prefetch('account_cash__attributes'),
-        #     get_attributes_prefetch('account_interim__attributes'),
-        #     get_attributes_prefetch('responsible__attributes'),
-        #     get_attributes_prefetch('counterparty__attributes'),
-        #     get_attributes_prefetch('linked_instrument__attributes'),
-        #     get_attributes_prefetch('allocation_balance__attributes'),
-        #     get_attributes_prefetch('allocation_pl__attributes'),
-        # )
-        #
-        # a_filters = [
-        #     Q(complex_transaction__isnull=True) | Q(complex_transaction__status=ComplexTransaction.PRODUCTION,
-        #                                             complex_transaction__is_deleted=False)
-        # ]
-        # kw_filters = {
-        #     'master_user': self.instance.master_user,
-        #     'is_deleted': False,
-        # }
+    def _trn_qs_prefetch(self, qs):
 
-        qs = super(TransactionReportBuilder, self)._trn_qs()
+        _qs_st = time.perf_counter()
 
-        # _l.debug('< base _trn_qs: %s', len(list(qs)))
+        qs = qs.select_related(
 
-        _l.debug('self.instance.begin_date %s', str(self.instance.begin_date))
-        _l.debug('self.instance.end_date: %s', str(self.instance.end_date))
+            'complex_transaction',
+            'complex_transaction__transaction_type',
+            'transaction_class',
 
-        filters = Q()
+            'instrument',
+            'instrument__instrument_type',
+            'instrument__instrument_type__instrument_class',
+            'instrument__pricing_currency',
+            'instrument__accrued_currency',
 
-        filter_obj = {}
+            'allocation_balance',
+            'allocation_pl',
+            'linked_instrument',
+            'linked_instrument__instrument_type',
 
-        if self.instance.begin_date:
-            # filters &= Q(complex_transaction__date__gte=self.instance.begin_date)
+            'transaction_currency',
+            'settlement_currency',
 
-            filter_obj['complex_transaction__' + self.instance.date_field + '__gte'] = self.instance.begin_date
+            'portfolio',
+
+            'account_position',
+            'account_cash',
+            'account_interim',
+
+            'strategy1_position',
+            'strategy1_cash',
+            'strategy2_position',
+            'strategy2_cash',
+            'strategy3_position',
+            'strategy3_cash',
+
+            'responsible',
+            'counterparty',
 
 
+        )
 
-            # qs = qs.filter(complex_transaction__date__gte=self.instance.begin_date)
-            qs = qs.filter(**filter_obj)
-
-        # _l.debug('< base begin date filter: %s', len(list(qs)))
-
-        force_qs_evaluation(qs)
-
-        if self.instance.end_date:
-            # filters &= Q(complex_transaction__date__lte=self.instance.end_date)
-
-            filter_obj['complex_transaction__' + self.instance.date_field + '__lte'] = self.instance.end_date
-
-            # print('filter_obj %s ' % filter_obj)
-
-            # qs = qs.filter(complex_transaction__date__lte=self.instance.end_date)
-            qs = qs.filter(**filter_obj)
-
-            # qs = qs.filter(filters)
-
-        # _l.debug('< base end date filter: %s', len(list(qs)))
-
-        # _l.debug('< filters %s', filters)
-
-        # if self.instance.begin_date:
-        #     # a_filters.append(Q(complex_transaction__date__gte=self.instance.begin_date))
-        #     kw_filters['complex_transaction__date__gte'] = self.instance.begin_date
-        #
-        # if self.instance.end_date:
-        #     # a_filters.append(Q(complex_transaction__date__lte=self.instance.end_date))
-        #     kw_filters['complex_transaction__date__lte'] = self.instance.end_date
-
-        # if self.instance.portfolios:
-        #     kw_filters['portfolio__in'] = self.instance.portfolios
-        #
-        # if self.instance.accounts:
-        #     kw_filters['account_position__in'] = self.instance.accounts
-        #     kw_filters['account_cash__in'] = self.instance.accounts
-        #     kw_filters['account_interim__in'] = self.instance.accounts
-        #
-        # if self.instance.accounts_position:
-        #     kw_filters['account_position__in'] = self.instance.accounts_position
-        #
-        # if self.instance.accounts_cash:
-        #     kw_filters['account_cash__in'] = self.instance.accounts_cash
-        #
-        # if self.instance.strategies1:
-        #     kw_filters['strategy1_position__in'] = self.instance.strategies1
-        #     kw_filters['strategy1_cash__in'] = self.instance.strategies1
-        #
-        # if self.instance.strategies2:
-        #     kw_filters['strategy2_position__in'] = self.instance.strategies2
-        #     kw_filters['strategy2_cash__in'] = self.instance.strategies2
-        #
-        # if self.instance.strategies3:
-        #     kw_filters['strategy3_position__in'] = self.instance.strategies3
-        #     kw_filters['strategy3_cash__in'] = self.instance.strategies3
-        #
-        # qs = qs.filter(*a_filters, **kw_filters)
-
-        # qs = qs.filter(filters)
-
-        # _l.debug('< base after_filters: %s', len(list(qs)))
-
-        qs = qs.order_by('complex_transaction__date', 'complex_transaction__code', 'transaction_code')
-
-        # from poms.transactions.filters import TransactionObjectPermissionFilter
-        # qs = TransactionObjectPermissionFilter.filter_qs(qs, self.instance.master_user, self.instance.member)
+        # _l.debug('_trn_qs_prefetch  done: %s', (time.perf_counter() - _qs_st))
 
         return qs
 
     def _load(self):
         # _l.debug('> _load')
 
-        qs = self._trn_qs()
+        trn_qs_st = time.perf_counter()
 
-        qs = self._trn_qs_permission_filter(qs)
+        trn_qs = Transaction.objects
 
-        self._transactions = list(qs)
+        trn_qs = self._trn_qs_prefetch(trn_qs)
+
+        trn_qs = trn_qs.filter(master_user=self.instance.master_user, is_canceled=False)
+
+        trn_qs = self._trn_qs_permission_filter(trn_qs)
+        trn_qs = self._trn_qs_filter(trn_qs)
+
+        _l.debug('_load_transactions trn_qs_st done: %s', (time.perf_counter() - trn_qs_st))
+
+        _l.debug('self.instance.begin_date %s', str(self.instance.begin_date))
+        _l.debug('self.instance.end_date: %s', str(self.instance.end_date))
+
+        filter_obj = {}
+
+        if self.instance.begin_date:
+
+            filter_obj['complex_transaction__' + self.instance.date_field + '__gte'] = self.instance.begin_date
+
+        if self.instance.end_date:
+
+            filter_obj['complex_transaction__' + self.instance.date_field + '__lte'] = self.instance.end_date
+
+        trn_qs = trn_qs.filter(**filter_obj)
+
+        trn_qs = trn_qs.order_by('complex_transaction__date', 'complex_transaction__code', 'transaction_code')
+
+        self._transactions = list(trn_qs)
 
         _l.debug('_load len: %s', len(self._transactions))
 
