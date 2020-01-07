@@ -49,14 +49,30 @@ class TransactionReportBuilder(BaseReportBuilder):
                 #     self._make_transactions(10000)
                 #     _l.debug('< _make_transactions')
 
+                load_st = time.perf_counter()
+
                 self._load()
+
+                _l.debug('build load_st done: %s', (time.perf_counter() - load_st))
+
                 # self._set_trns_refs(self._transactions)
                 self._items = [TransactionReportItem(self.instance, trn=t) for t in self._transactions]
                 self.instance.items = self._items
+
+                _refresh_from_db_st = time.perf_counter()
+
                 self._refresh_from_db()
+
+                _l.debug('build refresh_from_db done: %s', (time.perf_counter() - _refresh_from_db_st))
+
                 # self._set_items_refs(self._items)
                 # self._update_instance()
+
+                close_st = time.perf_counter()
+
                 self.instance.close()
+
+                _l.debug('build close_st done: %s', (time.perf_counter() - close_st))
 
                 # if settings.DEBUG:
                 #     _l.debug('> pickle')
@@ -86,9 +102,14 @@ class TransactionReportBuilder(BaseReportBuilder):
             finally:
                 transaction.set_rollback(True)
 
-        _l.debug('done: %s', (time.perf_counter() - st))
+
+        custom_fields_st = time.perf_counter()
 
         self.instance.custom_fields = TransactionReportCustomField.objects.filter(master_user=self.instance.master_user)
+
+        _l.debug('build custom_fields_st done: %s', (time.perf_counter() - custom_fields_st))
+
+        _l.debug('done: %s', (time.perf_counter() - st))
 
         return self.instance
 
@@ -206,7 +227,7 @@ class TransactionReportBuilder(BaseReportBuilder):
 
             filter_obj['complex_transaction__' + self.instance.date_field + '__lte'] = self.instance.end_date
 
-            print('filter_obj %s ' % filter_obj)
+            # print('filter_obj %s ' % filter_obj)
 
             # qs = qs.filter(complex_transaction__date__lte=self.instance.end_date)
             qs = qs.filter(**filter_obj)
@@ -215,7 +236,7 @@ class TransactionReportBuilder(BaseReportBuilder):
 
         # _l.debug('< base end date filter: %s', len(list(qs)))
 
-        _l.debug('< filters %s', filters)
+        # _l.debug('< filters %s', filters)
 
         # if self.instance.begin_date:
         #     # a_filters.append(Q(complex_transaction__date__gte=self.instance.begin_date))
@@ -265,7 +286,7 @@ class TransactionReportBuilder(BaseReportBuilder):
         return qs
 
     def _load(self):
-        _l.debug('> _load')
+        # _l.debug('> _load')
 
         qs = self._trn_qs()
 
@@ -273,10 +294,10 @@ class TransactionReportBuilder(BaseReportBuilder):
 
         self._transactions = list(qs)
 
-        _l.debug('< _load: %s', len(self._transactions))
+        _l.debug('_load len: %s', len(self._transactions))
 
     def _refresh_from_db(self):
-        _l.info('> _refresh_from_db')
+        # _l.info('> _refresh_from_db')
 
         self.instance.portfolios = self._refresh_portfolios(
             master_user=self.instance.master_user,
@@ -377,4 +398,4 @@ class TransactionReportBuilder(BaseReportBuilder):
             attrs=['responsible']
         )
 
-        _l.info('< _refresh_from_db')
+        # _l.info('< _refresh_from_db')
