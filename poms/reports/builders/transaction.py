@@ -7,6 +7,7 @@ from django.db.models import Q
 
 from poms.common.utils import force_qs_evaluation
 from poms.obj_attrs.models import GenericAttributeType
+from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.reports.builders.base_builder import BaseReportBuilder
 from poms.reports.builders.transaction_item import TransactionReportItem
 from poms.reports.models import BalanceReportCustomField, TransactionReportCustomField
@@ -166,7 +167,6 @@ class TransactionReportBuilder(BaseReportBuilder):
 
             'responsible',
             'counterparty',
-
 
         )
 

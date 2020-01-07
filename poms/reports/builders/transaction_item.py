@@ -131,12 +131,12 @@ class TransactionReportItem:
         self.overheads = check_val(trn, overheads, 'overheads')
         self.notes = check_val(trn, notes, 'notes')
 
-        if self.id is None or self.id < 0:
-            self.attributes = []
-        else:
-            self.attributes = check_val(trn, attributes, lambda: list(trn.attributes.all()))
-            # self.attributes = attributes if attributes is not empty else \
-            #     list(getattr(trn, 'attributes', None).all())
+        # if self.id is None or self.id < 0:
+        #     self.attributes = []
+        # else:
+        #     self.attributes = check_val(trn, attributes, lambda: list(trn.attributes.all()))
+        #     # self.attributes = attributes if attributes is not empty else \
+        #     #     list(getattr(trn, 'attributes', None).all())
 
         self.custom_fields = []
 
