@@ -38,7 +38,7 @@ from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDo
     AccountClassifierMapping, CounterpartyClassifierMapping, ResponsibleClassifierMapping, PricingPolicyMapping, \
     InstrumentClassifierMapping, AccountTypeMapping, ComplexTransactionImportSchemeSelectorValue, \
     ComplexTransactionImportSchemeReconField, ComplexTransactionImportSchemeReconScenario, \
-    ComplexTransactionImportSchemeRuleScenario
+    ComplexTransactionImportSchemeRuleScenario, ComplexTransactionImportSchemeCalculatedInput
 from poms.integrations.providers.base import get_provider, ProviderException
 from poms.integrations.storage import import_file_storage
 from poms.integrations.tasks import download_pricing, download_instrument, test_certificate
@@ -1326,6 +1326,20 @@ class ComplexTransactionImportSchemeInputSerializer(serializers.ModelSerializer)
         fields = ['id', 'name', 'column', 'name_expr']
 
 
+class ComplexTransactionImportSchemeCalculatedInputSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
+    name = serializers.CharField(max_length=255, allow_null=False, allow_blank=False,
+                                 validators=[
+                                     RegexValidator(regex='\A[a-zA-Z_][a-zA-Z0-9_]*\Z'),
+                                 ])
+
+    name_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
+
+    class Meta:
+        model = ComplexTransactionImportSchemeCalculatedInput
+        fields = ['id', 'name', 'column', 'name_expr']
+
+
 class ComplexTransactionImportSchemeSelectorValueSerializer(serializers.ModelSerializer):
 
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
@@ -1473,6 +1487,7 @@ class ComplexTransactionImportSchemeSerializer(serializers.ModelSerializer):
     rule_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
 
     inputs = ComplexTransactionImportSchemeInputSerializer(many=True, read_only=False)
+    calculated_inputs = ComplexTransactionImportSchemeCalculatedInputSerializer(many=True, read_only=False, required=False)
     selector_values = ComplexTransactionImportSchemeSelectorValueSerializer(many=True, read_only=False)
 
     rule_scenarios = ComplexTransactionImportSchemeRuleScenarioSerializer(many=True, read_only=False)
@@ -1480,22 +1495,29 @@ class ComplexTransactionImportSchemeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ComplexTransactionImportScheme
-        fields = ['id', 'master_user', 'scheme_name', 'rule_expr', 'inputs', 'rule_scenarios', 'selector_values',
+        fields = ['id', 'master_user', 'scheme_name', 'rule_expr', 'inputs', 'calculated_inputs', 'rule_scenarios', 'selector_values',
                   'recon_scenarios']
 
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionImportSchemeSerializer, self).__init__(*args, **kwargs)
 
     def create(self, validated_data):
-        inputs = validated_data.pop('inputs', None) or []
-        rule_scenarios = validated_data.pop('rule_scenarios', None) or []
-        selector_values = validated_data.pop('selector_values', None) or []
-        recon_scenarios = validated_data.pop('recon_scenarios', None) or []
+        inputs = validated_data.pop('inputs', empty) or []
+        calculated_inputs = validated_data.pop('calculated_inputs', empty) or []
+        rule_scenarios = validated_data.pop('rule_scenarios', empty) or []
+        selector_values = validated_data.pop('selector_values', empty) or []
+        recon_scenarios = validated_data.pop('recon_scenarios', empty) or []
         instance = super(ComplexTransactionImportSchemeSerializer, self).create(validated_data)
-        self.save_selector_values(instance, selector_values)
-        self.save_inputs(instance, inputs)
-        self.save_rule_scenarios(instance, rule_scenarios)
-        self.save_recon_scenarios(instance, recon_scenarios)
+        if selector_values is not empty:
+            self.save_selector_values(instance, selector_values)
+        if inputs is not empty:
+            self.save_inputs(instance, inputs)
+        if calculated_inputs is not empty:
+            self.save_calculated_inputs(instance, calculated_inputs)
+        if rule_scenarios is not empty:
+            self.save_rule_scenarios(instance, rule_scenarios)
+        if recon_scenarios is not empty:
+            self.save_recon_scenarios(instance, recon_scenarios)
         return instance
 
     def update(self, instance, validated_data):
@@ -1503,6 +1525,7 @@ class ComplexTransactionImportSchemeSerializer(serializers.ModelSerializer):
         print("Here update?s")
 
         inputs = validated_data.pop('inputs', empty)
+        calculated_inputs = validated_data.pop('calculated_inputs', None) or []
         rule_scenarios = validated_data.pop('rule_scenarios', empty)
         selector_values = validated_data.pop('selector_values', empty)
         recon_scenarios = validated_data.pop('recon_scenarios', empty)
@@ -1512,6 +1535,8 @@ class ComplexTransactionImportSchemeSerializer(serializers.ModelSerializer):
             self.save_selector_values(instance, selector_values)
         if inputs is not empty:
             self.save_inputs(instance, inputs)
+        if calculated_inputs is not empty:
+            self.save_calculated_inputs(instance, calculated_inputs)
         if rule_scenarios is not empty:
             self.save_rule_scenarios(instance, rule_scenarios)
         if recon_scenarios is not empty:
@@ -1557,6 +1582,24 @@ class ComplexTransactionImportSchemeSerializer(serializers.ModelSerializer):
             input0.save()
             pk_set.add(input0.id)
         instance.inputs.exclude(pk__in=pk_set).delete()
+
+    def save_calculated_inputs(self, instance, inputs):
+        pk_set = set()
+        for input_values in inputs:
+            input_id = input_values.pop('id', None)
+            input0 = None
+            if input_id:
+                try:
+                    input0 = instance.inputs.get(pk=input_id)
+                except ObjectDoesNotExist:
+                    pass
+            if input0 is None:
+                input0 = ComplexTransactionImportSchemeCalculatedInput(scheme=instance)
+            for name, value in input_values.items():
+                setattr(input0, name, value)
+            input0.save()
+            pk_set.add(input0.id)
+        instance.calculated_inputs.exclude(pk__in=pk_set).delete()
 
     def save_rule_scenarios(self, instance, rules):
         pk_set = set()

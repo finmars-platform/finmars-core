@@ -1204,6 +1204,8 @@ def generate_file_report(instance, master_user, type, name):
 
             columns = ['Row number']
 
+            _l.debug('instance %s' % instance)
+
             columns = columns + instance.error_rows[0]['error_data']['columns']['imported_columns']
             columns = columns + instance.error_rows[0]['error_data']['columns']['converted_imported_columns']
             columns = columns + instance.error_rows[0]['error_data']['columns']['transaction_type_selector']
@@ -1261,7 +1263,10 @@ def generate_file_report(instance, master_user, type, name):
     rowsSuccessCount = 0
 
     if instance.error_handling == 'break':
-        rowsSuccessCount = instance.error_row_index - 1
+        if instance.error_row_index:
+            rowsSuccessCount = instance.error_row_index - 1
+        else:
+            rowsSuccessCount = instance.total_rows - len(error_rows)
     else:
         rowsSuccessCount = instance.total_rows - len(error_rows)
 
@@ -1342,6 +1347,7 @@ def complex_transaction_csv_file_import(self, instance):
 
     scheme = instance.scheme
     scheme_inputs = list(scheme.inputs.all())
+    scheme_calculated_inputs = list(scheme.calculated_inputs.all())
 
     master_user = instance.master_user
 
@@ -1454,6 +1460,19 @@ def complex_transaction_csv_file_import(self, instance):
 
             return v
 
+    def update_row_with_calculated_data(row, inputs_raw):
+
+        for i in scheme_calculated_inputs:
+
+            try:
+                value = formula.safe_eval(i.name_expr, names=inputs_raw)
+                row.append(value)
+
+            except:
+                _l.info('can\'t process calculated input: %s|%s', i.name, i.column, exc_info=True)
+
+        return row
+
     def _process_csv_file(file):
 
         instance.processed_rows = 0
@@ -1474,6 +1493,7 @@ def complex_transaction_csv_file_import(self, instance):
             inputs = {}
             inputs_error = []
             inputs_conversion_error = []
+            calculated_columns_error = []
 
             error_rows = {
                 'level': 'info',
@@ -1484,12 +1504,14 @@ def complex_transaction_csv_file_import(self, instance):
                 'error_data': {
                     'columns': {
                         'imported_columns': [],
+                        'calculated_columns': [],
                         'converted_imported_columns': [],
                         'transaction_type_selector': [],
                         'executed_input_expressions': []
                     },
                     'data': {
                         'imported_columns': [],
+                        'calculated_columns': [],
                         'converted_imported_columns': [],
                         'transaction_type_selector': [],
                         'executed_input_expressions': []
@@ -1512,6 +1534,33 @@ def complex_transaction_csv_file_import(self, instance):
                     inputs_error.append(i)
 
             _l.info('inputs: error=%s, values=%s', [i.name for i in inputs_error], inputs_raw)
+
+            _l.info('row %s' % row)
+
+            original_columns_count = len(row)
+
+            row = update_row_with_calculated_data(row, inputs_raw)
+
+            _l.info('row with calculated %s' % row)
+
+            for i in scheme_calculated_inputs:
+
+                error_rows['error_data']['columns']['calculated_columns'].append(i.name)
+
+                try:
+
+                    index = original_columns_count + i.column - 1
+
+                    print('index %s ' % index)
+                    print('i.name %s ' % i.name)
+
+                    inputs[i.name] = row[index]
+
+                    error_rows['error_data']['data']['calculated_columns'].append(row[index])
+                except:
+                    _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                    error_rows['error_data']['data']['calculated_columns'].append(ugettext('Invalid expression'))
+                    calculated_columns_error.append(i)
 
             if inputs_error:
 
@@ -1735,7 +1784,7 @@ def complex_transaction_csv_file_import(self, instance):
 
     instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
 
-    instance.stats_url = generate_file_report(instance, master_user, 'transaction_import.import', 'Transaction Import');
+    instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.import', 'Transaction Import');
 
     return instance
 
@@ -1749,6 +1798,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
     scheme = instance.scheme
     scheme_inputs = list(scheme.inputs.all())
+    scheme_calculated_inputs = list(scheme.calculated_inputs.all())
     rule_scenarios = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()
 
     _l.info('scheme %s - inputs=%s, rules=%s', scheme,
@@ -1859,6 +1909,21 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
             return v
 
+    def update_row_with_calculated_data(row, inputs):
+
+        for i in scheme_calculated_inputs:
+
+            _l.info('update_row_with_calculated_data inputs %s' % inputs)
+
+            try:
+                value = formula.safe_eval(i.name_expr, names=inputs)
+                row.append(value)
+
+            except:
+                _l.info('can\'t process calculated input: %s|%s', i.name, i.column, exc_info=True)
+
+        return row
+
     def _validate_process_csv_file(file):
 
         delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
@@ -1876,6 +1941,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
             inputs_raw = {}
             inputs = {}
             inputs_error = []
+            calculated_columns_error = []
 
             error_rows = {
                 'level': 'info',
@@ -1886,12 +1952,14 @@ def complex_transaction_csv_file_import_validate(self, instance):
                 'error_data': {
                     'columns': {
                         'imported_columns': [],
+                        'calculated_columns': [],
                         'converted_imported_columns': [],
                         'transaction_type_selector': [],
                         'executed_input_expressions': []
                     },
                     'data': {
                         'imported_columns': [],
+                        'calculated_columns': [],
                         'converted_imported_columns': [],
                         'transaction_type_selector': [],
                         'executed_input_expressions': []
@@ -1928,6 +1996,34 @@ def complex_transaction_csv_file_import_validate(self, instance):
                     error_rows['error_data']['data']['converted_imported_columns'].append(
                         ugettext('Invalid expression'))
                     inputs_error.append(i)
+
+            _l.info('row %s' % row)
+
+            original_columns_count = len(row)
+
+            row = update_row_with_calculated_data(row, inputs_raw)
+
+            _l.info('row with calculated %s' % row)
+
+            for i in scheme_calculated_inputs:
+
+                error_rows['error_data']['columns']['calculated_columns'].append(i.name)
+
+                try:
+
+                    index = original_columns_count + i.column - 1
+
+                    _l.info('original_columns_count %s' % original_columns_count)
+                    _l.info('i.column %s' % i.column)
+                    _l.info('row %s' % row)
+
+                    inputs[i.name] = row[index]
+
+                    error_rows['error_data']['data']['calculated_columns'].append(row[index])
+                except:
+                    _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                    error_rows['error_data']['data']['calculated_columns'].append(ugettext('Invalid expression'))
+                    calculated_columns_error.append(i)
 
             if inputs_error:
 
@@ -2157,6 +2253,6 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
     instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
 
-    instance.stats_url = generate_file_report(instance, master_user, 'transaction_import.validate', 'Transaction Import Validation');
+    instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.validate', 'Transaction Import Validation');
 
     return instance
