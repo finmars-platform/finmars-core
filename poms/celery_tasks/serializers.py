@@ -12,7 +12,7 @@ class CeleryTaskSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = CeleryTask
-        fields = ('id', 'master_user', 'task_type', 'task_id', 'task_status', 'data', 'is_system_task', 'member', 'started_at', 'finished_at')
+        fields = ('id', 'master_user', 'task_type', 'task_id', 'task_status', 'data', 'is_system_task', 'member', 'started_at', 'finished_at', 'file_report')
 
 
     def __init__(self, *args, **kwargs):

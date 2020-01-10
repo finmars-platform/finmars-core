@@ -20,10 +20,13 @@ class CeleryTask(models.Model):
 
     json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
 
+    file_report = models.ForeignKey('file_reports.FileReport',null=True, blank=True, verbose_name=ugettext_lazy('file report'), on_delete=models.CASCADE)
+
     class Meta:
         unique_together = (
             ('master_user', 'task_id')
         )
+        ordering = ['-started_at']
 
     def __str__(self):
         return 'Master_user {0.master_user.id} <Task: {0.task_id} ({0.task_status})>'.format(self)

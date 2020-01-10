@@ -80,6 +80,8 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
         signer = TimestampSigner()
 
+        print("TASK id: %s" % task_id)
+
         if task_id:
 
             res = AsyncResult(signer.unsign(task_id))
@@ -100,6 +102,7 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
                 if celery_task:
                     celery_task.finished_at = datetime_now()
+                    celery_task.file_report_id = instance.stats_file_report
 
             else:
 
@@ -115,7 +118,8 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
                             "total_rows": res.result['total_rows'],
                             "processed_rows": res.result['processed_rows'],
                             "scheme_name": res.result['scheme_name'],
-                            "file_name": res.result['file_name']
+                            "file_name": res.result['file_name'],
+                            "stats_file_report": res.result['stats_file_report']
                         }
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
@@ -187,9 +191,9 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
 
         task_id = instance.task_id
 
-        signer = TimestampSigner()
+        print('TASK id: %s' % task_id)
 
-        print('validate instance %s' % instance.scheme)
+        signer = TimestampSigner()
 
         if task_id:
 
@@ -201,17 +205,18 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
                 celery_task = None
                 print("Cant create Celery Task")
 
-
-            print('celery_task %s ' % celery_task)
-
             st = time.perf_counter()
 
             if res.ready():
 
                 instance = res.result
 
+                print('instance %s' % instance.stats_file_report)
+                print('instance.total_rows %s' % instance.total_rows)
+
                 if celery_task:
                     celery_task.finished_at = datetime_now()
+                    celery_task.file_report_id = instance.stats_file_report
 
             else:
 
@@ -226,20 +231,12 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
                             "total_rows": res.result['total_rows'],
                             "processed_rows": res.result['processed_rows'],
                             "scheme_name": res.result['scheme_name'],
-                            "file_name": res.result['file_name']
+                            "file_name": res.result['file_name'],
+                            "stats_file_report": res.result['stats_file_report']
                         }
-
-                # print('TASK ITEMS LEN %s' % len(res.result.items))
-
-            print('AsyncResult res.ready: %s' % (time.perf_counter() - st))
 
             if instance.master_user.id != request.user.master_user.id:
                 raise PermissionDenied()
-
-            print('TASK RESULT %s' % res.result)
-            print('TASK STATUS %s' % res.status)
-
-            print('instance %s ' % instance)
 
             instance.task_id = task_id
             instance.task_status = res.status
@@ -253,14 +250,7 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
 
         else:
 
-
-
             # delattr(instance, 'file')
-
-            dump(instance)
-
-            print('instance %s' % instance)
-
 
             res = self.celery_task.apply_async(kwargs={'instance': instance})
             instance.task_id = signer.sign('%s' % res.id)
@@ -271,9 +261,6 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
                                                     task_type='validate_simple_import', task_id=instance.task_id)
 
             celery_task.save()
-
-            print('CREATE CELERY TASK %s' % res.id)
-            print('celery_task %s' % celery_task)
 
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)
