@@ -549,7 +549,7 @@ class OrderingPostFilter(BaseFilterBackend):
         ]
 
     def get_valid_fields(self, queryset, view):
-        valid_fields = getattr(view, 'ordering_fields', self.ordering_fields)
+        valid_fields = getattr(view, '`ing_fields', self.ordering_fields)
 
         if valid_fields is None:
             # Default to allowing filtering on serializer fields

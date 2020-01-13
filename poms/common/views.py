@@ -249,6 +249,7 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         if ordering:
             queryset = sort_by_dynamic_attrs(queryset, ordering, master_user, content_type)
 
+
         try:
             queryset.model._meta.get_field('is_enabled')
         except FieldDoesNotExist:

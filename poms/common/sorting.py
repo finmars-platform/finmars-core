@@ -7,6 +7,31 @@ from django.db.models.functions import Coalesce
 
 import math
 
+from django.db.models.functions import Lower
+
+def is_relation(item):
+    return item in ['type', 'currency', 'instrument',
+                    'instrument_type', 'group',
+                    'pricing_policy', 'portfolio',
+                    'transaction_type', 'transaction_currency',
+                    'settlement_currency', 'account_cash',
+                    'account_interim', 'account_position',
+                    'accrued_currency', 'pricing_currency',
+                    'one_off_event', 'regular_event', 'factor_same',
+                    'factor_up', 'factor_down',
+
+                    'strategy1_position', 'strategy1_cash',
+                    'strategy2_position', 'strategy2_cash',
+                    'strategy3_position', 'strategy3_cash',
+
+                    'counterparty', 'responsible',
+
+                    'allocation_balance', 'allocation_pl',
+                    'linked_instrument',
+
+                    'subgroup'
+
+                    ]
 
 def sort_by_dynamic_attrs(queryset, ordering, master_user, content_type):
     print('sort_by_dynamic_attrs.ordering %s' % ordering)
@@ -93,5 +118,23 @@ def sort_by_dynamic_attrs(queryset, ordering, master_user, content_type):
                     result.append(i)
 
         queryset = result
+    else:
+
+        print("ordering in system attrs %s" % ordering)
+
+        if '-' in ordering:
+            field = ordering.split('-')[1]
+        else :
+            field = ordering
+
+        print('ordering field %s' % field)
+
+        if is_relation(field):
+
+            queryset = queryset.order_by(ordering + '__name')
+
+        else:
+            queryset = queryset.order_by(ordering)
+
 
     return queryset
