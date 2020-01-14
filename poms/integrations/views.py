@@ -996,7 +996,6 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
                             "processed_rows": res.result['processed_rows'],
                             "scheme_name": res.result['scheme_name'],
                             "file_name": res.result['file_name'],
-                            "stats_file_report": res.result['stats_file_report']
                         }
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
@@ -1094,8 +1093,7 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
                             "total_rows": res.result['total_rows'],
                             "processed_rows": res.result['processed_rows'],
                             "scheme_name": res.result['scheme_name'],
-                            "file_name": res.result['file_name'],
-                            "stats_file_report": res.result['stats_file_report']
+                            "file_name": res.result['file_name']
                         }
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
