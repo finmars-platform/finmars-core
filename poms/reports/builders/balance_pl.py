@@ -262,6 +262,25 @@ class ReportBuilder(BaseReportBuilder):
             # kw_filters['instrument__in'] = self.instance.instruments
             filters &= Q(instrument__in=self.instance.instruments)
 
+        if self.instance.portfolios:
+            filters &= Q(portfolio__in=self.instance.portfolios)
+
+        if self.instance.accounts:
+            filters &= Q(account_position__in=self.instance.accounts) | Q(account_cash__in=self.instance.accounts) | Q(
+                account_interim__in=self.instance.accounts)
+
+        if self.instance.strategies1:
+            filters &= Q(strategy1_position__in=self.instance.strategies1) | Q(
+                strategy1_cash__in=self.instance.strategies1)
+
+        if self.instance.strategies2:
+            filters &= Q(strategy2_position__in=self.instance.strategies2) | Q(
+                strategy2_cash__in=self.instance.strategies2)
+
+        if self.instance.strategies3:
+            filters &= Q(strategy3_position__in=self.instance.strategies3) | Q(
+                strategy3_cash__in=self.instance.strategies3)
+
         if self.instance.transaction_classes:
             filters &= Q(transaction_class__in=self.instance.transaction_classes)
 
@@ -1659,7 +1678,8 @@ class ReportBuilder(BaseReportBuilder):
 
         # TODO END HERE
 
-        _l.debug('_refresh_with_perms_optimized instance relations done: %s', (time.perf_counter() - instance_relations_st))
+        _l.debug('_refresh_with_perms_optimized instance relations done: %s',
+                 (time.perf_counter() - instance_relations_st))
 
         permissions_st = time.perf_counter()
 
@@ -1686,12 +1706,17 @@ class ReportBuilder(BaseReportBuilder):
 
         attribute_types = self._get_attribute_types(self.instance.master_user)
 
-        self.instance.item_accounts = self._set_attribute_types_in_relations(self.instance.item_accounts, attribute_types)
-        self.instance.item_portfolios = self._set_attribute_types_in_relations(self.instance.item_portfolios, attribute_types)
-        self.instance.item_currencies = self._set_attribute_types_in_relations(self.instance.item_currencies, attribute_types)
-        self.instance.item_instruments = self._set_attribute_types_in_relations(self.instance.item_instruments, attribute_types)
+        self.instance.item_accounts = self._set_attribute_types_in_relations(self.instance.item_accounts,
+                                                                             attribute_types)
+        self.instance.item_portfolios = self._set_attribute_types_in_relations(self.instance.item_portfolios,
+                                                                               attribute_types)
+        self.instance.item_currencies = self._set_attribute_types_in_relations(self.instance.item_currencies,
+                                                                               attribute_types)
+        self.instance.item_instruments = self._set_attribute_types_in_relations(self.instance.item_instruments,
+                                                                                attribute_types)
 
-        _l.debug('_refresh_with_perms_optimized set attribute types done: %s', (time.perf_counter() - attribute_types_st))
+        _l.debug('_refresh_with_perms_optimized set attribute types done: %s',
+                 (time.perf_counter() - attribute_types_st))
 
         _l.debug('_refresh_with_perms_optimized item relations done: %s', (time.perf_counter() - item_relations_st))
 
@@ -1708,7 +1733,8 @@ class ReportBuilder(BaseReportBuilder):
         accounts_permissions = self._get_relation_permissions(groups=groups,
                                                               app_label='accounts', model='account')
 
-        accounts_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['acc', 'mismatch_acc'])
+        accounts_items_ids = self._get_relations_ids_from_items(items=self.instance.items,
+                                                                attrs=['acc', 'mismatch_acc'])
 
         if self.instance.member and self.instance.member.is_superuser:
 
@@ -1750,7 +1776,8 @@ class ReportBuilder(BaseReportBuilder):
 
             self.instance.item_account_types = self._get_account_types_by_ids(ids=account_types_ids)
 
-        _l.debug('_refresh_with_perms_optimized item_account_types done: %s', (time.perf_counter() - item_account_types_st))
+        _l.debug('_refresh_with_perms_optimized item_account_types done: %s',
+                 (time.perf_counter() - item_account_types_st))
 
         # Handle item_account_types END
 
@@ -1765,7 +1792,8 @@ class ReportBuilder(BaseReportBuilder):
         currencies_permissions = self._get_relation_permissions(groups=groups,
                                                                 app_label='currencies', model='currency')
 
-        currencies_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['ccy', 'pricing_ccy'])
+        currencies_items_ids = self._get_relations_ids_from_items(items=self.instance.items,
+                                                                  attrs=['ccy', 'pricing_ccy'])
 
         if self.instance.member and self.instance.member.is_superuser:
 
@@ -1792,7 +1820,8 @@ class ReportBuilder(BaseReportBuilder):
         portfolios_permissions = self._get_relation_permissions(groups=groups,
                                                                 app_label='portfolios', model='portfolio')
 
-        portfolios_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['prtfl', 'mismatch_prtfl'])
+        portfolios_items_ids = self._get_relations_ids_from_items(items=self.instance.items,
+                                                                  attrs=['prtfl', 'mismatch_prtfl'])
 
         if self.instance.member and self.instance.member.is_superuser:
             self.instance.item_portfolios = self._get_portfolios_by_ids(ids=portfolios_items_ids)
@@ -1855,7 +1884,8 @@ class ReportBuilder(BaseReportBuilder):
 
             self.instance.item_instrument_types = self._get_instrument_types_by_ids(ids=instrument_types_ids)
 
-        _l.debug('_refresh_with_perms_optimized item_instrument_types done: %s', (time.perf_counter() - item_instrument_types_st))
+        _l.debug('_refresh_with_perms_optimized item_instrument_types done: %s',
+                 (time.perf_counter() - item_instrument_types_st))
 
         # Handle item_instrument_types END
 
@@ -1868,7 +1898,7 @@ class ReportBuilder(BaseReportBuilder):
         groups = self.instance.member.groups.all()
 
         strategy1_permissions = self._get_relation_permissions(groups=groups,
-                                                              app_label='strategies', model='strategy1')
+                                                               app_label='strategies', model='strategy1')
 
         strategy1_items_ids = self._get_relations_ids_from_items(items=self.instance.items, attrs=['str1'])
 
