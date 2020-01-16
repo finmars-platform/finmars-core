@@ -24,6 +24,7 @@ from poms.accounts.models import Account
 from poms.audit.models import AuthLogEntry
 from poms.celery_tasks.models import CeleryTask
 from poms.common import formula
+from poms.common.formula import ExpressionEvalError
 from poms.common.utils import date_now, isclose
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency, CurrencyHistory
@@ -1663,7 +1664,7 @@ def complex_transaction_csv_file_import(self, instance):
 
 
 
-                        except ValueError:
+                        except (ValueError,ExpressionEvalError):
                             _l.info('can\'t process field: %s|%s', field.transaction_type_input.name,
                                     field.transaction_type_input.pk, exc_info=True)
                             fields_error.append(field)

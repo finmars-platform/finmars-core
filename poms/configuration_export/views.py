@@ -92,6 +92,19 @@ codename_set = ['view_%(model_name)s', 'change_%(model_name)s', 'manage_%(model_
                 'view_%(model_name)s_show_parameters', 'view_%(model_name)s_hide_parameters']
 
 
+def checkConfigurationSection(access_table):
+
+    result = True
+
+    print('access_table %s  ' % access_table)
+
+    for key, value in access_table.items():
+
+        if not value:
+            result = False
+
+    return result
+
 def get_codename_set(model_cls):
     kwargs = {
         'app_label': model_cls._meta.app_label,
@@ -176,6 +189,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration["head"]["date"] = str(datetime.now().date())
         configuration["body"] = []
 
+        can_export = checkConfigurationSection(self.access_table)
+
         transaction_types = self.get_transaction_types()
         transaction_type_groups = self.get_transaction_type_groups()
         edit_layouts = self.get_edit_layouts()
@@ -222,65 +237,79 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         get_transaction_user_fields = self.get_transaction_user_fields()
         instrument_user_fields = self.get_instrument_user_fields()
 
-        configuration["body"].append(transaction_types)
-        configuration["body"].append(transaction_type_groups)
-        configuration["body"].append(edit_layouts)
-        configuration["body"].append(list_layouts)
 
-        if self.access_table['ui.templatelayout']:
-            configuration["body"].append(template_layouts)
+        if can_export:
 
-        configuration["body"].append(context_menu_layouts)
-        configuration["body"].append(dashboard_layouts)
-        configuration["body"].append(report_layouts)
-        configuration["body"].append(bookmarks)
+            configuration["body"].append(transaction_types)
+            configuration["body"].append(transaction_type_groups)
+            configuration["body"].append(edit_layouts)
+            configuration["body"].append(list_layouts)
 
-        if self.access_table['csv_import.csvimportscheme']:
-            configuration["body"].append(csv_import_schemes)
+            if self.access_table['ui.templatelayout']:
+                configuration["body"].append(template_layouts)
 
-        if self.access_table['complex_import.compleximportscheme']:
-            configuration["body"].append(complex_import_schemes)
+            configuration["body"].append(context_menu_layouts)
+            configuration["body"].append(dashboard_layouts)
+            configuration["body"].append(report_layouts)
+            configuration["body"].append(bookmarks)
 
-        if self.access_table['integrations.pricedownloadscheme']:
-            configuration["body"].append(price_download_schemes)
+            if self.access_table['csv_import.csvimportscheme']:
+                configuration["body"].append(csv_import_schemes)
 
-        if self.access_table['integrations.instrumentdownloadscheme']:
-            configuration["body"].append(instrument_download_schemes)
+            if self.access_table['complex_import.compleximportscheme']:
+                configuration["body"].append(complex_import_schemes)
 
-        if self.access_table['integrations.complextransactionimportscheme']:
-            configuration["body"].append(complex_transaction_import_scheme)
+            if self.access_table['integrations.pricedownloadscheme']:
+                configuration["body"].append(price_download_schemes)
 
-        configuration["body"].append(account_types)
-        configuration["body"].append(currencies)
-        configuration["body"].append(pricing_policies)
-        configuration["body"].append(instrument_types)
-        configuration["body"].append(pricing_automated_schedule)
+            if self.access_table['integrations.instrumentdownloadscheme']:
+                configuration["body"].append(instrument_download_schemes)
 
-        if self.access_table['reference_tables.referencetable']:
-            configuration["body"].append(reference_tables)
+            if self.access_table['integrations.complextransactionimportscheme']:
+                configuration["body"].append(complex_transaction_import_scheme)
 
-        if self.access_table['obj_attrs.attributetype']:
-            configuration["body"].append(portfolio_attribute_types)
-            configuration["body"].append(currency_attribute_types)
-            configuration["body"].append(account_attribute_types)
-            configuration["body"].append(account_type_attribute_types)
-            configuration["body"].append(responsible_attribute_types)
-            configuration["body"].append(counterparty_attribute_types)
-            configuration["body"].append(instrument_attribute_types)
-            configuration["body"].append(instrument_type_attribute_types)
-            configuration["body"].append(transaction_type_attribute_types)
+            configuration["body"].append(account_types)
+            configuration["body"].append(currencies)
+            configuration["body"].append(pricing_policies)
+            configuration["body"].append(instrument_types)
+            configuration["body"].append(pricing_automated_schedule)
 
-        configuration["body"].append(strategy1_attribute_types)
-        configuration["body"].append(strategy2_attribute_types)
-        configuration["body"].append(strategy3_attribute_types)
+            if self.access_table['reference_tables.referencetable']:
+                configuration["body"].append(reference_tables)
 
-        configuration["body"].append(balance_report_custom_fields)
-        configuration["body"].append(pl_report_custom_fields)
-        configuration["body"].append(transaction_report_custom_fields)
+            if self.access_table['obj_attrs.attributetype']:
+                configuration["body"].append(portfolio_attribute_types)
+                configuration["body"].append(currency_attribute_types)
+                configuration["body"].append(account_attribute_types)
+                configuration["body"].append(account_type_attribute_types)
+                configuration["body"].append(responsible_attribute_types)
+                configuration["body"].append(counterparty_attribute_types)
+                configuration["body"].append(instrument_attribute_types)
+                configuration["body"].append(instrument_type_attribute_types)
+                configuration["body"].append(transaction_type_attribute_types)
 
-        if self.access_table['ui.userfield']:
-            configuration["body"].append(get_transaction_user_fields)
-            configuration["body"].append(instrument_user_fields)
+            configuration["body"].append(strategy1_attribute_types)
+            configuration["body"].append(strategy2_attribute_types)
+            configuration["body"].append(strategy3_attribute_types)
+
+            configuration["body"].append(balance_report_custom_fields)
+            configuration["body"].append(pl_report_custom_fields)
+            configuration["body"].append(transaction_report_custom_fields)
+
+            if self.access_table['ui.userfield']:
+                configuration["body"].append(get_transaction_user_fields)
+                configuration["body"].append(instrument_user_fields)
+
+        else:
+
+            configuration["body"].append(edit_layouts)
+            configuration["body"].append(list_layouts)
+
+            configuration["body"].append(context_menu_layouts)
+            configuration["body"].append(dashboard_layouts)
+            configuration["body"].append(report_layouts)
+            configuration["body"].append(bookmarks)
+
 
         return configuration
 
@@ -1771,41 +1800,47 @@ class MappingExportViewSet(AbstractModelViewSet):
         configuration["head"]["date"] = str(datetime.now().date())
         configuration["body"] = []
 
-        if self.access_table['integrations.mappingtable']:
+        can_export = checkConfigurationSection(self.access_table)
 
-            portfolio_mapping = self.get_portfolio_mapping()
-            currency_mapping = self.get_currency_mapping()
-            instrument_type_mapping = self.get_instrument_type_mapping()
-            account_mapping = self.get_account_mapping()
-            account_type_mapping = self.get_account_type_mapping()
-            instrument_mapping = self.get_instrument_mapping()
-            counterparty_mapping = self.get_counterparty_mapping()
-            responsible_mapping = self.get_responsible_mapping()
-            strategy1_mapping = self.get_strategy1_mapping()
+        print('can_export %s' % can_export)
 
-            pricing_policy_mapping = self.get_pricing_policy_mapping()
-            periodicity_mapping = self.get_periodicity_mapping()
-            daily_pricing_model_mapping = self.get_daily_pricing_model_mapping()
-            payment_size_detail_mapping = self.get_payment_size_detail_mapping()
-            accrual_calculation_model_mapping = self.get_accrual_calculation_model_mapping()
-            price_download_scheme_mapping = self.get_price_download_scheme_mapping()
+        if can_export:
 
-            configuration["body"].append(account_type_mapping)
-            configuration["body"].append(portfolio_mapping)
-            configuration["body"].append(currency_mapping)
-            configuration["body"].append(instrument_type_mapping)
-            configuration["body"].append(account_mapping)
-            configuration["body"].append(instrument_mapping)
-            configuration["body"].append(counterparty_mapping)
-            configuration["body"].append(responsible_mapping)
-            configuration["body"].append(strategy1_mapping)
+            if self.access_table['integrations.mappingtable']:
 
-            configuration["body"].append(pricing_policy_mapping)
-            configuration["body"].append(periodicity_mapping)
-            configuration["body"].append(daily_pricing_model_mapping)
-            configuration["body"].append(payment_size_detail_mapping)
-            configuration["body"].append(accrual_calculation_model_mapping)
-            configuration["body"].append(price_download_scheme_mapping)
+                portfolio_mapping = self.get_portfolio_mapping()
+                currency_mapping = self.get_currency_mapping()
+                instrument_type_mapping = self.get_instrument_type_mapping()
+                account_mapping = self.get_account_mapping()
+                account_type_mapping = self.get_account_type_mapping()
+                instrument_mapping = self.get_instrument_mapping()
+                counterparty_mapping = self.get_counterparty_mapping()
+                responsible_mapping = self.get_responsible_mapping()
+                strategy1_mapping = self.get_strategy1_mapping()
+
+                pricing_policy_mapping = self.get_pricing_policy_mapping()
+                periodicity_mapping = self.get_periodicity_mapping()
+                daily_pricing_model_mapping = self.get_daily_pricing_model_mapping()
+                payment_size_detail_mapping = self.get_payment_size_detail_mapping()
+                accrual_calculation_model_mapping = self.get_accrual_calculation_model_mapping()
+                price_download_scheme_mapping = self.get_price_download_scheme_mapping()
+
+                configuration["body"].append(account_type_mapping)
+                configuration["body"].append(portfolio_mapping)
+                configuration["body"].append(currency_mapping)
+                configuration["body"].append(instrument_type_mapping)
+                configuration["body"].append(account_mapping)
+                configuration["body"].append(instrument_mapping)
+                configuration["body"].append(counterparty_mapping)
+                configuration["body"].append(responsible_mapping)
+                configuration["body"].append(strategy1_mapping)
+
+                configuration["body"].append(pricing_policy_mapping)
+                configuration["body"].append(periodicity_mapping)
+                configuration["body"].append(daily_pricing_model_mapping)
+                configuration["body"].append(payment_size_detail_mapping)
+                configuration["body"].append(accrual_calculation_model_mapping)
+                configuration["body"].append(price_download_scheme_mapping)
 
         return configuration
 
