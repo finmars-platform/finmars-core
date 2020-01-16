@@ -174,6 +174,33 @@ class TransactionReportBuilder(BaseReportBuilder):
 
         return qs
 
+    def _trn_qs_filter(self, qs):
+
+        filters = Q()
+
+        if self.instance.portfolios:
+            filters &= Q(portfolio__in=self.instance.portfolios)
+
+        if self.instance.accounts:
+            filters &= Q(account_position__in=self.instance.accounts) | Q(account_cash__in=self.instance.accounts) | Q(
+                account_interim__in=self.instance.accounts)
+
+        if self.instance.strategies1:
+            filters &= Q(strategy1_position__in=self.instance.strategies1) | Q(
+                strategy1_cash__in=self.instance.strategies1)
+
+        if self.instance.strategies2:
+            filters &= Q(strategy2_position__in=self.instance.strategies2) | Q(
+                strategy2_cash__in=self.instance.strategies2)
+
+        if self.instance.strategies3:
+            filters &= Q(strategy3_position__in=self.instance.strategies3) | Q(
+                strategy3_cash__in=self.instance.strategies3)
+
+        qs = qs.filter(filters)
+
+        return qs
+
     def _load(self):
         # _l.debug('> _load')
 
