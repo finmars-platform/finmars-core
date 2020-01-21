@@ -27,7 +27,7 @@ from poms.reports.serializers import BalanceReportCustomFieldSerializer, PLRepor
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import TransactionClass, TransactionTypeGroup, TransactionType, TransactionTypeInput
 from poms.transactions.serializers import TransactionTypeGroupSerializer, TransactionTypeSerializer
-from poms.ui.models import ListLayout, InstrumentUserFieldModel, TransactionUserFieldModel
+from poms.ui.models import ListLayout, InstrumentUserFieldModel, TransactionUserFieldModel, DashboardLayout
 from poms.ui.serializers import EditLayoutSerializer, ListLayoutSerializer, DashboardLayoutSerializer, \
     InstrumentUserFieldSerializer, TransactionUserFieldSerializer
 from poms.users.models import EcosystemDefault
@@ -822,8 +822,29 @@ class ImportManager(object):
 
                         serializer = DashboardLayoutSerializer(data=content_object,
                                                                context=self.get_serializer_context())
-                        serializer.is_valid(raise_exception=True)
-                        serializer.save()
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except ValidationError:
+
+                            if self.instance.mode == 'overwrite':
+
+                                try:
+
+                                    content_type = get_content_type_by_name(content_object['content_type'])
+
+                                    layout = DashboardLayout.objects.get(member=self.member, name=content_object['name'])
+
+                                    print('layout %s ' % layout)
+
+                                    layout.data = content_object['data']
+
+                                    layout.save()
+
+                                except DashboardLayout.DoesNotExist:
+                                    pass
+
 
                         self.update_progress()
 
