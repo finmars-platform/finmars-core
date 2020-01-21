@@ -141,14 +141,18 @@ class PomsConfigurationPermission(BasePermission):
             '/api/v1/ui/instrument-user-field/': 'ui.userfield',
         }
 
-        for group in member.groups.all():
+        if request.path in url_to_function_map:
 
-            if group.permission_table:
-                if group.permission_table['configuration']:
-                    for item in group.permission_table['configuration']:
-                        if item['content_type'] == url_to_function_map[request.path]:
-                            if item['data']:
-                                if item['data']['creator_change']:
-                                    has_access = True
+            for group in member.groups.all():
+
+                if group.permission_table:
+                    if group.permission_table['configuration']:
+                        for item in group.permission_table['configuration']:
+                                if item['content_type'] == url_to_function_map[request.path]:
+                                    if item['data']:
+                                        if item['data']['creator_change']:
+                                            has_access = True
+        else:
+            has_access = True
 
         return has_access

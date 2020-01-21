@@ -6,7 +6,7 @@ from poms.users.fields import MasterUserField, MemberField, HiddenMemberField
 
 class ConfigurationImportAsJson:
     def __init__(self, task_id=None, task_status=None, master_user=None, status=None,
-                 data=None, member=None,
+                 data=None, member=None, mode=None,
                  total_rows=0, processed_rows=0, stats=None, imported=None):
         self.task_id = task_id
         self.task_status = task_status
@@ -17,6 +17,7 @@ class ConfigurationImportAsJson:
         self.status = status
 
         self.stats = stats
+        self.mode = mode
 
         self.imported = imported
 
@@ -35,6 +36,8 @@ class ConfigurationImportAsJsonSerializer(serializers.Serializer):
 
     master_user = MasterUserField()
     member = HiddenMemberField()
+
+    mode = serializers.CharField(allow_null=True, allow_blank=True, required=False)
 
     stats = serializers.ReadOnlyField()
     imported = serializers.ReadOnlyField()

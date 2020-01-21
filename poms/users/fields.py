@@ -12,7 +12,6 @@ from poms.users.models import Member, Group
 class CurrentMasterUserDefault(object):
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
-        # master_user = get_master_user(request)
         master_user = request.user.master_user
         self._master_user = master_user
 
@@ -20,10 +19,26 @@ class CurrentMasterUserDefault(object):
         return self._master_user
 
 
+class CurrentUserDefaultLocal(object):
+    def set_context(self, serializer_field):
+        request = serializer_field.context['request']
+        user = request.user
+        self._user = user
+
+    def __call__(self):
+        return self._user
+
+
 class MasterUserField(serializers.HiddenField):
     def __init__(self, **kwargs):
         kwargs['default'] = CurrentMasterUserDefault()
         super(MasterUserField, self).__init__(**kwargs)
+
+
+class CurrentUserField(serializers.HiddenField):
+    def __init__(self, **kwargs):
+        kwargs['default'] = CurrentUserDefaultLocal()
+        super(CurrentUserField, self).__init__(**kwargs)
 
 
 class CurrentMemberDefault(object):
@@ -56,6 +71,9 @@ class HiddenUserField(serializers.PrimaryKeyRelatedField):
         kwargs['default'] = CurrentUserDefault()
         # kwargs['read_only'] = True
         kwargs.setdefault('read_only', True)
+
+        print("HIDDEN USER FILD? %s" % kwargs['default'])
+
         super(HiddenUserField, self).__init__(**kwargs)
 
 

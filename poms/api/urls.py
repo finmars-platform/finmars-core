@@ -34,6 +34,7 @@ import poms.complex_import.views as complex_import
 import poms.system.views as system
 
 import poms.file_reports.views as file_reports
+import poms.configuration_sharing.views as configuration_sharing
 
 router = routers.DefaultRouter()
 
@@ -50,7 +51,8 @@ router.register(r'users/reset-password', users.ResetPasswordRequestTokenViewSet,
 
 router.register(r'users/user-register', users.UserRegisterViewSet, 'userregister')
 router.register(r'users/master-user-create', users.MasterUserCreateViewSet, 'masterusercreate')
-router.register(r'users/master-user-check-uniqueness', users.MasterUserCreateCheckUniquenessViewSet, 'masterusercreatecheckuniqueness')
+router.register(r'users/master-user-check-uniqueness', users.MasterUserCreateCheckUniquenessViewSet,
+                'masterusercreatecheckuniqueness')
 router.register(r'users/user', users.UserViewSet)
 router.register(r'users/user-member', users.UserMemberViewSet, 'usermember')
 router.register(r'users/master-user', users.MasterUserViewSet)
@@ -69,7 +71,8 @@ router.register(r'users/ecosystem-default', users.EcosystemDefaultViewSet, 'ecos
 
 router.register(r'accounts/account-type-ev-group', accounts.AccountTypeEvGroupViewSet)
 router.register(r'accounts/account-type', accounts.AccountTypeViewSet)
-router.register(r'accounts/account-type-attribute-type', accounts.AccountTypeAttributeTypeViewSet, 'accounttypeattributetype')
+router.register(r'accounts/account-type-attribute-type', accounts.AccountTypeAttributeTypeViewSet,
+                'accounttypeattributetype')
 
 # router.register(r'accounts/account-attribute-type', accounts.AccountAttributeTypeViewSet)
 router.register(r'accounts/account-attribute-type', accounts.AccountAttributeTypeViewSet, 'accountattributetype')
@@ -204,8 +207,10 @@ router.register(r'transactions/transaction-type-light-ev-group', transactions.Tr
                 'transactiontypelightevgroup')
 
 router.register(r'transactions/transaction-type', transactions.TransactionTypeViewSet)
-router.register(r'transactions/transaction-type-light', transactions.TransactionTypeLightViewSet, 'transactiontypelight')
-router.register(r'transactions/transaction-type-light-with-inputs', transactions.TransactionTypeLightWithInputsViewSet, 'transactiontypelightwithinputs')
+router.register(r'transactions/transaction-type-light', transactions.TransactionTypeLightViewSet,
+                'transactiontypelight')
+router.register(r'transactions/transaction-type-light-with-inputs', transactions.TransactionTypeLightWithInputsViewSet,
+                'transactiontypelightwithinputs')
 router.register(r'transactions/transaction-type-attribute-type', transactions.TransactionTypeAttributeTypeViewSet)
 # router.register(r'transactions/transaction-attribute-type', transactions.TransactionAttributeTypeViewSet)
 router.register(r'transactions/transaction-attribute-type', transactions.TransactionAttributeTypeViewSet,
@@ -225,9 +230,12 @@ router.register(r'transactions/complex-transaction-ev-group', transactions.Compl
 router.register(r'transactions/complex-transaction-light-ev-group', transactions.ComplexTransactionLightEvGroupViewSet,
                 'complextransactionlightevgroup')
 router.register(r'transactions/complex-transaction', transactions.ComplexTransactionViewSet)
-router.register(r'transactions/complex-transaction-light', transactions.ComplexTransactionLightViewSet, 'complextransactionlight')
-router.register(r'transactions/recalculate-permission-transaction', transactions.RecalculatePermissionTransactionViewSet, 'recalculatepermissiontranscation')
-router.register(r'transactions/recalculate-permission-complex-transaction', transactions.RecalculatePermissionComplexTransactionViewSet, 'recalculatepermissioncomplextrasaction')
+router.register(r'transactions/complex-transaction-light', transactions.ComplexTransactionLightViewSet,
+                'complextransactionlight')
+router.register(r'transactions/recalculate-permission-transaction',
+                transactions.RecalculatePermissionTransactionViewSet, 'recalculatepermissiontranscation')
+router.register(r'transactions/recalculate-permission-complex-transaction',
+                transactions.RecalculatePermissionComplexTransactionViewSet, 'recalculatepermissioncomplextrasaction')
 
 router.register(r'ui/portal-interface-access', ui.PortalInterfaceAccessViewSet)
 router.register(r'ui/list-layout', ui.ListLayoutViewSet)
@@ -326,20 +334,30 @@ router.register(r'import/csv-validate', csv_import.CsvDataImportValidateViewSet,
 router.register(r'import/complex/scheme', complex_import.ComplexImportSchemeViewSet, 'import_complex_scheme')
 router.register(r'import/complex', complex_import.ComplexImportViewSet, 'import_complex')
 
-router.register(r'import/configuration-json', configuration_import.ConfigurationImportAsJsonViewSet, 'configuration_import')
+router.register(r'import/configuration-json', configuration_import.ConfigurationImportAsJsonViewSet,
+                'configuration_import')
 router.register(r'export/configuration', configuration_export.ConfigurationExportViewSet, 'configuration_export')
 router.register(r'export/mapping', configuration_export.MappingExportViewSet, 'mapping_export')
 router.register(r'import/configuration/check-duplicates', configuration_export.ConfigurationDuplicateCheckViewSet,
                 'configuration_import_check_duplicates')
 
-
-router.register(r'reconciliation/process-bank-file', reconciliation.ProcessBankFileForReconcileViewSet, 'process_bank_file_for_reconcile')
+router.register(r'reconciliation/process-bank-file', reconciliation.ProcessBankFileForReconcileViewSet,
+                'process_bank_file_for_reconcile')
 router.register(r'reconciliation/bank-field', reconciliation.ReconciliationBankFileFieldViewSet, 'bank_fields')
-router.register(r'reconciliation/new-bank-field', reconciliation.ReconciliationNewBankFileFieldViewSet, 'new_bank_fields')
-router.register(r'reconciliation/complex-transaction-field', reconciliation.ReconciliationComplexTransactionFieldViewSet, 'complex_transaction_fields')
+router.register(r'reconciliation/new-bank-field', reconciliation.ReconciliationNewBankFileFieldViewSet,
+                'new_bank_fields')
+router.register(r'reconciliation/complex-transaction-field',
+                reconciliation.ReconciliationComplexTransactionFieldViewSet, 'complex_transaction_fields')
 
 router.register(r'file-reports/file-report', file_reports.FileReportViewSet, 'file_reports')
 
+router.register(r'configuration-sharing/shared-configuration-file',
+                configuration_sharing.SharedConfigurationFileViewSet, 'shared_configuration_file')
+router.register(r'configuration-sharing/invites', configuration_sharing.InviteToSharedConfigurationFileViewSet,
+                'invites_to_shared_configuration_file')
+
+router.register(r'configuration-sharing/my-invites', configuration_sharing.MyInviteToSharedConfigurationFileViewSet,
+                'my_invites_to_shared_configuration_file')
 
 urlpatterns = [
     url(r'^v1/', include(router.urls)),

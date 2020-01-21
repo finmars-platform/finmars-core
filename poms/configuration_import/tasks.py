@@ -1,6 +1,7 @@
 import time
 from celery import shared_task
 from django.contrib.contenttypes.models import ContentType
+from rest_framework.exceptions import ValidationError
 
 from poms.accounts.models import Account, AccountType
 from poms.accounts.serializers import AccountTypeSerializer
@@ -710,10 +711,10 @@ class ImportManager(object):
                 if 'content' in item:
 
                     for content_object in item['content']:
+
                         content_object['member'] = self.member.pk
 
                         if 'data' in content_object:
-
 
                             if 'reportOptions' in content_object['data']:
 
@@ -737,11 +738,29 @@ class ImportManager(object):
 
 
 
-
                         serializer = ListLayoutSerializer(data=content_object,
                                                           context=self.get_serializer_context())
-                        serializer.is_valid(raise_exception=True)
-                        serializer.save()
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except ValidationError:
+
+                            if self.instance.mode == 'overwrite':
+
+                                try:
+
+                                    content_type = get_content_type_by_name(content_object['content_type'])
+
+                                    layout = ListLayout.objects.get(member=self.member, name=content_object['name'], content_type=content_type)
+
+                                    print('layout %s ' % layout)
+
+                                    layout.data = content_object['data']
+
+                                    layout.save()
+
+                                except ListLayout.DoesNotExist:
+                                    pass
 
                         self.update_progress()
 
@@ -1185,6 +1204,8 @@ class ImportManager(object):
 @shared_task(name='configuration_import.configuration_import_as_json', bind=True)
 def configuration_import_as_json(self, instance):
     _l.debug('instance %s' % instance)
+    _l.debug('instance.mode %s' % instance.mode)
+    _l.debug('instance.data %s' % instance.data)
 
     import_manager = ImportManager(instance, self.update_state)
 
@@ -1196,6 +1217,8 @@ def configuration_import_as_json(self, instance):
     if 'body' in instance.data:
 
         for section in instance.data['body']:
+
+            _l.debug('section_name %s' % section['section_name'])
 
             if section['section_name'] == 'configuration':
                 configuration_section = section
