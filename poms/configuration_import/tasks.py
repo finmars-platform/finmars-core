@@ -5,6 +5,7 @@ from rest_framework.exceptions import ValidationError
 
 from poms.accounts.models import Account, AccountType
 from poms.accounts.serializers import AccountTypeSerializer
+from poms.complex_import.models import ComplexImportScheme
 from poms.complex_import.serializers import ComplexImportSchemeSerializer
 from poms.counterparties.models import Responsible, Counterparty
 from poms.csv_import.models import CsvImportScheme
@@ -22,12 +23,13 @@ from poms.integrations.serializers import ComplexTransactionImportSchemeSerializ
 from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_attrs.serializers import GenericAttributeTypeSerializer
 from poms.portfolios.models import Portfolio
+from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
 from poms.reports.serializers import BalanceReportCustomFieldSerializer, PLReportCustomFieldSerializer, \
     TransactionReportCustomFieldSerializer
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import TransactionClass, TransactionTypeGroup, TransactionType, TransactionTypeInput
 from poms.transactions.serializers import TransactionTypeGroupSerializer, TransactionTypeSerializer
-from poms.ui.models import ListLayout, InstrumentUserFieldModel, TransactionUserFieldModel, DashboardLayout
+from poms.ui.models import ListLayout, InstrumentUserFieldModel, TransactionUserFieldModel, DashboardLayout, EditLayout
 from poms.ui.serializers import EditLayoutSerializer, ListLayoutSerializer, DashboardLayoutSerializer, \
     InstrumentUserFieldSerializer, TransactionUserFieldSerializer
 from poms.users.models import EcosystemDefault
@@ -78,6 +80,10 @@ class ImportManager(object):
 
         self.update_task_state = update_state
         self.instance = instance
+
+        self.instance.stats = {}
+        self.instance.stats['configuration'] = {}
+        self.instance.stats['mappings'] = {}
 
         # _l.debug('self.master_user %s ' % self.master_user)
         # _l.debug('self.class instance %s' % self.master_user.__class__.__name__)
@@ -446,6 +452,8 @@ class ImportManager(object):
 
             if 'obj_attrs' in item['entity']:
 
+                self.instance.stats['configuration'][item['entity']] = []
+
                 if 'content' in item:
 
                     for content_object in item['content']:
@@ -459,8 +467,32 @@ class ImportManager(object):
 
                         serializer = GenericAttributeTypeSerializer(data=content_object,
                                                                     context=self.get_serializer_context())
-                        serializer.is_valid(raise_exception=True)
-                        serializer.save(content_type=content_type)
+
+                        stats = {}
+
+                        try:
+
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save(content_type=content_type)
+
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                instance = GenericAttributeType.objects.get(master_user=self.master_user, user_code=content_object['user_code'], content_type=content_type)
+
+                                serializer = GenericAttributeTypeSerializer(data=content_object,
+                                                                            instance=instance,
+                                                                            context=self.get_serializer_context())
+                                serializer.is_valid(raise_exception=True)
+                                serializer.save()
+
+                            else:
+                                _l.debug('error %s' % error)
+                                stats['status'] = 'error'
+                                # stats['message'] = error
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
@@ -474,6 +506,8 @@ class ImportManager(object):
 
             if 'instruments.instrumenttype' in item['entity']:
 
+                self.instance.stats['configuration'][item['entity']] = []
+
                 if 'content' in item:
 
                     for content_object in item['content']:
@@ -482,8 +516,30 @@ class ImportManager(object):
 
                         serializer = InstrumentTypeSerializer(data=content_object,
                                                               context=self.get_serializer_context())
-                        serializer.is_valid(raise_exception=True)
-                        serializer.save()
+
+                        stats = {}
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                instance = InstrumentType.objects.get(master_user=self.master_user, user_code=content_object['user_code'])
+
+                                serializer = InstrumentTypeSerializer(data=content_object,
+                                                                            instance=instance,
+                                                                            context=self.get_serializer_context())
+                                serializer.is_valid(raise_exception=True)
+                                serializer.save()
+
+                            else:
+
+                                _l.debug('error %s' % error)
+                                stats['status'] = 'error'
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
@@ -497,13 +553,36 @@ class ImportManager(object):
 
             if 'accounts.accounttype' in item['entity']:
 
+                self.instance.stats['configuration'][item['entity']] = []
+
                 if 'content' in item:
 
                     for content_object in item['content']:
                         serializer = AccountTypeSerializer(data=content_object,
                                                            context=self.get_serializer_context())
-                        serializer.is_valid(raise_exception=True)
-                        serializer.save()
+
+                        stats = {}
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                instance = AccountType.objects.get(master_user=self.master_user, user_code=content_object['user_code'])
+
+                                serializer = AccountTypeSerializer(data=content_object,
+                                                                      instance=instance,
+                                                                      context=self.get_serializer_context())
+                                serializer.is_valid(raise_exception=True)
+                                serializer.save()
+
+                            else:
+                                _l.debug('error %s' % error)
+                                stats['status'] = 'error'
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
@@ -517,13 +596,36 @@ class ImportManager(object):
 
             if 'transactions.transactiontypegroup' in item['entity']:
 
+                self.instance.stats['configuration'][item['entity']] = []
+
                 if 'content' in item:
 
                     for content_object in item['content']:
                         serializer = TransactionTypeGroupSerializer(data=content_object,
                                                                     context=self.get_serializer_context())
-                        serializer.is_valid(raise_exception=True)
-                        serializer.save()
+
+                        stats = {}
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                instance = TransactionTypeGroup.objects.get(master_user=self.master_user, user_code=content_object['user_code'])
+
+                                serializer = TransactionTypeGroupSerializer(data=content_object,
+                                                                   instance=instance,
+                                                                   context=self.get_serializer_context())
+                                serializer.is_valid(raise_exception=True)
+                                serializer.save()
+
+                            else:
+                                _l.debug('error %s' % error)
+                                stats['status'] = 'error'
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
@@ -536,6 +638,8 @@ class ImportManager(object):
         for item in configuration_section['items']:
 
             if 'transactions.transactiontype' in item['entity']:
+
+                self.instance.stats['configuration'][item['entity']] = []
 
                 if 'content' in item:
 
@@ -557,8 +661,29 @@ class ImportManager(object):
 
                         serializer = TransactionTypeSerializer(data=content_object,
                                                                context=self.get_serializer_context())
-                        serializer.is_valid(raise_exception=True)
-                        serializer.save()
+
+                        stats = {}
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                instance = TransactionType.objects.get(master_user=self.master_user, user_code=content_object['user_code'])
+
+                                serializer = TransactionTypeSerializer(data=content_object,
+                                                                            instance=instance,
+                                                                            context=self.get_serializer_context())
+                                serializer.is_valid(raise_exception=True)
+                                serializer.save()
+
+                            else:
+                                _l.debug('error %s' % error)
+                                stats['status'] = 'error'
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
@@ -626,13 +751,37 @@ class ImportManager(object):
 
             if 'reports.balancereportcustomfield' in item['entity']:
 
+                self.instance.stats['configuration'][item['entity']] = []
+
                 if 'content' in item:
 
                     for content_object in item['content']:
                         serializer = BalanceReportCustomFieldSerializer(data=content_object,
                                                                         context=self.get_serializer_context())
-                        serializer.is_valid(raise_exception=True)
-                        serializer.save()
+
+                        stats = {}
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                instance = BalanceReportCustomField.objects.get(master_user=self.master_user, user_code=content_object['user_code'])
+
+                                serializer = BalanceReportCustomFieldSerializer(data=content_object,
+                                                                       instance=instance,
+                                                                       context=self.get_serializer_context())
+                                serializer.is_valid(raise_exception=True)
+                                serializer.save()
+
+                            else:
+
+                                _l.debug('error %s' % error)
+                                stats['status'] = 'error'
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
@@ -646,13 +795,37 @@ class ImportManager(object):
 
             if 'reports.plreportcustomfield' in item['entity']:
 
+                self.instance.stats['configuration'][item['entity']] = []
+
                 if 'content' in item:
 
                     for content_object in item['content']:
                         serializer = PLReportCustomFieldSerializer(data=content_object,
                                                                    context=self.get_serializer_context())
-                        serializer.is_valid(raise_exception=True)
-                        serializer.save()
+
+                        stats = {}
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                instance = PLReportCustomField.objects.get(master_user=self.master_user, user_code=content_object['user_code'])
+
+                                serializer = PLReportCustomFieldSerializer(data=content_object,
+                                                                                instance=instance,
+                                                                                context=self.get_serializer_context())
+                                serializer.is_valid(raise_exception=True)
+                                serializer.save()
+
+                            else:
+
+                                _l.debug('error %s' % error)
+                                stats['status'] = 'error'
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
@@ -666,13 +839,37 @@ class ImportManager(object):
 
             if 'reports.transactionreportcustomfield' in item['entity']:
 
+                self.instance.stats['configuration'][item['entity']] = []
+
                 if 'content' in item:
 
                     for content_object in item['content']:
                         serializer = TransactionReportCustomFieldSerializer(data=content_object,
                                                                             context=self.get_serializer_context())
-                        serializer.is_valid(raise_exception=True)
-                        serializer.save()
+
+                        stats = {}
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                instance = TransactionReportCustomField.objects.get(master_user=self.master_user, user_code=content_object['user_code'])
+
+                                serializer = TransactionReportCustomFieldSerializer(data=content_object,
+                                                                           instance=instance,
+                                                                           context=self.get_serializer_context())
+                                serializer.is_valid(raise_exception=True)
+                                serializer.save()
+
+                            else:
+
+                                _l.debug('error %s' % error)
+                                stats['status'] = 'error'
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
@@ -686,6 +883,8 @@ class ImportManager(object):
 
             if 'ui.editlayout' in item['entity']:
 
+                self.instance.stats['configuration'][item['entity']] = []
+
                 if 'content' in item:
 
                     for content_object in item['content']:
@@ -693,8 +892,32 @@ class ImportManager(object):
 
                         serializer = EditLayoutSerializer(data=content_object,
                                                           context=self.get_serializer_context())
-                        serializer.is_valid(raise_exception=True)
-                        serializer.save()
+
+                        content_type = get_content_type_by_name(content_object['content_type'])
+
+                        stats = {}
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                instance = EditLayout.objects.get(member=self.member, content_type=content_type)
+
+                                serializer = EditLayoutSerializer(data=content_object,
+                                                                                    instance=instance,
+                                                                                    context=self.get_serializer_context())
+                                serializer.is_valid(raise_exception=True)
+                                serializer.save()
+
+                            else:
+
+                                _l.debug('error %s' % error)
+                                stats['status'] = 'error'
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
@@ -832,8 +1055,6 @@ class ImportManager(object):
 
                                 try:
 
-                                    content_type = get_content_type_by_name(content_object['content_type'])
-
                                     layout = DashboardLayout.objects.get(member=self.member, name=content_object['name'])
 
                                     print('layout %s ' % layout)
@@ -858,33 +1079,65 @@ class ImportManager(object):
 
             if 'integrations.complextransactionimportscheme' in item['entity']:
 
+                self.instance.stats['configuration'][item['entity']] = []
+
                 if 'content' in item:
 
                     for content_object in item['content']:
 
-                        for rule in content_object['rules']:
+                        if 'rules' in content_object:
 
-                            try:
-                                rule['transaction_type'] = TransactionType.objects.get(master_user=self.master_user,
-                                                                                       user_code=rule[
-                                                                                           '___transaction_type__user_code']).pk
-                            except TransactionType.DoesNotExist:
-                                _l.debug('Cant find Transaction Type form %s' % content_object['scheme_name'])
+                            for rule in content_object['rules']:
 
-                            if rule['transaction_type']:
+                                try:
+                                    rule['transaction_type'] = TransactionType.objects.get(master_user=self.master_user,
+                                                                                           user_code=rule[
+                                                                                               '___transaction_type__user_code']).pk
+                                except TransactionType.DoesNotExist:
+                                    _l.debug('Cant find Transaction Type form %s' % content_object['scheme_name'])
 
-                                for field in rule['fields']:
+                                if rule['transaction_type']:
 
-                                    try:
-                                        field['transaction_type_input'] = TransactionTypeInput.objects.get(
-                                            transaction_type=rule['transaction_type'], name=field['___input__name']).pk
-                                    except TransactionTypeInput.DoesNotExist:
-                                        _l.debug('Cant find Input %s' % field['___input__name'])
+                                    for field in rule['fields']:
+
+                                        try:
+                                            field['transaction_type_input'] = TransactionTypeInput.objects.get(
+                                                transaction_type=rule['transaction_type'], name=field['___input__name']).pk
+                                        except TransactionTypeInput.DoesNotExist:
+                                            _l.debug('Cant find Input %s' % field['___input__name'])
 
                         serializer = ComplexTransactionImportSchemeSerializer(data=content_object,
                                                                               context=self.get_serializer_context())
-                        serializer.is_valid(raise_exception=True)
-                        serializer.save()
+                        stats = {}
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                try:
+
+                                    instance = ComplexTransactionImportScheme.objects.get(master_user=self.master_user, scheme_name=content_object['scheme_name'])
+
+                                    serializer = ComplexTransactionImportSchemeSerializer(data=content_object,
+                                                                      instance=instance,
+                                                                      context=self.get_serializer_context())
+                                    serializer.is_valid(raise_exception=True)
+                                    serializer.save()
+
+                                except Exception as error:
+
+                                    _l.debug('error %s' % error)
+                                    stats['status'] = 'error'
+
+                            else:
+
+                                _l.debug('error %s' % error)
+                                stats['status'] = 'error'
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
@@ -897,6 +1150,8 @@ class ImportManager(object):
         for item in configuration_section['items']:
 
             if 'csv_import.csvimportscheme' in item['entity']:
+
+                self.instance.stats['configuration'][item['entity']] = []
 
                 if 'content' in item:
 
@@ -928,8 +1183,30 @@ class ImportManager(object):
 
                         serializer = CsvImportSchemeSerializer(data=content_object,
                                                                context=self.get_serializer_context())
-                        serializer.is_valid(raise_exception=True)
-                        serializer.save()
+
+                        stats = {}
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                instance = CsvImportScheme.objects.get(master_user=self.master_user, scheme_name=content_object['scheme_name'])
+
+                                serializer = CsvImportSchemeSerializer(data=content_object,
+                                                                                      instance=instance,
+                                                                                      context=self.get_serializer_context())
+                                serializer.is_valid(raise_exception=True)
+                                serializer.save()
+
+                            else:
+
+                                _l.debug('error %s' % error)
+                                stats['status'] = 'error'
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
@@ -942,6 +1219,8 @@ class ImportManager(object):
         for item in configuration_section['items']:
 
             if 'complex_import.compleximportscheme' in item['entity']:
+
+                self.instance.stats['configuration'][item['entity']] = []
 
                 if 'content' in item:
 
@@ -972,8 +1251,30 @@ class ImportManager(object):
 
                         serializer = ComplexImportSchemeSerializer(data=content_object,
                                                                    context=self.get_serializer_context())
-                        serializer.is_valid(raise_exception=True)
-                        serializer.save()
+
+                        stats = {}
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                instance = ComplexImportScheme.objects.get(master_user=self.master_user, scheme_name=content_object['scheme_name'])
+
+                                serializer = ComplexImportSchemeSerializer(data=content_object,
+                                                                       instance=instance,
+                                                                       context=self.get_serializer_context())
+                                serializer.is_valid(raise_exception=True)
+                                serializer.save()
+
+                            else:
+
+                                _l.debug('error %s' % error)
+                                stats['status'] = 'error'
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
@@ -987,17 +1288,41 @@ class ImportManager(object):
 
             if 'currencies.currency' in item['entity']:
 
+                self.instance.stats['configuration'][item['entity']] = []
+
                 if 'content' in item:
 
                     for content_object in item['content']:
 
+                        serializer = CurrencySerializer(data=content_object,
+                                                        context=self.get_serializer_context())
+
+                        stats = {}
+
                         try:
-                            serializer = CurrencySerializer(data=content_object,
-                                                            context=self.get_serializer_context())
                             serializer.is_valid(raise_exception=True)
                             serializer.save()
-                        except Exception as e:
-                            _l.debug(e)
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                instance = Currency.objects.get(master_user=self.master_user, user_code=content_object['user_code'])
+
+                                serializer = CurrencySerializer(data=content_object,
+                                                                           instance=instance,
+                                                                           context=self.get_serializer_context())
+                                serializer.is_valid(raise_exception=True)
+                                serializer.save()
+
+                            else:
+
+                                _l.debug('error %s' % error)
+                                stats['status'] = 'error'
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
+
+                        self.update_progress()
+
 
         _l.debug('Import Configuration Currency done %s' % (time.perf_counter() - st))
 
@@ -1009,20 +1334,39 @@ class ImportManager(object):
 
             if 'instruments.pricingpolicy' in item['entity']:
 
+                self.instance.stats['configuration'][item['entity']] = []
+
                 if 'content' in item:
 
                     for content_object in item['content']:
                         serializer = PricingPolicySerializer(data=content_object,
                                                              context=self.get_serializer_context())
-                        serializer.is_valid(raise_exception=True)
+
+                        stats = {}
 
                         try:
-                            serializer.instance = PricingPolicy.objects.get(
-                                master_user=self.master_user, user_code=content_object['user_code'])
-                        except PricingPolicy.DoesNotExist:
-                            pass
 
-                        serializer.save()
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                instance = PricingPolicy.objects.get(master_user=self.master_user, user_code=content_object['user_code'])
+
+                                serializer = PricingPolicySerializer(data=content_object,
+                                                                instance=instance,
+                                                                context=self.get_serializer_context())
+                                serializer.is_valid(raise_exception=True)
+                                serializer.save()
+
+                            else:
+
+                                _l.debug('error %s' % error)
+                                stats['status'] = 'error'
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
@@ -1036,13 +1380,18 @@ class ImportManager(object):
 
             if 'integrations.pricingautomatedschedule' in item['entity']:
 
+                self.instance.stats['configuration'][item['entity']] = []
+
                 if 'content' in item:
 
                     for content_object in item['content']:
 
-                        try:
-                            serializer = PricingAutomatedScheduleSerializer(data=content_object,
+                        serializer = PricingAutomatedScheduleSerializer(data=content_object,
                                                                             context=self.get_serializer_context())
+
+                        stats = {}
+
+                        try:
                             serializer.is_valid(raise_exception=True)
 
                             try:
@@ -1051,8 +1400,11 @@ class ImportManager(object):
                                 pass
 
                             serializer.save()
-                        except Exception as e:
-                            _l.debug(e)
+                        except Exception as error:
+                            _l.debug('error %s' % error)
+                            stats['status'] = 'error'
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
@@ -1065,24 +1417,39 @@ class ImportManager(object):
 
             if 'ui.instrumentuserfieldmodel' in item['entity']:
 
+                self.instance.stats['configuration'][item['entity']] = []
+
                 if 'content' in item:
 
                     for content_object in item['content']:
 
+                        serializer = InstrumentUserFieldSerializer(data=content_object,
+                                                                   context=self.get_serializer_context())
+
+                        stats = {}
+
                         try:
-                            serializer = InstrumentUserFieldSerializer(data=content_object,
-                                                                       context=self.get_serializer_context())
                             serializer.is_valid(raise_exception=True)
-
-                            try:
-                                serializer.instance = InstrumentUserFieldModel.objects.get(master_user=self.master_user,
-                                                                                           key=content_object['key'])
-                            except InstrumentUserFieldModel.DoesNotExist:
-                                pass
-
                             serializer.save()
-                        except Exception as e:
-                            _l.debug(e)
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                instance = InstrumentUserFieldModel.objects.get(master_user=self.master_user,
+                                                                                key=content_object['key'])
+
+                                serializer = InstrumentUserFieldSerializer(data=content_object,
+                                                                     instance=instance,
+                                                                     context=self.get_serializer_context())
+                                serializer.is_valid(raise_exception=True)
+                                serializer.save()
+
+                            else:
+
+                                _l.debug('error %s' % error)
+                                stats['status'] = 'error'
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
@@ -1096,13 +1463,19 @@ class ImportManager(object):
 
             if 'ui.transactionuserfieldmodel' in item['entity']:
 
+                self.instance.stats['configuration'][item['entity']] = []
+
                 if 'content' in item:
 
                     for content_object in item['content']:
 
+                        serializer = TransactionUserFieldSerializer(data=content_object,
+                                                                    context=self.get_serializer_context())
+
+                        stats = {}
+
                         try:
-                            serializer = TransactionUserFieldSerializer(data=content_object,
-                                                                        context=self.get_serializer_context())
+
                             serializer.is_valid(raise_exception=True)
 
                             try:
@@ -1112,8 +1485,11 @@ class ImportManager(object):
                                 pass
 
                             serializer.save()
-                        except Exception as e:
-                            _l.debug(e)
+                        except Exception as error:
+                            _l.debug('error %s' % error)
+                            stats['status'] = 'error'
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
@@ -1126,6 +1502,7 @@ class ImportManager(object):
         st = time.perf_counter()
 
         if 'items' in configuration_section:
+
             self.import_attribute_types(configuration_section)
             self.import_currencies(configuration_section)
             self.import_pricing_policies(configuration_section)
@@ -1185,7 +1562,11 @@ class ImportManager(object):
         if 'items' in mappings_section:
             for entity_object in mappings_section['items']:
 
+                self.instance.stats['mappings'][entity_object['entity']] = []
+
                 for content_object in entity_object['content']:
+
+                    stats = {}
 
                     error = False
 
@@ -1214,8 +1595,15 @@ class ImportManager(object):
                     if error == False:
                         serializer = map_to_serializer[entity_object['entity']](data=content_object,
                                                                                 context=self.get_serializer_context())
-                        serializer.is_valid(raise_exception=True)
-                        serializer.save()
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except Exception as error:
+                            _l.debug('error %s' % error)
+                            stats['status'] = 'error'
+
+                    self.instance.stats['mappings'][entity_object['entity']].append(stats)
 
                     self.update_progress()
 
@@ -1226,7 +1614,7 @@ class ImportManager(object):
 def configuration_import_as_json(self, instance):
     _l.debug('instance %s' % instance)
     _l.debug('instance.mode %s' % instance.mode)
-    _l.debug('instance.data %s' % instance.data)
+    # _l.debug('instance.data %s' % instance.data)
 
     import_manager = ImportManager(instance, self.update_state)
 

@@ -300,6 +300,10 @@ class PricingPolicy(NamedModel):
     class Meta(AbstractClassModel.Meta):
         verbose_name = ugettext_lazy('pricing policy')
         verbose_name_plural = ugettext_lazy('pricing policies')
+        unique_together = [
+            ['master_user', 'user_code']
+        ]
+        ordering = ['user_code']
 
 
 class InstrumentType(NamedModelAutoMapping, FakeDeletableModel):
