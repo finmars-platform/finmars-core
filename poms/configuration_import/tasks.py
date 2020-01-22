@@ -66,6 +66,86 @@ class ProxyRequest(object):
     def __init__(self, user):
         self.user = user
 
+def check_configuration_section(configuration_access_table):
+
+    result = True
+
+    for key, value in configuration_access_table.items():
+
+        if not value:
+            result = False
+
+    return result
+
+def get_data_access_table(member):
+
+    result = {}
+
+    if not member.is_admin:
+        for group in member.groups.all():
+            if group.permission_table:
+
+                if group.permission_table['data']:
+
+                    for perm_config in group.permission_table['data']:
+
+                        result[perm_config['content_type']] = False
+
+                        if perm_config['data']['create_objects']:
+                            result[perm_config['content_type']] = True
+
+    if member.is_admin:
+
+        for key, value in result.items():
+
+            result[key] = True
+
+    return result
+
+def get_configuration_access_table(member):
+
+    result = {
+        'obj_attrs.attributetype': False,
+        'reference_tables.referencetable': False,
+        'ui.templatelayout': False,
+        'integrations.mappingtable': False,
+        'integrations.pricedownloadscheme': False,
+        'integrations.instrumentdownloadscheme': False,
+        'csv_import.csvimportscheme': False,
+        'integrations.complextransactionimportscheme': False,
+        'complex_import.compleximportscheme': False,
+        'ui.userfield': False
+    }
+
+    if member.is_admin:
+        result = {
+            'obj_attrs.attributetype': True,
+            'reference_tables.referencetable': True,
+            'ui.templatelayout': True,
+            'integrations.mappingtable': True,
+            'integrations.pricedownloadscheme': True,
+            'integrations.instrumentdownloadscheme': True,
+            'csv_import.csvimportscheme': True,
+            'integrations.complextransactionimportscheme': True,
+            'complex_import.compleximportscheme': True,
+            'ui.userfield': True
+        }
+
+    if not member.is_admin:
+        for group in member.groups.all():
+            if group.permission_table:
+
+                if group.permission_table['configuration']:
+
+                    for perm_config in group.permission_table['configuration']:
+
+                        if not result[perm_config['content_type']]:
+
+                            if perm_config['data']['creator_view']:
+                                result[perm_config['content_type']] = True
+
+    return result
+
 
 class ImportManager(object):
 
@@ -84,6 +164,12 @@ class ImportManager(object):
         self.instance.stats = {}
         self.instance.stats['configuration'] = {}
         self.instance.stats['mappings'] = {}
+
+        self.data_access_table = get_data_access_table(self.member)
+        self.configuration_access_table = get_configuration_access_table(self.member)
+
+        _l.debug('self.access_table %s' % self.data_access_table)
+        _l.debug('self.configuration_access_table %s' % self.configuration_access_table)
 
         # _l.debug('self.master_user %s ' % self.master_user)
         # _l.debug('self.class instance %s' % self.master_user.__class__.__name__)
@@ -1503,33 +1589,71 @@ class ImportManager(object):
 
         if 'items' in configuration_section:
 
-            self.import_attribute_types(configuration_section)
-            self.import_currencies(configuration_section)
-            self.import_pricing_policies(configuration_section)
+            can_import = check_configuration_section(self.configuration_access_table)
 
-            self.import_pricing_automated_schedule(configuration_section)
+            #
+            # Import order matters
+            #
 
-            self.import_account_types(configuration_section)
+            if can_import:
+                self.import_attribute_types(configuration_section) # configuration section
+            else:
+                _l.debug("Permission Error: Attributes types")
 
-            self.import_instrument_types(configuration_section)
-            self.import_transaction_types_groups(configuration_section)
-            self.import_transaction_types(configuration_section)
-            self.overwrite_instrument_types(configuration_section)
+            if self.data_access_table['currencies.currency']:
+                self.import_currencies(configuration_section) # data section
+            else:
+                _l.debug("Permission Error: Currencies")
 
-            self.import_custom_columns_balance_report(configuration_section)
-            self.import_custom_columns_pl_report(configuration_section)
-            self.import_custom_columns_transaction_report(configuration_section)
+            if can_import:
+                self.import_pricing_policies(configuration_section) # configuration section
+                self.import_pricing_automated_schedule(configuration_section) # configuration section
+            else:
+                _l.debug("Permission Error: Pricing Policies")
+
+            if self.data_access_table['accounts.accounttype']:
+                self.import_account_types(configuration_section) # data section
+            else:
+                _l.debug("Permission Error: Account Type")
+
+            if self.data_access_table['instruments.instrumenttype']:
+                self.import_instrument_types(configuration_section) # data section
+            else:
+                _l.debug("Permission Error: Instrument Type")
+
+            self.import_transaction_types_groups(configuration_section) # unknown
+
+            if self.data_access_table['transactions.transactiontype']:
+                self.import_transaction_types(configuration_section) # data section
+            else:
+                _l.debug("Permission Error: Transaction Type")
+
+            if self.data_access_table['instruments.instrumenttype']:
+                self.overwrite_instrument_types(configuration_section) # data section
+            else:
+                _l.debug("Permission Error: Instrument Type")
+
+            # Configuration section
+
+            if can_import:
+
+                self.import_custom_columns_balance_report(configuration_section)
+                self.import_custom_columns_pl_report(configuration_section)
+                self.import_custom_columns_transaction_report(configuration_section)
+
+                self.import_transaction_import_schemes(configuration_section)
+                self.import_simple_import_schemes(configuration_section)
+                self.import_complex_import_schemes(configuration_section)
+
+                self.import_instrument_user_fields(configuration_section)
+                self.import_transaction_user_fields(configuration_section)
+
+            # User Interface
 
             self.import_edit_layouts(configuration_section)
             self.import_list_layouts(configuration_section)
             self.import_dashboard_layouts(configuration_section)
 
-            self.import_transaction_import_schemes(configuration_section)
-            self.import_simple_import_schemes(configuration_section)
-            self.import_complex_import_schemes(configuration_section)
-
-            self.import_instrument_user_fields(configuration_section)
-            self.import_transaction_user_fields(configuration_section)
 
         _l.debug('Import Configuration done %s' % (time.perf_counter() - st))
 
@@ -1559,53 +1683,59 @@ class ImportManager(object):
             'integrations.accrualcalculationmodelmapping': AccrualCalculationModel,
         }
 
-        if 'items' in mappings_section:
-            for entity_object in mappings_section['items']:
+        can_import = check_configuration_section(self.configuration_access_table)
 
-                self.instance.stats['mappings'][entity_object['entity']] = []
+        if can_import:
 
-                for content_object in entity_object['content']:
+            if 'items' in mappings_section:
+                for entity_object in mappings_section['items']:
 
-                    stats = {}
+                    self.instance.stats['mappings'][entity_object['entity']] = []
 
-                    error = False
+                    for content_object in entity_object['content']:
 
-                    if '___system_code' in content_object:
-                        content_object['content_object'] = map_to_model[entity_object['entity']].objects.get(
-                            system_code=content_object['___system_code']).pk
+                        stats = {}
 
-                    if '___user_code' in content_object:
+                        error = False
 
-                        try:
+                        if '___system_code' in content_object:
                             content_object['content_object'] = map_to_model[entity_object['entity']].objects.get(
-                                master_user=self.master_user, user_code__exact=content_object['___user_code']).pk
+                                system_code=content_object['___system_code']).pk
 
-                        except map_to_model[entity_object['entity']].DoesNotExist:
-                            error = True
+                        if '___user_code' in content_object:
 
-                    if '___scheme_name' in content_object:
+                            try:
+                                content_object['content_object'] = map_to_model[entity_object['entity']].objects.get(
+                                    master_user=self.master_user, user_code__exact=content_object['___user_code']).pk
 
-                        try:
-                            content_object['content_object'] = map_to_model[entity_object['entity']].objects.get(
-                                master_user=self.master_user, scheme_name__exact=content_object['___scheme_name']).pk
+                            except map_to_model[entity_object['entity']].DoesNotExist:
+                                error = True
 
-                        except map_to_model[entity_object['entity']].DoesNotExist:
-                            error = True
+                        if '___scheme_name' in content_object:
 
-                    if error == False:
-                        serializer = map_to_serializer[entity_object['entity']](data=content_object,
-                                                                                context=self.get_serializer_context())
+                            try:
+                                content_object['content_object'] = map_to_model[entity_object['entity']].objects.get(
+                                    master_user=self.master_user, scheme_name__exact=content_object['___scheme_name']).pk
 
-                        try:
-                            serializer.is_valid(raise_exception=True)
-                            serializer.save()
-                        except Exception as error:
-                            _l.debug('error %s' % error)
-                            stats['status'] = 'error'
+                            except map_to_model[entity_object['entity']].DoesNotExist:
+                                error = True
 
-                    self.instance.stats['mappings'][entity_object['entity']].append(stats)
+                        if error == False:
+                            serializer = map_to_serializer[entity_object['entity']](data=content_object,
+                                                                                    context=self.get_serializer_context())
 
-                    self.update_progress()
+                            try:
+                                serializer.is_valid(raise_exception=True)
+                                serializer.save()
+                            except Exception as error:
+                                _l.debug('error %s' % error)
+                                stats['status'] = 'error'
+
+                        self.instance.stats['mappings'][entity_object['entity']].append(stats)
+
+                        self.update_progress()
+        else:
+            _l.debug('Permission Error: Mappings')
 
         _l.debug('Import Mappings done %s' % (time.perf_counter() - st))
 

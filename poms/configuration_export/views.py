@@ -92,7 +92,7 @@ codename_set = ['view_%(model_name)s', 'change_%(model_name)s', 'manage_%(model_
                 'view_%(model_name)s_show_parameters', 'view_%(model_name)s_hide_parameters']
 
 
-def checkConfigurationSection(access_table):
+def check_configuration_section(access_table):
 
     result = True
 
@@ -189,7 +189,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration["head"]["date"] = str(datetime.now().date())
         configuration["body"] = []
 
-        can_export = checkConfigurationSection(self.access_table)
+        can_export = check_configuration_section(self.access_table)
 
         transaction_types = self.get_transaction_types()
         transaction_type_groups = self.get_transaction_type_groups()
