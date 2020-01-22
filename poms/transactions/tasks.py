@@ -10,7 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 from poms.accounts.models import Account
 from poms.obj_perms.models import GenericObjectPermission
 from poms.portfolios.models import Portfolio
-from poms.transactions.models import Transaction, ComplexTransaction, TransactionType
+from poms.transactions.models import Transaction, ComplexTransaction, TransactionType, ComplexTransactionInput
 from poms.users.models import Group
 
 _l = logging.getLogger('poms.transactions')
@@ -20,40 +20,119 @@ from celery.utils.log import get_task_logger
 celery_logger = get_task_logger(__name__)
 
 
-def get_complex_transaction_codename(group, complex_transaction, transaction_per_complex,
+def get_access_to_inputs(group_id, complex_transaction):
+
+    # print('get_access_to_inputs: group_id %s' % group_id)
+
+    result = None
+
+    portfolios = []
+    accounts = []
+
+    for input in ComplexTransactionInput.objects.filter(complex_transaction=complex_transaction['id']):
+
+        if input.portfolio_id:
+            portfolios.append(input.portfolio_id)
+
+        if input.account_id:
+            accounts.append(input.account_id)
+
+    # print('get_access_to_inputs: accounts %s' % accounts)
+    # print('get_access_to_inputs: portfolios %s' % portfolios)
+
+    count = 0
+
+    for id in portfolios:
+
+        try:
+
+            perm = GenericObjectPermission.objects.filter(object_id=id, group=group_id)
+
+            if len(perm):
+                count = count + 1
+
+        except GenericObjectPermission.DoesNotExist:
+            pass
+
+    for id in accounts:
+
+        try:
+
+            perm = GenericObjectPermission.objects.filter(object_id=id, group=group_id)
+
+            if len(perm):
+                count = count + 1
+
+        except GenericObjectPermission.DoesNotExist:
+            pass
+
+    # print('get_access_to_inputs: count %s' % count)
+    # print('get_access_to_inputs: len portfolio/accounts %s' % str(len(accounts) + len(portfolios)))
+
+    if count == 0:
+        result = 'no_view'
+
+    if count > 0:
+        result = 'partial_view'
+
+    if count == len(accounts) + len(portfolios):
+        result = 'full_view'
+
+    return result
+
+
+def get_complex_transaction_codename(group_id, complex_transaction, transaction_per_complex,
                                      transaction_permissions_grouped, transaction_type_permissions_grouped,
                                      transaction_ctype):
     result = None
 
-    transactions_total = transaction_per_complex[complex_transaction['id']]
-    transactions_in_group = transaction_permissions_grouped[group]
+    if complex_transaction['status'] == ComplexTransaction.PENDING:
 
-    transaction_count = 0
+        inputs_access = get_access_to_inputs(group_id, complex_transaction)
 
-    transactions_ids = []
+        if inputs_access == 'full_view':
 
-    for transaction in transactions_in_group:
-        if transaction['complex_transaction_id'] == complex_transaction['id']:
-            transaction_count = transaction_count + 1
-            transactions_ids.append(transaction['id'])
+            result = 'view_complextransaction'
 
-    if transaction_count == transactions_total:
-        result = 'view_complextransaction'
+        elif inputs_access == 'partial_view':
 
-    if transaction_count < transactions_total:
+            if complex_transaction['visibility_status'] == ComplexTransaction.SHOW_PARAMETERS:
+                result = 'view_complextransaction_show_parameters'
 
-        if complex_transaction['visibility_status'] == 1:
-            result = 'view_complextransaction_show_parameters'
+            if complex_transaction['visibility_status'] == ComplexTransaction.HIDE_PARAMETERS:
+                result = 'view_complextransaction_hide_parameters'
 
-        if complex_transaction['visibility_status'] == 2:
+    else:
+
+        transactions_total = transaction_per_complex[complex_transaction['id']]
+        transactions_in_group = transaction_permissions_grouped[group_id]
+
+        transaction_count = 0
+
+        transactions_ids = []
+
+        for transaction in transactions_in_group:
+            if transaction['complex_transaction_id'] == complex_transaction['id']:
+                transaction_count = transaction_count + 1
+                transactions_ids.append(transaction['id'])
+
+        if transaction_count == transactions_total:
+            result = 'view_complextransaction'
+
+        if transaction_count < transactions_total:
+
+            if complex_transaction['visibility_status'] == 1:
+                result = 'view_complextransaction_show_parameters'
+
+            if complex_transaction['visibility_status'] == 2:
+                result = 'view_complextransaction_hide_parameters'
+
+        if complex_transaction['transaction_type_id'] not in transaction_type_permissions_grouped[
+            group_id] and result is not None:
             result = 'view_complextransaction_hide_parameters'
 
-    if complex_transaction['transaction_type_id'] not in transaction_type_permissions_grouped[
-        group] and result is not None:
-        result = 'view_complextransaction_hide_parameters'
-
-    if transaction_count == 0:
-        result = None
+        if transaction_count == 0:
+            result = None
 
     # if result is None: # Not Required
     #     _l.debug("Remove all basic transaction permissions group %s complex transaction %s" % (group, complex_transaction['id']))
@@ -215,6 +294,7 @@ def recalculate_permissions_complex_transaction(self, instance):
 
     groups = list(Group.objects.filter(master_user_id=instance.master_user.id).values_list('id', flat=True))
     complex_transactions = ComplexTransaction.objects.filter(master_user_id=instance.master_user.id).values('id',
+                                                                                                            'status',
                                                                                                             'visibility_status',
                                                                                                             'transaction_type_id')
 
@@ -286,16 +366,16 @@ def recalculate_permissions_complex_transaction(self, instance):
     for permission in transaction_type_permissions:
         transaction_type_permissions_grouped[permission['group_id']].append(permission['object_id'])
 
-    for group in groups:
+    for group_id in groups:
 
         for complex_transaction in complex_transactions:
 
-            codename = get_complex_transaction_codename(group, complex_transaction, transaction_per_complex,
+            codename = get_complex_transaction_codename(group_id, complex_transaction, transaction_per_complex,
                                                         transaction_permissions_grouped,
                                                         transaction_type_permissions_grouped, transaction_ctype)
 
             if codename:
-                object_permission = GenericObjectPermission(group_id=group,
+                object_permission = GenericObjectPermission(group_id=group_id,
                                                             content_type=complex_transaction_ctype,
                                                             object_id=complex_transaction['id'],
                                                             permission=codenames_dict[codename])
