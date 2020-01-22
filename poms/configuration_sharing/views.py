@@ -33,7 +33,7 @@ class SharedConfigurationFileViewSet(AbstractModelViewSet):
     serializer_class = SharedConfigurationFileSerializer
     filter_class = SharedConfigurationFileFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByUserFilter
+        # OwnerByUserFilter
     ]
     permission_classes = AbstractModelViewSet.permission_classes + [
         PomsConfigurationPermission
