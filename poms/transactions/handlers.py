@@ -1256,7 +1256,7 @@ class TransactionTypeProcess(object):
             print('assign_permissions_to_complex_transaction: inputs_access %s' % inputs_access)
             print('assign_permissions_to_complex_transaction: ttype_access %s' % ttype_access)
 
-            if inputs_access == 'partial_view':
+            if inputs_access == 'partial_view' and permissions_count != 0:
 
                 if self.complex_transaction.visibility_status == ComplexTransaction.SHOW_PARAMETERS:
                     codename = 'view_complextransaction_show_parameters'

@@ -22,6 +22,26 @@ def dump(obj):
     for attr in dir(obj):
         print("obj.%s = %r" % (attr, getattr(obj, attr)))
 
+
+def get_access_table(member):
+
+    result = {}
+
+    if not member.is_admin:
+        for group in member.groups.all():
+            if group.permission_table:
+
+                if group.permission_table['configuration']:
+
+                    for perm_config in group.permission_table['configuration']:
+
+                        if not result[perm_config['content_type']]:
+
+                            if perm_config['data']['creator_view']:
+                                result[perm_config['content_type']] = True
+
+    return result
+
 class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
 
     serializer_class = ConfigurationImportAsJsonSerializer
