@@ -1113,6 +1113,8 @@ class TransactionTypeProcess(object):
 
     def get_access_to_inputs(self, group):
 
+        print('get_access_to_inputs: group %s' % group)
+
         result = None
 
         portfolios = []
@@ -1120,11 +1122,14 @@ class TransactionTypeProcess(object):
 
         for input in self.complex_transaction.inputs.all():
 
-            if input.portfolio:
+            if input.portfolio_id:
                 portfolios.append(input.portfolio_id)
 
-            if input.account:
+            if input.account_id:
                 accounts.append(input.account_id)
+
+        print('get_access_to_inputs: accounts %s' % accounts)
+        print('get_access_to_inputs: portfolios %s' % portfolios)
 
         count = 0
 
@@ -1152,14 +1157,17 @@ class TransactionTypeProcess(object):
             except GenericObjectPermission.DoesNotExist:
                 pass
 
+        print('get_access_to_inputs: count %s' % count)
+        print('get_access_to_inputs: len portfolio/accounts %s' % str(len(accounts) + len(portfolios)))
+
         if count == 0:
-            result = False
+            result = 'no_view'
 
         if count > 0:
             result = 'partial_view'
 
         if count == len(accounts) + len(portfolios):
-            result = True
+            result = 'full_view'
 
         return result
 
@@ -1191,6 +1199,8 @@ class TransactionTypeProcess(object):
 
     def assign_permissions_to_complex_transaction(self):
 
+        print("assign_permissions_to_complex_transaction: mode %s" % self.process_mode)
+
         groups = Group.objects.filter(master_user=self.transaction_type.master_user)
 
         perms = []
@@ -1220,10 +1230,6 @@ class TransactionTypeProcess(object):
 
             # _l.debug('groupid %s permissions_count %s' % (group.name, permissions_count))
 
-            print('self.transaction_type user_code %s' % self.transaction_type.user_code)
-            print('permissions_count %s' % permissions_count)
-            print('permissions_total %s' % permissions_total)
-
             if permissions_count == permissions_total:
                 codename = 'view_complextransaction'
 
@@ -1247,8 +1253,8 @@ class TransactionTypeProcess(object):
             if not ttype_access and codename is not None:
                 codename = 'view_complextransaction_hide_parameters'
 
-            print('inputs_access %s' % inputs_access)
-            print('ttype_access %s' % ttype_access)
+            print('assign_permissions_to_complex_transaction: inputs_access %s' % inputs_access)
+            print('assign_permissions_to_complex_transaction: ttype_access %s' % ttype_access)
 
             if inputs_access == 'partial_view':
 
@@ -1261,7 +1267,7 @@ class TransactionTypeProcess(object):
             if codename:
                 perms.append({'group': group, 'permission': codename})
 
-        _l.debug("complex transactions perms %s" % perms)
+        # _l.debug("complex transactions perms %s" % perms)
 
         assign_perms3(self.complex_transaction, perms)
 
@@ -1277,7 +1283,7 @@ class TransactionTypeProcess(object):
 
             inputs_access = self.get_access_to_inputs(group)
 
-            if inputs_access:
+            if inputs_access == 'full_view':
 
                 codename = 'view_complextransaction'
 
@@ -1705,6 +1711,8 @@ class TransactionTypeProcess(object):
 
     def process_as_pending(self):
 
+        print("Process as pending")
+
         complex_transaction_errors = {}
         if self.complex_transaction.date is None:
             self.complex_transaction.date = self._now  # set by default
@@ -1716,6 +1724,8 @@ class TransactionTypeProcess(object):
 
         if bool(complex_transaction_errors):
             self.complex_transaction_errors.append(complex_transaction_errors)
+
+
 
         self.complex_transaction.status = ComplexTransaction.PENDING
 
