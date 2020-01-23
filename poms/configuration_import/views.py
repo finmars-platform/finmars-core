@@ -90,14 +90,13 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
 
             print('AsyncResult res.ready: %s' % (time.perf_counter() - st))
 
-            dump(instance)
+            print('instance.master_user %s' % instance.master_user)
+            print('request.user %s' % request.user)
+            print('request.user.master_user %s' % request.user.master_user)
 
             if instance.master_user.id != request.user.master_user.id:
                 raise PermissionDenied()
 
-            # print('TASK RESULT %s' % res.result)
-            print('TASK STATUS %s' % res.status)
-            print('TASK STATUS celery_task %s' % celery_task)
 
             instance.task_id = task_id
             instance.task_status = res.status
@@ -120,9 +119,6 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
                                                     task_type='configuration_import', task_id=res.id)
 
             celery_task.save()
-
-            print('CREATE CELERY TASK celery_task %s' % celery_task)
-            print('CREATE CELERY TASK %s' % res.id)
 
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)

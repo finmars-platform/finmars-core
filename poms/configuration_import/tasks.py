@@ -81,18 +81,17 @@ def get_data_access_table(member):
 
     result = {}
 
-    if not member.is_admin:
-        for group in member.groups.all():
-            if group.permission_table:
+    for group in member.groups.all():
+        if group.permission_table:
 
-                if group.permission_table['data']:
+            if group.permission_table['data']:
 
-                    for perm_config in group.permission_table['data']:
+                for perm_config in group.permission_table['data']:
 
-                        result[perm_config['content_type']] = False
+                    result[perm_config['content_type']] = False
 
-                        if perm_config['data']['create_objects']:
-                            result[perm_config['content_type']] = True
+                    if perm_config['data']['create_objects']:
+                        result[perm_config['content_type']] = True
 
     if member.is_admin:
 
