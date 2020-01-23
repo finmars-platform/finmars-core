@@ -79,7 +79,20 @@ def check_configuration_section(configuration_access_table):
 
 def get_data_access_table(member):
 
-    result = {}
+    result = {
+
+        'portfolios.portfolio': False,
+        'accounts.account': False,
+        'instruments.instrument': False,
+        'counterparties.counterparty': False,
+        'counterparties.responsible': False,
+        'currencies.currency': False,
+        'strategies.strategy1': False,
+        'strategies.strategy2': False,
+        'strategies.strategy3': False,
+        'instruments.instrumenttype': False,
+        'transactions.transactiontype': False,
+    }
 
     for group in member.groups.all():
         if group.permission_table:
