@@ -92,6 +92,7 @@ def get_data_access_table(member):
         'strategies.strategy3': False,
         'instruments.instrumenttype': False,
         'transactions.transactiontype': False,
+        'accounts.accounttype': False
     }
 
     for group in member.groups.all():
