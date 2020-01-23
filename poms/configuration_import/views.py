@@ -90,6 +90,7 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
 
             print('AsyncResult res.ready: %s' % (time.perf_counter() - st))
 
+            print('instance %s' % instance)
             print('instance.master_user %s' % instance.master_user)
             print('request.user %s' % request.user)
             print('request.user.master_user %s' % request.user.master_user)
