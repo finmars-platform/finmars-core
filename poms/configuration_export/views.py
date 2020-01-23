@@ -1800,7 +1800,7 @@ class MappingExportViewSet(AbstractModelViewSet):
         configuration["head"]["date"] = str(datetime.now().date())
         configuration["body"] = []
 
-        can_export = checkConfigurationSection(self.access_table)
+        can_export = check_configuration_section(self.access_table)
 
         print('can_export %s' % can_export)
 
