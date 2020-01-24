@@ -80,8 +80,7 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
                         if celery_task:
                             celery_task.data = {
                                 "total_rows": res.result['total_rows'],
-                                "processed_rows": res.result['processed_rows'],
-                                "file_name": res.result['file_name']
+                                "processed_rows": res.result['processed_rows']
                             }
                     except TypeError:
                         print('Type erro')
@@ -91,6 +90,8 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
             print('AsyncResult res.ready: %s' % (time.perf_counter() - st))
 
             print('instance %s' % instance)
+            print('res.status %s' % res.status)
+            print('celery_task %s' % celery_task)
             print('instance.master_user %s' % instance.master_user)
             print('request.user %s' % request.user)
             print('request.user.master_user %s' % request.user.master_user)
@@ -117,9 +118,12 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
             celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                     member=request.user.member,
                                                     started_at=datetime_now(),
-                                                    task_type='configuration_import', task_id=res.id)
+                                                    task_type='configuration_import', task_id=instance.task_id)
 
             celery_task.save()
+
+
+            print('celery_task.task_status %s ' % celery_task.task_status)
 
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)
