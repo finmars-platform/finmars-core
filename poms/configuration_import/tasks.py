@@ -1347,7 +1347,7 @@ class ImportManager(object):
                                         master_user=self.master_user,
                                         scheme_name=action['complex_transaction_import_scheme'][
                                             '___complex_transaction_import_scheme__scheme_name']).pk
-                                except CsvImportScheme.DoesNotExist:
+                                except ComplexTransactionImportScheme.DoesNotExist:
                                     _l.info('Scheme %s is not found' % action['complex_transaction_import_scheme'][
                                         '___complex_transaction_import_scheme__scheme_name'])
 
