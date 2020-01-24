@@ -1119,6 +1119,9 @@ class ImportManager(object):
                 if 'content' in item:
 
                     for content_object in item['content']:
+
+                        _l.info('Dashboard layout name %s' % content_object['name'])
+
                         content_object['member'] = self.member.pk
 
                         if 'data' in content_object:
