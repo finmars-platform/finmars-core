@@ -1062,8 +1062,15 @@ class ImportManager(object):
 
                         serializer = ListLayoutSerializer(data=content_object,
                                                           context=self.get_serializer_context())
+
+
+
+
                         try:
                             serializer.is_valid(raise_exception=True)
+
+                            _l.info('Layout import name %s ' % content_object['name'])
+
                             serializer.save()
                         except ValidationError:
 
@@ -1073,9 +1080,10 @@ class ImportManager(object):
 
                                     content_type = get_content_type_by_name(content_object['content_type'])
 
-                                    layout = ListLayout.objects.get(member=self.member, name=content_object['name'], content_type=content_type)
+                                    _l.info('Layout overwrite content_type %s ' % content_type)
+                                    _l.info('Layout import name %s ' % content_object['name'])
 
-                                    print('layout %s ' % layout)
+                                    layout = ListLayout.objects.get(member=self.member, name=content_object['name'], content_type=content_type)
 
                                     layout.data = content_object['data']
 
@@ -1100,6 +1108,10 @@ class ImportManager(object):
                         component_type['settings']['content_type'])
 
                     try:
+
+                        _l.info('layout content_type %s' % content_type)
+                        _l.info('layout name %s' % component_type['settings']['layout_name'])
+
                         component_type['settings']['layout'] = ListLayout.objects.get(
                             member=self.member, content_type=content_type,
                             name__exact=component_type['settings']['layout_name']).pk
