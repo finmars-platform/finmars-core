@@ -19,7 +19,8 @@ from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.fields import CurrencyField, CurrencyDefault, SystemCurrencyDefault
 from poms.currencies.models import Currency
 from poms.instruments.fields import InstrumentField, InstrumentTypeField, InstrumentDefault, PricingPolicyField, \
-    AccrualCalculationModelField, PeriodicityField, NotificationClassField, EventClassField, EventScheduleField
+    AccrualCalculationModelField, PeriodicityField, NotificationClassField, EventClassField, EventScheduleField, \
+    TransactionTypeInputSettingsField
 from poms.instruments.models import Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail, PricingPolicy, \
     Periodicity, AccrualCalculationModel, EventSchedule
 from poms.instruments.serializers import PeriodicitySerializer, \
@@ -38,14 +39,15 @@ from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Fiel
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeInputContentTypeField, \
-    TransactionTypeGroupField, ReadOnlyContentTypeField, TransactionTypeField
+    TransactionTypeGroupField, ReadOnlyContentTypeField, TransactionTypeField, TransactionTypeInputField
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import TransactionClass, Transaction, TransactionType, TransactionTypeAction, \
     TransactionTypeActionTransaction, TransactionTypeActionInstrument, TransactionTypeInput, TransactionTypeGroup, \
     ComplexTransaction, EventClass, NotificationClass, ComplexTransactionInput, \
     TransactionTypeActionInstrumentFactorSchedule, TransactionTypeActionInstrumentManualPricingFormula, \
     TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentEventSchedule, \
-    TransactionTypeActionInstrumentEventScheduleAction, TransactionTypeActionExecuteCommand
+    TransactionTypeActionInstrumentEventScheduleAction, TransactionTypeActionExecuteCommand, \
+    TransactionTypeInputSettings
 from poms.users.fields import MasterUserField, HiddenMemberField
 
 from django.core.validators import RegexValidator
@@ -118,6 +120,54 @@ class TransactionTypeActionInstrumentEventSchedulePhantomField(serializers.Integ
         return value.order if value else None
 
 
+class TransactionTypeInputSettingsSerializer(serializers.ModelSerializer):
+
+    id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
+    linked_inputs_names = serializers.CharField(required=False, allow_null=True)
+
+    def __init__(self, **kwargs):
+        kwargs['required'] = False
+        kwargs['default'] = False
+        # kwargs['allow_null'] = True
+        super(TransactionTypeInputSettingsSerializer, self).__init__(**kwargs)
+
+    def get_attribute(self, obj):
+        return obj
+
+
+    class Meta:
+        model = TransactionTypeInputSettings
+        fields = ['id',  'linked_inputs_names']
+
+    def to_representation(self, value):
+
+        # print('value %s' % value    )
+
+        result = None
+
+        for item in value.settings.all():
+
+            if not result:
+                result = item
+
+        return super(TransactionTypeInputSettingsSerializer, self).to_representation(result)
+
+        # some "optimization" to use preloaded data through prefetch_related
+        # member = get_member_from_context(self.context)
+        # for o in value.options.all():
+        #     if o.member_id == member.id:
+        #         return o.is_hidden
+        # return False
+
+
+    # def to_representation(self, instance):
+    #
+    #     data = super(TransactionTypeInputSettingsSerializer, self).to_representation(instance)
+    #     print("SERIALIZE TO REPRESENTATION %s" % data)
+    #
+    #     return data
+
+
 class TransactionTypeInputSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
     name = serializers.CharField(max_length=255, allow_null=False, allow_blank=False,
@@ -147,6 +197,10 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
     periodicity = PeriodicityField(required=False, allow_null=True)
     accrual_calculation_model = AccrualCalculationModelField(required=False, allow_null=True)
 
+    settings = TransactionTypeInputSettingsSerializer(allow_null=True, required=False)
+
+    # settings = TransactionTypeInputSettingsField(required=False, allow_null=True)
+
     # account_object = serializers.PrimaryKeyRelatedField(source='account', read_only=True)
     # instrument_type_object = serializers.PrimaryKeyRelatedField(source='instrument_type', read_only=True)
     # instrument_object = serializers.PrimaryKeyRelatedField(source='instrument', read_only=True)
@@ -169,7 +223,8 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
             'is_fill_from_context', 'context_property', 'value', 'account', 'instrument_type', 'instrument', 'currency',
             'counterparty',
             'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3', 'daily_pricing_model',
-            'payment_size_detail', 'price_download_scheme', 'pricing_policy', 'periodicity', 'accrual_calculation_model'
+            'payment_size_detail', 'price_download_scheme', 'pricing_policy', 'periodicity', 'accrual_calculation_model',
+            'settings'
             # 'account_object',
             # 'instrument_type_object',
             # 'instrument_object',
@@ -221,7 +276,7 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
         self.fields['price_download_scheme_object'] = PriceDownloadSchemeViewSerializer(source='price_download_scheme',
                                                                                         read_only=True)
         self.fields['pricing_policy_object'] = PricingPolicySerializer(source="pricing_policy", read_only=True)
-
+    
         self.fields['periodicity_object'] = PeriodicitySerializer(source="periodicity", read_only=True)
         self.fields['accrual_calculation_model_object'] = AccrualCalculationModelSerializer(
             source="accrual_calculation_model",
@@ -283,6 +338,30 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
                     if attr != target_attr:
                         data[attr] = None
         return data
+
+    def create(self, validated_data):
+
+        settings = validated_data.pop('settings', empty)
+        instance = super(TransactionTypeInputSerializer, self).create(validated_data)
+
+        instance.settings.create(**settings)
+
+        return instance
+
+    def update(self, instance, validated_data):
+
+
+
+        settings = validated_data.pop('settings', empty)
+        instance = super(TransactionTypeInputSerializer, self).update(instance, validated_data)
+
+        print("Update Input settings %s" % settings)
+
+        if settings is not empty:
+            instance.settings.update_or_create(**settings)
+
+        return instance
+
 
 
 class TransactionTypeInputViewSerializer(serializers.ModelSerializer):
@@ -1227,7 +1306,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
         recon_fields = validated_data.pop('recon_fields', empty)
         instance = super(TransactionTypeSerializer, self).update(instance, validated_data)
 
-        print('actions %s' % actions)
+        # print('actions %s' % actions)
 
         if inputs is not empty:
             inputs = self.save_inputs(instance, inputs)
@@ -1255,11 +1334,25 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             # name = inp_data['name']
             pk = inp_data.pop('id', None)
             inp = cur_inputs.pop(pk, None)
+            settings_data = inp_data.pop('settings', None)
             if inp is None:
                 try:
                     inp = TransactionTypeInput.objects.get(transaction_type=instance, name=inp_data['name'])
                 except TransactionTypeInput.DoesNotExist:
                     inp = TransactionTypeInput(transaction_type=instance)
+
+            if settings_data:
+
+                try:
+                    settings = inp.settings.all().first()
+
+                    # print('settings %s' % settings  )
+
+                    settings.linked_inputs_names = settings_data['linked_inputs_names']
+                    settings.save()
+
+                except Exception as e:
+                    inp.settings.create(transaction_type_input=inp, linked_inputs_names=settings_data['linked_inputs_names'])
 
             inp.order = order
             for attr, value in inp_data.items():

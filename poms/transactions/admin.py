@@ -18,7 +18,8 @@ from poms.transactions.models import TransactionClass, Transaction, TransactionT
     EventClass, PeriodicityGroup, TransactionTypeActionInstrument, TransactionTypeActionTransaction, ComplexTransaction, \
     TransactionTypeGroup, ComplexTransactionInput, TransactionTypeActionInstrumentFactorSchedule, \
     TransactionTypeActionInstrumentManualPricingFormula, TransactionTypeActionInstrumentAccrualCalculationSchedules, \
-    TransactionTypeActionInstrumentEventSchedule, TransactionTypeActionInstrumentEventScheduleAction
+    TransactionTypeActionInstrumentEventSchedule, TransactionTypeActionInstrumentEventScheduleAction, \
+    TransactionTypeInputSettings
 
 admin.site.register(TransactionClass, ClassModelAdmin)
 admin.site.register(ActionClass, ClassModelAdmin)
@@ -58,8 +59,11 @@ class TransactionTypeInputAdmin(AbstractModelAdmin):
 
     master_user.admin_order_field = 'transaction_type__master_user'
 
+class TransactionTypeInputSettingsAdmin(AbstractModelAdmin):
+    model = TransactionTypeInputSettings
+    list_display = ['id', 'transaction_type_input', 'linked_inputs_names']
 
-admin.site.register(TransactionTypeInput, TransactionTypeInputAdmin)
+admin.site.register(TransactionTypeInputSettings, TransactionTypeInputSettingsAdmin)
 
 
 class TransactionTypeActionInstrumentAdmin(AbstractModelAdmin):

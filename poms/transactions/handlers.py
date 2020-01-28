@@ -1821,6 +1821,8 @@ class TransactionTypeProcess(object):
 
         inputs = {i.name: i for i in self.inputs}
 
+        print('self.recalculate_inputs %s' % self.recalculate_inputs)
+
         for name in self.recalculate_inputs:
             inp = inputs[name]
             if inp.can_recalculate:

@@ -4,7 +4,7 @@ from poms.common.fields import PrimaryKeyRelatedFilteredField
 from poms.instruments.models import Instrument, InstrumentType, PricingPolicy, AccrualCalculationModel, Periodicity, \
     EventSchedule
 from poms.obj_perms.fields import PrimaryKeyRelatedFilteredWithObjectPermissionField
-from poms.transactions.models import NotificationClass, EventClass
+from poms.transactions.models import NotificationClass, EventClass, TransactionTypeInputSettings, TransactionTypeInput
 from poms.users.filters import OwnerByMasterUserFilter
 
 
@@ -59,6 +59,9 @@ class PricingPolicyField(PrimaryKeyRelatedFilteredField):
     ]
 
 
+class TransactionTypeInputField(PrimaryKeyRelatedFilteredField):
+    queryset = TransactionTypeInput.objects
+
 class AccrualCalculationModelField(PrimaryKeyRelatedFilteredField):
     queryset = AccrualCalculationModel.objects
 
@@ -66,6 +69,8 @@ class AccrualCalculationModelField(PrimaryKeyRelatedFilteredField):
 class PeriodicityField(PrimaryKeyRelatedFilteredField):
     queryset = Periodicity.objects
 
+class TransactionTypeInputSettingsField(PrimaryKeyRelatedFilteredField):
+    queryset = TransactionTypeInputSettings.objects
 
 class NotificationClassField(PrimaryKeyRelatedFilteredField):
     queryset = NotificationClass.objects

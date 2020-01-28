@@ -539,7 +539,6 @@ class TransactionType(NamedModel, FakeDeletableModel):
 # )
 
 
-
 class TransactionTypeInput(models.Model):
     STRING = 10
     NUMBER = 20
@@ -682,6 +681,16 @@ class TransactionTypeInput(models.Model):
         return bool(self.value_expr) and self.value_type in [TransactionTypeInput.STRING, TransactionTypeInput.SELECTOR,
                                                              TransactionTypeInput.DATE,
                                                              TransactionTypeInput.NUMBER, TransactionTypeInput.RELATION]
+
+
+class TransactionTypeInputSettings(models.Model):
+
+    transaction_type_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True,
+                                               unique=True,
+                                               on_delete=models.PROTECT, related_name='settings',
+                                               verbose_name=ugettext_lazy('transaction type input'))
+
+    linked_inputs_names = models.TextField(blank=True, default='', null=True, verbose_name=ugettext_lazy('linked_input_names'))
 
 
 class RebookReactionChoice():
