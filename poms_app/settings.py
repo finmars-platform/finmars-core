@@ -120,6 +120,7 @@ INSTALLED_APPS = [
     'poms.reconciliation',
     'poms.file_reports',
     'poms.configuration_sharing',
+    'poms.pricing',
 
     'django.contrib.admin',
     'django.contrib.admindocs',

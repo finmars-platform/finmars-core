@@ -1,5 +1,8 @@
 # Changelog
 
+## 04.02.2020
+- Pricing
+
 ## 21.01.2020
 - Layout Sharing
 - Import Configuration

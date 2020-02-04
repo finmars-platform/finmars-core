@@ -22,6 +22,7 @@ from poms.instruments.models import Instrument, PriceHistory, InstrumentClass, D
 from poms.integrations.fields import PriceDownloadSchemeField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
+from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer
 from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeField
 from poms.users.fields import MasterUserField
@@ -99,7 +100,15 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer):
 
     class Meta:
         model = PricingPolicy
-        fields = ['id', 'master_user', 'user_code', 'name', 'short_name', 'notes', 'expr']
+        fields = ['id', 'master_user', 'user_code', 'name', 'short_name', 'notes', 'expr',
+                  'default_instrument_pricing_scheme', 'default_currency_pricing_scheme']
+
+    def __init__(self, *args, **kwargs):
+        super(PricingPolicySerializer, self).__init__(*args, **kwargs)
+
+        self.fields['default_instrument_pricing_scheme_object'] = InstrumentPricingSchemeSerializer(source='default_instrument_pricing_scheme', read_only=True)
+        self.fields['default_currency_pricing_scheme_object'] = CurrencyPricingSchemeSerializer(source='default_currency_pricing_scheme', read_only=True)
+
 
 
 class PricingPolicyViewSerializer(ModelWithUserCodeSerializer):

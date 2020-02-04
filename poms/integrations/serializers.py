@@ -866,7 +866,7 @@ class PricingAutomatedScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = PricingAutomatedSchedule
         fields = [
-            'id', 'master_user',
+            'id', 'master_user', 'name', 'notes',
             'is_enabled', 'cron_expr', 'balance_day', 'load_days', 'fill_days', 'override_existed',
             'last_run_at', 'next_run_at',
         ]

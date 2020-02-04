@@ -36,6 +36,8 @@ import poms.system.views as system
 import poms.file_reports.views as file_reports
 import poms.configuration_sharing.views as configuration_sharing
 
+import poms.pricing.views as pricing
+
 router = routers.DefaultRouter()
 
 router.register(r'system/ecosystem-configuration', system.EcosystemConfigurationViewSet, 'ecosystemconfiguration')
@@ -358,6 +360,14 @@ router.register(r'configuration-sharing/invites', configuration_sharing.InviteTo
 
 router.register(r'configuration-sharing/my-invites', configuration_sharing.MyInviteToSharedConfigurationFileViewSet,
                 'my_invites_to_shared_configuration_file')
+
+router.register(r'pricing/instrument-pricing-scheme', pricing.InstrumentPricingSchemeViewSet, 'pricing_instrument_pricing_scheme')
+router.register(r'pricing/instrument-pricing-scheme-type', pricing.InstrumentPricingSchemeTypeViewSet, 'pricing_instrument_pricing_scheme type')
+router.register(r'pricing/currency-pricing-scheme', pricing.CurrencyPricingSchemeViewSet, 'pricing_currency_pricing_scheme')
+router.register(r'pricing/currency-pricing-scheme-type', pricing.CurrencyPricingSchemeTypeViewSet, 'pricing_currency_pricing_scheme_type')
+router.register(r'pricing/procedure', pricing.PricingProcedureViewSet, 'pricing_procedure')
+
+
 
 urlpatterns = [
     url(r'^v1/', include(router.urls)),

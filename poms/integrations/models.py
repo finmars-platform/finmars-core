@@ -817,6 +817,10 @@ def validate_crontab(value):
 
 
 class PricingAutomatedSchedule(models.Model):
+
+    name = models.CharField(max_length=255, default='', null=True, blank=True, verbose_name=ugettext_lazy('name'))
+    notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
+
     master_user = models.OneToOneField('users.MasterUser', related_name='pricing_automated_schedule',
                                        verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
