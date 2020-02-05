@@ -49,6 +49,8 @@ class InstrumentPricingScheme(models.Model):
 
     notes_for_user = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes for user'))
 
+    notes_for_parameter = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes for parameter'))
+
     error_handler = models.PositiveSmallIntegerField(default=SKIP, choices=ERROR_HANDLER_CHOICES,
                                                      verbose_name=ugettext_lazy('error handler'))
 
@@ -61,6 +63,57 @@ class InstrumentPricingScheme(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_parameters(self):
+
+        result = None
+
+        print('self.type %s' % self.type)
+
+        if self.type:
+
+            if self.type.id == 2:  # manual pricing scheme
+
+                try:
+
+                    result = InstrumentPricingSchemeManualPricingParameters.objects.get(instrument_pricing_scheme=self)
+
+                except InstrumentPricingSchemeManualPricingParameters.DoesNotExist:
+                    pass
+
+            if self.type.id == 3:  # single parameter formula
+
+                try:
+
+                    result = InstrumentPricingSchemeSingleParameterFormulaParameters.objects.get(instrument_pricing_scheme=self)
+
+                except InstrumentPricingSchemeSingleParameterFormulaParameters.DoesNotExist:
+
+                    result = None
+
+            if self.type.id == 4:  # multiple parameters formula
+
+                try:
+
+                    result = InstrumentPricingSchemeMultipleParametersFormulaParameters.objects.get(instrument_pricing_scheme=self)
+
+                except InstrumentPricingSchemeMultipleParametersFormulaParameters.DoesNotExist:
+
+                    result = None
+
+            if self.type.id == 5:  # bloomberg
+
+                try:
+
+                    result = InstrumentPricingSchemeBloombergParameters.objects.get(instrument_pricing_scheme=self)
+
+                except InstrumentPricingSchemeBloombergParameters.DoesNotExist:
+
+                    result = None
+
+        print('result %s' % result)
+
+        return result
 
 
 class CurrencyPricingSchemeType(models.Model):
@@ -101,6 +154,8 @@ class CurrencyPricingScheme(models.Model):
 
     notes_for_user = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes for user'))
 
+    notes_for_parameter = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes for parameter'))
+
     error_handler = models.PositiveSmallIntegerField(default=SKIP, choices=ERROR_HANDLER_CHOICES,
                                                      verbose_name=ugettext_lazy('error handler'))
 
@@ -113,6 +168,57 @@ class CurrencyPricingScheme(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_parameters(self):
+
+        result = None
+
+        print('self.type %s' % self.type)
+
+        if self.type:
+
+            if self.type.id == 2:  # manual pricing scheme
+
+                try:
+
+                    result = CurrencyPricingSchemeManualPricingParameters.objects.get(currency_pricing_scheme=self)
+
+                except CurrencyPricingSchemeManualPricingParameters.DoesNotExist:
+                    pass
+
+            if self.type.id == 3:  # single parameter formula
+
+                try:
+
+                    result = CurrencyPricingSchemeSingleParameterFormulaParameters.objects.get(currency_pricing_scheme=self)
+
+                except CurrencyPricingSchemeSingleParameterFormulaParameters.DoesNotExist:
+
+                    result = None
+
+            if self.type.id == 4:  # multiple parameters formula
+
+                try:
+
+                    result = CurrencyPricingSchemeMultipleParametersFormulaParameters.objects.get(currency_pricing_scheme=self)
+
+                except CurrencyPricingSchemeMultipleParametersFormulaParameters.DoesNotExist:
+
+                    result = None
+
+            if self.type.id == 5:  # bloomberg
+
+                try:
+
+                    result = CurrencyPricingSchemeBloombergParameters.objects.get(currency_pricing_scheme=self)
+
+                except CurrencyPricingSchemeBloombergParameters.DoesNotExist:
+
+                    result = None
+
+        print('result %s' % result)
+
+        return result
 
 
 class InstrumentPricingSchemeManualPricingParameters(models.Model):
@@ -324,3 +430,104 @@ class PricingProcedure(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class CurrencyPricingPolicy(models.Model):
+
+    currency = models.ForeignKey('currencies.Currency', on_delete=models.CASCADE, verbose_name=ugettext_lazy('currency'), related_name='pricing_policies')
+
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, verbose_name=ugettext_lazy('pricing policy'))
+
+    pricing_scheme = models.ForeignKey(CurrencyPricingScheme, null=True, blank=True, on_delete=models.SET_NULL, verbose_name=ugettext_lazy('pricing scheme'))
+
+    notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
+
+    default_value = models.CharField(max_length=255, null=True, blank=True)
+    attribute_key = models.CharField(max_length=255, null=True, blank=True)
+
+    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+
+    @property
+    def data(self):
+        if self.json_data:
+            try:
+                return json.loads(self.json_data)
+            except (ValueError, TypeError):
+                return None
+        else:
+            return None
+
+    @data.setter
+    def data(self, val):
+        if val:
+            self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+        else:
+            self.json_data = None
+
+
+class InstrumentTypePricingPolicy(models.Model):
+
+    instrument_type = models.ForeignKey('instruments.InstrumentType', on_delete=models.CASCADE, verbose_name=ugettext_lazy('instrument type'), related_name='pricing_policies')
+
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, verbose_name=ugettext_lazy('pricing policy'))
+
+    pricing_scheme = models.ForeignKey(InstrumentPricingScheme, null=True, blank=True, on_delete=models.SET_NULL, verbose_name=ugettext_lazy('pricing scheme'))
+
+    notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
+
+    default_value = models.CharField(max_length=255, null=True, blank=True)
+    attribute_key = models.CharField(max_length=255, null=True, blank=True)
+
+    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+
+    overwrite_default_parameters = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
+
+    @property
+    def data(self):
+        if self.json_data:
+            try:
+                return json.loads(self.json_data)
+            except (ValueError, TypeError):
+                return None
+        else:
+            return None
+
+    @data.setter
+    def data(self, val):
+        if val:
+            self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+        else:
+            self.json_data = None
+
+
+class InstrumentPricingPolicy(models.Model):
+
+    instrument = models.ForeignKey('instruments.Instrument', on_delete=models.CASCADE, verbose_name=ugettext_lazy('instrument'), related_name='pricing_policies')
+
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, verbose_name=ugettext_lazy('pricing policy'))
+
+    pricing_scheme = models.ForeignKey(InstrumentPricingScheme, null=True, blank=True, on_delete=models.SET_NULL, verbose_name=ugettext_lazy('pricing scheme'))
+
+    notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
+
+    default_value = models.CharField(max_length=255, null=True, blank=True)
+    attribute_key = models.CharField(max_length=255, null=True, blank=True)
+
+    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+
+    @property
+    def data(self):
+        if self.json_data:
+            try:
+                return json.loads(self.json_data)
+            except (ValueError, TypeError):
+                return None
+        else:
+            return None
+
+    @data.setter
+    def data(self, val):
+        if val:
+            self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+        else:
+            self.json_data = None

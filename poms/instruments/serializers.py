@@ -22,7 +22,9 @@ from poms.instruments.models import Instrument, PriceHistory, InstrumentClass, D
 from poms.integrations.fields import PriceDownloadSchemeField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
-from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer
+from poms.pricing.models import InstrumentPricingPolicy, InstrumentTypePricingPolicy
+from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
+    InstrumentTypePricingPolicySerializer, InstrumentPricingPolicySerializer
 from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeField
 from poms.users.fields import MasterUserField
@@ -96,7 +98,7 @@ class CostMethodViewSerializer(PomsClassSerializer):
 
 class PricingPolicySerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
-    expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=False, allow_null=False)
+    # expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True, allow_null=True)
 
     class Meta:
         model = PricingPolicy
@@ -106,9 +108,106 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer):
     def __init__(self, *args, **kwargs):
         super(PricingPolicySerializer, self).__init__(*args, **kwargs)
 
-        self.fields['default_instrument_pricing_scheme_object'] = InstrumentPricingSchemeSerializer(source='default_instrument_pricing_scheme', read_only=True)
-        self.fields['default_currency_pricing_scheme_object'] = CurrencyPricingSchemeSerializer(source='default_currency_pricing_scheme', read_only=True)
+        self.fields['default_instrument_pricing_scheme_object'] = InstrumentPricingSchemeSerializer(
+            source='default_instrument_pricing_scheme', read_only=True)
+        self.fields['default_currency_pricing_scheme_object'] = CurrencyPricingSchemeSerializer(
+            source='default_currency_pricing_scheme', read_only=True)
 
+    def set_currency_pricing_scheme_parameters(self, pricing_policy, parameters):
+
+        # print('pricing_policy %s ' % pricing_policy)
+        # print('parameters %s ' % parameters)
+
+        if parameters:
+
+            if hasattr(parameters, 'data'):
+
+                pricing_policy.data = parameters.data
+
+            if hasattr(parameters, 'default_value'):
+
+                pricing_policy.default_value = parameters.default_value
+
+            if hasattr(parameters, 'attribute_key'):
+
+                pricing_policy.attribute_key = parameters.attribute_key
+
+    def set_instrument_pricing_scheme_parameters(self, pricing_policy, parameters):
+
+        # print('pricing_policy %s ' % pricing_policy)
+        # print('parameters %s ' % parameters)
+
+        if parameters:
+
+            if hasattr(parameters, 'data'):
+
+                pricing_policy.data = parameters.data
+
+            if hasattr(parameters, 'default_value'):
+
+                pricing_policy.default_value = parameters.default_value
+
+            if hasattr(parameters, 'attribute_key'):
+
+                pricing_policy.attribute_key = parameters.attribute_key
+
+    def create_instrument_type_pricing_policies(self, instance):
+
+        from poms.pricing.models import InstrumentTypePricingPolicy
+
+        instrument_types = InstrumentType.objects.filter(master_user=instance.master_user)
+
+        for item in instrument_types:
+            pricing_policy = InstrumentTypePricingPolicy(instrument_type=item, pricing_policy=instance,
+                                                     pricing_scheme=instance.default_instrument_pricing_scheme)
+
+            parameters = instance.default_instrument_pricing_scheme.get_parameters()
+            self.set_instrument_pricing_scheme_parameters(pricing_policy, parameters)
+
+            pricing_policy.save()
+
+    def create_instrument_pricing_policies(self, instance):
+
+        from poms.pricing.models import InstrumentPricingPolicy
+
+        instruments = Instrument.objects.filter(master_user=instance.master_user)
+
+        for item in instruments:
+            pricing_policy = InstrumentPricingPolicy(instrument=item, pricing_policy=instance,
+                                                     pricing_scheme=instance.default_instrument_pricing_scheme)
+
+            parameters = instance.default_instrument_pricing_scheme.get_parameters()
+            self.set_instrument_pricing_scheme_parameters(pricing_policy, parameters)
+
+            pricing_policy.save()
+
+    def create_currency_pricing_policies(self, instance):
+
+        from poms.currencies.models import Currency
+        from poms.pricing.models import CurrencyPricingPolicy
+
+        currencies = Currency.objects.filter(master_user=instance.master_user)
+
+        for item in currencies:
+            pricing_policy = CurrencyPricingPolicy(currency=item, pricing_policy=instance,
+                                                   pricing_scheme=instance.default_currency_pricing_scheme)
+
+            parameters = instance.default_currency_pricing_scheme.get_parameters()
+            self.set_currency_pricing_scheme_parameters(pricing_policy, parameters)
+
+            pricing_policy.save()
+
+    def create(self, validated_data):
+
+        instance = super(PricingPolicySerializer, self).create(validated_data)
+
+        # print("Creating Pricing Policies For Entities")
+
+        self.create_instrument_type_pricing_policies(instance)
+        self.create_instrument_pricing_policies(instance)
+        self.create_currency_pricing_policies(instance)
+
+        return instance
 
 
 class PricingPolicyViewSerializer(ModelWithUserCodeSerializer):
@@ -142,6 +241,8 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
     factor_down = TransactionTypeField(allow_null=True, required=False)
     factor_down_object = serializers.PrimaryKeyRelatedField(source='factor_down', read_only=True)
 
+    pricing_policies = InstrumentTypePricingPolicySerializer(allow_null=True, many=True)
+
     # tags = TagField(many=True, required=False, allow_null=True)
     # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
 
@@ -153,7 +254,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
             'notes', 'is_default', 'is_deleted', 'one_off_event', 'one_off_event_object',
             'regular_event', 'regular_event_object', 'factor_same', 'factor_same_object',
             'factor_up', 'factor_up_object', 'factor_down', 'factor_down_object',
-            'is_enabled'
+            'is_enabled', 'pricing_policies'
             # 'tags', 'tags_object',
         ]
 
@@ -183,6 +284,46 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
                 raise ValidationError(errors)
 
         return attrs
+
+    def create(self, validated_data):
+
+        pricing_policies = validated_data.pop('pricing_policies', None)
+
+        instance = super(InstrumentTypeSerializer, self).create(validated_data)
+
+        self.save_pricing_policies(instance, pricing_policies)
+
+        return instance
+
+    def update(self, instance, validated_data):
+
+        pricing_policies = validated_data.pop('pricing_policies', None)
+
+        instance = super(InstrumentTypeSerializer, self).update(instance, validated_data)
+
+        self.save_pricing_policies(instance, pricing_policies)
+
+        return instance
+
+    def save_pricing_policies(self, instance, pricing_policies):
+
+        for item in pricing_policies:
+
+            try:
+
+                oid = item.get('id', None)
+
+                o = InstrumentTypePricingPolicy.objects.get(instrument_type=instance, id=oid)
+
+                o.default_value = item['default_value']
+                o.attribute_key = item['attribute_key']
+                o.data = item['data']
+                o.notes = item['notes']
+
+                o.save()
+
+            except Exception as e:
+                print("Can't Find  Pricing Policy %s" % e)
 
 
 class InstrumentTypeViewSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
@@ -244,6 +385,8 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
     # tags = TagField(many=True, required=False, allow_null=True)
     # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
 
+    pricing_policies = InstrumentPricingPolicySerializer(allow_null=True, many=True)
+
     class Meta:
         model = Instrument
         fields = [
@@ -257,7 +400,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
             'price_download_scheme', 'price_download_scheme_object',
             'maturity_date', 'maturity_price',
             'manual_pricing_formulas', 'accrual_calculation_schedules', 'factor_schedules', 'event_schedules',
-            'is_enabled'
+            'is_enabled', 'pricing_policies'
             # 'attributes',
             # 'tags', 'tags_object'
         ]
@@ -285,6 +428,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
         accrual_calculation_schedules = validated_data.pop('accrual_calculation_schedules', None)
         factor_schedules = validated_data.pop('factor_schedules', None)
         event_schedules = validated_data.pop('event_schedules', None)
+        pricing_policies = validated_data.pop('pricing_policies', None)
 
         instance = super(InstrumentSerializer, self).create(validated_data)
 
@@ -292,6 +436,8 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
         self.save_accrual_calculation_schedules(instance, True, accrual_calculation_schedules)
         self.save_factor_schedules(instance, True, factor_schedules)
         self.save_event_schedules(instance, True, event_schedules)
+
+        self.save_pricing_policies(instance, pricing_policies)
 
         # self.rebuild_event_schedules(instance, True)
 
@@ -302,6 +448,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
         accrual_calculation_schedules = validated_data.pop('accrual_calculation_schedules', empty)
         factor_schedules = validated_data.pop('factor_schedules', empty)
         event_schedules = validated_data.pop('event_schedules', empty)
+        pricing_policies = validated_data.pop('pricing_policies', None)
 
         instance = super(InstrumentSerializer, self).update(instance, validated_data)
 
@@ -314,10 +461,32 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
         if event_schedules is not empty:
             self.save_event_schedules(instance, False, event_schedules)
 
+        self.save_pricing_policies(instance, pricing_policies)
+
         self.calculate_prices_accrued_price(instance, False)
         # self.rebuild_event_schedules(instance, False)
 
         return instance
+
+    def save_pricing_policies(self, instance, pricing_policies):
+
+        for item in pricing_policies:
+
+            try:
+
+                oid = item.get('id', None)
+
+                o = InstrumentPricingPolicy.objects.get(instrument=instance, id=oid)
+
+                o.default_value = item['default_value']
+                o.attribute_key = item['attribute_key']
+                o.data = item['data']
+                o.notes = item['notes']
+
+                o.save()
+
+            except Exception as e:
+                print("Can't Find  Pricing Policy %s" % e)
 
     def save_instr_related(self, instrument, created, instrument_attr, model, validated_data, accept=None):
         validated_data = validated_data or []

@@ -1,10 +1,14 @@
 from rest_framework import serializers
+
+from poms.common.serializers import ModelWithUserCodeSerializer
+from poms.instruments.models import PricingPolicy
 from poms.pricing.models import InstrumentPricingScheme, InstrumentPricingSchemeType, CurrencyPricingSchemeType, \
     InstrumentPricingSchemeManualPricingParameters, CurrencyPricingSchemeManualPricingParameters, \
     InstrumentPricingSchemeSingleParameterFormulaParameters, CurrencyPricingSchemeSingleParameterFormulaParameters, \
     CurrencyPricingScheme, PricingProcedure, InstrumentPricingSchemeMultipleParametersFormulaParameters, \
     CurrencyPricingSchemeMultipleParametersFormulaParameters, InstrumentPricingSchemeBloombergParameters, \
-    CurrencyPricingSchemeBloombergParameters
+    CurrencyPricingSchemeBloombergParameters, CurrencyPricingPolicy, InstrumentTypePricingPolicy, \
+    InstrumentPricingPolicy
 from poms.users.fields import MasterUserField
 
 
@@ -86,7 +90,7 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = InstrumentPricingScheme
-        fields = ('id', 'name', 'master_user', 'notes', 'notes_for_user', 'error_handler', 'type', 'type_settings')
+        fields = ('id', 'name', 'master_user', 'notes', 'notes_for_user', 'notes_for_parameter', 'error_handler', 'type', 'type_settings')
 
     def get_type_settings(self, instance):
 
@@ -362,7 +366,7 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CurrencyPricingScheme
-        fields = ('id', 'name', 'master_user', 'notes', 'notes_for_user', 'error_handler', 'type', 'type_settings')
+        fields = ('id', 'name', 'master_user', 'notes', 'notes_for_user', 'notes_for_parameter', 'error_handler', 'type', 'type_settings')
 
     def get_type_settings(self, instance):
 
@@ -577,3 +581,61 @@ class PricingProcedureSerializer(serializers.ModelSerializer):
         fields = ('master_user', 'id', 'name', 'notes', 'notes_for_users',
                   'price_date_from', 'price_date_to', 'price_balance_date', 'price_fill_days', 'price_override_existed',
                   'accrual_date_from', 'accrual_date_to')
+
+
+class PricingPolicyViewSerializer(ModelWithUserCodeSerializer):
+    class Meta:
+        model = PricingPolicy
+        fields = ['id', 'user_code', 'name', 'short_name', 'notes', 'expr']
+
+
+class CurrencyPricingPolicySerializer(serializers.ModelSerializer):
+
+    id = serializers.IntegerField(read_only=False)
+    data = serializers.JSONField(allow_null=True)
+
+    def __init__(self, *args, **kwargs):
+        super(CurrencyPricingPolicySerializer, self).__init__(*args, **kwargs)
+
+        self.fields['pricing_policy_object'] = PricingPolicyViewSerializer(source='pricing_policy', read_only=True)
+        self.fields['pricing_scheme_object'] = CurrencyPricingSchemeSerializer(source='pricing_scheme', read_only=True)
+
+    class Meta:
+        model = CurrencyPricingPolicy
+        fields = ('id', 'currency', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
+
+
+class InstrumentTypePricingPolicySerializer(serializers.ModelSerializer):
+
+    id = serializers.IntegerField(read_only=False)
+    data = serializers.JSONField(allow_null=True)
+
+    def __init__(self, *args, **kwargs):
+        super(InstrumentTypePricingPolicySerializer, self).__init__(*args, **kwargs)
+
+
+        self.fields['pricing_policy_object'] = PricingPolicyViewSerializer(source='pricing_policy', read_only=True)
+        self.fields['pricing_scheme_object'] = InstrumentPricingSchemeSerializer(source='pricing_scheme', read_only=True)
+
+    class Meta:
+        model = InstrumentTypePricingPolicy
+        fields = ('id', 'instrument_type', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
+
+
+class InstrumentPricingPolicySerializer(serializers.ModelSerializer):
+
+    id = serializers.IntegerField(read_only=False)
+    data = serializers.JSONField(allow_null=True)
+
+    def __init__(self, *args, **kwargs):
+        super(InstrumentPricingPolicySerializer, self).__init__(*args, **kwargs)
+
+
+        self.fields['pricing_policy_object'] = PricingPolicyViewSerializer(source='pricing_policy', read_only=True)
+
+        self.fields['pricing_scheme_object'] = InstrumentPricingSchemeSerializer(source='pricing_scheme', read_only=True)
+
+    class Meta:
+        model = InstrumentPricingPolicy
+        fields = ('id', 'instrument', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
+

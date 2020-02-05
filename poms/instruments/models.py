@@ -300,7 +300,7 @@ class PricingPolicy(NamedModel):
     # type = models.PositiveIntegerField(default=DISABLED, choices=TYPES)
 
     # expr - DEPRECATED
-    expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='', blank=True,
+    expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='', blank=True, null=True,
                             verbose_name=ugettext_lazy('expression'))
 
     default_instrument_pricing_scheme = models.ForeignKey(InstrumentPricingScheme, null=True, blank=True,
