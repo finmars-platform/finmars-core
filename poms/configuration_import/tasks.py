@@ -1228,8 +1228,8 @@ class ImportManager(object):
 
                     try:
 
-                        _l.info('layout content_type %s' % content_type)
-                        _l.info('layout name %s' % component_type['settings']['layout_name'])
+                        # _l.info('layout content_type %s' % content_type)
+                        # _l.info('layout name %s' % component_type['settings']['layout_name'])
 
                         component_type['settings']['layout'] = ListLayout.objects.get(
                             member=self.member, content_type=content_type,
@@ -1253,7 +1253,7 @@ class ImportManager(object):
 
                     for content_object in item['content']:
 
-                        _l.info('Dashboard layout name %s' % content_object['name'])
+                        # _l.info('Dashboard layout name %s' % content_object['name'])
 
                         content_object['member'] = self.member.pk
 
@@ -1862,220 +1862,231 @@ class ImportManager(object):
 
     def import_configuration(self, configuration_section):
 
-        st = time.perf_counter()
+        try:
 
-        if 'items' in configuration_section:
+            st = time.perf_counter()
 
-            can_import = check_configuration_section(self.configuration_access_table)
+            if 'items' in configuration_section:
 
-            #
-            # Import order matters
-            #
+                can_import = check_configuration_section(self.configuration_access_table)
 
-            if can_import:
-                self.import_attribute_types(configuration_section)  # configuration section
-            else:
-                _l.info("Permission Error: Attributes types")
+                #
+                # Import order matters
+                #
 
-            if self.data_access_table['currencies.currency']:
-                self.import_currencies(configuration_section)  # data section
-            else:
-                _l.info("Permission Error: Currencies")
+                if can_import:
+                    self.import_attribute_types(configuration_section)  # configuration section
+                else:
+                    _l.info("Permission Error: Attributes types")
 
-            if can_import:
-                self.import_pricing_policies(configuration_section)  # configuration section
-                self.import_pricing_automated_schedule(configuration_section)  # configuration section
-            else:
-                _l.info("Permission Error: Pricing Policies")
+                if self.data_access_table['currencies.currency']:
+                    self.import_currencies(configuration_section)  # data section
+                else:
+                    _l.info("Permission Error: Currencies")
 
-            if self.data_access_table['accounts.accounttype']:
-                self.import_account_types(configuration_section)  # data section
-            else:
-                _l.info("Permission Error: Account Type")
+                if can_import:
+                    self.import_pricing_policies(configuration_section)  # configuration section
+                    self.import_pricing_automated_schedule(configuration_section)  # configuration section
+                else:
+                    _l.info("Permission Error: Pricing Policies")
 
-            if self.data_access_table['instruments.instrumenttype']:
-                self.import_instrument_types(configuration_section)  # data section
-            else:
-                _l.info("Permission Error: Instrument Type")
+                if self.data_access_table['accounts.accounttype']:
+                    self.import_account_types(configuration_section)  # data section
+                else:
+                    _l.info("Permission Error: Account Type")
 
-            self.import_transaction_types_groups(configuration_section)  # unknown
+                if self.data_access_table['instruments.instrumenttype']:
+                    self.import_instrument_types(configuration_section)  # data section
+                else:
+                    _l.info("Permission Error: Instrument Type")
 
-            if self.data_access_table['transactions.transactiontype']:
-                self.import_transaction_types(configuration_section)  # data section
-            else:
-                _l.info("Permission Error: Transaction Type")
+                self.import_transaction_types_groups(configuration_section)  # unknown
 
-            if self.data_access_table['instruments.instrumenttype']:
-                self.overwrite_instrument_types(configuration_section)  # data section
-            else:
-                _l.info("Permission Error: Instrument Type")
+                if self.data_access_table['transactions.transactiontype']:
+                    self.import_transaction_types(configuration_section)  # data section
+                else:
+                    _l.info("Permission Error: Transaction Type")
 
-            # Configuration section
+                if self.data_access_table['instruments.instrumenttype']:
+                    self.overwrite_instrument_types(configuration_section)  # data section
+                else:
+                    _l.info("Permission Error: Instrument Type")
 
-            if can_import:
-                self.import_custom_columns_balance_report(configuration_section)
-                self.import_custom_columns_pl_report(configuration_section)
-                self.import_custom_columns_transaction_report(configuration_section)
+                # Configuration section
 
-                self.import_transaction_import_schemes(configuration_section)
-                self.import_simple_import_schemes(configuration_section)
-                self.import_complex_import_schemes(configuration_section)
+                if can_import:
+                    self.import_custom_columns_balance_report(configuration_section)
+                    self.import_custom_columns_pl_report(configuration_section)
+                    self.import_custom_columns_transaction_report(configuration_section)
 
-                self.import_instrument_user_fields(configuration_section)
-                self.import_transaction_user_fields(configuration_section)
+                    self.import_transaction_import_schemes(configuration_section)
+                    self.import_simple_import_schemes(configuration_section)
+                    self.import_complex_import_schemes(configuration_section)
 
-            # User Interface
+                    self.import_instrument_user_fields(configuration_section)
+                    self.import_transaction_user_fields(configuration_section)
 
-            self.import_edit_layouts(configuration_section)
-            self.import_list_layouts(configuration_section)
-            self.import_dashboard_layouts(configuration_section)
+                # User Interface
 
-        _l.info('Import Configuration done %s' % (time.perf_counter() - st))
+                self.import_edit_layouts(configuration_section)
+                self.import_list_layouts(configuration_section)
+                self.import_dashboard_layouts(configuration_section)
+
+            _l.info('Import Configuration done %s' % (time.perf_counter() - st))
+
+        except Exception as error:
+
+            _l.info('Import Configuration Error %s' % error)
 
     def import_mappings(self, mappings_section):
 
-        st = time.perf_counter()
+        try:
 
-        map_to_serializer = {
-            'integrations.accounttypemapping': AccountTypeMappingSerializer,
-            'integrations.instrumenttypemapping': InstrumentTypeMappingSerializer,
-            'integrations.pricingpolicymapping': PricingPolicyMappingSerializer,
-            'integrations.pricedownloadschememapping': PriceDownloadSchemeMappingSerializer,
-            'integrations.periodicitymapping': PeriodicityMappingSerializer,
-            'integrations.dailypricingmodelmapping': DailyPricingModelMappingSerializer,
-            'integrations.paymentsizedetailmapping': PaymentSizeDetailMappingSerializer,
-            'integrations.accrualcalculationmodelmapping': AccrualCalculationModelMappingSerializer,
-        }
+            st = time.perf_counter()
 
-        map_to_model = {
-            'integrations.accounttypemapping': AccountType,
-            'integrations.instrumenttypemapping': InstrumentType,
-            'integrations.pricingpolicymapping': PricingPolicy,
-            'integrations.pricedownloadschememapping': PriceDownloadScheme,
-            'integrations.periodicitymapping': Periodicity,
-            'integrations.dailypricingmodelmapping': DailyPricingModel,
-            'integrations.paymentsizedetailmapping': PaymentSizeDetail,
-            'integrations.accrualcalculationmodelmapping': AccrualCalculationModel,
-        }
+            map_to_serializer = {
+                'integrations.accounttypemapping': AccountTypeMappingSerializer,
+                'integrations.instrumenttypemapping': InstrumentTypeMappingSerializer,
+                'integrations.pricingpolicymapping': PricingPolicyMappingSerializer,
+                'integrations.pricedownloadschememapping': PriceDownloadSchemeMappingSerializer,
+                'integrations.periodicitymapping': PeriodicityMappingSerializer,
+                'integrations.dailypricingmodelmapping': DailyPricingModelMappingSerializer,
+                'integrations.paymentsizedetailmapping': PaymentSizeDetailMappingSerializer,
+                'integrations.accrualcalculationmodelmapping': AccrualCalculationModelMappingSerializer,
+            }
 
-        map_to_mapping = {
-            'integrations.accounttypemapping': AccountTypeMapping,
-            'integrations.instrumenttypemapping': InstrumentTypeMapping,
-            'integrations.pricingpolicymapping': PricingPolicyMapping,
-            'integrations.pricedownloadschememapping': PriceDownloadSchemeMapping,
-            'integrations.periodicitymapping': PeriodicityMapping,
-            'integrations.dailypricingmodelmapping': DailyPricingModelMapping,
-            'integrations.paymentsizedetailmapping': PaymentSizeDetailMapping,
-            'integrations.accrualcalculationmodelmapping': AccrualCalculationModelMapping,
-        }
+            map_to_model = {
+                'integrations.accounttypemapping': AccountType,
+                'integrations.instrumenttypemapping': InstrumentType,
+                'integrations.pricingpolicymapping': PricingPolicy,
+                'integrations.pricedownloadschememapping': PriceDownloadScheme,
+                'integrations.periodicitymapping': Periodicity,
+                'integrations.dailypricingmodelmapping': DailyPricingModel,
+                'integrations.paymentsizedetailmapping': PaymentSizeDetail,
+                'integrations.accrualcalculationmodelmapping': AccrualCalculationModel,
+            }
 
-        can_import = check_configuration_section(self.configuration_access_table)
+            map_to_mapping = {
+                'integrations.accounttypemapping': AccountTypeMapping,
+                'integrations.instrumenttypemapping': InstrumentTypeMapping,
+                'integrations.pricingpolicymapping': PricingPolicyMapping,
+                'integrations.pricedownloadschememapping': PriceDownloadSchemeMapping,
+                'integrations.periodicitymapping': PeriodicityMapping,
+                'integrations.dailypricingmodelmapping': DailyPricingModelMapping,
+                'integrations.paymentsizedetailmapping': PaymentSizeDetailMapping,
+                'integrations.accrualcalculationmodelmapping': AccrualCalculationModelMapping,
+            }
 
-        if can_import:
+            can_import = check_configuration_section(self.configuration_access_table)
 
-            if 'items' in mappings_section:
-                for entity_object in mappings_section['items']:
+            if can_import:
 
-                    self.instance.stats['mappings'][entity_object['entity']] = []
+                if 'items' in mappings_section:
+                    for entity_object in mappings_section['items']:
 
-                    for content_object in entity_object['content']:
+                        self.instance.stats['mappings'][entity_object['entity']] = []
 
-                        stats = {
-                            'content_type': entity_object['entity'],
-                            'mode': self.instance.mode,
-                            'item': content_object,
-                            'error': {
-                                'message': None
-                            },
-                            'status': 'info'
-                        }
+                        for content_object in entity_object['content']:
 
-                        error = False
+                            stats = {
+                                'content_type': entity_object['entity'],
+                                'mode': self.instance.mode,
+                                'item': content_object,
+                                'error': {
+                                    'message': None
+                                },
+                                'status': 'info'
+                            }
 
-                        if '___system_code' in content_object:
-                            content_object['content_object'] = map_to_model[entity_object['entity']].objects.get(
-                                system_code=content_object['___system_code']).pk
+                            error = False
 
-                        if '___user_code' in content_object:
-
-                            try:
+                            if '___system_code' in content_object:
                                 content_object['content_object'] = map_to_model[entity_object['entity']].objects.get(
-                                    master_user=self.master_user, user_code__exact=content_object['___user_code']).pk
+                                    system_code=content_object['___system_code']).pk
 
-                            except map_to_model[entity_object['entity']].DoesNotExist:
-                                error = True
+                            if '___user_code' in content_object:
 
-                        if '___scheme_name' in content_object:
+                                try:
+                                    content_object['content_object'] = map_to_model[entity_object['entity']].objects.get(
+                                        master_user=self.master_user, user_code__exact=content_object['___user_code']).pk
 
-                            try:
-                                content_object['content_object'] = map_to_model[entity_object['entity']].objects.get(
-                                    master_user=self.master_user,
-                                    scheme_name__exact=content_object['___scheme_name']).pk
+                                except map_to_model[entity_object['entity']].DoesNotExist:
+                                    error = True
 
-                            except map_to_model[entity_object['entity']].DoesNotExist:
-                                error = True
+                            if '___scheme_name' in content_object:
 
-                        if error == False:
-                            serializer = map_to_serializer[entity_object['entity']](data=content_object,
-                                                                                    context=self.get_serializer_context())
+                                try:
+                                    content_object['content_object'] = map_to_model[entity_object['entity']].objects.get(
+                                        master_user=self.master_user,
+                                        scheme_name__exact=content_object['___scheme_name']).pk
 
-                            try:
-                                serializer.is_valid(raise_exception=True)
-                                serializer.save()
-                            except Exception as error:
+                                except map_to_model[entity_object['entity']].DoesNotExist:
+                                    error = True
 
-                                if self.instance.mode == 'overwrite':
+                            if error == False:
+                                serializer = map_to_serializer[entity_object['entity']](data=content_object,
+                                                                                        context=self.get_serializer_context())
 
-                                    try:
+                                try:
+                                    serializer.is_valid(raise_exception=True)
+                                    serializer.save()
+                                except Exception as error:
 
-                                        instance = map_to_mapping[entity_object['entity']].objects.get(
-                                                value=content_object['value'],
-                                                master_user=self.master_user, content_object=content_object['content_object'])
+                                    if self.instance.mode == 'overwrite':
 
-                                        serializer = map_to_serializer[entity_object['entity']](data=content_object,
-                                                                                                instance=instance,
-                                                                                                context=self.get_serializer_context())
+                                        try:
 
-                                        serializer.is_valid(raise_exception=True)
+                                            instance = map_to_mapping[entity_object['entity']].objects.get(
+                                                    value=content_object['value'],
+                                                    master_user=self.master_user, content_object=content_object['content_object'])
 
-                                        serializer.save()
+                                            serializer = map_to_serializer[entity_object['entity']](data=content_object,
+                                                                                                    instance=instance,
+                                                                                                    context=self.get_serializer_context())
+
+                                            serializer.is_valid(raise_exception=True)
+
+                                            serializer.save()
 
 
-                                    except Exception as error:
+                                        except Exception as error:
 
-                                        _l.info('error %s' % error)
+                                            _l.info('error %s' % error)
 
+                                            stats['status'] = 'error'
+
+                                            if '___system_code' in content_object:
+                                                stats['error']['message'] = 'Can\'t Overwrite Mapping %s' % content_object['___system_code']
+
+                                            if '___user_code' in content_object:
+                                                stats['error']['message'] = 'Can\'t Overwrite  Mapping %s' % content_object['___user_code']
+
+                                            if '___scheme_name' in content_object:
+                                                stats['error']['message'] = 'Can\'t Overwrite  Mapping %s' % content_object['___scheme_name']
+
+                                    else:
                                         stats['status'] = 'error'
 
                                         if '___system_code' in content_object:
-                                            stats['error']['message'] = 'Can\'t Overwrite Mapping %s' % content_object['___system_code']
+                                            stats['error']['message'] = 'Mapping %s already exists' % content_object['___system_code']
 
                                         if '___user_code' in content_object:
-                                            stats['error']['message'] = 'Can\'t Overwrite  Mapping %s' % content_object['___user_code']
+                                            stats['error']['message'] = 'Mapping %s already exists' % content_object['___user_code']
 
                                         if '___scheme_name' in content_object:
-                                            stats['error']['message'] = 'Can\'t Overwrite  Mapping %s' % content_object['___scheme_name']
+                                            stats['error']['message'] = 'Mapping %s already exists' % content_object['___scheme_name']
 
-                                else:
-                                    stats['status'] = 'error'
+                            self.instance.stats['mappings'][entity_object['entity']].append(stats)
 
-                                    if '___system_code' in content_object:
-                                        stats['error']['message'] = 'Mapping %s already exists' % content_object['___system_code']
+                            self.update_progress()
+            else:
+                _l.info('Permission Error: Mappings')
 
-                                    if '___user_code' in content_object:
-                                        stats['error']['message'] = 'Mapping %s already exists' % content_object['___user_code']
+            _l.info('Import Mappings done %s' % (time.perf_counter() - st))
 
-                                    if '___scheme_name' in content_object:
-                                        stats['error']['message'] = 'Mapping %s already exists' % content_object['___scheme_name']
+        except Exception as error:
 
-                        self.instance.stats['mappings'][entity_object['entity']].append(stats)
-
-                        self.update_progress()
-        else:
-            _l.info('Permission Error: Mappings')
-
-        _l.info('Import Mappings done %s' % (time.perf_counter() - st))
-
+            _l.info('Import Mappings Error %s' % error)
 
 @shared_task(name='configuration_import.configuration_import_as_json', bind=True)
 def configuration_import_as_json(self, instance):

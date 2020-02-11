@@ -68,7 +68,7 @@ class InstrumentPricingScheme(models.Model):
 
         result = None
 
-        print('self.type %s' % self.type)
+        # print('self.type %s' % self.type)
 
         if self.type:
 
@@ -111,7 +111,7 @@ class InstrumentPricingScheme(models.Model):
 
                     result = None
 
-        print('result %s' % result)
+        # print('result %s' % result)
 
         return result
 
@@ -173,7 +173,7 @@ class CurrencyPricingScheme(models.Model):
 
         result = None
 
-        print('self.type %s' % self.type)
+        # print('self.type %s' % self.type)
 
         if self.type:
 
@@ -216,7 +216,7 @@ class CurrencyPricingScheme(models.Model):
 
                     result = None
 
-        print('result %s' % result)
+        # print('result %s' % result)
 
         return result
 
@@ -531,3 +531,8 @@ class InstrumentPricingPolicy(models.Model):
             self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
         else:
             self.json_data = None
+
+
+class PricingProcedureResult(models.Model):
+
+    procedure = models.ForeignKey(PricingProcedure, on_delete=models.CASCADE, verbose_name=ugettext_lazy('procedure'))

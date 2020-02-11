@@ -319,6 +319,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
                 o.attribute_key = item['attribute_key']
                 o.data = item['data']
                 o.notes = item['notes']
+                o.overwrite_default_parameters = item['overwrite_default_parameters']
 
                 o.save()
 

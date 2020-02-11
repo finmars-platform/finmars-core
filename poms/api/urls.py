@@ -367,6 +367,8 @@ router.register(r'pricing/currency-pricing-scheme', pricing.CurrencyPricingSchem
 router.register(r'pricing/currency-pricing-scheme-type', pricing.CurrencyPricingSchemeTypeViewSet, 'pricing_currency_pricing_scheme_type')
 router.register(r'pricing/procedure', pricing.PricingProcedureViewSet, 'pricing_procedure')
 
+router.register(r'pricing/brokers/bloomberg', pricing.PricingBrokerBloombergViewSet, 'pricing_broker_bloomberg')
+
 
 
 urlpatterns = [

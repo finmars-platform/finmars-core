@@ -8,16 +8,20 @@ from rest_framework import status
 from poms.common.utils import date_now, datetime_now
 
 from poms.celery_tasks.models import CeleryTask
-from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet
+from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet, AbstractViewSet
 
 from poms.csv_import.tasks import data_csv_file_import, data_csv_file_import_validate
 from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
+from poms.pricing.brokers.broker_serializers import DataRequestSerializer
+from poms.pricing.handlers import PricingProcedureProcess
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, InstrumentPricingSchemeType, \
     CurrencyPricingSchemeType, PricingProcedure
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
-    CurrencyPricingSchemeTypeSerializer, InstrumentPricingSchemeTypeSerializer, PricingProcedureSerializer
+    CurrencyPricingSchemeTypeSerializer, InstrumentPricingSchemeTypeSerializer, PricingProcedureSerializer, \
+    RunProcedureSerializer, BrokerBloombergSerializer
 
 from poms.users.filters import OwnerByMasterUserFilter
+from rest_framework.decorators import action
 
 from logging import getLogger
 
@@ -118,3 +122,43 @@ class PricingProcedureViewSet(AbstractModelViewSet):
         # PomsConfigurationPermission
     ]
 
+    @action(detail=True, methods=['post'], url_path='run-procedure', serializer_class=RunProcedureSerializer)
+    def run_procedure(self, request, pk=None):
+
+        print("Run Procedure %s" % pk)
+
+        procedure = PricingProcedure.objects.get(pk=pk)
+
+        instance = PricingProcedureProcess(procedure=procedure)
+
+        serializer = self.get_serializer(instance=instance)
+
+        return Response(serializer.data)
+
+
+
+class PricingBrokerBloombergViewSet(AbstractViewSet):
+
+    serializer_class = BrokerBloombergSerializer
+    permission_classes = []  # TODO warning, authentication is not performed
+    # permission_classes = AbstractViewSet.permission_classes + [
+    #     PomsFunctionPermission
+    # ]
+
+    def create(self, request, *args, **kwargs):
+
+        print("Request from Broker Bloomberg: request.data %s" % request.data)
+
+        return Response({'ok'})
+
+        # serializer = self.get_serializer(data=request.data)
+        # serializer.is_valid(raise_exception=True)
+        # serializer.save()
+        # return Response(serializer.data)
+
+    @action(detail=False, methods=['post'], url_path='callback', serializer_class=DataRequestSerializer)
+    def handle_callback(self, request):
+
+        print('request.data %s' % request.data)
+
+        return Response({'status': 'ok'})

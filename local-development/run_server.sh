@@ -10,4 +10,5 @@ RDS_HOSTNAME=localhost \
 RDS_PORT=5434 \
 POMS_PRICING_AUTO_DOWNLOAD_DISABLED=False \
 DEBUG=True \
+BROKER_BLOOMBERG_URL=http://localhost:8081/service/pricing/ \
 BACKEND_ROLES="ALL" python manage.py runserver

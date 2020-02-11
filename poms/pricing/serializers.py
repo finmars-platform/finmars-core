@@ -639,3 +639,19 @@ class InstrumentPricingPolicySerializer(serializers.ModelSerializer):
         model = InstrumentPricingPolicy
         fields = ('id', 'instrument', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
 
+
+class RunProcedureSerializer(serializers.Serializer):
+    def __init__(self, **kwargs):
+
+        kwargs['context'] = context = kwargs.get('context', {}) or {}
+        super(RunProcedureSerializer, self).__init__(**kwargs)
+        context['instance'] = self.instance
+
+        self.fields['procedure'] = serializers.PrimaryKeyRelatedField(read_only=True)
+
+
+class BrokerBloombergSerializer(serializers.Serializer):
+
+    def __init__(self, **kwargs):
+
+        pass

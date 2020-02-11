@@ -1346,7 +1346,7 @@ class ComplexTransactionImportSchemeSelectorValueSerializer(serializers.ModelSer
 
     class Meta:
         model = ComplexTransactionImportSchemeSelectorValue
-        fields = ['id', 'value', 'notes']
+        fields = ['id', 'value', 'notes', 'order']
 
 
 class ComplexTransactionImportSchemeReconFieldSerializer(serializers.ModelSerializer):

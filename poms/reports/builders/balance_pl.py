@@ -397,7 +397,8 @@ class ReportBuilder(BaseReportBuilder):
 
         currency_st = time.perf_counter()
 
-        currencies_list = Currency.objects.only('id').filter(master_user=self.instance.master_user)
+        # currencies_list = Currency.objects.only('id').filter(master_user=self.instance.master_user)
+        currencies_list = Currency.objects.filter(master_user=self.instance.master_user)
 
         currencies_dict = self.list_as_dict(currencies_list)
 
@@ -410,7 +411,7 @@ class ReportBuilder(BaseReportBuilder):
             #     (None, Portfolio),
             # )
 
-        ).only('id').filter(master_user=self.instance.master_user)
+        ).filter(master_user=self.instance.master_user)
 
         portfolios_dict = self.list_as_dict(portfolios_list)
 
@@ -427,7 +428,7 @@ class ReportBuilder(BaseReportBuilder):
             #     ('portfolios', Portfolio),
             # )
 
-        ).only('id').filter(master_user_id=self.instance.master_user.pk)
+        ).filter(master_user_id=self.instance.master_user.pk)
 
         accounts_dict = self.list_as_dict(accounts_list)
 
@@ -438,19 +439,22 @@ class ReportBuilder(BaseReportBuilder):
         strategies1_list = Strategy1.objects.select_related(
             # 'subgroup',
             # 'subgroup__group'
-        ).only('id').filter(master_user_id=self.instance.master_user.pk)
+        ).filter(master_user_id=self.instance.master_user.pk)
+
         strategies1_dict = self.list_as_dict(strategies1_list)
 
         strategies2_list = Strategy2.objects.select_related(
             # 'subgroup',
             # 'subgroup__group'
-        ).only('id').filter(master_user_id=self.instance.master_user.pk)
+        ).filter(master_user_id=self.instance.master_user.pk)
+
         strategies2_dict = self.list_as_dict(strategies2_list)
 
         strategies3_list = Strategy3.objects.select_related(
             # 'subgroup',
             # 'subgroup__group'
-        ).only('id').filter(master_user_id=self.instance.master_user.pk)
+        ).filter(master_user_id=self.instance.master_user.pk)
+
         strategies3_dict = self.list_as_dict(strategies3_list)
 
         _l.debug('_inject_relations load strategy 1-3 done: %s', (time.perf_counter() - strategy_st))

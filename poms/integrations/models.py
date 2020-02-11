@@ -951,6 +951,8 @@ class ComplexTransactionImportSchemeSelectorValue(models.Model):
     value = models.CharField(max_length=1000, verbose_name=ugettext_lazy('value '))
     notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
 
+    order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
+
 
 class ComplexTransactionImportSchemeRuleScenario(models.Model):
     scheme = models.ForeignKey(ComplexTransactionImportScheme, related_name='rule_scenarios',
