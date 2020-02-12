@@ -353,6 +353,8 @@ USE_ETAGS = True
 if not LOCAL:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = True
+
+    SECURE_REDIRECT_EXEMPT = [r'^v1/pricing/brokers/bloomberg/callback/$']  # TODO check for security
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     CSRF_COOKIE_DOMAIN = 'finmars.com'
