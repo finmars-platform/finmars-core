@@ -47,7 +47,7 @@ class InstrumentPricingScheme(models.Model):
                                     on_delete=models.CASCADE)
     notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
 
-    notes_for_user = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes for user'))
+    notes_for_users = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes for users'))
 
     notes_for_parameter = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes for parameter'))
 
@@ -152,7 +152,7 @@ class CurrencyPricingScheme(models.Model):
                                     on_delete=models.CASCADE)
     notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
 
-    notes_for_user = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes for user'))
+    notes_for_users = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes for users'))
 
     notes_for_parameter = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes for parameter'))
 
@@ -533,6 +533,33 @@ class InstrumentPricingPolicy(models.Model):
             self.json_data = None
 
 
-class PricingProcedureResult(models.Model):
+class PricingProcedureBloombergResult(models.Model):
+
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
 
     procedure = models.ForeignKey(PricingProcedure, on_delete=models.CASCADE, verbose_name=ugettext_lazy('procedure'))
+
+    instrument = models.ForeignKey('instruments.Instrument', on_delete=models.CASCADE, verbose_name=ugettext_lazy('instrument'))
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, verbose_name=ugettext_lazy('pricing policy'))
+
+    reference = models.CharField(max_length=255, null=True, blank=True)
+
+    date = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('date'))
+
+    instrument_parameters = models.CharField(max_length=255, null=True, blank=True)
+
+    ask_parameters = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('ask parameters'))
+    ask_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('ask value'))
+
+    bid_parameters = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('bid parameters'))
+    bid_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('bid value'))
+
+    last_parameters = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('last parameters'))
+    last_value = models.FloatField(null=True, blank=True,  verbose_name=ugettext_lazy('last value'))
+
+    class Meta:
+        unique_together = (
+            ('master_user', 'instrument', 'date', 'pricing_policy')
+        )
+

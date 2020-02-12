@@ -1,12 +1,29 @@
+import time
+
 from django.db.models import Q
 
+from poms.common import formula
 from poms.common.utils import isclose
-from poms.instruments.models import Instrument, DailyPricingModel
+from poms.instruments.models import Instrument, DailyPricingModel, PriceHistory
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
-from poms.pricing.models import InstrumentPricingSchemeType
+from poms.pricing.models import InstrumentPricingSchemeType, PricingProcedureBloombergResult
 from poms.reports.builders.balance_item import ReportItem, Report
 from poms.reports.builders.balance_pl import ReportBuilder
+from datetime import timedelta, date
+
+
+def get_list_of_dates_between_two_dates(date_from, date_to):
+
+    result = []
+
+    diff = date_to - date_from
+
+    for i in range(diff.days + 1):
+        day = date_from + timedelta(days=i)
+        result.append(day)
+
+    return result
 
 
 class InstrumentItem(object):
@@ -17,6 +34,7 @@ class InstrumentItem(object):
         self.pricing_scheme = pricing_scheme
 
         self.scheme_fields = []
+        self.scheme_fields_map = {}
         self.parameters = []
 
         self.fill_parameters()
@@ -72,20 +90,25 @@ class InstrumentItem(object):
 
         if self.pricing_scheme.type.id == 5:
 
+            self.scheme_fields_map = {}
+
             if parameters.bid0:
                 self.scheme_fields.append([parameters.bid0])
-            if parameters.bid1:
-                self.scheme_fields.append([parameters.bid1])
+                self.scheme_fields_map['bid'] = parameters.bid0
+            # if parameters.bid1:
+            #     self.scheme_fields.append([parameters.bid1])
 
             if parameters.ask0:
                 self.scheme_fields.append([parameters.ask0])
-            if parameters.ask1:
-                self.scheme_fields.append([parameters.ask1])
+                self.scheme_fields_map['ask'] = parameters.ask0
+            # if parameters.ask1:
+            #     self.scheme_fields.append([parameters.ask1])
 
             if parameters.last0:
                 self.scheme_fields.append([parameters.last0])
-            if parameters.last1:
-                self.scheme_fields.append([parameters.last1])
+                self.scheme_fields_map['last'] = parameters.last0
+            # if parameters.last1:
+            #     self.scheme_fields.append([parameters.last1])
 
 
 class CurrencyItem(object):
@@ -101,8 +124,9 @@ class CurrencyItem(object):
 
 class PricingProcedureProcess(object):
 
-    def __init__(self, procedure=None):
+    def __init__(self, procedure=None, master_user=None):
 
+        self.master_user = master_user
         self.procedure = procedure
 
         self.instruments = []
@@ -117,8 +141,6 @@ class PricingProcedureProcess(object):
         self.currency_items_grouped = {}
 
         self.broker_bloomberg = BrokerBloomberg()
-
-        self.process()
 
     def process(self):
 
@@ -246,13 +268,18 @@ class PricingProcedureProcess(object):
 
     def process_to_bloomberg_provider(self, items):
 
-        data = {}
+        body = {}
+        body['procedure'] = self.procedure.id
+        body['data'] = {}
 
-        data['date_from'] = str(self.procedure.price_date_from)
-        data['date_to'] = str(self.procedure.price_date_to)
-        data['items'] = []
+        body['data']['date_from'] = str(self.procedure.price_date_from)
+        body['data']['date_to'] = str(self.procedure.price_date_to)
+        body['data']['items'] = []
 
         items_with_missing_parameters = []
+
+        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from, date_to=self.procedure.price_date_to)
+        print('dates %s' % dates)
 
         for item in items:
 
@@ -260,6 +287,24 @@ class PricingProcedureProcess(object):
 
                 item_parameters = item.parameters.copy()
                 item_parameters.pop()
+
+                for date in dates:
+
+                    try:
+                        record = PricingProcedureBloombergResult(master_user=self.master_user,
+                                                                 procedure=self.procedure,
+                                                                 instrument=item.instrument,
+                                                                 instrument_parameters=str(item_parameters),
+                                                                 pricing_policy=item.policy.pricing_policy,
+                                                                 reference=item.parameters[0],
+                                                                 date=date,
+                                                                 ask_parameters=item.scheme_fields_map['ask'],
+                                                                 bid_parameters=item.scheme_fields_map['bid'],
+                                                                 last_parameters=item.scheme_fields_map['last'])
+                        record.save()
+
+                    except Exception as e:
+                        print("Cant create Result Record %s" % e)
 
                 item_obj = {
                     'reference': item.parameters[0],
@@ -274,7 +319,7 @@ class PricingProcedureProcess(object):
                         'values': []
                     })
 
-                data['items'].append(item_obj)
+                body['data']['items'].append(item_obj)
 
             else:
                 items_with_missing_parameters.append(item)
@@ -282,5 +327,139 @@ class PricingProcedureProcess(object):
         print('items_with_missing_parameters %s' % len(items_with_missing_parameters))
         # print('data %s' % data)
 
-        self.broker_bloomberg.send_request(self.procedure, data)
+        print('self.procedure %s' % self.procedure.id)
+
+        self.broker_bloomberg.send_request(body)
+
+
+class FillPricesProcess(object):
+
+    def __init__(self, instance, master_user):
+
+        self.instance = instance
+        self.master_user = master_user
+
+    def process(self):
+
+        print('< fill prices: total items len %s' % len(self.instance['data']['items']))
+
+        print('< fill prices: fields len %s' % len(self.instance['data']['items'][0]['fields']))
+
+        print('< fill prices: values len %s' % len(self.instance['data']['items'][0]['fields'][0]['values']))
+
+        for item in self.instance['data']['items']:
+
+            records_st = time.perf_counter()
+
+            records = PricingProcedureBloombergResult.objects.filter(
+                master_user=self.master_user,
+                procedure=self.instance['procedure'],
+                reference=item['reference'],
+                instrument_parameters=str(item['parameters'])
+            )
+
+            print('< fill prices: records for %s len %s' % (item['reference'], len(list(records))))
+
+            processing_st = time.perf_counter()
+
+            print('< get records from db done: %s', (time.perf_counter() - records_st))
+
+            for record in records:
+
+                for field in item['fields']:
+
+                    for val_obj in field['values']:
+
+                        if str(record.date) == str(val_obj['date']):
+
+                            if field['code'] in record.ask_parameters:
+
+                                record.ask_value = float(val_obj['value'])
+
+                            if field['code'] in record.bid_parameters:
+
+                                record.bid_value = float(val_obj['value'])
+
+                            if field['code'] in record.last_parameters:
+
+                                record.last_value = float(val_obj['value'])
+
+                            record.save()
+
+                    if not len(records):
+                        print('Cant fill the value. Related records not found. Reference %s' % item['reference'])
+
+            print('< processing item: %s', (time.perf_counter() - processing_st))
+
+        self.create_price_history()
+
+        print("process fill prices")
+
+    def create_price_history(self):
+
+        print("Creating price history")
+
+        records = PricingProcedureBloombergResult.objects.filter(
+            master_user=self.master_user,
+            procedure=self.instance['procedure'],
+            date__gte=self.instance['data']['date_from'],
+            date__lte=self.instance['data']['date_to']
+        )
+
+        for record in records:
+
+            safe_instrument = {
+                'id': record.instrument.id,
+            }
+
+            values = {
+                'd': record.date,
+                'instrument': safe_instrument,
+                'ask': record.ask_value,
+                'bid': record.bid_value,
+                'last': record.last_value
+            }
+
+            pricing_scheme = record.pricing_policy.default_instrument_pricing_scheme
+
+            expr = pricing_scheme.get_parameters().expr
+
+            print('values %s' % values)
+            print('expr %s' % expr)
+
+            try:
+                principal_price = formula.safe_eval(expr, names=values)
+            except formula.InvalidExpression:
+                print("Error here")
+                continue
+
+            print('principal_price %s' % principal_price)
+
+            if principal_price:
+
+                try:
+
+                    price = PriceHistory.objects.get(
+                        instrument=record.instrument,
+                        pricing_policy=record.pricing_policy,
+                        date=record.date
+                    )
+
+                    price.principal_price = principal_price
+                    price.save()
+
+                    print('Update Price history %s' % price.id)
+
+                except PriceHistory.DoesNotExist:
+
+                    price = PriceHistory(
+                        instrument=record.instrument,
+                        pricing_policy=record.pricing_policy,
+                        date=record.date,
+                        principal_price=principal_price
+                    )
+
+                    price.save()
+
+                    print('Create New Price history %s' % price.id)
 

@@ -13,7 +13,7 @@ from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet, Abstra
 from poms.csv_import.tasks import data_csv_file_import, data_csv_file_import_validate
 from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
 from poms.pricing.brokers.broker_serializers import DataRequestSerializer
-from poms.pricing.handlers import PricingProcedureProcess
+from poms.pricing.handlers import PricingProcedureProcess, FillPricesProcess
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, InstrumentPricingSchemeType, \
     CurrencyPricingSchemeType, PricingProcedure
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
@@ -129,7 +129,10 @@ class PricingProcedureViewSet(AbstractModelViewSet):
 
         procedure = PricingProcedure.objects.get(pk=pk)
 
-        instance = PricingProcedureProcess(procedure=procedure)
+        master_user = request.user.master_user
+
+        instance = PricingProcedureProcess(procedure=procedure, master_user=master_user)
+        instance.process()
 
         serializer = self.get_serializer(instance=instance)
 
@@ -145,20 +148,25 @@ class PricingBrokerBloombergViewSet(AbstractViewSet):
     #     PomsFunctionPermission
     # ]
 
-    def create(self, request, *args, **kwargs):
-
-        print("Request from Broker Bloomberg: request.data %s" % request.data)
-
-        return Response({'ok'})
-
-        # serializer = self.get_serializer(data=request.data)
-        # serializer.is_valid(raise_exception=True)
-        # serializer.save()
-        # return Response(serializer.data)
-
     @action(detail=False, methods=['post'], url_path='callback', serializer_class=DataRequestSerializer)
     def handle_callback(self, request):
 
-        print('request.data %s' % request.data)
+        # print('request.data %s' % request.data)
+
+        procedure_id = request.data['procedure']
+
+        print("> handle_callback: procedure_id %s" % procedure_id)
+
+        try:
+            procedure = PricingProcedure.objects.get(pk=procedure_id)
+
+            instance = FillPricesProcess(instance=request.data, master_user=procedure.master_user)
+            instance.process()
+
+        except PricingProcedure.DoesNotExist:
+
+            print("Does not exist? Procedure %s" % procedure_id)
+
+            return Response({'status': '404'})  # TODO handle 404 properly
 
         return Response({'status': 'ok'})

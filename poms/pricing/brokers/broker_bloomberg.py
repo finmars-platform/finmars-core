@@ -11,13 +11,6 @@ class BrokerBloomberg(BaseBroker):
         print("Broker: Bloomberg. Status: Initialized")
 
 
-    def send_request(self, procedure, data):
+    def send_request(self, data):
 
-        request_data = {}
-
-        request_data['procedure'] = procedure.id
-        request_data['data'] = data
-
-        # print('request_data %s' % request_data)
-
-        self.request_post(request_data)
+        self.request_post(data)
