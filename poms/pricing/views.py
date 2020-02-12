@@ -5,6 +5,7 @@ from django_filters.rest_framework import FilterSet
 
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.views import APIView
 
 from poms.common.utils import date_now, datetime_now
 
@@ -140,18 +141,11 @@ class PricingProcedureViewSet(AbstractModelViewSet):
         return Response(serializer.data)
 
 
+class PricingBrokerBloombergHandler(APIView):
 
-class PricingBrokerBloombergViewSet(AbstractViewSet):
+    permission_classes = []
 
-    serializer_class = BrokerBloombergSerializer
-    permission_classes = []  # TODO warning, authentication is not performed
-    # permission_classes = AbstractViewSet.permission_classes + [
-    #     PomsFunctionPermission
-    # ]
-
-    @csrf_exempt
-    @action(detail=False, methods=['post'], url_path='callback', serializer_class=DataRequestSerializer)
-    def handle_callback(self, request):
+    def post(self, request):
 
         # print('request.data %s' % request.data)
 
@@ -172,3 +166,18 @@ class PricingBrokerBloombergViewSet(AbstractViewSet):
             return Response({'status': '404'})  # TODO handle 404 properly
 
         return Response({'status': 'ok'})
+
+
+# class PricingBrokerBloombergViewSet(AbstractViewSet):
+#
+#     serializer_class = BrokerBloombergSerializer
+#     permission_classes = []  # TODO warning, authentication is not performed
+#     # permission_classes = AbstractViewSet.permission_classes + [
+#     #     PomsFunctionPermission
+#     # ]
+#
+#     @csrf_exempt
+#     @action(detail=False, methods=['post'], url_path='callback', serializer_class=DataRequestSerializer)
+#     def handle_callback(self, request):
+#
+#

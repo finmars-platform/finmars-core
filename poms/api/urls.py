@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from django.conf import settings
 from django.conf.urls import url, include
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import routers
 
 import poms.accounts.views as accounts
@@ -367,12 +368,16 @@ router.register(r'pricing/currency-pricing-scheme', pricing.CurrencyPricingSchem
 router.register(r'pricing/currency-pricing-scheme-type', pricing.CurrencyPricingSchemeTypeViewSet, 'pricing_currency_pricing_scheme_type')
 router.register(r'pricing/procedure', pricing.PricingProcedureViewSet, 'pricing_procedure')
 
-router.register(r'pricing/brokers/bloomberg', pricing.PricingBrokerBloombergViewSet, 'pricing_broker_bloomberg')
+# router.register(r'pricing/brokers/bloomberg/callback', csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view()), 'pricing_broker_bloomberg')
 
 
 
 urlpatterns = [
     url(r'^v1/', include(router.urls)),
+
+    # external callbacks
+
+    url('v1/pricing/brokers/bloomberg/callback', csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view()))
 ]
 
 if settings.DEV:
