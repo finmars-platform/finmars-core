@@ -38,8 +38,6 @@ import poms.configuration_sharing.views as configuration_sharing
 
 import poms.pricing.views as pricing
 
-from django.views.decorators.csrf import csrf_exempt
-
 router = routers.DefaultRouter()
 
 router.register(r'system/ecosystem-configuration', system.EcosystemConfigurationViewSet, 'ecosystemconfiguration')
@@ -369,7 +367,7 @@ router.register(r'pricing/currency-pricing-scheme', pricing.CurrencyPricingSchem
 router.register(r'pricing/currency-pricing-scheme-type', pricing.CurrencyPricingSchemeTypeViewSet, 'pricing_currency_pricing_scheme_type')
 router.register(r'pricing/procedure', pricing.PricingProcedureViewSet, 'pricing_procedure')
 
-router.register(r'pricing/brokers/bloomberg', csrf_exempt(pricing.PricingBrokerBloombergViewSet), 'pricing_broker_bloomberg')
+router.register(r'pricing/brokers/bloomberg', pricing.PricingBrokerBloombergViewSet, 'pricing_broker_bloomberg')
 
 
 

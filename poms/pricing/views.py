@@ -1,5 +1,6 @@
 from celery.result import AsyncResult
 from django.core.signing import TimestampSigner
+from django.views.decorators.csrf import csrf_exempt
 from django_filters.rest_framework import FilterSet
 
 from rest_framework.response import Response
@@ -148,6 +149,7 @@ class PricingBrokerBloombergViewSet(AbstractViewSet):
     #     PomsFunctionPermission
     # ]
 
+    @csrf_exempt
     @action(detail=False, methods=['post'], url_path='callback', serializer_class=DataRequestSerializer)
     def handle_callback(self, request):
 
