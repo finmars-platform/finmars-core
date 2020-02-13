@@ -154,6 +154,7 @@ class PricingBrokerBloombergHandler(APIView):
         print("> handle_callback: procedure_id %s" % procedure_id)
 
         try:
+
             procedure = PricingProcedure.objects.get(pk=procedure_id)
 
             instance = FillPricesProcess(instance=request.data, master_user=procedure.master_user)

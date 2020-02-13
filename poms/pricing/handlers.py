@@ -5,6 +5,7 @@ from django.db.models import Q
 from poms.common import formula
 from poms.common.utils import isclose
 from poms.instruments.models import Instrument, DailyPricingModel, PriceHistory
+from poms.integrations.models import ProviderClass
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
 from poms.pricing.models import InstrumentPricingSchemeType, PricingProcedureBloombergResult
@@ -270,6 +271,16 @@ class PricingProcedureProcess(object):
 
         body = {}
         body['procedure'] = self.procedure.id
+
+        config = self.master_user.import_configs.get(provider=ProviderClass.BLOOMBERG)
+        body['user'] = {
+            'token': self.master_user.id,
+            'credentials': {
+                'p12cert': str(config.p12cert),
+                'password': config.password
+            }
+        }
+
         body['data'] = {}
 
         body['data']['date_from'] = str(self.procedure.price_date_from)
