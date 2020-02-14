@@ -241,7 +241,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
     factor_down = TransactionTypeField(allow_null=True, required=False)
     factor_down_object = serializers.PrimaryKeyRelatedField(source='factor_down', read_only=True)
 
-    pricing_policies = InstrumentTypePricingPolicySerializer(allow_null=True, many=True)
+    pricing_policies = InstrumentTypePricingPolicySerializer(allow_null=True, many=True, required=False)
 
     # tags = TagField(many=True, required=False, allow_null=True)
     # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
@@ -307,24 +307,26 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
     def save_pricing_policies(self, instance, pricing_policies):
 
-        for item in pricing_policies:
+        if pricing_policies:
 
-            try:
+            for item in pricing_policies:
 
-                oid = item.get('id', None)
+                try:
 
-                o = InstrumentTypePricingPolicy.objects.get(instrument_type=instance, id=oid)
+                    oid = item.get('id', None)
 
-                o.default_value = item['default_value']
-                o.attribute_key = item['attribute_key']
-                o.data = item['data']
-                o.notes = item['notes']
-                o.overwrite_default_parameters = item['overwrite_default_parameters']
+                    o = InstrumentTypePricingPolicy.objects.get(instrument_type=instance, id=oid)
 
-                o.save()
+                    o.default_value = item['default_value']
+                    o.attribute_key = item['attribute_key']
+                    o.data = item['data']
+                    o.notes = item['notes']
+                    o.overwrite_default_parameters = item['overwrite_default_parameters']
 
-            except Exception as e:
-                print("Can't Find  Pricing Policy %s" % e)
+                    o.save()
+
+                except Exception as e:
+                    print("Can't Find  Pricing Policy %s" % e)
 
 
 class InstrumentTypeViewSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
@@ -386,7 +388,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
     # tags = TagField(many=True, required=False, allow_null=True)
     # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
 
-    pricing_policies = InstrumentPricingPolicySerializer(allow_null=True, many=True)
+    pricing_policies = InstrumentPricingPolicySerializer(allow_null=True, many=True, required=False)
 
     class Meta:
         model = Instrument
@@ -471,23 +473,25 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
 
     def save_pricing_policies(self, instance, pricing_policies):
 
-        for item in pricing_policies:
+        if pricing_policies:
 
-            try:
+            for item in pricing_policies:
 
-                oid = item.get('id', None)
+                try:
 
-                o = InstrumentPricingPolicy.objects.get(instrument=instance, id=oid)
+                    oid = item.get('id', None)
 
-                o.default_value = item['default_value']
-                o.attribute_key = item['attribute_key']
-                o.data = item['data']
-                o.notes = item['notes']
+                    o = InstrumentPricingPolicy.objects.get(instrument=instance, id=oid)
 
-                o.save()
+                    o.default_value = item['default_value']
+                    o.attribute_key = item['attribute_key']
+                    o.data = item['data']
+                    o.notes = item['notes']
 
-            except Exception as e:
-                print("Can't Find  Pricing Policy %s" % e)
+                    o.save()
+
+                except Exception as e:
+                    print("Can't Find  Pricing Policy %s" % e)
 
     def save_instr_related(self, instrument, created, instrument_attr, model, validated_data, accept=None):
         validated_data = validated_data or []

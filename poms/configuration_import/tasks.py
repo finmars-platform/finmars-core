@@ -1179,7 +1179,7 @@ class ImportManager(object):
                         try:
                             serializer.is_valid(raise_exception=True)
 
-                            _l.info('Layout import name %s ' % content_object['name'])
+                            # _l.info('Layout import name %s ' % content_object['name'])
 
                             serializer.save()
                         except ValidationError:
@@ -1610,6 +1610,8 @@ class ImportManager(object):
                             serializer.save()
                         except Exception as error:
 
+                            _l.info("Currency Error %s" % error)
+
                             if self.instance.mode == 'overwrite':
 
                                 try:
@@ -1624,6 +1626,9 @@ class ImportManager(object):
                                     serializer.save()
 
                                 except Exception as error:
+
+
+                                    _l.info("Currency Error overwrite %s" % error)
 
                                     stats['status'] = 'error'
                                     stats['error'][
@@ -1860,6 +1865,12 @@ class ImportManager(object):
 
     # Configuration import logic end
 
+    def print_entities_in_file(self, configuration_section):
+
+        for item in configuration_section['items']:
+
+            _l.info("In file: %s" % item['entity'])
+
     def import_configuration(self, configuration_section):
 
         try:
@@ -1867,6 +1878,8 @@ class ImportManager(object):
             st = time.perf_counter()
 
             if 'items' in configuration_section:
+
+                self.print_entities_in_file(configuration_section)
 
                 can_import = check_configuration_section(self.configuration_access_table)
 

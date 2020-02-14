@@ -28,7 +28,7 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
     # tags = TagField(many=True, required=False, allow_null=True)
     # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
 
-    pricing_policies = CurrencyPricingPolicySerializer(allow_null=True, many=True)
+    pricing_policies = CurrencyPricingPolicySerializer(allow_null=True, many=True, required=False)
 
     class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = Currency
@@ -75,23 +75,24 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
 
     def save_pricing_policies(self, instance, pricing_policies):
 
-        for item in pricing_policies:
+        if pricing_policies:
+            for item in pricing_policies:
 
-            try:
+                try:
 
-                oid = item.get('id', None)
+                    oid = item.get('id', None)
 
-                o = CurrencyPricingPolicy.objects.get(currency=instance, id=oid)
+                    o = CurrencyPricingPolicy.objects.get(currency=instance, id=oid)
 
-                o.default_value = item['default_value']
-                o.attribute_key = item['attribute_key']
-                o.data = item['data']
-                o.notes = item['notes']
+                    o.default_value = item['default_value']
+                    o.attribute_key = item['attribute_key']
+                    o.data = item['data']
+                    o.notes = item['notes']
 
-                o.save()
+                    o.save()
 
-            except Exception as e:
-                print("Can't Find  Pricing Policy %s" % e)
+                except Exception as e:
+                    print("Can't Find  Pricing Policy %s" % e)
 
 
 class CurrencyViewSerializer(ModelWithUserCodeSerializer):
