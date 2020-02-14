@@ -385,15 +385,24 @@ class FillPricesProcess(object):
 
                             if field['code'] in record.ask_parameters:
 
-                                record.ask_value = float(val_obj['value'])
+                                try:
+                                    record.ask_value = float(val_obj['value'])
+                                except Exception as e:
+                                    print('ask value e %s ' % e)
 
                             if field['code'] in record.bid_parameters:
 
-                                record.bid_value = float(val_obj['value'])
+                                try:
+                                    record.bid_value = float(val_obj['value'])
+                                except Exception as e:
+                                    print('bid value e %s ' % e)
 
                             if field['code'] in record.last_parameters:
 
-                                record.last_value = float(val_obj['value'])
+                                try:
+                                    record.last_value = float(val_obj['value'])
+                                except Exception as e:
+                                    print('last value e %s ' % e)
 
                             record.save()
 
