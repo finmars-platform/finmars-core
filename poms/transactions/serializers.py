@@ -1341,6 +1341,13 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                 except TransactionTypeInput.DoesNotExist:
                     inp = TransactionTypeInput(transaction_type=instance)
 
+
+
+            inp.order = order
+            for attr, value in inp_data.items():
+                setattr(inp, attr, value)
+            inp.save()
+
             if settings_data:
 
                 try:
@@ -1354,10 +1361,6 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                 except Exception as e:
                     inp.settings.create(transaction_type_input=inp, linked_inputs_names=settings_data['linked_inputs_names'])
 
-            inp.order = order
-            for attr, value in inp_data.items():
-                setattr(inp, attr, value)
-            inp.save()
             new_inputs.append(inp)
         return new_inputs
 
