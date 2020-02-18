@@ -487,6 +487,11 @@ class CurrencyPricingPolicy(models.Model):
         else:
             self.json_data = None
 
+    class Meta:
+        unique_together = (
+            ('currency', 'pricing_policy')
+        )
+
 
 class InstrumentTypePricingPolicy(models.Model):
 
@@ -522,6 +527,12 @@ class InstrumentTypePricingPolicy(models.Model):
         else:
             self.json_data = None
 
+    class Meta:
+        unique_together = (
+            ('instrument_type', 'pricing_policy')
+        )
+
+
 
 class InstrumentPricingPolicy(models.Model):
 
@@ -555,10 +566,10 @@ class InstrumentPricingPolicy(models.Model):
         else:
             self.json_data = None
 
-    # class Meta:
-    #     unique_together = (
-    #         ('instrument', 'pricing_policy', 'pricing_scheme')
-    #     )
+    class Meta:
+        unique_together = (
+            ('instrument', 'pricing_policy')
+        )
 
 
 class PricingProcedureBloombergResult(models.Model):
