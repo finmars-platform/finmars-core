@@ -54,7 +54,7 @@ class InstrumentPricingScheme(NamedModel):
     error_handler = models.PositiveSmallIntegerField(default=SKIP, choices=ERROR_HANDLER_CHOICES,
                                                      verbose_name=ugettext_lazy('error handler'))
 
-    type = models.ForeignKey(InstrumentPricingSchemeType, null=True, blank=True, verbose_name=ugettext_lazy('type'), on_delete=models.SET_NULL)
+    type = models.ForeignKey(InstrumentPricingSchemeType, verbose_name=ugettext_lazy('type'), on_delete=models.CASCADE)
 
     class Meta:
         unique_together = (
@@ -159,7 +159,7 @@ class CurrencyPricingScheme(NamedModel):
     error_handler = models.PositiveSmallIntegerField(default=SKIP, choices=ERROR_HANDLER_CHOICES,
                                                      verbose_name=ugettext_lazy('error handler'))
 
-    type = models.ForeignKey(CurrencyPricingSchemeType, null=True, blank=True, verbose_name=ugettext_lazy('type'), on_delete=models.CASCADE)
+    type = models.ForeignKey(CurrencyPricingSchemeType, verbose_name=ugettext_lazy('type'), on_delete=models.CASCADE)
 
     class Meta:
         unique_together = (
@@ -441,6 +441,10 @@ class PricingProcedure(NamedModel):
     accrual_date_to = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('accrual date to'))
     accrual_date_to_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                               verbose_name=ugettext_lazy('accrual date to expr'))
+
+    pricing_policy_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('pricing policy filters'))
+
+    instrument_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('instrument filters'))
 
     class Meta:
         unique_together = (

@@ -618,7 +618,11 @@ class PricingProcedureSerializer(serializers.ModelSerializer):
                   'price_balance_date', 'price_balance_date_expr',
                   'price_fill_days', 'price_override_existed',
                   'accrual_date_from', 'accrual_date_to',
-                  'accrual_date_from_expr', 'accrual_date_to_expr')
+                  'accrual_date_from_expr', 'accrual_date_to_expr',
+
+                  'pricing_policy_filters', 'instrument_filters'
+
+                  )
 
 
 class PricingPolicyViewSerializer(ModelWithUserCodeSerializer):
