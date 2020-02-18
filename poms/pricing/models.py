@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy
 
-from poms.common.models import EXPRESSION_FIELD_LENGTH
+from poms.common.models import EXPRESSION_FIELD_LENGTH, NamedModel
 from poms.users.models import MasterUser
 
 from django.core.serializers.json import DjangoJSONEncoder
@@ -28,7 +28,7 @@ class InstrumentPricingSchemeType(models.Model):
                                                   verbose_name=ugettext_lazy('input type'))
 
 
-class InstrumentPricingScheme(models.Model):
+class InstrumentPricingScheme(NamedModel):
 
     SKIP = 1
     DEFAULT_PRICE = 2
@@ -134,7 +134,7 @@ class CurrencyPricingSchemeType(models.Model):
                                                   verbose_name=ugettext_lazy('input type'))
 
 
-class CurrencyPricingScheme(models.Model):
+class CurrencyPricingScheme(NamedModel):
     SKIP = 1
     DEFAULT_PRICE = 2
     ASK_FOR_MANUAL_ENTRY = 3
@@ -403,7 +403,7 @@ class CurrencyPricingSchemeBloombergParameters(models.Model):
                                                    verbose_name=ugettext_lazy('FX-rate multiplier'))
 
 
-class PricingProcedure(models.Model):
+class PricingProcedure(NamedModel):
 
     name = models.CharField(max_length=255)
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
