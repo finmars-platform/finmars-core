@@ -25,6 +25,9 @@ from poms.integrations.serializers import ComplexTransactionImportSchemeSerializ
 from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_attrs.serializers import GenericAttributeTypeSerializer
 from poms.portfolios.models import Portfolio
+from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, PricingProcedure
+from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
+    PricingProcedureSerializer
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
 from poms.reports.serializers import BalanceReportCustomFieldSerializer, PLReportCustomFieldSerializer, \
     TransactionReportCustomFieldSerializer
@@ -1863,6 +1866,192 @@ class ImportManager(object):
 
         _l.info('Import Configuration Transaction User Fields done %s' % (time.perf_counter() - st))
 
+    def import_instrument_pricing_schemes(self, configuration_section):
+
+        st = time.perf_counter()
+
+        for item in configuration_section['items']:
+
+            if 'pricing.instrumentpricingscheme' in item['entity']:
+
+                self.instance.stats['configuration'][item['entity']] = []
+
+                if 'content' in item:
+
+                    for content_object in item['content']:
+
+                        serializer = InstrumentPricingSchemeSerializer(data=content_object,
+                                                               context=self.get_serializer_context())
+
+                        stats = {
+                            'content_type': item['entity'],
+                            'mode': self.instance.mode,
+                            'item': content_object,
+                            'error': {
+                                'message': None
+                            },
+                            'status': 'info'
+                        }
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                try:
+
+                                    instance = InstrumentPricingScheme.objects.get(master_user=self.master_user,
+                                                                           name=content_object['name'])
+
+                                    serializer = InstrumentPricingSchemeSerializer(data=content_object,
+                                                                           instance=instance,
+                                                                           context=self.get_serializer_context())
+                                    serializer.is_valid(raise_exception=True)
+                                    serializer.save()
+
+                                except Exception as error:
+
+                                    stats['status'] = 'error'
+                                    stats['error'][
+                                        'message'] = 'Can\'t Overwrite Instrument Pricing Scheme for %s' % content_object['name']
+
+                            else:
+
+                                stats['status'] = 'error'
+                                stats['error']['message'] = 'Instrument Pricing Scheme %s already exists' % content_object['name']
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
+
+                        self.update_progress()
+
+        _l.info('Import Instrument Pricing Scheme done %s' % (time.perf_counter() - st))
+
+    def import_currency_pricing_schemes(self, configuration_section):
+
+        st = time.perf_counter()
+
+        for item in configuration_section['items']:
+
+            if 'pricing.currencypricingscheme' in item['entity']:
+
+                self.instance.stats['configuration'][item['entity']] = []
+
+                if 'content' in item:
+
+                    for content_object in item['content']:
+
+                        serializer = CurrencyPricingSchemeSerializer(data=content_object,
+                                                                       context=self.get_serializer_context())
+
+                        stats = {
+                            'content_type': item['entity'],
+                            'mode': self.instance.mode,
+                            'item': content_object,
+                            'error': {
+                                'message': None
+                            },
+                            'status': 'info'
+                        }
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                try:
+
+                                    instance = CurrencyPricingScheme.objects.get(master_user=self.master_user,
+                                                                                   name=content_object['name'])
+
+                                    serializer = CurrencyPricingSchemeSerializer(data=content_object,
+                                                                                   instance=instance,
+                                                                                   context=self.get_serializer_context())
+                                    serializer.is_valid(raise_exception=True)
+                                    serializer.save()
+
+                                except Exception as error:
+
+                                    stats['status'] = 'error'
+                                    stats['error'][
+                                        'message'] = 'Can\'t Overwrite Currency Pricing Scheme for %s' % content_object['name']
+
+                            else:
+
+                                stats['status'] = 'error'
+                                stats['error']['message'] = 'Currency Pricing Scheme %s already exists' % content_object['name']
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
+
+                        self.update_progress()
+
+        _l.info('Import Configuration Currency Pricing Scheme done %s' % (time.perf_counter() - st))
+
+    def import_pricing_procedures(self, configuration_section):
+
+        st = time.perf_counter()
+
+        for item in configuration_section['items']:
+
+            if 'pricing.pricingprocedure' in item['entity']:
+
+                self.instance.stats['configuration'][item['entity']] = []
+
+                if 'content' in item:
+
+                    for content_object in item['content']:
+
+                        serializer = PricingProcedureSerializer(data=content_object,
+                                                                     context=self.get_serializer_context())
+
+                        stats = {
+                            'content_type': item['entity'],
+                            'mode': self.instance.mode,
+                            'item': content_object,
+                            'error': {
+                                'message': None
+                            },
+                            'status': 'info'
+                        }
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                try:
+
+                                    instance = PricingProcedure.objects.get(master_user=self.master_user,
+                                                                                 name=content_object['name'])
+
+                                    serializer = PricingProcedureSerializer(data=content_object,
+                                                                                   instance=instance,
+                                                                                   context=self.get_serializer_context())
+                                    serializer.is_valid(raise_exception=True)
+                                    serializer.save()
+
+                                except Exception as error:
+
+                                    stats['status'] = 'error'
+                                    stats['error'][
+                                        'message'] = 'Can\'t Overwrite Pricing Procedure for %s' % content_object['name']
+
+                            else:
+
+                                stats['status'] = 'error'
+                                stats['error']['message'] = 'Pricing Procedure %s already exists' % content_object['name']
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
+
+                        self.update_progress()
+
+        _l.info('Import Configuration Pricing Procedure done %s' % (time.perf_counter() - st))
+
     # Configuration import logic end
 
     def print_entities_in_file(self, configuration_section):
@@ -1938,6 +2127,11 @@ class ImportManager(object):
 
                     self.import_instrument_user_fields(configuration_section)
                     self.import_transaction_user_fields(configuration_section)
+
+
+                    self.import_instrument_pricing_schemes(configuration_section)
+                    self.import_currency_pricing_schemes(configuration_section)
+                    self.import_pricing_procedures(configuration_section)
 
                 # User Interface
 

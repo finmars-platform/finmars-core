@@ -125,6 +125,7 @@ class CurrencyItem(object):
 
 class PricingProcedureProcess(object):
 
+
     def __init__(self, procedure=None, master_user=None):
 
         self.master_user = master_user
@@ -142,6 +143,46 @@ class PricingProcedureProcess(object):
         self.currency_items_grouped = {}
 
         self.broker_bloomberg = BrokerBloomberg()
+
+        self.execute_procedure_date_expressions()
+
+    def execute_procedure_date_expressions(self):
+
+        if self.procedure.price_date_from_expr:
+            try:
+                self.procedure.price_date_from = formula.safe_eval(self.procedure.price_date_from_expr, names={})
+            except formula.InvalidExpression as e:
+                print("Cant execute price date from expression %s " % e)
+
+        if self.procedure.price_date_to_expr:
+            try:
+                self.procedure.price_date_to = formula.safe_eval(self.procedure.price_date_to_expr, names={})
+            except formula.InvalidExpression as e:
+                print("Cant execute price date to expression %s " % e)
+
+        if self.procedure.price_balance_date_expr:
+            try:
+                self.procedure.price_balance_date = formula.safe_eval(self.procedure.price_balance_date_expr, names={})
+            except formula.InvalidExpression as e:
+                print("Cant execute balance date expression %s " % e)
+
+        if self.procedure.accrual_date_from_expr:
+            try:
+                self.procedure.accrual_date_from = formula.safe_eval(self.procedure.accrual_date_from_expr, names={})
+            except formula.InvalidExpression as e:
+                print("Cant execute accrual date from expression %s " % e)
+
+        if self.procedure.accrual_date_to_expr:
+            try:
+                self.procedure.accrual_date_to = formula.safe_eval(self.procedure.accrual_date_to_expr, names={})
+            except formula.InvalidExpression as e:
+                print("Cant execute accrual date to expression %s " % e)
+
+        print('price_date_from %s' % self.procedure.price_date_from)
+        print('price_date_to %s' % self.procedure.price_date_to)
+        print('price_balance_date %s' % self.procedure.price_balance_date)
+        print('accrual_date_from %s' % self.procedure.accrual_date_from)
+        print('accrual_date_to %s' % self.procedure.accrual_date_to)
 
     def process(self):
 

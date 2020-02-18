@@ -4,7 +4,8 @@ from django.contrib import admin
 from django.contrib import admin
 
 from poms.pricing.models import InstrumentPricingSchemeType, CurrencyPricingSchemeType, InstrumentPricingScheme, \
-    CurrencyPricingScheme, PricingProcedureBloombergResult, PricingProcedure
+    CurrencyPricingScheme, PricingProcedureBloombergResult, PricingProcedure, InstrumentPricingPolicy, \
+    InstrumentTypePricingPolicy, CurrencyPricingPolicy
 
 
 class InstrumentPricingSchemeTypeAdmin(admin.ModelAdmin):
@@ -53,3 +54,27 @@ class PricingProcedureAdmin(admin.ModelAdmin):
 
 
 admin.site.register(PricingProcedure, PricingProcedureAdmin)
+
+
+class InstrumentPricingPolicyAdmin(admin.ModelAdmin):
+    model = InstrumentPricingPolicy,
+    list_display = ['id', 'instrument', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key']
+
+
+admin.site.register(InstrumentPricingPolicy, InstrumentPricingPolicyAdmin)
+
+
+class InstrumentTypePricingPolicyAdmin(admin.ModelAdmin):
+    model = InstrumentTypePricingPolicy,
+    list_display = ['id', 'instrument_type', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key']
+
+
+admin.site.register(InstrumentTypePricingPolicy, InstrumentTypePricingPolicyAdmin)
+
+
+class CurrencyPricingPolicyAdmin(admin.ModelAdmin):
+    model = CurrencyPricingPolicy,
+    list_display = ['id', 'currency', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key']
+
+
+admin.site.register(CurrencyPricingPolicy, CurrencyPricingPolicyAdmin)

@@ -412,16 +412,35 @@ class PricingProcedure(models.Model):
 
     notes_for_users = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes for user'))
 
+    price_is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('price is active'))
+
     price_date_from = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price date from'))
+
+    price_date_from_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                            verbose_name=ugettext_lazy('price date from expr'))
+
     price_date_to = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price date to'))
 
+    price_date_to_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                            verbose_name=ugettext_lazy('price date to expr'))
+
     price_balance_date = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price balance date'))
+
+    price_balance_date_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                          verbose_name=ugettext_lazy('price balance date expr'))
 
     price_fill_days = models.PositiveSmallIntegerField(default=0, verbose_name=ugettext_lazy('price fill days'))
     price_override_existed = models.BooleanField(default=True, verbose_name=ugettext_lazy('price override existed'))
 
+    accrual_is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('accrual is active'))
+
     accrual_date_from = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('accrual date from'))
+    accrual_date_from_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                               verbose_name=ugettext_lazy('accrual date from expr'))
+
     accrual_date_to = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('accrual date to'))
+    accrual_date_to_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                              verbose_name=ugettext_lazy('accrual date to expr'))
 
     class Meta:
         unique_together = (
@@ -531,6 +550,11 @@ class InstrumentPricingPolicy(models.Model):
             self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
         else:
             self.json_data = None
+
+    # class Meta:
+    #     unique_together = (
+    #         ('instrument', 'pricing_policy', 'pricing_scheme')
+    #     )
 
 
 class PricingProcedureBloombergResult(models.Model):

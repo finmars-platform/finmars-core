@@ -29,9 +29,9 @@ class CsvImportAdmin(admin.ModelAdmin):
 class CsvSchemeAdmin(admin.ModelAdmin):
     model = CsvImportScheme
     master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'scheme_name', ]
-    search_fields = ['id', 'scheme_name']
-    raw_id_fields = ['master_user']
+    list_display = ['id', 'master_user', 'scheme_name', 'content_type']
+    search_fields = ['id', 'scheme_name', 'content_type']
+    raw_id_fields = ['master_user', 'content_type']
     inlines = [
         EntityFieldInline,
         CsvFieldInline

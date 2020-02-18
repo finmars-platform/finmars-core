@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from poms.common.fields import ExpressionField
+from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import ModelWithUserCodeSerializer
 from poms.instruments.models import PricingPolicy
 from poms.pricing.models import InstrumentPricingScheme, InstrumentPricingSchemeType, CurrencyPricingSchemeType, \
@@ -37,7 +39,6 @@ class CurrencyPricingSchemeSingleParameterFormulaParametersSerializer(serializer
 
 
 class InstrumentPricingSchemeMultipleParametersFormulaParametersSerializer(serializers.ModelSerializer):
-
     data = serializers.JSONField(allow_null=False)
 
     class Meta:
@@ -46,7 +47,6 @@ class InstrumentPricingSchemeMultipleParametersFormulaParametersSerializer(seria
 
 
 class CurrencyPricingSchemeMultipleParametersFormulaParametersSerializer(serializers.ModelSerializer):
-
     data = serializers.JSONField(allow_null=False)
 
     class Meta:
@@ -55,7 +55,6 @@ class CurrencyPricingSchemeMultipleParametersFormulaParametersSerializer(seriali
 
 
 class InstrumentPricingSchemeBloombergParametersSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = InstrumentPricingSchemeBloombergParameters
         fields = ('id', 'instrument_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type',
@@ -65,11 +64,10 @@ class InstrumentPricingSchemeBloombergParametersSerializer(serializers.ModelSeri
 
 
 class CurrencyPricingSchemeBloombergParametersSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = CurrencyPricingSchemeBloombergParameters
-        fields = ('id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'fxrate', 'fxrate_multiplier')
-
+        fields = ('id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'fxrate',
+                  'fxrate_multiplier')
 
 
 class InstrumentPricingSchemeTypeSerializer(serializers.ModelSerializer):
@@ -90,7 +88,9 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = InstrumentPricingScheme
-        fields = ('id', 'name', 'master_user', 'notes', 'notes_for_users', 'notes_for_parameter', 'error_handler', 'type', 'type_settings')
+        fields = (
+        'id', 'name', 'master_user', 'notes', 'notes_for_users', 'notes_for_parameter', 'error_handler', 'type',
+        'type_settings')
 
     def get_type_settings(self, instance):
 
@@ -102,7 +102,8 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
 
                 try:
 
-                    manual_formula = InstrumentPricingSchemeManualPricingParameters.objects.get(instrument_pricing_scheme=instance.id)
+                    manual_formula = InstrumentPricingSchemeManualPricingParameters.objects.get(
+                        instrument_pricing_scheme=instance.id)
 
                     result = InstrumentPricingSchemeManualPricingParametersSerializer(instance=manual_formula).data
 
@@ -113,9 +114,11 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
 
                 try:
 
-                    single_parameter_formula = InstrumentPricingSchemeSingleParameterFormulaParameters.objects.get(instrument_pricing_scheme=instance.id)
+                    single_parameter_formula = InstrumentPricingSchemeSingleParameterFormulaParameters.objects.get(
+                        instrument_pricing_scheme=instance.id)
 
-                    result = InstrumentPricingSchemeSingleParameterFormulaParametersSerializer(instance=single_parameter_formula).data
+                    result = InstrumentPricingSchemeSingleParameterFormulaParametersSerializer(
+                        instance=single_parameter_formula).data
 
                 except InstrumentPricingSchemeSingleParameterFormulaParameters.DoesNotExist:
                     pass
@@ -124,9 +127,11 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
 
                 try:
 
-                    multiple_parameters_formula = InstrumentPricingSchemeMultipleParametersFormulaParameters.objects.get(instrument_pricing_scheme=instance.id)
+                    multiple_parameters_formula = InstrumentPricingSchemeMultipleParametersFormulaParameters.objects.get(
+                        instrument_pricing_scheme=instance.id)
 
-                    result = InstrumentPricingSchemeMultipleParametersFormulaParametersSerializer(instance=multiple_parameters_formula).data
+                    result = InstrumentPricingSchemeMultipleParametersFormulaParametersSerializer(
+                        instance=multiple_parameters_formula).data
 
                 except InstrumentPricingSchemeMultipleParametersFormulaParameters.DoesNotExist:
                     pass
@@ -135,15 +140,16 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
 
                 try:
 
-                    multiple_parameters_formula = InstrumentPricingSchemeBloombergParameters.objects.get(instrument_pricing_scheme=instance.id)
+                    multiple_parameters_formula = InstrumentPricingSchemeBloombergParameters.objects.get(
+                        instrument_pricing_scheme=instance.id)
 
-                    result = InstrumentPricingSchemeBloombergParametersSerializer(instance=multiple_parameters_formula).data
+                    result = InstrumentPricingSchemeBloombergParametersSerializer(
+                        instance=multiple_parameters_formula).data
 
                 except InstrumentPricingSchemeBloombergParameters.DoesNotExist:
                     pass
 
         return result
-
 
     def to_internal_value(self, data):
 
@@ -156,7 +162,6 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
 
         return ret
 
-
     def set_type_settings(self, instance, type_settings):
 
         if instance.type_id and type_settings:
@@ -164,11 +169,13 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
             if instance.type_id == 2:  # manual pricing scheme
 
                 try:
-                    manual_formula = InstrumentPricingSchemeManualPricingParameters.objects.get(instrument_pricing_scheme_id=instance.id)
+                    manual_formula = InstrumentPricingSchemeManualPricingParameters.objects.get(
+                        instrument_pricing_scheme_id=instance.id)
 
                 except InstrumentPricingSchemeManualPricingParameters.DoesNotExist:
 
-                    manual_formula = InstrumentPricingSchemeManualPricingParameters(instrument_pricing_scheme_id=instance.id)
+                    manual_formula = InstrumentPricingSchemeManualPricingParameters(
+                        instrument_pricing_scheme_id=instance.id)
 
                 if 'default_value' in type_settings:
                     manual_formula.default_value = type_settings['default_value']
@@ -185,11 +192,13 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
             if instance.type_id == 3:  # single parameter formula
 
                 try:
-                    single_parameter_formula = InstrumentPricingSchemeSingleParameterFormulaParameters.objects.get(instrument_pricing_scheme_id=instance.id)
+                    single_parameter_formula = InstrumentPricingSchemeSingleParameterFormulaParameters.objects.get(
+                        instrument_pricing_scheme_id=instance.id)
 
                 except InstrumentPricingSchemeSingleParameterFormulaParameters.DoesNotExist:
 
-                    single_parameter_formula = InstrumentPricingSchemeSingleParameterFormulaParameters(instrument_pricing_scheme_id=instance.id)
+                    single_parameter_formula = InstrumentPricingSchemeSingleParameterFormulaParameters(
+                        instrument_pricing_scheme_id=instance.id)
 
                 if 'default_value' in type_settings:
                     single_parameter_formula.default_value = type_settings['default_value']
@@ -216,11 +225,13 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
             if instance.type_id == 4:  # multiple parameters formula
 
                 try:
-                    multiple_parameters_formula = InstrumentPricingSchemeMultipleParametersFormulaParameters.objects.get(instrument_pricing_scheme_id=instance.id)
+                    multiple_parameters_formula = InstrumentPricingSchemeMultipleParametersFormulaParameters.objects.get(
+                        instrument_pricing_scheme_id=instance.id)
 
                 except InstrumentPricingSchemeMultipleParametersFormulaParameters.DoesNotExist:
 
-                    multiple_parameters_formula = InstrumentPricingSchemeMultipleParametersFormulaParameters(instrument_pricing_scheme_id=instance.id)
+                    multiple_parameters_formula = InstrumentPricingSchemeMultipleParametersFormulaParameters(
+                        instrument_pricing_scheme_id=instance.id)
 
                 if 'expr' in type_settings:
                     multiple_parameters_formula.expr = type_settings['expr']
@@ -237,7 +248,8 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
             if instance.type_id == 5:  # multiple parameters formula
 
                 try:
-                    bloomberg = InstrumentPricingSchemeBloombergParameters.objects.get(instrument_pricing_scheme_id=instance.id)
+                    bloomberg = InstrumentPricingSchemeBloombergParameters.objects.get(
+                        instrument_pricing_scheme_id=instance.id)
 
                 except InstrumentPricingSchemeBloombergParameters.DoesNotExist:
 
@@ -357,7 +369,7 @@ class CurrencyPricingSchemeTypeSerializer(serializers.ModelSerializer):
 class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
     master_user = MasterUserField()
 
-    type_settings =  serializers.SerializerMethodField()
+    type_settings = serializers.SerializerMethodField()
 
     def __init__(self, *args, **kwargs):
         super(CurrencyPricingSchemeSerializer, self).__init__(*args, **kwargs)
@@ -366,7 +378,9 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CurrencyPricingScheme
-        fields = ('id', 'name', 'master_user', 'notes', 'notes_for_users', 'notes_for_parameter', 'error_handler', 'type', 'type_settings')
+        fields = (
+        'id', 'name', 'master_user', 'notes', 'notes_for_users', 'notes_for_parameter', 'error_handler', 'type',
+        'type_settings')
 
     def get_type_settings(self, instance):
 
@@ -378,7 +392,8 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
 
                 try:
 
-                    manual_formula = CurrencyPricingSchemeManualPricingParameters.objects.get(currency_pricing_scheme=instance.id)
+                    manual_formula = CurrencyPricingSchemeManualPricingParameters.objects.get(
+                        currency_pricing_scheme=instance.id)
 
                     result = CurrencyPricingSchemeManualPricingParametersSerializer(instance=manual_formula).data
 
@@ -389,9 +404,11 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
 
                 try:
 
-                    single_parameter_formula = CurrencyPricingSchemeSingleParameterFormulaParameters.objects.get(currency_pricing_scheme=instance.id)
+                    single_parameter_formula = CurrencyPricingSchemeSingleParameterFormulaParameters.objects.get(
+                        currency_pricing_scheme=instance.id)
 
-                    result = CurrencyPricingSchemeSingleParameterFormulaParametersSerializer(instance=single_parameter_formula).data
+                    result = CurrencyPricingSchemeSingleParameterFormulaParametersSerializer(
+                        instance=single_parameter_formula).data
 
                 except CurrencyPricingSchemeManualPricingParameters.DoesNotExist:
                     pass
@@ -400,9 +417,11 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
 
                 try:
 
-                    multiple_parameters_formula = CurrencyPricingSchemeMultipleParametersFormulaParameters.objects.get(currency_pricing_scheme=instance.id)
+                    multiple_parameters_formula = CurrencyPricingSchemeMultipleParametersFormulaParameters.objects.get(
+                        currency_pricing_scheme=instance.id)
 
-                    result = CurrencyPricingSchemeMultipleParametersFormulaParametersSerializer(instance=multiple_parameters_formula).data
+                    result = CurrencyPricingSchemeMultipleParametersFormulaParametersSerializer(
+                        instance=multiple_parameters_formula).data
 
                 except CurrencyPricingSchemeMultipleParametersFormulaParameters.DoesNotExist:
                     pass
@@ -411,9 +430,11 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
 
                 try:
 
-                    multiple_parameters_formula = CurrencyPricingSchemeBloombergParameters.objects.get(currency_pricing_scheme=instance.id)
+                    multiple_parameters_formula = CurrencyPricingSchemeBloombergParameters.objects.get(
+                        currency_pricing_scheme=instance.id)
 
-                    result = CurrencyPricingSchemeBloombergParametersSerializer(instance=multiple_parameters_formula).data
+                    result = CurrencyPricingSchemeBloombergParametersSerializer(
+                        instance=multiple_parameters_formula).data
 
                 except CurrencyPricingSchemeBloombergParameters.DoesNotExist:
                     pass
@@ -438,11 +459,13 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
             if instance.type_id == 2:  # manual pricing scheme
 
                 try:
-                    manual_formula = CurrencyPricingSchemeManualPricingParameters.objects.get(currency_pricing_scheme_id=instance.id)
+                    manual_formula = CurrencyPricingSchemeManualPricingParameters.objects.get(
+                        currency_pricing_scheme_id=instance.id)
 
                 except CurrencyPricingSchemeManualPricingParameters.DoesNotExist:
 
-                    manual_formula = CurrencyPricingSchemeManualPricingParameters(currency_pricing_scheme_id=instance.id)
+                    manual_formula = CurrencyPricingSchemeManualPricingParameters(
+                        currency_pricing_scheme_id=instance.id)
 
                 if 'default_value' in type_settings:
                     manual_formula.default_value = type_settings['default_value']
@@ -461,11 +484,13 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
             if instance.type_id == 3:  # single parameter formula
 
                 try:
-                    single_parameter_formula = CurrencyPricingSchemeSingleParameterFormulaParameters.objects.get(currency_pricing_scheme_id=instance.id)
+                    single_parameter_formula = CurrencyPricingSchemeSingleParameterFormulaParameters.objects.get(
+                        currency_pricing_scheme_id=instance.id)
 
                 except CurrencyPricingSchemeSingleParameterFormulaParameters.DoesNotExist:
 
-                    single_parameter_formula = CurrencyPricingSchemeSingleParameterFormulaParameters(currency_pricing_scheme_id=instance.id)
+                    single_parameter_formula = CurrencyPricingSchemeSingleParameterFormulaParameters(
+                        currency_pricing_scheme_id=instance.id)
 
                 if 'default_value' in type_settings:
                     single_parameter_formula.default_value = type_settings['default_value']
@@ -492,11 +517,13 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
             if instance.type_id == 4:  # multiple parameters formula
 
                 try:
-                    multiple_parameters_formula = CurrencyPricingSchemeMultipleParametersFormulaParameters.objects.get(currency_pricing_scheme_id=instance.id)
+                    multiple_parameters_formula = CurrencyPricingSchemeMultipleParametersFormulaParameters.objects.get(
+                        currency_pricing_scheme_id=instance.id)
 
                 except CurrencyPricingSchemeMultipleParametersFormulaParameters.DoesNotExist:
 
-                    multiple_parameters_formula = CurrencyPricingSchemeMultipleParametersFormulaParameters(currency_pricing_scheme_id=instance.id)
+                    multiple_parameters_formula = CurrencyPricingSchemeMultipleParametersFormulaParameters(
+                        currency_pricing_scheme_id=instance.id)
 
                 if 'expr' in type_settings:
                     multiple_parameters_formula.expr = type_settings['expr']
@@ -513,7 +540,8 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
             if instance.type_id == 5:  # multiple parameters formula
 
                 try:
-                    bloomberg = CurrencyPricingSchemeBloombergParameters.objects.get(currency_pricing_scheme_id=instance.id)
+                    bloomberg = CurrencyPricingSchemeBloombergParameters.objects.get(
+                        currency_pricing_scheme_id=instance.id)
 
                 except CurrencyPricingSchemeBloombergParameters.DoesNotExist:
 
@@ -573,14 +601,24 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
 
 
 class PricingProcedureSerializer(serializers.ModelSerializer):
-
     master_user = MasterUserField()
+
+    price_date_from_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,default='')
+    price_date_to_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,default='')
+    price_balance_date_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,default='')
+    accrual_date_from_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,default='')
+    accrual_date_to_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,default='')
 
     class Meta:
         model = PricingProcedure
         fields = ('master_user', 'id', 'name', 'notes', 'notes_for_users',
-                  'price_date_from', 'price_date_to', 'price_balance_date', 'price_fill_days', 'price_override_existed',
-                  'accrual_date_from', 'accrual_date_to')
+                  'price_is_active', 'accrual_is_active',
+                  'price_date_from', 'price_date_to',
+                  'price_date_from_expr', 'price_date_to_expr',
+                  'price_balance_date', 'price_balance_date_expr',
+                  'price_fill_days', 'price_override_existed',
+                  'accrual_date_from', 'accrual_date_to',
+                  'accrual_date_from_expr', 'accrual_date_to_expr')
 
 
 class PricingPolicyViewSerializer(ModelWithUserCodeSerializer):
@@ -590,7 +628,6 @@ class PricingPolicyViewSerializer(ModelWithUserCodeSerializer):
 
 
 class CurrencyPricingPolicySerializer(serializers.ModelSerializer):
-
     id = serializers.IntegerField(read_only=False)
     data = serializers.JSONField(allow_null=True)
 
@@ -602,47 +639,47 @@ class CurrencyPricingPolicySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CurrencyPricingPolicy
-        fields = ('id', 'currency', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
+        fields = (
+        'id', 'currency', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
 
 
 class InstrumentTypePricingPolicySerializer(serializers.ModelSerializer):
-
     id = serializers.IntegerField(read_only=False)
     data = serializers.JSONField(allow_null=True)
 
     def __init__(self, *args, **kwargs):
         super(InstrumentTypePricingPolicySerializer, self).__init__(*args, **kwargs)
 
-
         self.fields['pricing_policy_object'] = PricingPolicyViewSerializer(source='pricing_policy', read_only=True)
-        self.fields['pricing_scheme_object'] = InstrumentPricingSchemeSerializer(source='pricing_scheme', read_only=True)
+        self.fields['pricing_scheme_object'] = InstrumentPricingSchemeSerializer(source='pricing_scheme',
+                                                                                 read_only=True)
 
     class Meta:
         model = InstrumentTypePricingPolicy
-        fields = ('id', 'instrument_type', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
+        fields = (
+        'id', 'instrument_type', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
 
 
 class InstrumentPricingPolicySerializer(serializers.ModelSerializer):
-
     id = serializers.IntegerField(read_only=False)
     data = serializers.JSONField(allow_null=True)
 
     def __init__(self, *args, **kwargs):
         super(InstrumentPricingPolicySerializer, self).__init__(*args, **kwargs)
 
-
         self.fields['pricing_policy_object'] = PricingPolicyViewSerializer(source='pricing_policy', read_only=True)
 
-        self.fields['pricing_scheme_object'] = InstrumentPricingSchemeSerializer(source='pricing_scheme', read_only=True)
+        self.fields['pricing_scheme_object'] = InstrumentPricingSchemeSerializer(source='pricing_scheme',
+                                                                                 read_only=True)
 
     class Meta:
         model = InstrumentPricingPolicy
-        fields = ('id', 'instrument', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
+        fields = (
+        'id', 'instrument', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
 
 
 class RunProcedureSerializer(serializers.Serializer):
     def __init__(self, **kwargs):
-
         kwargs['context'] = context = kwargs.get('context', {}) or {}
         super(RunProcedureSerializer, self).__init__(**kwargs)
         context['instance'] = self.instance
@@ -653,5 +690,4 @@ class RunProcedureSerializer(serializers.Serializer):
 class BrokerBloombergSerializer(serializers.Serializer):
 
     def __init__(self, **kwargs):
-
         pass

@@ -36,6 +36,8 @@ from poms.obj_attrs.serializers import GenericClassifierViewSerializer, GenericC
     GenericAttributeTypeSerializer
 from poms.obj_perms.utils import obj_perms_filter_objects
 from poms.portfolios.models import Portfolio
+from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, PricingProcedure
+from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer
 from poms.reference_tables.models import ReferenceTable, ReferenceTableRow
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
@@ -237,6 +239,12 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         get_transaction_user_fields = self.get_transaction_user_fields()
         instrument_user_fields = self.get_instrument_user_fields()
 
+        # Pricing
+
+        instrument_pricing_schemes = self.get_instrument_pricing_schemes()
+        currency_pricing_schemes = self.get_currency_pricing_schemes()
+        pricing_procedures = self.get_pricing_procedures()
+
 
         if can_export:
 
@@ -299,6 +307,14 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             if self.access_table['ui.userfield']:
                 configuration["body"].append(get_transaction_user_fields)
                 configuration["body"].append(instrument_user_fields)
+
+
+            # pricing
+
+            configuration["body"].append(instrument_pricing_schemes)
+            configuration["body"].append(currency_pricing_schemes)
+            configuration["body"].append(pricing_procedures)
+
 
         else:
 
@@ -1372,8 +1388,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         schemes = to_json_objects(CsvImportScheme.objects.filter(master_user=self._master_user))
         results = []
 
-        print('schemes %s' % len(schemes))
-        print('self._master_user %s' % self._master_user)
+        # print('schemes %s' % len(schemes))
+        # print('self._master_user %s' % self._master_user)
 
         for scheme in schemes:
             result_item = scheme["fields"]
@@ -1770,6 +1786,82 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         result = {
             "entity": "obj_attrs." + model + "attributetype",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+
+    def get_instrument_pricing_schemes(self):
+
+        schemes = InstrumentPricingScheme.objects.filter(master_user=self._master_user)
+        results = []
+
+        for scheme in schemes:
+
+            result_item = InstrumentPricingSchemeSerializer(instance=scheme).data
+
+            result_item.pop("id", None)
+            result_item.pop("type_object", None)
+            result_item.pop("master_user", None)
+            if result_item['type_settings']:
+                result_item['type_settings'].pop("instrument_pricing_scheme", None)
+
+            results.append(result_item)
+
+        result = {
+            "entity": "pricing.instrumentpricingscheme",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+
+    def get_currency_pricing_schemes(self):
+
+        schemes = CurrencyPricingScheme.objects.filter(master_user=self._master_user)
+        results = []
+
+        for scheme in schemes:
+
+            result_item = CurrencyPricingSchemeSerializer(instance=scheme).data
+
+            result_item.pop("id", None)
+            result_item.pop("type_object", None)
+            result_item.pop("master_user", None)
+            if result_item['type_settings']:
+                result_item['type_settings'].pop("currency_pricing_scheme", None)
+
+            results.append(result_item)
+
+        result = {
+            "entity": "pricing.currencypricingscheme",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_pricing_procedures(self):
+
+        schemes = to_json_objects(PricingProcedure.objects.filter(master_user=self._master_user))
+        results = []
+
+        for scheme in schemes:
+            result_item = scheme["fields"]
+
+            result_item.pop("master_user", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "pricing.pricingprocedure",
             "count": len(results),
             "content": results
         }

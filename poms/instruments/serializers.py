@@ -96,6 +96,45 @@ class CostMethodViewSerializer(PomsClassSerializer):
         fields = ['id', 'system_code', 'name']
 
 
+def set_currency_pricing_scheme_parameters(pricing_policy, parameters):
+
+    # print('pricing_policy %s ' % pricing_policy)
+    # print('parameters %s ' % parameters)
+
+    if parameters:
+
+        if hasattr(parameters, 'data'):
+
+            pricing_policy.data = parameters.data
+
+        if hasattr(parameters, 'default_value'):
+
+            pricing_policy.default_value = parameters.default_value
+
+        if hasattr(parameters, 'attribute_key'):
+
+            pricing_policy.attribute_key = parameters.attribute_key
+
+def set_instrument_pricing_scheme_parameters(pricing_policy, parameters):
+
+    # print('pricing_policy %s ' % pricing_policy)
+    # print('parameters %s ' % parameters)
+
+    if parameters:
+
+        if hasattr(parameters, 'data'):
+
+            pricing_policy.data = parameters.data
+
+        if hasattr(parameters, 'default_value'):
+
+            pricing_policy.default_value = parameters.default_value
+
+        if hasattr(parameters, 'attribute_key'):
+
+            pricing_policy.attribute_key = parameters.attribute_key
+
+
 class PricingPolicySerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
     # expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True, allow_null=True)
@@ -113,43 +152,7 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer):
         self.fields['default_currency_pricing_scheme_object'] = CurrencyPricingSchemeSerializer(
             source='default_currency_pricing_scheme', read_only=True)
 
-    def set_currency_pricing_scheme_parameters(self, pricing_policy, parameters):
 
-        # print('pricing_policy %s ' % pricing_policy)
-        # print('parameters %s ' % parameters)
-
-        if parameters:
-
-            if hasattr(parameters, 'data'):
-
-                pricing_policy.data = parameters.data
-
-            if hasattr(parameters, 'default_value'):
-
-                pricing_policy.default_value = parameters.default_value
-
-            if hasattr(parameters, 'attribute_key'):
-
-                pricing_policy.attribute_key = parameters.attribute_key
-
-    def set_instrument_pricing_scheme_parameters(self, pricing_policy, parameters):
-
-        # print('pricing_policy %s ' % pricing_policy)
-        # print('parameters %s ' % parameters)
-
-        if parameters:
-
-            if hasattr(parameters, 'data'):
-
-                pricing_policy.data = parameters.data
-
-            if hasattr(parameters, 'default_value'):
-
-                pricing_policy.default_value = parameters.default_value
-
-            if hasattr(parameters, 'attribute_key'):
-
-                pricing_policy.attribute_key = parameters.attribute_key
 
     def create_instrument_type_pricing_policies(self, instance):
 
@@ -162,7 +165,7 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer):
                                                      pricing_scheme=instance.default_instrument_pricing_scheme)
 
             parameters = instance.default_instrument_pricing_scheme.get_parameters()
-            self.set_instrument_pricing_scheme_parameters(pricing_policy, parameters)
+            set_instrument_pricing_scheme_parameters(pricing_policy, parameters)
 
             pricing_policy.save()
 
@@ -177,7 +180,7 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer):
                                                      pricing_scheme=instance.default_instrument_pricing_scheme)
 
             parameters = instance.default_instrument_pricing_scheme.get_parameters()
-            self.set_instrument_pricing_scheme_parameters(pricing_policy, parameters)
+            set_instrument_pricing_scheme_parameters(pricing_policy, parameters)
 
             pricing_policy.save()
 
@@ -193,7 +196,7 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer):
                                                    pricing_scheme=instance.default_currency_pricing_scheme)
 
             parameters = instance.default_currency_pricing_scheme.get_parameters()
-            self.set_currency_pricing_scheme_parameters(pricing_policy, parameters)
+            set_currency_pricing_scheme_parameters(pricing_policy, parameters)
 
             pricing_policy.save()
 
@@ -473,6 +476,29 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
 
     def save_pricing_policies(self, instance, pricing_policies):
 
+        policies = PricingPolicy.objects.filter(master_user=instance.master_user)
+
+        ids = set()
+
+        print("Policis len %s " % len(policies))
+
+        for policy in policies:
+
+            try:
+
+                o = InstrumentPricingPolicy.objects.create(instrument=instance, pricing_policy=policy)
+
+                if policy.default_instrument_pricing_scheme:
+                    parameters = policy.default_instrument_pricing_scheme.get_parameters()
+                    set_instrument_pricing_scheme_parameters(o, parameters)
+
+                o.save()
+
+                ids.add(o.id)
+
+            except Exception as e:
+                print(e)
+
         if pricing_policies:
 
             for item in pricing_policies:
@@ -480,6 +506,8 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
                 try:
 
                     oid = item.get('id', None)
+
+                    ids.add(oid)
 
                     o = InstrumentPricingPolicy.objects.get(instrument=instance, id=oid)
 
@@ -492,6 +520,8 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
 
                 except Exception as e:
                     print("Can't Find  Pricing Policy %s" % e)
+
+        InstrumentPricingPolicy.objects.filter(instrument=instance).exclude(id__in=ids).delete()
 
     def save_instr_related(self, instrument, created, instrument_attr, model, validated_data, accept=None):
         validated_data = validated_data or []
