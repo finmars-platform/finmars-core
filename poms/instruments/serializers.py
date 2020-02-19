@@ -355,6 +355,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
                     o = InstrumentPricingPolicy.objects.get(instrument_type=instance, id=oid)
 
+                    o.pricing_scheme = item['pricing_scheme']
                     o.default_value = item['default_value']
                     o.attribute_key = item['attribute_key']
                     o.data = item['data']
@@ -564,6 +565,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
 
                     o = InstrumentPricingPolicy.objects.get(instrument=instance, id=oid)
 
+                    o.pricing_scheme = item['pricing_scheme']
                     o.default_value = item['default_value']
                     o.attribute_key = item['attribute_key']
                     o.data = item['data']

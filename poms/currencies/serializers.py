@@ -140,6 +140,7 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
 
                     o = CurrencyPricingPolicy.objects.get(currency=instance, id=oid)
 
+                    o.pricing_scheme = item['pricing_scheme']
                     o.default_value = item['default_value']
                     o.attribute_key = item['attribute_key']
                     o.data = item['data']
