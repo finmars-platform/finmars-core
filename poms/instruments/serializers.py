@@ -244,8 +244,6 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
     factor_down = TransactionTypeField(allow_null=True, required=False)
     factor_down_object = serializers.PrimaryKeyRelatedField(source='factor_down', read_only=True)
 
-    pricing_policies = InstrumentTypePricingPolicySerializer(allow_null=True, many=True, required=False)
-
     # tags = TagField(many=True, required=False, allow_null=True)
     # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
 
@@ -271,6 +269,8 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
         self.fields['factor_up_object'] = TransactionTypeViewSerializer(source='factor_up', read_only=True)
         self.fields['factor_down_object'] = TransactionTypeViewSerializer(source='factor_down', read_only=True)
 
+        self.fields['pricing_policies'] = InstrumentTypePricingPolicySerializer(many=True, required=False, allow_null=True)
+
     def validate(self, attrs):
         instrument_class = attrs.get('instrument_class', None)
         one_off_event = attrs.get('one_off_event', None)
@@ -290,7 +290,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
     def create(self, validated_data):
 
-        pricing_policies = validated_data.pop('pricing_policies', None)
+        pricing_policies = validated_data.pop('pricing_policies', [])
 
         instance = super(InstrumentTypeSerializer, self).create(validated_data)
 
@@ -300,7 +300,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
     def update(self, instance, validated_data):
 
-        pricing_policies = validated_data.pop('pricing_policies', None)
+        pricing_policies = validated_data.pop('pricing_policies', [])
 
         instance = super(InstrumentTypeSerializer, self).update(instance, validated_data)
 
@@ -310,6 +310,39 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
     def save_pricing_policies(self, instance, pricing_policies):
 
+        policies = PricingPolicy.objects.filter(master_user=instance.master_user)
+
+        ids = set()
+
+        print("creating default policies")
+
+        for policy in policies:
+
+            try:
+
+                o = InstrumentPricingPolicy.objects.get(instrument_type=instance, pricing_policy=policy)
+
+            except InstrumentPricingPolicy.DoesNotExist:
+
+                o = InstrumentPricingPolicy(instrument_type=instance, pricing_policy=policy)
+
+                print('policy.default_instrument_pricing_scheme %s' % policy.default_instrument_pricing_scheme)
+
+                if policy.default_instrument_pricing_scheme:
+
+                    o.pricing_scheme = policy.default_instrument_pricing_scheme
+
+                    parameters = policy.default_instrument_pricing_scheme.get_parameters()
+                    set_instrument_pricing_scheme_parameters(o, parameters)
+
+                print('o.pricing_scheme %s' % o.pricing_scheme)
+
+                o.save()
+
+                ids.add(o.id)
+
+        print("update existing policies %s " % len(pricing_policies))
+
         if pricing_policies:
 
             for item in pricing_policies:
@@ -318,18 +351,26 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
                     oid = item.get('id', None)
 
-                    o = InstrumentTypePricingPolicy.objects.get(instrument_type=instance, id=oid)
+                    ids.add(oid)
+
+                    o = InstrumentPricingPolicy.objects.get(instrument_type=instance, id=oid)
 
                     o.default_value = item['default_value']
                     o.attribute_key = item['attribute_key']
                     o.data = item['data']
                     o.notes = item['notes']
-                    o.overwrite_default_parameters = item['overwrite_default_parameters']
+
+                    print("attributekey %s" % o.attribute_key)
 
                     o.save()
 
                 except Exception as e:
                     print("Can't Find  Pricing Policy %s" % e)
+
+        print('ids %s' % ids)
+
+        if len(ids):
+            InstrumentTypePricingPolicy.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
 
 
 class InstrumentTypeViewSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
@@ -391,7 +432,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
     # tags = TagField(many=True, required=False, allow_null=True)
     # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
 
-    pricing_policies = InstrumentPricingPolicySerializer(allow_null=True, many=True, required=False)
+
 
     class Meta:
         model = Instrument
@@ -429,12 +470,14 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
         self.fields['factor_schedules'] = InstrumentFactorScheduleSerializer(many=True, required=False, allow_null=True)
         self.fields['event_schedules'] = EventScheduleSerializer(many=True, required=False, allow_null=True)
 
+        self.fields['pricing_policies'] = InstrumentPricingPolicySerializer(many=True, required=False, allow_null=True)
+
     def create(self, validated_data):
         manual_pricing_formulas = validated_data.pop('manual_pricing_formulas', None)
         accrual_calculation_schedules = validated_data.pop('accrual_calculation_schedules', None)
         factor_schedules = validated_data.pop('factor_schedules', None)
         event_schedules = validated_data.pop('event_schedules', None)
-        pricing_policies = validated_data.pop('pricing_policies', None)
+        pricing_policies = validated_data.pop('pricing_policies', [])
 
         instance = super(InstrumentSerializer, self).create(validated_data)
 
@@ -454,7 +497,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
         accrual_calculation_schedules = validated_data.pop('accrual_calculation_schedules', empty)
         factor_schedules = validated_data.pop('factor_schedules', empty)
         event_schedules = validated_data.pop('event_schedules', empty)
-        pricing_policies = validated_data.pop('pricing_policies', None)
+        pricing_policies = validated_data.pop('pricing_policies', [])
 
         instance = super(InstrumentSerializer, self).update(instance, validated_data)
 
@@ -480,24 +523,34 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
 
         ids = set()
 
-        print("Policis len %s " % len(policies))
+        print("creating default policies")
 
         for policy in policies:
 
             try:
 
-                o = InstrumentPricingPolicy.objects.create(instrument=instance, pricing_policy=policy)
+                o = InstrumentPricingPolicy.objects.get(instrument=instance, pricing_policy=policy)
+
+            except InstrumentPricingPolicy.DoesNotExist:
+
+                o = InstrumentPricingPolicy(instrument=instance, pricing_policy=policy)
+
+                print('policy.default_instrument_pricing_scheme %s' % policy.default_instrument_pricing_scheme)
 
                 if policy.default_instrument_pricing_scheme:
+
+                    o.pricing_scheme = policy.default_instrument_pricing_scheme
+
                     parameters = policy.default_instrument_pricing_scheme.get_parameters()
                     set_instrument_pricing_scheme_parameters(o, parameters)
+
+                print('o.pricing_scheme %s' % o.pricing_scheme)
 
                 o.save()
 
                 ids.add(o.id)
 
-            except Exception as e:
-                print(e)
+        print("update existing policies %s " % len(pricing_policies))
 
         if pricing_policies:
 
@@ -516,12 +569,17 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
                     o.data = item['data']
                     o.notes = item['notes']
 
+                    print("attributekey %s" % o.attribute_key)
+
                     o.save()
 
                 except Exception as e:
                     print("Can't Find  Pricing Policy %s" % e)
 
-        InstrumentPricingPolicy.objects.filter(instrument=instance).exclude(id__in=ids).delete()
+        print('ids %s' % ids)
+
+        if len(ids):
+            InstrumentPricingPolicy.objects.filter(instrument=instance).exclude(id__in=ids).delete()
 
     def save_instr_related(self, instrument, created, instrument_attr, model, validated_data, accept=None):
         validated_data = validated_data or []

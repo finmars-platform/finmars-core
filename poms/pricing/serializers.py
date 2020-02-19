@@ -644,7 +644,7 @@ class CurrencyPricingPolicySerializer(serializers.ModelSerializer):
     class Meta:
         model = CurrencyPricingPolicy
         fields = (
-        'id', 'currency', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
+        'id', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
 
 
 class InstrumentTypePricingPolicySerializer(serializers.ModelSerializer):
@@ -661,7 +661,7 @@ class InstrumentTypePricingPolicySerializer(serializers.ModelSerializer):
     class Meta:
         model = InstrumentTypePricingPolicy
         fields = (
-        'id', 'instrument_type', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
+        'id', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
 
 
 class InstrumentPricingPolicySerializer(serializers.ModelSerializer):
@@ -678,8 +678,7 @@ class InstrumentPricingPolicySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = InstrumentPricingPolicy
-        fields = (
-        'id', 'instrument', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
+        fields = ('id', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
 
 
 class RunProcedureSerializer(serializers.Serializer):

@@ -7,6 +7,7 @@ from poms.common.serializers import ModelWithUserCodeSerializer
 from poms.currencies.fields import CurrencyField
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.fields import PricingPolicyField
+from poms.instruments.models import PricingPolicy
 from poms.integrations.fields import PriceDownloadSchemeField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
@@ -14,6 +15,25 @@ from poms.pricing.models import CurrencyPricingPolicy
 from poms.pricing.serializers import CurrencyPricingPolicySerializer
 from poms.tags.serializers import ModelWithTagSerializer
 from poms.users.fields import MasterUserField
+
+def set_currency_pricing_scheme_parameters(pricing_policy, parameters):
+
+    # print('pricing_policy %s ' % pricing_policy)
+    # print('parameters %s ' % parameters)
+
+    if parameters:
+
+        if hasattr(parameters, 'data'):
+
+            pricing_policy.data = parameters.data
+
+        if hasattr(parameters, 'default_value'):
+
+            pricing_policy.default_value = parameters.default_value
+
+        if hasattr(parameters, 'attribute_key'):
+
+            pricing_policy.attribute_key = parameters.attribute_key
 
 
 class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
@@ -75,12 +95,48 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
 
     def save_pricing_policies(self, instance, pricing_policies):
 
+        policies = PricingPolicy.objects.filter(master_user=instance.master_user)
+
+        ids = set()
+
+        print("creating default policies")
+
+        for policy in policies:
+
+            try:
+
+                o = CurrencyPricingPolicy.objects.get(currency=instance, pricing_policy=policy)
+
+            except CurrencyPricingPolicy.DoesNotExist:
+
+                o = CurrencyPricingPolicy(currency=instance, pricing_policy=policy)
+
+                print('policy.default_instrument_pricing_scheme %s' % policy.default_currency_pricing_scheme)
+
+                if policy.default_currency_pricing_scheme:
+
+                    o.pricing_scheme = policy.default_currency_pricing_scheme
+
+                    parameters = policy.default_currency_pricing_scheme.get_parameters()
+                    set_currency_pricing_scheme_parameters(o, parameters)
+
+                print('o.pricing_scheme %s' % o.pricing_scheme)
+
+                o.save()
+
+                ids.add(o.id)
+
+        print("update existing policies %s " % len(pricing_policies))
+
         if pricing_policies:
+
             for item in pricing_policies:
 
                 try:
 
                     oid = item.get('id', None)
+
+                    ids.add(oid)
 
                     o = CurrencyPricingPolicy.objects.get(currency=instance, id=oid)
 
@@ -89,10 +145,17 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
                     o.data = item['data']
                     o.notes = item['notes']
 
+                    print("attributekey %s" % o.attribute_key)
+
                     o.save()
 
                 except Exception as e:
                     print("Can't Find  Pricing Policy %s" % e)
+
+        print('ids %s' % ids)
+
+        if len(ids):
+            CurrencyPricingPolicy.objects.filter(currency=instance).exclude(id__in=ids).delete()
 
 
 class CurrencyViewSerializer(ModelWithUserCodeSerializer):
