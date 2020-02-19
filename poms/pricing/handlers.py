@@ -4,7 +4,7 @@ from django.db.models import Q
 
 from poms.common import formula
 from poms.common.utils import isclose
-from poms.instruments.models import Instrument, DailyPricingModel, PriceHistory
+from poms.instruments.models import Instrument, DailyPricingModel, PriceHistory, PricingPolicy
 from poms.integrations.models import ProviderClass
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
@@ -133,6 +133,7 @@ class PricingProcedureProcess(object):
 
         self.instruments = []
         self.currencies = []
+
         self.instrument_pricing_schemes = []
         self.currencies_pricing_schemes = []
 
@@ -184,11 +185,28 @@ class PricingProcedureProcess(object):
         print('accrual_date_from %s' % self.procedure.accrual_date_from)
         print('accrual_date_to %s' % self.procedure.accrual_date_to)
 
+    def print_grouped_instruments(self):
+
+        names = {
+            1: 'Skip',
+            2: 'Manual Pricing',
+            3: 'Single Parameter Formula',
+            4: 'Multiple Parameter Formula',
+            5: 'Bloomberg'
+
+        }
+
+        for provider_id, items in self.instrument_items_grouped.items():
+
+            print("Provider %s: len: %s" % (names[provider_id], len(items)))
+
+
     def process(self):
 
         print("Pricing Procedure Process")
 
         self.instruments = self.get_instruments()
+
 
         self.instrument_pricing_schemes = self.get_unique_pricing_schemes(self.instruments)
         self.currencies_pricing_schemes = self.get_unique_pricing_schemes(self.currencies)
@@ -208,13 +226,21 @@ class PricingProcedureProcess(object):
         print('instrument_items_grouped len %s' % len(self.instrument_items_grouped))
         print('currency_items_grouped len %s' % len(self.currency_items_grouped))
 
+        self.print_grouped_instruments()
+
         for provider_id, items in self.instrument_items_grouped.items():
 
-            if provider_id == 5:
+                if provider_id == 5:
 
-                self.process_to_bloomberg_provider(items)
+                    self.process_to_bloomberg_provider(items)
+
+                if provider_id == 3:
+
+                    self.process_to_single_parameter_formula(items)
 
     def get_instruments(self):
+
+        result = []
 
         instruments = Instrument.objects.filter(
             master_user=self.procedure.master_user
@@ -247,7 +273,17 @@ class PricingProcedureProcess(object):
 
         instruments = instruments.filter(pk__in=(instruments_always | instruments_opened))
 
-        return instruments
+        # Filter by Procedure Filter Settings
+
+        if self.procedure.instrument_filters:
+            for instrument in instruments:
+
+                if instrument.user_code in self.procedure.instrument_filters:
+                    result.append(instrument)
+        else:
+            result = instruments
+
+        return result
 
     def get_instrument_items(self):
 
@@ -257,9 +293,22 @@ class PricingProcedureProcess(object):
 
             for policy in instrument.pricing_policies.all():
 
-                item = InstrumentItem(instrument, policy, policy.pricing_scheme)
+                # Filter By Procedure Filter Settings
+                # TODO refactor soon
 
-                result.append(item)
+                if self.procedure.pricing_policy_filters:
+
+                    if policy.pricing_policy.user_code in self.procedure.pricing_policy_filters:
+
+                        item = InstrumentItem(instrument, policy, policy.pricing_scheme)
+
+                        result.append(item)
+
+                else:
+
+                    item = InstrumentItem(instrument, policy, policy.pricing_scheme)
+
+                    result.append(item)
 
         return result
 
@@ -331,7 +380,7 @@ class PricingProcedureProcess(object):
         items_with_missing_parameters = []
 
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from, date_to=self.procedure.price_date_to)
-        print('dates %s' % dates)
+
 
         for item in items:
 
@@ -382,6 +431,90 @@ class PricingProcedureProcess(object):
         print('self.procedure %s' % self.procedure.id)
 
         self.broker_bloomberg.send_request(body)
+
+    def process_to_single_parameter_formula(self, items):
+
+        print("Single parameters formula len %s" % len(items))
+
+        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from, date_to=self.procedure.price_date_to)
+
+        for item in items:
+
+            for date in dates:
+
+                scheme_parameters = item.pricing_scheme.get_parameters()
+
+                if scheme_parameters:
+
+                    safe_instrument = {
+                        'id': item.instrument.id,
+                    }
+
+                    parameter = None
+
+                    if item.policy.default_value:
+
+                        if scheme_parameters.value_type == 10:
+
+                            parameter = str(item.policy.default_value)
+
+                        elif scheme_parameters.value_type == 20:
+
+                            parameter = float(item.policy.default_value)
+
+                        else:
+
+                            parameter = item.policy.default_value
+
+                        # if scheme_parameters.type == 40:
+                        #
+                        #     parameter = float(item.policy.default_value)
+
+
+                    values = {
+                        'd': date,
+                        'instrument': safe_instrument,
+                        'parameter': parameter
+                    }
+
+                    expr = scheme_parameters.expr
+
+                    print('values %s' % values)
+                    print('expr %s' % expr)
+
+                    try:
+                        principal_price = formula.safe_eval(expr, names=values)
+                    except formula.InvalidExpression:
+                        print("Error here")
+                        continue
+
+                    print('principal_price %s' % principal_price)
+
+                    if principal_price:
+
+                        try:
+
+                            price = PriceHistory.objects.get(
+                                instrument=item.instrument,
+                                pricing_policy=item.policy.pricing_policy,
+                                date=date
+                            )
+
+                            price.principal_price = principal_price
+                            price.save()
+
+                            print('Update Price history %s' % price.id)
+
+                        except PriceHistory.DoesNotExist:
+
+                            price = PriceHistory(
+                                instrument=item.instrument,
+                                pricing_policy=item.policy.pricing_policy,
+                                date=date,
+                                principal_price=principal_price
+                            )
+
+                            price.save()
 
 
 class FillPricesProcess(object):

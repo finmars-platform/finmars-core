@@ -87,7 +87,9 @@ class InstrumentPricingScheme(NamedModel):
 
                     result = InstrumentPricingSchemeSingleParameterFormulaParameters.objects.get(instrument_pricing_scheme=self)
 
-                except InstrumentPricingSchemeSingleParameterFormulaParameters.DoesNotExist:
+                # except InstrumentPricingSchemeSingleParameterFormulaParameters.DoesNotExist:
+                except Exception as e:
+                    print(e)
 
                     result = None
 
