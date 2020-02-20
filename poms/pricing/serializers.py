@@ -58,16 +58,15 @@ class InstrumentPricingSchemeBloombergParametersSerializer(serializers.ModelSeri
     class Meta:
         model = InstrumentPricingSchemeBloombergParameters
         fields = ('id', 'instrument_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type',
-                  'bid0', 'bid1',
-                  'ask0', 'ask1',
-                  'last0', 'last1',)
+                  'bid_historical', 'bid_yesterday',
+                  'ask_historical', 'ask_yesterday',
+                  'last_historical', 'last_yesterday',)
 
 
 class CurrencyPricingSchemeBloombergParametersSerializer(serializers.ModelSerializer):
     class Meta:
         model = CurrencyPricingSchemeBloombergParameters
-        fields = ('id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'fxrate',
-                  'fxrate_multiplier')
+        fields = ('id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'fxrate')
 
 
 class InstrumentPricingSchemeTypeSerializer(serializers.ModelSerializer):
@@ -275,35 +274,35 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
                 else:
                     bloomberg.expr = None
 
-                if 'bid0' in type_settings:
-                    bloomberg.bid0 = type_settings['bid0']
+                if 'bid_historical' in type_settings:
+                    bloomberg.bid_historical = type_settings['bid_historical']
                 else:
-                    bloomberg.bid0 = None
+                    bloomberg.bid_historical = None
 
-                if 'bid1' in type_settings:
-                    bloomberg.bid1 = type_settings['bid1']
+                if 'bid_yesterday' in type_settings:
+                    bloomberg.bid_yesterday = type_settings['bid_yesterday']
                 else:
-                    bloomberg.bid1 = None
+                    bloomberg.bid_yesterday = None
 
-                if 'ask0' in type_settings:
-                    bloomberg.ask0 = type_settings['ask0']
+                if 'ask_historical' in type_settings:
+                    bloomberg.ask_historical = type_settings['ask_historical']
                 else:
-                    bloomberg.ask0 = None
+                    bloomberg.ask_historical = None
 
-                if 'ask1' in type_settings:
-                    bloomberg.ask1 = type_settings['ask1']
+                if 'ask_yesterday' in type_settings:
+                    bloomberg.ask_yesterday = type_settings['ask_yesterday']
                 else:
-                    bloomberg.ask1 = None
+                    bloomberg.ask_yesterday = None
 
-                if 'last0' in type_settings:
-                    bloomberg.last0 = type_settings['last0']
+                if 'last_historical' in type_settings:
+                    bloomberg.last_historical = type_settings['last_historical']
                 else:
-                    bloomberg.last0 = None
+                    bloomberg.last_historical = None
 
-                if 'last1' in type_settings:
-                    bloomberg.last1 = type_settings['last1']
+                if 'last_yesterday' in type_settings:
+                    bloomberg.last_yesterday = type_settings['last_yesterday']
                 else:
-                    bloomberg.last1 = None
+                    bloomberg.last_yesterday = None
 
                 bloomberg.save()
 
@@ -536,11 +535,6 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
                     bloomberg.fxrate = type_settings['fxrate']
                 else:
                     bloomberg.fxrate = None
-
-                if 'fxrate_multiplier' in type_settings:
-                    bloomberg.fxrate_multiplier = type_settings['fxrate_multiplier']
-                else:
-                    bloomberg.fxrate_multiplier = None
 
                 if 'expr' in type_settings:
                     bloomberg.expr = type_settings['expr']

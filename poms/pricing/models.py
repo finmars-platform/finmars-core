@@ -362,14 +362,14 @@ class InstrumentPricingSchemeBloombergParameters(models.Model):
     value_type = models.PositiveSmallIntegerField(default=STRING, choices=TYPES,
                                                   verbose_name=ugettext_lazy('value type'))
 
-    bid0 = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('bid0'))
-    bid1 = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('bid1'))
+    bid_historical = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('bid historical'))
+    bid_yesterday = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('bid yesterday'))
 
-    ask0 = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('ask0'))
-    ask1 = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('ask1'))
+    ask_historical = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('ask historical'))
+    ask_yesterday = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('ask yesterday'))
 
-    last0 = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('last0'))
-    last1 = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('last1'))
+    last_historical = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('last historical'))
+    last_yesterday = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('last yesterday'))
 
 
 
@@ -396,8 +396,6 @@ class CurrencyPricingSchemeBloombergParameters(models.Model):
                                                   verbose_name=ugettext_lazy('value type'))
 
     fxrate = models.CharField(max_length=50, blank=True, verbose_name=ugettext_lazy('FX-rate'))
-    fxrate_multiplier = models.FloatField(default=1.0,
-                                                   verbose_name=ugettext_lazy('FX-rate multiplier'))
 
 
 class PricingProcedure(NamedModel):
