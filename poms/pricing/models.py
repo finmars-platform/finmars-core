@@ -364,18 +364,13 @@ class InstrumentPricingSchemeBloombergParameters(models.Model):
 
     bid0 = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('bid0'))
     bid1 = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('bid1'))
-    bid0_multiplier = models.FloatField(default=1.0, null=True, verbose_name=ugettext_lazy('bid 0 multiplier'))
-    bid1_multiplier = models.FloatField(default=1.0, null=True, verbose_name=ugettext_lazy('bid 1 multiplier'))
 
     ask0 = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('ask0'))
     ask1 = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('ask1'))
-    ask0_multiplier = models.FloatField(default=1.0, null=True, verbose_name=ugettext_lazy('ask 0 multiplier'))
-    ask1_multiplier = models.FloatField(default=1.0, null=True, verbose_name=ugettext_lazy('ask 1 multiplier'))
 
     last0 = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('last0'))
     last1 = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('last1'))
-    last0_multiplier = models.FloatField(default=1.0, null=True, verbose_name=ugettext_lazy('last 0 multiplier'))
-    last1_multiplier = models.FloatField(default=1.0, null=True, verbose_name=ugettext_lazy('last 1 multiplier'))
+
 
 
 class CurrencyPricingSchemeBloombergParameters(models.Model):

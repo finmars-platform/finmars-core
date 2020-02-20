@@ -58,9 +58,9 @@ class InstrumentPricingSchemeBloombergParametersSerializer(serializers.ModelSeri
     class Meta:
         model = InstrumentPricingSchemeBloombergParameters
         fields = ('id', 'instrument_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type',
-                  'bid0', 'bid1', 'bid0_multiplier', 'bid1_multiplier',
-                  'ask0', 'ask1', 'ask0_multiplier', 'ask1_multiplier',
-                  'last0', 'last1', 'last0_multiplier', 'last1_multiplier')
+                  'bid0', 'bid1',
+                  'ask0', 'ask1',
+                  'last0', 'last1',)
 
 
 class CurrencyPricingSchemeBloombergParametersSerializer(serializers.ModelSerializer):
@@ -285,16 +285,6 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
                 else:
                     bloomberg.bid1 = None
 
-                if 'bid0_multiplier' in type_settings:
-                    bloomberg.bid0_multiplier = type_settings['bid0_multiplier']
-                else:
-                    bloomberg.bid0_multiplier = None
-
-                if 'bid1_multiplier' in type_settings:
-                    bloomberg.bid1_multiplier = type_settings['bid1_multiplier']
-                else:
-                    bloomberg.bid1_multiplier = None
-
                 if 'ask0' in type_settings:
                     bloomberg.ask0 = type_settings['ask0']
                 else:
@@ -305,16 +295,6 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
                 else:
                     bloomberg.ask1 = None
 
-                if 'ask0_multiplier' in type_settings:
-                    bloomberg.ask0_multiplier = type_settings['ask0_multiplier']
-                else:
-                    bloomberg.ask0_multiplier = None
-
-                if 'ask1_multiplier' in type_settings:
-                    bloomberg.ask1_multiplier = type_settings['ask1_multiplier']
-                else:
-                    bloomberg.ask1_multiplier = None
-
                 if 'last0' in type_settings:
                     bloomberg.last0 = type_settings['last0']
                 else:
@@ -324,16 +304,6 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
                     bloomberg.last1 = type_settings['last1']
                 else:
                     bloomberg.last1 = None
-
-                if 'last0_multiplier' in type_settings:
-                    bloomberg.last0_multiplier = type_settings['last0_multiplier']
-                else:
-                    bloomberg.last0_multiplier = None
-
-                if 'last1_multiplier' in type_settings:
-                    bloomberg.last1_multiplier = type_settings['last1_multiplier']
-                else:
-                    bloomberg.last1_multiplier = None
 
                 bloomberg.save()
 
