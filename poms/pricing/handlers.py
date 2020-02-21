@@ -879,6 +879,8 @@ class FillPricesProcess(object):
                 continue
 
             print('principal_price %s' % principal_price)
+            print('instrument %s' % record.instrument.user_code)
+            print('pricing_policy %s' % record.pricing_policy.user_code)
 
             if principal_price:
 
