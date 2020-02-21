@@ -172,23 +172,24 @@ class PricingProcedureProcess(object):
             except formula.InvalidExpression as e:
                 print("Cant execute balance date expression %s " % e)
 
-        if self.procedure.accrual_date_from_expr:
-            try:
-                self.procedure.accrual_date_from = formula.safe_eval(self.procedure.accrual_date_from_expr, names={})
-            except formula.InvalidExpression as e:
-                print("Cant execute accrual date from expression %s " % e)
-
-        if self.procedure.accrual_date_to_expr:
-            try:
-                self.procedure.accrual_date_to = formula.safe_eval(self.procedure.accrual_date_to_expr, names={})
-            except formula.InvalidExpression as e:
-                print("Cant execute accrual date to expression %s " % e)
+        # DEPRECATED
+        # if self.procedure.accrual_date_from_expr:
+        #     try:
+        #         self.procedure.accrual_date_from = formula.safe_eval(self.procedure.accrual_date_from_expr, names={})
+        #     except formula.InvalidExpression as e:
+        #         print("Cant execute accrual date from expression %s " % e)
+        #
+        # if self.procedure.accrual_date_to_expr:
+        #     try:
+        #         self.procedure.accrual_date_to = formula.safe_eval(self.procedure.accrual_date_to_expr, names={})
+        #     except formula.InvalidExpression as e:
+        #         print("Cant execute accrual date to expression %s " % e)
 
         print('price_date_from %s' % self.procedure.price_date_from)
         print('price_date_to %s' % self.procedure.price_date_to)
         print('price_balance_date %s' % self.procedure.price_balance_date)
-        print('accrual_date_from %s' % self.procedure.accrual_date_from)
-        print('accrual_date_to %s' % self.procedure.accrual_date_to)
+        # print('accrual_date_from %s' % self.procedure.accrual_date_from)
+        # print('accrual_date_to %s' % self.procedure.accrual_date_to)
 
     def print_grouped_instruments(self):
 
