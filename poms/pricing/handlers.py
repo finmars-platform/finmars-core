@@ -544,6 +544,22 @@ class PricingProcedureProcess(object):
                     }
 
 
+                    if item.policy.data:
+
+                        if 'parameters' in item.policy.data:
+
+                            for parameter in item.policy.data['parameters']:
+
+                                print('parameter %s ' % parameter)
+
+                                if 'default_value' in parameter and parameter['default_value']:
+                                    val = parameter['default_value']
+
+                                if 'attribute_key' in parameter and parameter['attribute_key']:
+                                    val = None  # TODO Implement soon
+
+                                values['parameter' + str(parameter['index'])] = val
+
 
                     expr = scheme_parameters.expr
 
