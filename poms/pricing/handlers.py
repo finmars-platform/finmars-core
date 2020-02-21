@@ -543,7 +543,6 @@ class PricingProcedureProcess(object):
                         'parameter': parameter
                     }
 
-
                     if item.policy.data:
 
                         if 'parameters' in item.policy.data:
@@ -559,7 +558,6 @@ class PricingProcedureProcess(object):
                                     val = None  # TODO Implement soon
 
                                 values['parameter' + str(parameter['index'])] = val
-
 
                     expr = scheme_parameters.expr
 
@@ -650,13 +648,20 @@ class PricingProcedureProcess(object):
                                                                      instrument_parameters=str(item_parameters),
                                                                      pricing_policy=item.policy.pricing_policy,
                                                                      reference=item.parameters[0],
-                                                                     date=date,
-                                                                     ask_parameters=item.scheme_fields_map[
-                                                                         'ask_yesterday'],
-                                                                     bid_parameters=item.scheme_fields_map[
-                                                                         'bid_yesterday'],
-                                                                     last_parameters=item.scheme_fields_map[
-                                                                         'last_yesterday'])
+                                                                     date=date)
+
+                            if 'ask_yesterday' in item.scheme_fields_map:
+                                record.ask_parameters = item.scheme_fields_map[
+                                    'ask_yesterday']
+
+                            if 'bid_yesterday' in item.scheme_fields_map:
+                                record.bid_parameters = item.scheme_fields_map[
+                                    'bid_yesterday']
+
+                            if 'last_yesterday' in item.scheme_fields_map:
+                                record.last_parameters = item.scheme_fields_map[
+                                    'last_yesterday']
+
                             record.save()
 
                         except Exception as e:
@@ -703,13 +708,20 @@ class PricingProcedureProcess(object):
                                                                      instrument_parameters=str(item_parameters),
                                                                      pricing_policy=item.policy.pricing_policy,
                                                                      reference=item.parameters[0],
-                                                                     date=date,
-                                                                     ask_parameters=item.scheme_fields_map[
-                                                                         'ask_historical'],
-                                                                     bid_parameters=item.scheme_fields_map[
-                                                                         'bid_historical'],
-                                                                     last_parameters=item.scheme_fields_map[
-                                                                         'last_historical'])
+                                                                     date=date)
+
+                            if 'ask_historical' in item.scheme_fields_map:
+                                record.ask_parameters = item.scheme_fields_map[
+                                    'ask_historical']
+
+                            if 'bid_historical' in item.scheme_fields_map:
+                                record.bid_parameters = item.scheme_fields_map[
+                                    'bid_historical']
+
+                            if 'last_historical' in item.scheme_fields_map:
+                                record.last_parameters = item.scheme_fields_map[
+                                    'last_historical']
+
                             record.save()
 
                         except Exception as e:
@@ -721,7 +733,7 @@ class PricingProcedureProcess(object):
                         'fields': []
                     }
 
-                    if  'ask_historical' in item.scheme_fields_map:
+                    if 'ask_historical' in item.scheme_fields_map:
                         item_obj['fields'].append({
                             'code': item.scheme_fields_map['ask_historical'],
                             'parameters': [],
