@@ -598,6 +598,57 @@ class PricingProcedureProcess(object):
 
                             price.save()
 
+    def optimize_items(self, items):
+
+        unique_references = []
+        unique_codes = {}
+
+        result_dict = {}
+        result = []
+
+        for item in items:
+
+            reference_identifier = item['reference'] + ','.join(item['parameters'])
+
+            if reference_identifier not in unique_references:
+
+                result_item = {}
+
+                result_item['reference'] = item['reference']
+                result_item['parameters'] = item['parameters']
+                result_item['fields'] = []
+
+                unique_references.append(reference_identifier)
+
+                unique_codes[reference_identifier] = []
+
+                for field in item['fields']:
+
+                    code_identifier = field['code'] + ','.join(field['parameters'])
+
+                    if code_identifier not in unique_codes[reference_identifier]:
+                        unique_codes[reference_identifier].append(code_identifier)
+
+                        result_item['fields'].append(field)
+
+                result_dict[reference_identifier] = result_item
+
+            else:
+
+                for field in item['fields']:
+
+                    code_identifier = field['code'] + ','.join(field['parameters'])
+
+                    if code_identifier not in unique_codes[reference_identifier]:
+                        unique_codes[reference_identifier].append(code_identifier)
+
+                        result_dict[reference_identifier]['fields'].append(field)
+
+        for key, value in result_dict.items():
+            result.append(value)
+
+        return result
+
     def process_to_bloomberg_provider(self, items):
 
         print("Process Bloomberg Provider: len %s" % len(items))
@@ -628,6 +679,8 @@ class PricingProcedureProcess(object):
         is_yesterday = self.is_yesterday(self.procedure.price_date_from, self.procedure.price_date_to)
 
         print('is_yesterday %s' % is_yesterday)
+
+        full_items = []
 
         for item in items:
 
@@ -694,7 +747,7 @@ class PricingProcedureProcess(object):
                             'values': []
                         })
 
-                    body['data']['items'].append(item_obj)
+                    full_items.append(item_obj)
 
                 else:
 
@@ -754,10 +807,18 @@ class PricingProcedureProcess(object):
                             'values': []
                         })
 
-                    body['data']['items'].append(item_obj)
+                    full_items.append(item_obj)
 
             else:
                 items_with_missing_parameters.append(item)
+
+        print('full_items len: %s' % len(full_items))
+
+        optimized_items = self.optimize_items(full_items)
+
+        print('optimized_items len: %s' % len(optimized_items))
+
+        body['data']['items'] = optimized_items
 
         print('items_with_missing_parameters %s' % len(items_with_missing_parameters))
         # print('data %s' % data)
