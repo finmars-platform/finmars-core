@@ -288,10 +288,26 @@ class CurrencyPricingSchemeSingleParameterFormulaParameters(models.Model):
 
 class InstrumentPricingSchemeMultipleParametersFormulaParameters(models.Model):
 
+    STRING = 10
+    NUMBER = 20
+    DATE = 40
+
+    TYPES = (
+        (NUMBER, ugettext_lazy('Number')),
+        (STRING, ugettext_lazy('String')),
+        (DATE, ugettext_lazy('Date')),
+    )
+
+
     instrument_pricing_scheme = models.ForeignKey(InstrumentPricingScheme, verbose_name=ugettext_lazy('Instrument Pricing Scheme'), on_delete=models.CASCADE)
 
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                             verbose_name=ugettext_lazy('expr'))
+
+    default_value = models.CharField(max_length=255, null=True, blank=True)
+    attribute_key = models.CharField(max_length=255, null=True, blank=True)
+    value_type = models.PositiveSmallIntegerField(default=STRING, choices=TYPES,
+                                                  verbose_name=ugettext_lazy('value type'))
 
     json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
 
@@ -315,10 +331,26 @@ class InstrumentPricingSchemeMultipleParametersFormulaParameters(models.Model):
 
 class CurrencyPricingSchemeMultipleParametersFormulaParameters(models.Model):
 
+    STRING = 10
+    NUMBER = 20
+    DATE = 40
+
+    TYPES = (
+        (NUMBER, ugettext_lazy('Number')),
+        (STRING, ugettext_lazy('String')),
+        (DATE, ugettext_lazy('Date')),
+    )
+
+
     currency_pricing_scheme = models.ForeignKey(CurrencyPricingScheme, verbose_name=ugettext_lazy('Currency Pricing Scheme'), on_delete=models.CASCADE)
 
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                             verbose_name=ugettext_lazy('expr'))
+
+    default_value = models.CharField(max_length=255, null=True, blank=True)
+    attribute_key = models.CharField(max_length=255, null=True, blank=True)
+    value_type = models.PositiveSmallIntegerField(default=STRING, choices=TYPES,
+                                                  verbose_name=ugettext_lazy('value type'))
 
     json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
 
@@ -407,7 +439,8 @@ class PricingProcedure(NamedModel):
 
     notes_for_users = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes for user'))
 
-    price_is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('price is active'))
+    # DEPRECATED since 21.02.2020
+    # price_is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('price is active'))
 
     price_date_from = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price date from'))
 
@@ -427,15 +460,16 @@ class PricingProcedure(NamedModel):
     price_fill_days = models.PositiveSmallIntegerField(default=0, verbose_name=ugettext_lazy('price fill days'))
     price_override_existed = models.BooleanField(default=True, verbose_name=ugettext_lazy('price override existed'))
 
-    accrual_is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('accrual is active'))
-
-    accrual_date_from = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('accrual date from'))
-    accrual_date_from_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                               verbose_name=ugettext_lazy('accrual date from expr'))
-
-    accrual_date_to = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('accrual date to'))
-    accrual_date_to_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                              verbose_name=ugettext_lazy('accrual date to expr'))
+    # DEPRECATED since 21.02.2020
+    # accrual_is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('accrual is active'))
+    #
+    # accrual_date_from = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('accrual date from'))
+    # accrual_date_from_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+    #                                            verbose_name=ugettext_lazy('accrual date from expr'))
+    #
+    # accrual_date_to = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('accrual date to'))
+    # accrual_date_to_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+    #                                           verbose_name=ugettext_lazy('accrual date to expr'))
 
     pricing_policy_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('pricing policy filters'))
 

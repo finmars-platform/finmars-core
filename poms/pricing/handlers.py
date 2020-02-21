@@ -194,7 +194,7 @@ class PricingProcedureProcess(object):
 
         names = {
             1: 'Skip',
-            2: 'Manual Pricing',
+            2: 'Manual Pricing',  # DEPRECATED
             3: 'Single Parameter Formula',
             4: 'Multiple Parameter Formula',
             5: 'Bloomberg'
@@ -240,10 +240,11 @@ class PricingProcedureProcess(object):
             if provider_id == 3:
                 self.process_to_single_parameter_formula(items)
 
+            if provider_id == 4:
+                self.process_to_multiple_parameter_formula(items)
+
             if provider_id == 5:
                 self.process_to_bloomberg_provider(items)
-
-
 
     def get_instruments(self):
 
@@ -372,160 +373,45 @@ class PricingProcedureProcess(object):
 
         return False
 
-    def process_to_bloomberg_provider(self, items):
+    # DEPRECATED
+    def process_to_manual_pricing(self, items):
 
-        print("Process Bloomberg Provider: len %s" % len(items))
-
-        body = {}
-        body['procedure'] = self.procedure.id
-
-        config = self.master_user.import_configs.get(provider=ProviderClass.BLOOMBERG)
-        body['user'] = {
-            'token': self.master_user.id,
-            'credentials': {
-                'p12cert': str(config.p12cert),
-                'password': config.password
-            }
-        }
-
-        body['data'] = {}
-
-        body['data']['date_from'] = str(self.procedure.price_date_from)
-        body['data']['date_to'] = str(self.procedure.price_date_to)
-        body['data']['items'] = []
-
-        items_with_missing_parameters = []
+        print("Process Manual Pricing: len %s" % len(items))
 
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
 
-        is_yesterday = self.is_yesterday(self.procedure.price_date_from, self.procedure.price_date_to)
-
-        print('is_yesterday %s' % is_yesterday)
-
         for item in items:
 
-            if len(item.parameters):
+            for date in dates:
 
-                item_parameters = item.parameters.copy()
-                item_parameters.pop()
+                principal_price = item.policy.default_value
 
-                if is_yesterday:
+                if principal_price:
 
-                    for date in dates:
+                    try:
 
-                        try:
+                        price = PriceHistory.objects.get(
+                            instrument=item.instrument,
+                            pricing_policy=item.policy.pricing_policy,
+                            date=date
+                        )
 
-                            record = PricingProcedureBloombergResult(master_user=self.master_user,
-                                                                     procedure=self.procedure,
-                                                                     instrument=item.instrument,
-                                                                     instrument_parameters=str(item_parameters),
-                                                                     pricing_policy=item.policy.pricing_policy,
-                                                                     reference=item.parameters[0],
-                                                                     date=date,
-                                                                     ask_parameters=item.scheme_fields_map[
-                                                                         'ask_yesterday'],
-                                                                     bid_parameters=item.scheme_fields_map[
-                                                                         'bid_yesterday'],
-                                                                     last_parameters=item.scheme_fields_map[
-                                                                         'last_yesterday'])
-                            record.save()
+                        price.principal_price = principal_price
+                        price.save()
 
-                        except Exception as e:
-                            print("Cant create Result Record %s" % e)
+                        print('Update Price history %s' % price.id)
 
-                    item_obj = {
-                        'reference': item.parameters[0],
-                        'parameters': item_parameters,
-                        'fields': []
-                    }
+                    except PriceHistory.DoesNotExist:
 
-                    if item.scheme_fields_map['ask_yesterday']:
-                        item_obj['fields'].append({
-                            'code': item.scheme_fields_map['ask_yesterday'],
-                            'parameters': [],
-                            'values': []
-                        })
+                        price = PriceHistory(
+                            instrument=item.instrument,
+                            pricing_policy=item.policy.pricing_policy,
+                            date=date,
+                            principal_price=principal_price
+                        )
 
-                    if item.scheme_fields_map['bid_yesterday']:
-                        item_obj['fields'].append({
-                            'code': item.scheme_fields_map['bid_yesterday'],
-                            'parameters': [],
-                            'values': []
-                        })
-
-                    if item.scheme_fields_map['last_yesterday']:
-                        item_obj['fields'].append({
-                            'code': item.scheme_fields_map['last_yesterday'],
-                            'parameters': [],
-                            'values': []
-                        })
-
-                    body['data']['items'].append(item_obj)
-
-                else:
-
-                    for date in dates:
-
-                        try:
-
-                            record = PricingProcedureBloombergResult(master_user=self.master_user,
-                                                                     procedure=self.procedure,
-                                                                     instrument=item.instrument,
-                                                                     instrument_parameters=str(item_parameters),
-                                                                     pricing_policy=item.policy.pricing_policy,
-                                                                     reference=item.parameters[0],
-                                                                     date=date,
-                                                                     ask_parameters=item.scheme_fields_map[
-                                                                         'ask_historical'],
-                                                                     bid_parameters=item.scheme_fields_map[
-                                                                         'bid_historical'],
-                                                                     last_parameters=item.scheme_fields_map[
-                                                                         'last_historical'])
-                            record.save()
-
-                        except Exception as e:
-                            print("Cant create Result Record %s" % e)
-
-                    item_obj = {
-                        'reference': item.parameters[0],
-                        'parameters': item_parameters,
-                        'fields': []
-                    }
-
-                    if item.scheme_fields_map['ask_historical']:
-                        item_obj['fields'].append({
-                            'code': item.scheme_fields_map['ask_historical'],
-                            'parameters': [],
-                            'values': []
-                        })
-
-                    if item.scheme_fields_map['bid_historical']:
-                        item_obj['fields'].append({
-                            'code': item.scheme_fields_map['bid_historical'],
-                            'parameters': [],
-                            'values': []
-                        })
-
-                    if item.scheme_fields_map['last_historical']:
-                        item_obj['fields'].append({
-                            'code': item.scheme_fields_map['last_historical'],
-                            'parameters': [],
-                            'values': []
-                        })
-
-                    body['data']['items'].append(item_obj)
-
-            else:
-                items_with_missing_parameters.append(item)
-
-        print('items_with_missing_parameters %s' % len(items_with_missing_parameters))
-        # print('data %s' % data)
-
-        print('self.procedure %s' % self.procedure.id)
-        print('send request %s' % body)
-
-        self.broker_bloomberg.send_request(body)
+                        price.save()
 
     def process_to_single_parameter_formula(self, items):
 
@@ -611,9 +497,9 @@ class PricingProcedureProcess(object):
 
                             price.save()
 
-    def process_to_manual_pricing(self, items):
+    def process_to_multiple_parameter_formula(self, items):
 
-        print("Process Manual Pricing: len %s" % len(items))
+        print("Process Multiple parameters Formula: len %s" % len(items))
 
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
@@ -622,33 +508,235 @@ class PricingProcedureProcess(object):
 
             for date in dates:
 
-                principal_price = item.policy.default_value
+                scheme_parameters = item.pricing_scheme.get_parameters()
 
-                if principal_price:
+                if scheme_parameters:
+
+                    safe_instrument = {
+                        'id': item.instrument.id,
+                    }
+
+                    parameter = None
+
+                    if item.policy.default_value:
+
+                        if scheme_parameters.value_type == 10:
+
+                            parameter = str(item.policy.default_value)
+
+                        elif scheme_parameters.value_type == 20:
+
+                            parameter = float(item.policy.default_value)
+
+                        else:
+
+                            parameter = item.policy.default_value
+
+                        # if scheme_parameters.type == 40:
+                        #
+                        #     parameter = float(item.policy.default_value)
+
+                    values = {
+                        'd': date,
+                        'instrument': safe_instrument,
+                        'parameter': parameter
+                    }
+
+
+
+                    expr = scheme_parameters.expr
+
+                    print('values %s' % values)
+                    print('expr %s' % expr)
 
                     try:
+                        principal_price = formula.safe_eval(expr, names=values)
+                    except formula.InvalidExpression:
+                        print("Error here")
+                        continue
 
-                        price = PriceHistory.objects.get(
-                            instrument=item.instrument,
-                            pricing_policy=item.policy.pricing_policy,
-                            date=date
-                        )
+                    print('principal_price %s' % principal_price)
 
-                        price.principal_price = principal_price
-                        price.save()
+                    if principal_price:
 
-                        print('Update Price history %s' % price.id)
+                        try:
 
-                    except PriceHistory.DoesNotExist:
+                            price = PriceHistory.objects.get(
+                                instrument=item.instrument,
+                                pricing_policy=item.policy.pricing_policy,
+                                date=date
+                            )
 
-                        price = PriceHistory(
-                            instrument=item.instrument,
-                            pricing_policy=item.policy.pricing_policy,
-                            date=date,
-                            principal_price=principal_price
-                        )
+                            price.principal_price = principal_price
+                            price.save()
 
-                        price.save()
+                            print('Update Price history %s' % price.id)
+
+                        except PriceHistory.DoesNotExist:
+
+                            price = PriceHistory(
+                                instrument=item.instrument,
+                                pricing_policy=item.policy.pricing_policy,
+                                date=date,
+                                principal_price=principal_price
+                            )
+
+                            price.save()
+
+    def process_to_bloomberg_provider(self, items):
+
+        print("Process Bloomberg Provider: len %s" % len(items))
+
+        body = {}
+        body['procedure'] = self.procedure.id
+
+        config = self.master_user.import_configs.get(provider=ProviderClass.BLOOMBERG)
+        body['user'] = {
+            'token': self.master_user.id,
+            'credentials': {
+                'p12cert': str(config.p12cert),
+                'password': config.password
+            }
+        }
+
+        body['data'] = {}
+
+        body['data']['date_from'] = str(self.procedure.price_date_from)
+        body['data']['date_to'] = str(self.procedure.price_date_to)
+        body['data']['items'] = []
+
+        items_with_missing_parameters = []
+
+        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
+                                                    date_to=self.procedure.price_date_to)
+
+        is_yesterday = self.is_yesterday(self.procedure.price_date_from, self.procedure.price_date_to)
+
+        print('is_yesterday %s' % is_yesterday)
+
+        for item in items:
+
+            if len(item.parameters):
+
+                item_parameters = item.parameters.copy()
+                item_parameters.pop()
+
+                if is_yesterday:
+
+                    for date in dates:
+
+                        try:
+
+                            record = PricingProcedureBloombergResult(master_user=self.master_user,
+                                                                     procedure=self.procedure,
+                                                                     instrument=item.instrument,
+                                                                     instrument_parameters=str(item_parameters),
+                                                                     pricing_policy=item.policy.pricing_policy,
+                                                                     reference=item.parameters[0],
+                                                                     date=date,
+                                                                     ask_parameters=item.scheme_fields_map[
+                                                                         'ask_yesterday'],
+                                                                     bid_parameters=item.scheme_fields_map[
+                                                                         'bid_yesterday'],
+                                                                     last_parameters=item.scheme_fields_map[
+                                                                         'last_yesterday'])
+                            record.save()
+
+                        except Exception as e:
+                            print("Cant create Result Record %s" % e)
+
+                    item_obj = {
+                        'reference': item.parameters[0],
+                        'parameters': item_parameters,
+                        'fields': []
+                    }
+
+                    if 'ask_yesterday' in item.scheme_fields_map:
+                        item_obj['fields'].append({
+                            'code': item.scheme_fields_map['ask_yesterday'],
+                            'parameters': [],
+                            'values': []
+                        })
+
+                    if 'bid_yesterday' in item.scheme_fields_map:
+                        item_obj['fields'].append({
+                            'code': item.scheme_fields_map['bid_yesterday'],
+                            'parameters': [],
+                            'values': []
+                        })
+
+                    if 'last_yesterday' in item.scheme_fields_map:
+                        item_obj['fields'].append({
+                            'code': item.scheme_fields_map['last_yesterday'],
+                            'parameters': [],
+                            'values': []
+                        })
+
+                    body['data']['items'].append(item_obj)
+
+                else:
+
+                    for date in dates:
+
+                        try:
+
+                            record = PricingProcedureBloombergResult(master_user=self.master_user,
+                                                                     procedure=self.procedure,
+                                                                     instrument=item.instrument,
+                                                                     instrument_parameters=str(item_parameters),
+                                                                     pricing_policy=item.policy.pricing_policy,
+                                                                     reference=item.parameters[0],
+                                                                     date=date,
+                                                                     ask_parameters=item.scheme_fields_map[
+                                                                         'ask_historical'],
+                                                                     bid_parameters=item.scheme_fields_map[
+                                                                         'bid_historical'],
+                                                                     last_parameters=item.scheme_fields_map[
+                                                                         'last_historical'])
+                            record.save()
+
+                        except Exception as e:
+                            print("Cant create Result Record %s" % e)
+
+                    item_obj = {
+                        'reference': item.parameters[0],
+                        'parameters': item_parameters,
+                        'fields': []
+                    }
+
+                    if  'ask_historical' in item.scheme_fields_map:
+                        item_obj['fields'].append({
+                            'code': item.scheme_fields_map['ask_historical'],
+                            'parameters': [],
+                            'values': []
+                        })
+
+                    if 'bid_historical' in item.scheme_fields_map:
+                        item_obj['fields'].append({
+                            'code': item.scheme_fields_map['bid_historical'],
+                            'parameters': [],
+                            'values': []
+                        })
+
+                    if 'last_historical' in item.scheme_fields_map:
+                        item_obj['fields'].append({
+                            'code': item.scheme_fields_map['last_historical'],
+                            'parameters': [],
+                            'values': []
+                        })
+
+                    body['data']['items'].append(item_obj)
+
+            else:
+                items_with_missing_parameters.append(item)
+
+        print('items_with_missing_parameters %s' % len(items_with_missing_parameters))
+        # print('data %s' % data)
+
+        print('self.procedure %s' % self.procedure.id)
+        print('send request %s' % body)
+
+        self.broker_bloomberg.send_request(body)
 
 
 class FillPricesProcess(object):

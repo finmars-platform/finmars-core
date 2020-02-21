@@ -43,7 +43,7 @@ class InstrumentPricingSchemeMultipleParametersFormulaParametersSerializer(seria
 
     class Meta:
         model = InstrumentPricingSchemeMultipleParametersFormulaParameters
-        fields = ('id', 'instrument_pricing_scheme', 'expr', 'data')
+        fields = ('id', 'instrument_pricing_scheme', 'expr', 'data', 'default_value', 'attribute_key', 'value_type')
 
 
 class CurrencyPricingSchemeMultipleParametersFormulaParametersSerializer(serializers.ModelSerializer):
@@ -51,7 +51,7 @@ class CurrencyPricingSchemeMultipleParametersFormulaParametersSerializer(seriali
 
     class Meta:
         model = CurrencyPricingSchemeMultipleParametersFormulaParameters
-        fields = ('id', 'currency_pricing_scheme', 'expr', 'data')
+        fields = ('id', 'currency_pricing_scheme', 'expr', 'data', 'default_value', 'attribute_key', 'value_type')
 
 
 class InstrumentPricingSchemeBloombergParametersSerializer(serializers.ModelSerializer):
@@ -570,19 +570,19 @@ class PricingProcedureSerializer(serializers.ModelSerializer):
     price_date_from_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,default='')
     price_date_to_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,default='')
     price_balance_date_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,default='')
-    accrual_date_from_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,default='')
-    accrual_date_to_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,default='')
+    # accrual_date_from_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,default='')
+    # accrual_date_to_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,default='')
 
     class Meta:
         model = PricingProcedure
         fields = ('master_user', 'id', 'name', 'notes', 'notes_for_users',
-                  'price_is_active', 'accrual_is_active',
+                  # 'price_is_active', 'accrual_is_active',
                   'price_date_from', 'price_date_to',
                   'price_date_from_expr', 'price_date_to_expr',
                   'price_balance_date', 'price_balance_date_expr',
                   'price_fill_days', 'price_override_existed',
-                  'accrual_date_from', 'accrual_date_to',
-                  'accrual_date_from_expr', 'accrual_date_to_expr',
+                  # 'accrual_date_from', 'accrual_date_to',
+                  # 'accrual_date_from_expr', 'accrual_date_to_expr',
 
                   'pricing_policy_filters', 'instrument_filters'
 
