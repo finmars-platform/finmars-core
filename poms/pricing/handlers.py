@@ -15,7 +15,6 @@ from datetime import timedelta, date, datetime
 
 
 def get_list_of_dates_between_two_dates(date_from, date_to):
-
     result = []
 
     diff = date_to - date_from
@@ -44,7 +43,7 @@ class InstrumentItem(object):
     def fill_parameters(self):
 
         if self.pricing_scheme.type.input_type == InstrumentPricingSchemeType.NONE:
-            pass # do nothing
+            pass  # do nothing
 
         if self.pricing_scheme.type.input_type == InstrumentPricingSchemeType.SINGLE_PARAMETER:
 
@@ -60,7 +59,8 @@ class InstrumentItem(object):
 
                     try:
 
-                        attribute = GenericAttribute.objects.get(object_id=self.instrument.id, attribute_type__user_code=self.policy.attribute_key)
+                        attribute = GenericAttribute.objects.get(object_id=self.instrument.id,
+                                                                 attribute_type__user_code=self.policy.attribute_key)
 
                         if attribute.attribute_type.value_type == GenericAttributeType.STRING:
                             result = attribute.value_string
@@ -83,7 +83,7 @@ class InstrumentItem(object):
                     self.parameters.append(result)
 
         if self.pricing_scheme.type.input_type == InstrumentPricingSchemeType.MULTIPLE_PARAMETERS:
-            pass # TODO implement multiparameter case
+            pass  # TODO implement multiparameter case
 
     def fill_scheme_fields(self):
 
@@ -116,7 +116,6 @@ class InstrumentItem(object):
             if parameters.last_yesterday:
                 self.scheme_fields.append([parameters.last_yesterday])
                 self.scheme_fields_map['last_yesterday'] = parameters.last_yesterday
-
 
 
 class CurrencyItem(object):
@@ -203,9 +202,7 @@ class PricingProcedureProcess(object):
         }
 
         for provider_id, items in self.instrument_items_grouped.items():
-
             print("Provider %s: len: %s" % (names[provider_id], len(items)))
-
 
     def process(self):
 
@@ -225,8 +222,10 @@ class PricingProcedureProcess(object):
         print('instrument_items len %s' % len(self.instrument_items))
         print('currency_items len %s' % len(self.currency_items))
 
-        self.instrument_items_grouped = self.group_items_by_provider(items=self.instrument_items, groups=self.instrument_pricing_schemes)
-        self.currency_items_grouped = self.group_items_by_provider(items=self.currency_items, groups=self.currencies_pricing_schemes)
+        self.instrument_items_grouped = self.group_items_by_provider(items=self.instrument_items,
+                                                                     groups=self.instrument_pricing_schemes)
+        self.currency_items_grouped = self.group_items_by_provider(items=self.currency_items,
+                                                                   groups=self.currencies_pricing_schemes)
 
         print('instrument_items_grouped len %s' % len(self.instrument_items_grouped))
         print('currency_items_grouped len %s' % len(self.currency_items_grouped))
@@ -235,13 +234,16 @@ class PricingProcedureProcess(object):
 
         for provider_id, items in self.instrument_items_grouped.items():
 
-                if provider_id == 5:
+            if provider_id == 2:
+                self.process_to_manual_pricing(items)
 
-                    self.process_to_bloomberg_provider(items)
+            if provider_id == 3:
+                self.process_to_single_parameter_formula(items)
 
-                if provider_id == 3:
+            if provider_id == 5:
+                self.process_to_bloomberg_provider(items)
 
-                    self.process_to_single_parameter_formula(items)
+
 
     def get_instruments(self):
 
@@ -265,7 +267,8 @@ class PricingProcedureProcess(object):
 
             owner_or_admin = self.procedure.master_user.members.filter(Q(is_owner=True) | Q(is_admin=True)).first()
 
-            report = Report(master_user=self.procedure.master_user, member=owner_or_admin, report_date=self.procedure.price_balance_date)
+            report = Report(master_user=self.procedure.master_user, member=owner_or_admin,
+                            report_date=self.procedure.price_balance_date)
 
             builder = ReportBuilder(instance=report)
 
@@ -304,7 +307,6 @@ class PricingProcedureProcess(object):
                 if self.procedure.pricing_policy_filters:
 
                     if policy.pricing_policy.user_code in self.procedure.pricing_policy_filters:
-
                         item = InstrumentItem(instrument, policy, policy.pricing_scheme)
 
                         result.append(item)
@@ -324,7 +326,6 @@ class PricingProcedureProcess(object):
         for currency in self.currencies:
 
             for policy in currency.pricing_policies.all():
-
                 item = CurrencyItem(currency, policy, policy.pricing_scheme)
 
                 result.append(item)
@@ -343,7 +344,6 @@ class PricingProcedureProcess(object):
                 if policy.pricing_scheme:
 
                     if policy.pricing_scheme.id not in unique_ids:
-
                         unique_ids.append(policy.pricing_scheme.id)
                         result.append(policy.pricing_scheme)
 
@@ -357,7 +357,6 @@ class PricingProcedureProcess(object):
             result[item.type.id] = []
 
         for item in items:
-
             result[item.policy.pricing_scheme.type.id].append(item)
 
         return result
@@ -369,12 +368,13 @@ class PricingProcedureProcess(object):
             yesterday = date_now() - timedelta(days=1)
 
             if yesterday == date_from:
-
                 return True
 
         return False
 
     def process_to_bloomberg_provider(self, items):
+
+        print("Process Bloomberg Provider: len %s" % len(items))
 
         body = {}
         body['procedure'] = self.procedure.id
@@ -396,7 +396,8 @@ class PricingProcedureProcess(object):
 
         items_with_missing_parameters = []
 
-        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from, date_to=self.procedure.price_date_to)
+        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
+                                                    date_to=self.procedure.price_date_to)
 
         is_yesterday = self.is_yesterday(self.procedure.price_date_from, self.procedure.price_date_to)
 
@@ -422,9 +423,12 @@ class PricingProcedureProcess(object):
                                                                      pricing_policy=item.policy.pricing_policy,
                                                                      reference=item.parameters[0],
                                                                      date=date,
-                                                                     ask_parameters=item.scheme_fields_map['ask_yesterday'],
-                                                                     bid_parameters=item.scheme_fields_map['bid_yesterday'],
-                                                                     last_parameters=item.scheme_fields_map['last_yesterday'])
+                                                                     ask_parameters=item.scheme_fields_map[
+                                                                         'ask_yesterday'],
+                                                                     bid_parameters=item.scheme_fields_map[
+                                                                         'bid_yesterday'],
+                                                                     last_parameters=item.scheme_fields_map[
+                                                                         'last_yesterday'])
                             record.save()
 
                         except Exception as e:
@@ -457,7 +461,6 @@ class PricingProcedureProcess(object):
                             'values': []
                         })
 
-
                     body['data']['items'].append(item_obj)
 
                 else:
@@ -473,9 +476,12 @@ class PricingProcedureProcess(object):
                                                                      pricing_policy=item.policy.pricing_policy,
                                                                      reference=item.parameters[0],
                                                                      date=date,
-                                                                     ask_parameters=item.scheme_fields_map['ask_historical'],
-                                                                     bid_parameters=item.scheme_fields_map['bid_historical'],
-                                                                     last_parameters=item.scheme_fields_map['last_historical'])
+                                                                     ask_parameters=item.scheme_fields_map[
+                                                                         'ask_historical'],
+                                                                     bid_parameters=item.scheme_fields_map[
+                                                                         'bid_historical'],
+                                                                     last_parameters=item.scheme_fields_map[
+                                                                         'last_historical'])
                             record.save()
 
                         except Exception as e:
@@ -523,9 +529,10 @@ class PricingProcedureProcess(object):
 
     def process_to_single_parameter_formula(self, items):
 
-        print("Single parameters formula len %s" % len(items))
+        print("Process Single parameters Formula: len %s" % len(items))
 
-        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from, date_to=self.procedure.price_date_to)
+        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
+                                                    date_to=self.procedure.price_date_to)
 
         for item in items:
 
@@ -558,7 +565,6 @@ class PricingProcedureProcess(object):
                         # if scheme_parameters.type == 40:
                         #
                         #     parameter = float(item.policy.default_value)
-
 
                     values = {
                         'd': date,
@@ -604,6 +610,45 @@ class PricingProcedureProcess(object):
                             )
 
                             price.save()
+
+    def process_to_manual_pricing(self, items):
+
+        print("Process Manual Pricing: len %s" % len(items))
+
+        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
+                                                    date_to=self.procedure.price_date_to)
+
+        for item in items:
+
+            for date in dates:
+
+                principal_price = item.policy.default_value
+
+                if principal_price:
+
+                    try:
+
+                        price = PriceHistory.objects.get(
+                            instrument=item.instrument,
+                            pricing_policy=item.policy.pricing_policy,
+                            date=date
+                        )
+
+                        price.principal_price = principal_price
+                        price.save()
+
+                        print('Update Price history %s' % price.id)
+
+                    except PriceHistory.DoesNotExist:
+
+                        price = PriceHistory(
+                            instrument=item.instrument,
+                            pricing_policy=item.policy.pricing_policy,
+                            date=date,
+                            principal_price=principal_price
+                        )
+
+                        price.save()
 
 
 class FillPricesProcess(object):
