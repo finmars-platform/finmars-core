@@ -767,9 +767,9 @@ class FillPricesProcess(object):
 
         print('< fill prices: total items len %s' % len(self.instance['data']['items']))
 
-        print('< fill prices: fields len %s' % len(self.instance['data']['items'][0]['fields']))
-
-        print('< fill prices: values len %s' % len(self.instance['data']['items'][0]['fields'][0]['values']))
+        # print('< fill prices: fields len %s' % len(self.instance['data']['items'][0]['fields']))
+        #
+        # print('< fill prices: values len %s' % len(self.instance['data']['items'][0]['fields'][0]['values']))
 
         for item in self.instance['data']['items']:
 
