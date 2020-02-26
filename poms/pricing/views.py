@@ -17,7 +17,7 @@ from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfiguration
 from poms.pricing.brokers.broker_serializers import DataRequestSerializer
 from poms.pricing.handlers import PricingProcedureProcess, FillPricesProcess
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, InstrumentPricingSchemeType, \
-    CurrencyPricingSchemeType, PricingProcedure
+    CurrencyPricingSchemeType, PricingProcedure, PricingProcedureInstance
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
     CurrencyPricingSchemeTypeSerializer, InstrumentPricingSchemeTypeSerializer, PricingProcedureSerializer, \
     RunProcedureSerializer, BrokerBloombergSerializer
@@ -155,7 +155,7 @@ class PricingBrokerBloombergHandler(APIView):
 
         try:
 
-            procedure = PricingProcedure.objects.get(pk=procedure_id)
+            procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
 
             instance = FillPricesProcess(instance=request.data, master_user=procedure.master_user)
             instance.process()

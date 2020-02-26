@@ -235,8 +235,9 @@ class PricingProcedureProcess(object):
 
         for provider_id, items in self.instrument_items_grouped.items():
 
-            if provider_id == 2:
-                self.process_to_manual_pricing(items)
+            # DEPRECATED
+            # if provider_id == 2:
+            #     self.process_to_manual_pricing(items)
 
             if provider_id == 3:
                 self.process_to_single_parameter_formula(items)
@@ -609,7 +610,7 @@ class PricingProcedureProcess(object):
 
                                         val = float(parameter['default_value'])
 
-                                    if float(parameter['value_type']) == 40:
+                                    elif float(parameter['value_type']) == 40:
 
                                         val = formula._parse_date(str(parameter['default_value']))
 
@@ -768,6 +769,7 @@ class PricingProcedureProcess(object):
         is_yesterday = self.is_yesterday(self.procedure.price_date_from, self.procedure.price_date_to)
 
         print('is_yesterday %s' % is_yesterday)
+        print('procedure id %s' % body['procedure'])
 
         full_items = []
 
