@@ -4,7 +4,7 @@ from poms_app import settings
 
 class BrokerBloomberg(BaseBroker):
 
-    broker_url = settings.BROKER_BLOOMBERG_URL
+    broker_url = settings.MEDIATOR_URL
 
     def __init__(self):
 

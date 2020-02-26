@@ -561,8 +561,6 @@ class InstrumentTypePricingPolicy(models.Model):
             ('instrument_type', 'pricing_policy')
         )
 
-
-
 class InstrumentPricingPolicy(models.Model):
 
     instrument = models.ForeignKey('instruments.Instrument', on_delete=models.CASCADE, verbose_name=ugettext_lazy('instrument'), related_name='pricing_policies')
@@ -600,13 +598,39 @@ class InstrumentPricingPolicy(models.Model):
             ('instrument', 'pricing_policy')
         )
 
+class PricingProcedureInstance(models.Model):
+
+    STATUS_INIT = 'I'
+    STATUS_PENDING = 'P'
+    STATUS_DONE = 'D'
+    STATUS_ERROR = 'E'
+
+    STATUS_CHOICES = (
+        (STATUS_INIT, ugettext_lazy('Init')),
+        (STATUS_PENDING, ugettext_lazy('Pending')),
+        (STATUS_DONE, ugettext_lazy('Done')),
+        (STATUS_ERROR, ugettext_lazy('Error')),
+    )
+
+    pricing_procedure = models.ForeignKey(PricingProcedure, on_delete=models.CASCADE, verbose_name=ugettext_lazy('pricing procedure'))
+
+    created = models.DateTimeField(auto_now_add=True, editable=False, db_index=True,
+                                   verbose_name='created')
+    modified = models.DateTimeField(auto_now=True, editable=False, db_index=True)
+
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
+
+    status = models.CharField(max_length=1,  default=STATUS_INIT, choices=STATUS_CHOICES, verbose_name=ugettext_lazy('status'))
+
+
 
 class PricingProcedureBloombergResult(models.Model):
 
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
-    procedure = models.ForeignKey(PricingProcedure, on_delete=models.CASCADE, verbose_name=ugettext_lazy('procedure'))
+    procedure = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE, verbose_name=ugettext_lazy('procedure'))
 
     instrument = models.ForeignKey('instruments.Instrument', on_delete=models.CASCADE, verbose_name=ugettext_lazy('instrument'))
     pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, verbose_name=ugettext_lazy('pricing policy'))
@@ -630,4 +654,3 @@ class PricingProcedureBloombergResult(models.Model):
         unique_together = (
             ('master_user', 'instrument', 'date', 'pricing_policy')
         )
-

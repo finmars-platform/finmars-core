@@ -8,7 +8,7 @@ from poms.instruments.models import Instrument, DailyPricingModel, PriceHistory,
 from poms.integrations.models import ProviderClass
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
-from poms.pricing.models import InstrumentPricingSchemeType, PricingProcedureBloombergResult
+from poms.pricing.models import InstrumentPricingSchemeType, PricingProcedureBloombergResult, PricingProcedureInstance
 from poms.reports.builders.balance_item import ReportItem, Report
 from poms.reports.builders.balance_pl import ReportBuilder
 from datetime import timedelta, date, datetime
@@ -738,8 +738,12 @@ class PricingProcedureProcess(object):
 
         print("Process Bloomberg Provider: len %s" % len(items))
 
+        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure, master_user=self.master_user, status=PricingProcedureInstance.STATUS_PENDING)
+        procedure_instance.save()
+
         body = {}
-        body['procedure'] = self.procedure.id
+        body['procedure'] = procedure_instance.id
+        body['provider_type'] = 'BLOOMBERG'
 
         config = self.master_user.import_configs.get(provider=ProviderClass.BLOOMBERG)
         body['user'] = {
@@ -781,7 +785,7 @@ class PricingProcedureProcess(object):
                         try:
 
                             record = PricingProcedureBloombergResult(master_user=self.master_user,
-                                                                     procedure=self.procedure,
+                                                                     procedure=procedure_instance,
                                                                      instrument=item.instrument,
                                                                      instrument_parameters=str(item_parameters),
                                                                      pricing_policy=item.policy.pricing_policy,
@@ -841,7 +845,7 @@ class PricingProcedureProcess(object):
                         try:
 
                             record = PricingProcedureBloombergResult(master_user=self.master_user,
-                                                                     procedure=self.procedure,
+                                                                     procedure=procedure_instance,
                                                                      instrument=item.instrument,
                                                                      instrument_parameters=str(item_parameters),
                                                                      pricing_policy=item.policy.pricing_policy,
