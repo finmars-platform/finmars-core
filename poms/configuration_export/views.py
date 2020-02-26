@@ -891,6 +891,18 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
             result_item["pk"] = pricing_policy["pk"]
 
+            try:
+                result_item["__default_instrument_pricing_scheme__user_code"] = InstrumentPricingScheme.objects.get(
+                    pk=result_item["default_instrument_pricing_scheme"]).user_code
+            except Exception:
+                print("Cant find default instrument pricing scheme")
+
+            try:
+                result_item["__default_currency_pricing_scheme__user_code"] = CurrencyPricingScheme.objects.get(
+                    pk=result_item["default_currency_pricing_scheme"]).user_code
+            except Exception:
+                print("Cant find default currency pricing scheme")
+
             result_item.pop("master_user", None)
 
             clear_none_attrs(result_item)

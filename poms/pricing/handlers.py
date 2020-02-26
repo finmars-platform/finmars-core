@@ -445,13 +445,37 @@ class PricingProcedureProcess(object):
 
                             parameter = float(item.policy.default_value)
 
+                        if scheme_parameters.value_type == 40:
+
+                            parameter = formula._parse_date(str(item.policy.default_value))
+
                         else:
 
                             parameter = item.policy.default_value
 
-                        # if scheme_parameters.type == 40:
-                        #
-                        #     parameter = float(item.policy.default_value)
+                    elif item.policy.attribute_key:
+
+                        if 'attributes' in item.policy.attribute_key:
+
+                            user_code = item.policy.attribute_key.split('attributes.')[1]
+
+                            attribute = GenericAttribute.objects.get(object_id=item.instrument.id, attribute_type__user_code=user_code)
+
+                            if scheme_parameters.value_type == 10:
+
+                                parameter = attribute.value_string
+
+                            if scheme_parameters.value_type == 20:
+
+                                parameter = attribute.value_float
+
+                            if scheme_parameters.value_type == 40:
+
+                                parameter = attribute.value_date
+
+                        else:
+
+                            parameter = item.instrument[item.policy.attribute_key]
 
                     values = {
                         'd': date,
@@ -529,13 +553,37 @@ class PricingProcedureProcess(object):
 
                             parameter = float(item.policy.default_value)
 
+                        if scheme_parameters.value_type == 40:
+
+                            parameter = formula._parse_date(str(item.policy.default_value))
+
                         else:
 
                             parameter = item.policy.default_value
 
-                        # if scheme_parameters.type == 40:
-                        #
-                        #     parameter = float(item.policy.default_value)
+                    elif item.policy.attribute_key:
+
+                        if 'attributes' in item.policy.attribute_key:
+
+                            user_code = item.policy.attribute_key.split('attributes.')[1]
+
+                            attribute = GenericAttribute.objects.get(object_id=item.instrument.id, attribute_type__user_code=user_code)
+
+                            if scheme_parameters.value_type == 10:
+
+                                parameter = attribute.value_string
+
+                            if scheme_parameters.value_type == 20:
+
+                                parameter = attribute.value_float
+
+                            if scheme_parameters.value_type == 40:
+
+                                parameter = attribute.value_date
+
+                        else:
+
+                            parameter = item.instrument[item.policy.attribute_key]
 
                     values = {
                         'd': date,
@@ -552,10 +600,47 @@ class PricingProcedureProcess(object):
                                 print('parameter %s ' % parameter)
 
                                 if 'default_value' in parameter and parameter['default_value']:
-                                    val = parameter['default_value']
+
+                                    if float(parameter['value_type']) == 10:
+
+                                        val = str(parameter['default_value'])
+
+                                    elif float(parameter['value_type']) == 20:
+
+                                        val = float(parameter['default_value'])
+
+                                    if float(parameter['value_type']) == 40:
+
+                                        val = formula._parse_date(str(parameter['default_value']))
+
+                                    else:
+
+                                        val = parameter['default_value']
 
                                 if 'attribute_key' in parameter and parameter['attribute_key']:
-                                    val = None  # TODO Implement soon
+
+                                    if 'attributes' in parameter['attribute_key']:
+
+                                        user_code = parameter['attribute_key'].split('attributes.')[1]
+
+                                        attribute = GenericAttribute.objects.get(object_id=item.instrument.id, attribute_type__user_code=user_code)
+
+                                        if float(parameter['value_type']) == 10:
+
+                                            val = attribute.value_string
+
+                                        if float(parameter['value_type']) == 20:
+
+                                            val = attribute.value_float
+
+                                        if float(parameter['value_type']) == 40:
+
+                                            val = attribute.value_date
+
+                                    else:
+
+                                        val = item.instrument[parameter['attribute_key']]
+
 
                                 values['parameter' + str(parameter['index'])] = val
 

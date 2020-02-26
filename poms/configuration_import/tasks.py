@@ -1661,6 +1661,31 @@ class ImportManager(object):
                 if 'content' in item:
 
                     for content_object in item['content']:
+
+
+                        if '__default_instrument_pricing_scheme__user_code' in content_object:
+
+                            try:
+
+                                content_object['default_instrument_pricing_scheme'] = InstrumentPricingScheme.objects.get(
+                                    master_user=self.master_user,
+                                    user_code=content_object['__default_instrument_pricing_scheme__user_code']).pk
+
+                            except Exception:
+                                print("Cant map default instrument pricing scheme")
+
+                        if '__default_currency_pricing_scheme__user_code' in content_object:
+
+                            try:
+
+                                content_object['default_currency_pricing_scheme'] = CurrencyPricingScheme.objects.get(
+                                    master_user=self.master_user,
+                                    user_code=content_object['__default_currency_pricing_scheme__user_code']).pk
+
+                            except Exception:
+                                print("Cant map default currency pricing scheme")
+
+
                         serializer = PricingPolicySerializer(data=content_object,
                                                              context=self.get_serializer_context())
 
