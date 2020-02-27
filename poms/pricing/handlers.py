@@ -77,6 +77,7 @@ class FillPricesProcess(object):
     def process(self):
 
         print('< fill prices: total items len %s' % len(self.instance['data']['items']))
+        print('< action:  %s' % self.instance['action'])
 
         if self.instance['action'] == 'bloomberg_get_currency_prices':
 
@@ -267,6 +268,8 @@ class FillPricesProcess(object):
             date__gte=self.instance['data']['date_from'],
             date__lte=self.instance['data']['date_to']
         )
+
+        print('create_currency_history: records len %s' % len(records))
 
         for record in records:
 
