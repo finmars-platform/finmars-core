@@ -208,7 +208,7 @@ class FillPricesProcess(object):
                 'last': record.last_value
             }
 
-            pricing_scheme = record.pricing_policy.default_instrument_pricing_scheme
+            pricing_scheme = record.pricing_policy.default_instrument_pricing_scheme # TODO why we took default scheme?
 
             expr = pricing_scheme.get_parameters().expr
 
@@ -283,7 +283,7 @@ class FillPricesProcess(object):
                 'fx_rate': record.fx_rate_value,
             }
 
-            pricing_scheme = record.pricing_policy.default_instrument_pricing_scheme
+            pricing_scheme = record.pricing_policy.default_currency_pricing_scheme  # TODO why we took default scheme?
 
             expr = pricing_scheme.get_parameters().expr
 
