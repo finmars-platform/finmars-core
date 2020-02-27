@@ -27,6 +27,9 @@ class InstrumentPricingSchemeType(models.Model):
     input_type = models.PositiveSmallIntegerField(default=NONE, choices=INPUT_TYPE_CHOICES,
                                                   verbose_name=ugettext_lazy('input type'))
 
+    def __str__(self):
+        return self.name
+
 
 class InstrumentPricingScheme(NamedModel):
 
@@ -136,6 +139,9 @@ class CurrencyPricingSchemeType(models.Model):
     notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
     input_type = models.PositiveSmallIntegerField(default=NONE, choices=INPUT_TYPE_CHOICES,
                                                   verbose_name=ugettext_lazy('input type'))
+
+    def __str__(self):
+        return self.name
 
 
 class CurrencyPricingScheme(NamedModel):
