@@ -663,7 +663,7 @@ class PricingProcedureBloombergInstrumentResult(models.Model):
 
     class Meta:
         unique_together = (
-            ('master_user', 'instrument', 'date', 'pricing_policy')
+            ('master_user', 'instrument', 'date', 'pricing_policy', 'procedure')
         )
 
 
@@ -688,5 +688,5 @@ class PricingProcedureBloombergCurrencyResult(models.Model):
 
     class Meta:
         unique_together = (
-            ('master_user', 'currency', 'date', 'pricing_policy')
+            ('master_user', 'currency', 'date', 'pricing_policy', 'procedure')
         )
