@@ -318,7 +318,7 @@ class FillPricesProcess(object):
                 except CurrencyHistory.DoesNotExist:
 
                     price = CurrencyHistory(
-                        instrument=record.instrument,
+                        currency=record.currency,
                         pricing_policy=record.pricing_policy,
                         date=record.date,
                         fx_rate=fx_rate
