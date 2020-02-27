@@ -76,11 +76,15 @@ class CurrencyItem(object):
 
         if self.pricing_scheme.type.id == 5:
 
+            print('parameters.fx_rate %s' % parameters.fx_rate)
+
             self.scheme_fields_map = {}
 
             if parameters.fx_rate:
                 self.scheme_fields.append([parameters.fx_rate])
                 self.scheme_fields_map['fx_rate'] = parameters.fx_rate
+
+            print('self.scheme_fields_map %s' % self.scheme_fields_map)
 
 
 class PricingCurrencyHandler(object):
@@ -488,7 +492,7 @@ class PricingCurrencyHandler(object):
 
                             record = PricingProcedureBloombergCurrencyResult(master_user=self.master_user,
                                                                      procedure=procedure_instance,
-                                                                     currency=item.instrument,
+                                                                     currency=item.currency,
                                                                      currency_parameters=str(item_parameters),
                                                                      pricing_policy=item.policy.pricing_policy,
                                                                      reference=item.parameters[0],
