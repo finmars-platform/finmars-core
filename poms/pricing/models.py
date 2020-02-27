@@ -631,9 +631,12 @@ class PricingProcedureInstance(models.Model):
 
     status = models.CharField(max_length=1,  default=STATUS_INIT, choices=STATUS_CHOICES, verbose_name=ugettext_lazy('status'))
 
+    action = models.CharField(max_length=255, null=True, blank=True)
+    provider = models.CharField(max_length=255, null=True, blank=True)
 
 
-class PricingProcedureBloombergResult(models.Model):
+
+class PricingProcedureBloombergInstrumentResult(models.Model):
 
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
                                     on_delete=models.CASCADE)
@@ -661,4 +664,29 @@ class PricingProcedureBloombergResult(models.Model):
     class Meta:
         unique_together = (
             ('master_user', 'instrument', 'date', 'pricing_policy')
+        )
+
+
+class PricingProcedureBloombergCurrencyResult(models.Model):
+
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
+
+    procedure = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE, verbose_name=ugettext_lazy('procedure'))
+
+    currency = models.ForeignKey('currencies.Currency', on_delete=models.CASCADE, verbose_name=ugettext_lazy('currency'))
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, verbose_name=ugettext_lazy('pricing policy'))
+
+    reference = models.CharField(max_length=255, null=True, blank=True)
+
+    date = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('date'))
+
+    currency_parameters = models.CharField(max_length=255, null=True, blank=True)
+
+    fx_rate_parameters = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('fx rate parameters'))
+    fx_rate_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('fx rate value'))
+
+    class Meta:
+        unique_together = (
+            ('master_user', 'currency', 'date', 'pricing_policy')
         )

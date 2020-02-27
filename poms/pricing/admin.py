@@ -4,8 +4,9 @@ from django.contrib import admin
 from django.contrib import admin
 
 from poms.pricing.models import InstrumentPricingSchemeType, CurrencyPricingSchemeType, InstrumentPricingScheme, \
-    CurrencyPricingScheme, PricingProcedureBloombergResult, PricingProcedure, InstrumentPricingPolicy, \
-    InstrumentTypePricingPolicy, CurrencyPricingPolicy, PricingProcedureInstance
+    CurrencyPricingScheme, PricingProcedure, InstrumentPricingPolicy, \
+    InstrumentTypePricingPolicy, CurrencyPricingPolicy, PricingProcedureInstance, \
+    PricingProcedureBloombergInstrumentResult, PricingProcedureBloombergCurrencyResult
 
 
 class InstrumentPricingSchemeTypeAdmin(admin.ModelAdmin):
@@ -40,13 +41,23 @@ class CurrencyPricingSchemeAdmin(admin.ModelAdmin):
 admin.site.register(CurrencyPricingScheme, CurrencyPricingSchemeAdmin)
 
 
-class PricingProcedureBloombergResultAdmin(admin.ModelAdmin):
-    model = PricingProcedureBloombergResult
+class PricingProcedureBloombergInstrumentResultAdmin(admin.ModelAdmin):
+    model = PricingProcedureBloombergInstrumentResult
     list_display = ['id', 'master_user', 'procedure', 'instrument', 'pricing_policy', 'reference', 'date', 'ask_value', 'bid_value', 'last_value']
     raw_id_fields = ['instrument', 'pricing_policy']
 
 
-admin.site.register(PricingProcedureBloombergResult, PricingProcedureBloombergResultAdmin)
+admin.site.register(PricingProcedureBloombergInstrumentResult, PricingProcedureBloombergInstrumentResultAdmin)
+
+
+class PricingProcedureBloombergCurrencyResultAdmin(admin.ModelAdmin):
+    model = PricingProcedureBloombergCurrencyResult
+    list_display = ['id', 'master_user', 'procedure', 'currency', 'pricing_policy', 'reference', 'date', 'fx_rate_parameters', 'fx_rate_value']
+    raw_id_fields = ['currency', 'pricing_policy']
+
+
+admin.site.register(PricingProcedureBloombergCurrencyResult, PricingProcedureBloombergCurrencyResultAdmin)
+
 
 
 class PricingProcedureAdmin(admin.ModelAdmin):

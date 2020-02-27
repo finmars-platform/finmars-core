@@ -1,5 +1,7 @@
 from datetime import timedelta
 
+from poms.common.utils import date_now
+
 
 def get_unique_pricing_schemes(items):
 
@@ -39,6 +41,21 @@ def group_items_by_provider(items, groups):
         result[item.type.id] = []
 
     for item in items:
-        result[item.policy.pricing_scheme.type.id].append(item)
+        if item.policy.pricing_scheme:
+            result[item.policy.pricing_scheme.type.id].append(item)
+        else:
+            print('Pricing scheme is not set in policy %s' % item.policy.id)
 
     return result
+
+
+def get_is_yesterday(date_from, date_to):
+
+    if date_from == date_to:
+
+        yesterday = date_now() - timedelta(days=1)
+
+        if yesterday == date_from:
+            return True
+
+    return False

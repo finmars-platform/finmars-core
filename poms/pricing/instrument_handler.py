@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.db import transaction
 from django.db.models import Q
 
 from poms.common import formula
@@ -8,8 +9,10 @@ from poms.instruments.models import Instrument, DailyPricingModel, PriceHistory
 from poms.integrations.models import ProviderClass
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
-from poms.pricing.models import InstrumentPricingSchemeType, PricingProcedureInstance, PricingProcedureBloombergResult
-from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_between_two_dates, group_items_by_provider
+from poms.pricing.models import InstrumentPricingSchemeType, PricingProcedureInstance, \
+    PricingProcedureBloombergInstrumentResult
+from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_between_two_dates, group_items_by_provider, \
+    get_is_yesterday
 from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
 
@@ -137,9 +140,8 @@ class PricingInstrumentHandler(object):
 
         print('instrument_items len %s' % len(self.instrument_items))
 
-
         self.instrument_items_grouped = group_items_by_provider(items=self.instrument_items,
-                                                                     groups=self.instrument_pricing_schemes)
+                                                                groups=self.instrument_pricing_schemes)
 
         print('instrument_items_grouped len %s' % len(self.instrument_items_grouped))
 
@@ -234,17 +236,6 @@ class PricingInstrumentHandler(object):
 
         return result
 
-    def is_yesterday(self, date_from, date_to):
-
-        if date_from == date_to:
-
-            yesterday = date_now() - timedelta(days=1)
-
-            if yesterday == date_from:
-                return True
-
-        return False
-
     # DEPRECATED
     def process_to_manual_pricing(self, items):
 
@@ -330,18 +321,16 @@ class PricingInstrumentHandler(object):
 
                             user_code = item.policy.attribute_key.split('attributes.')[1]
 
-                            attribute = GenericAttribute.objects.get(object_id=item.instrument.id, attribute_type__user_code=user_code)
+                            attribute = GenericAttribute.objects.get(object_id=item.instrument.id,
+                                                                     attribute_type__user_code=user_code)
 
                             if scheme_parameters.value_type == 10:
-
                                 parameter = attribute.value_string
 
                             if scheme_parameters.value_type == 20:
-
                                 parameter = attribute.value_float
 
                             if scheme_parameters.value_type == 40:
-
                                 parameter = attribute.value_date
 
                         else:
@@ -438,18 +427,16 @@ class PricingInstrumentHandler(object):
 
                             user_code = item.policy.attribute_key.split('attributes.')[1]
 
-                            attribute = GenericAttribute.objects.get(object_id=item.instrument.id, attribute_type__user_code=user_code)
+                            attribute = GenericAttribute.objects.get(object_id=item.instrument.id,
+                                                                     attribute_type__user_code=user_code)
 
                             if scheme_parameters.value_type == 10:
-
                                 parameter = attribute.value_string
 
                             if scheme_parameters.value_type == 20:
-
                                 parameter = attribute.value_float
 
                             if scheme_parameters.value_type == 40:
-
                                 parameter = attribute.value_date
 
                         else:
@@ -494,24 +481,21 @@ class PricingInstrumentHandler(object):
 
                                         user_code = parameter['attribute_key'].split('attributes.')[1]
 
-                                        attribute = GenericAttribute.objects.get(object_id=item.instrument.id, attribute_type__user_code=user_code)
+                                        attribute = GenericAttribute.objects.get(object_id=item.instrument.id,
+                                                                                 attribute_type__user_code=user_code)
 
                                         if float(parameter['value_type']) == 10:
-
                                             val = attribute.value_string
 
                                         if float(parameter['value_type']) == 20:
-
                                             val = attribute.value_float
 
                                         if float(parameter['value_type']) == 40:
-
                                             val = attribute.value_date
 
                                     else:
 
                                         val = item.instrument[parameter['attribute_key']]
-
 
                                 values['parameter' + str(parameter['index'])] = val
 
@@ -609,12 +593,17 @@ class PricingInstrumentHandler(object):
 
         print("Pricing Instrument Handler - Bloomberg Provider: len %s" % len(items))
 
-        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure, master_user=self.master_user, status=PricingProcedureInstance.STATUS_PENDING)
+        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+                                                      master_user=self.master_user,
+                                                      status=PricingProcedureInstance.STATUS_PENDING,
+                                                      action='bloomberg_get_instrument_prices',
+                                                      provider='bloomberg')
         procedure_instance.save()
 
         body = {}
+        body['action'] = procedure_instance.action
         body['procedure'] = procedure_instance.id
-        body['provider_type'] = 'BLOOMBERG'
+        body['provider'] = procedure_instance.provider
 
         config = self.master_user.import_configs.get(provider=ProviderClass.BLOOMBERG)
         body['user'] = {
@@ -636,7 +625,7 @@ class PricingInstrumentHandler(object):
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
 
-        is_yesterday = self.is_yesterday(self.procedure.price_date_from, self.procedure.price_date_to)
+        is_yesterday = get_is_yesterday(self.procedure.price_date_from, self.procedure.price_date_to)
 
         print('is_yesterday %s' % is_yesterday)
         print('procedure id %s' % body['procedure'])
@@ -654,32 +643,34 @@ class PricingInstrumentHandler(object):
 
                     for date in dates:
 
-                        try:
+                        with transaction.atomic():
+                            try:
+                                record = PricingProcedureBloombergInstrumentResult(master_user=self.master_user,
+                                                                                   procedure=procedure_instance,
+                                                                                   instrument=item.instrument,
+                                                                                   instrument_parameters=str(
+                                                                                       item_parameters),
+                                                                                   pricing_policy=item.policy.pricing_policy,
+                                                                                   reference=item.parameters[0],
+                                                                                   date=date)
 
-                            record = PricingProcedureBloombergResult(master_user=self.master_user,
-                                                                     procedure=procedure_instance,
-                                                                     instrument=item.instrument,
-                                                                     instrument_parameters=str(item_parameters),
-                                                                     pricing_policy=item.policy.pricing_policy,
-                                                                     reference=item.parameters[0],
-                                                                     date=date)
+                                if 'ask_yesterday' in item.scheme_fields_map:
+                                    record.ask_parameters = item.scheme_fields_map[
+                                        'ask_yesterday']
 
-                            if 'ask_yesterday' in item.scheme_fields_map:
-                                record.ask_parameters = item.scheme_fields_map[
-                                    'ask_yesterday']
+                                if 'bid_yesterday' in item.scheme_fields_map:
+                                    record.bid_parameters = item.scheme_fields_map[
+                                        'bid_yesterday']
 
-                            if 'bid_yesterday' in item.scheme_fields_map:
-                                record.bid_parameters = item.scheme_fields_map[
-                                    'bid_yesterday']
+                                if 'last_yesterday' in item.scheme_fields_map:
+                                    record.last_parameters = item.scheme_fields_map[
+                                        'last_yesterday']
 
-                            if 'last_yesterday' in item.scheme_fields_map:
-                                record.last_parameters = item.scheme_fields_map[
-                                    'last_yesterday']
+                                record.save()
 
-                            record.save()
-
-                        except Exception as e:
-                            print("Cant create Result Record %s" % e)
+                            except Exception as e:
+                                print("Cant create Result Record %s" % e)
+                                pass
 
                     item_obj = {
                         'reference': item.parameters[0],
@@ -714,32 +705,34 @@ class PricingInstrumentHandler(object):
 
                     for date in dates:
 
-                        try:
+                        with transaction.atomic():
+                            try:
 
-                            record = PricingProcedureBloombergResult(master_user=self.master_user,
-                                                                     procedure=procedure_instance,
-                                                                     instrument=item.instrument,
-                                                                     instrument_parameters=str(item_parameters),
-                                                                     pricing_policy=item.policy.pricing_policy,
-                                                                     reference=item.parameters[0],
-                                                                     date=date)
+                                record = PricingProcedureBloombergInstrumentResult(master_user=self.master_user,
+                                                                                   procedure=procedure_instance,
+                                                                                   instrument=item.instrument,
+                                                                                   instrument_parameters=str(
+                                                                                       item_parameters),
+                                                                                   pricing_policy=item.policy.pricing_policy,
+                                                                                   reference=item.parameters[0],
+                                                                                   date=date)
 
-                            if 'ask_historical' in item.scheme_fields_map:
-                                record.ask_parameters = item.scheme_fields_map[
-                                    'ask_historical']
+                                if 'ask_historical' in item.scheme_fields_map:
+                                    record.ask_parameters = item.scheme_fields_map[
+                                        'ask_historical']
 
-                            if 'bid_historical' in item.scheme_fields_map:
-                                record.bid_parameters = item.scheme_fields_map[
-                                    'bid_historical']
+                                if 'bid_historical' in item.scheme_fields_map:
+                                    record.bid_parameters = item.scheme_fields_map[
+                                        'bid_historical']
 
-                            if 'last_historical' in item.scheme_fields_map:
-                                record.last_parameters = item.scheme_fields_map[
-                                    'last_historical']
+                                if 'last_historical' in item.scheme_fields_map:
+                                    record.last_parameters = item.scheme_fields_map[
+                                        'last_historical']
 
-                            record.save()
+                                record.save()
 
-                        except Exception as e:
-                            print("Cant create Result Record %s" % e)
+                            except Exception as e:
+                                print("Cant create Result Record %s" % e)
 
                     item_obj = {
                         'reference': item.parameters[0],

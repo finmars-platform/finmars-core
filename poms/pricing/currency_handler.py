@@ -1,8 +1,13 @@
+from django.db import transaction
+
 from poms.common import formula
 from poms.currencies.models import Currency, CurrencyHistory
+from poms.integrations.models import ProviderClass
 from poms.obj_attrs.models import GenericAttribute
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
-from poms.pricing.utils import get_unique_pricing_schemes, group_items_by_provider, get_list_of_dates_between_two_dates
+from poms.pricing.models import PricingProcedureInstance, PricingProcedureBloombergCurrencyResult
+from poms.pricing.utils import get_unique_pricing_schemes, group_items_by_provider, get_list_of_dates_between_two_dates, \
+    get_is_yesterday
 
 
 class CurrencyItem(object):
@@ -39,6 +44,11 @@ class PricingCurrencyHandler(object):
 
         self.currencies = self.get_currencies()
 
+        try:
+            print('currencies len %s ' % len(self.currencies))
+        except Exception as e:
+            print(e)
+
         self.currencies_pricing_schemes = get_unique_pricing_schemes(self.currencies)
 
         print('currencies_pricing_schemes len %s' % len(self.currencies_pricing_schemes))
@@ -69,12 +79,11 @@ class PricingCurrencyHandler(object):
             if provider_id == 5:
                 self.process_to_bloomberg_provider(items)
 
-
     def get_currencies(self):
 
         result = []
 
-        result = list(Currency.objects.filter(master_user=self.master_user))
+        result = Currency.objects.filter(master_user=self.master_user).exclude(user_code='-')
 
         return result
 
@@ -364,7 +373,108 @@ class PricingCurrencyHandler(object):
 
         print("Pricing Currency Handler - Bloomberg Provider: len %s" % len(items))
 
-        pass
+        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+                                                      master_user=self.master_user,
+                                                      status=PricingProcedureInstance.STATUS_PENDING,
+                                                      action='bloomberg_get_currency_prices',
+                                                      provider='bloomberg')
+        procedure_instance.save()
+
+        body = {}
+        body['action'] = procedure_instance.action
+        body['procedure'] = procedure_instance.id
+        body['provider'] = procedure_instance.provider
+
+        config = self.master_user.import_configs.get(provider=ProviderClass.BLOOMBERG)
+        body['user'] = {
+            'token': self.master_user.id,
+            'credentials': {
+                'p12cert': str(config.p12cert),
+                'password': config.password
+            }
+        }
+
+        body['data'] = {}
+
+        body['data']['date_from'] = str(self.procedure.price_date_from)
+        body['data']['date_to'] = str(self.procedure.price_date_to)
+        body['data']['items'] = []
+
+        items_with_missing_parameters = []
+
+        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
+                                                    date_to=self.procedure.price_date_to)
+
+        is_yesterday = get_is_yesterday(self.procedure.price_date_from, self.procedure.price_date_to)
+
+        print('is_yesterday %s' % is_yesterday)
+        print('procedure id %s' % body['procedure'])
+
+        full_items = []
+
+        for item in items:
+
+            if len(item.parameters):
+
+                item_parameters = item.parameters.copy()
+                item_parameters.pop()
+
+                for date in dates:
+
+                    with transaction.atomic():
+                        try:
+
+                            record = PricingProcedureBloombergCurrencyResult(master_user=self.master_user,
+                                                                     procedure=procedure_instance,
+                                                                     currency=item.instrument,
+                                                                     currency_parameters=str(item_parameters),
+                                                                     pricing_policy=item.policy.pricing_policy,
+                                                                     reference=item.parameters[0],
+                                                                     date=date)
+
+                            if 'fx_rate' in item.scheme_fields_map:
+                                record.fx_rate_parameters = item.scheme_fields_map[
+                                    'fx_rate']
+
+                            record.save()
+
+                        except Exception as e:
+                            print("Cant create Result Record %s" % e)
+
+                item_obj = {
+                    'reference': item.parameters[0],
+                    'parameters': item_parameters,
+                    'fields': []
+                }
+
+                if 'fx_rate' in item.scheme_fields_map:
+                    item_obj['fields'].append({
+                        'code': item.scheme_fields_map['fx_rate'],
+                        'parameters': [],
+                        'values': []
+                    })
+
+                full_items.append(item_obj)
+
+            else:
+                items_with_missing_parameters.append(item)
+
+        print('full_items len: %s' % len(full_items))
+
+        # optimized_items = self.optimize_items(full_items)
+        optimized_items = full_items
+
+        print('optimized_items len: %s' % len(optimized_items))
+
+        body['data']['items'] = optimized_items
+
+        print('items_with_missing_parameters %s' % len(items_with_missing_parameters))
+        # print('data %s' % data)
+
+        print('self.procedure %s' % self.procedure.id)
+        print('send request %s' % body)
+
+        self.broker_bloomberg.send_request(body)
 
     def print_grouped_currencies(self):
 
