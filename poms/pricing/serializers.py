@@ -66,7 +66,7 @@ class InstrumentPricingSchemeBloombergParametersSerializer(serializers.ModelSeri
 class CurrencyPricingSchemeBloombergParametersSerializer(serializers.ModelSerializer):
     class Meta:
         model = CurrencyPricingSchemeBloombergParameters
-        fields = ('id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'fxrate')
+        fields = ('id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'fx_rate')
 
 
 class InstrumentPricingSchemeTypeSerializer(serializers.ModelSerializer):
@@ -531,10 +531,10 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
                 else:
                     bloomberg.value_type = None
 
-                if 'fxrate' in type_settings:
-                    bloomberg.fxrate = type_settings['fxrate']
+                if 'fx_rate' in type_settings:
+                    bloomberg.fx_rate = type_settings['fx_rate']
                 else:
-                    bloomberg.fxrate = None
+                    bloomberg.fx_rate = None
 
                 if 'expr' in type_settings:
                     bloomberg.expr = type_settings['expr']

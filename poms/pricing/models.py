@@ -435,7 +435,7 @@ class CurrencyPricingSchemeBloombergParameters(models.Model):
     value_type = models.PositiveSmallIntegerField(default=STRING, choices=TYPES,
                                                   verbose_name=ugettext_lazy('value type'))
 
-    fxrate = models.CharField(max_length=50, blank=True, verbose_name=ugettext_lazy('FX-rate'))
+    fx_rate = models.CharField(max_length=50, blank=True, verbose_name=ugettext_lazy('FX rate'))
 
 
 class PricingProcedure(NamedModel):

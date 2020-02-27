@@ -3,9 +3,10 @@ from django.db import transaction
 from poms.common import formula
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.integrations.models import ProviderClass
-from poms.obj_attrs.models import GenericAttribute
+from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
-from poms.pricing.models import PricingProcedureInstance, PricingProcedureBloombergCurrencyResult
+from poms.pricing.models import PricingProcedureInstance, PricingProcedureBloombergCurrencyResult, \
+    CurrencyPricingSchemeType
 from poms.pricing.utils import get_unique_pricing_schemes, group_items_by_provider, get_list_of_dates_between_two_dates, \
     get_is_yesterday
 
@@ -18,7 +19,68 @@ class CurrencyItem(object):
         self.pricing_scheme = pricing_scheme
 
         self.scheme_fields = []
+        self.scheme_fields_map = {}
         self.parameters = []
+
+        self.fill_parameters()
+        self.fill_scheme_fields()
+
+    def fill_parameters(self):
+
+        if self.pricing_scheme.type.input_type == CurrencyPricingSchemeType.NONE:
+            pass  # do nothing
+
+        if self.pricing_scheme.type.input_type == CurrencyPricingSchemeType.SINGLE_PARAMETER:
+
+            if self.policy.default_value:
+                self.parameters.append(self.policy.default_value)
+            else:
+
+                result = None
+
+                if self.policy.attribute_key == 'reference_for_pricing':
+                    result = self.currency.reference_for_pricing   ## TODO check if needed for currency
+                else:
+
+                    try:
+
+                        attribute = GenericAttribute.objects.get(object_id=self.currency.id,
+                                                                 attribute_type__user_code=self.policy.attribute_key)
+
+                        if attribute.attribute_type.value_type == GenericAttributeType.STRING:
+                            result = attribute.value_string
+
+                        if attribute.attribute_type.value_type == GenericAttributeType.NUMBER:
+                            result = attribute.value_float
+
+                        if attribute.attribute_type.value_type == GenericAttributeType.DATE:
+                            result = attribute.value_date
+
+                        if attribute.attribute_type.value_type == GenericAttributeType.CLASSIFIER:
+
+                            if attribute.classifier:
+                                result = attribute.classifier.name
+
+                    except GenericAttribute.DoesNotExist:
+                        pass
+
+                if result:
+                    self.parameters.append(result)
+
+        if self.pricing_scheme.type.input_type == CurrencyPricingSchemeType.MULTIPLE_PARAMETERS:
+            pass  # TODO implement multiparameter case
+
+    def fill_scheme_fields(self):
+
+        parameters = self.pricing_scheme.get_parameters()
+
+        if self.pricing_scheme.type.id == 5:
+
+            self.scheme_fields_map = {}
+
+            if parameters.fx_rate:
+                self.scheme_fields.append([parameters.fx_rate])
+                self.scheme_fields_map['fx_rate'] = parameters.fx_rate
 
 
 class PricingCurrencyHandler(object):
