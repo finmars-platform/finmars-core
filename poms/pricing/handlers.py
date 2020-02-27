@@ -297,7 +297,7 @@ class FillPricesProcess(object):
                 continue
 
             print('fx_rate %s' % fx_rate)
-            print('instrument %s' % record.instrument.user_code)
+            print('currency %s' % record.currency.user_code)
             print('pricing_policy %s' % record.pricing_policy.user_code)
 
             if fx_rate:
