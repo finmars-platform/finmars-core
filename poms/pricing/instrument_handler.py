@@ -547,12 +547,14 @@ class PricingInstrumentHandler(object):
 
         print("Pricing Instrument Handler - Bloomberg Provider: len %s" % len(items))
 
-        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
-                                                      master_user=self.master_user,
-                                                      status=PricingProcedureInstance.STATUS_PENDING,
-                                                      action='bloomberg_get_instrument_prices',
-                                                      provider='bloomberg')
-        procedure_instance.save()
+        with transaction.atomic():
+
+            procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+                                                          master_user=self.master_user,
+                                                          status=PricingProcedureInstance.STATUS_PENDING,
+                                                          action='bloomberg_get_instrument_prices',
+                                                          provider='bloomberg')
+            procedure_instance.save()
 
         body = {}
         body['action'] = procedure_instance.action
@@ -740,12 +742,14 @@ class PricingInstrumentHandler(object):
 
         print("Pricing Instrument Handler - Wtrade Provider: len %s" % len(items))
 
-        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
-                                                      master_user=self.master_user,
-                                                      status=PricingProcedureInstance.STATUS_PENDING,
-                                                      action='wtrade_get_instrument_prices',
-                                                      provider='wtrade')
-        procedure_instance.save()
+        with transaction.atomic():
+
+            procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+                                                          master_user=self.master_user,
+                                                          status=PricingProcedureInstance.STATUS_PENDING,
+                                                          action='wtrade_get_instrument_prices',
+                                                          provider='wtrade')
+            procedure_instance.save()
 
         body = {}
         body['action'] = procedure_instance.action
