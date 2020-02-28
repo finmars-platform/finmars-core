@@ -165,8 +165,8 @@ class PricingInstrumentHandler(object):
             if provider_id == 5:
                 self.process_to_bloomberg_provider(items)
 
-            if provider_id == 6:
-                self.process_to_wtrade_provider(items)
+            # if provider_id == 6:
+                # self.process_to_wtrade_provider(items)
 
     def get_instruments(self):
 
@@ -855,16 +855,7 @@ class PricingInstrumentHandler(object):
         print('self.procedure %s' % self.procedure.id)
         print('send request %s' % body)
 
-        response = self.transport.send_request(body)
-
-        data = response.json()
-
-        print('data %s' % data)
-
-        from poms.pricing.handlers import FillPricesBrokerWtradeProcess
-        instance = FillPricesBrokerWtradeProcess(instance=data, master_user=self.master_user)
-        instance.process()
-
+        self.transport.send_request(body)
 
     def print_grouped_instruments(self):
 
