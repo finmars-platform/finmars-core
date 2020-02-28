@@ -863,7 +863,8 @@ class PricingInstrumentHandler(object):
             2: 'Manual Pricing',  # DEPRECATED
             3: 'Single Parameter Formula',
             4: 'Multiple Parameter Formula',
-            5: 'Bloomberg'
+            5: 'Bloomberg',
+            6: 'Wtrade'
 
         }
 
