@@ -17,6 +17,6 @@ class PricingTransport(object):
 
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
-        response = requests.post(url=self.mediator_url, data=json.dumps(data), headers=headers)
+        response = requests.post(url=self.mediator_url + 'process/pricing/', data=json.dumps(data), headers=headers)
 
         return response
