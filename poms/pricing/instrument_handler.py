@@ -457,6 +457,8 @@ class PricingInstrumentHandler(object):
 
                     if item.policy.data:
 
+                        print('item.policy.data %s' % item.policy.data)
+
                         if 'parameters' in item.policy.data:
 
                             for parameter in item.policy.data['parameters']:
