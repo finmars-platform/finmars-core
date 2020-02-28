@@ -313,7 +313,7 @@ class PricingInstrumentHandler(object):
 
                             parameter = float(item.policy.default_value)
 
-                        if scheme_parameters.value_type == 40:
+                        elif scheme_parameters.value_type == 40:
 
                             parameter = formula._parse_date(str(item.policy.default_value))
 
@@ -419,7 +419,7 @@ class PricingInstrumentHandler(object):
 
                             parameter = float(item.policy.default_value)
 
-                        if scheme_parameters.value_type == 40:
+                        elif scheme_parameters.value_type == 40:
 
                             parameter = formula._parse_date(str(item.policy.default_value))
 
