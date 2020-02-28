@@ -457,8 +457,6 @@ class PricingInstrumentHandler(object):
 
                     if item.policy.data:
 
-                        print('item.policy.data %s' % item.policy.data)
-
                         if 'parameters' in item.policy.data:
 
                             for parameter in item.policy.data['parameters']:
@@ -503,7 +501,7 @@ class PricingInstrumentHandler(object):
 
                                     else:
 
-                                        val = item.instrument[parameter['attribute_key']]
+                                        val = getattr(item.instrument, parameter['attribute_key'])
 
                                 values['parameter' + str(parameter['index'])] = val
 
