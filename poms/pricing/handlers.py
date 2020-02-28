@@ -565,7 +565,7 @@ class FillPricesBrokerWtradeProcess(object):
 
                     print('Create New Price history %s' % price.id)
 
-        PricingProcedureBloombergInstrumentResult.objects.filter(master_user=self.master_user,
+        PricingProcedureWtradeInstrumentResult.objects.filter(master_user=self.master_user,
                                                                  procedure=self.instance['procedure'],
                                                                  date__gte=self.instance['data']['date_from'],
                                                                  date__lte=self.instance['data']['date_to']).delete()
@@ -644,7 +644,7 @@ class FillPricesBrokerWtradeProcess(object):
 
                     print('Create New Currency history %s' % price.id)
 
-        PricingProcedureBloombergCurrencyResult.objects.filter(master_user=self.master_user,
+        PricingProcedureWtradeCurrencyResult.objects.filter(master_user=self.master_user,
                                                                procedure=self.instance['procedure'],
                                                                date__gte=self.instance['data']['date_from'],
                                                                date__lte=self.instance['data']['date_to']).delete()
