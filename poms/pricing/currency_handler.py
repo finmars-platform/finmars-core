@@ -6,9 +6,9 @@ from poms.integrations.models import ProviderClass
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
 from poms.pricing.models import PricingProcedureInstance, PricingProcedureBloombergCurrencyResult, \
-    CurrencyPricingSchemeType
+    CurrencyPricingSchemeType, PricingProcedureWtradeCurrencyResult
 from poms.pricing.utils import get_unique_pricing_schemes, group_items_by_provider, get_list_of_dates_between_two_dates, \
-    get_is_yesterday
+    get_is_yesterday, optimize_items
 
 
 class CurrencyItem(object):
@@ -527,8 +527,129 @@ class PricingCurrencyHandler(object):
 
         print('full_items len: %s' % len(full_items))
 
-        # optimized_items = self.optimize_items(full_items)
-        optimized_items = full_items
+        optimized_items = optimize_items(full_items)
+
+        print('optimized_items len: %s' % len(optimized_items))
+
+        body['data']['items'] = optimized_items
+
+        print('items_with_missing_parameters %s' % len(items_with_missing_parameters))
+        # print('data %s' % data)
+
+        print('self.procedure %s' % self.procedure.id)
+        print('send request %s' % body)
+
+        self.broker_bloomberg.send_request(body)
+
+    def process_to_wtrade_provider(self, items):
+
+        print("Pricing Instrument Handler - Wtrade Provider: len %s" % len(items))
+
+        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+                                                      master_user=self.master_user,
+                                                      status=PricingProcedureInstance.STATUS_PENDING,
+                                                      action='wtrade_get_instrument_prices',
+                                                      provider='wtrade')
+        procedure_instance.save()
+
+        body = {}
+        body['action'] = procedure_instance.action
+        body['procedure'] = procedure_instance.id
+        body['provider'] = procedure_instance.provider
+
+        config = self.master_user.import_configs.get(provider=ProviderClass.BLOOMBERG)
+        body['user'] = {
+            'token': self.master_user.id
+        }
+
+        body['data'] = {}
+
+        body['data']['date_from'] = str(self.procedure.price_date_from)
+        body['data']['date_to'] = str(self.procedure.price_date_to)
+        body['data']['items'] = []
+
+        items_with_missing_parameters = []
+
+        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
+                                                    date_to=self.procedure.price_date_to)
+
+        is_yesterday = get_is_yesterday(self.procedure.price_date_from, self.procedure.price_date_to)
+
+        print('is_yesterday %s' % is_yesterday)
+        print('procedure id %s' % body['procedure'])
+
+        full_items = []
+
+        for item in items:
+
+            if len(item.parameters):
+
+                item_parameters = item.parameters.copy()
+                item_parameters.pop()
+
+                for date in dates:
+
+                    with transaction.atomic():
+                        try:
+                            record = PricingProcedureWtradeCurrencyResult(master_user=self.master_user,
+                                                                            procedure=procedure_instance,
+                                                                            currency=item.currency,
+                                                                            currency_parameters=str(
+                                                                                item_parameters),
+                                                                            pricing_policy=item.policy.pricing_policy,
+                                                                            reference=item.parameters[0],
+                                                                            date=date)
+
+                            record.save()
+
+                        except Exception as e:
+                            print("Cant create Result Record %s" % e)
+                            pass
+
+                item_obj = {
+                    'reference': item.parameters[0],
+                    'parameters': item_parameters,
+                    'fields': []
+                }
+
+                item_obj['fields'].append({
+                    'code': 'close',
+                    'parameters': [],
+                    'values': []
+                })
+
+                item_obj['fields'].append({
+                    'code': 'open',
+                    'parameters': [],
+                    'values': []
+                })
+
+                item_obj['fields'].append({
+                    'code': 'high',
+                    'parameters': [],
+                    'values': []
+                })
+
+                item_obj['fields'].append({
+                    'code': 'low',
+                    'parameters': [],
+                    'values': []
+                })
+
+                item_obj['fields'].append({
+                    'code': 'volume',
+                    'parameters': [],
+                    'values': []
+                })
+
+                full_items.append(item_obj)
+
+            else:
+                items_with_missing_parameters.append(item)
+
+        print('full_items len: %s' % len(full_items))
+
+        optimized_items = optimize_items(full_items)
 
         print('optimized_items len: %s' % len(optimized_items))
 

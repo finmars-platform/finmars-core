@@ -377,7 +377,8 @@ urlpatterns = [
 
     # external callbacks
 
-    url(r'internal/brokers/bloomberg/callback', csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view()))
+    url(r'internal/brokers/bloomberg/callback', csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view())),
+    url(r'internal/brokers/wtrade/callback', csrf_exempt(pricing.PricingBrokerWtradeHandler.as_view()))
 ]
 
 if settings.DEV:

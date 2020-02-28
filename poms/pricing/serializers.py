@@ -10,7 +10,7 @@ from poms.pricing.models import InstrumentPricingScheme, InstrumentPricingScheme
     CurrencyPricingScheme, PricingProcedure, InstrumentPricingSchemeMultipleParametersFormulaParameters, \
     CurrencyPricingSchemeMultipleParametersFormulaParameters, InstrumentPricingSchemeBloombergParameters, \
     CurrencyPricingSchemeBloombergParameters, CurrencyPricingPolicy, InstrumentTypePricingPolicy, \
-    InstrumentPricingPolicy
+    InstrumentPricingPolicy, CurrencyPricingSchemeWtradeParameters, InstrumentPricingSchemeWtradeParameters
 from poms.users.fields import MasterUserField
 
 
@@ -67,6 +67,18 @@ class CurrencyPricingSchemeBloombergParametersSerializer(serializers.ModelSerial
     class Meta:
         model = CurrencyPricingSchemeBloombergParameters
         fields = ('id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'fx_rate')
+
+
+class InstrumentPricingSchemeWtradeParametersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstrumentPricingSchemeWtradeParameters
+        fields = ('id', 'instrument_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type')
+
+
+class CurrencyPricingSchemeWtradeParametersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CurrencyPricingSchemeWtradeParameters
+        fields = ('id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type')
 
 
 class InstrumentPricingSchemeTypeSerializer(serializers.ModelSerializer):
@@ -146,6 +158,19 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
                         instance=multiple_parameters_formula).data
 
                 except InstrumentPricingSchemeBloombergParameters.DoesNotExist:
+                    pass
+
+            if instance.type_id == 6:  # wtrade
+
+                try:
+
+                    multiple_parameters_formula = InstrumentPricingSchemeWtradeParameters.objects.get(
+                        instrument_pricing_scheme=instance.id)
+
+                    result = InstrumentPricingSchemeWtradeParametersSerializer(
+                        instance=multiple_parameters_formula).data
+
+                except InstrumentPricingSchemeWtradeParameters.DoesNotExist:
                     pass
 
         return result
@@ -408,6 +433,19 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
                 except CurrencyPricingSchemeBloombergParameters.DoesNotExist:
                     pass
 
+            if instance.type_id == 6:  # wtrade
+
+                try:
+
+                    multiple_parameters_formula = CurrencyPricingSchemeWtradeParameters.objects.get(
+                        currency_pricing_scheme=instance.id)
+
+                    result = CurrencyPricingSchemeWtradeParametersSerializer(
+                        instance=multiple_parameters_formula).data
+
+                except CurrencyPricingSchemeWtradeParameters.DoesNotExist:
+                    pass
+
         return result
 
     def to_internal_value(self, data):
@@ -542,6 +580,38 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
                     bloomberg.expr = None
 
                 bloomberg.save()
+
+            if instance.type_id == 6:  # multiple parameters formula
+
+                try:
+                    wtrade = CurrencyPricingSchemeWtradeParameters.objects.get(
+                        currency_pricing_scheme_id=instance.id)
+
+                except CurrencyPricingSchemeWtradeParameters.DoesNotExist:
+
+                    wtrade = CurrencyPricingSchemeWtradeParameters(currency_pricing_scheme_id=instance.id)
+
+                if 'default_value' in type_settings:
+                    wtrade.default_value = type_settings['default_value']
+                else:
+                    wtrade.default_value = None
+
+                if 'attribute_key' in type_settings:
+                    wtrade.attribute_key = type_settings['attribute_key']
+                else:
+                    wtrade.attribute_key = None
+
+                if 'value_type' in type_settings:
+                    wtrade.value_type = type_settings['value_type']
+                else:
+                    wtrade.value_type = None
+
+                if 'expr' in type_settings:
+                    wtrade.expr = type_settings['expr']
+                else:
+                    wtrade.expr = None
+
+                wtrade.save()
 
     def create(self, validated_data):
 

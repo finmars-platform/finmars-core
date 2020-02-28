@@ -59,3 +59,55 @@ def get_is_yesterday(date_from, date_to):
             return True
 
     return False
+
+
+def optimize_items(items):
+
+    unique_references = []
+    unique_codes = {}
+
+    result_dict = {}
+    result = []
+
+    for item in items:
+
+        reference_identifier = item['reference'] + ','.join(item['parameters'])
+
+        if reference_identifier not in unique_references:
+
+            result_item = {}
+
+            result_item['reference'] = item['reference']
+            result_item['parameters'] = item['parameters']
+            result_item['fields'] = []
+
+            unique_references.append(reference_identifier)
+
+            unique_codes[reference_identifier] = []
+
+            for field in item['fields']:
+
+                code_identifier = field['code'] + ','.join(field['parameters'])
+
+                if code_identifier not in unique_codes[reference_identifier]:
+                    unique_codes[reference_identifier].append(code_identifier)
+
+                    result_item['fields'].append(field)
+
+            result_dict[reference_identifier] = result_item
+
+        else:
+
+            for field in item['fields']:
+
+                code_identifier = field['code'] + ','.join(field['parameters'])
+
+                if code_identifier not in unique_codes[reference_identifier]:
+                    unique_codes[reference_identifier].append(code_identifier)
+
+                    result_dict[reference_identifier]['fields'].append(field)
+
+    for key, value in result_dict.items():
+        result.append(value)
+
+    return result
