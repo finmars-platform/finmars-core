@@ -751,112 +751,112 @@ class PricingInstrumentHandler(object):
                                                           provider='wtrade')
             procedure_instance.save()
 
-        body = {}
-        body['action'] = procedure_instance.action
-        body['procedure'] = procedure_instance.id
-        body['provider'] = procedure_instance.provider
+            body = {}
+            body['action'] = procedure_instance.action
+            body['procedure'] = procedure_instance.id
+            body['provider'] = procedure_instance.provider
 
-        body['user'] = {
-            'token': self.master_user.id
-        }
+            body['user'] = {
+                'token': self.master_user.id
+            }
 
-        body['data'] = {}
+            body['data'] = {}
 
-        body['data']['date_from'] = str(self.procedure.price_date_from)
-        body['data']['date_to'] = str(self.procedure.price_date_to)
-        body['data']['items'] = []
+            body['data']['date_from'] = str(self.procedure.price_date_from)
+            body['data']['date_to'] = str(self.procedure.price_date_to)
+            body['data']['items'] = []
 
-        items_with_missing_parameters = []
+            items_with_missing_parameters = []
 
-        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
-                                                    date_to=self.procedure.price_date_to)
+            dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
+                                                        date_to=self.procedure.price_date_to)
 
-        print('procedure id %s' % body['procedure'])
+            print('procedure id %s' % body['procedure'])
 
-        full_items = []
+            full_items = []
 
-        for item in items:
+            for item in items:
 
-            if len(item.parameters):
+                if len(item.parameters):
 
-                item_parameters = item.parameters.copy()
-                item_parameters.pop()
+                    item_parameters = item.parameters.copy()
+                    item_parameters.pop()
 
-                for date in dates:
+                    for date in dates:
 
-                    with transaction.atomic():
-                        try:
-                            record = PricingProcedureWtradeInstrumentResult(master_user=self.master_user,
-                                                                            procedure=procedure_instance,
-                                                                            instrument=item.instrument,
-                                                                            instrument_parameters=str(
-                                                                                item_parameters),
-                                                                            pricing_policy=item.policy.pricing_policy,
-                                                                            reference=item.parameters[0],
-                                                                            date=date)
+                        with transaction.atomic():
+                            try:
+                                record = PricingProcedureWtradeInstrumentResult(master_user=self.master_user,
+                                                                                procedure=procedure_instance,
+                                                                                instrument=item.instrument,
+                                                                                instrument_parameters=str(
+                                                                                    item_parameters),
+                                                                                pricing_policy=item.policy.pricing_policy,
+                                                                                reference=item.parameters[0],
+                                                                                date=date)
 
-                            record.save()
+                                record.save()
 
-                        except Exception as e:
-                            print("Cant create Result Record %s" % e)
-                            pass
+                            except Exception as e:
+                                print("Cant create Result Record %s" % e)
+                                pass
 
-                item_obj = {
-                    'reference': item.parameters[0],
-                    'parameters': item_parameters,
-                    'fields': []
-                }
+                    item_obj = {
+                        'reference': item.parameters[0],
+                        'parameters': item_parameters,
+                        'fields': []
+                    }
 
-                item_obj['fields'].append({
-                    'code': 'close',
-                    'parameters': [],
-                    'values': []
-                })
+                    item_obj['fields'].append({
+                        'code': 'close',
+                        'parameters': [],
+                        'values': []
+                    })
 
-                item_obj['fields'].append({
-                    'code': 'open',
-                    'parameters': [],
-                    'values': []
-                })
+                    item_obj['fields'].append({
+                        'code': 'open',
+                        'parameters': [],
+                        'values': []
+                    })
 
-                item_obj['fields'].append({
-                    'code': 'high',
-                    'parameters': [],
-                    'values': []
-                })
+                    item_obj['fields'].append({
+                        'code': 'high',
+                        'parameters': [],
+                        'values': []
+                    })
 
-                item_obj['fields'].append({
-                    'code': 'low',
-                    'parameters': [],
-                    'values': []
-                })
+                    item_obj['fields'].append({
+                        'code': 'low',
+                        'parameters': [],
+                        'values': []
+                    })
 
-                item_obj['fields'].append({
-                    'code': 'volume',
-                    'parameters': [],
-                    'values': []
-                })
+                    item_obj['fields'].append({
+                        'code': 'volume',
+                        'parameters': [],
+                        'values': []
+                    })
 
-                full_items.append(item_obj)
+                    full_items.append(item_obj)
 
-            else:
-                items_with_missing_parameters.append(item)
+                else:
+                    items_with_missing_parameters.append(item)
 
-        print('full_items len: %s' % len(full_items))
+            print('full_items len: %s' % len(full_items))
 
-        optimized_items = optimize_items(full_items)
+            optimized_items = optimize_items(full_items)
 
-        print('optimized_items len: %s' % len(optimized_items))
+            print('optimized_items len: %s' % len(optimized_items))
 
-        body['data']['items'] = optimized_items
+            body['data']['items'] = optimized_items
 
-        print('items_with_missing_parameters %s' % len(items_with_missing_parameters))
-        # print('data %s' % data)
+            print('items_with_missing_parameters %s' % len(items_with_missing_parameters))
+            # print('data %s' % data)
 
-        print('self.procedure %s' % self.procedure.id)
-        print('send request %s' % body)
+            print('self.procedure %s' % self.procedure.id)
+            print('send request %s' % body)
 
-        self.transport.send_request(body)
+            self.transport.send_request(body)
 
     def print_grouped_instruments(self):
 
