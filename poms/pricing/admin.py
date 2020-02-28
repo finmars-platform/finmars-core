@@ -6,7 +6,8 @@ from django.contrib import admin
 from poms.pricing.models import InstrumentPricingSchemeType, CurrencyPricingSchemeType, InstrumentPricingScheme, \
     CurrencyPricingScheme, PricingProcedure, InstrumentPricingPolicy, \
     InstrumentTypePricingPolicy, CurrencyPricingPolicy, PricingProcedureInstance, \
-    PricingProcedureBloombergInstrumentResult, PricingProcedureBloombergCurrencyResult
+    PricingProcedureBloombergInstrumentResult, PricingProcedureBloombergCurrencyResult, \
+    PricingProcedureWtradeInstrumentResult, PricingProcedureWtradeCurrencyResult
 
 
 class InstrumentPricingSchemeTypeAdmin(admin.ModelAdmin):
@@ -58,6 +59,23 @@ class PricingProcedureBloombergCurrencyResultAdmin(admin.ModelAdmin):
 
 admin.site.register(PricingProcedureBloombergCurrencyResult, PricingProcedureBloombergCurrencyResultAdmin)
 
+
+class PricingProcedureWtradeInstrumentResultAdmin(admin.ModelAdmin):
+    model = PricingProcedureWtradeInstrumentResult
+    list_display = ['id', 'master_user', 'procedure', 'instrument', 'pricing_policy', 'reference', 'date', 'open_value', 'close_value', 'high_value', 'low_value', 'volume_value']
+    raw_id_fields = ['instrument', 'pricing_policy']
+
+
+admin.site.register(PricingProcedureWtradeInstrumentResult, PricingProcedureWtradeInstrumentResultAdmin)
+
+
+class PricingProcedureWtradeCurrencyResultAdmin(admin.ModelAdmin):
+    model = PricingProcedureWtradeCurrencyResult
+    list_display = ['id', 'master_user', 'procedure', 'currency', 'pricing_policy', 'reference', 'date', 'open_value', 'close_value', 'high_value', 'low_value', 'volume_value']
+    raw_id_fields = ['currency', 'pricing_policy']
+
+
+admin.site.register(PricingProcedureWtradeCurrencyResult, PricingProcedureWtradeCurrencyResultAdmin)
 
 
 class PricingProcedureAdmin(admin.ModelAdmin):

@@ -15,7 +15,8 @@ from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet, Abstra
 from poms.csv_import.tasks import data_csv_file_import, data_csv_file_import_validate
 from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
 from poms.pricing.brokers.broker_serializers import DataRequestSerializer
-from poms.pricing.handlers import PricingProcedureProcess, FillPricesBrokerBloombergProcess
+from poms.pricing.handlers import PricingProcedureProcess, FillPricesBrokerBloombergProcess, \
+    FillPricesBrokerWtradeProcess
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, InstrumentPricingSchemeType, \
     CurrencyPricingSchemeType, PricingProcedure, PricingProcedureInstance
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
@@ -151,7 +152,7 @@ class PricingBrokerBloombergHandler(APIView):
 
         procedure_id = request.data['procedure']
 
-        print("> handle_callback: procedure_id %s" % procedure_id)
+        print("> handle_callback broker bloomberg: procedure_id %s" % procedure_id)
 
         try:
 
@@ -179,7 +180,7 @@ class PricingBrokerWtradeHandler(APIView):
 
         procedure_id = request.data['procedure']
 
-        print("> handle_callback: procedure_id %s" % procedure_id)
+        print("> handle_callback broker wtrade: procedure_id %s" % procedure_id)
 
         try:
 
