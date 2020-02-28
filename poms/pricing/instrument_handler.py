@@ -857,9 +857,7 @@ class PricingInstrumentHandler(object):
 
         response = self.transport.send_request(body)
 
-        data_json = response.json()
-
-        data = json.loads(data_json)
+        data = response.json()
 
         print('data %s' % data)
 
