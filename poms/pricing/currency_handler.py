@@ -227,7 +227,7 @@ class PricingCurrencyHandler(object):
 
                         else:
 
-                            parameter = item.currenc[item.policy.attribute_key]
+                            parameter = item.currency[item.policy.attribute_key]
 
                     values = {
                         'd': date,
