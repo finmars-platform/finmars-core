@@ -7,6 +7,7 @@ from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
 from poms.pricing.models import PricingProcedureInstance, PricingProcedureBloombergCurrencyResult, \
     CurrencyPricingSchemeType, PricingProcedureWtradeCurrencyResult
+from poms.pricing.transport.transport import PricingTransport
 from poms.pricing.utils import get_unique_pricing_schemes, group_items_by_provider, get_list_of_dates_between_two_dates, \
     get_is_yesterday, optimize_items
 
@@ -102,7 +103,8 @@ class PricingCurrencyHandler(object):
 
         self.currency_items_grouped = {}
 
-        self.broker_bloomberg = BrokerBloomberg()
+        # self.broker_bloomberg = BrokerBloomberg()
+        self.transport = PricingTransport()
 
     def process(self):
 
@@ -539,7 +541,7 @@ class PricingCurrencyHandler(object):
         print('self.procedure %s' % self.procedure.id)
         print('send request %s' % body)
 
-        self.broker_bloomberg.send_request(body)
+        self.transport.send_request(body)
 
     def process_to_wtrade_provider(self, items):
 
@@ -661,7 +663,7 @@ class PricingCurrencyHandler(object):
         print('self.procedure %s' % self.procedure.id)
         print('send request %s' % body)
 
-        self.broker_bloomberg.send_request(body)
+        self.transport.send_request(body)
 
     def print_grouped_currencies(self):
 

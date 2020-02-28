@@ -11,6 +11,7 @@ from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
 from poms.pricing.models import InstrumentPricingSchemeType, PricingProcedureInstance, \
     PricingProcedureBloombergInstrumentResult, PricingProcedureWtradeInstrumentResult
+from poms.pricing.transport.transport import PricingTransport
 from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_between_two_dates, group_items_by_provider, \
     get_is_yesterday, optimize_items
 from poms.reports.builders.balance_item import Report, ReportItem
@@ -124,7 +125,8 @@ class PricingInstrumentHandler(object):
 
         self.instrument_items_grouped = {}
 
-        self.broker_bloomberg = BrokerBloomberg()
+        # self.broker_bloomberg = BrokerBloomberg()
+        self.transport = PricingTransport()
 
     def process(self):
 
@@ -732,7 +734,7 @@ class PricingInstrumentHandler(object):
         print('self.procedure %s' % self.procedure.id)
         print('send request %s' % body)
 
-        self.broker_bloomberg.send_request(body)
+        self.transport.send_request(body)
 
     def process_to_wtrade_provider(self, items):
 
@@ -750,7 +752,6 @@ class PricingInstrumentHandler(object):
         body['procedure'] = procedure_instance.id
         body['provider'] = procedure_instance.provider
 
-        config = self.master_user.import_configs.get(provider=ProviderClass.BLOOMBERG)
         body['user'] = {
             'token': self.master_user.id
         }
@@ -766,9 +767,6 @@ class PricingInstrumentHandler(object):
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
 
-        is_yesterday = get_is_yesterday(self.procedure.price_date_from, self.procedure.price_date_to)
-
-        print('is_yesterday %s' % is_yesterday)
         print('procedure id %s' % body['procedure'])
 
         full_items = []
@@ -854,7 +852,7 @@ class PricingInstrumentHandler(object):
         print('self.procedure %s' % self.procedure.id)
         print('send request %s' % body)
 
-        self.broker_bloomberg.send_request(body)
+        self.transport.send_request(body)
 
     def print_grouped_instruments(self):
 
