@@ -10,7 +10,6 @@ from poms.instruments.models import Instrument, DailyPricingModel, PriceHistory
 from poms.integrations.models import ProviderClass
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
-from poms.pricing.handlers import FillPricesBrokerWtradeProcess
 from poms.pricing.models import InstrumentPricingSchemeType, PricingProcedureInstance, \
     PricingProcedureBloombergInstrumentResult, PricingProcedureWtradeInstrumentResult
 from poms.pricing.transport.transport import PricingTransport
@@ -864,6 +863,7 @@ class PricingInstrumentHandler(object):
 
         print('data %s' % data)
 
+        from poms.pricing.handlers import FillPricesBrokerWtradeProcess
         instance = FillPricesBrokerWtradeProcess(instance=data, master_user=self.master_user)
         instance.process()
 
