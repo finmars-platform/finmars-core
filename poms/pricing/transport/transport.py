@@ -13,7 +13,7 @@ class PricingTransport(object):
         print("Transport Status: Initialized")
 
 
-    def request_post(self, data):
+    def send_request(self, data):
 
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
