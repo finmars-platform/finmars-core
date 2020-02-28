@@ -161,7 +161,7 @@ class PricingBrokerBloombergHandler(APIView):
             instance = FillPricesBrokerBloombergProcess(instance=request.data, master_user=procedure.master_user)
             instance.process()
 
-        except PricingProcedure.DoesNotExist:
+        except PricingProcedureInstance.DoesNotExist:
 
             print("Does not exist? Procedure %s" % procedure_id)
 
@@ -189,7 +189,7 @@ class PricingBrokerWtradeHandler(APIView):
             instance = FillPricesBrokerWtradeProcess(instance=request.data, master_user=procedure.master_user)
             instance.process()
 
-        except PricingProcedure.DoesNotExist:
+        except PricingProcedureInstance.DoesNotExist:
 
             print("Does not exist? Procedure %s" % procedure_id)
 
