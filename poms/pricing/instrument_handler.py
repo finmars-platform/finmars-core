@@ -868,17 +868,17 @@ class PricingInstrumentHandler(object):
         instance.process()
 
 
-def print_grouped_instruments(self):
+    def print_grouped_instruments(self):
 
-        names = {
-            1: 'Skip',
-            2: 'Manual Pricing',  # DEPRECATED
-            3: 'Single Parameter Formula',
-            4: 'Multiple Parameter Formula',
-            5: 'Bloomberg',
-            6: 'Wtrade'
+            names = {
+                1: 'Skip',
+                2: 'Manual Pricing',  # DEPRECATED
+                3: 'Single Parameter Formula',
+                4: 'Multiple Parameter Formula',
+                5: 'Bloomberg',
+                6: 'Wtrade'
 
-        }
+            }
 
-        for provider_id, items in self.instrument_items_grouped.items():
-            print("Pricing Instrument Handler - Provider %s: len: %s" % (names[provider_id], len(items)))
+            for provider_id, items in self.instrument_items_grouped.items():
+                print("Pricing Instrument Handler - Provider %s: len: %s" % (names[provider_id], len(items)))
