@@ -108,12 +108,13 @@ class FillPricesBrokerBloombergProcess(object):
 
                             if str(record.date) == str(val_obj['date']):
 
-                                if field['code'] in record.fx_rate_parameters:
+                                if record.fx_rate_parameters:
+                                    if field['code'] in record.fx_rate_parameters:
 
-                                    try:
-                                        record.fx_rate_value = float(val_obj['value'])
-                                    except Exception as e:
-                                        print('fx_rate_value e %s ' % e)
+                                        try:
+                                            record.fx_rate_value = float(val_obj['value'])
+                                        except Exception as e:
+                                            print('fx_rate_value e %s ' % e)
 
                                 record.save()
 
@@ -153,33 +154,37 @@ class FillPricesBrokerBloombergProcess(object):
 
                             if str(record.date) == str(val_obj['date']):
 
-                                if field['code'] in record.ask_parameters:
+                                if record.ask_parameters:
+                                    if field['code'] in record.ask_parameters:
 
-                                    try:
-                                        record.ask_value = float(val_obj['value'])
-                                    except Exception as e:
-                                        print('ask value e %s ' % e)
+                                        try:
+                                            record.ask_value = float(val_obj['value'])
+                                        except Exception as e:
+                                            print('ask value e %s ' % e)
 
-                                if field['code'] in record.bid_parameters:
+                                if record.bid_parameters:
+                                    if field['code'] in record.bid_parameters:
 
-                                    try:
-                                        record.bid_value = float(val_obj['value'])
-                                    except Exception as e:
-                                        print('bid value e %s ' % e)
+                                        try:
+                                            record.bid_value = float(val_obj['value'])
+                                        except Exception as e:
+                                             print('bid value e %s ' % e)
 
-                                if field['code'] in record.last_parameters:
+                                if record.last_parameters:
+                                    if field['code'] in record.last_parameters:
 
-                                    try:
-                                        record.last_value = float(val_obj['value'])
-                                    except Exception as e:
-                                        print('last value e %s ' % e)
+                                        try:
+                                            record.last_value = float(val_obj['value'])
+                                        except Exception as e:
+                                            print('last value e %s ' % e)
 
-                                if field['code'] in record.accrual_parameters:
+                                if record.accrual_parameters:
+                                    if field['code'] in record.accrual_parameters:
 
-                                    try:
-                                        record.accrual_value = float(val_obj['value'])
-                                    except Exception as e:
-                                        print('accrual_value value e %s ' % e)
+                                        try:
+                                            record.accrual_value = float(val_obj['value'])
+                                        except Exception as e:
+                                            print('accrual_value value e %s ' % e)
 
                                 record.save()
 
