@@ -235,18 +235,20 @@ class PricingInstrumentHandler(object):
                 # Filter By Procedure Filter Settings
                 # TODO refactor soon
 
-                if self.procedure.pricing_policy_filters:
+                if policy.pricing_scheme:
 
-                    if policy.pricing_policy.user_code in self.procedure.pricing_policy_filters:
+                    if self.procedure.pricing_policy_filters:
+
+                        if policy.pricing_policy.user_code in self.procedure.pricing_policy_filters:
+                            item = InstrumentItem(instrument, policy, policy.pricing_scheme)
+
+                            result.append(item)
+
+                    else:
+
                         item = InstrumentItem(instrument, policy, policy.pricing_scheme)
 
                         result.append(item)
-
-                else:
-
-                    item = InstrumentItem(instrument, policy, policy.pricing_scheme)
-
-                    result.append(item)
 
         return result
 

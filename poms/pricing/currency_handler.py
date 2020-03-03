@@ -162,9 +162,12 @@ class PricingCurrencyHandler(object):
         for currency in self.currencies:
 
             for policy in currency.pricing_policies.all():
-                item = CurrencyItem(currency, policy, policy.pricing_scheme)
 
-                result.append(item)
+                if policy.pricing_scheme:
+
+                    item = CurrencyItem(currency, policy, policy.pricing_scheme)
+
+                    result.append(item)
 
         return result
 
