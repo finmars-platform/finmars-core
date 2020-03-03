@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 
+from poms.common.filters import NoOpFilter
 from poms.common.utils import date_now, datetime_now
 
 from poms.celery_tasks.models import CeleryTask
@@ -14,14 +15,17 @@ from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet, Abstra
 
 from poms.csv_import.tasks import data_csv_file_import, data_csv_file_import_validate
 from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
+from poms.portfolios.models import Portfolio
 from poms.pricing.brokers.broker_serializers import DataRequestSerializer
 from poms.pricing.handlers import PricingProcedureProcess, FillPricesBrokerBloombergProcess, \
     FillPricesBrokerWtradeProcess
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, InstrumentPricingSchemeType, \
-    CurrencyPricingSchemeType, PricingProcedure, PricingProcedureInstance
+    CurrencyPricingSchemeType, PricingProcedure, PricingProcedureInstance, PriceHistoryError, \
+    CurrencyHistoryError
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
     CurrencyPricingSchemeTypeSerializer, InstrumentPricingSchemeTypeSerializer, PricingProcedureSerializer, \
-    RunProcedureSerializer, BrokerBloombergSerializer
+    RunProcedureSerializer, BrokerBloombergSerializer, PriceHistoryErrorSerializer, \
+    CurrencyHistoryErrorSerializer
 
 from poms.users.filters import OwnerByMasterUserFilter
 from rest_framework.decorators import action
@@ -196,3 +200,48 @@ class PricingBrokerWtradeHandler(APIView):
             return Response({'status': '404'})  # TODO handle 404 properly
 
         return Response({'status': 'ok'})
+
+
+class PriceHistoryErrorFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    class Meta:
+        model = PriceHistoryError
+        fields = []
+
+
+class PriceHistoryErrorViewSet(AbstractModelViewSet):
+    queryset = PriceHistoryError.objects.select_related(
+        'master_user',
+    )
+    serializer_class = PriceHistoryErrorSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = PriceHistoryErrorFilterSet
+    ordering_fields = [
+        'date'
+    ]
+
+
+class CurrencyHistoryErrorFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    class Meta:
+        model = CurrencyHistoryError
+        fields = []
+
+
+class CurrencyHistoryErrorViewSet(AbstractModelViewSet):
+    queryset = CurrencyHistoryError.objects.select_related(
+        'master_user',
+    )
+    serializer_class = CurrencyHistoryErrorSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = CurrencyHistoryErrorFilterSet
+    ordering_fields = [
+        'date'
+    ]
+

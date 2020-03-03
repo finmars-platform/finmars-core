@@ -11,7 +11,7 @@ from poms.integrations.models import ProviderClass
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
 from poms.pricing.models import InstrumentPricingSchemeType, PricingProcedureInstance, \
-    PricingProcedureBloombergInstrumentResult, PricingProcedureWtradeInstrumentResult
+    PricingProcedureBloombergInstrumentResult, PricingProcedureWtradeInstrumentResult, PriceHistoryError
 from poms.pricing.transport.transport import PricingTransport
 from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_between_two_dates, group_items_by_provider, \
     get_is_yesterday, optimize_items
@@ -94,6 +94,10 @@ class InstrumentItem(object):
                 self.scheme_fields.append([parameters.ask_historical])
                 self.scheme_fields_map['ask_historical'] = parameters.ask_historical
 
+            if parameters.accrual_historical:
+                self.scheme_fields.append([parameters.accrual_historical])
+                self.scheme_fields_map['accrual_historical'] = parameters.accrual_historical
+
             if parameters.last_historical:
                 self.scheme_fields.append([parameters.last_historical])
                 self.scheme_fields_map['last_historical'] = parameters.last_historical
@@ -109,6 +113,10 @@ class InstrumentItem(object):
             if parameters.last_yesterday:
                 self.scheme_fields.append([parameters.last_yesterday])
                 self.scheme_fields_map['last_yesterday'] = parameters.last_yesterday
+
+            if parameters.accrual_yesterday:
+                self.scheme_fields.append([parameters.accrual_yesterday])
+                self.scheme_fields_map['accrual_yesterday'] = parameters.accrual_yesterday
 
 
 class PricingInstrumentHandler(object):
@@ -289,6 +297,13 @@ class PricingInstrumentHandler(object):
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
 
+        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+                                                      master_user=self.master_user,
+                                                      status=PricingProcedureInstance.STATUS_PENDING,
+                                                      action='single_parameter_formula_get_instrument_prices',
+                                                      provider='finmars')
+        procedure_instance.save()
+
         for item in items:
 
             for date in dates:
@@ -350,43 +365,72 @@ class PricingInstrumentHandler(object):
                     }
 
                     expr = scheme_parameters.expr
+                    pricing_error_text_expr = scheme_parameters.pricing_error_text_expr
 
                     print('values %s' % values)
                     print('expr %s' % expr)
 
+                    has_error = False
+                    error = PriceHistoryError(
+                        master_user=self.master_user,
+                        procedure_instance=procedure_instance,
+                        instrument=item.instrument,
+                        pricing_scheme=item.pricing_scheme,
+                        pricing_policy=item.policy.pricing_policy,
+                        date=date,
+                    )
+
+                    principal_price = None
+
                     try:
                         principal_price = formula.safe_eval(expr, names=values)
                     except formula.InvalidExpression:
-                        print("Error here")
-                        continue
 
-                    print('principal_price %s' % principal_price)
-
-                    if principal_price:
+                        has_error = True
 
                         try:
 
-                            price = PriceHistory.objects.get(
-                                instrument=item.instrument,
-                                pricing_policy=item.policy.pricing_policy,
-                                date=date
-                            )
+                            print('pricing_error_text_expr %s' % pricing_error_text_expr)
 
-                            price.principal_price = principal_price
-                            price.save()
+                            error.price_error_text = formula.safe_eval(pricing_error_text_expr, names=values)
 
-                            print('Update Price history %s' % price.id)
+                        except formula.InvalidExpression:
+                            error.price_error_text = 'Invalid Error Text Expression'
 
-                        except PriceHistory.DoesNotExist:
+                    print("Error here? %s" % has_error)
 
-                            price = PriceHistory(
-                                instrument=item.instrument,
-                                pricing_policy=item.policy.pricing_policy,
-                                date=date,
-                                principal_price=principal_price
-                            )
+                    print('principal_price %s' % principal_price)
 
-                            price.save()
+                    accrued_price = item.instrument.get_accrued_price(date)
+
+                    try:
+
+                        price = PriceHistory.objects.get(
+                            instrument=item.instrument,
+                            pricing_policy=item.policy.pricing_policy,
+                            date=date
+                        )
+
+                    except PriceHistory.DoesNotExist:
+
+                        price = PriceHistory(
+                            instrument=item.instrument,
+                            pricing_policy=item.policy.pricing_policy,
+                            date=date
+                        )
+
+                    if principal_price:
+                        price.principal_price = principal_price
+                        error.principal_price = principal_price
+
+                    if accrued_price:
+                        price.accrued_price = accrued_price
+                        error.accrued_price = accrued_price
+
+                    price.save()
+
+                    if has_error:
+                        error.save()
 
     def process_to_multiple_parameter_formula(self, items):
 
@@ -394,6 +438,13 @@ class PricingInstrumentHandler(object):
 
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
+
+        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+                                                      master_user=self.master_user,
+                                                      status=PricingProcedureInstance.STATUS_PENDING,
+                                                      action='multiple_parameter_formula_get_instrument_prices',
+                                                      provider='finmars')
+        procedure_instance.save()
 
         for item in items:
 
@@ -506,43 +557,66 @@ class PricingInstrumentHandler(object):
                                 values['parameter' + str(parameter['index'])] = val
 
                     expr = scheme_parameters.expr
+                    pricing_error_text_expr = scheme_parameters.pricing_error_text_expr
 
                     print('values %s' % values)
                     print('expr %s' % expr)
 
+                    has_error = False
+                    error = PriceHistoryError(
+                        master_user=self.master_user,
+                        procedure_instance=procedure_instance,
+                        instrument=item.instrument,
+                        pricing_scheme=item.pricing_scheme,
+                        pricing_policy=item.policy.pricing_policy,
+                        date=date,
+                    )
+
+                    principal_price = None
+
                     try:
                         principal_price = formula.safe_eval(expr, names=values)
                     except formula.InvalidExpression:
-                        print("Error here")
-                        continue
+                        has_error = True
+
+                        try:
+                            error.price_error_text = formula.safe_eval(pricing_error_text_expr, names=values)
+                        except formula.InvalidExpression:
+                            error.price_error_text = 'Invalid Error Text Expression'
+
 
                     print('principal_price %s' % principal_price)
 
+                    accrued_price = item.instrument.get_accrued_price(date)
+
+                    try:
+
+                        price = PriceHistory.objects.get(
+                            instrument=item.instrument,
+                            pricing_policy=item.policy.pricing_policy,
+                            date=date
+                        )
+
+                    except PriceHistory.DoesNotExist:
+
+                        price = PriceHistory(
+                            instrument=item.instrument,
+                            pricing_policy=item.policy.pricing_policy,
+                            date=date
+                        )
+
                     if principal_price:
+                        price.principal_price = principal_price
+                        error.principal_price = principal_price
 
-                        try:
+                    if accrued_price:
+                        price.accrued_price = accrued_price
+                        error.accrued_price = accrued_price
 
-                            price = PriceHistory.objects.get(
-                                instrument=item.instrument,
-                                pricing_policy=item.policy.pricing_policy,
-                                date=date
-                            )
+                    price.save()
 
-                            price.principal_price = principal_price
-                            price.save()
-
-                            print('Update Price history %s' % price.id)
-
-                        except PriceHistory.DoesNotExist:
-
-                            price = PriceHistory(
-                                instrument=item.instrument,
-                                pricing_policy=item.policy.pricing_policy,
-                                date=date,
-                                principal_price=principal_price
-                            )
-
-                            price.save()
+                    if has_error:
+                        error.save()
 
     def process_to_bloomberg_provider(self, items):
 
@@ -608,6 +682,7 @@ class PricingInstrumentHandler(object):
                                                                                    instrument_parameters=str(
                                                                                        item_parameters),
                                                                                    pricing_policy=item.policy.pricing_policy,
+                                                                                   pricing_scheme=item.pricing_scheme,
                                                                                    reference=item.parameters[0],
                                                                                    date=date)
 
@@ -622,6 +697,10 @@ class PricingInstrumentHandler(object):
                                 if 'last_yesterday' in item.scheme_fields_map:
                                     record.last_parameters = item.scheme_fields_map[
                                         'last_yesterday']
+
+                                if 'accrual_yesterday' in item.scheme_fields_map:
+                                    record.accrual_parameters = item.scheme_fields_map[
+                                        'accrual_yesterday']
 
                                 record.save()
 
@@ -656,6 +735,13 @@ class PricingInstrumentHandler(object):
                             'values': []
                         })
 
+                    if 'accrual_yesterday' in item.scheme_fields_map:
+                        item_obj['fields'].append({
+                            'code': item.scheme_fields_map['accrual_yesterday'],
+                            'parameters': [],
+                            'values': []
+                        })
+
                     full_items.append(item_obj)
 
                 else:
@@ -671,6 +757,7 @@ class PricingInstrumentHandler(object):
                                                                                    instrument_parameters=str(
                                                                                        item_parameters),
                                                                                    pricing_policy=item.policy.pricing_policy,
+                                                                                   pricing_scheme=item.pricing_scheme,
                                                                                    reference=item.parameters[0],
                                                                                    date=date)
 
@@ -685,6 +772,10 @@ class PricingInstrumentHandler(object):
                                 if 'last_historical' in item.scheme_fields_map:
                                     record.last_parameters = item.scheme_fields_map[
                                         'last_historical']
+
+                                if 'accrual_historical' in item.scheme_fields_map:
+                                    record.accrual_parameters = item.scheme_fields_map[
+                                        'accrual_historical']
 
                                 record.save()
 
@@ -714,6 +805,13 @@ class PricingInstrumentHandler(object):
                     if 'last_historical' in item.scheme_fields_map:
                         item_obj['fields'].append({
                             'code': item.scheme_fields_map['last_historical'],
+                            'parameters': [],
+                            'values': []
+                        })
+
+                    if 'accrual_historical' in item.scheme_fields_map:
+                        item_obj['fields'].append({
+                            'code': item.scheme_fields_map['accrual_historical'],
                             'parameters': [],
                             'values': []
                         })
@@ -791,6 +889,7 @@ class PricingInstrumentHandler(object):
                                                                             instrument_parameters=str(
                                                                                 item_parameters),
                                                                             pricing_policy=item.policy.pricing_policy,
+                                                                            pricing_scheme=item.pricing_scheme,
                                                                             reference=item.parameters[0],
                                                                             date=date)
 

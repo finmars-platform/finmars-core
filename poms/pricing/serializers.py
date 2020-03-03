@@ -10,7 +10,8 @@ from poms.pricing.models import InstrumentPricingScheme, InstrumentPricingScheme
     CurrencyPricingScheme, PricingProcedure, InstrumentPricingSchemeMultipleParametersFormulaParameters, \
     CurrencyPricingSchemeMultipleParametersFormulaParameters, InstrumentPricingSchemeBloombergParameters, \
     CurrencyPricingSchemeBloombergParameters, CurrencyPricingPolicy, InstrumentTypePricingPolicy, \
-    InstrumentPricingPolicy, CurrencyPricingSchemeWtradeParameters, InstrumentPricingSchemeWtradeParameters
+    InstrumentPricingPolicy, CurrencyPricingSchemeWtradeParameters, InstrumentPricingSchemeWtradeParameters, \
+    PriceHistoryError, CurrencyHistoryError
 from poms.users.fields import MasterUserField
 
 
@@ -29,13 +30,16 @@ class CurrencyPricingSchemeManualPricingParametersSerializer(serializers.ModelSe
 class InstrumentPricingSchemeSingleParameterFormulaParametersSerializer(serializers.ModelSerializer):
     class Meta:
         model = InstrumentPricingSchemeSingleParameterFormulaParameters
-        fields = ('id', 'instrument_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type')
+        fields = ('id', 'instrument_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type',
+                  'pricing_error_text_expr',
+                  'accrual_calculation_method', 'accrual_expr', 'accrual_error_text_expr')
 
 
 class CurrencyPricingSchemeSingleParameterFormulaParametersSerializer(serializers.ModelSerializer):
     class Meta:
         model = CurrencyPricingSchemeSingleParameterFormulaParameters
-        fields = ('id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type')
+        fields = (
+            'id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'error_text_expr')
 
 
 class InstrumentPricingSchemeMultipleParametersFormulaParametersSerializer(serializers.ModelSerializer):
@@ -43,7 +47,9 @@ class InstrumentPricingSchemeMultipleParametersFormulaParametersSerializer(seria
 
     class Meta:
         model = InstrumentPricingSchemeMultipleParametersFormulaParameters
-        fields = ('id', 'instrument_pricing_scheme', 'expr', 'data', 'default_value', 'attribute_key', 'value_type')
+        fields = ('id', 'instrument_pricing_scheme', 'expr', 'data', 'default_value', 'attribute_key', 'value_type',
+                  'pricing_error_text_expr',
+                  'accrual_calculation_method', 'accrual_expr', 'accrual_error_text_expr')
 
 
 class CurrencyPricingSchemeMultipleParametersFormulaParametersSerializer(serializers.ModelSerializer):
@@ -51,22 +57,28 @@ class CurrencyPricingSchemeMultipleParametersFormulaParametersSerializer(seriali
 
     class Meta:
         model = CurrencyPricingSchemeMultipleParametersFormulaParameters
-        fields = ('id', 'currency_pricing_scheme', 'expr', 'data', 'default_value', 'attribute_key', 'value_type')
+        fields = ('id', 'currency_pricing_scheme', 'expr', 'data', 'default_value', 'attribute_key', 'value_type',
+                  'error_text_expr')
 
 
 class InstrumentPricingSchemeBloombergParametersSerializer(serializers.ModelSerializer):
     class Meta:
         model = InstrumentPricingSchemeBloombergParameters
         fields = ('id', 'instrument_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type',
+                  'pricing_error_text_expr',
+                  'accrual_calculation_method', 'accrual_expr', 'accrual_error_text_expr',
                   'bid_historical', 'bid_yesterday',
                   'ask_historical', 'ask_yesterday',
-                  'last_historical', 'last_yesterday',)
+                  'last_historical', 'last_yesterday',
+                  'accrual_historical', 'accrual_yesterday',
+                  )
 
 
 class CurrencyPricingSchemeBloombergParametersSerializer(serializers.ModelSerializer):
     class Meta:
         model = CurrencyPricingSchemeBloombergParameters
-        fields = ('id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'fx_rate')
+        fields = ('id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'fx_rate',
+                  'error_text_expr')
 
 
 class InstrumentPricingSchemeWtradeParametersSerializer(serializers.ModelSerializer):
@@ -100,8 +112,8 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
     class Meta:
         model = InstrumentPricingScheme
         fields = (
-        'id', 'name', 'master_user', 'notes', 'notes_for_users', 'notes_for_parameter', 'error_handler', 'type',
-        'type_settings')
+            'id', 'name', 'master_user', 'notes', 'notes_for_users', 'notes_for_parameter', 'error_handler', 'type',
+            'type_settings')
 
     def get_type_settings(self, instance):
 
@@ -244,6 +256,26 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
                 else:
                     single_parameter_formula.expr = None
 
+                if 'pricing_error_text_expr' in type_settings:
+                    single_parameter_formula.pricing_error_text_expr = type_settings['pricing_error_text_expr']
+                else:
+                    single_parameter_formula.pricing_error_text_expr = None
+
+                if 'accrual_calculation_method' in type_settings:
+                    single_parameter_formula.accrual_calculation_method = type_settings['accrual_calculation_method']
+                else:
+                    single_parameter_formula.accrual_calculation_method = None
+
+                if 'accrual_expr' in type_settings:
+                    single_parameter_formula.accrual_expr = type_settings['accrual_expr']
+                else:
+                    single_parameter_formula.accrual_expr = None
+
+                if 'accrual_error_text_expr' in type_settings:
+                    single_parameter_formula.accrual_error_text_expr = type_settings['accrual_error_text_expr']
+                else:
+                    single_parameter_formula.accrual_error_text_expr = None
+
                 single_parameter_formula.save()
 
             if instance.type_id == 4:  # multiple parameters formula
@@ -261,6 +293,26 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
                     multiple_parameters_formula.expr = type_settings['expr']
                 else:
                     multiple_parameters_formula.expr = None
+
+                if 'pricing_error_text_expr' in type_settings:
+                    multiple_parameters_formula.pricing_error_text_expr = type_settings['pricing_error_text_expr']
+                else:
+                    multiple_parameters_formula.pricing_error_text_expr = None
+
+                if 'accrual_calculation_method' in type_settings:
+                    multiple_parameters_formula.accrual_calculation_method = type_settings['accrual_calculation_method']
+                else:
+                    multiple_parameters_formula.accrual_calculation_method = None
+
+                if 'accrual_expr' in type_settings:
+                    multiple_parameters_formula.accrual_expr = type_settings['accrual_expr']
+                else:
+                    multiple_parameters_formula.accrual_expr = None
+
+                if 'accrual_error_text_expr' in type_settings:
+                    multiple_parameters_formula.accrual_error_text_expr = type_settings['accrual_error_text_expr']
+                else:
+                    multiple_parameters_formula.accrual_error_text_expr = None
 
                 if 'data' in type_settings:
                     multiple_parameters_formula.data = type_settings['data']
@@ -299,6 +351,26 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
                 else:
                     bloomberg.expr = None
 
+                if 'pricing_error_text_expr' in type_settings:
+                    bloomberg.pricing_error_text_expr = type_settings['pricing_error_text_expr']
+                else:
+                    bloomberg.pricing_error_text_expr = None
+
+                if 'accrual_calculation_method' in type_settings:
+                    bloomberg.accrual_calculation_method = type_settings['accrual_calculation_method']
+                else:
+                    bloomberg.accrual_calculation_method = None
+
+                if 'accrual_expr' in type_settings:
+                    bloomberg.accrual_expr = type_settings['accrual_expr']
+                else:
+                    bloomberg.accrual_expr = None
+
+                if 'accrual_error_text_expr' in type_settings:
+                    bloomberg.accrual_error_text_expr = type_settings['accrual_error_text_expr']
+                else:
+                    bloomberg.accrual_error_text_expr = None
+
                 if 'bid_historical' in type_settings:
                     bloomberg.bid_historical = type_settings['bid_historical']
                 else:
@@ -328,6 +400,16 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
                     bloomberg.last_yesterday = type_settings['last_yesterday']
                 else:
                     bloomberg.last_yesterday = None
+
+                if 'accrual_historical' in type_settings:
+                    bloomberg.accrual_historical = type_settings['accrual_historical']
+                else:
+                    bloomberg.accrual_historical = None
+
+                if 'accrual_yesterday' in type_settings:
+                    bloomberg.accrual_yesterday = type_settings['accrual_yesterday']
+                else:
+                    bloomberg.accrual_yesterday = None
 
                 bloomberg.save()
 
@@ -373,8 +455,8 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CurrencyPricingScheme
         fields = (
-        'id', 'name', 'master_user', 'notes', 'notes_for_users', 'notes_for_parameter', 'error_handler', 'type',
-        'type_settings')
+            'id', 'name', 'master_user', 'notes', 'notes_for_users', 'notes_for_parameter', 'error_handler', 'type',
+            'type_settings')
 
     def get_type_settings(self, instance):
 
@@ -637,9 +719,13 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
 class PricingProcedureSerializer(serializers.ModelSerializer):
     master_user = MasterUserField()
 
-    price_date_from_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,default='')
-    price_date_to_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,default='')
-    price_balance_date_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,default='')
+    price_date_from_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True,
+                                           allow_blank=True, default='')
+    price_date_to_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True,
+                                         allow_blank=True, default='')
+    price_balance_date_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True,
+                                              allow_blank=True, default='')
+
     # accrual_date_from_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,default='')
     # accrual_date_to_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,default='')
 
@@ -678,7 +764,7 @@ class CurrencyPricingPolicySerializer(serializers.ModelSerializer):
     class Meta:
         model = CurrencyPricingPolicy
         fields = (
-        'id', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
+            'id', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
 
 
 class InstrumentTypePricingPolicySerializer(serializers.ModelSerializer):
@@ -695,7 +781,7 @@ class InstrumentTypePricingPolicySerializer(serializers.ModelSerializer):
     class Meta:
         model = InstrumentTypePricingPolicy
         fields = (
-        'id', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
+            'id', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
 
 
 class InstrumentPricingPolicySerializer(serializers.ModelSerializer):
@@ -728,3 +814,17 @@ class BrokerBloombergSerializer(serializers.Serializer):
 
     def __init__(self, **kwargs):
         pass
+
+
+class PriceHistoryErrorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PriceHistoryError
+        fields = ('id', 'master_user', 'instrument', 'pricing_policy', 'pricing_scheme', 'date', 'principal_price',
+                  'accrued_price', 'price_error_text', 'accrual_error_text', 'procedure_instance')
+
+
+class CurrencyHistoryErrorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CurrencyHistoryError
+        fields = ('id', 'master_user', 'currency', 'pricing_policy', 'pricing_scheme', 'date', 'fx_rate', 'error_text',
+                  'procedure_instance')

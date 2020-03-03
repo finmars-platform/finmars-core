@@ -368,6 +368,10 @@ router.register(r'pricing/currency-pricing-scheme', pricing.CurrencyPricingSchem
 router.register(r'pricing/currency-pricing-scheme-type', pricing.CurrencyPricingSchemeTypeViewSet, 'pricing_currency_pricing_scheme_type')
 router.register(r'pricing/procedure', pricing.PricingProcedureViewSet, 'pricing_procedure')
 
+router.register(r'pricing/price-history-error', pricing.PriceHistoryErrorViewSet)
+router.register(r'pricing/currency-history-error', pricing.CurrencyHistoryErrorViewSet)
+
+
 # router.register(r'pricing/brokers/bloomberg/callback', csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view()), 'pricing_broker_bloomberg')
 
 

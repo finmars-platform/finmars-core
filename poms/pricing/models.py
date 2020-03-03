@@ -5,13 +5,13 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy
 
 from poms.common.models import EXPRESSION_FIELD_LENGTH, NamedModel
+from poms.common.utils import date_now
 from poms.users.models import MasterUser
 
 from django.core.serializers.json import DjangoJSONEncoder
 
 
 class InstrumentPricingSchemeType(models.Model):
-
     NONE = 1
     SINGLE_PARAMETER = 2
     MULTIPLE_PARAMETERS = 3
@@ -32,7 +32,6 @@ class InstrumentPricingSchemeType(models.Model):
 
 
 class InstrumentPricingScheme(NamedModel):
-
     SKIP = 1
     DEFAULT_PRICE = 2
     ASK_FOR_MANUAL_ENTRY = 3
@@ -88,7 +87,8 @@ class InstrumentPricingScheme(NamedModel):
 
                 try:
 
-                    result = InstrumentPricingSchemeSingleParameterFormulaParameters.objects.get(instrument_pricing_scheme=self)
+                    result = InstrumentPricingSchemeSingleParameterFormulaParameters.objects.get(
+                        instrument_pricing_scheme=self)
 
                 # except InstrumentPricingSchemeSingleParameterFormulaParameters.DoesNotExist:
                 except Exception as e:
@@ -100,7 +100,8 @@ class InstrumentPricingScheme(NamedModel):
 
                 try:
 
-                    result = InstrumentPricingSchemeMultipleParametersFormulaParameters.objects.get(instrument_pricing_scheme=self)
+                    result = InstrumentPricingSchemeMultipleParametersFormulaParameters.objects.get(
+                        instrument_pricing_scheme=self)
 
                 except (InstrumentPricingSchemeMultipleParametersFormulaParameters.DoesNotExist, Exception) as e:
 
@@ -134,7 +135,6 @@ class InstrumentPricingScheme(NamedModel):
 
 
 class CurrencyPricingSchemeType(models.Model):
-
     NONE = 1
     SINGLE_PARAMETER = 2
     MULTIPLE_PARAMETERS = 3
@@ -210,7 +210,8 @@ class CurrencyPricingScheme(NamedModel):
 
                 try:
 
-                    result = CurrencyPricingSchemeSingleParameterFormulaParameters.objects.get(currency_pricing_scheme=self)
+                    result = CurrencyPricingSchemeSingleParameterFormulaParameters.objects.get(
+                        currency_pricing_scheme=self)
 
                 except CurrencyPricingSchemeSingleParameterFormulaParameters.DoesNotExist:
 
@@ -220,7 +221,8 @@ class CurrencyPricingScheme(NamedModel):
 
                 try:
 
-                    result = CurrencyPricingSchemeMultipleParametersFormulaParameters.objects.get(currency_pricing_scheme=self)
+                    result = CurrencyPricingSchemeMultipleParametersFormulaParameters.objects.get(
+                        currency_pricing_scheme=self)
 
                 except CurrencyPricingSchemeMultipleParametersFormulaParameters.DoesNotExist:
 
@@ -235,7 +237,6 @@ class CurrencyPricingScheme(NamedModel):
                 except CurrencyPricingSchemeBloombergParameters.DoesNotExist:
 
                     result = None
-
 
             if self.type.id == 6:  # wtrade
 
@@ -253,16 +254,18 @@ class CurrencyPricingScheme(NamedModel):
 
 
 class InstrumentPricingSchemeManualPricingParameters(models.Model):
-
-    instrument_pricing_scheme = models.ForeignKey(InstrumentPricingScheme, verbose_name=ugettext_lazy('Instrument Pricing Scheme'), on_delete=models.CASCADE)
+    instrument_pricing_scheme = models.ForeignKey(InstrumentPricingScheme,
+                                                  verbose_name=ugettext_lazy('Instrument Pricing Scheme'),
+                                                  on_delete=models.CASCADE)
 
     default_value = models.CharField(max_length=255, null=True, blank=True)
     attribute_key = models.CharField(max_length=255, null=True, blank=True)
 
 
 class CurrencyPricingSchemeManualPricingParameters(models.Model):
-
-    currency_pricing_scheme = models.ForeignKey(CurrencyPricingScheme, verbose_name=ugettext_lazy('Currency Pricing Scheme'), on_delete=models.CASCADE)
+    currency_pricing_scheme = models.ForeignKey(CurrencyPricingScheme,
+                                                verbose_name=ugettext_lazy('Currency Pricing Scheme'),
+                                                on_delete=models.CASCADE)
 
     default_value = models.CharField(max_length=255, null=True, blank=True)
 
@@ -270,7 +273,6 @@ class CurrencyPricingSchemeManualPricingParameters(models.Model):
 
 
 class InstrumentPricingSchemeSingleParameterFormulaParameters(models.Model):
-
     STRING = 10
     NUMBER = 20
     DATE = 40
@@ -281,10 +283,37 @@ class InstrumentPricingSchemeSingleParameterFormulaParameters(models.Model):
         (DATE, ugettext_lazy('Date')),
     )
 
-    instrument_pricing_scheme = models.ForeignKey(InstrumentPricingScheme, verbose_name=ugettext_lazy('Instrument Pricing Scheme'), on_delete=models.CASCADE)
+    ACCRUAL_NOT_APPLICABLE = 1
+    ACCRUAL_PER_SCHEDULE = 2
+    ACCRUAL_PER_FORMULA = 3
+
+    ACCRUAL_METHODS = (
+        (ACCRUAL_NOT_APPLICABLE, ugettext_lazy('Not applicable')),
+        (ACCRUAL_PER_SCHEDULE, ugettext_lazy('As per Accrual Schedule')),
+        (ACCRUAL_PER_FORMULA, ugettext_lazy('As per Formula')),
+
+    )
+
+    instrument_pricing_scheme = models.ForeignKey(InstrumentPricingScheme,
+                                                  verbose_name=ugettext_lazy('Instrument Pricing Scheme'),
+                                                  on_delete=models.CASCADE)
 
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                             verbose_name=ugettext_lazy('expr'))
+
+    pricing_error_text_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
+                                               verbose_name=ugettext_lazy('pricing error text'))
+
+    accrual_calculation_method = models.PositiveSmallIntegerField(default=ACCRUAL_NOT_APPLICABLE,
+                                                                  choices=ACCRUAL_METHODS,
+                                                                  verbose_name=ugettext_lazy(
+                                                                      'accrual calculation method'))
+
+    accrual_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
+                                    verbose_name=ugettext_lazy('accrual expr'))
+
+    accrual_error_text_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
+                                               verbose_name=ugettext_lazy('accrual error text expr'))
 
     default_value = models.CharField(max_length=255, null=True, blank=True)
     attribute_key = models.CharField(max_length=255, null=True, blank=True)
@@ -293,7 +322,6 @@ class InstrumentPricingSchemeSingleParameterFormulaParameters(models.Model):
 
 
 class CurrencyPricingSchemeSingleParameterFormulaParameters(models.Model):
-
     STRING = 10
     NUMBER = 20
     DATE = 40
@@ -304,10 +332,15 @@ class CurrencyPricingSchemeSingleParameterFormulaParameters(models.Model):
         (DATE, ugettext_lazy('Date')),
     )
 
-    currency_pricing_scheme = models.ForeignKey(CurrencyPricingScheme, verbose_name=ugettext_lazy('Currency Pricing Scheme'), on_delete=models.CASCADE)
+    currency_pricing_scheme = models.ForeignKey(CurrencyPricingScheme,
+                                                verbose_name=ugettext_lazy('Currency Pricing Scheme'),
+                                                on_delete=models.CASCADE)
 
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                             verbose_name=ugettext_lazy('expr'))
+
+    error_text_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
+                                       verbose_name=ugettext_lazy('error text expr'))
 
     default_value = models.CharField(max_length=255, null=True, blank=True)
     attribute_key = models.CharField(max_length=255, null=True, blank=True)
@@ -316,7 +349,6 @@ class CurrencyPricingSchemeSingleParameterFormulaParameters(models.Model):
 
 
 class InstrumentPricingSchemeMultipleParametersFormulaParameters(models.Model):
-
     STRING = 10
     NUMBER = 20
     DATE = 40
@@ -327,11 +359,37 @@ class InstrumentPricingSchemeMultipleParametersFormulaParameters(models.Model):
         (DATE, ugettext_lazy('Date')),
     )
 
+    ACCRUAL_NOT_APPLICABLE = 1
+    ACCRUAL_PER_SCHEDULE = 2
+    ACCRUAL_PER_FORMULA = 3
 
-    instrument_pricing_scheme = models.ForeignKey(InstrumentPricingScheme, verbose_name=ugettext_lazy('Instrument Pricing Scheme'), on_delete=models.CASCADE)
+    ACCRUAL_METHODS = (
+        (ACCRUAL_NOT_APPLICABLE, ugettext_lazy('Not applicable')),
+        (ACCRUAL_PER_SCHEDULE, ugettext_lazy('As per Accrual Schedule')),
+        (ACCRUAL_PER_FORMULA, ugettext_lazy('As per Formula')),
+
+    )
+
+    instrument_pricing_scheme = models.ForeignKey(InstrumentPricingScheme,
+                                                  verbose_name=ugettext_lazy('Instrument Pricing Scheme'),
+                                                  on_delete=models.CASCADE)
 
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                             verbose_name=ugettext_lazy('expr'))
+
+    pricing_error_text_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
+                                               verbose_name=ugettext_lazy('pricing error text'))
+
+    accrual_calculation_method = models.PositiveSmallIntegerField(default=ACCRUAL_NOT_APPLICABLE,
+                                                                  choices=ACCRUAL_METHODS,
+                                                                  verbose_name=ugettext_lazy(
+                                                                      'accrual calculation method'))
+
+    accrual_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
+                                    verbose_name=ugettext_lazy('accrual expr'))
+
+    accrual_error_text_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
+                                               verbose_name=ugettext_lazy('accrual error text expr'))
 
     default_value = models.CharField(max_length=255, null=True, blank=True)
     attribute_key = models.CharField(max_length=255, null=True, blank=True)
@@ -359,7 +417,6 @@ class InstrumentPricingSchemeMultipleParametersFormulaParameters(models.Model):
 
 
 class CurrencyPricingSchemeMultipleParametersFormulaParameters(models.Model):
-
     STRING = 10
     NUMBER = 20
     DATE = 40
@@ -370,11 +427,15 @@ class CurrencyPricingSchemeMultipleParametersFormulaParameters(models.Model):
         (DATE, ugettext_lazy('Date')),
     )
 
-
-    currency_pricing_scheme = models.ForeignKey(CurrencyPricingScheme, verbose_name=ugettext_lazy('Currency Pricing Scheme'), on_delete=models.CASCADE)
+    currency_pricing_scheme = models.ForeignKey(CurrencyPricingScheme,
+                                                verbose_name=ugettext_lazy('Currency Pricing Scheme'),
+                                                on_delete=models.CASCADE)
 
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                             verbose_name=ugettext_lazy('expr'))
+
+    error_text_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
+                                       verbose_name=ugettext_lazy('error text expr'))
 
     default_value = models.CharField(max_length=255, null=True, blank=True)
     attribute_key = models.CharField(max_length=255, null=True, blank=True)
@@ -402,7 +463,6 @@ class CurrencyPricingSchemeMultipleParametersFormulaParameters(models.Model):
 
 
 class InstrumentPricingSchemeBloombergParameters(models.Model):
-
     STRING = 10
     NUMBER = 20
     DATE = 40
@@ -413,28 +473,63 @@ class InstrumentPricingSchemeBloombergParameters(models.Model):
         (DATE, ugettext_lazy('Date')),
     )
 
-    instrument_pricing_scheme = models.ForeignKey(InstrumentPricingScheme, verbose_name=ugettext_lazy('Instrument Pricing Scheme'), on_delete=models.CASCADE)
+    ACCRUAL_NOT_APPLICABLE = 1
+    ACCRUAL_PER_SCHEDULE = 2
+    ACCRUAL_PER_FORMULA = 3
+
+    ACCRUAL_METHODS = (
+        (ACCRUAL_NOT_APPLICABLE, ugettext_lazy('Not applicable')),
+        (ACCRUAL_PER_SCHEDULE, ugettext_lazy('As per Accrual Schedule')),
+        (ACCRUAL_PER_FORMULA, ugettext_lazy('As per Formula')),
+
+    )
+
+    instrument_pricing_scheme = models.ForeignKey(InstrumentPricingScheme,
+                                                  verbose_name=ugettext_lazy('Instrument Pricing Scheme'),
+                                                  on_delete=models.CASCADE)
 
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                             verbose_name=ugettext_lazy('expr'))
+
+    pricing_error_text_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
+                                               verbose_name=ugettext_lazy('pricing error text expr'))
+
+    accrual_calculation_method = models.PositiveSmallIntegerField(default=ACCRUAL_NOT_APPLICABLE,
+                                                                  choices=ACCRUAL_METHODS,
+                                                                  verbose_name=ugettext_lazy(
+                                                                      'accrual calculation method'))
+
+    accrual_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
+                                    verbose_name=ugettext_lazy('accrual expr'))
+
+    accrual_error_text_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
+                                               verbose_name=ugettext_lazy('accrual error text expr'))
 
     default_value = models.CharField(max_length=255, null=True, blank=True)
     attribute_key = models.CharField(max_length=255, null=True, blank=True)
     value_type = models.PositiveSmallIntegerField(default=STRING, choices=TYPES,
                                                   verbose_name=ugettext_lazy('value type'))
 
-    bid_historical = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('bid historical'))
+    bid_historical = models.CharField(max_length=50, blank=True, null=True,
+                                      verbose_name=ugettext_lazy('bid historical'))
     bid_yesterday = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('bid yesterday'))
 
-    ask_historical = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('ask historical'))
+    ask_historical = models.CharField(max_length=50, blank=True, null=True,
+                                      verbose_name=ugettext_lazy('ask historical'))
     ask_yesterday = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('ask yesterday'))
 
-    last_historical = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('last historical'))
-    last_yesterday = models.CharField(max_length=50, blank=True, null=True, verbose_name=ugettext_lazy('last yesterday'))
+    last_historical = models.CharField(max_length=50, blank=True, null=True,
+                                       verbose_name=ugettext_lazy('last historical'))
+    last_yesterday = models.CharField(max_length=50, blank=True, null=True,
+                                      verbose_name=ugettext_lazy('last yesterday'))
+
+    accrual_historical = models.CharField(max_length=50, blank=True, null=True,
+                                          verbose_name=ugettext_lazy('accrual historical'))
+    accrual_yesterday = models.CharField(max_length=50, blank=True, null=True,
+                                         verbose_name=ugettext_lazy('accrual yesterday'))
 
 
 class CurrencyPricingSchemeBloombergParameters(models.Model):
-
     STRING = 10
     NUMBER = 20
     DATE = 40
@@ -445,10 +540,15 @@ class CurrencyPricingSchemeBloombergParameters(models.Model):
         (DATE, ugettext_lazy('Date')),
     )
 
-    currency_pricing_scheme = models.ForeignKey(CurrencyPricingScheme, verbose_name=ugettext_lazy('Currency Pricing Scheme'), on_delete=models.CASCADE)
+    currency_pricing_scheme = models.ForeignKey(CurrencyPricingScheme,
+                                                verbose_name=ugettext_lazy('Currency Pricing Scheme'),
+                                                on_delete=models.CASCADE)
 
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                             verbose_name=ugettext_lazy('expr'))
+
+    error_text_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
+                                       verbose_name=ugettext_lazy('error text expr'))
 
     default_value = models.CharField(max_length=255, null=True, blank=True)
     attribute_key = models.CharField(max_length=255, null=True, blank=True)
@@ -459,7 +559,6 @@ class CurrencyPricingSchemeBloombergParameters(models.Model):
 
 
 class InstrumentPricingSchemeWtradeParameters(models.Model):
-
     STRING = 10
     NUMBER = 20
     DATE = 40
@@ -470,7 +569,9 @@ class InstrumentPricingSchemeWtradeParameters(models.Model):
         (DATE, ugettext_lazy('Date')),
     )
 
-    instrument_pricing_scheme = models.ForeignKey(InstrumentPricingScheme, verbose_name=ugettext_lazy('Instrument Pricing Scheme'), on_delete=models.CASCADE)
+    instrument_pricing_scheme = models.ForeignKey(InstrumentPricingScheme,
+                                                  verbose_name=ugettext_lazy('Instrument Pricing Scheme'),
+                                                  on_delete=models.CASCADE)
 
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                             verbose_name=ugettext_lazy('expr'))
@@ -482,7 +583,6 @@ class InstrumentPricingSchemeWtradeParameters(models.Model):
 
 
 class CurrencyPricingSchemeWtradeParameters(models.Model):
-
     STRING = 10
     NUMBER = 20
     DATE = 40
@@ -493,7 +593,9 @@ class CurrencyPricingSchemeWtradeParameters(models.Model):
         (DATE, ugettext_lazy('Date')),
     )
 
-    currency_pricing_scheme = models.ForeignKey(CurrencyPricingScheme, verbose_name=ugettext_lazy('Currency Pricing Scheme'), on_delete=models.CASCADE)
+    currency_pricing_scheme = models.ForeignKey(CurrencyPricingScheme,
+                                                verbose_name=ugettext_lazy('Currency Pricing Scheme'),
+                                                on_delete=models.CASCADE)
 
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                             verbose_name=ugettext_lazy('expr'))
@@ -505,7 +607,6 @@ class CurrencyPricingSchemeWtradeParameters(models.Model):
 
 
 class PricingProcedure(NamedModel):
-
     name = models.CharField(max_length=255)
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
                                     on_delete=models.CASCADE)
@@ -519,17 +620,17 @@ class PricingProcedure(NamedModel):
     price_date_from = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price date from'))
 
     price_date_from_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                            verbose_name=ugettext_lazy('price date from expr'))
+                                            verbose_name=ugettext_lazy('price date from expr'))
 
     price_date_to = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price date to'))
 
     price_date_to_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                            verbose_name=ugettext_lazy('price date to expr'))
+                                          verbose_name=ugettext_lazy('price date to expr'))
 
     price_balance_date = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price balance date'))
 
     price_balance_date_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                          verbose_name=ugettext_lazy('price balance date expr'))
+                                               verbose_name=ugettext_lazy('price balance date expr'))
 
     price_fill_days = models.PositiveSmallIntegerField(default=0, verbose_name=ugettext_lazy('price fill days'))
     price_override_existed = models.BooleanField(default=True, verbose_name=ugettext_lazy('price override existed'))
@@ -545,7 +646,8 @@ class PricingProcedure(NamedModel):
     # accrual_date_to_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
     #                                           verbose_name=ugettext_lazy('accrual date to expr'))
 
-    pricing_policy_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('pricing policy filters'))
+    pricing_policy_filters = models.TextField(blank=True, default='',
+                                              verbose_name=ugettext_lazy('pricing policy filters'))
 
     instrument_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('instrument filters'))
 
@@ -559,12 +661,14 @@ class PricingProcedure(NamedModel):
 
 
 class CurrencyPricingPolicy(models.Model):
+    currency = models.ForeignKey('currencies.Currency', on_delete=models.CASCADE,
+                                 verbose_name=ugettext_lazy('currency'), related_name='pricing_policies')
 
-    currency = models.ForeignKey('currencies.Currency', on_delete=models.CASCADE, verbose_name=ugettext_lazy('currency'), related_name='pricing_policies')
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE,
+                                       verbose_name=ugettext_lazy('pricing policy'))
 
-    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, verbose_name=ugettext_lazy('pricing policy'))
-
-    pricing_scheme = models.ForeignKey(CurrencyPricingScheme, null=True, blank=True, on_delete=models.SET_NULL, verbose_name=ugettext_lazy('pricing scheme'))
+    pricing_scheme = models.ForeignKey(CurrencyPricingScheme, null=True, blank=True, on_delete=models.SET_NULL,
+                                       verbose_name=ugettext_lazy('pricing scheme'))
 
     notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
 
@@ -597,12 +701,14 @@ class CurrencyPricingPolicy(models.Model):
 
 
 class InstrumentTypePricingPolicy(models.Model):
+    instrument_type = models.ForeignKey('instruments.InstrumentType', on_delete=models.CASCADE,
+                                        verbose_name=ugettext_lazy('instrument type'), related_name='pricing_policies')
 
-    instrument_type = models.ForeignKey('instruments.InstrumentType', on_delete=models.CASCADE, verbose_name=ugettext_lazy('instrument type'), related_name='pricing_policies')
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE,
+                                       verbose_name=ugettext_lazy('pricing policy'))
 
-    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, verbose_name=ugettext_lazy('pricing policy'))
-
-    pricing_scheme = models.ForeignKey(InstrumentPricingScheme, null=True, blank=True, on_delete=models.SET_NULL, verbose_name=ugettext_lazy('pricing scheme'))
+    pricing_scheme = models.ForeignKey(InstrumentPricingScheme, null=True, blank=True, on_delete=models.SET_NULL,
+                                       verbose_name=ugettext_lazy('pricing scheme'))
 
     notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
 
@@ -637,12 +743,14 @@ class InstrumentTypePricingPolicy(models.Model):
 
 
 class InstrumentPricingPolicy(models.Model):
+    instrument = models.ForeignKey('instruments.Instrument', on_delete=models.CASCADE,
+                                   verbose_name=ugettext_lazy('instrument'), related_name='pricing_policies')
 
-    instrument = models.ForeignKey('instruments.Instrument', on_delete=models.CASCADE, verbose_name=ugettext_lazy('instrument'), related_name='pricing_policies')
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE,
+                                       verbose_name=ugettext_lazy('pricing policy'))
 
-    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, verbose_name=ugettext_lazy('pricing policy'))
-
-    pricing_scheme = models.ForeignKey(InstrumentPricingScheme, null=True, blank=True, on_delete=models.SET_NULL, verbose_name=ugettext_lazy('pricing scheme'))
+    pricing_scheme = models.ForeignKey(InstrumentPricingScheme, null=True, blank=True, on_delete=models.SET_NULL,
+                                       verbose_name=ugettext_lazy('pricing scheme'))
 
     notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
 
@@ -675,7 +783,6 @@ class InstrumentPricingPolicy(models.Model):
 
 
 class PricingProcedureInstance(models.Model):
-
     STATUS_INIT = 'I'
     STATUS_PENDING = 'P'
     STATUS_DONE = 'D'
@@ -688,7 +795,8 @@ class PricingProcedureInstance(models.Model):
         (STATUS_ERROR, ugettext_lazy('Error')),
     )
 
-    pricing_procedure = models.ForeignKey(PricingProcedure, on_delete=models.CASCADE, verbose_name=ugettext_lazy('pricing procedure'))
+    pricing_procedure = models.ForeignKey(PricingProcedure, on_delete=models.CASCADE,
+                                          verbose_name=ugettext_lazy('pricing procedure'))
 
     created = models.DateTimeField(auto_now_add=True, editable=False, db_index=True,
                                    verbose_name='created')
@@ -697,21 +805,78 @@ class PricingProcedureInstance(models.Model):
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
-    status = models.CharField(max_length=1,  default=STATUS_INIT, choices=STATUS_CHOICES, verbose_name=ugettext_lazy('status'))
+    status = models.CharField(max_length=1, default=STATUS_INIT, choices=STATUS_CHOICES,
+                              verbose_name=ugettext_lazy('status'))
 
     action = models.CharField(max_length=255, null=True, blank=True)
     provider = models.CharField(max_length=255, null=True, blank=True)
 
 
-class PricingProcedureBloombergInstrumentResult(models.Model):
+class PriceHistoryError(models.Model):
 
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
-    procedure = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE, verbose_name=ugettext_lazy('procedure'))
+    instrument = models.ForeignKey('instruments.Instrument', on_delete=models.CASCADE,
+                                   verbose_name=ugettext_lazy('instrument'))
 
-    instrument = models.ForeignKey('instruments.Instrument', on_delete=models.CASCADE, verbose_name=ugettext_lazy('instrument'))
-    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, verbose_name=ugettext_lazy('pricing policy'))
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE,
+                                       verbose_name=ugettext_lazy('pricing policy'))
+
+    pricing_scheme = models.ForeignKey(InstrumentPricingScheme, null=True, blank=True, on_delete=models.SET_NULL,
+                                       verbose_name=ugettext_lazy('pricing scheme'))
+
+    date = models.DateField(db_index=True, default=date_now, verbose_name=ugettext_lazy('date'))
+
+    principal_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('principal price'))
+    accrued_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('accrued price'))
+
+    price_error_text = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('price error text'))
+
+    accrual_error_text = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('accrual error text'))
+
+    procedure_instance = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE,
+                                           verbose_name=ugettext_lazy('pricing procedure instance'))
+
+
+class CurrencyHistoryError(models.Model):
+
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
+
+    currency = models.ForeignKey('currencies.Currency', on_delete=models.CASCADE,
+                                   verbose_name=ugettext_lazy('currency'))
+
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE,
+                                       verbose_name=ugettext_lazy('pricing policy'))
+
+    pricing_scheme = models.ForeignKey(CurrencyPricingScheme, null=True, blank=True, on_delete=models.SET_NULL,
+                                       verbose_name=ugettext_lazy('pricing scheme'))
+
+    date = models.DateField(db_index=True, default=date_now, verbose_name=ugettext_lazy('date'))
+
+    fx_rate = models.FloatField(default=0.0, verbose_name=ugettext_lazy('fx rate'))
+
+    error_text = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('error text'))
+
+    procedure_instance = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE,
+                                           verbose_name=ugettext_lazy('pricing procedure instance'))
+
+
+class PricingProcedureBloombergInstrumentResult(models.Model):
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
+
+    procedure = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE,
+                                  verbose_name=ugettext_lazy('procedure'))
+
+    instrument = models.ForeignKey('instruments.Instrument', on_delete=models.CASCADE,
+                                   verbose_name=ugettext_lazy('instrument'))
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE,
+                                       verbose_name=ugettext_lazy('pricing policy'))
+
+    pricing_scheme = models.ForeignKey(InstrumentPricingScheme, null=True, blank=True, on_delete=models.SET_NULL,
+                                       verbose_name=ugettext_lazy('pricing scheme'))
 
     reference = models.CharField(max_length=255, null=True, blank=True)
 
@@ -719,14 +884,21 @@ class PricingProcedureBloombergInstrumentResult(models.Model):
 
     instrument_parameters = models.CharField(max_length=255, null=True, blank=True)
 
-    ask_parameters = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('ask parameters'))
+    ask_parameters = models.CharField(max_length=255, null=True, blank=True,
+                                      verbose_name=ugettext_lazy('ask parameters'))
     ask_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('ask value'))
 
-    bid_parameters = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('bid parameters'))
+    bid_parameters = models.CharField(max_length=255, null=True, blank=True,
+                                      verbose_name=ugettext_lazy('bid parameters'))
     bid_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('bid value'))
 
-    last_parameters = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('last parameters'))
-    last_value = models.FloatField(null=True, blank=True,  verbose_name=ugettext_lazy('last value'))
+    last_parameters = models.CharField(max_length=255, null=True, blank=True,
+                                       verbose_name=ugettext_lazy('last parameters'))
+    last_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('last value'))
+
+    accrual_parameters = models.CharField(max_length=255, null=True, blank=True,
+                                          verbose_name=ugettext_lazy('accrual parameters'))
+    accrual_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('accrual value'))
 
     class Meta:
         unique_together = (
@@ -735,14 +907,19 @@ class PricingProcedureBloombergInstrumentResult(models.Model):
 
 
 class PricingProcedureBloombergCurrencyResult(models.Model):
-
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
-    procedure = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE, verbose_name=ugettext_lazy('procedure'))
+    procedure = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE,
+                                  verbose_name=ugettext_lazy('procedure'))
 
-    currency = models.ForeignKey('currencies.Currency', on_delete=models.CASCADE, verbose_name=ugettext_lazy('currency'))
-    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, verbose_name=ugettext_lazy('pricing policy'))
+    currency = models.ForeignKey('currencies.Currency', on_delete=models.CASCADE,
+                                 verbose_name=ugettext_lazy('currency'))
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE,
+                                       verbose_name=ugettext_lazy('pricing policy'))
+
+    pricing_scheme = models.ForeignKey(CurrencyPricingScheme, null=True, blank=True, on_delete=models.SET_NULL,
+                                       verbose_name=ugettext_lazy('pricing scheme'))
 
     reference = models.CharField(max_length=255, null=True, blank=True)
 
@@ -750,7 +927,8 @@ class PricingProcedureBloombergCurrencyResult(models.Model):
 
     currency_parameters = models.CharField(max_length=255, null=True, blank=True)
 
-    fx_rate_parameters = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('fx rate parameters'))
+    fx_rate_parameters = models.CharField(max_length=255, null=True, blank=True,
+                                          verbose_name=ugettext_lazy('fx rate parameters'))
     fx_rate_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('fx rate value'))
 
     class Meta:
@@ -760,14 +938,19 @@ class PricingProcedureBloombergCurrencyResult(models.Model):
 
 
 class PricingProcedureWtradeInstrumentResult(models.Model):
-
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
-    procedure = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE, verbose_name=ugettext_lazy('procedure'))
+    procedure = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE,
+                                  verbose_name=ugettext_lazy('procedure'))
 
-    instrument = models.ForeignKey('instruments.Instrument', on_delete=models.CASCADE, verbose_name=ugettext_lazy('instrument'))
-    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, verbose_name=ugettext_lazy('pricing policy'))
+    instrument = models.ForeignKey('instruments.Instrument', on_delete=models.CASCADE,
+                                   verbose_name=ugettext_lazy('instrument'))
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE,
+                                       verbose_name=ugettext_lazy('pricing policy'))
+
+    pricing_scheme = models.ForeignKey(InstrumentPricingScheme, null=True, blank=True, on_delete=models.SET_NULL,
+                                       verbose_name=ugettext_lazy('pricing scheme'))
 
     reference = models.CharField(max_length=255, null=True, blank=True)
 
@@ -788,14 +971,19 @@ class PricingProcedureWtradeInstrumentResult(models.Model):
 
 
 class PricingProcedureWtradeCurrencyResult(models.Model):
-
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
-    procedure = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE, verbose_name=ugettext_lazy('procedure'))
+    procedure = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE,
+                                  verbose_name=ugettext_lazy('procedure'))
 
-    currency = models.ForeignKey('currencies.Currency', on_delete=models.CASCADE, verbose_name=ugettext_lazy('currency'))
-    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, verbose_name=ugettext_lazy('pricing policy'))
+    currency = models.ForeignKey('currencies.Currency', on_delete=models.CASCADE,
+                                 verbose_name=ugettext_lazy('currency'))
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE,
+                                       verbose_name=ugettext_lazy('pricing policy'))
+
+    pricing_scheme = models.ForeignKey(CurrencyPricingScheme, null=True, blank=True, on_delete=models.SET_NULL,
+                                       verbose_name=ugettext_lazy('pricing scheme'))
 
     reference = models.CharField(max_length=255, null=True, blank=True)
 

@@ -6,7 +6,7 @@ from poms.integrations.models import ProviderClass
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
 from poms.pricing.models import PricingProcedureInstance, PricingProcedureBloombergCurrencyResult, \
-    CurrencyPricingSchemeType, PricingProcedureWtradeCurrencyResult
+    CurrencyPricingSchemeType, PricingProcedureWtradeCurrencyResult, CurrencyHistoryError
 from poms.pricing.transport.transport import PricingTransport
 from poms.pricing.utils import get_unique_pricing_schemes, group_items_by_provider, get_list_of_dates_between_two_dates, \
     get_is_yesterday, optimize_items
@@ -175,6 +175,13 @@ class PricingCurrencyHandler(object):
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
 
+        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+                                                      master_user=self.master_user,
+                                                      status=PricingProcedureInstance.STATUS_PENDING,
+                                                      action='single_parameter_formula_get_currency_prices',
+                                                      provider='finmars')
+        procedure_instance.save()
+
         for item in items:
 
             for date in dates:
@@ -237,44 +244,60 @@ class PricingCurrencyHandler(object):
                         'parameter': parameter
                     }
 
+                    has_error = False
+                    error = CurrencyHistoryError(
+                        master_user=self.master_user,
+                        procedure_instance=procedure_instance,
+                        currency=item.currency,
+                        pricing_scheme=item.pricing_scheme,
+                        pricing_policy=item.policy.pricing_policy,
+                        date=date,
+                    )
+
                     expr = scheme_parameters.expr
+                    error_text_expr = scheme_parameters.error_text_expr
 
                     print('values %s' % values)
                     print('expr %s' % expr)
 
+                    fx_rate = None
+
                     try:
                         fx_rate = formula.safe_eval(expr, names=values)
                     except formula.InvalidExpression:
-                        print("Error here")
-                        continue
+                        has_error = True
+
+                        try:
+                            error.error_text = formula.safe_eval(error_text_expr, names=values)
+                        except formula.InvalidExpression:
+                            error.error_text = 'Invalid Error Text Expression'
 
                     print('fx_rate %s' % fx_rate)
 
+                    try:
+
+                        price = CurrencyHistory.objects.get(
+                            currency=item.currency,
+                            pricing_policy=item.policy.pricing_policy,
+                            date=date
+                        )
+
+                    except CurrencyHistory.DoesNotExist:
+
+                        price = CurrencyHistory(
+                            currency=item.currency,
+                            pricing_policy=item.policy.pricing_policy,
+                            date=date
+                        )
+
                     if fx_rate:
+                        price.fx_rate = fx_rate
 
-                        try:
+                    price.save()
 
-                            price = CurrencyHistory.objects.get(
-                                currency=item.currency,
-                                pricing_policy=item.policy.pricing_policy,
-                                date=date
-                            )
+                    if has_error:
+                        error.save()
 
-                            price.fx_rate = fx_rate
-                            price.save()
-
-                            print('Update Currency history %s' % price.id)
-
-                        except CurrencyHistory.DoesNotExist:
-
-                            price = CurrencyHistory(
-                                currency=item.currency,
-                                pricing_policy=item.policy.pricing_policy,
-                                date=date,
-                                fx_rate=fx_rate
-                            )
-
-                            price.save()
 
     def process_to_multiple_parameter_formula(self, items):
 
@@ -282,6 +305,13 @@ class PricingCurrencyHandler(object):
 
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
+
+        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+                                                      master_user=self.master_user,
+                                                      status=PricingProcedureInstance.STATUS_PENDING,
+                                                      action='multiple_parameter_formula_get_currency_prices',
+                                                      provider='finmars')
+        procedure_instance.save()
 
         for item in items:
 
@@ -398,44 +428,59 @@ class PricingCurrencyHandler(object):
 
                                 values['parameter' + str(parameter['index'])] = val
 
+                    has_error = False
+                    error = CurrencyHistoryError(
+                        master_user=self.master_user,
+                        procedure_instance=procedure_instance,
+                        currency=item.currency,
+                        pricing_scheme=item.pricing_scheme,
+                        pricing_policy=item.policy.pricing_policy,
+                        date=date,
+                    )
+
                     expr = scheme_parameters.expr
+                    error_text_expr = scheme_parameters.error_text_expr
 
                     print('values %s' % values)
                     print('expr %s' % expr)
 
+                    fx_rate = None
+
                     try:
                         fx_rate = formula.safe_eval(expr, names=values)
                     except formula.InvalidExpression:
-                        print("Error here")
-                        continue
+                        has_error = True
+
+                        try:
+                            error.error_text = formula.safe_eval(error_text_expr, names=values)
+                        except formula.InvalidExpression:
+                            error.error_text = 'Invalid Error Text Expression'
 
                     print('fx_rate %s' % fx_rate)
 
+                    try:
+
+                        price = CurrencyHistory.objects.get(
+                            currency=item.currency,
+                            pricing_policy=item.policy.pricing_policy,
+                            date=date
+                        )
+
+                    except CurrencyHistory.DoesNotExist:
+
+                        price = CurrencyHistory(
+                            currency=item.currency,
+                            pricing_policy=item.policy.pricing_policy,
+                            date=date
+                        )
+
                     if fx_rate:
+                        price.fx_rate = fx_rate
 
-                        try:
+                    price.save()
 
-                            price = CurrencyHistory.objects.get(
-                                currency=item.currency,
-                                pricing_policy=item.policy.pricing_policy,
-                                date=date
-                            )
-
-                            price.fx_rate = fx_rate
-                            price.save()
-
-                            print('Update Price history %s' % price.id)
-
-                        except CurrencyHistory.DoesNotExist:
-
-                            price = CurrencyHistory(
-                                currency=item.currency,
-                                pricing_policy=item.policy.pricing_policy,
-                                date=date,
-                                fx_rate=fx_rate
-                            )
-
-                            price.save()
+                    if has_error:
+                        error.save()
 
     def process_to_bloomberg_provider(self, items):
 
@@ -499,6 +544,7 @@ class PricingCurrencyHandler(object):
                                                                      currency=item.currency,
                                                                      currency_parameters=str(item_parameters),
                                                                      pricing_policy=item.policy.pricing_policy,
+                                                                     pricing_scheme=item.pricing_scheme,
                                                                      reference=item.parameters[0],
                                                                      date=date)
 
@@ -554,7 +600,7 @@ class PricingCurrencyHandler(object):
             procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
                                                           master_user=self.master_user,
                                                           status=PricingProcedureInstance.STATUS_PENDING,
-                                                          action='wtrade_get_instrument_prices',
+                                                          action='wtrade_get_currency_prices',
                                                           provider='wtrade')
             procedure_instance.save()
 
@@ -603,6 +649,7 @@ class PricingCurrencyHandler(object):
                                                                             currency_parameters=str(
                                                                                 item_parameters),
                                                                             pricing_policy=item.policy.pricing_policy,
+                                                                            pricing_scheme=item.pricing_scheme,
                                                                             reference=item.parameters[0],
                                                                             date=date)
 

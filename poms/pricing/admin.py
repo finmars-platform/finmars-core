@@ -7,7 +7,8 @@ from poms.pricing.models import InstrumentPricingSchemeType, CurrencyPricingSche
     CurrencyPricingScheme, PricingProcedure, InstrumentPricingPolicy, \
     InstrumentTypePricingPolicy, CurrencyPricingPolicy, PricingProcedureInstance, \
     PricingProcedureBloombergInstrumentResult, PricingProcedureBloombergCurrencyResult, \
-    PricingProcedureWtradeInstrumentResult, PricingProcedureWtradeCurrencyResult
+    PricingProcedureWtradeInstrumentResult, PricingProcedureWtradeCurrencyResult, PriceHistoryError, \
+    CurrencyHistoryError
 
 
 class InstrumentPricingSchemeTypeAdmin(admin.ModelAdmin):
@@ -120,5 +121,30 @@ class PricingProcedureInstanceAdmin(admin.ModelAdmin):
 
 
 admin.site.register(PricingProcedureInstance, PricingProcedureInstanceAdmin)
+
+
+class PriceHistoryErrorAdmin(admin.ModelAdmin):
+    model = PriceHistoryError
+    list_display = ['id', 'procedure_instance', 'master_user',
+                    'instrument', 'pricing_policy', 'pricing_scheme',
+                    'date', 'principal_price', 'accrued_price',
+                    'price_error_text', 'accrual_error_text']
+    raw_id_fields = ['procedure_instance', 'master_user', 'instrument', 'pricing_policy', 'pricing_scheme']
+
+
+admin.site.register(PriceHistoryError, PriceHistoryErrorAdmin)
+
+
+class CurrencyHistoryErrorAdmin(admin.ModelAdmin):
+    model = CurrencyHistoryError
+    list_display = ['id', 'procedure_instance', 'master_user',
+                    'currency', 'pricing_policy', 'pricing_scheme',
+                    'date', 'fx_rate',
+                    'error_text']
+    raw_id_fields = ['procedure_instance', 'master_user', 'currency', 'pricing_policy', 'pricing_scheme']
+
+
+admin.site.register(CurrencyHistoryError, CurrencyHistoryErrorAdmin)
+
 
 

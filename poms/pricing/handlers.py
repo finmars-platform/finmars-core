@@ -8,7 +8,8 @@ from poms.instruments.models import PriceHistory
 from poms.pricing.currency_handler import PricingCurrencyHandler
 from poms.pricing.instrument_handler import PricingInstrumentHandler
 from poms.pricing.models import PricingProcedureBloombergInstrumentResult, PricingProcedureBloombergCurrencyResult, \
-    PricingProcedureWtradeInstrumentResult, PricingProcedureWtradeCurrencyResult
+    PricingProcedureWtradeInstrumentResult, PricingProcedureWtradeCurrencyResult, PriceHistoryError, \
+    CurrencyHistoryError
 
 
 class PricingProcedureProcess(object):
@@ -173,6 +174,13 @@ class FillPricesBrokerBloombergProcess(object):
                                     except Exception as e:
                                         print('last value e %s ' % e)
 
+                                if field['code'] in record.accrual_parameters:
+
+                                    try:
+                                        record.accrual_value = float(val_obj['value'])
+                                    except Exception as e:
+                                        print('accrual_value value e %s ' % e)
+
                                 record.save()
 
                         if not len(records):
@@ -206,53 +214,79 @@ class FillPricesBrokerBloombergProcess(object):
                 'instrument': safe_instrument,
                 'ask': record.ask_value,
                 'bid': record.bid_value,
-                'last': record.last_value
+                'last': record.last_value,
+                'accrual': record.accrual_value
             }
 
-            pricing_scheme = record.pricing_policy.default_instrument_pricing_scheme # TODO why we took default scheme?
+            pricing_scheme_parameters = record.pricing_scheme.get_parameters()
 
-            expr = pricing_scheme.get_parameters().expr
+            expr = pricing_scheme_parameters.expr
+            pricing_error_text_expr = pricing_scheme_parameters.pricing_error_text_expr
 
             print('values %s' % values)
             print('expr %s' % expr)
 
+            has_error = False
+            error = PriceHistoryError(
+                master_user=self.master_user,
+                procedure_instance_id=self.instance['procedure'],
+                instrument=record.instrument,
+                pricing_scheme=record.pricing_scheme,
+                pricing_policy=record.pricing_policy,
+                date=record.date,
+            )
+
+            principal_price = None
+
             try:
                 principal_price = formula.safe_eval(expr, names=values)
             except formula.InvalidExpression:
-                print("Error here")
-                continue
+
+                has_error = True
+
+                try:
+                    error.price_error_text = formula.safe_eval(pricing_error_text_expr, names=values)
+
+                except formula.InvalidExpression:
+
+                    error.price_error_text = 'Invalid Error Text Expression'
+
 
             print('principal_price %s' % principal_price)
             print('instrument %s' % record.instrument.user_code)
             print('pricing_policy %s' % record.pricing_policy.user_code)
 
+            accrued_price = record.instrument.get_accrued_price(record.date)
+
+            try:
+
+                price = PriceHistory.objects.get(
+                    instrument=record.instrument,
+                    pricing_policy=record.pricing_policy,
+                    date=record.date
+                )
+
+            except PriceHistory.DoesNotExist:
+
+                price = PriceHistory(
+                    instrument=record.instrument,
+                    pricing_policy=record.pricing_policy,
+                    date=record.date,
+                    principal_price=principal_price
+                )
+
             if principal_price:
+                price.principal_price = principal_price
+                error.principal_price = principal_price
 
-                try:
+            if accrued_price:
+                price.accrued_price = accrued_price
+                error.accrued_price = accrued_price
 
-                    price = PriceHistory.objects.get(
-                        instrument=record.instrument,
-                        pricing_policy=record.pricing_policy,
-                        date=record.date
-                    )
+            price.save()
 
-                    price.principal_price = principal_price
-                    price.save()
-
-                    print('Update Price history %s' % price.id)
-
-                except PriceHistory.DoesNotExist:
-
-                    price = PriceHistory(
-                        instrument=record.instrument,
-                        pricing_policy=record.pricing_policy,
-                        date=record.date,
-                        principal_price=principal_price
-                    )
-
-                    price.save()
-
-                    print('Create New Price history %s' % price.id)
+            if has_error:
+                error.save()
 
         PricingProcedureBloombergInstrumentResult.objects.filter(master_user=self.master_user,
                                                        procedure=self.instance['procedure'],
@@ -284,50 +318,64 @@ class FillPricesBrokerBloombergProcess(object):
                 'fx_rate': record.fx_rate_value,
             }
 
-            pricing_scheme = record.pricing_policy.default_currency_pricing_scheme  # TODO why we took default scheme?
+            has_error = False
+            error = CurrencyHistoryError(
+                master_user=self.master_user,
+                procedure_instance_id=self.instance['procedure'],
+                currency=record.currency,
+                pricing_scheme=record.pricing_scheme,
+                pricing_policy=record.pricing_policy,
+                date=record.date,
+            )
 
-            expr = pricing_scheme.get_parameters().expr
+            pricing_scheme_parameters = record.pricing_scheme.get_parameters()
+
+            expr = pricing_scheme_parameters.expr
+            error_text_expr = pricing_scheme_parameters.error_text_expr
 
             print('values %s' % values)
             print('expr %s' % expr)
 
+            fx_rate = None
+
             try:
                 fx_rate = formula.safe_eval(expr, names=values)
             except formula.InvalidExpression:
-                print("Error here")
-                continue
+
+                has_error = True
+
+                try:
+                    error.error_text = formula.safe_eval(error_text_expr, names=values)
+                except formula.InvalidExpression:
+                    error.error_text = 'Invalid Error Text Expression'
 
             print('fx_rate %s' % fx_rate)
             print('currency %s' % record.currency.user_code)
             print('pricing_policy %s' % record.pricing_policy.user_code)
 
+            try:
+
+                price = CurrencyHistory.objects.get(
+                    currency=record.currency,
+                    pricing_policy=record.pricing_policy,
+                    date=record.date
+                )
+
+            except CurrencyHistory.DoesNotExist:
+
+                price = CurrencyHistory(
+                    currency=record.currency,
+                    pricing_policy=record.pricing_policy,
+                    date=record.date
+                )
+
             if fx_rate:
+                price.fx_rate = fx_rate
 
-                try:
+            price.save()
 
-                    price = CurrencyHistory.objects.get(
-                        currency=record.currency,
-                        pricing_policy=record.pricing_policy,
-                        date=record.date
-                    )
-
-                    price.fx_rate = fx_rate
-                    price.save()
-
-                    print('Update Currency history %s' % price.id)
-
-                except CurrencyHistory.DoesNotExist:
-
-                    price = CurrencyHistory(
-                        currency=record.currency,
-                        pricing_policy=record.pricing_policy,
-                        date=record.date,
-                        fx_rate=fx_rate
-                    )
-
-                    price.save()
-
-                    print('Create New Currency history %s' % price.id)
+            if has_error:
+                error.save()
 
         PricingProcedureBloombergCurrencyResult.objects.filter(master_user=self.master_user,
                                                                  procedure=self.instance['procedure'],
@@ -537,33 +585,32 @@ class FillPricesBrokerWtradeProcess(object):
             print('instrument %s' % record.instrument.user_code)
             print('pricing_policy %s' % record.pricing_policy.user_code)
 
+            accrued_price = record.instrument.get_accrued_price(record.date)
+
+            try:
+
+                price = PriceHistory.objects.get(
+                    instrument=record.instrument,
+                    pricing_policy=record.pricing_policy,
+                    date=record.date
+                )
+
+            except PriceHistory.DoesNotExist:
+
+                price = PriceHistory(
+                    instrument=record.instrument,
+                    pricing_policy=record.pricing_policy,
+                    date=record.date,
+                    principal_price=principal_price
+                )
+
             if principal_price:
+                price.principal_price = principal_price
 
-                try:
+            if accrued_price:
+                price.accrued_price = accrued_price
 
-                    price = PriceHistory.objects.get(
-                        instrument=record.instrument,
-                        pricing_policy=record.pricing_policy,
-                        date=record.date
-                    )
-
-                    price.principal_price = principal_price
-                    price.save()
-
-                    print('Update Price history %s' % price.id)
-
-                except PriceHistory.DoesNotExist:
-
-                    price = PriceHistory(
-                        instrument=record.instrument,
-                        pricing_policy=record.pricing_policy,
-                        date=record.date,
-                        principal_price=principal_price
-                    )
-
-                    price.save()
-
-                    print('Create New Price history %s' % price.id)
+            price.save()
 
         PricingProcedureWtradeInstrumentResult.objects.filter(master_user=self.master_user,
                                                                  procedure=self.instance['procedure'],
