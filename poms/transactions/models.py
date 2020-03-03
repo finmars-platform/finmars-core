@@ -687,7 +687,7 @@ class TransactionTypeInputSettings(models.Model):
 
     transaction_type_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True,
                                                unique=True,
-                                               on_delete=models.PROTECT, related_name='settings',
+                                               on_delete=models.CASCADE, related_name='settings',
                                                verbose_name=ugettext_lazy('transaction type input'))
 
     linked_inputs_names = models.TextField(blank=True, default='', null=True, verbose_name=ugettext_lazy('linked_input_names'))
