@@ -1,6 +1,7 @@
 from django.contrib.contenttypes.models import ContentType
 from rest_framework.filters import BaseFilterBackend
 
+from poms.pricing.models import PriceHistoryError, CurrencyHistoryError
 from poms.reports.models import BalanceReport, PLReport, PerformanceReport, CashFlowReport, TransactionReport
 
 
@@ -21,6 +22,7 @@ class LayoutContentTypeFilter(BaseFilterBackend):
         models = [AccountType, Account, Currency, CurrencyHistory, InstrumentType, Instrument, PriceHistory,
                   PricingPolicy, CounterpartyGroup, Counterparty, Responsible, ResponsibleGroup, Portfolio,
                   TransactionTypeGroup, TransactionType, Transaction, ComplexTransaction, Tag,
+                  PriceHistoryError, CurrencyHistoryError,
                   Strategy1Group, Strategy1Subgroup, Strategy1,
                   Strategy2Group, Strategy2Subgroup, Strategy2,
                   Strategy3Group, Strategy3Subgroup, Strategy3,

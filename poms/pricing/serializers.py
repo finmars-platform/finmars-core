@@ -3,7 +3,8 @@ from rest_framework import serializers
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import ModelWithUserCodeSerializer
-from poms.instruments.models import PricingPolicy
+from poms.currencies.models import CurrencyHistory
+from poms.instruments.models import PricingPolicy, PriceHistory
 from poms.pricing.models import InstrumentPricingScheme, InstrumentPricingSchemeType, CurrencyPricingSchemeType, \
     InstrumentPricingSchemeManualPricingParameters, CurrencyPricingSchemeManualPricingParameters, \
     InstrumentPricingSchemeSingleParameterFormulaParameters, CurrencyPricingSchemeSingleParameterFormulaParameters, \
@@ -822,9 +823,40 @@ class PriceHistoryErrorSerializer(serializers.ModelSerializer):
         fields = ('id', 'master_user', 'instrument', 'pricing_policy', 'pricing_scheme', 'date', 'principal_price',
                   'accrued_price', 'price_error_text', 'accrual_error_text', 'procedure_instance')
 
+    def update(self, instance, validated_data):
+
+        instance = super(PriceHistoryErrorSerializer, self).update(instance, validated_data)
+
+        try:
+            price_history = PriceHistory.objects.get(instrument=instance.instrument, pricing_policy=instance.pricing_policy, date=instance.date)
+        except PriceHistory.DoesNotExist:
+            price_history = PriceHistory(instrument=instance.instrument, pricing_policy=instance.pricing_policy, date=instance.date)
+
+        price_history.principal_price = instance.principal_price
+        price_history.accrued_price = instance.accrued_price
+
+        price_history.save()
+
+        return instance
+
 
 class CurrencyHistoryErrorSerializer(serializers.ModelSerializer):
     class Meta:
         model = CurrencyHistoryError
         fields = ('id', 'master_user', 'currency', 'pricing_policy', 'pricing_scheme', 'date', 'fx_rate', 'error_text',
                   'procedure_instance')
+
+    def update(self, instance, validated_data):
+
+        instance = super(CurrencyHistoryErrorSerializer, self).update(instance, validated_data)
+
+        try:
+            currency_history = CurrencyHistory.objects.get(currency=instance.currency, pricing_policy=instance.pricing_policy, date=instance.date)
+        except CurrencyHistory.DoesNotExist:
+            currency_history = CurrencyHistory(currency=instance.currency, pricing_policy=instance.pricing_policy, date=instance.date)
+
+        currency_history.fx_rate = instance.fx_rate
+
+        currency_history.save()
+
+        return instance
