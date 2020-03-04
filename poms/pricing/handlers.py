@@ -313,6 +313,9 @@ class FillPricesBrokerBloombergProcess(object):
                     principal_price=principal_price
                 )
 
+            price.principal_price = 0
+            price.accrued_price = 0
+
             if principal_price:
                 price.principal_price = principal_price
                 error.principal_price = principal_price
@@ -641,6 +644,9 @@ class FillPricesBrokerWtradeProcess(object):
                     date=record.date,
                     principal_price=principal_price
                 )
+
+            price.principal_price = 0
+            price.accrued_price = 0
 
             if principal_price:
                 price.principal_price = principal_price

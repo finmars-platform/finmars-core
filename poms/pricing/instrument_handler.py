@@ -160,10 +160,6 @@ class PricingInstrumentHandler(object):
 
         for provider_id, items in self.instrument_items_grouped.items():
 
-            # DEPRECATED
-            # if provider_id == 2:
-            #     self.process_to_manual_pricing(items)
-
             if provider_id == 3:
                 self.process_to_single_parameter_formula(items)
 
@@ -251,46 +247,6 @@ class PricingInstrumentHandler(object):
                         result.append(item)
 
         return result
-
-    # DEPRECATED
-    def process_to_manual_pricing(self, items):
-
-        print("Process Manual Pricing: len %s" % len(items))
-
-        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
-                                                    date_to=self.procedure.price_date_to)
-
-        for item in items:
-
-            for date in dates:
-
-                principal_price = item.policy.default_value
-
-                if principal_price:
-
-                    try:
-
-                        price = PriceHistory.objects.get(
-                            instrument=item.instrument,
-                            pricing_policy=item.policy.pricing_policy,
-                            date=date
-                        )
-
-                        price.principal_price = principal_price
-                        price.save()
-
-                        print('Update Price history %s' % price.id)
-
-                    except PriceHistory.DoesNotExist:
-
-                        price = PriceHistory(
-                            instrument=item.instrument,
-                            pricing_policy=item.policy.pricing_policy,
-                            date=date,
-                            principal_price=principal_price
-                        )
-
-                        price.save()
 
     def process_to_single_parameter_formula(self, items):
 
@@ -454,6 +410,9 @@ class PricingInstrumentHandler(object):
                             pricing_policy=item.policy.pricing_policy,
                             date=date
                         )
+
+                    price.principal_price = 0
+                    price.accrued_price = 0
 
                     if principal_price:
                         price.principal_price = principal_price
@@ -673,6 +632,9 @@ class PricingInstrumentHandler(object):
                             pricing_policy=item.policy.pricing_policy,
                             date=date
                         )
+
+                    price.principal_price = 0
+                    price.accrued_price = 0
 
                     if principal_price:
                         price.principal_price = principal_price
