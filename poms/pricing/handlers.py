@@ -264,10 +264,10 @@ class FillPricesBrokerBloombergProcess(object):
             print('instrument %s' % record.instrument.user_code)
             print('pricing_policy %s' % record.pricing_policy.user_code)
 
-            if record.pricing_scheme.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
+            if pricing_scheme_parameters.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
 
                 try:
-                    accrued_price = record.instrument.get_accrued_price(date)
+                    accrued_price = record.instrument.get_accrued_price(record.date)
                 except Exception:
                     has_error = True
 
@@ -280,7 +280,7 @@ class FillPricesBrokerBloombergProcess(object):
                     except formula.InvalidExpression:
                         error.accrual_error_text = 'Invalid Error Text Expression'
 
-            if record.pricing_scheme.accrual_calculation_method == 3:   # ACCRUAL_PER_FORMULA
+            if pricing_scheme_parameters.accrual_calculation_method == 3:   # ACCRUAL_PER_FORMULA
 
                 try:
                     accrued_price = formula.safe_eval(accrual_expr, names=values)

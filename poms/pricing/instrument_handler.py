@@ -406,7 +406,7 @@ class PricingInstrumentHandler(object):
 
                     print('principal_price %s' % principal_price)
 
-                    if item.pricing_scheme.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
+                    if scheme_parameters.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
 
                         try:
                             accrued_price = item.instrument.get_accrued_price(date)
@@ -422,7 +422,7 @@ class PricingInstrumentHandler(object):
                             except formula.InvalidExpression:
                                 error.accrual_error_text = 'Invalid Error Text Expression'
 
-                    if item.pricing_scheme.accrual_calculation_method == 3:   # ACCRUAL_PER_FORMULA
+                    if scheme_parameters.accrual_calculation_method == 3:   # ACCRUAL_PER_FORMULA
 
                         try:
                             accrued_price = formula.safe_eval(accrual_expr, names=values)
@@ -626,7 +626,7 @@ class PricingInstrumentHandler(object):
 
                     print('principal_price %s' % principal_price)
 
-                    if item.pricing_scheme.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
+                    if scheme_parameters.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
 
                         try:
                             accrued_price = item.instrument.get_accrued_price(date)
@@ -642,7 +642,7 @@ class PricingInstrumentHandler(object):
                             except formula.InvalidExpression:
                                 error.accrual_error_text = 'Invalid Error Text Expression'
 
-                    if item.pricing_scheme.accrual_calculation_method == 3:   # ACCRUAL_PER_FORMULA
+                    if scheme_parameters.accrual_calculation_method == 3:   # ACCRUAL_PER_FORMULA
 
                         try:
                             accrued_price = formula.safe_eval(accrual_expr, names=values)

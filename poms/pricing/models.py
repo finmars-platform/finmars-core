@@ -32,16 +32,17 @@ class InstrumentPricingSchemeType(models.Model):
 
 
 class InstrumentPricingScheme(NamedModel):
-    SKIP = 1
-    DEFAULT_PRICE = 2
-    ASK_FOR_MANUAL_ENTRY = 3
-    ADD_TO_PRICING_LOG = 4
+
+    ADD_TO_ERROR_TABLE_AND_NOTIFY_IN_THE_END = 1
+    ADD_TO_ERROR_TABLE_AND_NO_NOTIFICATION = 2
+    ADD_TO_ERROR_TABLE_AND_NOTIFY_DIRECTLY = 3
+    NOTIFY_DIRECTLY_AND_REQUEST_PRICES = 4
 
     ERROR_HANDLER_CHOICES = (
-        (SKIP, ugettext_lazy('Skip')),
-        (DEFAULT_PRICE, ugettext_lazy('Default Price')),
-        (ASK_FOR_MANUAL_ENTRY, ugettext_lazy('Ask For Manual Entry')),
-        (ADD_TO_PRICING_LOG, ugettext_lazy('Add to Pricing Log')),
+        (ADD_TO_ERROR_TABLE_AND_NOTIFY_IN_THE_END, ugettext_lazy('Add to Error Table and notify in the End')),
+        (ADD_TO_ERROR_TABLE_AND_NO_NOTIFICATION, ugettext_lazy('Add to Error Table, no notification')),
+        (ADD_TO_ERROR_TABLE_AND_NOTIFY_DIRECTLY, ugettext_lazy('Add to Error Table, notify directly')),
+        (NOTIFY_DIRECTLY_AND_REQUEST_PRICES, ugettext_lazy('Notify Directly and request Prices')),
     )
 
     name = models.CharField(max_length=255)
@@ -53,7 +54,7 @@ class InstrumentPricingScheme(NamedModel):
 
     notes_for_parameter = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes for parameter'))
 
-    error_handler = models.PositiveSmallIntegerField(default=SKIP, choices=ERROR_HANDLER_CHOICES,
+    error_handler = models.PositiveSmallIntegerField(default=ADD_TO_ERROR_TABLE_AND_NOTIFY_IN_THE_END, choices=ERROR_HANDLER_CHOICES,
                                                      verbose_name=ugettext_lazy('error handler'))
 
     type = models.ForeignKey(InstrumentPricingSchemeType, verbose_name=ugettext_lazy('type'), on_delete=models.CASCADE)
@@ -155,16 +156,17 @@ class CurrencyPricingSchemeType(models.Model):
 
 
 class CurrencyPricingScheme(NamedModel):
-    SKIP = 1
-    DEFAULT_PRICE = 2
-    ASK_FOR_MANUAL_ENTRY = 3
-    ADD_TO_PRICING_LOG = 4
+
+    ADD_TO_ERROR_TABLE_AND_NOTIFY_IN_THE_END = 1
+    ADD_TO_ERROR_TABLE_AND_NO_NOTIFICATION = 2
+    ADD_TO_ERROR_TABLE_AND_NOTIFY_DIRECTLY = 3
+    NOTIFY_DIRECTLY_AND_REQUEST_PRICES = 4
 
     ERROR_HANDLER_CHOICES = (
-        (SKIP, ugettext_lazy('Skip')),
-        (DEFAULT_PRICE, ugettext_lazy('Default Price')),
-        (ASK_FOR_MANUAL_ENTRY, ugettext_lazy('Ask For Manual Entry')),
-        (ADD_TO_PRICING_LOG, ugettext_lazy('Add to Pricing Log')),
+        (ADD_TO_ERROR_TABLE_AND_NOTIFY_IN_THE_END, ugettext_lazy('Add to Error Table and notify in the End')),
+        (ADD_TO_ERROR_TABLE_AND_NO_NOTIFICATION, ugettext_lazy('Add to Error Table, no notification')),
+        (ADD_TO_ERROR_TABLE_AND_NOTIFY_DIRECTLY, ugettext_lazy('Add to Error Table, notify directly')),
+        (NOTIFY_DIRECTLY_AND_REQUEST_PRICES, ugettext_lazy('Notify Directly and request Prices')),
     )
 
     name = models.CharField(max_length=255)
@@ -176,7 +178,7 @@ class CurrencyPricingScheme(NamedModel):
 
     notes_for_parameter = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes for parameter'))
 
-    error_handler = models.PositiveSmallIntegerField(default=SKIP, choices=ERROR_HANDLER_CHOICES,
+    error_handler = models.PositiveSmallIntegerField(default=ADD_TO_ERROR_TABLE_AND_NOTIFY_IN_THE_END, choices=ERROR_HANDLER_CHOICES,
                                                      verbose_name=ugettext_lazy('error handler'))
 
     type = models.ForeignKey(CurrencyPricingSchemeType, verbose_name=ugettext_lazy('type'), on_delete=models.CASCADE)
