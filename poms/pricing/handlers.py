@@ -226,7 +226,9 @@ class FillPricesBrokerBloombergProcess(object):
             pricing_scheme_parameters = record.pricing_scheme.get_parameters()
 
             expr = pricing_scheme_parameters.expr
+            accrual_expr = pricing_scheme_parameters.accrual_expr
             pricing_error_text_expr = pricing_scheme_parameters.pricing_error_text_expr
+            accrual_error_text_expr = pricing_scheme_parameters.accrual_error_text_expr
 
             print('values %s' % values)
             print('expr %s' % expr)
@@ -242,6 +244,7 @@ class FillPricesBrokerBloombergProcess(object):
             )
 
             principal_price = None
+            accrued_price = None
 
             try:
                 principal_price = formula.safe_eval(expr, names=values)
@@ -261,7 +264,37 @@ class FillPricesBrokerBloombergProcess(object):
             print('instrument %s' % record.instrument.user_code)
             print('pricing_policy %s' % record.pricing_policy.user_code)
 
-            accrued_price = record.instrument.get_accrued_price(record.date)
+            if record.pricing_scheme.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
+
+                try:
+                    accrued_price = record.instrument.get_accrued_price(date)
+                except Exception:
+                    has_error = True
+
+                    try:
+
+                        print('accrual_error_text_expr %s' % accrual_error_text_expr)
+
+                        error.accrual_error_text = formula.safe_eval(accrual_error_text_expr, names=values)
+
+                    except formula.InvalidExpression:
+                        error.accrual_error_text = 'Invalid Error Text Expression'
+
+            if record.pricing_scheme.accrual_calculation_method == 3:   # ACCRUAL_PER_FORMULA
+
+                try:
+                    accrued_price = formula.safe_eval(accrual_expr, names=values)
+                except formula.InvalidExpression:
+                    has_error = True
+
+                    try:
+
+                        print('accrual_error_text_expr %s' % accrual_error_text_expr)
+
+                        error.accrual_error_text = formula.safe_eval(accrual_error_text_expr, names=values)
+
+                    except formula.InvalidExpression:
+                        error.accrual_error_text = 'Invalid Error Text Expression'
 
             try:
 
