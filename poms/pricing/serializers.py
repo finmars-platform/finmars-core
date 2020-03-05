@@ -4,6 +4,7 @@ from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import ModelWithUserCodeSerializer
 from poms.currencies.models import CurrencyHistory
+from poms.instruments.fields import InstrumentField, PricingPolicyField
 from poms.instruments.models import PricingPolicy, PriceHistory
 from poms.pricing.models import InstrumentPricingScheme, InstrumentPricingSchemeType, CurrencyPricingSchemeType, \
     InstrumentPricingSchemeManualPricingParameters, CurrencyPricingSchemeManualPricingParameters, \
@@ -12,7 +13,7 @@ from poms.pricing.models import InstrumentPricingScheme, InstrumentPricingScheme
     CurrencyPricingSchemeMultipleParametersFormulaParameters, InstrumentPricingSchemeBloombergParameters, \
     CurrencyPricingSchemeBloombergParameters, CurrencyPricingPolicy, InstrumentTypePricingPolicy, \
     InstrumentPricingPolicy, CurrencyPricingSchemeWtradeParameters, InstrumentPricingSchemeWtradeParameters, \
-    PriceHistoryError, CurrencyHistoryError
+    PriceHistoryError, CurrencyHistoryError, PricingProcedureInstance
 from poms.users.fields import MasterUserField
 
 
@@ -746,6 +747,15 @@ class PricingProcedureSerializer(serializers.ModelSerializer):
                   )
 
 
+class PricingProcedureInstanceSerializer(serializers.ModelSerializer):
+
+    pricing_procedure_object = PricingProcedureSerializer(source='pricing_procedure', read_only=True)
+
+    class Meta:
+        model = PricingProcedureInstance
+        fields = ('master_user', 'id', 'pricing_procedure', 'created', 'modified', 'status', 'pricing_procedure', 'pricing_procedure_object')
+
+
 class PricingPolicyViewSerializer(ModelWithUserCodeSerializer):
     class Meta:
         model = PricingPolicy
@@ -818,10 +828,28 @@ class BrokerBloombergSerializer(serializers.Serializer):
 
 
 class PriceHistoryErrorSerializer(serializers.ModelSerializer):
+
+    pricing_scheme_object = InstrumentPricingSchemeSerializer(source='pricing_scheme', read_only=True)
+    procedure_instance_object = PricingProcedureInstanceSerializer(source='procedure_instance', read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        super(PriceHistoryErrorSerializer, self).__init__(*args, **kwargs)
+
+        from poms.instruments.serializers import InstrumentViewSerializer
+        from poms.instruments.serializers import PricingPolicySerializer
+
+        self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
+        self.fields['pricing_policy_object'] = PricingPolicySerializer(source='pricing_policy', read_only=True)
+
     class Meta:
         model = PriceHistoryError
         fields = ('id', 'master_user', 'instrument', 'pricing_policy', 'pricing_scheme', 'date', 'principal_price',
-                  'accrued_price', 'price_error_text', 'accrual_error_text', 'procedure_instance')
+                  'accrued_price', 'price_error_text', 'accrual_error_text', 'procedure_instance',
+
+                  'pricing_scheme_object',
+                  'procedure_instance_object'
+
+                  )
 
     def update(self, instance, validated_data):
 
@@ -841,10 +869,30 @@ class PriceHistoryErrorSerializer(serializers.ModelSerializer):
 
 
 class CurrencyHistoryErrorSerializer(serializers.ModelSerializer):
+
+    pricing_scheme_object = CurrencyPricingSchemeSerializer(source='pricing_scheme', read_only=True)
+    procedure_instance_object = PricingProcedureInstanceSerializer(source='procedure_instance', read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        super(CurrencyHistoryErrorSerializer, self).__init__(*args, **kwargs)
+
+        from poms.instruments.serializers import PricingPolicySerializer
+        from poms.currencies.serializers import CurrencyViewSerializer
+
+        self.fields['currency_object'] = CurrencyViewSerializer(source='currency', read_only=True)
+        self.fields['pricing_policy_object'] = PricingPolicySerializer(source='pricing_policy', read_only=True)
+
+
+
     class Meta:
         model = CurrencyHistoryError
         fields = ('id', 'master_user', 'currency', 'pricing_policy', 'pricing_scheme', 'date', 'fx_rate', 'error_text',
-                  'procedure_instance')
+                  'procedure_instance',
+
+                  'pricing_scheme_object',
+                  'procedure_instance_object',
+
+                  )
 
     def update(self, instance, validated_data):
 
