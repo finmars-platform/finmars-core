@@ -415,6 +415,40 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
 
                 bloomberg.save()
 
+            if instance.type_id == 6:  # wtrade
+
+                try:
+                    wtrade = InstrumentPricingSchemeWtradeParameters.objects.get(
+                        instrument_pricing_scheme_id=instance.id)
+
+                except InstrumentPricingSchemeWtradeParameters.DoesNotExist:
+
+                    wtrade = InstrumentPricingSchemeWtradeParameters(instrument_pricing_scheme_id=instance.id)
+
+                if 'default_value' in type_settings:
+                    wtrade.default_value = type_settings['default_value']
+                else:
+                    wtrade.default_value = None
+
+                if 'attribute_key' in type_settings:
+                    wtrade.attribute_key = type_settings['attribute_key']
+                else:
+                    wtrade.attribute_key = None
+
+                if 'value_type' in type_settings:
+                    wtrade.value_type = type_settings['value_type']
+                else:
+                    wtrade.value_type = None
+
+                if 'expr' in type_settings:
+                    wtrade.expr = type_settings['expr']
+                else:
+                    wtrade.expr = None
+
+
+                wtrade.save()
+
+
     def create(self, validated_data):
 
         type_settings = validated_data.pop('type_settings', None)
@@ -665,7 +699,7 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
 
                 bloomberg.save()
 
-            if instance.type_id == 6:  # multiple parameters formula
+            if instance.type_id == 6:  # wtrade
 
                 try:
                     wtrade = CurrencyPricingSchemeWtradeParameters.objects.get(
