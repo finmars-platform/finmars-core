@@ -1151,21 +1151,21 @@ def download_pricing_auto_scheduler(self):
 
     # TODO tmp limit
 
-    limit = 5
-    index = 0
-
-    for s in schedule_qs:
-        index = index + 1
-        master_user = s.master_user
-
-        if index < limit:
-
-            with timezone.override(master_user.timezone or settings.TIME_ZONE):
-                next_run_at = timezone.localtime(s.next_run_at)
-                s.schedule(save=True)
-                _l.info('pricing_auto: master_user=%s, next_run_at=%s',
-                        master_user.id, s.next_run_at)
-            download_pricing_auto.apply_async(kwargs={'master_user_id': master_user.id})
+    # limit = 5
+    # index = 0
+    #
+    # for s in schedule_qs:
+    #     index = index + 1
+    #     master_user = s.master_user
+    #
+    #     if index < limit:
+    #
+    #         with timezone.override(master_user.timezone or settings.TIME_ZONE):
+    #             next_run_at = timezone.localtime(s.next_run_at)
+    #             s.schedule(save=True)
+    #             _l.info('pricing_auto: master_user=%s, next_run_at=%s',
+    #                     master_user.id, s.next_run_at)
+    #         download_pricing_auto.apply_async(kwargs={'master_user_id': master_user.id})
     _l.info('finished')
 
 

@@ -169,8 +169,8 @@ class PricingInstrumentHandler(object):
             if provider_id == 5:
                 self.process_to_bloomberg_provider(items)
 
-            # if provider_id == 6:
-                # self.process_to_wtrade_provider(items)
+            if provider_id == 6:
+                self.process_to_wtrade_provider(items)
 
     def get_instruments(self):
 
