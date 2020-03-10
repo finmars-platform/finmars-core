@@ -38,6 +38,7 @@ import poms.file_reports.views as file_reports
 import poms.configuration_sharing.views as configuration_sharing
 
 import poms.pricing.views as pricing
+import poms.schedules.views as schedules
 
 router = routers.DefaultRouter()
 
@@ -370,6 +371,7 @@ router.register(r'pricing/procedure', pricing.PricingProcedureViewSet, 'pricing_
 
 router.register(r'pricing/price-history-error', pricing.PriceHistoryErrorViewSet)
 router.register(r'pricing/currency-history-error', pricing.CurrencyHistoryErrorViewSet)
+router.register(r'schedules/pricing', schedules.PricingScheduleViewSet)
 
 
 # router.register(r'pricing/brokers/bloomberg/callback', csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view()), 'pricing_broker_bloomberg')

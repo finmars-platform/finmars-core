@@ -122,6 +122,8 @@ INSTALLED_APPS = [
     'poms.configuration_sharing',
     'poms.pricing',
 
+    'poms.schedules',
+
     'django.contrib.admin',
     'django.contrib.admindocs',
 
@@ -711,8 +713,8 @@ if BackendRole.ALL in BACKEND_ROLES or BackendRole.DATA_PROVIDER in BACKEND_ROLE
     print("Role: DATA_PROVIDER. CELERY BEAT SCHEDULE INITIALIZED")
 
     CELERY_BEAT_SCHEDULE = {
-        'integrations.download_pricing_auto_scheduler': {
-            'task': 'integrations.download_pricing_auto_scheduler',
+        'integrations.process_pricing_procedures_schedules': {
+            'task': 'schedules.process_pricing_procedures_schedules',
             'schedule': crontab(minute='0,10,20,30,40,50'),
         },
         'instruments.generate_events_do_not_inform_apply_default': {

@@ -972,34 +972,35 @@ class PricingProcedureWtradeInstrumentResult(models.Model):
         )
 
 
-class PricingProcedureWtradeCurrencyResult(models.Model):
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
-                                    on_delete=models.CASCADE)
-
-    procedure = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE,
-                                  verbose_name=ugettext_lazy('procedure'))
-
-    currency = models.ForeignKey('currencies.Currency', on_delete=models.CASCADE,
-                                 verbose_name=ugettext_lazy('currency'))
-    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE,
-                                       verbose_name=ugettext_lazy('pricing policy'))
-
-    pricing_scheme = models.ForeignKey(CurrencyPricingScheme, null=True, blank=True, on_delete=models.SET_NULL,
-                                       verbose_name=ugettext_lazy('pricing scheme'))
-
-    reference = models.CharField(max_length=255, null=True, blank=True)
-
-    date = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('date'))
-
-    currency_parameters = models.CharField(max_length=255, null=True, blank=True)
-
-    open_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('open value'))
-    close_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('close value'))
-    high_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('high value'))
-    low_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('low value'))
-    volume_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('volume value'))
-
-    class Meta:
-        unique_together = (
-            ('master_user', 'currency', 'date', 'pricing_policy', 'procedure')
-        )
+# DEPRECATED since 09.03.2020
+# class PricingProcedureWtradeCurrencyResult(models.Model):
+#     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
+#                                     on_delete=models.CASCADE)
+#
+#     procedure = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE,
+#                                   verbose_name=ugettext_lazy('procedure'))
+#
+#     currency = models.ForeignKey('currencies.Currency', on_delete=models.CASCADE,
+#                                  verbose_name=ugettext_lazy('currency'))
+#     pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE,
+#                                        verbose_name=ugettext_lazy('pricing policy'))
+#
+#     pricing_scheme = models.ForeignKey(CurrencyPricingScheme, null=True, blank=True, on_delete=models.SET_NULL,
+#                                        verbose_name=ugettext_lazy('pricing scheme'))
+#
+#     reference = models.CharField(max_length=255, null=True, blank=True)
+#
+#     date = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('date'))
+#
+#     currency_parameters = models.CharField(max_length=255, null=True, blank=True)
+#
+#     open_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('open value'))
+#     close_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('close value'))
+#     high_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('high value'))
+#     low_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('low value'))
+#     volume_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('volume value'))
+#
+#     class Meta:
+#         unique_together = (
+#             ('master_user', 'currency', 'date', 'pricing_policy', 'procedure')
+#         )
