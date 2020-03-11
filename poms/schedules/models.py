@@ -31,7 +31,7 @@ class BaseSchedule(NamedModel):
     last_run_at = models.DateTimeField(default=timezone.now, editable=False, db_index=True,
                                        verbose_name=ugettext_lazy('last run at'))
     # next_run_at = models.DateTimeField(default=timezone.now, editable=False, db_index=True,
-    #                                    verbose_name=ugettext_lazy('next run at'))
+    #                                    verbose_name=ugettext_lazy('next run at')) # TODO Undo when test is passed on prod
     next_run_at = models.DateTimeField(default=timezone.now, editable=True, db_index=True,
                                        verbose_name=ugettext_lazy('next run at'))
 
@@ -45,18 +45,18 @@ class BaseSchedule(NamedModel):
         start_time = timezone.localtime(timezone.now())
         cron = croniter(self.cron_expr, start_time)
 
-        next_run_at = cron.get_next(datetime)
-
-        min_timedelta = settings.PRICING_AUTO_DOWNLOAD_MIN_TIMEDELTA
-        if min_timedelta is not None:
-            if not isinstance(min_timedelta, timedelta):
-                min_timedelta = timedelta(minutes=min_timedelta)
-            for i in range(100):
-                if (next_run_at - start_time) >= min_timedelta:
-                    break
-                next_run_at = cron.get_next(datetime)
-
-        self.next_run_at = next_run_at
+        # next_run_at = cron.get_next(datetime)
+        #
+        # min_timedelta = settings.PRICING_AUTO_DOWNLOAD_MIN_TIMEDELTA
+        # if min_timedelta is not None:
+        #     if not isinstance(min_timedelta, timedelta):
+        #         min_timedelta = timedelta(minutes=min_timedelta)
+        #     for i in range(100):
+        #         if (next_run_at - start_time) >= min_timedelta:
+        #             break
+        #         next_run_at = cron.get_next(datetime)
+        #
+        # self.next_run_at = next_run_at
 
         if save:
             self.save(update_fields=['last_run_at', 'next_run_at', ])
