@@ -11,6 +11,10 @@ from poms.pricing.models import PricingProcedureBloombergInstrumentResult, Prici
     PricingProcedureWtradeInstrumentResult,  PriceHistoryError, \
     CurrencyHistoryError
 
+import logging
+
+_l = logging.getLogger('poms.pricing')
+
 
 class PricingProcedureProcess(object):
 
@@ -30,38 +34,38 @@ class PricingProcedureProcess(object):
             try:
                 self.procedure.price_date_from = formula.safe_eval(self.procedure.price_date_from_expr, names={})
             except formula.InvalidExpression as e:
-                print("Cant execute price date from expression %s " % e)
+                _l.info("Cant execute price date from expression %s " % e)
 
         if self.procedure.price_date_to_expr:
             try:
                 self.procedure.price_date_to = formula.safe_eval(self.procedure.price_date_to_expr, names={})
             except formula.InvalidExpression as e:
-                print("Cant execute price date to expression %s " % e)
+                _l.info("Cant execute price date to expression %s " % e)
 
         if self.procedure.price_balance_date_expr:
             try:
                 self.procedure.price_balance_date = formula.safe_eval(self.procedure.price_balance_date_expr, names={})
             except formula.InvalidExpression as e:
-                print("Cant execute balance date expression %s " % e)
+                _l.info("Cant execute balance date expression %s " % e)
 
         # DEPRECATED
         # if self.procedure.accrual_date_from_expr:
         #     try:
         #         self.procedure.accrual_date_from = formula.safe_eval(self.procedure.accrual_date_from_expr, names={})
         #     except formula.InvalidExpression as e:
-        #         print("Cant execute accrual date from expression %s " % e)
+        #         _l.info("Cant execute accrual date from expression %s " % e)
         #
         # if self.procedure.accrual_date_to_expr:
         #     try:
         #         self.procedure.accrual_date_to = formula.safe_eval(self.procedure.accrual_date_to_expr, names={})
         #     except formula.InvalidExpression as e:
-        #         print("Cant execute accrual date to expression %s " % e)
+        #         _l.info("Cant execute accrual date to expression %s " % e)
 
-        print('price_date_from %s' % self.procedure.price_date_from)
-        print('price_date_to %s' % self.procedure.price_date_to)
-        print('price_balance_date %s' % self.procedure.price_balance_date)
-        # print('accrual_date_from %s' % self.procedure.accrual_date_from)
-        # print('accrual_date_to %s' % self.procedure.accrual_date_to)
+        _l.info('price_date_from %s' % self.procedure.price_date_from)
+        _l.info('price_date_to %s' % self.procedure.price_date_to)
+        _l.info('price_balance_date %s' % self.procedure.price_balance_date)
+        # _l.info('accrual_date_from %s' % self.procedure.accrual_date_from)
+        # _l.info('accrual_date_to %s' % self.procedure.accrual_date_to)
 
     def process(self):
 
@@ -78,8 +82,8 @@ class FillPricesBrokerBloombergProcess(object):
 
     def process(self):
 
-        print('< fill prices: total items len %s' % len(self.instance['data']['items']))
-        print('< action:  %s' % self.instance['action'])
+        _l.info('< fill prices: total items len %s' % len(self.instance['data']['items']))
+        _l.info('< action:  %s' % self.instance['action'])
 
         if self.instance['action'] == 'bloomberg_get_currency_prices':
 
@@ -94,11 +98,11 @@ class FillPricesBrokerBloombergProcess(object):
                     currency_parameters=str(item['parameters'])
                 )
 
-                print('< fill currency prices: records for %s len %s' % (item['reference'], len(list(records))))
+                _l.info('< fill currency prices: records for %s len %s' % (item['reference'], len(list(records))))
 
                 processing_st = time.perf_counter()
 
-                print('< get records from db done: %s', (time.perf_counter() - records_st))
+                _l.info('< get records from db done: %s', (time.perf_counter() - records_st))
 
                 for record in records:
 
@@ -114,18 +118,18 @@ class FillPricesBrokerBloombergProcess(object):
                                         try:
                                             record.fx_rate_value = float(val_obj['value'])
                                         except Exception as e:
-                                            print('fx_rate_value e %s ' % e)
+                                            _l.info('fx_rate_value e %s ' % e)
 
                                 record.save()
 
                         if not len(records):
-                            print('Cant fill the value. Related records not found. Reference %s' % item['reference'])
+                            _l.info('Cant fill the value. Related records not found. Reference %s' % item['reference'])
 
-                print('< processing item: %s', (time.perf_counter() - processing_st))
+                _l.info('< processing item: %s', (time.perf_counter() - processing_st))
 
             self.create_currency_history()
 
-            print("process fill currency prices")
+            _l.info("process fill currency prices")
 
         elif self.instance['action'] == 'bloomberg_get_instrument_prices':
 
@@ -140,11 +144,11 @@ class FillPricesBrokerBloombergProcess(object):
                     instrument_parameters=str(item['parameters'])
                 )
 
-                print('< fill instrument prices: records for %s len %s' % (item['reference'], len(list(records))))
+                _l.info('< fill instrument prices: records for %s len %s' % (item['reference'], len(list(records))))
 
                 processing_st = time.perf_counter()
 
-                print('< get records from db done: %s', (time.perf_counter() - records_st))
+                _l.info('< get records from db done: %s', (time.perf_counter() - records_st))
 
                 for record in records:
 
@@ -160,7 +164,7 @@ class FillPricesBrokerBloombergProcess(object):
                                         try:
                                             record.ask_value = float(val_obj['value'])
                                         except Exception as e:
-                                            print('ask value e %s ' % e)
+                                            _l.info('ask value e %s ' % e)
 
                                 if record.bid_parameters:
                                     if field['code'] in record.bid_parameters:
@@ -168,7 +172,7 @@ class FillPricesBrokerBloombergProcess(object):
                                         try:
                                             record.bid_value = float(val_obj['value'])
                                         except Exception as e:
-                                             print('bid value e %s ' % e)
+                                             _l.info('bid value e %s ' % e)
 
                                 if record.last_parameters:
                                     if field['code'] in record.last_parameters:
@@ -176,7 +180,7 @@ class FillPricesBrokerBloombergProcess(object):
                                         try:
                                             record.last_value = float(val_obj['value'])
                                         except Exception as e:
-                                            print('last value e %s ' % e)
+                                            _l.info('last value e %s ' % e)
 
                                 if record.accrual_parameters:
                                     if field['code'] in record.accrual_parameters:
@@ -184,22 +188,22 @@ class FillPricesBrokerBloombergProcess(object):
                                         try:
                                             record.accrual_value = float(val_obj['value'])
                                         except Exception as e:
-                                            print('accrual_value value e %s ' % e)
+                                            _l.info('accrual_value value e %s ' % e)
 
                                 record.save()
 
                         if not len(records):
-                            print('Cant fill the value. Related records not found. Reference %s' % item['reference'])
+                            _l.info('Cant fill the value. Related records not found. Reference %s' % item['reference'])
 
-                print('< processing item: %s', (time.perf_counter() - processing_st))
+                _l.info('< processing item: %s', (time.perf_counter() - processing_st))
 
             self.create_price_history()
 
-            print("process fill instrument prices")
+            _l.info("process fill instrument prices")
 
     def create_price_history(self):
 
-        print("Creating price history")
+        _l.info("Creating price history")
 
         records = PricingProcedureBloombergInstrumentResult.objects.filter(
             master_user=self.master_user,
@@ -230,8 +234,8 @@ class FillPricesBrokerBloombergProcess(object):
             pricing_error_text_expr = pricing_scheme_parameters.pricing_error_text_expr
             accrual_error_text_expr = pricing_scheme_parameters.accrual_error_text_expr
 
-            print('values %s' % values)
-            print('expr %s' % expr)
+            _l.info('values %s' % values)
+            _l.info('expr %s' % expr)
 
             has_error = False
             error = PriceHistoryError(
@@ -260,9 +264,9 @@ class FillPricesBrokerBloombergProcess(object):
                     error.price_error_text = 'Invalid Error Text Expression'
 
 
-            print('principal_price %s' % principal_price)
-            print('instrument %s' % record.instrument.user_code)
-            print('pricing_policy %s' % record.pricing_policy.user_code)
+            _l.info('principal_price %s' % principal_price)
+            _l.info('instrument %s' % record.instrument.user_code)
+            _l.info('pricing_policy %s' % record.pricing_policy.user_code)
 
             if pricing_scheme_parameters.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
 
@@ -273,7 +277,7 @@ class FillPricesBrokerBloombergProcess(object):
 
                     try:
 
-                        print('accrual_error_text_expr %s' % accrual_error_text_expr)
+                        _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
 
                         error.accrual_error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
@@ -289,7 +293,7 @@ class FillPricesBrokerBloombergProcess(object):
 
                     try:
 
-                        print('accrual_error_text_expr %s' % accrual_error_text_expr)
+                        _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
 
                         error.accrual_error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
@@ -336,7 +340,7 @@ class FillPricesBrokerBloombergProcess(object):
 
     def create_currency_history(self):
 
-        print("Creating currency history")
+        _l.info("Creating currency history")
 
         records = PricingProcedureBloombergCurrencyResult.objects.filter(
             master_user=self.master_user,
@@ -345,7 +349,7 @@ class FillPricesBrokerBloombergProcess(object):
             date__lte=self.instance['data']['date_to']
         )
 
-        print('create_currency_history: records len %s' % len(records))
+        _l.info('create_currency_history: records len %s' % len(records))
 
         for record in records:
 
@@ -374,8 +378,8 @@ class FillPricesBrokerBloombergProcess(object):
             expr = pricing_scheme_parameters.expr
             error_text_expr = pricing_scheme_parameters.error_text_expr
 
-            print('values %s' % values)
-            print('expr %s' % expr)
+            _l.info('values %s' % values)
+            _l.info('expr %s' % expr)
 
             fx_rate = None
 
@@ -390,9 +394,9 @@ class FillPricesBrokerBloombergProcess(object):
                 except formula.InvalidExpression:
                     error.error_text = 'Invalid Error Text Expression'
 
-            print('fx_rate %s' % fx_rate)
-            print('currency %s' % record.currency.user_code)
-            print('pricing_policy %s' % record.pricing_policy.user_code)
+            _l.info('fx_rate %s' % fx_rate)
+            _l.info('currency %s' % record.currency.user_code)
+            _l.info('pricing_policy %s' % record.pricing_policy.user_code)
 
             try:
 
@@ -433,8 +437,8 @@ class FillPricesBrokerWtradeProcess(object):
 
     def process(self):
 
-        print('< fill prices: total items len %s' % len(self.instance['data']['items']))
-        print('< action:  %s' % self.instance['action'])
+        _l.info('< fill prices: total items len %s' % len(self.instance['data']['items']))
+        _l.info('< action:  %s' % self.instance['action'])
 
         if self.instance['action'] == 'wtrade_get_instrument_prices':
 
@@ -449,11 +453,11 @@ class FillPricesBrokerWtradeProcess(object):
                     instrument_parameters=str(item['parameters'])
                 )
 
-                print('< fill instrument prices: records for %s len %s' % (item['reference'], len(list(records))))
+                _l.info('< fill instrument prices: records for %s len %s' % (item['reference'], len(list(records))))
 
                 processing_st = time.perf_counter()
 
-                print('< get records from db done: %s', (time.perf_counter() - records_st))
+                _l.info('< get records from db done: %s', (time.perf_counter() - records_st))
 
                 for record in records:
 
@@ -468,50 +472,50 @@ class FillPricesBrokerWtradeProcess(object):
                                     try:
                                         record.open_value = float(val_obj['value'])
                                     except Exception as e:
-                                        print('fx_rate_value e %s ' % e)
+                                        _l.info('fx_rate_value e %s ' % e)
 
                                 if field['code'] == 'close':
 
                                     try:
                                         record.close_value = float(val_obj['value'])
                                     except Exception as e:
-                                        print('close_value e %s ' % e)
+                                        _l.info('close_value e %s ' % e)
 
                                 if field['code'] == 'high':
 
                                     try:
                                         record.high_value = float(val_obj['value'])
                                     except Exception as e:
-                                        print('high_value e %s ' % e)
+                                        _l.info('high_value e %s ' % e)
 
                                 if field['code'] == 'low':
 
                                     try:
                                         record.low_value = float(val_obj['value'])
                                     except Exception as e:
-                                        print('low_value e %s ' % e)
+                                        _l.info('low_value e %s ' % e)
 
                                 if field['code'] == 'volume':
 
                                     try:
                                         record.volume_value = float(val_obj['value'])
                                     except Exception as e:
-                                        print('volume_value e %s ' % e)
+                                        _l.info('volume_value e %s ' % e)
 
                                 record.save()
 
                         if not len(records):
-                            print('Cant fill the value. Related records not found. Reference %s' % item['reference'])
+                            _l.info('Cant fill the value. Related records not found. Reference %s' % item['reference'])
 
-                print('< processing item: %s', (time.perf_counter() - processing_st))
+                _l.info('< processing item: %s', (time.perf_counter() - processing_st))
 
             self.create_price_history()
 
-            print("process fill instrument prices")
+            _l.info("process fill instrument prices")
 
     def create_price_history(self):
 
-        print("Creating price history")
+        _l.info("Creating price history")
 
         records = PricingProcedureWtradeInstrumentResult.objects.filter(
             master_user=self.master_user,
@@ -540,18 +544,18 @@ class FillPricesBrokerWtradeProcess(object):
 
             expr = pricing_scheme.get_parameters().expr
 
-            print('values %s' % values)
-            print('expr %s' % expr)
+            _l.info('values %s' % values)
+            _l.info('expr %s' % expr)
 
             try:
                 principal_price = formula.safe_eval(expr, names=values)
             except formula.InvalidExpression:
-                print("Error here")
+                _l.info("Error here")
                 continue
 
-            print('principal_price %s' % principal_price)
-            print('instrument %s' % record.instrument.user_code)
-            print('pricing_policy %s' % record.pricing_policy.user_code)
+            _l.info('principal_price %s' % principal_price)
+            _l.info('instrument %s' % record.instrument.user_code)
+            _l.info('pricing_policy %s' % record.pricing_policy.user_code)
 
             accrued_price = record.instrument.get_accrued_price(record.date)
 
