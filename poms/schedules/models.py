@@ -30,7 +30,9 @@ class BaseSchedule(NamedModel):
 
     last_run_at = models.DateTimeField(default=timezone.now, editable=False, db_index=True,
                                        verbose_name=ugettext_lazy('last run at'))
-    next_run_at = models.DateTimeField(default=timezone.now, editable=False, db_index=True,
+    # next_run_at = models.DateTimeField(default=timezone.now, editable=False, db_index=True,
+    #                                    verbose_name=ugettext_lazy('next run at'))
+    next_run_at = models.DateTimeField(default=timezone.now, editable=True, db_index=True,
                                        verbose_name=ugettext_lazy('next run at'))
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
