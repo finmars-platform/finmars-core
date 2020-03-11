@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from poms.common import formula
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import ModelWithUserCodeSerializer
@@ -780,6 +781,45 @@ class PricingProcedureSerializer(serializers.ModelSerializer):
 
                   )
 
+    def to_representation(self, instance):
+        data = super(PricingProcedureSerializer, self).to_representation(instance)
+
+        if data['price_balance_date_expr']:
+
+            try:
+                data['price_balance_date_calculated'] = formula.safe_eval(data['price_balance_date_expr'], names={})
+            except formula.InvalidExpression as e:
+                data['price_balance_date_calculated'] = 'Invalid Expression'
+
+        else:
+            data['price_balance_date_calculated'] = data['price_balance_date']
+
+
+
+        if data['price_date_from_expr']:
+
+            try:
+                data['price_date_from_calculated'] = formula.safe_eval(data['price_date_from_expr'], names={})
+            except formula.InvalidExpression as e:
+                data['price_date_from_calculated'] = 'Invalid Expression'
+        else:
+            data['price_date_from_calculated'] = data['price_date_from']
+
+
+
+        if data['price_date_to_expr']:
+
+            try:
+                data['price_date_to_calculated'] = formula.safe_eval(data['price_date_to_expr'], names={})
+            except formula.InvalidExpression as e:
+                data['price_date_to_calculated'] = 'Invalid Expression'
+        else:
+            data['price_date_to_calculated'] = data['price_date_to']
+
+        return data
+
+
+
 
 class PricingProcedureInstanceSerializer(serializers.ModelSerializer):
 
@@ -899,6 +939,8 @@ class PriceHistoryErrorSerializer(serializers.ModelSerializer):
 
         price_history.save()
 
+        instance.delete()
+
         return instance
 
 
@@ -940,5 +982,7 @@ class CurrencyHistoryErrorSerializer(serializers.ModelSerializer):
         currency_history.fx_rate = instance.fx_rate
 
         currency_history.save()
+
+        instance.delete()
 
         return instance
