@@ -18,7 +18,7 @@ from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfiguration
 from poms.portfolios.models import Portfolio
 from poms.pricing.brokers.broker_serializers import DataRequestSerializer
 from poms.pricing.handlers import PricingProcedureProcess, FillPricesBrokerBloombergProcess, \
-    FillPricesBrokerWtradeProcess
+    FillPricesBrokerWtradeProcess, FillPricesBrokerFixerProcess
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, InstrumentPricingSchemeType, \
     CurrencyPricingSchemeType, PricingProcedure, PricingProcedureInstance, PriceHistoryError, \
     CurrencyHistoryError
@@ -191,6 +191,34 @@ class PricingBrokerWtradeHandler(APIView):
             procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
 
             instance = FillPricesBrokerWtradeProcess(instance=request.data, master_user=procedure.master_user)
+            instance.process()
+
+        except PricingProcedureInstance.DoesNotExist:
+
+            print("Does not exist? Procedure %s" % procedure_id)
+
+            return Response({'status': '404'})  # TODO handle 404 properly
+
+        return Response({'status': 'ok'})
+
+
+class PricingBrokerFixerHandler(APIView):
+
+    permission_classes = []
+
+    def post(self, request):
+
+        # print('request.data %s' % request.data)
+
+        procedure_id = request.data['procedure']
+
+        print("> handle_callback broker fixer: procedure_id %s" % procedure_id)
+
+        try:
+
+            procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
+
+            instance = FillPricesBrokerFixerProcess(instance=request.data, master_user=procedure.master_user)
             instance.process()
 
         except PricingProcedureInstance.DoesNotExist:

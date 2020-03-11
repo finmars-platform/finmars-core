@@ -240,15 +240,15 @@ class CurrencyPricingScheme(NamedModel):
 
                     result = None
 
-            if self.type.id == 6:  # wtrade
-
-                try:
-
-                    result = CurrencyPricingSchemeWtradeParameters.objects.get(currency_pricing_scheme=self)
-
-                except CurrencyPricingSchemeWtradeParameters.DoesNotExist:
-
-                    result = None
+            # if self.type.id == 6:  # wtrade
+            #
+            #     try:
+            #
+            #         result = CurrencyPricingSchemeWtradeParameters.objects.get(currency_pricing_scheme=self)
+            #
+            #     except CurrencyPricingSchemeWtradeParameters.DoesNotExist:
+            #
+            #         result = None
 
         # print('result %s' % result)
 
@@ -571,6 +571,17 @@ class InstrumentPricingSchemeWtradeParameters(models.Model):
         (DATE, ugettext_lazy('Date')),
     )
 
+    ACCRUAL_NOT_APPLICABLE = 1
+    ACCRUAL_PER_SCHEDULE = 2
+    ACCRUAL_PER_FORMULA = 3
+
+    ACCRUAL_METHODS = (
+        (ACCRUAL_NOT_APPLICABLE, ugettext_lazy('Not applicable')),
+        (ACCRUAL_PER_SCHEDULE, ugettext_lazy('As per Accrual Schedule')),
+        (ACCRUAL_PER_FORMULA, ugettext_lazy('As per Formula')),
+
+    )
+
     instrument_pricing_scheme = models.ForeignKey(InstrumentPricingScheme,
                                                   verbose_name=ugettext_lazy('Instrument Pricing Scheme'),
                                                   on_delete=models.CASCADE)
@@ -578,13 +589,52 @@ class InstrumentPricingSchemeWtradeParameters(models.Model):
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                             verbose_name=ugettext_lazy('expr'))
 
+    pricing_error_text_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
+                                               verbose_name=ugettext_lazy('pricing error text expr'))
+
+    accrual_calculation_method = models.PositiveSmallIntegerField(default=ACCRUAL_NOT_APPLICABLE,
+                                                                  choices=ACCRUAL_METHODS,
+                                                                  verbose_name=ugettext_lazy(
+                                                                      'accrual calculation method'))
+
+    accrual_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
+                                    verbose_name=ugettext_lazy('accrual expr'))
+
+    accrual_error_text_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
+                                               verbose_name=ugettext_lazy('accrual error text expr'))
+
+
     default_value = models.CharField(max_length=255, null=True, blank=True)
     attribute_key = models.CharField(max_length=255, null=True, blank=True)
     value_type = models.PositiveSmallIntegerField(default=STRING, choices=TYPES,
                                                   verbose_name=ugettext_lazy('value type'))
 
+# DEPRECATED since 09.03.2020
+# class CurrencyPricingSchemeWtradeParameters(models.Model):
+#     STRING = 10
+#     NUMBER = 20
+#     DATE = 40
+#
+#     TYPES = (
+#         (NUMBER, ugettext_lazy('Number')),
+#         (STRING, ugettext_lazy('String')),
+#         (DATE, ugettext_lazy('Date')),
+#     )
+#
+#     currency_pricing_scheme = models.ForeignKey(CurrencyPricingScheme,
+#                                                 verbose_name=ugettext_lazy('Currency Pricing Scheme'),
+#                                                 on_delete=models.CASCADE)
+#
+#     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+#                             verbose_name=ugettext_lazy('expr'))
+#
+#     default_value = models.CharField(max_length=255, null=True, blank=True)
+#     attribute_key = models.CharField(max_length=255, null=True, blank=True)
+#     value_type = models.PositiveSmallIntegerField(default=STRING, choices=TYPES,
+#                                                   verbose_name=ugettext_lazy('value type'))
 
-class CurrencyPricingSchemeWtradeParameters(models.Model):
+
+class CurrencyPricingSchemeFixerParameters(models.Model):
     STRING = 10
     NUMBER = 20
     DATE = 40
@@ -601,6 +651,9 @@ class CurrencyPricingSchemeWtradeParameters(models.Model):
 
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                             verbose_name=ugettext_lazy('expr'))
+
+    error_text_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
+                                       verbose_name=ugettext_lazy('error text expr'))
 
     default_value = models.CharField(max_length=255, null=True, blank=True)
     attribute_key = models.CharField(max_length=255, null=True, blank=True)
@@ -1004,3 +1057,32 @@ class PricingProcedureWtradeInstrumentResult(models.Model):
 #         unique_together = (
 #             ('master_user', 'currency', 'date', 'pricing_policy', 'procedure')
 #         )
+
+
+class PricingProcedureFixerCurrencyResult(models.Model):
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
+
+    procedure = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE,
+                                  verbose_name=ugettext_lazy('procedure'))
+
+    currency = models.ForeignKey('currencies.Currency', on_delete=models.CASCADE,
+                                 verbose_name=ugettext_lazy('currency'))
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE,
+                                       verbose_name=ugettext_lazy('pricing policy'))
+
+    pricing_scheme = models.ForeignKey(CurrencyPricingScheme, null=True, blank=True, on_delete=models.SET_NULL,
+                                       verbose_name=ugettext_lazy('pricing scheme'))
+
+    reference = models.CharField(max_length=255, null=True, blank=True)
+
+    date = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('date'))
+
+    currency_parameters = models.CharField(max_length=255, null=True, blank=True)
+
+    close_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('close value'))
+
+    class Meta:
+        unique_together = (
+            ('master_user', 'currency', 'date', 'pricing_policy', 'procedure')
+        )

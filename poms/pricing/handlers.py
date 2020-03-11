@@ -8,8 +8,8 @@ from poms.instruments.models import PriceHistory
 from poms.pricing.currency_handler import PricingCurrencyHandler
 from poms.pricing.instrument_handler import PricingInstrumentHandler
 from poms.pricing.models import PricingProcedureBloombergInstrumentResult, PricingProcedureBloombergCurrencyResult, \
-    PricingProcedureWtradeInstrumentResult,  PriceHistoryError, \
-    CurrencyHistoryError
+    PricingProcedureWtradeInstrumentResult, PriceHistoryError, \
+    CurrencyHistoryError, PricingProcedureFixerCurrencyResult
 
 import logging
 
@@ -591,3 +591,150 @@ class FillPricesBrokerWtradeProcess(object):
                                                                  procedure=self.instance['procedure'],
                                                                  date__gte=self.instance['data']['date_from'],
                                                                  date__lte=self.instance['data']['date_to']).delete()
+
+
+class FillPricesBrokerFixerProcess(object):
+
+    def __init__(self, instance, master_user):
+
+        self.instance = instance
+        self.master_user = master_user
+
+    def process(self):
+
+        _l.info('< fill prices: total items len %s' % len(self.instance['data']['items']))
+        _l.info('< action:  %s' % self.instance['action'])
+
+        if self.instance['action'] == 'fixer_get_currency_prices':
+
+            for item in self.instance['data']['items']:
+
+                records_st = time.perf_counter()
+
+                records = PricingProcedureFixerCurrencyResult.objects.filter(
+                    master_user=self.master_user,
+                    procedure=self.instance['procedure'],
+                    reference=item['reference'],
+                    currency_parameters=str(item['parameters'])
+                )
+
+                _l.info('< fill currency prices: records for %s len %s' % (item['reference'], len(list(records))))
+
+                processing_st = time.perf_counter()
+
+                _l.info('< get records from db done: %s', (time.perf_counter() - records_st))
+
+                for record in records:
+
+                    for field in item['fields']:
+
+                        for val_obj in field['values']:
+
+                            if str(record.date) == str(val_obj['date']):
+
+                                if field['code'] == 'close':
+
+                                    try:
+                                        record.close_value = float(val_obj['value'])
+                                    except Exception as e:
+                                        _l.info('close_value e %s ' % e)
+
+                                record.save()
+
+                        if not len(records):
+                            _l.info('Cant fill the value. Related records not found. Reference %s' % item['reference'])
+
+                _l.info('< processing item: %s', (time.perf_counter() - processing_st))
+
+            self.create_currency_history()
+
+            _l.info("process fill currency prices")
+
+    def create_currency_history(self):
+
+        _l.info("Creating currency history")
+
+        records = PricingProcedureFixerCurrencyResult.objects.filter(
+            master_user=self.master_user,
+            procedure=self.instance['procedure'],
+            date__gte=self.instance['data']['date_from'],
+            date__lte=self.instance['data']['date_to']
+        )
+
+        _l.info('create_currency_history: records len %s' % len(records))
+
+        for record in records:
+
+            safe_currency = {
+                'id': record.currency.id,
+            }
+
+            values = {
+                'd': record.date,
+                'currency': safe_currency,
+                'close': record.close_value,
+            }
+
+            has_error = False
+            error = CurrencyHistoryError(
+                master_user=self.master_user,
+                procedure_instance_id=self.instance['procedure'],
+                currency=record.currency,
+                pricing_scheme=record.pricing_scheme,
+                pricing_policy=record.pricing_policy,
+                date=record.date,
+            )
+
+            pricing_scheme_parameters = record.pricing_scheme.get_parameters()
+
+            expr = pricing_scheme_parameters.expr
+            error_text_expr = pricing_scheme_parameters.error_text_expr
+
+            _l.info('values %s' % values)
+            _l.info('expr %s' % expr)
+
+            fx_rate = None
+
+            try:
+                fx_rate = formula.safe_eval(expr, names=values)
+            except formula.InvalidExpression:
+
+                has_error = True
+
+                try:
+                    error.error_text = formula.safe_eval(error_text_expr, names=values)
+                except formula.InvalidExpression:
+                    error.error_text = 'Invalid Error Text Expression'
+
+            _l.info('fx_rate %s' % fx_rate)
+            _l.info('currency %s' % record.currency.user_code)
+            _l.info('pricing_policy %s' % record.pricing_policy.user_code)
+
+            try:
+
+                price = CurrencyHistory.objects.get(
+                    currency=record.currency,
+                    pricing_policy=record.pricing_policy,
+                    date=record.date
+                )
+
+            except CurrencyHistory.DoesNotExist:
+
+                price = CurrencyHistory(
+                    currency=record.currency,
+                    pricing_policy=record.pricing_policy,
+                    date=record.date
+                )
+
+            if fx_rate:
+                price.fx_rate = fx_rate
+
+            price.save()
+
+            if has_error:
+                error.save()
+
+        PricingProcedureFixerCurrencyResult.objects.filter(master_user=self.master_user,
+                                                               procedure=self.instance['procedure'],
+                                                               date__gte=self.instance['data']['date_from'],
+                                                               date__lte=self.instance['data']['date_to']).delete()
