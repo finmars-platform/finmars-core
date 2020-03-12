@@ -152,8 +152,8 @@ class PricingCurrencyHandler(object):
             if provider_id == 5:
                 self.process_to_bloomberg_provider(items)
 
-            # if provider_id == 7:
-            #     self.process_to_fixer_provider(items)
+            if provider_id == 7:
+                self.process_to_fixer_provider(items)
 
     def get_currencies(self):
 
