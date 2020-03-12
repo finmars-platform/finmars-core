@@ -250,6 +250,16 @@ class CurrencyPricingScheme(NamedModel):
             #
             #         result = None
 
+            if self.type.id == 7:  # fixer
+
+                try:
+
+                    result = CurrencyPricingSchemeFixerParameters.objects.get(currency_pricing_scheme=self)
+
+                except CurrencyPricingSchemeFixerParameters.DoesNotExist:
+
+                    result = None
+
         # print('result %s' % result)
 
         return result
