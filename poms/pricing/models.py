@@ -120,7 +120,7 @@ class InstrumentPricingScheme(NamedModel):
 
                     result = None
 
-            if self.type.id == 6:  # bloomberg
+            if self.type.id == 6:  # wtrade
 
                 try:
 

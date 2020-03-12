@@ -540,9 +540,7 @@ class FillPricesBrokerWtradeProcess(object):
                 'volume': record.volume_value
             }
 
-            pricing_scheme = record.pricing_policy.default_instrument_pricing_scheme # TODO why we took default scheme?
-
-            expr = pricing_scheme.get_parameters().expr
+            expr = record.pricing_scheme.get_parameters().expr
 
             _l.info('values %s' % values)
             _l.info('expr %s' % expr)
