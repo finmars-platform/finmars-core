@@ -2351,7 +2351,7 @@ class ComplexTransactionViewSerializer(ComplexTransactionMixin, serializers.Mode
         return data
 
 
-class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
+class ComplexTransactionLightSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer):
     # text = serializers.SerializerMethodField()
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)

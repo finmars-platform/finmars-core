@@ -126,10 +126,11 @@ class InstrumentItem(object):
 
 class PricingInstrumentHandler(object):
 
-    def __init__(self, procedure=None, master_user=None):
+    def __init__(self, procedure=None, parent_procedure=None, master_user=None):
 
         self.master_user = master_user
         self.procedure = procedure
+        self.parent_procedure = parent_procedure
 
         self.instruments = []
 
@@ -261,6 +262,7 @@ class PricingInstrumentHandler(object):
                                                     date_to=self.procedure.price_date_to)
 
         procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+                                                      parent_procedure_instance=self.parent_procedure,
                                                       master_user=self.master_user,
                                                       status=PricingProcedureInstance.STATUS_PENDING,
                                                       action='single_parameter_formula_get_instrument_prices',
@@ -432,6 +434,10 @@ class PricingInstrumentHandler(object):
                     if has_error:
                         error.save()
 
+        procedure_instance.status = PricingProcedureInstance.STATUS_DONE
+
+        procedure_instance.save()
+
     def process_to_multiple_parameter_formula(self, items):
 
         _l.info("Pricing Instrument Handler - Multiple parameters Formula: len %s" % len(items))
@@ -440,6 +446,7 @@ class PricingInstrumentHandler(object):
                                                     date_to=self.procedure.price_date_to)
 
         procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+                                                      parent_procedure_instance=self.parent_procedure,
                                                       master_user=self.master_user,
                                                       status=PricingProcedureInstance.STATUS_PENDING,
                                                       action='multiple_parameter_formula_get_instrument_prices',
@@ -654,6 +661,10 @@ class PricingInstrumentHandler(object):
                     if has_error:
                         error.save()
 
+        procedure_instance.status = PricingProcedureInstance.STATUS_DONE
+
+        procedure_instance.save()
+
     def process_to_bloomberg_provider(self, items):
 
         _l.info("Pricing Instrument Handler - Bloomberg Provider: len %s" % len(items))
@@ -661,6 +672,7 @@ class PricingInstrumentHandler(object):
         with transaction.atomic():
 
             procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+                                                          parent_procedure_instance=self.parent_procedure,
                                                           master_user=self.master_user,
                                                           status=PricingProcedureInstance.STATUS_PENDING,
                                                           action='bloomberg_get_instrument_prices',
@@ -878,6 +890,7 @@ class PricingInstrumentHandler(object):
         _l.info("Pricing Instrument Handler - Wtrade Provider: len %s" % len(items))
 
         procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+                                                      parent_procedure_instance=self.parent_procedure,
                                                       master_user=self.master_user,
                                                       status=PricingProcedureInstance.STATUS_PENDING,
                                                       action='wtrade_get_instrument_prices',

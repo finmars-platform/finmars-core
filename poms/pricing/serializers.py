@@ -14,7 +14,8 @@ from poms.pricing.models import InstrumentPricingScheme, InstrumentPricingScheme
     CurrencyPricingSchemeMultipleParametersFormulaParameters, InstrumentPricingSchemeBloombergParameters, \
     CurrencyPricingSchemeBloombergParameters, CurrencyPricingPolicy, InstrumentTypePricingPolicy, \
     InstrumentPricingPolicy, InstrumentPricingSchemeWtradeParameters, \
-    PriceHistoryError, CurrencyHistoryError, PricingProcedureInstance, CurrencyPricingSchemeFixerParameters
+    PriceHistoryError, CurrencyHistoryError, PricingProcedureInstance, CurrencyPricingSchemeFixerParameters, \
+    PricingParentProcedureInstance
 from poms.users.fields import MasterUserField
 
 
@@ -891,15 +892,24 @@ class PricingProcedureSerializer(serializers.ModelSerializer):
         return data
 
 
-
-
 class PricingProcedureInstanceSerializer(serializers.ModelSerializer):
 
     pricing_procedure_object = PricingProcedureSerializer(source='pricing_procedure', read_only=True)
 
     class Meta:
         model = PricingProcedureInstance
-        fields = ('master_user', 'id', 'pricing_procedure', 'created', 'modified', 'status', 'pricing_procedure', 'pricing_procedure_object')
+        fields = ('master_user', 'id', 'parent_procedure_instance',  'created', 'modified', 'status', 'pricing_procedure', 'pricing_procedure_object')
+
+
+class PricingParentProcedureInstanceSerializer(serializers.ModelSerializer):
+
+    pricing_procedure_object = PricingProcedureSerializer(source='pricing_procedure', read_only=True)
+
+    procedures = PricingProcedureInstanceSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = PricingParentProcedureInstance
+        fields = ('master_user', 'id', 'created', 'modified', 'pricing_procedure', 'pricing_procedure_object', 'procedures')
 
 
 class PricingPolicyViewSerializer(ModelWithUserCodeSerializer):

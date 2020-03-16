@@ -21,11 +21,11 @@ from poms.pricing.handlers import PricingProcedureProcess, FillPricesBrokerBloom
     FillPricesBrokerWtradeProcess, FillPricesBrokerFixerProcess
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, InstrumentPricingSchemeType, \
     CurrencyPricingSchemeType, PricingProcedure, PricingProcedureInstance, PriceHistoryError, \
-    CurrencyHistoryError
+    CurrencyHistoryError, PricingParentProcedureInstance
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
     CurrencyPricingSchemeTypeSerializer, InstrumentPricingSchemeTypeSerializer, PricingProcedureSerializer, \
     RunProcedureSerializer, BrokerBloombergSerializer, PriceHistoryErrorSerializer, \
-    CurrencyHistoryErrorSerializer
+    CurrencyHistoryErrorSerializer, PricingParentProcedureInstanceSerializer
 
 from poms.users.filters import OwnerByMasterUserFilter
 from rest_framework.decorators import action
@@ -165,6 +165,9 @@ class PricingBrokerBloombergHandler(APIView):
             instance = FillPricesBrokerBloombergProcess(instance=request.data, master_user=procedure.master_user)
             instance.process()
 
+            procedure.status = PricingProcedureInstance.STATUS_DONE
+            procedure.save()
+
         except PricingProcedureInstance.DoesNotExist:
 
             print("Does not exist? Procedure %s" % procedure_id)
@@ -193,6 +196,9 @@ class PricingBrokerWtradeHandler(APIView):
             instance = FillPricesBrokerWtradeProcess(instance=request.data, master_user=procedure.master_user)
             instance.process()
 
+            procedure.status = PricingProcedureInstance.STATUS_DONE
+            procedure.save()
+
         except PricingProcedureInstance.DoesNotExist:
 
             print("Does not exist? Procedure %s" % procedure_id)
@@ -200,6 +206,25 @@ class PricingBrokerWtradeHandler(APIView):
             return Response({'status': '404'})  # TODO handle 404 properly
 
         return Response({'status': 'ok'})
+
+
+class PricingParentProcedureInstanceFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    class Meta:
+        model = PricingParentProcedureInstance
+        fields = []
+
+
+class PricingParentProcedureInstanceViewSet(AbstractModelViewSet):
+    queryset = PricingParentProcedureInstance.objects.select_related(
+        'master_user',
+    )
+    serializer_class = PricingParentProcedureInstanceSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = PricingParentProcedureInstanceFilterSet
 
 
 class PricingBrokerFixerHandler(APIView):
@@ -220,6 +245,9 @@ class PricingBrokerFixerHandler(APIView):
 
             instance = FillPricesBrokerFixerProcess(instance=request.data, master_user=procedure.master_user)
             instance.process()
+
+            procedure.status = PricingProcedureInstance.STATUS_DONE
+            procedure.save()
 
         except PricingProcedureInstance.DoesNotExist:
 

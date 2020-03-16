@@ -847,6 +847,19 @@ class InstrumentPricingPolicy(models.Model):
         )
 
 
+class PricingParentProcedureInstance(models.Model):
+
+    created = models.DateTimeField(auto_now_add=True, editable=False, db_index=True,
+                                   verbose_name='created')
+    modified = models.DateTimeField(auto_now=True, editable=False, db_index=True)
+
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
+
+    pricing_procedure = models.ForeignKey(PricingProcedure, on_delete=models.CASCADE,
+                                          verbose_name=ugettext_lazy('pricing procedure'))
+
+
 class PricingProcedureInstance(models.Model):
     STATUS_INIT = 'I'
     STATUS_PENDING = 'P'
@@ -862,6 +875,10 @@ class PricingProcedureInstance(models.Model):
 
     pricing_procedure = models.ForeignKey(PricingProcedure, on_delete=models.CASCADE,
                                           verbose_name=ugettext_lazy('pricing procedure'))
+
+    parent_procedure_instance = models.ForeignKey(PricingParentProcedureInstance, on_delete=models.CASCADE,
+                                                  related_name='procedures',
+                                                  verbose_name=ugettext_lazy('parent pricing procedure'), null=True, blank=True)
 
     created = models.DateTimeField(auto_now_add=True, editable=False, db_index=True,
                                    verbose_name='created')

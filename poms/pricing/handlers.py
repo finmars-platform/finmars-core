@@ -9,7 +9,7 @@ from poms.pricing.currency_handler import PricingCurrencyHandler
 from poms.pricing.instrument_handler import PricingInstrumentHandler
 from poms.pricing.models import PricingProcedureBloombergInstrumentResult, PricingProcedureBloombergCurrencyResult, \
     PricingProcedureWtradeInstrumentResult, PriceHistoryError, \
-    CurrencyHistoryError, PricingProcedureFixerCurrencyResult
+    CurrencyHistoryError, PricingProcedureFixerCurrencyResult, PricingParentProcedureInstance
 
 import logging
 
@@ -25,8 +25,13 @@ class PricingProcedureProcess(object):
 
         self.execute_procedure_date_expressions()
 
-        self.pricing_instrument_handler = PricingInstrumentHandler(procedure=procedure, master_user=master_user)
-        self.pricing_currency_handler = PricingCurrencyHandler(procedure=procedure, master_user=master_user)
+        self.parent_procedure = PricingParentProcedureInstance(pricing_procedure=procedure, master_user=master_user)
+        self.parent_procedure.save()
+
+        self.pricing_instrument_handler = PricingInstrumentHandler(procedure=procedure, parent_procedure=self.parent_procedure, master_user=master_user)
+        self.pricing_currency_handler = PricingCurrencyHandler(procedure=procedure, parent_procedure=self.parent_procedure, master_user=master_user)
+
+
 
     def execute_procedure_date_expressions(self):
 

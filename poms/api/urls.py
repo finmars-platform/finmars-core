@@ -368,6 +368,7 @@ router.register(r'pricing/instrument-pricing-scheme-type', pricing.InstrumentPri
 router.register(r'pricing/currency-pricing-scheme', pricing.CurrencyPricingSchemeViewSet, 'pricing_currency_pricing_scheme')
 router.register(r'pricing/currency-pricing-scheme-type', pricing.CurrencyPricingSchemeTypeViewSet, 'pricing_currency_pricing_scheme_type')
 router.register(r'pricing/procedure', pricing.PricingProcedureViewSet, 'pricing_procedure')
+router.register(r'pricing/parent-procedure-instance', pricing.PricingParentProcedureInstanceViewSet, 'pricing_parent_procedure_instance')
 
 router.register(r'pricing/price-history-error', pricing.PriceHistoryErrorViewSet)
 router.register(r'pricing/currency-history-error', pricing.CurrencyHistoryErrorViewSet)
