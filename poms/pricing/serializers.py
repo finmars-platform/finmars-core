@@ -295,6 +295,21 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
                     multiple_parameters_formula = InstrumentPricingSchemeMultipleParametersFormulaParameters(
                         instrument_pricing_scheme_id=instance.id)
 
+                if 'default_value' in type_settings:
+                    multiple_parameters_formula.default_value = type_settings['default_value']
+                else:
+                    multiple_parameters_formula.default_value = None
+
+                if 'attribute_key' in type_settings:
+                    multiple_parameters_formula.attribute_key = type_settings['attribute_key']
+                else:
+                    multiple_parameters_formula.attribute_key = None
+
+                if 'value_type' in type_settings:
+                    multiple_parameters_formula.value_type = type_settings['value_type']
+                else:
+                    multiple_parameters_formula.value_type = None
+
                 if 'expr' in type_settings:
                     multiple_parameters_formula.expr = type_settings['expr']
                 else:
@@ -618,30 +633,30 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
 
         if instance.type_id and type_settings:
 
-            if instance.type_id == 2:  # manual pricing scheme
-
-                try:
-                    manual_formula = CurrencyPricingSchemeManualPricingParameters.objects.get(
-                        currency_pricing_scheme_id=instance.id)
-
-                except CurrencyPricingSchemeManualPricingParameters.DoesNotExist:
-
-                    manual_formula = CurrencyPricingSchemeManualPricingParameters(
-                        currency_pricing_scheme_id=instance.id)
-
-                if 'default_value' in type_settings:
-                    manual_formula.default_value = type_settings['default_value']
-                else:
-                    manual_formula.default_value = None
-
-                if 'attribute_key' in type_settings:
-                    manual_formula.attribute_key = type_settings['attribute_key']
-                else:
-                    manual_formula.attribute_key = None
-
-                print('manual_formula %s' % manual_formula)
-
-                manual_formula.save()
+            # if instance.type_id == 2:  # manual pricing scheme
+            #
+            #     try:
+            #         manual_formula = CurrencyPricingSchemeManualPricingParameters.objects.get(
+            #             currency_pricing_scheme_id=instance.id)
+            #
+            #     except CurrencyPricingSchemeManualPricingParameters.DoesNotExist:
+            #
+            #         manual_formula = CurrencyPricingSchemeManualPricingParameters(
+            #             currency_pricing_scheme_id=instance.id)
+            #
+            #     if 'default_value' in type_settings:
+            #         manual_formula.default_value = type_settings['default_value']
+            #     else:
+            #         manual_formula.default_value = None
+            #
+            #     if 'attribute_key' in type_settings:
+            #         manual_formula.attribute_key = type_settings['attribute_key']
+            #     else:
+            #         manual_formula.attribute_key = None
+            #
+            #     print('manual_formula %s' % manual_formula)
+            #
+            #     manual_formula.save()
 
             if instance.type_id == 3:  # single parameter formula
 
@@ -686,6 +701,21 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
 
                     multiple_parameters_formula = CurrencyPricingSchemeMultipleParametersFormulaParameters(
                         currency_pricing_scheme_id=instance.id)
+
+                if 'default_value' in type_settings:
+                    multiple_parameters_formula.default_value = type_settings['default_value']
+                else:
+                    multiple_parameters_formula.default_value = None
+
+                if 'attribute_key' in type_settings:
+                    multiple_parameters_formula.attribute_key = type_settings['attribute_key']
+                else:
+                    multiple_parameters_formula.attribute_key = None
+
+                if 'value_type' in type_settings:
+                    multiple_parameters_formula.value_type = type_settings['value_type']
+                else:
+                    multiple_parameters_formula.value_type = None
 
                 if 'expr' in type_settings:
                     multiple_parameters_formula.expr = type_settings['expr']
