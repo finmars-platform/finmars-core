@@ -986,6 +986,7 @@ class PricingProcedureBloombergInstrumentResult(models.Model):
         unique_together = (
             ('master_user', 'instrument', 'date', 'pricing_policy', 'procedure')
         )
+        ordering = ['date']
 
 
 class PricingProcedureBloombergCurrencyResult(models.Model):
@@ -1017,6 +1018,7 @@ class PricingProcedureBloombergCurrencyResult(models.Model):
         unique_together = (
             ('master_user', 'currency', 'date', 'pricing_policy', 'procedure')
         )
+        ordering = ['date']
 
 
 class PricingProcedureWtradeInstrumentResult(models.Model):
@@ -1050,6 +1052,7 @@ class PricingProcedureWtradeInstrumentResult(models.Model):
         unique_together = (
             ('master_user', 'instrument', 'date', 'pricing_policy', 'procedure')
         )
+        ordering = ['date']
 
 
 # DEPRECATED since 09.03.2020
@@ -1113,3 +1116,4 @@ class PricingProcedureFixerCurrencyResult(models.Model):
         unique_together = (
             ('master_user', 'currency', 'date', 'pricing_policy', 'procedure')
         )
+        ordering = ['date']

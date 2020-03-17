@@ -1,6 +1,8 @@
 from datetime import timedelta
 
 from poms.common.utils import date_now
+from poms.currencies.models import CurrencyHistory
+from poms.instruments.models import PriceHistory
 
 
 def get_unique_pricing_schemes(items):
@@ -111,3 +113,87 @@ def optimize_items(items):
         result.append(value)
 
     return result
+
+
+def roll_currency_history_for_n_day_forward(procedure, last_price):
+
+    print("Roll Currency History for %s " % last_price)
+
+    if procedure.price_fill_days:
+
+        for i in range(procedure.price_fill_days):
+
+            can_write = True
+
+            new_date = last_price.date + timedelta(days=i)
+
+            try:
+
+                price = CurrencyHistory.objects.get(
+                    currency=last_price.currency,
+                    pricing_policy=last_price.pricing_policy,
+                    date=new_date
+                )
+
+                if not procedure.price_override_existed:
+                    can_write = False
+
+            except CurrencyHistory.DoesNotExist:
+
+                price = CurrencyHistory(
+                    currency=last_price.currency,
+                    pricing_policy=last_price.pricing_policy,
+                    date=new_date
+                )
+
+            if can_write:
+
+                if last_price.fx_rate:
+                    price.fx_rate = last_price.fx_rate
+
+                price.save()
+
+
+def roll_price_history_for_n_day_forward(procedure, last_price):
+
+    print("Roll Price History for  %s " % last_price)
+
+    if procedure.price_fill_days:
+
+        for i in range(procedure.price_fill_days):
+
+            can_write = True
+
+            new_date = last_price.date + timedelta(days=i)
+
+            try:
+
+                price = PriceHistory.objects.get(
+                    instrument=last_price.instrument,
+                    pricing_policy=last_price.pricing_policy,
+                    date=new_date
+                )
+
+                if not procedure.price_override_existed:
+                    can_write = False
+
+            except PriceHistory.DoesNotExist:
+
+                price = PriceHistory(
+                    instrument=last_price.instrument,
+                    pricing_policy=last_price.pricing_policy,
+                    date=new_date
+                )
+
+            if can_write:
+
+                price.principal_price = 0
+                price.accrued_price = 0
+
+                if last_price.principal_price:
+                    price.principal_price = last_price.principal_price
+
+                if last_price.accrued_price:
+                    price.accrued_price = last_price.accrued_price
+
+                price.save()

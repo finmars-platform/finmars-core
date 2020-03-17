@@ -9,9 +9,11 @@ from poms.pricing.currency_handler import PricingCurrencyHandler
 from poms.pricing.instrument_handler import PricingInstrumentHandler
 from poms.pricing.models import PricingProcedureBloombergInstrumentResult, PricingProcedureBloombergCurrencyResult, \
     PricingProcedureWtradeInstrumentResult, PriceHistoryError, \
-    CurrencyHistoryError, PricingProcedureFixerCurrencyResult, PricingParentProcedureInstance
+    CurrencyHistoryError, PricingProcedureFixerCurrencyResult, PricingParentProcedureInstance, PricingProcedureInstance
 
 import logging
+
+from poms.pricing.utils import roll_price_history_for_n_day_forward, roll_currency_history_for_n_day_forward
 
 _l = logging.getLogger('poms.pricing')
 
@@ -31,6 +33,8 @@ class PricingProcedureProcess(object):
         self.pricing_instrument_handler = PricingInstrumentHandler(procedure=procedure, parent_procedure=self.parent_procedure, master_user=master_user)
         self.pricing_currency_handler = PricingCurrencyHandler(procedure=procedure, parent_procedure=self.parent_procedure, master_user=master_user)
 
+        _l.info("Procedure settings - Overwrite: %s" % self.procedure.price_override_existed)
+        _l.info("Procedure settings - Roll Days N Forward: %s" % self.procedure.price_fill_days)
 
 
     def execute_procedure_date_expressions(self):
@@ -84,6 +88,9 @@ class FillPricesBrokerBloombergProcess(object):
 
         self.instance = instance
         self.master_user = master_user
+
+        self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
+        self.procedure = self.procedure_instance.pricing_procedure
 
     def process(self):
 
@@ -305,6 +312,8 @@ class FillPricesBrokerBloombergProcess(object):
                     except formula.InvalidExpression:
                         error.accrual_error_text = 'Invalid Error Text Expression'
 
+            can_write = True
+
             try:
 
                 price = PriceHistory.objects.get(
@@ -312,6 +321,9 @@ class FillPricesBrokerBloombergProcess(object):
                     pricing_policy=record.pricing_policy,
                     date=record.date
                 )
+
+                if not self.procedure.price_override_existed:
+                    can_write = False
 
             except PriceHistory.DoesNotExist:
 
@@ -322,21 +334,29 @@ class FillPricesBrokerBloombergProcess(object):
                     principal_price=principal_price
                 )
 
-            price.principal_price = 0
-            price.accrued_price = 0
+            if can_write:
 
-            if principal_price:
-                price.principal_price = principal_price
-                error.principal_price = principal_price
+                price.principal_price = 0
+                price.accrued_price = 0
 
-            if accrued_price:
-                price.accrued_price = accrued_price
-                error.accrued_price = accrued_price
+                if principal_price:
+                    price.principal_price = principal_price
+                    error.principal_price = principal_price
 
-            price.save()
+                if accrued_price:
+                    price.accrued_price = accrued_price
+                    error.accrued_price = accrued_price
 
-            if has_error:
-                error.save()
+                price.save()
+
+                if has_error:
+                    error.save()
+
+            if self.instance['data']['date_to'] == record.date:
+
+                _l.info("Bloomberg Roll Prices for Price History")
+
+                roll_price_history_for_n_day_forward(self.procedure, price)
 
         PricingProcedureBloombergInstrumentResult.objects.filter(master_user=self.master_user,
                                                        procedure=self.instance['procedure'],
@@ -403,6 +423,8 @@ class FillPricesBrokerBloombergProcess(object):
             _l.info('currency %s' % record.currency.user_code)
             _l.info('pricing_policy %s' % record.pricing_policy.user_code)
 
+            can_write = True
+
             try:
 
                 price = CurrencyHistory.objects.get(
@@ -410,6 +432,9 @@ class FillPricesBrokerBloombergProcess(object):
                     pricing_policy=record.pricing_policy,
                     date=record.date
                 )
+
+                if not self.procedure.price_override_existed:
+                    can_write = False
 
             except CurrencyHistory.DoesNotExist:
 
@@ -419,13 +444,21 @@ class FillPricesBrokerBloombergProcess(object):
                     date=record.date
                 )
 
-            if fx_rate:
-                price.fx_rate = fx_rate
+            if can_write:
 
-            price.save()
+                if fx_rate:
+                    price.fx_rate = fx_rate
 
-            if has_error:
-                error.save()
+                price.save()
+
+                if has_error:
+                    error.save()
+
+            if self.instance['data']['date_to'] == record.date:
+
+                _l.info("Bloomberg Roll Prices for Currency History")
+
+                roll_currency_history_for_n_day_forward(self.procedure, price)
 
         PricingProcedureBloombergCurrencyResult.objects.filter(master_user=self.master_user,
                                                                  procedure=self.instance['procedure'],
@@ -439,6 +472,9 @@ class FillPricesBrokerWtradeProcess(object):
 
         self.instance = instance
         self.master_user = master_user
+
+        self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
+        self.procedure = self.procedure_instance.pricing_procedure
 
     def process(self):
 
@@ -562,6 +598,8 @@ class FillPricesBrokerWtradeProcess(object):
 
             accrued_price = record.instrument.get_accrued_price(record.date)
 
+            can_write = True
+
             try:
 
                 price = PriceHistory.objects.get(
@@ -569,6 +607,9 @@ class FillPricesBrokerWtradeProcess(object):
                     pricing_policy=record.pricing_policy,
                     date=record.date
                 )
+
+                if not self.procedure.price_override_existed:
+                    can_write = False
 
             except PriceHistory.DoesNotExist:
 
@@ -579,16 +620,24 @@ class FillPricesBrokerWtradeProcess(object):
                     principal_price=principal_price
                 )
 
-            price.principal_price = 0
-            price.accrued_price = 0
+            if can_write:
 
-            if principal_price:
-                price.principal_price = principal_price
+                price.principal_price = 0
+                price.accrued_price = 0
 
-            if accrued_price:
-                price.accrued_price = accrued_price
+                if principal_price:
+                    price.principal_price = principal_price
 
-            price.save()
+                if accrued_price:
+                    price.accrued_price = accrued_price
+
+                price.save()
+
+            if self.instance['data']['date_to'] == record.date:
+
+                _l.info("Wtrade Roll Prices for Price History")
+
+                roll_price_history_for_n_day_forward(self.procedure, price)
 
         PricingProcedureWtradeInstrumentResult.objects.filter(master_user=self.master_user,
                                                                  procedure=self.instance['procedure'],
@@ -602,6 +651,9 @@ class FillPricesBrokerFixerProcess(object):
 
         self.instance = instance
         self.master_user = master_user
+
+        self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
+        self.procedure = self.procedure_instance.pricing_procedure
 
     def process(self):
 
@@ -713,6 +765,8 @@ class FillPricesBrokerFixerProcess(object):
             _l.info('currency %s' % record.currency.user_code)
             _l.info('pricing_policy %s' % record.pricing_policy.user_code)
 
+            can_write = True
+
             try:
 
                 price = CurrencyHistory.objects.get(
@@ -720,6 +774,9 @@ class FillPricesBrokerFixerProcess(object):
                     pricing_policy=record.pricing_policy,
                     date=record.date
                 )
+
+                if not self.procedure.price_override_existed:
+                    can_write = False
 
             except CurrencyHistory.DoesNotExist:
 
@@ -729,13 +786,21 @@ class FillPricesBrokerFixerProcess(object):
                     date=record.date
                 )
 
-            if fx_rate:
-                price.fx_rate = fx_rate
+            if can_write:
 
-            price.save()
+                if fx_rate:
+                    price.fx_rate = fx_rate
 
-            if has_error:
-                error.save()
+                price.save()
+
+                if has_error:
+                    error.save()
+
+            if self.instance['data']['date_to'] == record.date:
+
+                _l.info("Fixer Roll Prices for Currency History")
+
+                roll_currency_history_for_n_day_forward(self.procedure, price)
 
         PricingProcedureFixerCurrencyResult.objects.filter(master_user=self.master_user,
                                                                procedure=self.instance['procedure'],

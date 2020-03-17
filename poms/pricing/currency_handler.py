@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.db import transaction
 
 from poms.common import formula
@@ -9,8 +11,7 @@ from poms.pricing.models import PricingProcedureInstance, PricingProcedureBloomb
     CurrencyPricingSchemeType, CurrencyHistoryError, PricingProcedureFixerCurrencyResult
 from poms.pricing.transport.transport import PricingTransport
 from poms.pricing.utils import get_unique_pricing_schemes, group_items_by_provider, get_list_of_dates_between_two_dates, \
-    get_is_yesterday, optimize_items
-
+    get_is_yesterday, optimize_items, roll_currency_history_for_n_day_forward
 
 import logging
 
@@ -197,6 +198,8 @@ class PricingCurrencyHandler(object):
 
         for item in items:
 
+            last_price = None
+
             for date in dates:
 
                 scheme_parameters = item.pricing_scheme.get_parameters()
@@ -287,6 +290,8 @@ class PricingCurrencyHandler(object):
 
                     _l.info('fx_rate %s' % fx_rate)
 
+                    can_write = True
+
                     try:
 
                         price = CurrencyHistory.objects.get(
@@ -294,6 +299,9 @@ class PricingCurrencyHandler(object):
                             pricing_policy=item.policy.pricing_policy,
                             date=date
                         )
+
+                        if not self.procedure.price_override_existed:
+                            can_write = False
 
                     except CurrencyHistory.DoesNotExist:
 
@@ -303,13 +311,19 @@ class PricingCurrencyHandler(object):
                             date=date
                         )
 
-                    if fx_rate:
-                        price.fx_rate = fx_rate
+                    if can_write:
 
-                    price.save()
+                        if fx_rate:
+                            price.fx_rate = fx_rate
 
-                    if has_error:
-                        error.save()
+                        price.save()
+
+                        if has_error:
+                            error.save()
+
+                    last_price = price
+
+            roll_currency_history_for_n_day_forward(self.procedure, last_price)
 
         procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
@@ -331,6 +345,8 @@ class PricingCurrencyHandler(object):
         procedure_instance.save()
 
         for item in items:
+
+            last_price = None
 
             for date in dates:
 
@@ -475,6 +491,8 @@ class PricingCurrencyHandler(object):
 
                     _l.info('fx_rate %s' % fx_rate)
 
+                    can_write = True
+
                     try:
 
                         price = CurrencyHistory.objects.get(
@@ -482,6 +500,9 @@ class PricingCurrencyHandler(object):
                             pricing_policy=item.policy.pricing_policy,
                             date=date
                         )
+
+                        if not self.procedure.price_override_existed:
+                            can_write = False
 
                     except CurrencyHistory.DoesNotExist:
 
@@ -491,13 +512,19 @@ class PricingCurrencyHandler(object):
                             date=date
                         )
 
-                    if fx_rate:
-                        price.fx_rate = fx_rate
+                    if can_write:
 
-                    price.save()
+                        if fx_rate:
+                            price.fx_rate = fx_rate
 
-                    if has_error:
-                        error.save()
+                        price.save()
+
+                        if has_error:
+                            error.save()
+
+                    last_price = price
+
+            roll_currency_history_for_n_day_forward(self.procedure, last_price)
 
         procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 

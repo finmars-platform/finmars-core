@@ -14,7 +14,7 @@ from poms.pricing.models import InstrumentPricingSchemeType, PricingProcedureIns
     PricingProcedureBloombergInstrumentResult, PricingProcedureWtradeInstrumentResult, PriceHistoryError
 from poms.pricing.transport.transport import PricingTransport
 from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_between_two_dates, group_items_by_provider, \
-    get_is_yesterday, optimize_items
+    get_is_yesterday, optimize_items, roll_price_history_for_n_day_forward
 from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
 
@@ -271,6 +271,8 @@ class PricingInstrumentHandler(object):
 
         for item in items:
 
+            last_price = None
+
             for date in dates:
 
                 scheme_parameters = item.pricing_scheme.get_parameters()
@@ -401,6 +403,7 @@ class PricingInstrumentHandler(object):
                             except formula.InvalidExpression:
                                 error.accrual_error_text = 'Invalid Error Text Expression'
 
+                    can_write = True
 
                     try:
 
@@ -410,6 +413,9 @@ class PricingInstrumentHandler(object):
                             date=date
                         )
 
+                        if self.procedure.price_override_existed:
+                            can_write = False
+
                     except PriceHistory.DoesNotExist:
 
                         price = PriceHistory(
@@ -418,21 +424,27 @@ class PricingInstrumentHandler(object):
                             date=date
                         )
 
-                    price.principal_price = 0
-                    price.accrued_price = 0
+                    if can_write:
 
-                    if principal_price:
-                        price.principal_price = principal_price
-                        error.principal_price = principal_price
+                        price.principal_price = 0
+                        price.accrued_price = 0
 
-                    if accrued_price:
-                        price.accrued_price = accrued_price
-                        error.accrued_price = accrued_price
+                        if principal_price:
+                            price.principal_price = principal_price
+                            error.principal_price = principal_price
 
-                    price.save()
+                        if accrued_price:
+                            price.accrued_price = accrued_price
+                            error.accrued_price = accrued_price
 
-                    if has_error:
-                        error.save()
+                        price.save()
+
+                        if has_error:
+                            error.save()
+
+                    last_price = price
+
+            roll_price_history_for_n_day_forward(self.procedure, last_price)
 
         procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
@@ -454,6 +466,8 @@ class PricingInstrumentHandler(object):
         procedure_instance.save()
 
         for item in items:
+
+            last_price = None
 
             for date in dates:
 
@@ -629,6 +643,8 @@ class PricingInstrumentHandler(object):
                             except formula.InvalidExpression:
                                 error.accrual_error_text = 'Invalid Error Text Expression'
 
+                    can_write = True
+
                     try:
 
                         price = PriceHistory.objects.get(
@@ -636,6 +652,9 @@ class PricingInstrumentHandler(object):
                             pricing_policy=item.policy.pricing_policy,
                             date=date
                         )
+
+                        if self.procedure.price_override_existed:
+                            can_write = False
 
                     except PriceHistory.DoesNotExist:
 
@@ -645,21 +664,27 @@ class PricingInstrumentHandler(object):
                             date=date
                         )
 
-                    price.principal_price = 0
-                    price.accrued_price = 0
+                    if can_write:
 
-                    if principal_price:
-                        price.principal_price = principal_price
-                        error.principal_price = principal_price
+                        price.principal_price = 0
+                        price.accrued_price = 0
 
-                    if accrued_price:
-                        price.accrued_price = accrued_price
-                        error.accrued_price = accrued_price
+                        if principal_price:
+                            price.principal_price = principal_price
+                            error.principal_price = principal_price
 
-                    price.save()
+                        if accrued_price:
+                            price.accrued_price = accrued_price
+                            error.accrued_price = accrued_price
 
-                    if has_error:
-                        error.save()
+                        price.save()
+
+                        if has_error:
+                            error.save()
+
+                    last_price = price
+
+            roll_price_history_for_n_day_forward(self.procedure, last_price)
 
         procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
