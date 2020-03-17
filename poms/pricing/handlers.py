@@ -92,6 +92,9 @@ class FillPricesBrokerBloombergProcess(object):
         self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
         self.procedure = self.procedure_instance.pricing_procedure
 
+        _l.info('Broker Bloomberg - Overwrite: %s' % self.procedure.price_override_existed)
+        _l.info('Broker Bloomberg - Roll Days N Forward: %s' % self.procedure.price_fill_days)
+
     def process(self):
 
         _l.info('< fill prices: total items len %s' % len(self.instance['data']['items']))
@@ -476,6 +479,9 @@ class FillPricesBrokerWtradeProcess(object):
         self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
         self.procedure = self.procedure_instance.pricing_procedure
 
+        _l.info('Broker Wtrade - Overwrite: %s' % self.procedure.price_override_existed)
+        _l.info('Broker Wtrade - Roll Days N Forward: %s' % self.procedure.price_fill_days)
+
     def process(self):
 
         _l.info('< fill prices: total items len %s' % len(self.instance['data']['items']))
@@ -654,6 +660,9 @@ class FillPricesBrokerFixerProcess(object):
 
         self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
         self.procedure = self.procedure_instance.pricing_procedure
+
+        _l.info('Broker Fixer - Overwrite: %s' % self.procedure.price_override_existed)
+        _l.info('Broker Fixer - Roll Days N Forward: %s' % self.procedure.price_fill_days)
 
     def process(self):
 
