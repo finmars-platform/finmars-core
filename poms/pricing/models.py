@@ -859,6 +859,9 @@ class PricingParentProcedureInstance(models.Model):
     pricing_procedure = models.ForeignKey(PricingProcedure, on_delete=models.CASCADE,
                                           verbose_name=ugettext_lazy('pricing procedure'))
 
+    class Meta:
+        ordering = ['-created']
+
 
 class PricingProcedureInstance(models.Model):
     STATUS_INIT = 'I'

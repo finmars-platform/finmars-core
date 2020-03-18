@@ -327,6 +327,7 @@ class FillPricesBrokerBloombergProcess(object):
 
                 if not self.procedure.price_override_existed:
                     can_write = False
+                    _l.info('Overwrite existing %s' % price)
 
             except PriceHistory.DoesNotExist:
 
@@ -336,6 +337,8 @@ class FillPricesBrokerBloombergProcess(object):
                     date=record.date,
                     principal_price=principal_price
                 )
+
+                _l.info('Create new %s' % price)
 
             if can_write:
 
@@ -438,6 +441,8 @@ class FillPricesBrokerBloombergProcess(object):
 
                 if not self.procedure.price_override_existed:
                     can_write = False
+                    _l.info('Overwrite existing %s' % price)
+
 
             except CurrencyHistory.DoesNotExist:
 
@@ -446,6 +451,8 @@ class FillPricesBrokerBloombergProcess(object):
                     pricing_policy=record.pricing_policy,
                     date=record.date
                 )
+
+                _l.info('Create new %s' % price)
 
             if can_write:
 
@@ -616,6 +623,7 @@ class FillPricesBrokerWtradeProcess(object):
 
                 if not self.procedure.price_override_existed:
                     can_write = False
+                    _l.info('Overwrite existing %s' % price)
 
             except PriceHistory.DoesNotExist:
 
@@ -625,6 +633,8 @@ class FillPricesBrokerWtradeProcess(object):
                     date=record.date,
                     principal_price=principal_price
                 )
+
+                _l.info('Create new %s' % price)
 
             if can_write:
 
@@ -787,6 +797,8 @@ class FillPricesBrokerFixerProcess(object):
                 if not self.procedure.price_override_existed:
                     can_write = False
 
+                    _l.info('Overwrite existing %s' % price)
+
             except CurrencyHistory.DoesNotExist:
 
                 price = CurrencyHistory(
@@ -794,6 +806,8 @@ class FillPricesBrokerFixerProcess(object):
                     pricing_policy=record.pricing_policy,
                     date=record.date
                 )
+
+                _l.info('Create new %s' % price)
 
             if can_write:
 

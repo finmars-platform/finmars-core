@@ -413,8 +413,10 @@ class PricingInstrumentHandler(object):
                             date=date
                         )
 
-                        if self.procedure.price_override_existed:
+                        if not self.procedure.price_override_existed:
                             can_write = False
+
+                            _l.info('Overwrite existing %s' % price)
 
                     except PriceHistory.DoesNotExist:
 
@@ -423,6 +425,8 @@ class PricingInstrumentHandler(object):
                             pricing_policy=item.policy.pricing_policy,
                             date=date
                         )
+
+                        _l.info('Create new %s' % price)
 
                     if can_write:
 
@@ -653,8 +657,9 @@ class PricingInstrumentHandler(object):
                             date=date
                         )
 
-                        if self.procedure.price_override_existed:
+                        if not self.procedure.price_override_existed:
                             can_write = False
+                            _l.info('Overwrite existing %s' % price)
 
                     except PriceHistory.DoesNotExist:
 
@@ -663,6 +668,8 @@ class PricingInstrumentHandler(object):
                             pricing_policy=item.policy.pricing_policy,
                             date=date
                         )
+
+                        _l.info('Create new %s' % price)
 
                     if can_write:
 
