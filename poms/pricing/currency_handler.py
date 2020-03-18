@@ -302,6 +302,9 @@ class PricingCurrencyHandler(object):
 
                         if not self.procedure.price_override_existed:
                             can_write = False
+                            _l.info('Skip %s' % price)
+                        else:
+                            _l.info('Overwrite existing %s' % price)
 
                     except CurrencyHistory.DoesNotExist:
 
@@ -503,6 +506,8 @@ class PricingCurrencyHandler(object):
 
                         if not self.procedure.price_override_existed:
                             can_write = False
+                            _l.info('Skip %s' % price)
+                        else:
                             _l.info('Overwrite existing %s' % price)
 
                     except CurrencyHistory.DoesNotExist:

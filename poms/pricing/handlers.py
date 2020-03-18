@@ -327,6 +327,8 @@ class FillPricesBrokerBloombergProcess(object):
 
                 if not self.procedure.price_override_existed:
                     can_write = False
+                    _l.info('Skip %s' % price)
+                else:
                     _l.info('Overwrite existing %s' % price)
 
             except PriceHistory.DoesNotExist:
@@ -441,6 +443,8 @@ class FillPricesBrokerBloombergProcess(object):
 
                 if not self.procedure.price_override_existed:
                     can_write = False
+                    _l.info('Skip %s' % price)
+                else:
                     _l.info('Overwrite existing %s' % price)
 
 
@@ -623,6 +627,8 @@ class FillPricesBrokerWtradeProcess(object):
 
                 if not self.procedure.price_override_existed:
                     can_write = False
+                    _l.info('Skips %s' % price)
+                else:
                     _l.info('Overwrite existing %s' % price)
 
             except PriceHistory.DoesNotExist:
@@ -796,7 +802,8 @@ class FillPricesBrokerFixerProcess(object):
 
                 if not self.procedure.price_override_existed:
                     can_write = False
-
+                    _l.info('Skip %s' % price)
+                else:
                     _l.info('Overwrite existing %s' % price)
 
             except CurrencyHistory.DoesNotExist:
