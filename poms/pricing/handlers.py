@@ -360,7 +360,7 @@ class FillPricesBrokerBloombergProcess(object):
                 if has_error:
                     error.save()
 
-            if self.instance['data']['date_to'] == record.date:
+            if self.instance['data']['date_to'] == str(record.date):
 
                 _l.info("Bloomberg Roll Prices for Price History")
 
@@ -655,7 +655,7 @@ class FillPricesBrokerWtradeProcess(object):
 
                 price.save()
 
-            if self.instance['data']['date_to'] == record.date:
+            if self.instance['data']['date_to'] == str(record.date):
 
                 _l.info("Wtrade Roll Prices for Price History")
 
