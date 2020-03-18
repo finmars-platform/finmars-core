@@ -156,7 +156,7 @@ def roll_currency_history_for_n_day_forward(procedure, last_price):
 
 def roll_price_history_for_n_day_forward(procedure, last_price):
 
-    print("Roll Price History for  %s " % last_price)
+    print("Roll Price History for  %s for %s days" % (last_price, procedure.price_fill_days))
 
     if procedure.price_fill_days:
 
@@ -176,6 +176,9 @@ def roll_price_history_for_n_day_forward(procedure, last_price):
 
                 if not procedure.price_override_existed:
                     can_write = False
+                    print('Roll Price History Skip %s ' % price)
+                else:
+                    print('Roll Price History Overwrite %s ' % price)
 
             except PriceHistory.DoesNotExist:
 
@@ -184,6 +187,8 @@ def roll_price_history_for_n_day_forward(procedure, last_price):
                     pricing_policy=last_price.pricing_policy,
                     date=new_date
                 )
+
+                print('Roll Price History Create new %s ' % price)
 
             if can_write:
 
