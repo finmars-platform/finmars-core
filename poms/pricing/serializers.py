@@ -880,7 +880,8 @@ class PricingProcedureSerializer(serializers.ModelSerializer):
                   # 'accrual_date_from', 'accrual_date_to',
                   # 'accrual_date_from_expr', 'accrual_date_to_expr',
 
-                  'pricing_policy_filters', 'instrument_filters'
+                  'pricing_policy_filters', 'instrument_filters',
+                  'instrument_type_filters'
 
                   )
 
@@ -978,7 +979,7 @@ class InstrumentTypePricingPolicySerializer(serializers.ModelSerializer):
     class Meta:
         model = InstrumentTypePricingPolicy
         fields = (
-            'id', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
+            'id', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data', 'overwrite_default_parameters')
 
 
 class InstrumentPricingPolicySerializer(serializers.ModelSerializer):

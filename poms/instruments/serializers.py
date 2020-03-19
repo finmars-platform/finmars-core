@@ -320,11 +320,11 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
             try:
 
-                o = InstrumentPricingPolicy.objects.get(instrument_type=instance, pricing_policy=policy)
+                o = InstrumentTypePricingPolicy.objects.get(instrument_type=instance, pricing_policy=policy)
 
-            except InstrumentPricingPolicy.DoesNotExist:
+            except InstrumentTypePricingPolicy.DoesNotExist:
 
-                o = InstrumentPricingPolicy(instrument_type=instance, pricing_policy=policy)
+                o = InstrumentTypePricingPolicy(instrument_type=instance, pricing_policy=policy)
 
                 print('policy.default_instrument_pricing_scheme %s' % policy.default_instrument_pricing_scheme)
 
@@ -353,13 +353,14 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
                     ids.add(oid)
 
-                    o = InstrumentPricingPolicy.objects.get(instrument_type=instance, id=oid)
+                    o = InstrumentTypePricingPolicy.objects.get(instrument_type=instance, id=oid)
 
                     o.pricing_scheme = item['pricing_scheme']
                     o.default_value = item['default_value']
                     o.attribute_key = item['attribute_key']
                     o.data = item['data']
                     o.notes = item['notes']
+                    o.overwrite_default_parameters = item['overwrite_default_parameters']
 
                     print("attributekey %s" % o.attribute_key)
 

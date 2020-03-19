@@ -10,6 +10,7 @@ from rest_framework import serializers
 from rest_framework.decorators import action
 
 from rest_framework.exceptions import MethodNotAllowed, PermissionDenied, ValidationError
+from rest_framework.permissions import IsAuthenticated
 
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
@@ -203,6 +204,41 @@ class InstrumentTypeViewSet(AbstractWithObjectPermissionViewSet):
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
     ]
+
+    @action(detail=True, methods=['get','put'], url_path='update-pricing',  permission_classes=[IsAuthenticated])
+    def update_pricing(self, request, pk=None):
+        instrument_type = self.get_object()
+
+        print('detail_route: /update-pricing: process update_pricing')
+
+        instruments = Instrument.objects.filter(instrument_type=instrument_type, master_user=request.user.master_user)
+
+        print("request.data %s " % request.data)
+        print("instruments affected %s" % len(instruments))
+
+        from poms.pricing.models import InstrumentPricingPolicy
+
+        for instrument in instruments:
+
+            try:
+                policy = InstrumentPricingPolicy.objects.get(instrument=instrument, pricing_policy=request.data['pricing_policy'])
+
+                if request.data['overwrite_default_parameters']:
+
+                    policy.pricing_scheme_id = request.data['pricing_scheme']
+                    policy.default_value = request.data['default_value']
+                    policy.data = request.data['data']
+                    policy.attribute_key = request.data['attribute_key']
+                    policy.save()
+
+                    print("Policy %s updated" % policy)
+
+                else:
+                    print("Nothing changed for %s" % policy)
+            except InstrumentPricingPolicy.DoesNotExist:
+                print("Policy %s is not found for instrument %s" % (request.data['pricing_policy_object']['name'], instrument))
+
+        return Response({"status": "ok"})
 
 
 class InstrumentTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):

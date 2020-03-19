@@ -216,13 +216,25 @@ class PricingInstrumentHandler(object):
 
         # Filter by Procedure Filter Settings
 
-        if self.procedure.instrument_filters:
-            for instrument in instruments:
+        # if self.procedure.instrument_filters:
+        #     for instrument in instruments:
+        #
+        #         if instrument.user_code in self.procedure.instrument_filters:
+        #             result.append(instrument)
+        # else:
+        #     result = instruments
 
-                if instrument.user_code in self.procedure.instrument_filters:
-                    result.append(instrument)
-        else:
-            result = instruments
+        if self.procedure.instrument_type_filters:
+
+            user_codes = self.procedure.instrument_type_filters.split(",")
+
+            print("Filter by Instrument Types %s " % user_codes)
+
+            print("instruments before filter %s " % len(instruments))
+            instruments = instruments.filter(instrument_type__user_code__in=user_codes)
+            print("instruments after filter %s " % len(instruments))
+
+        result = instruments
 
         return result
 

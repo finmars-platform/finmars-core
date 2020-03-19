@@ -716,6 +716,8 @@ class PricingProcedure(NamedModel):
 
     instrument_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('instrument filters'))
 
+    instrument_type_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('instrument type filters'))
+
     class Meta:
         unique_together = (
             ('name', 'master_user')
