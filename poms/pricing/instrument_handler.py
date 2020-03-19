@@ -183,7 +183,8 @@ class PricingInstrumentHandler(object):
         result = []
 
         instruments = Instrument.objects.filter(
-            master_user=self.procedure.master_user
+            master_user=self.procedure.master_user,
+            is_deleted=False
         ).exclude(
             daily_pricing_model=DailyPricingModel.SKIP
         )
