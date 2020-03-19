@@ -314,7 +314,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
         ids = set()
 
-        print("creating default policies")
+        # print("creating default policies")
 
         for policy in policies:
 
@@ -326,7 +326,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
                 o = InstrumentTypePricingPolicy(instrument_type=instance, pricing_policy=policy)
 
-                print('policy.default_instrument_pricing_scheme %s' % policy.default_instrument_pricing_scheme)
+                # print('policy.default_instrument_pricing_scheme %s' % policy.default_instrument_pricing_scheme)
 
                 if policy.default_instrument_pricing_scheme:
 
@@ -335,13 +335,13 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
                     parameters = policy.default_instrument_pricing_scheme.get_parameters()
                     set_instrument_pricing_scheme_parameters(o, parameters)
 
-                print('o.pricing_scheme %s' % o.pricing_scheme)
+                # print('o.pricing_scheme %s' % o.pricing_scheme)
 
                 o.save()
 
                 ids.add(o.id)
 
-        print("update existing policies %s " % len(pricing_policies))
+        # print("update existing policies %s " % len(pricing_policies))
 
         if pricing_policies:
 
@@ -369,7 +369,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
                 except Exception as e:
                     print("Can't Find  Pricing Policy %s" % e)
 
-        print('ids %s' % ids)
+        # print('ids %s' % ids)
 
         if len(ids):
             InstrumentTypePricingPolicy.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
@@ -525,7 +525,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
 
         ids = set()
 
-        print("creating default policies")
+        # print("creating default policies")
 
         for policy in policies:
 
@@ -537,7 +537,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
 
                 o = InstrumentPricingPolicy(instrument=instance, pricing_policy=policy)
 
-                print('policy.default_instrument_pricing_scheme %s' % policy.default_instrument_pricing_scheme)
+                # print('policy.default_instrument_pricing_scheme %s' % policy.default_instrument_pricing_scheme)
 
                 if policy.default_instrument_pricing_scheme:
 
@@ -546,13 +546,13 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
                     parameters = policy.default_instrument_pricing_scheme.get_parameters()
                     set_instrument_pricing_scheme_parameters(o, parameters)
 
-                print('o.pricing_scheme %s' % o.pricing_scheme)
+                # print('o.pricing_scheme %s' % o.pricing_scheme)
 
                 o.save()
 
                 ids.add(o.id)
 
-        print("update existing policies %s " % len(pricing_policies))
+        # print("update existing policies %s " % len(pricing_policies))
 
         if pricing_policies:
 
@@ -579,7 +579,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
                 except Exception as e:
                     print("Can't Find  Pricing Policy %s" % e)
 
-        print('ids %s' % ids)
+        # print('ids %s' % ids)
 
         if len(ids):
             InstrumentPricingPolicy.objects.filter(instrument=instance).exclude(id__in=ids).delete()

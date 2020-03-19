@@ -99,7 +99,7 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
 
         ids = set()
 
-        print("creating default policies")
+        # print("creating default policies")
 
         for policy in policies:
 
@@ -111,7 +111,7 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
 
                 o = CurrencyPricingPolicy(currency=instance, pricing_policy=policy)
 
-                print('policy.default_instrument_pricing_scheme %s' % policy.default_currency_pricing_scheme)
+                # print('policy.default_instrument_pricing_scheme %s' % policy.default_currency_pricing_scheme)
 
                 if policy.default_currency_pricing_scheme:
 
@@ -120,13 +120,13 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
                     parameters = policy.default_currency_pricing_scheme.get_parameters()
                     set_currency_pricing_scheme_parameters(o, parameters)
 
-                print('o.pricing_scheme %s' % o.pricing_scheme)
+                # print('o.pricing_scheme %s' % o.pricing_scheme)
 
                 o.save()
 
                 ids.add(o.id)
 
-        print("update existing policies %s " % len(pricing_policies))
+        # print("update existing policies %s " % len(pricing_policies))
 
         if pricing_policies:
 
@@ -153,7 +153,7 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
                 except Exception as e:
                     print("Can't Find  Pricing Policy %s" % e)
 
-        print('ids %s' % ids)
+        # print('ids %s' % ids)
 
         if len(ids):
             CurrencyPricingPolicy.objects.filter(currency=instance).exclude(id__in=ids).delete()

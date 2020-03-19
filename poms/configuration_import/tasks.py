@@ -1136,8 +1136,6 @@ class ImportManager(object):
 
                             if 'reportOptions' in content_object['data']:
 
-                                print(content_object['data']['reportOptions'])
-
                                 if 'pricing_policy' in content_object['data']['reportOptions']:
 
                                     try:
@@ -1305,8 +1303,6 @@ class ImportManager(object):
 
                                     layout = DashboardLayout.objects.get(member=self.member,
                                                                          name=content_object['name'])
-
-                                    print('layout %s ' % layout)
 
                                     layout.data = content_object['data']
 
@@ -1629,7 +1625,6 @@ class ImportManager(object):
                                     serializer.save()
 
                                 except Exception as error:
-
 
                                     _l.info("Currency Error overwrite %s" % error)
 
@@ -2087,88 +2082,88 @@ class ImportManager(object):
 
     def import_configuration(self, configuration_section):
 
-        try:
+        # try:
 
-            st = time.perf_counter()
+        st = time.perf_counter()
 
-            if 'items' in configuration_section:
+        if 'items' in configuration_section:
 
-                self.print_entities_in_file(configuration_section)
+            self.print_entities_in_file(configuration_section)
 
-                can_import = check_configuration_section(self.configuration_access_table)
+            can_import = check_configuration_section(self.configuration_access_table)
 
-                #
-                # Import order matters
-                #
+            #
+            # Import order matters
+            #
 
-                if can_import:
-                    self.import_attribute_types(configuration_section)  # configuration section
-                else:
-                    _l.info("Permission Error: Attributes types")
+            if can_import:
+                self.import_attribute_types(configuration_section)  # configuration section
+            else:
+                _l.info("Permission Error: Attributes types")
 
-                if self.data_access_table['currencies.currency']:
-                    self.import_currencies(configuration_section)  # data section
-                else:
-                    _l.info("Permission Error: Currencies")
+            if self.data_access_table['currencies.currency']:
+                self.import_currencies(configuration_section)  # data section
+            else:
+                _l.info("Permission Error: Currencies")
 
-                if can_import:
-                    self.import_pricing_policies(configuration_section)  # configuration section
-                    self.import_pricing_automated_schedule(configuration_section)  # configuration section
-                else:
-                    _l.info("Permission Error: Pricing Policies")
+            if can_import:
+                self.import_pricing_policies(configuration_section)  # configuration section
+                self.import_pricing_automated_schedule(configuration_section)  # configuration section
+            else:
+                _l.info("Permission Error: Pricing Policies")
 
-                if self.data_access_table['accounts.accounttype']:
-                    self.import_account_types(configuration_section)  # data section
-                else:
-                    _l.info("Permission Error: Account Type")
+            if self.data_access_table['accounts.accounttype']:
+                self.import_account_types(configuration_section)  # data section
+            else:
+                _l.info("Permission Error: Account Type")
 
-                if self.data_access_table['instruments.instrumenttype']:
-                    self.import_instrument_types(configuration_section)  # data section
-                else:
-                    _l.info("Permission Error: Instrument Type")
+            if self.data_access_table['instruments.instrumenttype']:
+                self.import_instrument_types(configuration_section)  # data section
+            else:
+                _l.info("Permission Error: Instrument Type")
 
-                self.import_transaction_types_groups(configuration_section)  # unknown
+            self.import_transaction_types_groups(configuration_section)  # unknown
 
-                if self.data_access_table['transactions.transactiontype']:
-                    self.import_transaction_types(configuration_section)  # data section
-                else:
-                    _l.info("Permission Error: Transaction Type")
+            if self.data_access_table['transactions.transactiontype']:
+                self.import_transaction_types(configuration_section)  # data section
+            else:
+                _l.info("Permission Error: Transaction Type")
 
-                if self.data_access_table['instruments.instrumenttype']:
-                    self.overwrite_instrument_types(configuration_section)  # data section
-                else:
-                    _l.info("Permission Error: Instrument Type")
+            if self.data_access_table['instruments.instrumenttype']:
+                self.overwrite_instrument_types(configuration_section)  # data section
+            else:
+                _l.info("Permission Error: Instrument Type")
 
-                # Configuration section
+            # Configuration section
 
-                if can_import:
-                    self.import_custom_columns_balance_report(configuration_section)
-                    self.import_custom_columns_pl_report(configuration_section)
-                    self.import_custom_columns_transaction_report(configuration_section)
+            if can_import:
+                self.import_custom_columns_balance_report(configuration_section)
+                self.import_custom_columns_pl_report(configuration_section)
+                self.import_custom_columns_transaction_report(configuration_section)
 
-                    self.import_transaction_import_schemes(configuration_section)
-                    self.import_simple_import_schemes(configuration_section)
-                    self.import_complex_import_schemes(configuration_section)
+                self.import_transaction_import_schemes(configuration_section)
+                self.import_simple_import_schemes(configuration_section)
+                self.import_complex_import_schemes(configuration_section)
 
-                    self.import_instrument_user_fields(configuration_section)
-                    self.import_transaction_user_fields(configuration_section)
+                self.import_instrument_user_fields(configuration_section)
+                self.import_transaction_user_fields(configuration_section)
 
 
-                    self.import_instrument_pricing_schemes(configuration_section)
-                    self.import_currency_pricing_schemes(configuration_section)
-                    self.import_pricing_procedures(configuration_section)
+                self.import_instrument_pricing_schemes(configuration_section)
+                self.import_currency_pricing_schemes(configuration_section)
+                self.import_pricing_procedures(configuration_section)
 
-                # User Interface
+            # User Interface
 
-                self.import_edit_layouts(configuration_section)
-                self.import_list_layouts(configuration_section)
-                self.import_dashboard_layouts(configuration_section)
+            self.import_edit_layouts(configuration_section)
+            self.import_list_layouts(configuration_section)
+            self.import_dashboard_layouts(configuration_section)
 
-            _l.info('Import Configuration done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration done %s' % (time.perf_counter() - st))
 
-        except Exception as error:
-
-            _l.info('Import Configuration Error %s' % error)
+        # except Exception as error:
+        #
+        #     _l.info('Import Configuration Error %s' % error)
 
     def import_mappings(self, mappings_section):
 
