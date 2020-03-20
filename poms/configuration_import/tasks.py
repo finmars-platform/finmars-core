@@ -31,6 +31,8 @@ from poms.pricing.serializers import InstrumentPricingSchemeSerializer, Currency
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
 from poms.reports.serializers import BalanceReportCustomFieldSerializer, PLReportCustomFieldSerializer, \
     TransactionReportCustomFieldSerializer
+from poms.schedules.models import PricingSchedule
+from poms.schedules.serializers import PricingScheduleSerializer
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import TransactionClass, TransactionTypeGroup, TransactionType, TransactionTypeInput
 from poms.transactions.serializers import TransactionTypeGroupSerializer, TransactionTypeSerializer
@@ -1191,8 +1193,8 @@ class ImportManager(object):
 
                                     content_type = get_content_type_by_name(content_object['content_type'])
 
-                                    _l.info('Layout overwrite content_type %s ' % content_type)
-                                    _l.info('Layout import name %s ' % content_object['name'])
+                                    # _l.info('Layout overwrite content_type %s ' % content_type)
+                                    # _l.info('Layout import name %s ' % content_object['name'])
 
                                     layout = ListLayout.objects.get(member=self.member, name=content_object['name'],
                                                                     content_type=content_type)
@@ -1337,9 +1339,11 @@ class ImportManager(object):
 
                     for content_object in item['content']:
 
-                        if 'rules' in content_object:
+                        _l.info('content_object %s '  % content_object )
 
-                            for rule in content_object['rules']:
+                        if 'rule_scenarios' in content_object:
+
+                            for rule in content_object['rule_scenarios']:
 
                                 try:
                                     rule['transaction_type'] = TransactionType.objects.get(master_user=self.master_user,
@@ -1391,6 +1395,8 @@ class ImportManager(object):
                                     serializer.save()
 
                                 except Exception as error:
+
+                                    _l.info('Overwrite Error: Transaction Import Scheme - %s' % error)
 
                                     stats['status'] = 'error'
                                     stats['error'][
@@ -1609,8 +1615,6 @@ class ImportManager(object):
                             serializer.save()
                         except Exception as error:
 
-                            _l.info("Currency Error %s" % error)
-
                             if self.instance.mode == 'overwrite':
 
                                 try:
@@ -1623,6 +1627,8 @@ class ImportManager(object):
                                                                     context=self.get_serializer_context())
                                     serializer.is_valid(raise_exception=True)
                                     serializer.save()
+
+                                    _l.info("Currency Overwritten %s" % instance)
 
                                 except Exception as error:
 
@@ -2010,6 +2016,76 @@ class ImportManager(object):
 
         _l.info('Import Configuration Currency Pricing Scheme done %s' % (time.perf_counter() - st))
 
+    def import_pricing_schedules(self, configuration_section):
+
+        st = time.perf_counter()
+
+        for item in configuration_section['items']:
+
+            if 'schedules.pricingschedule' in item['entity']:
+
+                self.instance.stats['configuration'][item['entity']] = []
+
+                if 'content' in item:
+
+                    for content_object in item['content']:
+
+                        serializer = PricingScheduleSerializer(data=content_object,
+                                                                     context=self.get_serializer_context())
+
+                        procedures = PricingProcedure.objects.filter(master_user=self.master_user, user_code__in=content_object['pricing_procedures__user_codes'])
+
+                        content_object['pricing_procedures'] = []
+
+                        for procedure in procedures:
+                            content_object['pricing_procedures'].append(procedure.id)
+
+
+                        stats = {
+                            'content_type': item['entity'],
+                            'mode': self.instance.mode,
+                            'item': content_object,
+                            'error': {
+                                'message': None
+                            },
+                            'status': 'info'
+                        }
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                try:
+
+                                    instance = PricingSchedule.objects.get(master_user=self.master_user,
+                                                                                 name=content_object['name'])
+
+                                    serializer = PricingScheduleSerializer(data=content_object,
+                                                                                 instance=instance,
+                                                                                 context=self.get_serializer_context())
+                                    serializer.is_valid(raise_exception=True)
+                                    serializer.save()
+
+                                except Exception as error:
+
+                                    stats['status'] = 'error'
+                                    stats['error'][
+                                        'message'] = 'Can\'t Overwrite Pricing Schedule for %s' % content_object['name']
+
+                            else:
+
+                                stats['status'] = 'error'
+                                stats['error']['message'] = 'Currency Pricing Schedule %s already exists' % content_object['name']
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
+
+                        self.update_progress()
+
+        _l.info('Import Configuration Pricing Schedules done %s' % (time.perf_counter() - st))
+
     def import_pricing_procedures(self, configuration_section):
 
         st = time.perf_counter()
@@ -2152,6 +2228,7 @@ class ImportManager(object):
                 self.import_instrument_pricing_schemes(configuration_section)
                 self.import_currency_pricing_schemes(configuration_section)
                 self.import_pricing_procedures(configuration_section)
+                self.import_pricing_schedules(configuration_section)
 
             # User Interface
 
