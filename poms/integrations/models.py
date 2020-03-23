@@ -902,6 +902,9 @@ class ComplexTransactionImportScheme(models.Model):
     class Meta:
         verbose_name = ugettext_lazy('complex transaction import scheme')
         verbose_name_plural = ugettext_lazy('complex transaction import schemes')
+        unique_together = [
+            ['master_user', 'scheme_name'],
+        ]
 
     def __str__(self):
         return self.scheme_name
