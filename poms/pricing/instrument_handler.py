@@ -459,6 +459,12 @@ class PricingInstrumentHandler(object):
 
                         if has_error:
                             error.save()
+                    else:
+
+                        error.error_text =  "Prices already exists. Principal Price: " + principal_price +"; Accrued: "+ accrued_price +"."
+
+                        error.status = PriceHistoryError.STATUS_SKIP
+                        error.save()
 
                     last_price = price
 
@@ -704,6 +710,13 @@ class PricingInstrumentHandler(object):
 
                         if has_error:
                             error.save()
+
+                    else:
+
+                        error.error_text =  "Prices already exists. Principal Price: " + principal_price +"; Accrued: "+ accrued_price +"."
+
+                        error.status = PriceHistoryError.STATUS_SKIP
+                        error.save()
 
                     last_price = price
 

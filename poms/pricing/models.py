@@ -901,6 +901,14 @@ class PricingProcedureInstance(models.Model):
 
 class PriceHistoryError(models.Model):
 
+    STATUS_ERROR = 'E'
+    STATUS_SKIP = 'S'
+
+    STATUS_CHOICES = (
+        (STATUS_ERROR, ugettext_lazy('Error')),
+        (STATUS_SKIP, ugettext_lazy('Skip')),
+    )
+
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
@@ -925,8 +933,19 @@ class PriceHistoryError(models.Model):
     procedure_instance = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE,
                                            verbose_name=ugettext_lazy('pricing procedure instance'))
 
+    status = models.CharField(max_length=1, default=STATUS_ERROR, choices=STATUS_CHOICES,
+                              verbose_name=ugettext_lazy('status'))
+
 
 class CurrencyHistoryError(models.Model):
+
+    STATUS_ERROR = 'E'
+    STATUS_SKIP = 'S'
+
+    STATUS_CHOICES = (
+        (STATUS_ERROR, ugettext_lazy('Error')),
+        (STATUS_SKIP, ugettext_lazy('Skip')),
+    )
 
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
                                     on_delete=models.CASCADE)
@@ -948,6 +967,9 @@ class CurrencyHistoryError(models.Model):
 
     procedure_instance = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE,
                                            verbose_name=ugettext_lazy('pricing procedure instance'))
+
+    status = models.CharField(max_length=1, default=STATUS_ERROR, choices=STATUS_CHOICES,
+                              verbose_name=ugettext_lazy('status'))
 
 
 class PricingProcedureBloombergInstrumentResult(models.Model):

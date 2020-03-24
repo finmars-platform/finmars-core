@@ -324,6 +324,13 @@ class PricingCurrencyHandler(object):
                         if has_error:
                             error.save()
 
+                    else:
+
+                        error.error_text = "Prices already exists. Fx rate: " + fx_rate + "."
+
+                        error.status = CurrencyHistoryError.STATUS_SKIP
+                        error.save()
+
                     last_price = price
 
             roll_currency_history_for_n_day_forward(self.procedure, last_price)
@@ -529,6 +536,11 @@ class PricingCurrencyHandler(object):
 
                         if has_error:
                             error.save()
+                    else:
+                        error.error_text = "Prices already exists. Fx rate: " + fx_rate + "."
+
+                        error.status = CurrencyHistoryError.STATUS_SKIP
+                        error.save()
 
                     last_price = price
 

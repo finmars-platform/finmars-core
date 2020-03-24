@@ -1033,6 +1033,8 @@ class PriceHistoryErrorSerializer(serializers.ModelSerializer):
         fields = ('id', 'master_user', 'instrument', 'pricing_policy', 'pricing_scheme', 'date', 'principal_price',
                   'accrued_price', 'price_error_text', 'accrual_error_text', 'procedure_instance',
 
+                  'status',
+
                   'pricing_scheme_object',
                   'procedure_instance_object'
 
@@ -1077,6 +1079,8 @@ class CurrencyHistoryErrorSerializer(serializers.ModelSerializer):
         model = CurrencyHistoryError
         fields = ('id', 'master_user', 'currency', 'pricing_policy', 'pricing_scheme', 'date', 'fx_rate', 'error_text',
                   'procedure_instance',
+
+                  'status',
 
                   'pricing_scheme_object',
                   'procedure_instance_object',

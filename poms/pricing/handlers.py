@@ -359,6 +359,12 @@ class FillPricesBrokerBloombergProcess(object):
 
                 if has_error:
                     error.save()
+            else:
+
+                error.error_text =  "Prices already exists. Principal Price: " + principal_price +"; Accrued: "+ accrued_price +"."
+
+                error.status = PriceHistoryError.STATUS_SKIP
+                error.save()
 
             if self.instance['data']['date_to'] == str(record.date):
 
@@ -467,6 +473,12 @@ class FillPricesBrokerBloombergProcess(object):
 
                 if has_error:
                     error.save()
+
+            else:
+                error.error_text = "Prices already exists. Fx rate: " + fx_rate + "."
+
+                error.status = CurrencyHistoryError.STATUS_SKIP
+                error.save()
 
             if self.instance['data']['date_to'] == record.date:
 
@@ -598,22 +610,78 @@ class FillPricesBrokerWtradeProcess(object):
                 'volume': record.volume_value
             }
 
-            expr = record.pricing_scheme.get_parameters().expr
+            pricing_scheme_parameters = record.pricing_scheme.get_parameters()
+
+            expr = pricing_scheme_parameters.expr
+            accrual_expr = pricing_scheme_parameters.accrual_expr
+            pricing_error_text_expr = pricing_scheme_parameters.pricing_error_text_expr
+            accrual_error_text_expr = pricing_scheme_parameters.accrual_error_text_expr
 
             _l.info('values %s' % values)
             _l.info('expr %s' % expr)
 
+            has_error = False
+            error = PriceHistoryError(
+                master_user=self.master_user,
+                procedure_instance_id=self.instance['procedure'],
+                instrument=record.instrument,
+                pricing_scheme=record.pricing_scheme,
+                pricing_policy=record.pricing_policy,
+                date=record.date,
+            )
+
+            principal_price = None
+            accrued_price = None
+
             try:
                 principal_price = formula.safe_eval(expr, names=values)
             except formula.InvalidExpression:
-                _l.info("Error here")
-                continue
+
+                has_error = True
+
+                try:
+                    error.price_error_text = formula.safe_eval(pricing_error_text_expr, names=values)
+
+                except formula.InvalidExpression:
+
+                    error.price_error_text = 'Invalid Error Text Expression'
+
 
             _l.info('principal_price %s' % principal_price)
             _l.info('instrument %s' % record.instrument.user_code)
             _l.info('pricing_policy %s' % record.pricing_policy.user_code)
 
-            accrued_price = record.instrument.get_accrued_price(record.date)
+            if pricing_scheme_parameters.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
+
+                try:
+                    accrued_price = record.instrument.get_accrued_price(record.date)
+                except Exception:
+                    has_error = True
+
+                    try:
+
+                        _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
+
+                        error.accrual_error_text = formula.safe_eval(accrual_error_text_expr, names=values)
+
+                    except formula.InvalidExpression:
+                        error.accrual_error_text = 'Invalid Error Text Expression'
+
+            if pricing_scheme_parameters.accrual_calculation_method == 3:   # ACCRUAL_PER_FORMULA
+
+                try:
+                    accrued_price = formula.safe_eval(accrual_expr, names=values)
+                except formula.InvalidExpression:
+                    has_error = True
+
+                    try:
+
+                        _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
+
+                        error.accrual_error_text = formula.safe_eval(accrual_error_text_expr, names=values)
+
+                    except formula.InvalidExpression:
+                        error.accrual_error_text = 'Invalid Error Text Expression'
 
             can_write = True
 
@@ -649,11 +717,23 @@ class FillPricesBrokerWtradeProcess(object):
 
                 if principal_price:
                     price.principal_price = principal_price
+                    error.principal_price = principal_price
 
                 if accrued_price:
                     price.accrued_price = accrued_price
+                    error.accrued_price = accrued_price
 
                 price.save()
+
+                if has_error:
+                    error.save()
+
+            else:
+
+                error.error_text =  "Prices already exists. Principal Price: " + principal_price +"; Accrued: "+ accrued_price +"."
+
+                error.status = PriceHistoryError.STATUS_SKIP
+                error.save()
 
             if self.instance['data']['date_to'] == str(record.date):
 
@@ -825,6 +905,12 @@ class FillPricesBrokerFixerProcess(object):
 
                 if has_error:
                     error.save()
+
+            else:
+                error.error_text = "Prices already exists. Fx rate: " + fx_rate + "."
+
+                error.status = CurrencyHistoryError.STATUS_SKIP
+                error.save()
 
             if self.instance['data']['date_to'] == record.date:
 
