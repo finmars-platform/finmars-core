@@ -39,6 +39,7 @@ import poms.configuration_sharing.views as configuration_sharing
 
 import poms.pricing.views as pricing
 import poms.schedules.views as schedules
+import poms.layout_recovery.views as layout_recovery
 
 router = routers.DefaultRouter()
 
@@ -373,6 +374,9 @@ router.register(r'pricing/parent-procedure-instance', pricing.PricingParentProce
 router.register(r'pricing/price-history-error', pricing.PriceHistoryErrorViewSet)
 router.register(r'pricing/currency-history-error', pricing.CurrencyHistoryErrorViewSet)
 router.register(r'schedules/pricing', schedules.PricingScheduleViewSet)
+
+router.register(r'recovery/generate-layout-archetype', layout_recovery.GenerateLayoutArchetypeViewSet, 'recovery_generate_layout_archetype')
+router.register(r'recovery/layout', layout_recovery.FixLayoutViewSet, 'recovery_layout')
 
 
 # router.register(r'pricing/brokers/bloomberg/callback', csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view()), 'pricing_broker_bloomberg')

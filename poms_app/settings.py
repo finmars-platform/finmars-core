@@ -124,6 +124,8 @@ INSTALLED_APPS = [
 
     'poms.schedules',
 
+    'poms.layout_recovery',
+
     'django.contrib.admin',
     'django.contrib.admindocs',
 
