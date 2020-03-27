@@ -234,20 +234,28 @@ class ComplexTransactionSpecificFilter(BaseFilterBackend):
         # print('is_locked %s' % is_locked)
         # print('is_canceled %s' % is_canceled)
         # print('is_partial_visible %s' % is_partial_visible)
+        if is_locked == False:
+            queryset = queryset.filter(is_locked=is_locked)
 
-        queryset = queryset.exclude(is_locked=is_locked, is_canceled=is_canceled)
+        if is_canceled == False:
+            queryset = queryset.filter(is_canceled=is_canceled)
 
         partially_visible_permissions = ['view_complextransaction_show_parameters', 'view_complextransaction_hide_parameters']
         full_visible_permissions = ['view_complextransaction']
 
-        if not member.is_admin:
+        if is_partially_visible == False:
 
-            if is_partially_visible:
-                queryset = obj_perms_filter_objects(member, partially_visible_permissions, queryset,
-                                                    prefetch=False)
-            else:
-                queryset = obj_perms_filter_objects(member, full_visible_permissions, queryset,
-                                                    prefetch=False)
+            queryset = obj_perms_filter_objects(member, full_visible_permissions, queryset,
+                                                prefetch=False)
+
+        # if not member.is_admin:
+        #
+        #     if is_partially_visible:
+        #         queryset = obj_perms_filter_objects(member, partially_visible_permissions, queryset,
+        #                                             prefetch=False)
+        #     else:
+        #         queryset = obj_perms_filter_objects(member, full_visible_permissions, queryset,
+        #                                             prefetch=False)
 
         # print("ComplexTransactionSpecificFilter after %s" % len(queryset))
 
