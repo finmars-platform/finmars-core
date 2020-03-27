@@ -38,7 +38,7 @@ from poms.tags.filters import TagFilter
 from poms.tags.utils import get_tag_prefetch
 from poms.transactions.filters import TransactionObjectPermissionFilter, ComplexTransactionPermissionFilter, \
     TransactionObjectPermissionMemberFilter, TransactionObjectPermissionGroupFilter, \
-    TransactionObjectPermissionPermissionFilter
+    TransactionObjectPermissionPermissionFilter, ComplexTransactionSpecificFilter
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import TransactionClass, Transaction, TransactionType, TransactionTypeGroup, \
     ComplexTransaction, EventClass, NotificationClass, TransactionTypeInput, TransactionTypeAction
@@ -1394,6 +1394,7 @@ class ComplexTransactionLightViewSet(AbstractWithObjectPermissionViewSet):
 
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         # ComplexTransactionPermissionFilter,
+        ComplexTransactionSpecificFilter,
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
@@ -1414,6 +1415,7 @@ class ComplexTransactionLightEvGroupViewSet(AbstractEvGroupWithObjectPermissionV
 
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         # ComplexTransactionPermissionFilter,
+        ComplexTransactionSpecificFilter,
         OwnerByMasterUserFilter,
         AttributeFilter
     ]

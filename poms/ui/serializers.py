@@ -5,6 +5,8 @@ from django.db import IntegrityError
 from mptt.utils import get_cached_trees
 from rest_framework import serializers
 
+from poms.layout_recovery.models import LayoutArchetype
+from poms.layout_recovery.utils import recursive_dict_fix
 from poms.ui.fields import LayoutContentTypeField, ListLayoutField
 from poms.ui.models import TemplateListLayout, TemplateEditLayout, ListLayout, EditLayout, Bookmark, Configuration, \
     ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
@@ -83,6 +85,37 @@ class ListLayoutSerializer(serializers.ModelSerializer):
         model = ListLayout
         fields = ['id', 'member', 'content_type', 'name', 'is_default', 'is_active', 'data', 'origin_for_global_layout', 'sourced_from_global_layout']
 
+    def to_representation(self, instance):
+
+        if instance.is_fixed:
+
+            # print("Layout %s is already fixed" % instance.name)
+
+            res = super(ListLayoutSerializer, self).to_representation(instance)
+
+            return res
+
+        else:
+
+            try:
+                layout_archetype = LayoutArchetype.objects.get(content_type=instance.content_type, master_user=instance.member.master_user)
+
+                instance.data = recursive_dict_fix(layout_archetype.data, instance.data)
+
+                instance.is_fixed = True
+
+                # print("Layout %s is fixed" % instance.name)
+
+                instance.save()
+
+            except Exception as e:
+
+                print("Cant Fix Layout %s" % instance.name)
+                print("Error %s" % e)
+
+            res = super(ListLayoutSerializer, self).to_representation(instance)
+
+            return res
 
 class DashboardLayoutSerializer(serializers.ModelSerializer):
     member = HiddenMemberField()

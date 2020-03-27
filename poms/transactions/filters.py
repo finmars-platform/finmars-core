@@ -12,7 +12,7 @@ from poms.integrations.models import PriceDownloadScheme
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
     ObjectPermissionPermissionFilter
 from poms.obj_perms.models import GenericObjectPermission
-from poms.obj_perms.utils import obj_perms_filter_objects_for_view
+from poms.obj_perms.utils import obj_perms_filter_objects_for_view, obj_perms_filter_objects
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import Transaction, EventClass, NotificationClass
@@ -202,3 +202,54 @@ class TransactionObjectPermissionPermissionFilter(ObjectPermissionPermissionFilt
             return Q(portfolio__in=pk_q)
         else:
             raise ValueError('Invalid object_permission_model')
+
+
+class ComplexTransactionSpecificFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+
+        # print("ComplexTransactionSpecificFilter before %s" % len(queryset))
+
+        is_locked = False
+        is_canceled = False
+        is_partially_visible = False
+
+        member = request.user.member
+
+        if 'ev_options' in request.data:
+
+            if 'complex_transaction_filters' in request.data['ev_options']:
+
+                if 'locked' in request.data['ev_options']['complex_transaction_filters']:
+
+                    is_locked = True
+
+                if 'ignored' in request.data['ev_options']['complex_transaction_filters']:
+
+                    is_canceled = True
+
+                if 'partially_visible' in request.data['ev_options']['complex_transaction_filters']:
+
+                    is_partially_visible = True
+
+        # print('is_locked %s' % is_locked)
+        # print('is_canceled %s' % is_canceled)
+        # print('is_partial_visible %s' % is_partial_visible)
+
+        queryset = queryset.filter(is_locked=is_locked, is_canceled=is_canceled)
+
+        partially_visible_permissions = ['view_complextransaction_show_parameters', 'view_complextransaction_hide_parameters']
+        full_visible_permissions = ['view_complextransaction']
+
+        if not member.is_admin:
+
+            if is_partially_visible:
+                queryset = obj_perms_filter_objects(member, partially_visible_permissions, queryset,
+                                                    prefetch=False)
+            else:
+                queryset = obj_perms_filter_objects(member, full_visible_permissions, queryset,
+                                                    prefetch=False)
+
+        # print("ComplexTransactionSpecificFilter after %s" % len(queryset))
+
+        return queryset
+

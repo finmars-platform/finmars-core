@@ -303,6 +303,8 @@ class ListLayout(BaseLayout):
     is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
     is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('is active'))
 
+    is_fixed = models.BooleanField(default=False, verbose_name=ugettext_lazy('is fixeds'))
+
     class Meta(BaseLayout.Meta):
         unique_together = [
             ['member', 'content_type', 'name'],

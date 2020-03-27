@@ -21,9 +21,11 @@ class LayoutArchetypeGenerateHandler():
 
         self.master_users = MasterUser.objects.all()
         self.entity_viewer_content_types = ContentType.objects.filter(
-            model__in=['portfolio', 'account', 'instrument', 'counterparty', 'responsible', 'currency', 'strategy1',
-                       'strategy2', 'strategy3', 'pricehistory', 'currencyhistory', 'type', 'instruenttype',
-                       'transactiontype'])
+            model__in=['portfolio', 'account', 'instrument', 'counterparty', 'responsible', 'currency',
+                       'complextransaction', 'transaction'
+                       'strategy1', 'strategy2', 'strategy3',
+                       'pricehistory', 'currencyhistory',
+                       'type', 'instruenttype', 'transactiontype'])
 
         _l.info('entity_viewer_content_types %s' % self.entity_viewer_content_types)
 
@@ -176,12 +178,23 @@ class LayoutArchetypeGenerateHandler():
 
         _l.info('Generating Transaction Report Viewer Layouts Archetypes %s' % (time.perf_counter() - st))
 
+    def reset_fix_status(self):
+
+        ListLayout.objects.all().update(is_fixed=False)
+
+        _l.info('Reset is_fixed status for List Layouts Finish')
+
+
+
     def process(self):
 
         self.generate_entity_viewer_layout_archetype()
         self.generate_balance_report_viewer_archetype()
         self.generate_pl_report_viewer_archetype()
         self.generate_transaction_report_viewer_archetype()
+
+        self.reset_fix_status()
+
 
 
 class LayoutFixHandler():
