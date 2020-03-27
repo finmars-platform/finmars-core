@@ -131,6 +131,7 @@ def get_complex_transaction_codename(group_id, complex_transaction, transaction_
             group_id] and result is not None:
             result = 'view_complextransaction_hide_parameters'
 
+        _l.info('get_complex_transaction_codename complex_transaction id  %s' % complex_transaction['id'])
         _l.info('get_complex_transaction_codename transaction_count %s' % transaction_count)
         _l.info('get_complex_transaction_codename transactions_total %s' % transactions_total)
         _l.info('get_complex_transaction_codename result %s' % result)
