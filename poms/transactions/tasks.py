@@ -308,7 +308,7 @@ def recalculate_permissions_complex_transaction(self, instance):
     transaction_ctype = ContentType.objects.get_for_model(Transaction)
     transaction_permissions = GenericObjectPermission.objects.filter(group__in=groups,
                                                                      content_type=transaction_ctype,
-                                                                     permission__codename='view_transaction').values(
+                                                                     permission__codename__in=['view_transaction', 'partial_view_transaction']).values(
         'id',
         'group_id',
         'object_id')
