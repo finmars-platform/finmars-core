@@ -235,7 +235,7 @@ class ComplexTransactionSpecificFilter(BaseFilterBackend):
         # print('is_canceled %s' % is_canceled)
         # print('is_partial_visible %s' % is_partial_visible)
 
-        queryset = queryset.filter(is_locked=is_locked, is_canceled=is_canceled)
+        queryset = queryset.exclude(is_locked=is_locked, is_canceled=is_canceled)
 
         partially_visible_permissions = ['view_complextransaction_show_parameters', 'view_complextransaction_hide_parameters']
         full_visible_permissions = ['view_complextransaction']
