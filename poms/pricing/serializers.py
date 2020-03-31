@@ -872,6 +872,7 @@ class PricingProcedureSerializer(serializers.ModelSerializer):
     class Meta:
         model = PricingProcedure
         fields = ('master_user', 'id', 'name', 'notes', 'notes_for_users',
+                  'user_code',
                   # 'price_is_active', 'accrual_is_active',
                   'price_date_from', 'price_date_to',
                   'price_date_from_expr', 'price_date_to_expr',

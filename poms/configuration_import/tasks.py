@@ -17,11 +17,12 @@ from poms.instruments.models import InstrumentType, DailyPricingModel, PaymentSi
 from poms.instruments.serializers import InstrumentTypeSerializer, PricingPolicySerializer
 from poms.integrations.models import PriceDownloadScheme, ComplexTransactionImportScheme, PricingAutomatedSchedule, \
     Task, AccountTypeMapping, InstrumentTypeMapping, PricingPolicyMapping, PriceDownloadSchemeMapping, \
-    PeriodicityMapping, DailyPricingModelMapping, PaymentSizeDetailMapping, AccrualCalculationModelMapping
+    PeriodicityMapping, DailyPricingModelMapping, PaymentSizeDetailMapping, AccrualCalculationModelMapping, \
+    InstrumentDownloadScheme
 from poms.integrations.serializers import ComplexTransactionImportSchemeSerializer, PricingAutomatedScheduleSerializer, \
     AccountTypeMappingSerializer, InstrumentTypeMappingSerializer, PricingPolicyMappingSerializer, \
     PriceDownloadSchemeMappingSerializer, PeriodicityMappingSerializer, DailyPricingModelMappingSerializer, \
-    PaymentSizeDetailMappingSerializer, AccrualCalculationModelMappingSerializer
+    PaymentSizeDetailMappingSerializer, AccrualCalculationModelMappingSerializer, InstrumentDownloadSchemeSerializer
 from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_attrs.serializers import GenericAttributeTypeSerializer
 from poms.portfolios.models import Portfolio
@@ -36,9 +37,10 @@ from poms.schedules.serializers import PricingScheduleSerializer
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import TransactionClass, TransactionTypeGroup, TransactionType, TransactionTypeInput
 from poms.transactions.serializers import TransactionTypeGroupSerializer, TransactionTypeSerializer
-from poms.ui.models import ListLayout, InstrumentUserFieldModel, TransactionUserFieldModel, DashboardLayout, EditLayout
+from poms.ui.models import ListLayout, InstrumentUserFieldModel, TransactionUserFieldModel, DashboardLayout, EditLayout, \
+    ContextMenuLayout, TemplateLayout
 from poms.ui.serializers import EditLayoutSerializer, ListLayoutSerializer, DashboardLayoutSerializer, \
-    InstrumentUserFieldSerializer, TransactionUserFieldSerializer
+    InstrumentUserFieldSerializer, TransactionUserFieldSerializer, ContextMenuLayoutSerializer, TemplateLayoutSerializer
 from poms.users.models import EcosystemDefault
 
 from logging import getLogger
@@ -1218,6 +1220,135 @@ class ImportManager(object):
 
         _l.info('Import Configuration List Layouts done %s' % (time.perf_counter() - st))
 
+    def import_context_menu_layouts(self, configuration_section):
+
+        st = time.perf_counter()
+
+        for item in configuration_section['items']:
+
+            if 'ui.contextmenulayout' in item['entity']:
+
+                self.instance.stats['configuration'][item['entity']] = []
+
+                if 'content' in item:
+
+                    for content_object in item['content']:
+
+                        content_object['member'] = self.member.pk
+
+
+                        serializer = ContextMenuLayoutSerializer(data=content_object,
+                                                          context=self.get_serializer_context())
+
+                        stats = {
+                            'content_type': item['entity'],
+                            'mode': self.instance.mode,
+                            'item': content_object,
+                            'error': {
+                                'message': None
+                            },
+                            'status': 'info'
+                        }
+
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+
+                            # _l.info('Layout import name %s ' % content_object['name'])
+
+                            serializer.save()
+                        except ValidationError:
+
+                            if self.instance.mode == 'overwrite':
+
+                                try:
+
+                                    layout = ContextMenuLayout.objects.get(member=self.member, name=content_object['name'],
+                                                                    type=content_object['type'])
+
+                                    layout.data = content_object['data']
+
+                                    layout.save()
+
+                                except Exception as error:
+                                    stats['status'] = 'error'
+                                    stats['error'][
+                                        'message'] = 'Can\'t Overwrite Context Menu Layout for %s' % content_object['name']
+                            else:
+
+                                stats['status'] = 'error'
+                                stats['error']['message'] = 'Context Menu Layout %s already exists' % content_object['name']
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
+
+                        self.update_progress()
+
+        _l.info('Import Configuration List Layouts done %s' % (time.perf_counter() - st))
+
+    def import_template_layouts(self, configuration_section):
+
+        st = time.perf_counter()
+
+        for item in configuration_section['items']:
+
+            if 'ui.templatelayout' in item['entity']:
+
+                self.instance.stats['configuration'][item['entity']] = []
+
+                if 'content' in item:
+
+                    for content_object in item['content']:
+
+                        content_object['member'] = self.member.pk
+
+                        serializer = TemplateLayoutSerializer(data=content_object,
+                                                          context=self.get_serializer_context())
+
+                        stats = {
+                            'content_type': item['entity'],
+                            'mode': self.instance.mode,
+                            'item': content_object,
+                            'error': {
+                                'message': None
+                            },
+                            'status': 'info'
+                        }
+
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+
+                            # _l.info('Layout import name %s ' % content_object['name'])
+
+                            serializer.save()
+                        except ValidationError:
+
+                            if self.instance.mode == 'overwrite':
+
+                                try:
+
+                                    layout = TemplateLayout.objects.get(member=self.member, name=content_object['name'],
+                                                                        type=content_object['type'])
+
+                                    layout.data = content_object['data']
+
+                                    layout.save()
+
+                                except Exception as error:
+                                    stats['status'] = 'error'
+                                    stats['error'][
+                                        'message'] = 'Can\'t Overwrite Template Layout for %s' % content_object['name']
+                            else:
+
+                                stats['status'] = 'error'
+                                stats['error']['message'] = 'Template Layout %s already exists' % content_object['name']
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
+
+                        self.update_progress()
+
+        _l.info('Import Configuration List Layouts done %s' % (time.perf_counter() - st))
+
     def sync_dashboard_layout_component_type_settings(self, component_type):
 
         if 'settings' in component_type:
@@ -1324,6 +1455,80 @@ class ImportManager(object):
                         self.update_progress()
 
         _l.info('Import Configuration Dashboard Layouts done %s' % (time.perf_counter() - st))
+
+    def import_download_instrument_schemes(self, configuration_section):
+
+        st = time.perf_counter()
+
+        for item in configuration_section['items']:
+
+            if 'integrations.instrumentdownloadscheme' in item['entity']:
+
+                self.instance.stats['configuration'][item['entity']] = []
+
+                if 'content' in item:
+
+                    for content_object in item['content']:
+
+                        _l.info('content_object %s '  % content_object )
+
+                        if '___price_download_scheme__scheme_name' in content_object:
+
+                            try:
+                                content_object["price_download_scheme"] = PriceDownloadScheme.objects.get(
+                                pk=content_object["___price_download_scheme__scheme_name"], master_user=self.master_user).id
+                            except PriceDownloadScheme.DoesNotExist:
+                                content_object["price_download_scheme"] = self.ecosystem_default.price_download_scheme.id
+
+                        serializer = InstrumentDownloadSchemeSerializer(data=content_object,
+                                                                              context=self.get_serializer_context())
+                        stats = {
+                            'content_type': item['entity'],
+                            'mode': self.instance.mode,
+                            'item': content_object,
+                            'error': {
+                                'message': None
+                            },
+                            'status': 'info'
+                        }
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                try:
+
+                                    instance = InstrumentDownloadScheme.objects.get(master_user=self.master_user,
+                                                                                          scheme_name=content_object[
+                                                                                              'scheme_name'])
+
+                                    serializer = InstrumentDownloadSchemeSerializer(data=content_object,
+                                                                                          instance=instance,
+                                                                                          context=self.get_serializer_context())
+                                    serializer.is_valid(raise_exception=True)
+                                    serializer.save()
+
+                                except Exception as error:
+
+                                    _l.info('Overwrite Error: Instrument Download Scheme - %s' % error)
+
+                                    stats['status'] = 'error'
+                                    stats['error'][
+                                        'message'] = 'Can\'t Overwrite Instrument Download Scheme for %s' % content_object['scheme_name']
+
+                            else:
+
+                                stats['status'] = 'error'
+                                stats['error']['message'] = 'Transaction Instrument Download %s already exists' % content_object['scheme_name']
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
+
+                        self.update_progress()
+
+        _l.info('Import Configuration Instrument Download Scheme done %s' % (time.perf_counter() - st))
 
     def import_transaction_import_schemes(self, configuration_section):
 
@@ -2215,6 +2420,8 @@ class ImportManager(object):
                 self.import_simple_import_schemes(configuration_section)
                 self.import_complex_import_schemes(configuration_section)
 
+                self.import_download_instrument_schemes(configuration_section)
+
                 self.import_instrument_user_fields(configuration_section)
                 self.import_transaction_user_fields(configuration_section)
 
@@ -2234,6 +2441,8 @@ class ImportManager(object):
 
             self.import_edit_layouts(configuration_section)
             self.import_list_layouts(configuration_section)
+            self.import_template_layouts(configuration_section)
+            self.import_context_menu_layouts(configuration_section)
             self.import_dashboard_layouts(configuration_section)
 
         _l.info('Import Configuration done %s' % (time.perf_counter() - st))

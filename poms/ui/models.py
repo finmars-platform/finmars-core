@@ -312,6 +312,9 @@ class ListLayout(BaseLayout):
         ordering = ['name']
 
     def save(self, *args, **kwargs):
+
+        is_fixed = True
+
         if self.is_default:
             qs = ListLayout.objects.filter(member=self.member, content_type=self.content_type, is_default=True)
             if self.pk:

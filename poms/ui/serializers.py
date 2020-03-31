@@ -98,15 +98,12 @@ class ListLayoutSerializer(serializers.ModelSerializer):
         else:
 
             try:
+
                 layout_archetype = LayoutArchetype.objects.get(content_type=instance.content_type, master_user=instance.member.master_user)
 
                 instance.data = recursive_dict_fix(layout_archetype.data, instance.data)
 
-                instance.is_fixed = True
-
-                # print("Layout %s is fixed" % instance.name)
-
-                instance.save()
+                print("Fix Layout %s" % instance.name)
 
             except Exception as e:
 
