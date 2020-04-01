@@ -36,8 +36,10 @@ from poms.obj_attrs.serializers import GenericClassifierViewSerializer, GenericC
     GenericAttributeTypeSerializer
 from poms.obj_perms.utils import obj_perms_filter_objects
 from poms.portfolios.models import Portfolio
-from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, PricingProcedure
-from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer
+from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, PricingProcedure, CurrencyPricingPolicy, \
+    InstrumentTypePricingPolicy
+from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
+    CurrencyPricingPolicySerializer, InstrumentTypePricingPolicySerializer
 from poms.reference_tables.models import ReferenceTable, ReferenceTableRow
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
 from poms.schedules.models import PricingSchedule
@@ -848,6 +850,31 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
+    def get_currency_pricing_policies(self, currency_pk):
+
+        items = CurrencyPricingPolicy.objects.filter(currency=currency_pk)
+
+        results = []
+
+        for item in items:
+
+            result_item = CurrencyPricingPolicySerializer(instance=item).data
+
+            result_item['___pricing_policy__user_code'] = item.pricing_policy.user_code
+            result_item['___pricing_scheme__user_code'] = item.pricing_scheme.user_code
+
+            result_item.pop("id", None)
+
+            result_item.pop("pricing_policy", None)
+            result_item.pop("pricing_policy_object", None)
+
+            result_item.pop("pricing_scheme", None)
+            result_item.pop("pricing_scheme_object", None)
+
+            results.append(result_item)
+
+        return results
+
     def get_currencies(self):
         currencies = to_json_objects(
             Currency.objects.filter(master_user=self._master_user, is_deleted=False).exclude(user_code='-'))
@@ -870,6 +897,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 result_item["___price_download_scheme__scheme_name"] = PriceDownloadScheme.objects.get(
                     pk=result_item["price_download_scheme"]).scheme_name
                 result_item.pop("price_download_scheme", None)
+
+            result_item['pricing_policies'] = self.get_currency_pricing_policies(currency["pk"])
 
             clear_none_attrs(result_item)
 
@@ -923,6 +952,32 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
+    def get_instrument_type_pricing_policies(self, instrument_type_pk):
+
+        items = InstrumentTypePricingPolicy.objects.filter(instrument_type=instrument_type_pk)
+
+        results = []
+
+        for item in items:
+
+            result_item = InstrumentTypePricingPolicySerializer(instance=item).data
+
+            result_item['___pricing_policy__user_code'] = item.pricing_policy.user_code
+            result_item['___pricing_scheme__user_code'] = item.pricing_scheme.user_code
+
+            result_item.pop("id", None)
+
+            result_item.pop("pricing_policy", None)
+            result_item.pop("pricing_policy_object", None)
+
+            result_item.pop("pricing_scheme", None)
+            result_item.pop("pricing_scheme_object", None)
+
+            results.append(result_item)
+
+
+        return results
+
     def get_instrument_types(self):
 
         qs = InstrumentType.objects.filter(master_user=self._master_user, is_deleted=False).exclude(user_code='-')
@@ -963,6 +1018,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 result_item["___factor_down__user_code"] = TransactionType.objects.get(
                     pk=result_item["factor_down"]).user_code
                 result_item.pop("factor_down", None)
+
+            result_item['pricing_policies'] = self.get_instrument_type_pricing_policies(instrument_type["pk"])
 
             clear_none_attrs(result_item)
 

@@ -21,7 +21,8 @@ from poms.common.utils import date_now, isclose
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
-from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme
+from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, CurrencyPricingPolicy, \
+    InstrumentTypePricingPolicy, InstrumentPricingPolicy
 from poms.tags.models import TagLink
 from poms.users.models import MasterUser, Member
 
@@ -318,6 +319,14 @@ class PricingPolicy(NamedModel):
             ['master_user', 'user_code']
         ]
         ordering = ['user_code']
+
+    # def delete(self, *args, **kwargs):
+    #
+    #     CurrencyPricingPolicy.objects.filter(pricing_policy=self).delete()
+    #     InstrumentTypePricingPolicy.objects.filter(pricing_policy=self).delete()
+    #     InstrumentPricingPolicy.objects.filter(pricing_policy=self).delete()
+    #
+    #     super(PricingPolicy, self).delete(*args, **kwargs)
 
 
 class InstrumentType(NamedModelAutoMapping, FakeDeletableModel):
@@ -828,7 +837,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel):
 class ManualPricingFormula(models.Model):
     instrument = models.ForeignKey(Instrument, related_name='manual_pricing_formulas',
                                    verbose_name=ugettext_lazy('instrument'), on_delete=models.CASCADE)
-    pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.PROTECT, related_name='manual_pricing_formulas',
+    pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE, related_name='manual_pricing_formulas',
                                        verbose_name=ugettext_lazy('pricing policy'))
     expr = models.CharField(max_length=255, blank=True, default='', verbose_name=ugettext_lazy('expression'))
     notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
@@ -848,7 +857,7 @@ class ManualPricingFormula(models.Model):
 class PriceHistory(models.Model):
     instrument = models.ForeignKey(Instrument, related_name='prices', verbose_name=ugettext_lazy('instrument'),
                                    on_delete=models.CASCADE)
-    pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.PROTECT, null=True, blank=True,
+    pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE, null=True, blank=True,
                                        verbose_name=ugettext_lazy('pricing policy'))
     date = models.DateField(db_index=True, default=date_now, verbose_name=ugettext_lazy('date'))
     principal_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('principal price'))

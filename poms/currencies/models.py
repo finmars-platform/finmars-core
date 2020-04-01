@@ -87,7 +87,7 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel):
 # ...
 class CurrencyHistory(models.Model):
     currency = models.ForeignKey(Currency, related_name='histories', verbose_name=ugettext_lazy('currency'), on_delete=models.CASCADE)
-    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.PROTECT, null=True, blank=True,
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, null=True, blank=True,
                                        verbose_name=ugettext_lazy('pricing policy'))
     date = models.DateField(db_index=True, default=date_now, verbose_name=ugettext_lazy('date'))
     fx_rate = models.FloatField(default=0., verbose_name=ugettext_lazy('fx rate'))

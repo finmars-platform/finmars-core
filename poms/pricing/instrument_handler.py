@@ -298,45 +298,53 @@ class PricingInstrumentHandler(object):
 
                     parameter = None
 
-                    if item.policy.default_value:
+                    try:
 
-                        if scheme_parameters.value_type == 10:
-
-                            parameter = str(item.policy.default_value)
-
-                        elif scheme_parameters.value_type == 20:
-
-                            parameter = float(item.policy.default_value)
-
-                        elif scheme_parameters.value_type == 40:
-
-                            parameter = formula._parse_date(str(item.policy.default_value))
-
-                        else:
-
-                            parameter = item.policy.default_value
-
-                    elif item.policy.attribute_key:
-
-                        if 'attributes' in item.policy.attribute_key:
-
-                            user_code = item.policy.attribute_key.split('attributes.')[1]
-
-                            attribute = GenericAttribute.objects.get(object_id=item.instrument.id,
-                                                                     attribute_type__user_code=user_code)
+                        if item.policy.default_value:
 
                             if scheme_parameters.value_type == 10:
-                                parameter = attribute.value_string
 
-                            if scheme_parameters.value_type == 20:
-                                parameter = attribute.value_float
+                                parameter = str(item.policy.default_value)
 
-                            if scheme_parameters.value_type == 40:
-                                parameter = attribute.value_date
+                            elif scheme_parameters.value_type == 20:
 
-                        else:
+                                parameter = float(item.policy.default_value)
 
-                            parameter = item.instrument[item.policy.attribute_key]
+                            elif scheme_parameters.value_type == 40:
+
+                                parameter = formula._parse_date(str(item.policy.default_value))
+
+                            else:
+
+                                parameter = item.policy.default_value
+
+                        elif item.policy.attribute_key:
+
+                            if 'attributes' in item.policy.attribute_key:
+
+                                user_code = item.policy.attribute_key.split('attributes.')[1]
+
+                                attribute = GenericAttribute.objects.get(object_id=item.instrument.id,
+                                                                         attribute_type__user_code=user_code)
+
+                                if scheme_parameters.value_type == 10:
+                                    parameter = attribute.value_string
+
+                                if scheme_parameters.value_type == 20:
+                                    parameter = attribute.value_float
+
+                                if scheme_parameters.value_type == 40:
+                                    parameter = attribute.value_date
+
+                            else:
+
+                                parameter = item.instrument[item.policy.attribute_key]
+
+                    except Exception as e:
+
+                        _l.info("Cant find parameter value. Error: %s" % e)
+
+                        parameter = None
 
                     values = {
                         'd': date,
@@ -505,45 +513,53 @@ class PricingInstrumentHandler(object):
 
                     parameter = None
 
-                    if item.policy.default_value:
+                    try:
 
-                        if scheme_parameters.value_type == 10:
-
-                            parameter = str(item.policy.default_value)
-
-                        elif scheme_parameters.value_type == 20:
-
-                            parameter = float(item.policy.default_value)
-
-                        elif scheme_parameters.value_type == 40:
-
-                            parameter = formula._parse_date(str(item.policy.default_value))
-
-                        else:
-
-                            parameter = item.policy.default_value
-
-                    elif item.policy.attribute_key:
-
-                        if 'attributes' in item.policy.attribute_key:
-
-                            user_code = item.policy.attribute_key.split('attributes.')[1]
-
-                            attribute = GenericAttribute.objects.get(object_id=item.instrument.id,
-                                                                     attribute_type__user_code=user_code)
+                        if item.policy.default_value:
 
                             if scheme_parameters.value_type == 10:
-                                parameter = attribute.value_string
 
-                            if scheme_parameters.value_type == 20:
-                                parameter = attribute.value_float
+                                parameter = str(item.policy.default_value)
 
-                            if scheme_parameters.value_type == 40:
-                                parameter = attribute.value_date
+                            elif scheme_parameters.value_type == 20:
 
-                        else:
+                                parameter = float(item.policy.default_value)
 
-                            parameter = item.instrument[item.policy.attribute_key]
+                            elif scheme_parameters.value_type == 40:
+
+                                parameter = formula._parse_date(str(item.policy.default_value))
+
+                            else:
+
+                                parameter = item.policy.default_value
+
+                        elif item.policy.attribute_key:
+
+                            if 'attributes' in item.policy.attribute_key:
+
+                                user_code = item.policy.attribute_key.split('attributes.')[1]
+
+                                attribute = GenericAttribute.objects.get(object_id=item.instrument.id,
+                                                                         attribute_type__user_code=user_code)
+
+                                if scheme_parameters.value_type == 10:
+                                    parameter = attribute.value_string
+
+                                if scheme_parameters.value_type == 20:
+                                    parameter = attribute.value_float
+
+                                if scheme_parameters.value_type == 40:
+                                    parameter = attribute.value_date
+
+                            else:
+
+                                parameter = item.instrument[item.policy.attribute_key]
+
+                    except Exception as e:
+
+                        _l.info("Cant find parameter value. Error: %s" % e)
+
+                        parameter = None
 
                     values = {
                         'd': date,

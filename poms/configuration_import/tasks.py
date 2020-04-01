@@ -29,6 +29,8 @@ from poms.portfolios.models import Portfolio
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, PricingProcedure
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
     PricingProcedureSerializer
+from poms.reference_tables.models import ReferenceTable
+from poms.reference_tables.serializers import ReferenceTableSerializer
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
 from poms.reports.serializers import BalanceReportCustomFieldSerializer, PLReportCustomFieldSerializer, \
     TransactionReportCustomFieldSerializer
@@ -630,6 +632,35 @@ class ImportManager(object):
                     for content_object in item['content']:
                         content_object['one_off_event'] = self.ecosystem_default.transaction_type.pk
                         content_object['regular_event'] = self.ecosystem_default.transaction_type.pk
+
+
+                        if 'pricing_policies' in content_object:
+
+                            for policy in content_object['pricing_policies']:
+
+                                if '___pricing_policy__user_code' in policy:
+
+                                    try:
+                                        policy['pricing_policy'] = PricingPolicy.objects.get(
+                                            master_user=self.master_user,
+                                            user_code=policy['___pricing_policy__user_code']).pk
+
+                                    except PricingPolicy.DoesNotExist:
+                                        policy['pricing_policy'] = self.ecosystem_default.pricing_policy.pk
+
+                                if '___pricing_scheme__user_code' in policy:
+
+                                    try:
+                                        policy['pricing_scheme'] = InstrumentPricingScheme.objects.get(
+                                            master_user=self.master_user,
+                                            user_code=policy['___pricing_policy__user_code']).pk
+
+                                    except InstrumentPricingScheme.DoesNotExist:
+                                        policy['pricing_scheme'] = InstrumentPricingScheme.objects.get(
+                                            master_user=self.master_user,
+                                            user_code='-').pk  # TODO Add to EcosystemDefaults
+
+
 
                         serializer = InstrumentTypeSerializer(data=content_object,
                                                               context=self.get_serializer_context())
@@ -1285,6 +1316,73 @@ class ImportManager(object):
 
         _l.info('Import Configuration List Layouts done %s' % (time.perf_counter() - st))
 
+    def import_reference_tables(self, configuration_section):
+
+        st = time.perf_counter()
+
+        for item in configuration_section['items']:
+
+            if 'reference_tables.referencetable' in item['entity']:
+
+                self.instance.stats['configuration'][item['entity']] = []
+
+                if 'content' in item:
+
+                    for content_object in item['content']:
+
+                        content_object['member'] = self.member.pk
+
+
+                        serializer = ReferenceTableSerializer(data=content_object,
+                                                                 context=self.get_serializer_context())
+
+                        stats = {
+                            'content_type': item['entity'],
+                            'mode': self.instance.mode,
+                            'item': content_object,
+                            'error': {
+                                'message': None
+                            },
+                            'status': 'info'
+                        }
+
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+
+                            # _l.info('Layout import name %s ' % content_object['name'])
+
+                            serializer.save()
+                        except ValidationError:
+
+                            if self.instance.mode == 'overwrite':
+
+                                try:
+
+                                    instance = ReferenceTable.objects.get(master_user=self.master_user,
+                                                                               user_code=content_object['name'])
+
+                                    serializer = ReferenceTableSerializer(data=content_object,
+                                                                               instance=instance,
+                                                                               context=self.get_serializer_context())
+                                    serializer.is_valid(raise_exception=True)
+                                    serializer.save()
+
+                                except Exception as error:
+                                    stats['status'] = 'error'
+                                    stats['error'][
+                                        'message'] = 'Can\'t Overwrite Reference Table Layout for %s' % content_object['name']
+                            else:
+
+                                stats['status'] = 'error'
+                                stats['error']['message'] = 'Reference Table %s already exists' % content_object['name']
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
+
+                        self.update_progress()
+
+        _l.info('Import Reference Table done %s' % (time.perf_counter() - st))
+
     def import_template_layouts(self, configuration_section):
 
         st = time.perf_counter()
@@ -1827,6 +1925,33 @@ class ImportManager(object):
                                     instance = Currency.objects.get(master_user=self.master_user,
                                                                     user_code=content_object['user_code'])
 
+                                    if 'pricing_policies' in content_object:
+
+                                        for policy in content_object['pricing_policies']:
+
+                                            if '___pricing_policy__user_code' in policy:
+
+                                                try:
+                                                    policy['pricing_policy'] = PricingPolicy.objects.get(
+                                                        master_user=self.master_user,
+                                                        user_code=policy['___pricing_policy__user_code']).pk
+
+                                                except PricingPolicy.DoesNotExist:
+                                                    policy['pricing_policy'] = self.ecosystem_default.pricing_policy.pk
+
+                                            if '___pricing_scheme__user_code' in policy:
+
+                                                try:
+                                                    policy['pricing_scheme'] = CurrencyPricingScheme.objects.get(
+                                                        master_user=self.master_user,
+                                                        user_code=policy['___pricing_policy__user_code']).pk
+
+                                                except CurrencyPricingScheme.DoesNotExist:
+                                                    policy['pricing_scheme'] = CurrencyPricingScheme.objects.get(
+                                                        master_user=self.master_user,
+                                                        user_code='-').pk  # TODO Add to EcosystemDefaults
+
+
                                     serializer = CurrencySerializer(data=content_object,
                                                                     instance=instance,
                                                                     context=self.get_serializer_context())
@@ -1877,8 +2002,8 @@ class ImportManager(object):
                                     master_user=self.master_user,
                                     user_code=content_object['__default_instrument_pricing_scheme__user_code']).pk
 
-                            except Exception:
-                                print("Cant map default instrument pricing scheme")
+                            except Exception as e:
+                                _l.info("Cant map default instrument pricing scheme. Error: %s" % e)
 
                         if '__default_currency_pricing_scheme__user_code' in content_object:
 
@@ -1888,8 +2013,8 @@ class ImportManager(object):
                                     master_user=self.master_user,
                                     user_code=content_object['__default_currency_pricing_scheme__user_code']).pk
 
-                            except Exception:
-                                print("Cant map default currency pricing scheme")
+                            except Exception as e:
+                                _l.info("Cant map default currency pricing scheme. Error: %s" % e)
 
 
                         serializer = PricingPolicySerializer(data=content_object,
@@ -2425,7 +2550,6 @@ class ImportManager(object):
                 self.import_instrument_user_fields(configuration_section)
                 self.import_transaction_user_fields(configuration_section)
 
-
                 self.import_instrument_pricing_schemes(configuration_section)
                 self.import_currency_pricing_schemes(configuration_section)
                 self.import_pricing_procedures(configuration_section)
@@ -2443,6 +2567,7 @@ class ImportManager(object):
             self.import_list_layouts(configuration_section)
             self.import_template_layouts(configuration_section)
             self.import_context_menu_layouts(configuration_section)
+            self.import_reference_tables(configuration_section)
             self.import_dashboard_layouts(configuration_section)
 
         _l.info('Import Configuration done %s' % (time.perf_counter() - st))

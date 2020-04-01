@@ -19,10 +19,11 @@ class LayoutContentTypeFilter(BaseFilterBackend):
         from poms.tags.models import Tag
         from poms.ui.models import Dashboard
 
-        models = [AccountType, Account, Currency, CurrencyHistory, InstrumentType, Instrument, PriceHistory,
+        models = [AccountType, Account, Currency, InstrumentType, Instrument,
+                  PriceHistory, CurrencyHistory,
+                  PriceHistoryError, CurrencyHistoryError,
                   PricingPolicy, CounterpartyGroup, Counterparty, Responsible, ResponsibleGroup, Portfolio,
                   TransactionTypeGroup, TransactionType, Transaction, ComplexTransaction, Tag,
-                  PriceHistoryError, CurrencyHistoryError,
                   Strategy1Group, Strategy1Subgroup, Strategy1,
                   Strategy2Group, Strategy2Subgroup, Strategy2,
                   Strategy3Group, Strategy3Subgroup, Strategy3,
