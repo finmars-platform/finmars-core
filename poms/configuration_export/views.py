@@ -860,8 +860,10 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
             result_item = CurrencyPricingPolicySerializer(instance=item).data
 
-            result_item['___pricing_policy__user_code'] = item.pricing_policy.user_code
-            result_item['___pricing_scheme__user_code'] = item.pricing_scheme.user_code
+            if item.pricing_policy:
+                result_item['___pricing_policy__user_code'] = item.pricing_policy.user_code
+            if item.pricing_scheme:
+                result_item['___pricing_scheme__user_code'] = item.pricing_scheme.user_code
 
             result_item.pop("id", None)
 
@@ -962,8 +964,10 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
             result_item = InstrumentTypePricingPolicySerializer(instance=item).data
 
-            result_item['___pricing_policy__user_code'] = item.pricing_policy.user_code
-            result_item['___pricing_scheme__user_code'] = item.pricing_scheme.user_code
+            if item.pricing_policy:
+                result_item['___pricing_policy__user_code'] = item.pricing_policy.user_code
+            if item.pricing_scheme:
+                result_item['___pricing_scheme__user_code'] = item.pricing_scheme.user_code
 
             result_item.pop("id", None)
 

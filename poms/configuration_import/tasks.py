@@ -7,6 +7,7 @@ from poms.accounts.models import Account, AccountType
 from poms.accounts.serializers import AccountTypeSerializer
 from poms.complex_import.models import ComplexImportScheme
 from poms.complex_import.serializers import ComplexImportSchemeSerializer
+from poms.configuration_import.recovery import ConfigurationRecoveryHandler
 from poms.counterparties.models import Responsible, Counterparty
 from poms.csv_import.models import CsvImportScheme
 from poms.csv_import.serializers import CsvImportSchemeSerializer
@@ -193,6 +194,8 @@ class ImportManager(object):
 
         _l.info('self.access_table %s' % self.data_access_table)
         _l.info('self.configuration_access_table %s' % self.configuration_access_table)
+
+        self.configuration_recovery_handler = ConfigurationRecoveryHandler()
 
         # _l.info('self.master_user %s ' % self.master_user)
         # _l.info('self.class instance %s' % self.master_user.__class__.__name__)
@@ -2487,6 +2490,10 @@ class ImportManager(object):
             _l.info("In file: %s" % item['entity'])
 
     def import_configuration(self, configuration_section):
+
+        self.configuration_recovery_handler.set_configuration(configuration_section)
+
+        configuration_section = self.configuration_recovery_handler.process_recovery()
 
         # try:
 

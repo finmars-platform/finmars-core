@@ -14,6 +14,7 @@ from poms.celery_tasks.models import CeleryTask
 from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet, AbstractViewSet
 
 from poms.csv_import.tasks import data_csv_file_import, data_csv_file_import_validate
+from poms.integrations.providers.base import parse_date_iso
 from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
 from poms.portfolios.models import Portfolio
 from poms.pricing.brokers.broker_serializers import DataRequestSerializer
@@ -134,11 +135,24 @@ class PricingProcedureViewSet(AbstractModelViewSet):
 
         print("Run Procedure %s" % pk)
 
+        print("Request data %s" % request.data)
+
         procedure = PricingProcedure.objects.get(pk=pk)
 
         master_user = request.user.master_user
 
-        instance = PricingProcedureProcess(procedure=procedure, master_user=master_user)
+        date_from = None
+        date_to = None
+
+        if 'user_price_date_from' in request.data:
+            if request.data['user_price_date_from']:
+                date_from = parse_date_iso(request.data['user_price_date_from'])
+
+        if 'user_price_date_to' in request.data:
+            if request.data['user_price_date_to']:
+                date_to = parse_date_iso(request.data['user_price_date_to'])
+
+        instance = PricingProcedureProcess(procedure=procedure, master_user=master_user, date_from=date_from, date_to=date_to)
         instance.process()
 
         serializer = self.get_serializer(instance=instance)

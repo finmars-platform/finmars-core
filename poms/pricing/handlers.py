@@ -20,12 +20,23 @@ _l = logging.getLogger('poms.pricing')
 
 class PricingProcedureProcess(object):
 
-    def __init__(self, procedure=None, master_user=None):
+    def __init__(self, procedure=None, master_user=None, date_from=None, date_to=None):
 
         self.master_user = master_user
         self.procedure = procedure
 
         self.execute_procedure_date_expressions()
+
+        if date_from:
+            self.procedure.price_date_from = date_from
+        if date_to:
+            _l.info("Date To set from user Settings")
+            self.procedure.price_date_to = date_to
+
+        _l.info('price_date_from %s' % self.procedure.price_date_from)
+        _l.info('price_date_to %s' % self.procedure.price_date_to)
+        _l.info('price_balance_date %s' % self.procedure.price_balance_date)
+
 
         self.parent_procedure = PricingParentProcedureInstance(pricing_procedure=procedure, master_user=master_user)
         self.parent_procedure.save()
@@ -57,24 +68,6 @@ class PricingProcedureProcess(object):
             except formula.InvalidExpression as e:
                 _l.info("Cant execute balance date expression %s " % e)
 
-        # DEPRECATED
-        # if self.procedure.accrual_date_from_expr:
-        #     try:
-        #         self.procedure.accrual_date_from = formula.safe_eval(self.procedure.accrual_date_from_expr, names={})
-        #     except formula.InvalidExpression as e:
-        #         _l.info("Cant execute accrual date from expression %s " % e)
-        #
-        # if self.procedure.accrual_date_to_expr:
-        #     try:
-        #         self.procedure.accrual_date_to = formula.safe_eval(self.procedure.accrual_date_to_expr, names={})
-        #     except formula.InvalidExpression as e:
-        #         _l.info("Cant execute accrual date to expression %s " % e)
-
-        _l.info('price_date_from %s' % self.procedure.price_date_from)
-        _l.info('price_date_to %s' % self.procedure.price_date_to)
-        _l.info('price_balance_date %s' % self.procedure.price_balance_date)
-        # _l.info('accrual_date_from %s' % self.procedure.accrual_date_from)
-        # _l.info('accrual_date_to %s' % self.procedure.accrual_date_to)
 
     def process(self):
 
