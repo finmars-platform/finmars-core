@@ -939,6 +939,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 print("Cant find default currency pricing scheme")
 
             result_item.pop("master_user", None)
+            result_item.pop("default_currency_pricing_scheme", None)
+            result_item.pop("default_instrument_pricing_scheme", None)
+
 
             clear_none_attrs(result_item)
 
