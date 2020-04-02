@@ -57,7 +57,7 @@ class ConfigurationRecoveryHandler(object):
 
             _l.info('Currency Recovery done %s' % (time.perf_counter() - st))
 
-        except (ConfigurationEntityArchetype.DoesNotExist, ConfigurationRecoveryHandler.MultipleObjectsReturned) as e:
+        except (ConfigurationEntityArchetype.DoesNotExist, Exception) as e:
 
             _l.info('Currency Recovery error %s' % e)
 
@@ -78,7 +78,7 @@ class ConfigurationRecoveryHandler(object):
 
             _l.info('Account Type Recovery done %s' % (time.perf_counter() - st))
 
-        except (ConfigurationEntityArchetype.DoesNotExist, ConfigurationRecoveryHandler.MultipleObjectsReturned) as e:
+        except (ConfigurationEntityArchetype.DoesNotExist, Exception) as e:
 
             _l.info('Account Type Recovery error %s' % e)
 
@@ -99,6 +99,6 @@ class ConfigurationRecoveryHandler(object):
 
             _l.info('Instrument Type Recovery done %s' % (time.perf_counter() - st))
 
-        except (ConfigurationEntityArchetype.DoesNotExist, ConfigurationRecoveryHandler.MultipleObjectsReturned) as e:
+        except (ConfigurationEntityArchetype.DoesNotExist, Exception) as e:
 
             _l.info('Instrument Type Recovery error %s' % e)
