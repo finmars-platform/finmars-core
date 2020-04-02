@@ -41,4 +41,7 @@ def process_pricing_procedures_schedules(self):
 
                 procedures_count = procedures_count + 1
 
+        s.last_run_at = timezone.now()
+        s.save(update_fields=['last_run_at'])
+
     _l.info('Finished. Procedures initialized: %s' % procedures_count)

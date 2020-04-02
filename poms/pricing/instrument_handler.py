@@ -573,8 +573,6 @@ class PricingInstrumentHandler(object):
 
                             for parameter in item.policy.data['parameters']:
 
-                                _l.info('parameter %s ' % parameter)
-
                                 if 'default_value' in parameter and parameter['default_value']:
 
                                     if float(parameter['value_type']) == 10:
