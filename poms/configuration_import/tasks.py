@@ -1338,9 +1338,6 @@ class ImportManager(object):
 
                     for content_object in item['content']:
 
-                        content_object['member'] = self.member.pk
-
-
                         serializer = ReferenceTableSerializer(data=content_object,
                                                                  context=self.get_serializer_context())
 
@@ -1368,7 +1365,7 @@ class ImportManager(object):
                                 try:
 
                                     instance = ReferenceTable.objects.get(master_user=self.master_user,
-                                                                               user_code=content_object['name'])
+                                                                          name=content_object['name'])
 
                                     serializer = ReferenceTableSerializer(data=content_object,
                                                                                instance=instance,

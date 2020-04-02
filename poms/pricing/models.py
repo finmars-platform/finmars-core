@@ -720,7 +720,7 @@ class PricingProcedure(NamedModel):
 
     class Meta:
         unique_together = (
-            ('name', 'master_user')
+            ('master_user', 'user_code')
         )
 
     def __str__(self):
