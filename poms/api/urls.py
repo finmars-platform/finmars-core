@@ -341,6 +341,9 @@ router.register(r'import/complex', complex_import.ComplexImportViewSet, 'import_
 
 router.register(r'import/configuration-json', configuration_import.ConfigurationImportAsJsonViewSet,
                 'configuration_import')
+
+router.register(r'import/generate-configuration-entity-archetype', configuration_import.GenerateConfigurationEntityArchetypeViewSet, 'generate_configuration_entity_archetype')
+
 router.register(r'export/configuration', configuration_export.ConfigurationExportViewSet, 'configuration_export')
 router.register(r'export/mapping', configuration_export.MappingExportViewSet, 'mapping_export')
 router.register(r'import/configuration/check-duplicates', configuration_export.ConfigurationDuplicateCheckViewSet,

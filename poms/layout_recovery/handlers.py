@@ -15,7 +15,7 @@ import copy
 _l = logging.getLogger('poms.layout_recovery')
 
 
-class LayoutArchetypeGenerateHandler():
+class LayoutArchetypeGenerateHandler(object):
 
     def __init__(self):
 
@@ -183,8 +183,6 @@ class LayoutArchetypeGenerateHandler():
         ListLayout.objects.all().update(is_fixed=False)
 
         _l.info('Reset is_fixed status for List Layouts Finish')
-
-
 
     def process(self):
 

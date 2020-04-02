@@ -7,6 +7,7 @@ from poms.accounts.models import Account, AccountType
 from poms.accounts.serializers import AccountTypeSerializer
 from poms.complex_import.models import ComplexImportScheme
 from poms.complex_import.serializers import ComplexImportSchemeSerializer
+from poms.configuration_import.handlers import ConfigurationEntityArchetypeGenerateHandler
 from poms.configuration_import.recovery import ConfigurationRecoveryHandler
 from poms.counterparties.models import Responsible, Counterparty
 from poms.csv_import.models import CsvImportScheme
@@ -24,6 +25,7 @@ from poms.integrations.serializers import ComplexTransactionImportSchemeSerializ
     AccountTypeMappingSerializer, InstrumentTypeMappingSerializer, PricingPolicyMappingSerializer, \
     PriceDownloadSchemeMappingSerializer, PeriodicityMappingSerializer, DailyPricingModelMappingSerializer, \
     PaymentSizeDetailMappingSerializer, AccrualCalculationModelMappingSerializer, InstrumentDownloadSchemeSerializer
+from poms.layout_recovery.handlers import LayoutArchetypeGenerateHandler
 from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_attrs.serializers import GenericAttributeTypeSerializer
 from poms.portfolios.models import Portfolio
@@ -195,7 +197,7 @@ class ImportManager(object):
         _l.info('self.access_table %s' % self.data_access_table)
         _l.info('self.configuration_access_table %s' % self.configuration_access_table)
 
-        self.configuration_recovery_handler = ConfigurationRecoveryHandler()
+        self.configuration_recovery_handler = ConfigurationRecoveryHandler(master_user=self.master_user)
 
         # _l.info('self.master_user %s ' % self.master_user)
         # _l.info('self.class instance %s' % self.master_user.__class__.__name__)
@@ -2771,5 +2773,16 @@ def configuration_import_as_json(self, instance):
         import_manager.import_mappings(mappings_section)
 
     _l.info('Import done %s' % (time.perf_counter() - st))
+
+    return instance
+
+
+@shared_task(name='configuration_import.generate_configuration_entity_archetype', bind=True)
+def generate_configuration_entity_archetype(self, instance):
+
+    _l.info('generate_configuration_entity_archetype init')
+
+    handler = ConfigurationEntityArchetypeGenerateHandler()
+    handler.process()
 
     return instance

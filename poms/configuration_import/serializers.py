@@ -4,6 +4,12 @@ from rest_framework import serializers
 from poms.users.fields import MasterUserField, MemberField, HiddenMemberField
 
 
+class GenerateConfigurationEntityArchetype:
+    def __init__(self, task_id=None, task_status=None):
+        self.task_id = task_id
+        self.task_status = task_status
+
+
 class ConfigurationImportAsJson:
     def __init__(self, task_id=None, task_status=None, master_user=None, status=None,
                  data=None, member=None, mode=None,
@@ -50,3 +56,11 @@ class ConfigurationImportAsJsonSerializer(serializers.Serializer):
             validated_data.pop('data', None)
 
         return ConfigurationImportAsJson(**validated_data)
+
+
+class GenerateConfigurationEntityArchetypeSerializer(serializers.Serializer):
+    task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    task_status = serializers.ReadOnlyField()
+
+    def create(self, validated_data):
+        return GenerateConfigurationEntityArchetype(**validated_data)

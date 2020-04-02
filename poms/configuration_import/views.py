@@ -6,10 +6,10 @@ from rest_framework.response import Response
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet
-from poms.configuration_import.serializers import ConfigurationImportAsJsonSerializer
+from poms.configuration_import.serializers import ConfigurationImportAsJsonSerializer, \
+    GenerateConfigurationEntityArchetypeSerializer
 
-from poms.configuration_import.tasks import configuration_import_as_json
-
+from poms.configuration_import.tasks import configuration_import_as_json, generate_configuration_entity_archetype
 
 from poms.common.utils import date_now, datetime_now
 
@@ -128,3 +128,58 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class GenerateConfigurationEntityArchetypeViewSet(AbstractAsyncViewSet):
+    serializer_class = GenerateConfigurationEntityArchetypeSerializer
+    celery_task = generate_configuration_entity_archetype
+
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        # PomsFunctionPermission
+    ]
+
+    def create(self, request, *args, **kwargs):
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        task_id = instance.task_id
+
+        signer = TimestampSigner()
+
+        if task_id:
+
+            res = AsyncResult(signer.unsign(task_id))
+
+            st = time.perf_counter()
+
+            if res.ready():
+
+                instance = res.result
+
+            print('AsyncResult res.ready: %s' % (time.perf_counter() - st))
+
+            if instance.master_user.id != request.user.master_user.id:
+                raise PermissionDenied()
+
+            print('TASK RESULT %s' % res.result)
+            print('TASK STATUS %s' % res.status)
+
+            instance.task_id = task_id
+            instance.task_status = res.status
+
+            serializer = self.get_serializer(instance=instance, many=False)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        else:
+
+            res = self.celery_task.apply_async(kwargs={'instance': instance})
+            instance.task_id = signer.sign('%s' % res.id)
+
+            print('CREATE CELERY TASK %s' % res.id)
+
+            instance.task_status = res.status
+            serializer = self.get_serializer(instance=instance, many=False)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
