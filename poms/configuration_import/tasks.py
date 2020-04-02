@@ -1911,6 +1911,33 @@ class ImportManager(object):
                         serializer = CurrencySerializer(data=content_object,
                                                         context=self.get_serializer_context())
 
+                        if 'pricing_policies' in content_object:
+
+                            for policy in content_object['pricing_policies']:
+
+                                if '___pricing_policy__user_code' in policy:
+
+                                    try:
+                                        policy['pricing_policy'] = PricingPolicy.objects.get(
+                                            master_user=self.master_user,
+                                            user_code=policy['___pricing_policy__user_code']).pk
+
+                                    except PricingPolicy.DoesNotExist:
+                                        policy['pricing_policy'] = self.ecosystem_default.pricing_policy.pk
+
+                                if '___pricing_scheme__user_code' in policy:
+
+                                    try:
+                                        policy['pricing_scheme'] = CurrencyPricingScheme.objects.get(
+                                            master_user=self.master_user,
+                                            user_code=policy['___pricing_policy__user_code']).pk
+
+                                    except CurrencyPricingScheme.DoesNotExist:
+                                        policy['pricing_scheme'] = None
+                                        # policy['pricing_scheme'] = CurrencyPricingScheme.objects.get(
+                                        #     master_user=self.master_user,
+                                        #     user_code='-').pk  # TODO Add to EcosystemDefaults
+
                         stats = {
                             'content_type': item['entity'],
                             'mode': self.instance.mode,
@@ -1932,34 +1959,6 @@ class ImportManager(object):
 
                                     instance = Currency.objects.get(master_user=self.master_user,
                                                                     user_code=content_object['user_code'])
-
-                                    if 'pricing_policies' in content_object:
-
-                                        for policy in content_object['pricing_policies']:
-
-                                            if '___pricing_policy__user_code' in policy:
-
-                                                try:
-                                                    policy['pricing_policy'] = PricingPolicy.objects.get(
-                                                        master_user=self.master_user,
-                                                        user_code=policy['___pricing_policy__user_code']).pk
-
-                                                except PricingPolicy.DoesNotExist:
-                                                    policy['pricing_policy'] = self.ecosystem_default.pricing_policy.pk
-
-                                            if '___pricing_scheme__user_code' in policy:
-
-                                                try:
-                                                    policy['pricing_scheme'] = CurrencyPricingScheme.objects.get(
-                                                        master_user=self.master_user,
-                                                        user_code=policy['___pricing_policy__user_code']).pk
-
-                                                except CurrencyPricingScheme.DoesNotExist:
-                                                    policy['pricing_scheme'] = None
-                                                    # policy['pricing_scheme'] = CurrencyPricingScheme.objects.get(
-                                                    #     master_user=self.master_user,
-                                                    #     user_code='-').pk  # TODO Add to EcosystemDefaults
-
 
                                     serializer = CurrencySerializer(data=content_object,
                                                                     instance=instance,
