@@ -659,9 +659,12 @@ class ImportManager(object):
                                             user_code=policy['___pricing_scheme__user_code']).pk
 
                                     except InstrumentPricingScheme.DoesNotExist:
-                                        policy['pricing_scheme'] = InstrumentPricingScheme.objects.get(
-                                            master_user=self.master_user,
-                                            user_code='-').pk  # TODO Add to EcosystemDefaults
+
+                                        policy['pricing_scheme'] = None
+
+                                        # policy['pricing_scheme'] = InstrumentPricingScheme.objects.get(
+                                        #     master_user=self.master_user,
+                                        #     user_code='-').pk  # TODO Add to EcosystemDefaults
 
 
 
@@ -1577,7 +1580,7 @@ class ImportManager(object):
 
                             try:
                                 content_object["price_download_scheme"] = PriceDownloadScheme.objects.get(
-                                pk=content_object["___price_download_scheme__scheme_name"], master_user=self.master_user).id
+                                scheme_name=content_object["___price_download_scheme__scheme_name"], master_user=self.master_user).id
                             except PriceDownloadScheme.DoesNotExist:
                                 content_object["price_download_scheme"] = self.ecosystem_default.price_download_scheme.id
 
@@ -1950,9 +1953,10 @@ class ImportManager(object):
                                                         user_code=policy['___pricing_policy__user_code']).pk
 
                                                 except CurrencyPricingScheme.DoesNotExist:
-                                                    policy['pricing_scheme'] = CurrencyPricingScheme.objects.get(
-                                                        master_user=self.master_user,
-                                                        user_code='-').pk  # TODO Add to EcosystemDefaults
+                                                    policy['pricing_scheme'] = None
+                                                    # policy['pricing_scheme'] = CurrencyPricingScheme.objects.get(
+                                                    #     master_user=self.master_user,
+                                                    #     user_code='-').pk  # TODO Add to EcosystemDefaults
 
 
                                     serializer = CurrencySerializer(data=content_object,
