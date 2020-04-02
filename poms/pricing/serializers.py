@@ -118,7 +118,7 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
     class Meta:
         model = InstrumentPricingScheme
         fields = (
-            'id', 'name', 'master_user', 'notes', 'notes_for_users', 'notes_for_parameter', 'error_handler', 'type',
+            'id', 'name', 'user_code', 'master_user', 'notes', 'notes_for_users', 'notes_for_parameter', 'error_handler', 'type',
             'type_settings')
 
     def get_type_settings(self, instance):
@@ -530,7 +530,7 @@ class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CurrencyPricingScheme
         fields = (
-            'id', 'name', 'master_user', 'notes', 'notes_for_users', 'notes_for_parameter', 'error_handler', 'type',
+            'id', 'name', 'user_code', 'master_user', 'notes', 'notes_for_users', 'notes_for_parameter', 'error_handler', 'type',
             'type_settings')
 
     def get_type_settings(self, instance):
