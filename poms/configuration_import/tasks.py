@@ -656,7 +656,7 @@ class ImportManager(object):
                                     try:
                                         policy['pricing_scheme'] = InstrumentPricingScheme.objects.get(
                                             master_user=self.master_user,
-                                            user_code=policy['___pricing_policy__user_code']).pk
+                                            user_code=policy['___pricing_scheme__user_code']).pk
 
                                     except InstrumentPricingScheme.DoesNotExist:
                                         policy['pricing_scheme'] = InstrumentPricingScheme.objects.get(
