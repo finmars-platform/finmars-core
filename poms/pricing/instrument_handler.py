@@ -338,7 +338,7 @@ class PricingInstrumentHandler(object):
 
                             else:
 
-                                parameter = item.instrument[item.policy.attribute_key]
+                                parameter = getattr(item.instrument, item.policy.attribute_key, None)
 
                     except Exception as e:
 
@@ -553,7 +553,7 @@ class PricingInstrumentHandler(object):
 
                             else:
 
-                                parameter = item.instrument[item.policy.attribute_key]
+                                parameter = getattr(item.instrument, item.policy.attribute_key, None)
 
                     except Exception as e:
 

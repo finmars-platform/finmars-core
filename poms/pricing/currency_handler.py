@@ -254,7 +254,7 @@ class PricingCurrencyHandler(object):
 
                             else:
 
-                                parameter = item.currency[item.policy.attribute_key]
+                                parameter = getattr(item.currency, item.policy.attribute_key, None)
 
                     except Exception as e:
 
@@ -420,7 +420,7 @@ class PricingCurrencyHandler(object):
 
                             else:
 
-                                parameter = item.currency[item.policy.attribute_key]
+                                parameter = getattr(item.currency, item.policy.attribute_key, None)
 
                     except Exception as e:
 
