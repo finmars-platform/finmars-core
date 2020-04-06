@@ -17,6 +17,7 @@ def force_qs_evaluation(qs):
 
 
 def db_class_check_data(model, verbosity, using):
+
     from django.db import IntegrityError, ProgrammingError
 
     try:

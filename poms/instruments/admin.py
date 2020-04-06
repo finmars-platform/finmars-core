@@ -9,7 +9,7 @@ from poms.common.admin import ClassModelAdmin, AbstractModelAdmin
 from poms.instruments.models import Instrument, PriceHistory, InstrumentClass, InstrumentType, \
     DailyPricingModel, AccrualCalculationModel, Periodicity, CostMethod, \
     ManualPricingFormula, AccrualCalculationSchedule, InstrumentFactorSchedule, EventSchedule, \
-    PricingPolicy, PaymentSizeDetail, EventScheduleAction, EventScheduleConfig, GeneratedEvent
+    PricingPolicy, PaymentSizeDetail, EventScheduleAction, EventScheduleConfig, GeneratedEvent, PricingCondition
 from poms.instruments.tasks import calculate_prices_accrued_price
 from poms.obj_attrs.admin import GenericAttributeInline
 from poms.obj_perms.admin import GenericObjectPermissionInline
@@ -17,6 +17,7 @@ from poms.tags.admin import GenericTagLinkInline
 
 admin.site.register(InstrumentClass, ClassModelAdmin)
 admin.site.register(DailyPricingModel, ClassModelAdmin)
+admin.site.register(PricingCondition, ClassModelAdmin)
 admin.site.register(AccrualCalculationModel, ClassModelAdmin)
 admin.site.register(Periodicity, ClassModelAdmin)
 admin.site.register(CostMethod, ClassModelAdmin)

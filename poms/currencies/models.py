@@ -40,6 +40,9 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel):
     price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.PROTECT, null=True,
                                               blank=True, verbose_name=ugettext_lazy('price download scheme'))
 
+    pricing_condition = models.ForeignKey('instruments.PricingCondition', null=True, blank=True,
+                                            verbose_name=ugettext_lazy('pricing condition'), on_delete=models.CASCADE)
+
     attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
 

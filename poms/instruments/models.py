@@ -83,6 +83,22 @@ class DailyPricingModel(AbstractClassModel):
         verbose_name_plural = ugettext_lazy('daily pricing models')
 
 
+class PricingCondition(AbstractClassModel):
+    NO_VALUATION = 1
+    RUN_VALUATION_IF_NON_ZERO = 2
+    RUN_VALUATION_ALWAYS = 3
+
+    CLASSES = (
+        (NO_VALUATION, 'NO_VALUATION', ugettext_lazy("Don't Run Valuation")),
+        (RUN_VALUATION_IF_NON_ZERO, 'RUN_VALUATION_IF_OPEN', ugettext_lazy("Run Valuation: if non-zero position")),
+        (RUN_VALUATION_ALWAYS, 'RUN_VALUATION_ALWAYS', ugettext_lazy("Run Valuation: always"))
+    )
+
+    class Meta(AbstractClassModel.Meta):
+        verbose_name = ugettext_lazy('pricing condition')
+        verbose_name_plural = ugettext_lazy('pricing conditions ')
+
+
 class AccrualCalculationModel(AbstractClassModel):
     NONE = 1
     ACT_ACT = 2
@@ -400,6 +416,11 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel):
     daily_pricing_model = models.ForeignKey(DailyPricingModel, null=True, blank=True,
                                             verbose_name=ugettext_lazy('daily pricing model'),
                                             on_delete=models.SET_NULL)
+
+    pricing_condition = models.ForeignKey(PricingCondition, null=True, blank=True,
+                                            verbose_name=ugettext_lazy('pricing condition'),
+                                            on_delete=models.SET_NULL)
+
     price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.PROTECT, null=True,
                                               blank=True, verbose_name=ugettext_lazy('price download scheme'))
     maturity_date = models.DateField(default=date.max, verbose_name=ugettext_lazy('maturity date'))

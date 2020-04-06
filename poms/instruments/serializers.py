@@ -18,7 +18,7 @@ from poms.instruments.fields import InstrumentField, InstrumentTypeField, Pricin
 from poms.instruments.models import Instrument, PriceHistory, InstrumentClass, DailyPricingModel, \
     AccrualCalculationModel, PaymentSizeDetail, Periodicity, CostMethod, InstrumentType, \
     ManualPricingFormula, AccrualCalculationSchedule, InstrumentFactorSchedule, EventSchedule, \
-    PricingPolicy, EventScheduleAction, EventScheduleConfig, GeneratedEvent
+    PricingPolicy, EventScheduleAction, EventScheduleConfig, GeneratedEvent, PricingCondition
 from poms.integrations.fields import PriceDownloadSchemeField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
@@ -44,6 +44,11 @@ class InstrumentClassViewSerializer(PomsClassSerializer):
 class DailyPricingModelSerializer(PomsClassSerializer):
     class Meta(PomsClassSerializer.Meta):
         model = DailyPricingModel
+
+
+class PricingConditionSerializer(PomsClassSerializer):
+    class Meta(PomsClassSerializer.Meta):
+        model = PricingCondition
 
 
 class DailyPricingModelViewSerializer(PomsClassSerializer):
@@ -419,6 +424,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
     accrued_currency_object = serializers.PrimaryKeyRelatedField(source='accrued_currency', read_only=True)
     payment_size_detail_object = PaymentSizeDetailSerializer(source='payment_size_detail', read_only=True)
     daily_pricing_model_object = DailyPricingModelSerializer(source='daily_pricing_model', read_only=True)
+    pricing_condition_object = PricingConditionSerializer(source='pricing_condition', read_only=True)
     price_download_scheme = PriceDownloadSchemeField(allow_null=True, required=False)
     price_download_scheme_object = serializers.PrimaryKeyRelatedField(source='price_download_scheme', read_only=True)
 
@@ -445,7 +451,9 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
             'accrued_currency', 'accrued_currency_object', 'accrued_multiplier',
             'payment_size_detail', 'payment_size_detail_object', 'default_price', 'default_accrued',
             'user_text_1', 'user_text_2', 'user_text_3',
-            'reference_for_pricing', 'daily_pricing_model', 'daily_pricing_model_object',
+            'reference_for_pricing',
+            'daily_pricing_model', 'daily_pricing_model_object',
+            'pricing_condition', 'pricing_condition_object',
             'price_download_scheme', 'price_download_scheme_object',
             'maturity_date', 'maturity_price',
             'manual_pricing_formulas', 'accrual_calculation_schedules', 'factor_schedules', 'event_schedules',
