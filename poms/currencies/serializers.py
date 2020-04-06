@@ -138,7 +138,10 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
 
                     ids.add(oid)
 
-                    o = CurrencyPricingPolicy.objects.get(currency=instance, id=oid)
+                    print('oid %s' % oid)
+                    print('instance.id %s' % instance.id)
+
+                    o = CurrencyPricingPolicy.objects.get(currency_id=instance.id, id=oid)
 
                     o.pricing_scheme = item['pricing_scheme']
                     o.default_value = item['default_value']
@@ -147,6 +150,7 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
                     o.notes = item['notes']
 
                     print("attributekey %s" % o.attribute_key)
+                    print("pricing_scheme %s" % o.pricing_scheme)
 
                     o.save()
 
