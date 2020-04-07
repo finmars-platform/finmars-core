@@ -168,7 +168,7 @@ def roll_currency_history_for_n_day_forward(item, procedure, last_price, master_
                     currency=item.currency,
                     pricing_scheme=item.pricing_scheme,
                     pricing_policy=item.policy.pricing_policy,
-                    date=date,
+                    date=new_date,
                 )
 
                 _l.info('Roll Currency History Error Skip %s ' % error)
