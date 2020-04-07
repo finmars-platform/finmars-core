@@ -186,15 +186,15 @@ class PricingInstrumentHandler(object):
             is_deleted=False
         )
 
-        instruments = instruments.filter(
-            pricing_condition__in=[PricingCondition.RUN_VALUATION_ALWAYS, PricingCondition.RUN_VALUATION_IF_NON_ZERO])
+        # instruments = instruments.filter(
+        #     pricing_condition__in=[PricingCondition.RUN_VALUATION_ALWAYS, PricingCondition.RUN_VALUATION_IF_NON_ZERO])
 
         instruments_opened = set()
         instruments_always = set()
 
         for i in instruments:
 
-            if i.daily_pricing_model_id in [DailyPricingModel.FORMULA_ALWAYS, DailyPricingModel.PROVIDER_ALWAYS]:
+            if i.pricing_condition_id in [PricingCondition.RUN_VALUATION_ALWAYS, PricingCondition.RUN_VALUATION_IF_NON_ZERO]:
                 instruments_always.add(i.id)
 
         if self.procedure.price_balance_date:
