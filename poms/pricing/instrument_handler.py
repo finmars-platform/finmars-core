@@ -6,7 +6,7 @@ from django.db.models import Q
 
 from poms.common import formula
 from poms.common.utils import isclose, date_now
-from poms.instruments.models import Instrument, DailyPricingModel, PriceHistory
+from poms.instruments.models import Instrument, DailyPricingModel, PriceHistory, PricingCondition
 from poms.integrations.models import ProviderClass
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
@@ -17,7 +17,6 @@ from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_bet
     get_is_yesterday, optimize_items, roll_price_history_for_n_day_forward
 from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
-
 
 import logging
 
@@ -185,9 +184,10 @@ class PricingInstrumentHandler(object):
         instruments = Instrument.objects.filter(
             master_user=self.procedure.master_user,
             is_deleted=False
-        ).exclude(
-            daily_pricing_model=DailyPricingModel.SKIP
         )
+
+        instruments = instruments.filter(
+            pricing_condition__in=[PricingCondition.RUN_VALUATION_ALWAYS, PricingCondition.RUN_VALUATION_IF_NON_ZERO])
 
         instruments_opened = set()
         instruments_always = set()
@@ -226,7 +226,6 @@ class PricingInstrumentHandler(object):
         #     result = instruments
 
         if self.procedure.instrument_type_filters:
-
             user_codes = self.procedure.instrument_type_filters.split(",")
 
             print("Filter by Instrument Types %s " % user_codes)
@@ -392,7 +391,7 @@ class PricingInstrumentHandler(object):
 
                     _l.info('principal_price %s' % principal_price)
 
-                    if scheme_parameters.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
+                    if scheme_parameters.accrual_calculation_method == 2:  # ACCRUAL_PER_SCHEDULE
 
                         try:
                             accrued_price = item.instrument.get_accrued_price(date)
@@ -408,7 +407,7 @@ class PricingInstrumentHandler(object):
                             except formula.InvalidExpression:
                                 error.accrual_error_text = 'Invalid Error Text Expression'
 
-                    if scheme_parameters.accrual_calculation_method == 3:   # ACCRUAL_PER_FORMULA
+                    if scheme_parameters.accrual_calculation_method == 3:  # ACCRUAL_PER_FORMULA
 
                         try:
                             accrued_price = formula.safe_eval(accrual_expr, names=values)
@@ -469,14 +468,14 @@ class PricingInstrumentHandler(object):
                             error.save()
                     else:
 
-                        error.error_text =  "Prices already exists. Principal Price: " + principal_price +"; Accrued: "+ accrued_price +"."
+                        error.error_text = "Prices already exists. Principal Price: " + principal_price + "; Accrued: " + accrued_price + "."
 
                         error.status = PriceHistoryError.STATUS_SKIP
                         error.save()
 
                     last_price = price
 
-            roll_price_history_for_n_day_forward(self.procedure, last_price)
+            roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user, procedure_instance)
 
         procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
@@ -646,10 +645,9 @@ class PricingInstrumentHandler(object):
                         except formula.InvalidExpression:
                             error.price_error_text = 'Invalid Error Text Expression'
 
-
                     _l.info('principal_price %s' % principal_price)
 
-                    if scheme_parameters.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
+                    if scheme_parameters.accrual_calculation_method == 2:  # ACCRUAL_PER_SCHEDULE
 
                         try:
                             accrued_price = item.instrument.get_accrued_price(date)
@@ -665,7 +663,7 @@ class PricingInstrumentHandler(object):
                             except formula.InvalidExpression:
                                 error.accrual_error_text = 'Invalid Error Text Expression'
 
-                    if scheme_parameters.accrual_calculation_method == 3:   # ACCRUAL_PER_FORMULA
+                    if scheme_parameters.accrual_calculation_method == 3:  # ACCRUAL_PER_FORMULA
 
                         try:
                             accrued_price = formula.safe_eval(accrual_expr, names=values)
@@ -727,14 +725,14 @@ class PricingInstrumentHandler(object):
 
                     else:
 
-                        error.error_text =  "Prices already exists. Principal Price: " + principal_price +"; Accrued: "+ accrued_price +"."
+                        error.error_text = "Prices already exists. Principal Price: " + principal_price + "; Accrued: " + accrued_price + "."
 
                         error.status = PriceHistoryError.STATUS_SKIP
                         error.save()
 
                     last_price = price
 
-            roll_price_history_for_n_day_forward(self.procedure, last_price)
+            roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user, procedure_instance)
 
         procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
@@ -1082,15 +1080,15 @@ class PricingInstrumentHandler(object):
 
     def print_grouped_instruments(self):
 
-            names = {
-                1: 'Skip',
-                2: 'Manual Pricing',  # DEPRECATED
-                3: 'Single Parameter Formula',
-                4: 'Multiple Parameter Formula',
-                5: 'Bloomberg',
-                6: 'Wtrade'
+        names = {
+            1: 'Skip',
+            2: 'Manual Pricing',  # DEPRECATED
+            3: 'Single Parameter Formula',
+            4: 'Multiple Parameter Formula',
+            5: 'Bloomberg',
+            6: 'Wtrade'
 
-            }
+        }
 
-            for provider_id, items in self.instrument_items_grouped.items():
-                _l.info("Pricing Instrument Handler - Provider %s: len: %s" % (names[provider_id], len(items)))
+        for provider_id, items in self.instrument_items_grouped.items():
+            _l.info("Pricing Instrument Handler - Provider %s: len: %s" % (names[provider_id], len(items)))

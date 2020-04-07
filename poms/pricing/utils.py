@@ -4,6 +4,13 @@ from poms.common.utils import date_now
 from poms.currencies.models import CurrencyHistory
 from poms.instruments.models import PriceHistory
 
+import logging
+
+from poms.pricing.models import PriceHistoryError, CurrencyHistoryError
+
+_l = logging.getLogger('poms.pricing')
+
+
 
 def get_unique_pricing_schemes(items):
 
@@ -46,7 +53,7 @@ def group_items_by_provider(items, groups):
         if item.policy.pricing_scheme:
             result[item.policy.pricing_scheme.type.id].append(item)
         else:
-            print('Pricing scheme is not set in policy %s' % item.policy.id)
+            _l.info('Pricing scheme is not set in policy %s' % item.policy.id)
 
     return result
 
@@ -115,9 +122,9 @@ def optimize_items(items):
     return result
 
 
-def roll_currency_history_for_n_day_forward(procedure, last_price):
+def roll_currency_history_for_n_day_forward(item, procedure, last_price, master_user, procedure_instance):
 
-    print("Roll Currency History for %s " % last_price)
+    _l.info("Roll Currency History for %s " % last_price)
 
     if procedure.price_fill_days:
 
@@ -153,10 +160,26 @@ def roll_currency_history_for_n_day_forward(procedure, last_price):
 
                 price.save()
 
+            else:
 
-def roll_price_history_for_n_day_forward(procedure, last_price):
+                error = CurrencyHistoryError(
+                    master_user=master_user,
+                    procedure_instance=procedure_instance,
+                    currency=item.currency,
+                    pricing_scheme=item.pricing_scheme,
+                    pricing_policy=item.policy.pricing_policy,
+                    date=date,
+                )
 
-    print("Roll Price History for  %s for %s days" % (last_price, procedure.price_fill_days))
+                _l.info('Roll Currency History Error Skip %s ' % error)
+
+                error.status = CurrencyHistoryError.STATUS_SKIP
+                error.save()
+
+
+def roll_price_history_for_n_day_forward(item, procedure, last_price, master_user, procedure_instance):
+
+    _l.info("Roll Price History for  %s for %s days" % (last_price, procedure.price_fill_days))
 
     if procedure.price_fill_days:
 
@@ -176,9 +199,9 @@ def roll_price_history_for_n_day_forward(procedure, last_price):
 
                 if not procedure.price_override_existed:
                     can_write = False
-                    print('Roll Price History Skip %s ' % price)
+                    _l.info('Roll Price History Skip %s ' % price)
                 else:
-                    print('Roll Price History Overwrite %s ' % price)
+                    _l.info('Roll Price History Overwrite %s ' % price)
 
             except PriceHistory.DoesNotExist:
 
@@ -188,7 +211,7 @@ def roll_price_history_for_n_day_forward(procedure, last_price):
                     date=new_date
                 )
 
-                print('Roll Price History Create new %s ' % price)
+                _l.info('Roll Price History Create new %s ' % price)
 
             if can_write:
 
@@ -202,3 +225,19 @@ def roll_price_history_for_n_day_forward(procedure, last_price):
                     price.accrued_price = last_price.accrued_price
 
                 price.save()
+
+            else:
+
+                error = PriceHistoryError(
+                    master_user=master_user,
+                    procedure_instance=procedure_instance,
+                    instrument=item.instrument,
+                    pricing_scheme=item.pricing_scheme,
+                    pricing_policy=item.pricing_policy,
+                    date=new_date,
+                )
+
+                _l.info('Roll Price History Error Skip %s ' % error)
+
+                error.status = PriceHistoryError.STATUS_SKIP
+                error.save()

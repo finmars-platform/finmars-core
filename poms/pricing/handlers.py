@@ -363,7 +363,8 @@ class FillPricesBrokerBloombergProcess(object):
 
                 _l.info("Bloomberg Roll Prices for Price History")
 
-                roll_price_history_for_n_day_forward(self.procedure, price)
+                # roll_price_history_for_n_day_forward(self.procedure, price)
+                roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.instance['procedure'])
 
         PricingProcedureBloombergInstrumentResult.objects.filter(master_user=self.master_user,
                                                        procedure=self.instance['procedure'],
@@ -477,7 +478,7 @@ class FillPricesBrokerBloombergProcess(object):
 
                 _l.info("Bloomberg Roll Prices for Currency History")
 
-                roll_currency_history_for_n_day_forward(self.procedure, price)
+                roll_currency_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.instance['procedure'])
 
         PricingProcedureBloombergCurrencyResult.objects.filter(master_user=self.master_user,
                                                                  procedure=self.instance['procedure'],
@@ -732,7 +733,7 @@ class FillPricesBrokerWtradeProcess(object):
 
                 _l.info("Wtrade Roll Prices for Price History")
 
-                roll_price_history_for_n_day_forward(self.procedure, price)
+                roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.instance['procedure'])
 
         PricingProcedureWtradeInstrumentResult.objects.filter(master_user=self.master_user,
                                                                  procedure=self.instance['procedure'],
@@ -909,7 +910,7 @@ class FillPricesBrokerFixerProcess(object):
 
                 _l.info("Fixer Roll Prices for Currency History")
 
-                roll_currency_history_for_n_day_forward(self.procedure, price)
+                roll_currency_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.instance['procedure'])
 
         PricingProcedureFixerCurrencyResult.objects.filter(master_user=self.master_user,
                                                                procedure=self.instance['procedure'],

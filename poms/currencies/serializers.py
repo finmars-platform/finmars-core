@@ -55,6 +55,7 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'notes',
             'reference_for_pricing', 'daily_pricing_model',
+            'pricing_condition',
             'price_download_scheme', 'default_fx_rate',
             'is_default', 'is_deleted', 'is_enabled',
             'pricing_policies'

@@ -2,6 +2,9 @@ from poms_app import settings
 import requests
 import json
 
+import logging
+
+_l = logging.getLogger('poms.pricing')
 
 
 class PricingTransport(object):
@@ -17,6 +20,13 @@ class PricingTransport(object):
 
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
-        response = requests.post(url=self.mediator_url + 'process/pricing/', data=json.dumps(data), headers=headers)
+        response = None
+
+        try:
+
+            response = requests.post(url=self.mediator_url + 'process/pricing/', data=json.dumps(data), headers=headers)
+
+        except Exception:
+            _l.info("Can't send request to Mediator. Is Mediator offline?")
 
         return response

@@ -36,8 +36,8 @@ class PageNumberPaginationExt(PageNumberPagination):
         if page_number in self.last_page_strings:
             page_number = paginator.num_pages
 
-        print('page_number %s' % page_number)
-        print('page_size %s' % page_size)
+        # print('page_number %s' % page_number)
+        # print('page_size %s' % page_size)
 
         try:
             self.page = paginator.page(page_number)
@@ -55,9 +55,9 @@ class PageNumberPaginationExt(PageNumberPagination):
 
         res = list(self.page)
 
-        print(len(res))
+        # print(len(res))
 
-        print("post_paginate_queryset done %s seconds " % (time.time() - start_time))
+        # print("post_paginate_queryset done %s seconds " % (time.time() - start_time))
 
         return res
 

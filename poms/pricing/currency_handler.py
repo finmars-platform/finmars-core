@@ -4,6 +4,7 @@ from django.db import transaction
 
 from poms.common import formula
 from poms.currencies.models import Currency, CurrencyHistory
+from poms.instruments.models import PricingCondition
 from poms.integrations.models import ProviderClass
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
@@ -83,7 +84,7 @@ class CurrencyItem(object):
 
         if self.pricing_scheme.type.id == 5:
 
-            _l.info('parameters.fx_rate %s' % parameters.fx_rate)
+            # _l.info('parameters.fx_rate %s' % parameters.fx_rate)
 
             self.scheme_fields_map = {}
 
@@ -91,7 +92,7 @@ class CurrencyItem(object):
                 self.scheme_fields.append([parameters.fx_rate])
                 self.scheme_fields_map['fx_rate'] = parameters.fx_rate
 
-            _l.info('self.scheme_fields_map %s' % self.scheme_fields_map)
+            # _l.info('self.scheme_fields_map %s' % self.scheme_fields_map)
 
 
 class PricingCurrencyHandler(object):
@@ -159,11 +160,17 @@ class PricingCurrencyHandler(object):
 
     def get_currencies(self):
 
-        result = []
+        currencies = []
 
-        result = Currency.objects.filter(master_user=self.master_user).exclude(user_code='-')
+        currencies = Currency.objects.filter(master_user=self.master_user).exclude(user_code='-')
 
-        return result
+        # _l.info("Before condition filter %s" % len(currencies))
+
+        currencies = currencies.filter(pricing_condition_id__in=[PricingCondition.RUN_VALUATION_ALWAYS, PricingCondition.RUN_VALUATION_IF_NON_ZERO])
+
+        # _l.info("After condition filter %s" % len(currencies))
+
+        return currencies
 
     def get_currency_items(self):
 
@@ -196,6 +203,8 @@ class PricingCurrencyHandler(object):
                                                       provider='finmars')
         procedure_instance.save()
 
+        _l.info('process_to_single_parameter_formula dates %s' % dates)
+
         for item in items:
 
             last_price = None
@@ -203,6 +212,8 @@ class PricingCurrencyHandler(object):
             for date in dates:
 
                 scheme_parameters = item.pricing_scheme.get_parameters()
+
+                _l.info('process_to_single_parameter_formula scheme_parameters  %s ' % scheme_parameters)
 
                 if scheme_parameters:
 
@@ -341,7 +352,8 @@ class PricingCurrencyHandler(object):
 
                     last_price = price
 
-            roll_currency_history_for_n_day_forward(self.procedure, last_price)
+            if last_price:
+                roll_currency_history_for_n_day_forward(item, self.procedure, last_price, self.master_user, procedure_instance)
 
         procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
@@ -560,7 +572,8 @@ class PricingCurrencyHandler(object):
 
                     last_price = price
 
-            roll_currency_history_for_n_day_forward(self.procedure, last_price)
+            if last_price:
+                roll_currency_history_for_n_day_forward(item, self.procedure, last_price, self.master_user, procedure_instance)
 
         procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
