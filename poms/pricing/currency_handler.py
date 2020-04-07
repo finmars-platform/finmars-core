@@ -1,8 +1,10 @@
 from datetime import timedelta
 
 from django.db import transaction
+from django.db.models import Q
 
 from poms.common import formula
+from poms.common.utils import isclose
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import PricingCondition
 from poms.integrations.models import ProviderClass
@@ -15,6 +17,9 @@ from poms.pricing.utils import get_unique_pricing_schemes, group_items_by_provid
     get_is_yesterday, optimize_items, roll_currency_history_for_n_day_forward
 
 import logging
+
+from poms.reports.builders.balance_item import Report, ReportItem
+from poms.reports.builders.balance_pl import ReportBuilder
 
 _l = logging.getLogger('poms.pricing')
 
@@ -162,11 +167,39 @@ class PricingCurrencyHandler(object):
 
         currencies = []
 
-        currencies = Currency.objects.filter(master_user=self.master_user).exclude(user_code='-')
+        currencies = Currency.objects.filter(
+            master_user=self.procedure.master_user,
+            is_deleted=False
+        ).exclude(user_code='-')
 
-        # _l.info("Before condition filter %s" % len(currencies))
+        # instruments = instruments.filter(
+        #     pricing_condition__in=[PricingCondition.RUN_VALUATION_ALWAYS, PricingCondition.RUN_VALUATION_IF_NON_ZERO])
 
-        currencies = currencies.filter(pricing_condition_id__in=[PricingCondition.RUN_VALUATION_ALWAYS, PricingCondition.RUN_VALUATION_IF_NON_ZERO])
+        currencies_opened = set()
+        currencies_always = set()
+
+        for i in currencies:
+
+            if i.pricing_condition_id in [PricingCondition.RUN_VALUATION_ALWAYS, PricingCondition.RUN_VALUATION_IF_NON_ZERO]:
+                currencies_always.add(i.id)
+
+        if self.procedure.price_balance_date:
+
+            owner_or_admin = self.procedure.master_user.members.filter(Q(is_owner=True) | Q(is_admin=True)).first()
+
+            report = Report(master_user=self.procedure.master_user, member=owner_or_admin,
+                            report_date=self.procedure.price_balance_date)
+
+            builder = ReportBuilder(instance=report)
+
+            builder.build_position_only()
+
+            for i in report.items:
+                if i.type == ReportItem.TYPE_CURRENCY and not isclose(i.pos_size, 0.0):
+                    if i.instr:
+                        currencies_opened.add(i.instr.id)
+
+        currencies = currencies.filter(pk__in=(currencies_always | currencies_opened))
 
         # _l.info("After condition filter %s" % len(currencies))
 

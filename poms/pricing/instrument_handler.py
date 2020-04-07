@@ -184,7 +184,7 @@ class PricingInstrumentHandler(object):
         instruments = Instrument.objects.filter(
             master_user=self.procedure.master_user,
             is_deleted=False
-        )
+        ).exclude(user_code='-')
 
         # instruments = instruments.filter(
         #     pricing_condition__in=[PricingCondition.RUN_VALUATION_ALWAYS, PricingCondition.RUN_VALUATION_IF_NON_ZERO])
