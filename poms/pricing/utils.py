@@ -130,6 +130,8 @@ def roll_currency_history_for_n_day_forward(item, procedure, last_price, master_
 
         for i in range(procedure.price_fill_days):
 
+            i = i + 1
+
             can_write = True
 
             new_date = last_price.date + timedelta(days=i)
@@ -184,6 +186,8 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
     if procedure.price_fill_days:
 
         for i in range(procedure.price_fill_days):
+
+            i = i + 1
 
             can_write = True
 
