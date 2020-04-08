@@ -1905,9 +1905,6 @@ class ImportManager(object):
 
                     for content_object in item['content']:
 
-                        serializer = CurrencySerializer(data=content_object,
-                                                        context=self.get_serializer_context())
-
                         if 'pricing_policies' in content_object:
 
                             for policy in content_object['pricing_policies']:
@@ -1934,6 +1931,9 @@ class ImportManager(object):
                                         # policy['pricing_scheme'] = CurrencyPricingScheme.objects.get(
                                         #     master_user=self.master_user,
                                         #     user_code='-').pk  # TODO Add to EcosystemDefaults
+
+                        serializer = CurrencySerializer(data=content_object,
+                                                        context=self.get_serializer_context())
 
                         stats = {
                             'content_type': item['entity'],
