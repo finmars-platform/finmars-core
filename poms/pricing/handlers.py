@@ -4,6 +4,7 @@ import time
 from poms.common import formula
 from poms.currencies.models import CurrencyHistory
 from poms.instruments.models import PriceHistory
+from poms.integrations.providers.base import parse_date_iso
 
 from poms.pricing.currency_handler import PricingCurrencyHandler
 from poms.pricing.instrument_handler import PricingInstrumentHandler
@@ -474,7 +475,7 @@ class FillPricesBrokerBloombergProcess(object):
                 error.status = CurrencyHistoryError.STATUS_SKIP
                 error.save()
 
-            if self.instance['data']['date_to'] == record.date:
+            if parse_date_iso(self.instance['data']['date_to']) == record.date:
 
                 _l.info("Bloomberg Roll Prices for Currency History")
 
@@ -906,7 +907,7 @@ class FillPricesBrokerFixerProcess(object):
                 error.status = CurrencyHistoryError.STATUS_SKIP
                 error.save()
 
-            if self.instance['data']['date_to'] == record.date:
+            if parse_date_iso(self.instance['data']['date_to']) == record.date:
 
                 _l.info("Fixer Roll Prices for Currency History")
 
