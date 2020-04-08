@@ -2287,7 +2287,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Instrument Pricing Scheme done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Instrument Pricing Scheme done %s' % (time.perf_counter() - st))
 
     def import_currency_pricing_schemes(self, configuration_section):
 
@@ -2511,15 +2511,27 @@ class ImportManager(object):
             # Import order matters
             #
 
+
+            # Import Pricing
+
             if can_import:
-                self.import_attribute_types(configuration_section)  # configuration section
-            else:
-                _l.info("Permission Error: Attributes types")
+
+                self.import_instrument_pricing_schemes(configuration_section)
+                self.import_currency_pricing_schemes(configuration_section)
+                self.import_pricing_procedures(configuration_section)
+                self.import_pricing_schedules(configuration_section)
+
+                self.import_pricing_policies(configuration_section)  # configuration section
 
             if self.data_access_table['currencies.currency']:
                 self.import_currencies(configuration_section)  # data section
             else:
                 _l.info("Permission Error: Currencies")
+
+            if can_import:
+                self.import_attribute_types(configuration_section)  # configuration section
+            else:
+                _l.info("Permission Error: Attributes types")
 
             if self.data_access_table['accounts.accounttype']:
                 self.import_account_types(configuration_section)  # data section
@@ -2559,13 +2571,7 @@ class ImportManager(object):
                 self.import_instrument_user_fields(configuration_section)
                 self.import_transaction_user_fields(configuration_section)
 
-                self.import_instrument_pricing_schemes(configuration_section)
-                self.import_currency_pricing_schemes(configuration_section)
-                self.import_pricing_procedures(configuration_section)
-                self.import_pricing_schedules(configuration_section)
-
             if can_import:
-                self.import_pricing_policies(configuration_section)  # configuration section
                 self.import_pricing_automated_schedule(configuration_section)  # configuration section
             else:
                 _l.info("Permission Error: Pricing Policies")
