@@ -1924,13 +1924,16 @@ class ImportManager(object):
                                     try:
                                         policy['pricing_scheme'] = CurrencyPricingScheme.objects.get(
                                             master_user=self.master_user,
-                                            user_code=policy['___pricing_policy__user_code']).pk
+                                            user_code=policy['___pricing_scheme__user_code']).pk
 
                                     except CurrencyPricingScheme.DoesNotExist:
                                         policy['pricing_scheme'] = None
                                         # policy['pricing_scheme'] = CurrencyPricingScheme.objects.get(
                                         #     master_user=self.master_user,
                                         #     user_code='-').pk  # TODO Add to EcosystemDefaults
+
+
+                        _l.info('content_object %s' % content_object)
 
                         serializer = CurrencySerializer(data=content_object,
                                                         context=self.get_serializer_context())

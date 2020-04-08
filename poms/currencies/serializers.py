@@ -133,14 +133,13 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
 
             for item in pricing_policies:
 
+                print('item %s' % item)
+
                 try:
 
                     oid = item.get('id', None)
 
                     ids.add(oid)
-
-                    print('oid %s' % oid)
-                    print('instance.id %s' % instance.id)
 
                     o = CurrencyPricingPolicy.objects.get(currency_id=instance.id, id=oid)
 
@@ -150,13 +149,31 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
                     o.data = item['data']
                     o.notes = item['notes']
 
-                    print("attributekey %s" % o.attribute_key)
-                    print("pricing_scheme %s" % o.pricing_scheme)
 
                     o.save()
 
-                except Exception as e:
-                    print("Can't Find  Pricing Policy %s" % e)
+                except CurrencyPricingPolicy.DoesNotExist as e:
+
+                    try:
+
+                        print("Id is not Provided. Trying to lookup.")
+
+                        o = CurrencyPricingPolicy.objects.get(currency_id=instance.id,
+                                                              pricing_scheme=item['pricing_scheme'],
+                                                              pricing_policy=item['pricing_policy']
+                                                              )
+
+                        o.pricing_scheme = item['pricing_scheme']
+                        o.default_value = item['default_value']
+                        o.attribute_key = item['attribute_key']
+                        o.data = item['data']
+                        o.notes = item['notes']
+
+                        o.save()
+
+                    except Exception as e:
+
+                        print("Can't Find  Pricing Policy %s" % e)
 
         # print('ids %s' % ids)
 

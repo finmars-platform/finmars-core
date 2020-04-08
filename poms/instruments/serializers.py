@@ -584,8 +584,26 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
 
                     o.save()
 
-                except Exception as e:
-                    print("Can't Find  Pricing Policy %s" % e)
+                except InstrumentPricingPolicy.DoesNotExist as e:
+
+                    try:
+
+                        print("Id is not Provided. Trying to lookup.")
+
+                        o = InstrumentPricingPolicy.objects.get(instrument=instance, pricing_scheme=item['pricing_scheme'],
+                                                                pricing_policy=item['pricing_policy'])
+
+                        o.pricing_scheme = item['pricing_scheme']
+                        o.default_value = item['default_value']
+                        o.attribute_key = item['attribute_key']
+                        o.data = item['data']
+                        o.notes = item['notes']
+
+                        o.save()
+
+                    except Exception as e:
+
+                        print("Can't Find  Pricing Policy %s" % e)
 
         # print('ids %s' % ids)
 
