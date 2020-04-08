@@ -171,6 +171,8 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
 
                         o.save()
 
+                        ids.add(o.id)
+
                     except Exception as e:
 
                         print("Can't Find  Pricing Policy %s" % e)
