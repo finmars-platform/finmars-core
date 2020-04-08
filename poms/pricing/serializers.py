@@ -951,7 +951,7 @@ class PricingPolicyViewSerializer(ModelWithUserCodeSerializer):
 
 
 class CurrencyPricingPolicySerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(read_only=False)
+    id = serializers.IntegerField(read_only=False, allow_null=True, required=False)
     data = serializers.JSONField(allow_null=True, required=False)
 
     def __init__(self, *args, **kwargs):
@@ -967,7 +967,7 @@ class CurrencyPricingPolicySerializer(serializers.ModelSerializer):
 
 
 class InstrumentTypePricingPolicySerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(read_only=False)
+    id = serializers.IntegerField(read_only=False, allow_null=True, required=False)
     data = serializers.JSONField(allow_null=True, required=False)
 
     def __init__(self, *args, **kwargs):
@@ -984,7 +984,7 @@ class InstrumentTypePricingPolicySerializer(serializers.ModelSerializer):
 
 
 class InstrumentPricingPolicySerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(read_only=False)
+    id = serializers.IntegerField(read_only=False, allow_null=True, required=False)
     data = serializers.JSONField(allow_null=True, required=False)
 
     def __init__(self, *args, **kwargs):
