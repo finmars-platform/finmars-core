@@ -396,9 +396,6 @@ def process_csv_file(master_user,
                     'instrument': Instrument,
                     'instrument_type': InstrumentType,
                     'type': AccountType,
-                    'price_download_scheme': PriceDownloadScheme,
-                    'daily_pricing_model': DailyPricingModel,
-                    'payment_size_detail': PaymentSizeDetail,
                     'currency': Currency,
                     'pricing_currency': Currency,
                     'accrued_currency': Currency
@@ -450,12 +447,20 @@ def process_csv_file(master_user,
                                             # _l.info('Lookup by user code %s' % executed_expression)
 
                                             if key == 'price_download_scheme':
-                                                instance[key] = relation_map[key].objects.get(master_user=master_user,
+                                                instance[key] = PriceDownloadScheme.objects.get(master_user=master_user,
                                                                                               scheme_name=executed_expression)
-                                            elif key == 'daily_pricing_model' or key == 'payment_size_detail':
-                                                instance[key] = relation_map[key].objects.get(
+
+                                            elif key == 'daily_pricing_model':
+                                                instance[key] = DailyPricingModel.objects.get(
                                                     system_code=executed_expression)
+
+                                            elif key == 'payment_size_detail':
+
+                                                instance[key] = PaymentSizeDetail.objects.get(
+                                                    system_code=executed_expression)
+
                                             else:
+
                                                 instance[key] = relation_map[key].objects.get(master_user=master_user,
                                                                                               user_code=executed_expression)
 
@@ -469,18 +474,7 @@ def process_csv_file(master_user,
                                                 if hasattr(ecosystem_default, key):
                                                     instance[key] = getattr(ecosystem_default, key)
                                                 else:
-                                                    if key == 'price_download_scheme':
-                                                        instance[key] = relation_map[key].objects.get(
-                                                            master_user=master_user,
-                                                            scheme_name='-')
-                                                    elif key == 'daily_pricing_model' or key == 'payment_size_detail':
-                                                        instance[key] = relation_map[key].objects.get(system_code='-')
-                                                    else:
-                                                        instance[key] = relation_map[key].objects.get(
-                                                            master_user=master_user,
-                                                            user_code='-')
-
-
+                                                    _l.info("Can't set default value for %s" % key)
                                             else:
 
                                                 inputs_error.append(

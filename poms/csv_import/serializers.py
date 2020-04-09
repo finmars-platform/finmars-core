@@ -87,18 +87,84 @@ class CsvImportSchemeSerializer(serializers.ModelSerializer):
                        'attributes', 'tags', 'ecosystemdefault', 'is_enabled', 'deleted_user_code', 'instrumentmapping',
                        'factor_schedules', 'event_schedules', 'manual_pricing_formulas', 'transactions_linked',
                        'accrual_calculation_schedules', 'transactions_allocation_balance', 'transactions_allocation_pl',
+                        'pricingprocedurewtradeinstrumentresult', 'pricingprocedurebloomberginstrumentresult',
+                       'pricehistoryerror', 'currencyhistoryerror',
+                       'pricing_policies', 'currencymapping', 'transactions_settlement_currency',
+                       'instruments_accrued', 'histories'
+
+                       'pricingprocedurefixercurrencyresult', 'pricingprocedurebloombergcurrencyresult'
+                       
                        'prices']
 
+        content_type_str = scheme.content_type.app_label + '.' + scheme.content_type.model
 
+        allowed_fields = {
+            'currencies.currency': [
+                'name', 'user_code', 'short_name', 'public_name', 'notes',
+                'default_fx_rate', 'reference_for_pricing',
+                'pricing_condition'
+            ],
+            'accounts.account': [
+                'name', 'user_code', 'short_name', 'public_name', 'notes',
+                'type'
+            ],
+            'counterparties.counterparty': [
+                'name', 'user_code', 'short_name', 'public_name', 'notes',
+                'group'
+            ],
+            'counterparties.responsible': [
+                'name', 'user_code', 'short_name', 'public_name', 'notes',
+                'group'
+            ],
+            'portfolios.portfolio': [
+                'name', 'user_code', 'short_name', 'public_name', 'notes',
+            ],
+            'instruments.instrument': [
+                'name', 'user_code', 'short_name', 'public_name', 'notes',
+                'reference_for_pricing',
+                'instrument_type', 'price_download_scheme',
+                'pricing_currency', 'accrued_currency',
+                'payment_size_detail', 'pricing_condition',
+
+                'price_multiplier', 'accrued_multiplier',
+                'maturity_date', 'maturity_price',
+                'default_price', 'default_accrued'
+                'user_text_1', 'user_text_2', 'user_text_3'
+            ],
+            'instruments.pricehistory': [
+                'instrument', 'pricing_policy', 'date', 'principal_price', 'accrued_price'
+            ],
+            'currencies.currencyhistory': [
+                'currency', 'pricing_policy', 'date', 'fx_rate'
+            ],
+            'strategies.strategy1': [
+                'name', 'user_code', 'short_name', 'public_name', 'notes',
+                'subgroup'
+            ],
+            'strategies.strategy2': [
+                'name', 'user_code', 'short_name', 'public_name', 'notes',
+                'subgroup'
+            ],
+            'strategies.strategy3': [
+                'name', 'user_code', 'short_name', 'public_name', 'notes',
+                'subgroup'
+            ]
+
+
+        }
+
+        ids = set()
 
         for model_field in model_fields:
 
-            if model_field.name not in meta_fields:
+            if model_field.name in allowed_fields[content_type_str]:
 
                 try:
 
-                    EntityField.objects.get(scheme=scheme,
+                    o = EntityField.objects.get(scheme=scheme,
                                             system_property_key=model_field.name)
+
+                    ids.add(o.id)
 
                 except EntityField.DoesNotExist:
 
@@ -107,10 +173,14 @@ class CsvImportSchemeSerializer(serializers.ModelSerializer):
                     if hasattr(model_field, 'verbose_name'):
                         name = model_field.verbose_name
 
-                    EntityField.objects.create(scheme=scheme,
+                    o = EntityField.objects.create(scheme=scheme,
                                                system_property_key=model_field.name,
                                                name=name,
                                                expression='')
+
+                    ids.add(o.id)
+
+        EntityField.objects.filter(scheme=scheme).exclude(id__in=ids).delete()
 
     def set_entity_fields_mapping(self, scheme, entity_fields):
 
