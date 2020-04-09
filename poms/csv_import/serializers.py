@@ -78,24 +78,6 @@ class CsvImportSchemeSerializer(serializers.ModelSerializer):
 
         model_fields = model._meta.get_fields()
 
-        meta_fields = ['id', 'is_deleted', 'master_user', 'masteruser', 'transaction', 'portfoliomapping',
-                       'generated_events', 'master_user_mismatch_account', 'transactions_account_position',
-                       'responsiblemapping', 'counterpartymapping', 'transaction_types',
-                       'transactions_account_cash', 'transactions_account_interim', 'accountmapping',
-                       'is_valid_for_all_portfolios', 'transactions',
-                       'master_user_mismatch_portfolio', 'external_cash_flows', 'attrs', 'object_permissions',
-                       'attributes', 'tags', 'ecosystemdefault', 'is_enabled', 'deleted_user_code', 'instrumentmapping',
-                       'factor_schedules', 'event_schedules', 'manual_pricing_formulas', 'transactions_linked',
-                       'accrual_calculation_schedules', 'transactions_allocation_balance', 'transactions_allocation_pl',
-                        'pricingprocedurewtradeinstrumentresult', 'pricingprocedurebloomberginstrumentresult',
-                       'pricehistoryerror', 'currencyhistoryerror',
-                       'pricing_policies', 'currencymapping', 'transactions_settlement_currency',
-                       'instruments_accrued', 'histories'
-
-                       'pricingprocedurefixercurrencyresult', 'pricingprocedurebloombergcurrencyresult'
-                       
-                       'prices']
-
         content_type_str = scheme.content_type.app_label + '.' + scheme.content_type.model
 
         allowed_fields = {

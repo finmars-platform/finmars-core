@@ -2806,7 +2806,8 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
             self.fields['values'] = TransactionTypeProcessValuesSerializer(instance=self.instance, required=False)
 
         if self.instance:
-            recalculate_inputs = [(i.name, i.verbose_name) for i in self.instance.inputs if i.can_recalculate]
+            # recalculate_inputs = [(i.name, i.verbose_name) for i in self.instance.inputs if i.can_recalculate]
+            recalculate_inputs = [(i.name, i.verbose_name) for i in self.instance.inputs]
             self.fields['recalculate_inputs'] = serializers.MultipleChoiceField(required=False, allow_null=True,
                                                                                 choices=recalculate_inputs)
         else:
