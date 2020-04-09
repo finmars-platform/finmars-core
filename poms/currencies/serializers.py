@@ -146,7 +146,12 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
                     o.pricing_scheme = item['pricing_scheme']
                     o.default_value = item['default_value']
                     o.attribute_key = item['attribute_key']
-                    o.data = item['data']
+
+                    if 'data' in item:
+                        o.data = item['data']
+                    else:
+                        o.data = None
+
                     o.notes = item['notes']
 
 
@@ -166,7 +171,12 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
                         o.pricing_scheme = item['pricing_scheme']
                         o.default_value = item['default_value']
                         o.attribute_key = item['attribute_key']
-                        o.data = item['data']
+
+                        if 'data' in item:
+                            o.data = item['data']
+                        else:
+                            o.data = None
+
                         o.notes = item['notes']
 
                         o.save()

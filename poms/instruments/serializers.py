@@ -363,16 +363,46 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
                     o.pricing_scheme = item['pricing_scheme']
                     o.default_value = item['default_value']
                     o.attribute_key = item['attribute_key']
-                    o.data = item['data']
+
+                    if 'data' in item:
+                        o.data = item['data']
+                    else:
+                        o.data = None
+
                     o.notes = item['notes']
                     o.overwrite_default_parameters = item['overwrite_default_parameters']
 
-                    print("attributekey %s" % o.attribute_key)
-
                     o.save()
 
-                except Exception as e:
-                    print("Can't Find  Pricing Policy %s" % e)
+                except InstrumentTypePricingPolicy.DoesNotExist as e:
+
+                    try:
+
+                        print("Id is not Provided. Trying to lookup.")
+
+                        o = InstrumentTypePricingPolicy.objects.get(instrument_type=instance,
+                                                                    pricing_scheme=item['pricing_scheme'],
+                                                                    pricing_policy=item['pricing_policy'])
+
+                        o.pricing_scheme = item['pricing_scheme']
+                        o.default_value = item['default_value']
+                        o.attribute_key = item['attribute_key']
+
+                        if 'data' in item:
+                            o.data = item['data']
+                        else:
+                            o.data = None
+
+                        o.notes = item['notes']
+                        o.overwrite_default_parameters = item['overwrite_default_parameters']
+
+                        o.save()
+
+                        ids.add(o.id)
+
+                    except Exception as e:
+
+                        print("Can't Find  Pricing Policy %s" % e)
 
         # print('ids %s' % ids)
 
