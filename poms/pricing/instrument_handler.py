@@ -165,17 +165,19 @@ class PricingInstrumentHandler(object):
 
         for provider_id, items in self.instrument_items_grouped.items():
 
-            if provider_id == 3:
-                self.process_to_single_parameter_formula(items)
+            if len(items):
 
-            if provider_id == 4:
-                self.process_to_multiple_parameter_formula(items)
+                if provider_id == 3:
+                    self.process_to_single_parameter_formula(items)
 
-            if provider_id == 5:
-                self.process_to_bloomberg_provider(items)
+                if provider_id == 4:
+                    self.process_to_multiple_parameter_formula(items)
 
-            if provider_id == 6:
-                self.process_to_wtrade_provider(items)
+                if provider_id == 5:
+                    self.process_to_bloomberg_provider(items)
+
+                if provider_id == 6:
+                    self.process_to_wtrade_provider(items)
 
     def get_instruments(self):
 

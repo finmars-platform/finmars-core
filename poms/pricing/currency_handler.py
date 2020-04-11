@@ -147,21 +147,23 @@ class PricingCurrencyHandler(object):
 
         for provider_id, items in self.currency_items_grouped.items():
 
-            # DEPRECATED
-            # if provider_id == 2:
-            #     self.process_to_manual_pricing(items)
+            if len(items):
 
-            if provider_id == 3:
-                self.process_to_single_parameter_formula(items)
+                # DEPRECATED
+                # if provider_id == 2:
+                #     self.process_to_manual_pricing(items)
 
-            if provider_id == 4:
-                self.process_to_multiple_parameter_formula(items)
+                if provider_id == 3:
+                    self.process_to_single_parameter_formula(items)
 
-            if provider_id == 5:
-                self.process_to_bloomberg_provider(items)
+                if provider_id == 4:
+                    self.process_to_multiple_parameter_formula(items)
 
-            if provider_id == 7:
-                self.process_to_fixer_provider(items)
+                if provider_id == 5:
+                    self.process_to_bloomberg_provider(items)
+
+                if provider_id == 7:
+                    self.process_to_fixer_provider(items)
 
     def get_currencies(self):
 
