@@ -376,7 +376,7 @@ class FillPricesBrokerBloombergProcess(object):
                     error.save()
             else:
 
-                error.error_text =  "Prices already exists. Principal Price: " + principal_price +"; Accrued: "+ accrued_price +"."
+                error.error_text =  "Prices already exists. Principal Price: " + str(principal_price) +"; Accrued: "+ str(accrued_price) +"."
 
                 error.status = PriceHistoryError.STATUS_SKIP
                 error.save()
@@ -491,7 +491,7 @@ class FillPricesBrokerBloombergProcess(object):
                     error.save()
 
             else:
-                error.error_text = "Prices already exists. Fx rate: " + fx_rate + "."
+                error.error_text = "Prices already exists. Fx rate: " + str(fx_rate) + "."
 
                 error.status = CurrencyHistoryError.STATUS_SKIP
                 error.save()
@@ -746,7 +746,7 @@ class FillPricesBrokerWtradeProcess(object):
 
             else:
 
-                error.error_text =  "Prices already exists. Principal Price: " + principal_price +"; Accrued: "+ accrued_price +"."
+                error.error_text =  "Prices already exists. Principal Price: " + str(principal_price) +"; Accrued: "+ str(accrued_price) +"."
 
                 error.status = PriceHistoryError.STATUS_SKIP
                 error.save()
@@ -923,7 +923,7 @@ class FillPricesBrokerFixerProcess(object):
                     error.save()
 
             else:
-                error.error_text = "Prices already exists. Fx rate: " + fx_rate + "."
+                error.error_text = "Prices already exists. Fx rate: " + str(fx_rate) + "."
 
                 error.status = CurrencyHistoryError.STATUS_SKIP
                 error.save()
