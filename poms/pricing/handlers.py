@@ -1,5 +1,6 @@
 import time
 
+from django.db.models import Q
 
 from poms.common import formula
 from poms.currencies.models import CurrencyHistory
@@ -15,6 +16,8 @@ from poms.pricing.models import PricingProcedureBloombergInstrumentResult, Prici
 import logging
 
 from poms.pricing.utils import roll_price_history_for_n_day_forward, roll_currency_history_for_n_day_forward
+from poms.reports.builders.balance_item import Report
+from poms.reports.builders.balance_pl import ReportBuilder
 
 _l = logging.getLogger('poms.pricing')
 
@@ -42,12 +45,30 @@ class PricingProcedureProcess(object):
         self.parent_procedure = PricingParentProcedureInstance(pricing_procedure=procedure, master_user=master_user)
         self.parent_procedure.save()
 
-        self.pricing_instrument_handler = PricingInstrumentHandler(procedure=procedure, parent_procedure=self.parent_procedure, master_user=master_user)
-        self.pricing_currency_handler = PricingCurrencyHandler(procedure=procedure, parent_procedure=self.parent_procedure, master_user=master_user)
+        self.report = self.build_report_positions_only()
+
+        self.pricing_instrument_handler = PricingInstrumentHandler(procedure=procedure, parent_procedure=self.parent_procedure, master_user=master_user, report=self.report)
+        self.pricing_currency_handler = PricingCurrencyHandler(procedure=procedure, parent_procedure=self.parent_procedure, master_user=master_user, report=self.report)
 
         _l.info("Procedure settings - Overwrite: %s" % self.procedure.price_override_existed)
         _l.info("Procedure settings - Roll Days N Forward: %s" % self.procedure.price_fill_days)
 
+    def build_report_positions_only(self):
+
+        processing_st = time.perf_counter()
+
+        owner_or_admin = self.procedure.master_user.members.filter(Q(is_owner=True) | Q(is_admin=True)).first()
+
+        report = Report(master_user=self.procedure.master_user, member=owner_or_admin,
+                        report_date=self.procedure.price_balance_date)
+
+        builder = ReportBuilder(instance=report)
+
+        builder.build_position_only()
+
+        _l.info('< build_report_positions_only : %s', (time.perf_counter() - processing_st))
+
+        return report
 
     def execute_procedure_date_expressions(self):
 

@@ -102,7 +102,7 @@ class CurrencyItem(object):
 
 class PricingCurrencyHandler(object):
 
-    def __init__(self, procedure=None, parent_procedure=None, master_user=None):
+    def __init__(self, procedure=None, parent_procedure=None, master_user=None, report=None):
 
         self.master_user = master_user
         self.procedure = procedure
@@ -118,6 +118,8 @@ class PricingCurrencyHandler(object):
 
         # self.broker_bloomberg = BrokerBloomberg()
         self.transport = PricingTransport()
+
+        self.report = report
 
     def process(self):
 
@@ -185,18 +187,25 @@ class PricingCurrencyHandler(object):
             if i.pricing_condition_id in [PricingCondition.RUN_VALUATION_ALWAYS, PricingCondition.RUN_VALUATION_IF_NON_ZERO]:
                 currencies_always.add(i.id)
 
-        if self.procedure.price_balance_date:
+        # if self.procedure.price_balance_date:
+        #
+        #     owner_or_admin = self.procedure.master_user.members.filter(Q(is_owner=True) | Q(is_admin=True)).first()
+        #
+        #     report = Report(master_user=self.procedure.master_user, member=owner_or_admin,
+        #                     report_date=self.procedure.price_balance_date)
+        #
+        #     builder = ReportBuilder(instance=report)
+        #
+        #     builder.build_position_only()
+        #
+        #     for i in report.items:
+        #         if i.type == ReportItem.TYPE_CURRENCY and not isclose(i.pos_size, 0.0):
+        #             if i.instr:
+        #                 currencies_opened.add(i.instr.id)
 
-            owner_or_admin = self.procedure.master_user.members.filter(Q(is_owner=True) | Q(is_admin=True)).first()
+        if self.report:
 
-            report = Report(master_user=self.procedure.master_user, member=owner_or_admin,
-                            report_date=self.procedure.price_balance_date)
-
-            builder = ReportBuilder(instance=report)
-
-            builder.build_position_only()
-
-            for i in report.items:
+            for i in self.report.items:
                 if i.type == ReportItem.TYPE_CURRENCY and not isclose(i.pos_size, 0.0):
                     if i.instr:
                         currencies_opened.add(i.instr.id)
