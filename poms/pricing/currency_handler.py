@@ -389,7 +389,7 @@ class PricingCurrencyHandler(object):
 
                     else:
 
-                        error.error_text = "Prices already exists. Fx rate: " + fx_rate + "."
+                        error.error_text = "Prices already exists. Fx rate: " + str(fx_rate) + "."
 
                         error.status = CurrencyHistoryError.STATUS_SKIP
                         error.save()
@@ -609,7 +609,7 @@ class PricingCurrencyHandler(object):
                         if has_error:
                             error.save()
                     else:
-                        error.error_text = "Prices already exists. Fx rate: " + fx_rate + "."
+                        error.error_text = "Prices already exists. Fx rate: " + str(fx_rate) + "."
 
                         error.status = CurrencyHistoryError.STATUS_SKIP
                         error.save()
