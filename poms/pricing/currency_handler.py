@@ -207,8 +207,8 @@ class PricingCurrencyHandler(object):
 
             for i in self.report.items:
                 if i.type == ReportItem.TYPE_CURRENCY and not isclose(i.pos_size, 0.0):
-                    if i.instr:
-                        currencies_opened.add(i.instr.id)
+                    if i.ccy:
+                        currencies_opened.add(i.ccy.id)
 
         currencies = currencies.filter(pk__in=(currencies_always | currencies_opened))
 
