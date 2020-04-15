@@ -3,7 +3,7 @@ from django.contrib import admin
 from poms.common.admin import AbstractModelAdmin
 from poms.ui.filters import LayoutContentTypeFilter
 from poms.ui.models import TemplateListLayout, TemplateEditLayout, ListLayout, EditLayout, Bookmark, \
-    TransactionUserFieldModel, PortalInterfaceAccessModel
+    TransactionUserFieldModel, PortalInterfaceAccessModel, DashboardLayout, ContextMenuLayout
 
 
 class PortalInterfaceAccessModelAdmin(AbstractModelAdmin):
@@ -73,6 +73,38 @@ class ListLayoutAdmin(BaseLayoutAdmin):
 
 
 admin.site.register(ListLayout, ListLayoutAdmin)
+
+class DashboardLayoutAdmin(BaseLayoutAdmin):
+    model = DashboardLayout
+    master_user_path = 'member__master_user'
+    list_display = ['id', 'master_user', 'member', 'name']
+    list_select_related = ['member__master_user', 'member'  ]
+    search_fields = ['id', 'name']
+    raw_id_fields = ['member']
+
+    def master_user(self, obj):
+        return obj.member.master_user
+
+    master_user.admin_order_field = 'member__master_user'
+
+
+admin.site.register(DashboardLayout, DashboardLayoutAdmin)
+
+class ContextMenuLayoutAdmin(BaseLayoutAdmin):
+    model = ContextMenuLayout
+    master_user_path = 'member__master_user'
+    list_display = ['id', 'master_user', 'member', 'name']
+    list_select_related = ['member__master_user', 'member'  ]
+    search_fields = ['id', 'name']
+    raw_id_fields = ['member']
+
+    def master_user(self, obj):
+        return obj.member.master_user
+
+    master_user.admin_order_field = 'member__master_user'
+
+
+admin.site.register(ContextMenuLayout, ContextMenuLayoutAdmin)
 
 
 class EditLayoutAdmin(BaseLayoutAdmin):

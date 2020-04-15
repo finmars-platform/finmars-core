@@ -3,6 +3,7 @@ import json
 from django.contrib.contenttypes.models import ContentType
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.utils.text import Truncator
 from django.utils.translation import ugettext_lazy
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
@@ -226,6 +227,7 @@ class TemplateLayout(BaseUIModel):
                                verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
     type = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('type'))
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
+    user_code = models.CharField(max_length=25, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
     is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
 
     class Meta(BaseUIModel.Meta):
@@ -235,6 +237,10 @@ class TemplateLayout(BaseUIModel):
         ordering = ['name']
 
     def save(self, *args, **kwargs):
+
+        if not self.user_code:
+            self.user_code = Truncator(self.name).chars(25, truncate='')
+
         if self.is_default:
             qs = TemplateLayout.objects.filter(master_user=self.member, type=self.type,
                                                is_default=True)
@@ -248,12 +254,19 @@ class ContextMenuLayout(BaseUIModel):
     member = models.ForeignKey(Member, related_name='context_menu_layouts', verbose_name=ugettext_lazy('member'),
                                on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
+    user_code = models.CharField(max_length=25, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
     type = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('type'))
 
     class Meta(BaseUIModel.Meta):
         unique_together = [
-            ['member', 'type', 'name'],
+            ['member', 'type', 'user_code'],
         ]
+
+    def save(self, *args, **kwargs):
+        if not self.user_code:
+            self.user_code = Truncator(self.name).chars(25, truncate='')
+
+        super(ContextMenuLayout, self).save(*args, **kwargs)
 
 
 class BaseLayout(BaseUIModel):
@@ -262,16 +275,17 @@ class BaseLayout(BaseUIModel):
     class Meta:
         abstract = True
 
-
+# DEPRECATED
 class TemplateListLayout(BaseLayout):
     master_user = models.ForeignKey(MasterUser, related_name='template_list_layouts',
                                     verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
+    user_code = models.CharField(max_length=25, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
     is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
 
     class Meta(BaseLayout.Meta):
         unique_together = [
-            ['master_user', 'content_type', 'name'],
+            ['master_user', 'content_type', 'user_code'],
         ]
         ordering = ['name']
 
@@ -284,7 +298,7 @@ class TemplateListLayout(BaseLayout):
             qs.update(is_default=False)
         return super(TemplateListLayout, self).save(*args, **kwargs)
 
-
+# DEPRECATED
 class TemplateEditLayout(BaseLayout):
     master_user = models.ForeignKey(MasterUser, related_name='edit_layouts', verbose_name=ugettext_lazy('master user'),
                                     on_delete=models.CASCADE)
@@ -300,6 +314,7 @@ class ListLayout(BaseLayout):
     member = models.ForeignKey(Member, related_name='template_list_layouts', verbose_name=ugettext_lazy('member'),
                                on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
+    user_code = models.CharField(max_length=25, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
     is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
     is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('is active'))
 
@@ -307,13 +322,16 @@ class ListLayout(BaseLayout):
 
     class Meta(BaseLayout.Meta):
         unique_together = [
-            ['member', 'content_type', 'name'],
+            ['member', 'content_type', 'user_code'],
         ]
         ordering = ['name']
 
     def save(self, *args, **kwargs):
 
         is_fixed = True
+
+        if not self.user_code:
+            self.user_code = Truncator(self.name).chars(25, truncate='')
 
         if self.is_default:
             qs = ListLayout.objects.filter(member=self.member, content_type=self.content_type, is_default=True)
@@ -336,16 +354,21 @@ class DashboardLayout(BaseUIModel):
     member = models.ForeignKey(Member, related_name='dashboard_layouts', verbose_name=ugettext_lazy('member'),
                                on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
+    user_code = models.CharField(max_length=25, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
     is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
     is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('is active'))
 
     class Meta(BaseLayout.Meta):
         unique_together = [
-            ['member', 'name'],
+            ['member', 'user_code'],
         ]
         ordering = ['name']
 
     def save(self, *args, **kwargs):
+
+        if not self.user_code:
+            self.user_code = Truncator(self.name).chars(25, truncate='')
+
         if self.is_default:
             qs = DashboardLayout.objects.filter(member=self.member, is_default=True)
             if self.pk:
