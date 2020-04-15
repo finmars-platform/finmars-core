@@ -1396,7 +1396,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 item["data"] = item_model.data
 
                 if item_model.list_layout:
-                    item["___layout_name"] = item_model.list_layout.name
+                    item["___list_layout__name"] = item_model.list_layout.name
+                    item["___list_layout__user_code"] = item_model.list_layout.user_code
 
                     item["___content_type"] = '%s.%s' % (
                         item_model.list_layout.content_type.app_label,
@@ -1421,7 +1422,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
                     bookmark_json["fields"]["data"] = bookmark_model.data
                     if bookmark_model.list_layout:
-                        bookmark_json["fields"]["___layout_name"] = bookmark_model.list_layout.name
+                        bookmark_json["fields"]["___layout__name"] = bookmark_model.list_layout.name
+                        bookmark_json["fields"]["___layout__user_codef"] = bookmark_model.list_layout.user_code
                         bookmark_json["fields"]["___content_type"] = '%s.%s' % (
                             bookmark_model.list_layout.content_type.app_label,
                             bookmark_model.list_layout.content_type.model)

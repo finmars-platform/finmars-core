@@ -44,7 +44,7 @@ class TemplateLayoutSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TemplateLayout
-        fields = ['id', 'member', 'type', 'name', 'is_default', 'data']
+        fields = ['id', 'member', 'type', 'name', 'user_code', 'is_default', 'data']
 
 
 class ContextMenuLayoutSerializer(serializers.ModelSerializer):
@@ -53,7 +53,7 @@ class ContextMenuLayoutSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ContextMenuLayout
-        fields = ['id', 'member', 'type', 'name', 'data', 'origin_for_global_layout', 'sourced_from_global_layout']
+        fields = ['id', 'member', 'type', 'name',  'user_code', 'data', 'origin_for_global_layout', 'sourced_from_global_layout']
 
 
 class ListLayoutSerializer(serializers.ModelSerializer):
@@ -63,7 +63,7 @@ class ListLayoutSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ListLayout
-        fields = ['id', 'member', 'content_type', 'name', 'is_default', 'is_active', 'data', 'origin_for_global_layout', 'sourced_from_global_layout']
+        fields = ['id', 'member', 'content_type', 'name', 'user_code', 'is_default', 'is_active', 'data', 'origin_for_global_layout', 'sourced_from_global_layout']
 
     def to_representation(self, instance):
 
@@ -100,7 +100,7 @@ class DashboardLayoutSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DashboardLayout
-        fields = ['id', 'member', 'name', 'is_default', 'is_active', 'data', 'origin_for_global_layout', 'sourced_from_global_layout']
+        fields = ['id', 'member', 'name', 'user_code', 'is_default', 'is_active', 'data', 'origin_for_global_layout', 'sourced_from_global_layout']
 
 
 class ConfigurationExportLayoutSerializer(serializers.ModelSerializer):

@@ -1237,8 +1237,15 @@ class ImportManager(object):
                                     # _l.info('Layout overwrite content_type %s ' % content_type)
                                     # _l.info('Layout import name %s ' % content_object['name'])
 
-                                    layout = ListLayout.objects.get(member=self.member, name=content_object['name'],
-                                                                    content_type=content_type)
+                                    if 'user_code' in content_object:  # TODO Remove Later (will be set to '' in recovery as default)
+
+                                        layout = ListLayout.objects.get(member=self.member, user_code=content_object['user_code'],
+                                                                        content_type=content_type)
+
+                                    else:
+
+                                        layout = ListLayout.objects.get(member=self.member, name=content_object['name'],
+                                                                        content_type=content_type)
 
                                     layout.data = content_object['data']
 
@@ -1302,8 +1309,14 @@ class ImportManager(object):
 
                                 try:
 
-                                    layout = ContextMenuLayout.objects.get(member=self.member, name=content_object['name'],
-                                                                    type=content_object['type'])
+                                    if 'user_code' in content_object:  # TODO Remove Later (will be set to '' in recovery as default)
+
+                                        layout = ContextMenuLayout.objects.get(member=self.member, user_code=content_object['user_code'],
+                                                                        type=content_object['type'])
+
+                                    else:
+                                        layout = ContextMenuLayout.objects.get(member=self.member, name=content_object['name'],
+                                                                               type=content_object['type'])
 
                                     layout.data = content_object['data']
 
@@ -1430,8 +1443,16 @@ class ImportManager(object):
 
                                 try:
 
-                                    layout = TemplateLayout.objects.get(member=self.member, name=content_object['name'],
-                                                                        type=content_object['type'])
+                                    if 'user_code' in content_object: # TODO Remove Later (will be set to '' in recovery as default)
+
+                                        layout = TemplateLayout.objects.get(member=self.member, user_code=content_object['user_code'],
+                                                                            type=content_object['type'])
+
+                                    else:
+
+                                        layout = TemplateLayout.objects.get(member=self.member, name=content_object['name'],
+                                                                            type=content_object['type'])
+
 
                                     layout.data = content_object['data']
 
@@ -1537,8 +1558,13 @@ class ImportManager(object):
 
                                 try:
 
-                                    layout = DashboardLayout.objects.get(member=self.member,
-                                                                         name=content_object['name'])
+                                    if 'user_code' in content_object:  # TODO Remove Later (will be set to '' in recovery as default)
+
+                                        layout = DashboardLayout.objects.get(member=self.member,
+                                                                             user_code=content_object['user_code'])
+                                    else:
+                                        layout = DashboardLayout.objects.get(member=self.member,
+                                                                             name=content_object['name'])
 
                                     layout.data = content_object['data']
 
