@@ -4,10 +4,10 @@ from django_filters.rest_framework import FilterSet
 
 from poms.common.filters import NoOpFilter, CharFilter
 from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet
-from poms.ui.models import TemplateListLayout, TemplateEditLayout, ListLayout, EditLayout, Bookmark, Configuration, \
+from poms.ui.models import  ListLayout, EditLayout, Bookmark, Configuration, \
     ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout
-from poms.ui.serializers import TemplateListLayoutSerializer, ListLayoutSerializer, TemplateEditLayoutSerializer, \
+from poms.ui.serializers import ListLayoutSerializer, \
     EditLayoutSerializer, BookmarkSerializer, ConfigurationSerializer, ConfigurationExportLayoutSerializer, \
     TransactionUserFieldSerializer, InstrumentUserFieldSerializer, PortalInterfaceAccessModelSerializer, \
     DashboardLayoutSerializer, TemplateLayoutSerializer, ContextMenuLayoutSerializer
@@ -111,63 +111,6 @@ class ContextMenuLayoutViewSet(AbstractModelViewSet):
     ordering_fields = [
         'type', 'name',
     ]
-
-
-class TemplateListLayoutFilterSet(FilterSet):
-    id = NoOpFilter()
-    is_default = django_filters.BooleanFilter()
-    name = CharFilter()
-    content_type = LayoutContentTypeFilter()
-
-    class Meta:
-        model = TemplateListLayout
-        fields = []
-
-
-class TemplateListLayoutViewSet(AbstractModelViewSet):
-    queryset = TemplateListLayout.objects.select_related(
-        'master_user',
-        'content_type'
-    )
-    serializer_class = TemplateListLayoutSerializer
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-    ]
-    filter_class = TemplateListLayoutFilterSet
-    permission_classes = AbstractModelViewSet.permission_classes + [
-        SuperUserOnly,
-    ]
-    ordering_fields = [
-        'content_type', 'name', 'is_default',
-    ]
-
-
-class TemplateEditLayoutFilterSet(FilterSet):
-    id = NoOpFilter()
-    content_type = LayoutContentTypeFilter()
-
-    class Meta:
-        model = TemplateEditLayout
-        fields = []
-
-
-class TemplateEditLayoutViewSet(AbstractModelViewSet):
-    queryset = TemplateEditLayout.objects.select_related(
-        'master_user',
-        'content_type'
-    )
-    serializer_class = TemplateEditLayoutSerializer
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-    ]
-    permission_classes = AbstractModelViewSet.permission_classes + [
-        SuperUserOnly,
-    ]
-    filter_class = TemplateEditLayoutFilterSet
-    ordering_fields = [
-        'content_type', 'name',
-    ]
-
 
 class ListLayoutFilterSet(FilterSet):
     id = NoOpFilter()

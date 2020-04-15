@@ -2,8 +2,8 @@ from django.contrib import admin
 
 from poms.common.admin import AbstractModelAdmin
 from poms.ui.filters import LayoutContentTypeFilter
-from poms.ui.models import TemplateListLayout, TemplateEditLayout, ListLayout, EditLayout, Bookmark, \
-    TransactionUserFieldModel, PortalInterfaceAccessModel, DashboardLayout, ContextMenuLayout
+from poms.ui.models import ListLayout, EditLayout, Bookmark, \
+    TransactionUserFieldModel, PortalInterfaceAccessModel, DashboardLayout, ContextMenuLayout, TemplateLayout
 
 
 class PortalInterfaceAccessModelAdmin(AbstractModelAdmin):
@@ -33,35 +33,10 @@ class TransactionUserFieldModelAdmin(BaseLayoutAdmin):
 
 admin.site.register(TransactionUserFieldModel, TransactionUserFieldModelAdmin)
 
-
-class TemplateListLayoutAdmin(BaseLayoutAdmin):
-    model = TemplateListLayout
-    master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'content_type', 'name']
-    list_select_related = ['master_user', 'content_type']
-    search_fields = ['id', 'name']
-    raw_id_fields = ['master_user']
-
-
-admin.site.register(TemplateListLayout, TemplateListLayoutAdmin)
-
-
-class TemplateEditLayoutAdmin(BaseLayoutAdmin):
-    model = TemplateEditLayout
-    master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'content_type']
-    list_select_related = ['master_user', 'content_type']
-    search_fields = ['id']
-    raw_id_fields = ['master_user']
-
-
-admin.site.register(TemplateEditLayout, TemplateEditLayoutAdmin)
-
-
 class ListLayoutAdmin(BaseLayoutAdmin):
     model = ListLayout
     master_user_path = 'member__master_user'
-    list_display = ['id', 'master_user', 'member', 'content_type', 'name']
+    list_display = ['id', 'master_user', 'member', 'content_type', 'name', 'user_code']
     list_select_related = ['member__master_user', 'member', 'content_type']
     search_fields = ['id', 'name']
     raw_id_fields = ['member']
@@ -77,7 +52,7 @@ admin.site.register(ListLayout, ListLayoutAdmin)
 class DashboardLayoutAdmin(BaseLayoutAdmin):
     model = DashboardLayout
     master_user_path = 'member__master_user'
-    list_display = ['id', 'master_user', 'member', 'name']
+    list_display = ['id', 'master_user', 'member', 'name', 'user_code']
     list_select_related = ['member__master_user', 'member'  ]
     search_fields = ['id', 'name']
     raw_id_fields = ['member']
@@ -93,8 +68,8 @@ admin.site.register(DashboardLayout, DashboardLayoutAdmin)
 class ContextMenuLayoutAdmin(BaseLayoutAdmin):
     model = ContextMenuLayout
     master_user_path = 'member__master_user'
-    list_display = ['id', 'master_user', 'member', 'name']
-    list_select_related = ['member__master_user', 'member'  ]
+    list_display = ['id', 'master_user', 'member', 'name', 'user_code']
+    list_select_related = ['member__master_user', 'member']
     search_fields = ['id', 'name']
     raw_id_fields = ['member']
 
@@ -105,6 +80,22 @@ class ContextMenuLayoutAdmin(BaseLayoutAdmin):
 
 
 admin.site.register(ContextMenuLayout, ContextMenuLayoutAdmin)
+
+class TemplateLayoutAdmin(BaseLayoutAdmin):
+    model = TemplateLayout
+    master_user_path = 'member__master_user'
+    list_display = ['id', 'master_user', 'member', 'name', 'user_code']
+    list_select_related = ['member__master_user', 'member']
+    search_fields = ['id', 'name']
+    raw_id_fields = ['member']
+
+    def master_user(self, obj):
+        return obj.member.master_user
+
+    master_user.admin_order_field = 'member__master_user'
+
+
+admin.site.register(TemplateLayout, TemplateLayoutAdmin)
 
 
 class EditLayoutAdmin(BaseLayoutAdmin):

@@ -22,14 +22,14 @@ from poms.integrations.models import PriceDownloadScheme, ProviderClass, Accrual
     InstrumentMapping, CounterpartyMapping, ResponsibleMapping, PortfolioMapping, Strategy1Mapping, Strategy2Mapping, \
     Strategy3Mapping, DailyPricingModelMapping, PaymentSizeDetailMapping, PriceDownloadSchemeMapping, \
     PricingAutomatedSchedule, ComplexTransactionImportScheme, ComplexTransactionImportSchemeInput, \
-    ComplexTransactionImportSchemeRule, ComplexTransactionImportSchemeField, ImportConfig
+    ComplexTransactionImportSchemeField, ImportConfig
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, Strategy2Subgroup, \
     Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
 from poms.tags.models import Tag
 from poms.transactions.models import TransactionClass, ActionClass, EventClass, NotificationClass, TransactionTypeGroup, \
     TransactionType, TransactionTypeInput, TransactionTypeActionInstrument, TransactionTypeActionTransaction
-from poms.ui.models import TemplateListLayout, TemplateEditLayout, ListLayout, EditLayout
+from poms.ui.models import ListLayout, EditLayout
 from poms.users.models import Group, Member
 
 _l = logging.getLogger('poms.users.cloner')
@@ -412,9 +412,6 @@ class FullDataCloner(object):
                                 'notes', 'content_types')
 
     def _ui(self):
-        self._simple_list_clone(TemplateListLayout, None, 'master_user', 'content_type', 'json_data', 'name',
-                                'is_default', pk_map=False)
-        self._simple_list_clone(TemplateEditLayout, None, 'master_user', 'content_type', 'json_data', pk_map=False)
 
         if self._source_owner:
             self._simple_list_clone(ListLayout, 'member__master_user', 'member', 'content_type', 'json_data', 'name',

@@ -8,7 +8,7 @@ from rest_framework import serializers
 from poms.layout_recovery.models import LayoutArchetype
 from poms.layout_recovery.utils import recursive_dict_fix
 from poms.ui.fields import LayoutContentTypeField, ListLayoutField
-from poms.ui.models import TemplateListLayout, TemplateEditLayout, ListLayout, EditLayout, Bookmark, Configuration, \
+from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
     ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout
 from poms.users.fields import MasterUserField, HiddenMemberField
@@ -45,26 +45,6 @@ class TemplateLayoutSerializer(serializers.ModelSerializer):
     class Meta:
         model = TemplateLayout
         fields = ['id', 'member', 'type', 'name', 'is_default', 'data']
-
-
-class TemplateListLayoutSerializer(serializers.ModelSerializer):
-    member = HiddenMemberField()
-    content_type = LayoutContentTypeField()
-    data = serializers.JSONField(allow_null=False)
-
-    class Meta:
-        model = TemplateListLayout
-        fields = ['id', 'member', 'content_type', 'name', 'is_default', 'data',]
-
-
-class TemplateEditLayoutSerializer(serializers.ModelSerializer):
-    master_user = MasterUserField()
-    content_type = LayoutContentTypeField()
-    data = serializers.JSONField(allow_null=False)
-
-    class Meta:
-        model = TemplateEditLayout
-        fields = ['id', 'master_user', 'content_type', 'data']
 
 
 class ContextMenuLayoutSerializer(serializers.ModelSerializer):

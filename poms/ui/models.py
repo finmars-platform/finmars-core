@@ -275,40 +275,6 @@ class BaseLayout(BaseUIModel):
     class Meta:
         abstract = True
 
-# DEPRECATED
-class TemplateListLayout(BaseLayout):
-    master_user = models.ForeignKey(MasterUser, related_name='template_list_layouts',
-                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
-    name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
-    user_code = models.CharField(max_length=25, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
-    is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
-
-    class Meta(BaseLayout.Meta):
-        unique_together = [
-            ['master_user', 'content_type', 'user_code'],
-        ]
-        ordering = ['name']
-
-    def save(self, *args, **kwargs):
-        if self.is_default:
-            qs = TemplateListLayout.objects.filter(master_user=self.master_user, content_type=self.content_type,
-                                                   is_default=True)
-            if self.pk:
-                qs = qs.exclude(pk=self.pk)
-            qs.update(is_default=False)
-        return super(TemplateListLayout, self).save(*args, **kwargs)
-
-# DEPRECATED
-class TemplateEditLayout(BaseLayout):
-    master_user = models.ForeignKey(MasterUser, related_name='edit_layouts', verbose_name=ugettext_lazy('master user'),
-                                    on_delete=models.CASCADE)
-
-    class Meta(BaseLayout.Meta):
-        unique_together = [
-            ['master_user', 'content_type'],
-        ]
-        ordering = ['content_type']
-
 
 class ListLayout(BaseLayout):
     member = models.ForeignKey(Member, related_name='template_list_layouts', verbose_name=ugettext_lazy('member'),
