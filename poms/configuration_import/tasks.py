@@ -899,35 +899,35 @@ class ImportManager(object):
                             item = TransactionType.objects.get(master_user=self.master_user,
                                                                user_code=content_object['___factor_down__user_code'])
                             instrument_type.factor_down = item
-                        except TransactionType.DoesNotExist:
+                        except (TransactionType.DoesNotExist, KeyError):
                             instrument_type.factor_down_id = self.ecosystem_default.transaction_type.pk
 
                         try:
                             item = TransactionType.objects.get(master_user=self.master_user,
                                                                user_code=content_object['___factor_same__user_code'])
                             instrument_type.factor_same = item
-                        except TransactionType.DoesNotExist:
+                        except (TransactionType.DoesNotExist, KeyError):
                             instrument_type.factor_same_id = self.ecosystem_default.transaction_type.pk
 
                         try:
                             item = TransactionType.objects.get(master_user=self.master_user,
                                                                user_code=content_object['___factor_up__user_code'])
                             instrument_type.factor_up = item
-                        except TransactionType.DoesNotExist:
+                        except (TransactionType.DoesNotExist, KeyError):
                             instrument_type.factor_up_id = self.ecosystem_default.transaction_type.pk
 
                         try:
                             item = TransactionType.objects.get(master_user=self.master_user,
                                                                user_code=content_object['___one_off_event__user_code'])
                             instrument_type.one_off_event = item
-                        except TransactionType.DoesNotExist:
+                        except (TransactionType.DoesNotExist, KeyError):
                             instrument_type.one_off_event_id = self.ecosystem_default.transaction_type.pk
 
                         try:
                             item = TransactionType.objects.get(master_user=self.master_user,
                                                                user_code=content_object['___regular_event__user_code'])
                             instrument_type.regular_event = item
-                        except TransactionType.DoesNotExist:
+                        except (TransactionType.DoesNotExist, KeyError):
                             instrument_type.regular_event_id = self.ecosystem_default.transaction_type.pk
 
                         instrument_type.save()
