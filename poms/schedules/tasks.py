@@ -31,15 +31,29 @@ def process_pricing_procedures_schedules(self):
         with timezone.override(master_user.timezone or settings.TIME_ZONE):
             next_run_at = timezone.localtime(s.next_run_at)
             s.schedule(save=True)
-            _l.info('PricingSchedule: master_user=%s, next_run_at=%s',
+            _l.info('PricingSchedule: master_user=%s, next_run_at=%s. STARTED',
                     master_user.id, s.next_run_at)
 
             for procedure in s.pricing_procedures.all():
 
-                instance = PricingProcedureProcess(procedure=procedure, master_user=master_user)
-                instance.process()
+                try:
 
-                procedures_count = procedures_count + 1
+                    instance = PricingProcedureProcess(procedure=procedure, master_user=master_user)
+                    instance.process()
+
+                    _l.info('PricingSchedule: master_user=%s, next_run_at=%s. PROCESSED',
+                            master_user.id, s.next_run_at)
+
+                    procedures_count = procedures_count + 1
+
+                except Exception as e:
+
+                    _l.info('PricingSchedule: master_user=%s, next_run_at=%s. Error',
+                            master_user.id, s.next_run_at)
+
+                    _l.info('Error %s' % e)
+
+                    pass
 
         s.last_run_at = timezone.now()
         s.save(update_fields=['last_run_at'])
