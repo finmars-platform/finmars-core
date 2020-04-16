@@ -2629,38 +2629,54 @@ class ConfigurationDuplicateCheckViewSet(AbstractModelViewSet):
 
                 for item in entity['content']:
 
-                    # print('item %s' % item)
+                    if entity['entity'] in ['ui.bookmark', 'ui.listlayout', 'ui.reportlayout', 'ui.editlayout',
+                                            'ui.dashboardlayout', 'ui.templatelayout', 'ui.contextmenulayout']:
 
-                    if 'scheme_name' in item:
+                        if 'user_code' in item:
 
-                        if model.objects.filter(scheme_name=item['scheme_name'], master_user=master_user).exists():
-                            result_item['content'].append({'scheme_name': item['scheme_name'], 'is_duplicate': True})
-                        else:
-                            result_item['content'].append({'scheme_name': item['scheme_name'], 'is_duplicate': False})
-
-                    elif 'user_code' in item:
-
-                        if model.objects.filter(user_code=item['user_code'], master_user=master_user).exists():
-                            result_item['content'].append({'user_code': item['user_code'], 'is_duplicate': True})
-                        else:
-                            result_item['content'].append({'user_code': item['user_code'], 'is_duplicate': False})
-
-                    elif 'name' in item:
-
-                        if entity['entity'] in ['ui.transactionuserfieldmodel', 'ui.instrumentuserfieldmodel']:
-
-                            if model.objects.filter(key=item['key'], master_user=master_user).exists():
-                                result_item['content'].append({'name': item['name'], 'is_duplicate': True})
+                            if model.objects.filter(user_code=item['user_code'], member=member).exists():
+                                result_item['content'].append({'user_code': item['user_code'], 'is_duplicate': True})
+                            else:
+                                result_item['content'].append({'user_code': item['user_code'], 'is_duplicate': False})
 
                         else:
 
-                            if entity['entity'] in ['ui.bookmark', 'ui.listlayout', 'ui.reportlayout', 'ui.editlayout',
-                                                    'ui.dashboardlayout', 'ui.templatelayout', 'ui.contextmenulayout']:
+                            # DEPRECATED LOGIC
+                            # BEFORE 04.2020 LAYOUT ENTITIES HAD ONLY NAME PROPERTY
+                            # SOME OBSOLETE CONFIGURATION FILES CAN HAVE ONLY NAME PROPERTY
+                            # IT MEANS user_code WILL BE ALWAYS '' for them
+
+                            if 'name' in item:
 
                                 if model.objects.filter(name=item['name'], member=member).exists():
                                     result_item['content'].append({'name': item['name'], 'is_duplicate': True})
                                 else:
                                     result_item['content'].append({'name': item['name'], 'is_duplicate': False})
+
+                    else:
+
+                        # print('item %s' % item)
+
+                        if 'scheme_name' in item:
+
+                            if model.objects.filter(scheme_name=item['scheme_name'], master_user=master_user).exists():
+                                result_item['content'].append({'scheme_name': item['scheme_name'], 'is_duplicate': True})
+                            else:
+                                result_item['content'].append({'scheme_name': item['scheme_name'], 'is_duplicate': False})
+
+                        elif 'user_code' in item:
+
+                            if model.objects.filter(user_code=item['user_code'], master_user=master_user).exists():
+                                result_item['content'].append({'user_code': item['user_code'], 'is_duplicate': True})
+                            else:
+                                result_item['content'].append({'user_code': item['user_code'], 'is_duplicate': False})
+
+                        elif 'name' in item:
+
+                            if entity['entity'] in ['ui.transactionuserfieldmodel', 'ui.instrumentuserfieldmodel']:
+
+                                if model.objects.filter(key=item['key'], master_user=master_user).exists():
+                                    result_item['content'].append({'name': item['name'], 'is_duplicate': True})
 
                             else:
 

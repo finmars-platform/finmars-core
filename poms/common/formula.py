@@ -502,14 +502,11 @@ def _get_fx_rate(evaluator, date, currency, pricing_policy, default_value=0):
     context = evaluator.context
     master_user = get_master_user_from_context(context)
 
+    date = _parse_date(date)
     currency = _safe_get_currency(evaluator, currency)
     pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
 
     # TODO need master user check, security hole
-
-    print('date %s' % date)
-    print('pricing_policy %s' % pricing_policy)
-    print('currency %s' % currency)
 
     try:
         result = CurrencyHistory.objects.get(date=date, currency=currency,
@@ -533,6 +530,7 @@ def _add_fx_history(evaluator, date, currency, pricing_policy, fx_rate=0, overwr
     context = evaluator.context
     master_user = get_master_user_from_context(context)
 
+    date = _parse_date(date)
     pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
     currency = _safe_get_currency(evaluator, currency)
 
@@ -569,6 +567,7 @@ def _add_price_history(evaluator, date, instrument, pricing_policy, principal_pr
     context = evaluator.context
     master_user = get_master_user_from_context(context)
 
+    date = _parse_date(date)
     instrument = _safe_get_instrument(evaluator, instrument)
     pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
 
@@ -608,6 +607,8 @@ def _get_latest_principal_price(evaluator, date_from, date_to, instrument, prici
     context = evaluator.context
     master_user = get_master_user_from_context(context)
 
+    date_from = _parse_date(date_from)
+    date_to = _parse_date(date_to)
     instrument = _safe_get_instrument(evaluator, instrument)
     pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
 
@@ -632,6 +633,7 @@ def _get_price_history_principal_price(evaluator, date, instrument, pricing_poli
 
     # TODO need master user check, security hole
 
+    date = _parse_date(date)
     instrument = _safe_get_instrument(evaluator, instrument)
     pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
 
@@ -651,15 +653,21 @@ def _get_price_history_principal_price(evaluator, date, instrument, pricing_poli
 _get_price_history_principal_price.evaluator = True
 
 
-def _get_price_history_accrued_price(evaluator, date, instrument, pricing_policy, default_value=0):
+def _get_price_history_accrued_price(evaluator, date, instrument, pricing_policy, default_value=0, days_to_look_back=0):
     from poms.users.utils import get_master_user_from_context
     from poms.instruments.models import PriceHistory, Instrument, PricingPolicy
+
+    try:
+        days_to_look_back = int(days_to_look_back)
+    except TypeError:
+        raise ExpressionEvalError('Invalid Days To Look Back Value')
 
     context = evaluator.context
     master_user = get_master_user_from_context(context)
 
     # TODO need master user check, security hole
 
+    date = _parse_date(date)
     instrument = _safe_get_instrument(evaluator, instrument)
 
     master_user = get_master_user_from_context(context)
@@ -680,19 +688,75 @@ def _get_price_history_accrued_price(evaluator, date, instrument, pricing_policy
     if pricing_policy_pk is None:
         raise ExpressionEvalError('Invalid Pricing Policy')
 
-    try:
+    if days_to_look_back == 0:
 
-        result = PriceHistory.objects.get(date=date, instrument=instrument,
-                                          pricing_policy=pricing_policy_pk)
+        try:
 
-        return result.accrued_price
+            result = PriceHistory.objects.get(date=date, instrument=instrument,
+                                              pricing_policy_id=pricing_policy_pk)
 
-    except PriceHistory.DoesNotExist:
+            return result.accrued_price
 
-        return default_value
+        except PriceHistory.DoesNotExist:
+
+            return default_value
+
+    else:
+
+        date_from = None
+        date_to = None
+
+        if days_to_look_back < 0:
+            date_to = date
+            date_from = date - datetime.timedelta(days=abs(days_to_look_back))
+
+        else:
+            date_from = date
+            date_to = date + datetime.timedelta(days=abs(days_to_look_back))
+
+        print('_get_price_history_accrued_price date_from %s' % date_from)
+        print('_get_price_history_accrued_price date_to %s' % date_to)
+
+        prices = PriceHistory.objects.filter(date__gte=date_from, date_lte=date_to,
+                                             instrument=instrument,
+                                             pricing_policy_id=pricing_policy_pk).order_by('-date')
+
+        if len(prices):
+            return prices[0].defaul_value
+        else:
+            return default_value
 
 
 _get_price_history_accrued_price.evaluator = True
+
+
+def _get_next_coupon_date(evaluator, date, instrument):
+    from poms.users.utils import get_master_user_from_context
+    from poms.instruments.models import PriceHistory, Instrument, PricingPolicy
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    # TODO need master user check, security hole
+
+    date = _parse_date(date)
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    master_user = get_master_user_from_context(context)
+
+    items = instrument.get_future_coupons(begin_date=date, with_maturity=False)
+
+    if len(items):
+
+        next_date = items[0]
+
+        return next_date[0]
+
+    return None
+
+
+_get_next_coupon_date.evaluator = True
+
 
 
 def _get_factor_schedule(evaluator, date, instrument):
@@ -720,7 +784,7 @@ def _get_factor_schedule(evaluator, date, instrument):
             result = results[0]
         else:
             result = None
-        
+
     if result is not None:
         return result.factor_value
 
@@ -1402,6 +1466,7 @@ FUNCTIONS = [
     SimpleEval2Def('get_fx_rate', _get_fx_rate),
     SimpleEval2Def('get_principal_price', _get_price_history_principal_price),
     SimpleEval2Def('get_accrued_price', _get_price_history_accrued_price),
+    SimpleEval2Def('get_next_coupon_date', _get_next_coupon_date),
     SimpleEval2Def('get_factor', _get_factor_schedule),
     SimpleEval2Def('add_fx_history', _add_fx_history),
     SimpleEval2Def('add_price_history', _add_price_history),
