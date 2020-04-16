@@ -381,7 +381,6 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
                         print("Id is not Provided. Trying to lookup.")
 
                         o = InstrumentTypePricingPolicy.objects.get(instrument_type=instance,
-                                                                    pricing_scheme=item['pricing_scheme'],
                                                                     pricing_policy=item['pricing_policy'])
 
                         o.pricing_scheme = item['pricing_scheme']
@@ -625,7 +624,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
 
                         print("Id is not Provided. Trying to lookup.")
 
-                        o = InstrumentPricingPolicy.objects.get(instrument=instance, pricing_scheme=item['pricing_scheme'],
+                        o = InstrumentPricingPolicy.objects.get(instrument=instance,
                                                                 pricing_policy=item['pricing_policy'])
 
                         o.pricing_scheme = item['pricing_scheme']

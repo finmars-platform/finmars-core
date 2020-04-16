@@ -163,8 +163,10 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
 
                         print("Id is not Provided. Trying to lookup.")
 
+                        print('instance id %s' % instance)
+                        print('pricing scheme %s' % item['pricing_scheme'])
+
                         o = CurrencyPricingPolicy.objects.get(currency_id=instance.id,
-                                                              pricing_scheme=item['pricing_scheme'],
                                                               pricing_policy=item['pricing_policy']
                                                               )
 
