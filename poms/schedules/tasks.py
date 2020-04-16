@@ -31,8 +31,12 @@ def process_pricing_procedures_schedules(self):
         with timezone.override(master_user.timezone or settings.TIME_ZONE):
             next_run_at = timezone.localtime(s.next_run_at)
             s.schedule(save=True)
+
+
             _l.info('PricingSchedule: master_user=%s, next_run_at=%s. STARTED',
                     master_user.id, s.next_run_at)
+
+            _l.info('PricingSchedule: count %s' % len(s.pricing_procedures.all()))
 
             for procedure in s.pricing_procedures.all():
 
