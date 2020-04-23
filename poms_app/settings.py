@@ -492,40 +492,14 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose'
         },
-        'celery': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            # 'class': 'logging.handlers.GroupWriteRotatingFileHandler',
-            # 'filename': '/var/log/finmars/app/finmars-celery.log',
-            'filename': '/var/log/finmars/celery.log',
-            'formatter': 'verbose',
-            'maxBytes': 1024 * 1024 * 100,  # 100 mb
-        },
-        # 'mail_admins': {
-        #     'level': 'ERROR',
-        #     'class': 'django.utils.log.AdminEmailHandler',
-        #     'filters': ['require_debug_false']
-        # },
         'logstash': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            # 'class': 'logging.handlers.GroupWriteRotatingFileHandler',
             'filename': '/var/log/finmars/django.log',
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,
             'formatter': 'verbose'
         }
-        # 'logstash': {
-        #     'level': 'DEBUG',
-        #     'class': 'logstash.TCPLogstashHandler',
-        #     'host': LOGSTASH_HOST,
-        #     'port': 5000,
-        #     'version': 1,
-        #     # Version of logstash event schema. Default value: 0 (for backward compatibility of the library)
-        #     'message_type': 'django',  # 'type' field in logstash message. Default value: 'logstash'.
-        #     'fqdn': False,  # Fully qualified domain name. Default value: false.
-        #     'tags': ['django'],  # list of tags. Default: None.
-        # },
     },
     'loggers': {
         'py.warnings': {
@@ -556,12 +530,12 @@ LOGGING = {
         # },
         'poms': {
             'level': 'DEBUG',
-            'handlers': ['console', 'logstash', 'celery'],
+            'handlers': ['console', 'logstash'],
             'propagate': False,
         },
         'celery': {
             'level': 'INFO',
-            'handlers': ['console', 'logstash', 'celery'],
+            'handlers': ['console', 'logstash'],
         },
         'suds': {
             'level': 'INFO',
