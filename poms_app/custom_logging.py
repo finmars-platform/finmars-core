@@ -1,3 +1,4 @@
+import logging
 import os
 import stat
 from logging import handlers
@@ -9,3 +10,10 @@ class GroupWriteRotatingFileHandler(handlers.RotatingFileHandler):
         super().__init__(*args, **kwargs)
 
         os.chmod(self.baseFilename, 0o0777)
+
+    def _open(self):
+        prevumask=os.umask(0o002)
+
+        rtv=logging.handlers.RotatingFileHandler._open(self)
+        os.umask(prevumask)
+        return rtv
