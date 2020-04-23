@@ -469,9 +469,6 @@ LOGSTASH_HOST = os.environ.get('LOGSTASH_HOST', None)
 
 print('LOGSTASH_HOST %s' % LOGSTASH_HOST)
 
-from poms_app.custom_logging import GroupWriteRotatingFileHandler
-logging.handlers.GroupWriteRotatingFileHandler = GroupWriteRotatingFileHandler
-
 LOGGING = {
     'version': 1,
     'formatters': {
@@ -497,8 +494,8 @@ LOGGING = {
         },
         'celery': {
             'level': 'DEBUG',
-            # 'class': 'logging.handlers.RotatingFileHandler',
-            'class': 'logging.handlers.GroupWriteRotatingFileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
+            # 'class': 'logging.handlers.GroupWriteRotatingFileHandler',
             # 'filename': '/var/log/finmars/app/finmars-celery.log',
             'filename': '/var/log/finmars/celery.log',
             'formatter': 'verbose',
@@ -511,7 +508,8 @@ LOGGING = {
         # },
         'logstash': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.GroupWriteRotatingFileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
+            # 'class': 'logging.handlers.GroupWriteRotatingFileHandler',
             'filename': '/var/log/finmars/django.log',
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,
