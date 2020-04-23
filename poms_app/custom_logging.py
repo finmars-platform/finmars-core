@@ -15,5 +15,8 @@ class GroupWriteRotatingFileHandler(handlers.RotatingFileHandler):
         prevumask=os.umask(0o002)
 
         rtv=logging.handlers.RotatingFileHandler._open(self)
+
+        os.chmod(self.baseFilename, 0o0777)
+
         os.umask(prevumask)
         return rtv
