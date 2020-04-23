@@ -158,7 +158,7 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
 
         page = self.paginate_queryset(filtered_qs)
 
-        print("List %s seconds " % (time.time() - start_time))
+        _l.info("List %s seconds " % (time.time() - start_time))
 
         if page is not None:
             return self.get_paginated_response(page)
@@ -303,7 +303,7 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
 
         serializer = self.get_serializer(page, many=True)
 
-        print("Filtered List %s seconds " % (time.time() - start_time))
+        _l.info("Filtered List %s seconds " % (time.time() - start_time))
 
         return self.get_paginated_response(serializer.data)
 
@@ -314,8 +314,6 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         # return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
-
-        print('AbstractModelViewSet create')
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)

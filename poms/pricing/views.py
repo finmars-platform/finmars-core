@@ -133,9 +133,9 @@ class PricingProcedureViewSet(AbstractModelViewSet):
     @action(detail=True, methods=['post'], url_path='run-procedure', serializer_class=RunProcedureSerializer)
     def run_procedure(self, request, pk=None):
 
-        print("Run Procedure %s" % pk)
+        _l.info("Run Procedure %s" % pk)
 
-        print("Request data %s" % request.data)
+        _l.info("Request data %s" % request.data)
 
         procedure = PricingProcedure.objects.get(pk=pk)
 
@@ -166,11 +166,11 @@ class PricingBrokerBloombergHandler(APIView):
 
     def post(self, request):
 
-        # print('request.data %s' % request.data)
+        # _l.info('request.data %s' % request.data)
 
         procedure_id = request.data['procedure']
 
-        print("> handle_callback broker bloomberg: procedure_id %s" % procedure_id)
+        _l.info("> handle_callback broker bloomberg: procedure_id %s" % procedure_id)
 
         try:
 
@@ -184,7 +184,7 @@ class PricingBrokerBloombergHandler(APIView):
 
         except PricingProcedureInstance.DoesNotExist:
 
-            print("Does not exist? Procedure %s" % procedure_id)
+            _l.info("Does not exist? Procedure %s" % procedure_id)
 
             return Response({'status': '404'})  # TODO handle 404 properly
 
@@ -197,11 +197,11 @@ class PricingBrokerWtradeHandler(APIView):
 
     def post(self, request):
 
-        # print('request.data %s' % request.data)
+        # _l.info('request.data %s' % request.data)
 
         procedure_id = request.data['procedure']
 
-        print("> handle_callback broker wtrade: procedure_id %s" % procedure_id)
+        _l.info("> handle_callback broker wtrade: procedure_id %s" % procedure_id)
 
         try:
 
@@ -215,7 +215,7 @@ class PricingBrokerWtradeHandler(APIView):
 
         except PricingProcedureInstance.DoesNotExist:
 
-            print("Does not exist? Procedure %s" % procedure_id)
+            _l.info("Does not exist? Procedure %s" % procedure_id)
 
             return Response({'status': '404'})  # TODO handle 404 properly
 
@@ -247,11 +247,11 @@ class PricingBrokerFixerHandler(APIView):
 
     def post(self, request):
 
-        # print('request.data %s' % request.data)
+        # _l.info('request.data %s' % request.data)
 
         procedure_id = request.data['procedure']
 
-        print("> handle_callback broker fixer: procedure_id %s" % procedure_id)
+        _l.info("> handle_callback broker fixer: procedure_id %s" % procedure_id)
 
         try:
 
@@ -265,7 +265,7 @@ class PricingBrokerFixerHandler(APIView):
 
         except PricingProcedureInstance.DoesNotExist:
 
-            print("Does not exist? Procedure %s" % procedure_id)
+            _l.info("Does not exist? Procedure %s" % procedure_id)
 
             return Response({'status': '404'})  # TODO handle 404 properly
 
