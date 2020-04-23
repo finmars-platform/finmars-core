@@ -9,7 +9,7 @@ class GroupWriteRotatingFileHandler(handlers.RotatingFileHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        os.chmod(self.baseFilename, 0o0777)
+        # os.chmod(self.baseFilename, 0o0777)
 
     def _open(self):
         prevumask=os.umask(0o002)
