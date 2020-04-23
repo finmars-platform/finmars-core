@@ -4,6 +4,7 @@ RUN apt-get update && \
     apt-get install -y apt-utils && \
     apt-get upgrade -y && \
     apt-get install -y \
+        htop \
         openssl libssl-dev \
         python3-dev python3-pip python3-venv python3-setuptools python3-wheel \
         libpq-dev libgdal-dev libgeos-dev libproj-dev \
@@ -32,7 +33,7 @@ RUN mkdir -p /var/app-data/import/files/
 RUN chmod -R 777 /var/app-data/
 
 RUN mkdir -p /var/log/finmars
-RUN chmod -R 777 /var/log/finmars
+RUN chown -R www-data:www-data /var/log/finmars/
 
 COPY docker/celeryd /etc/init.d/celeryd
 COPY docker/celeryd-config /etc/default/celeryd
