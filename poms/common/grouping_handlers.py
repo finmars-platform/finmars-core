@@ -12,6 +12,10 @@ from django.db.models import Q
 
 import time
 
+import logging
+
+_l = logging.getLogger('poms.common')
+
 
 def get_root_dynamic_attr_group(qs, root_group, groups_order):
     start_time = time.time()
@@ -67,7 +71,7 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
     if groups_order == 'desc':
         qs = qs.order_by(F('group_name').desc())
 
-    print("get_root_dynamic_attr_group %s seconds " % (time.time() - start_time))
+    _l.info("get_root_dynamic_attr_group %s seconds " % (time.time() - start_time))
 
     return qs
 
@@ -196,7 +200,7 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
     if groups_order == 'desc':
         qs = qs.order_by(F('group_name').desc())
 
-    print("get_last_dynamic_attr_group %s seconds " % (time.time() - start_time))
+    _l.info("get_last_dynamic_attr_group %s seconds " % (time.time() - start_time))
 
     return qs
 
@@ -327,7 +331,7 @@ def get_queryset_filters(qs, groups_types, groups_values, original_qs):
 
         i = i + 1
 
-    print("get_queryset_filters %s seconds " % (time.time() - start_time))
+    _l.info("get_queryset_filters %s seconds " % (time.time() - start_time))
 
     # original_qs = original_qs.filter(id__in=qs)
 
@@ -390,6 +394,6 @@ def handle_groups(qs, groups_types, groups_values, groups_order, master_user, or
 
     # print('handle_groups  %s' % qs)
 
-    print("handle_groups %s seconds " % (time.time() - start_time))
+    _l.info("handle_groups %s seconds " % (time.time() - start_time))
 
     return qs

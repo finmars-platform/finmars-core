@@ -14,6 +14,10 @@ from django.db.models import Q
 
 import time
 
+import logging
+
+_l = logging.getLogger('poms.common')
+
 
 class ValueType:
     STRING = '10'
@@ -52,8 +56,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
 
     attributes_qs = GenericAttribute.objects.filter(attribute_type=attribute_type)
 
-    print('attribute_type.value_type %s' % attribute_type.value_type)
-    print('value_type %s' % value_type)
+    # print('attribute_type.value_type %s' % attribute_type.value_type)
+    # print('value_type %s' % value_type)
 
     # CLASSIFIER FILTERS START
 
@@ -444,8 +448,8 @@ def add_filter(qs, filter_config):
                 include_null_options[key + '__name__isnull'] = True
                 include_empty_string_options[key + '__name'] = ''
 
-            print('include_null_options %s' % include_null_options)
-            print('options %s' % options)
+            # print('include_null_options %s' % include_null_options)
+            # print('options %s' % options)
 
             qs = qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
@@ -496,8 +500,8 @@ def add_filter(qs, filter_config):
                 include_null_options[key + '__isnull'] = True
                 include_empty_string_options[key] = ''
 
-            print('include_null_options %s' % include_null_options)
-            print('options %s' % options)
+            # print('include_null_options %s' % include_null_options)
+            # print('options %s' % options)
 
             qs = qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
@@ -562,7 +566,7 @@ def add_filter(qs, filter_config):
             if exclude_empty_cells:
                 exclude_empty_cells_options[key + '__isnull'] = True
 
-            print('exclude_empty_cells_options %s' % exclude_empty_cells_options)
+            # print('exclude_empty_cells_options %s' % exclude_empty_cells_options)
 
             qs = qs.exclude(Q(**options) | Q(**exclude_empty_cells_options))
 
@@ -809,6 +813,6 @@ def handle_filters(qs, filter_settings, master_user, content_type):
             else:
                 qs = add_filter(qs, filter_config)
 
-    print("handle_filters done in %s seconds " % (time.time() - start_time))
+    _l.info("handle_filters done in %s seconds " % (time.time() - start_time))
 
     return qs

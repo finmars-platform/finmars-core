@@ -21,6 +21,10 @@ from django.core.exceptions import ImproperlyConfigured
 
 import time
 
+import logging
+
+_l = logging.getLogger('poms.common')
+
 
 # class ClassifierFilter(BaseFilterBackend):
 #     def filter_queryset(self, request, queryset, view):
@@ -69,9 +73,6 @@ def is_scheme(item):
 
 def _model_choices(model, field_name, master_user_path):
     master_user = get_request().user.master_user
-
-    print('model %s' % model)
-    print('field_name %s' % field_name)
 
     qs = model.objects.filter(**{master_user_path: master_user}).order_by(field_name)
 
@@ -177,8 +178,6 @@ class GroupsAttributeFilter(BaseFilterBackend):
         return group_type
 
     def filter_queryset(self, request, queryset, view):
-
-        print('GroupsAttributeFilter')
 
         start_time = time.time()
 
@@ -300,7 +299,7 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
                 i = i + 1
 
-        print("GroupsAttributeFilter done in %s seconds " % (time.time() - start_time))
+        _l.info("GroupsAttributeFilter done in %s seconds " % (time.time() - start_time))
 
         return queryset
 
@@ -317,8 +316,6 @@ class AttributeFilter(BaseFilterBackend):
         return group_type
 
     def filter_queryset(self, request, queryset, view):
-
-        print('Attributes Filter')
 
         start_time = time.time()
 
@@ -435,7 +432,7 @@ class AttributeFilter(BaseFilterBackend):
 
         # print('AttributeFilter qs len %s' % len(queryset))
 
-        # print("AttributeFilter.filter_queryset %s seconds " % (time.time() - start_time))
+        _l.info("AttributeFilter.filter_queryset %s seconds " % (time.time() - start_time))
 
         return queryset
 
