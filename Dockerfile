@@ -5,6 +5,7 @@ RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y \
         htop \
+        curl \
         openssl libssl-dev \
         python3-dev python3-pip python3-venv python3-setuptools python3-wheel \
         libpq-dev libgdal-dev libgeos-dev libproj-dev \
@@ -14,6 +15,8 @@ RUN apt-get update && \
         supervisor && \
     rm -rf /var/lib/apt/lists/*
 
+RUN curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.6.2-amd64.deb && \
+    dpkg -i filebeat-7.6.2-amd64.deb
 
 ADD requirements.txt /var/app/
 RUN pyvenv-3.5 /var/app-venv
@@ -43,6 +46,8 @@ COPY docker/celerybeat-config /etc/default/celerybeat
 
 COPY docker/uwsgi-www.ini /etc/uwsgi/finmars-vassals/finmars-www.ini
 COPY docker/uwsgi-emperor.ini /etc/uwsgi/apps-enabled/finmars.ini
+
+COPY docker/filebeat-config /etc/default/filebeat.yml
 
 RUN chmod +x /var/app/docker/finmars-run.sh
 RUN chmod +x /etc/init.d/celeryd

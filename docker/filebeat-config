@@ -1,0 +1,13 @@
+filebeat.inputs:
+- type: log
+  enabled: true
+  paths:
+    - /var/log/finmars/*
+  multiline.pattern: '^\['
+  multiline.negate: true
+  multiline.match: after
+
+  encoding: 'utf8'
+
+output.logstash:
+  hosts: ["18.185.108.86:5044"]
