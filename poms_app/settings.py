@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/1.9/ref/settings/
 from __future__ import unicode_literals
 
 import json
+import logging
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -22,6 +23,7 @@ from django.utils.translation import ugettext_lazy
 import boto3
 import base64
 from botocore.exceptions import ClientError
+
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -467,6 +469,9 @@ LOGSTASH_HOST = os.environ.get('LOGSTASH_HOST', None)
 
 print('LOGSTASH_HOST %s' % LOGSTASH_HOST)
 
+from poms_app.custom_logging import GroupWriteRotatingFileHandler
+logging.handlers.GroupWriteRotatingFileHandler = GroupWriteRotatingFileHandler
+
 LOGGING = {
     'version': 1,
     'formatters': {
@@ -492,7 +497,8 @@ LOGGING = {
         },
         'celery': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
+            # 'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'logging.handlers.GroupWriteRotatingFileHandler',
             # 'filename': '/var/log/finmars/app/finmars-celery.log',
             'filename': '/var/log/finmars/celery.log',
             'formatter': 'verbose',
@@ -505,7 +511,7 @@ LOGGING = {
         # },
         'logstash': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'logging.handlers.GroupWriteRotatingFileHandler',
             'filename': '/var/log/finmars/django.log',
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,
