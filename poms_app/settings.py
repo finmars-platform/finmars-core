@@ -493,7 +493,7 @@ LOGGING = {
             'formatter': 'verbose'
         },
         'celery': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
             # 'class': 'logging.handlers.GroupWriteRotatingFileHandler',
             # 'filename': '/var/log/finmars/app/finmars-celery.log',
@@ -507,7 +507,7 @@ LOGGING = {
         #     'filters': ['require_debug_false']
         # },
         'logstash': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
             # 'class': 'logging.handlers.GroupWriteRotatingFileHandler',
             'filename': '/var/log/finmars/django.log',

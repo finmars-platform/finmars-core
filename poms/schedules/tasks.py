@@ -18,7 +18,8 @@ def process_pricing_procedures_schedules(self):
         is_enabled=True, next_run_at__lte=timezone.now()
     )
 
-    _l.info('Schedules initialized: %s', schedule_qs.count())
+    if schedule_qs.count():
+        _l.info('Schedules initialized: %s', schedule_qs.count())
 
     # TODO tmp limit
 
@@ -62,4 +63,5 @@ def process_pricing_procedures_schedules(self):
         s.last_run_at = timezone.now()
         s.save(update_fields=['last_run_at'])
 
-    _l.info('Finished. Procedures initialized: %s' % procedures_count)
+    if procedures_count:
+        _l.info('Finished. Procedures initialized: %s' % procedures_count)
