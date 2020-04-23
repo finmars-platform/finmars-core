@@ -31,8 +31,8 @@ RUN mkdir -p /var/app-data/import/configs/
 RUN mkdir -p /var/app-data/import/files/
 RUN chmod -R 777 /var/app-data/
 
-RUN mkir -p /var/logs/finmars
-RUN chmod -R 77 /var/logs/finmars
+RUN mkdir -p /var/logs/finmars
+RUN chmod -R 777 /var/logs/finmars
 
 COPY docker/celeryd /etc/init.d/celeryd
 COPY docker/celeryd-config /etc/default/celeryd

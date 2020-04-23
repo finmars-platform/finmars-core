@@ -493,7 +493,6 @@ LOGGING = {
         'celery': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
-            'delay': True,
             # 'filename': '/var/log/finmars/app/finmars-celery.log',
             'filename': '/var/log/finmars/celery.log',
             'formatter': 'verbose',
@@ -508,7 +507,6 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': '/var/log/finmars/django.log',
-            'delay': True,
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,
             'formatter': 'verbose'
