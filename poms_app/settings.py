@@ -465,12 +465,15 @@ SESSION_CACHE_ALIAS = 'http_session'
 
 LOGSTASH_HOST = os.environ.get('LOGSTASH_HOST', None)
 
+print('LOGSTASH_HOST %s' % LOGSTASH_HOST)
+
 LOGGING = {
     'version': 1,
     'formatters': {
         'verbose': {
             # 'format': '%(asctime)s %(levelname)s %(process)d/%(thread)d %(module)s - %(message)s'
-            'format': '[%(levelname)1.1s %(asctime)s %(process)d:%(thread)d %(name)s %(module)s:%(lineno)d] %(message)s',
+            # 'format': '[%(levelname)1.1s %(asctime)s %(process)d:%(thread)d %(name)s %(module)s:%(lineno)d] %(message)s',
+            'format': '[%(levelname)s] [%(asctime)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s',
         },
     },
     'filters': {
@@ -490,7 +493,8 @@ LOGGING = {
         'celery': {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': '/var/log/uwsgi/app/finmars-celery.log',
+            # 'filename': '/var/log/finmars/app/finmars-celery.log',
+            'filename': '/var/log/finmars/celery.log',
             'formatter': 'verbose',
             'maxBytes': 1024 * 1024 * 100,  # 100 mb
         },
@@ -500,36 +504,44 @@ LOGGING = {
         #     'filters': ['require_debug_false']
         # },
         'logstash': {
-            'level': 'WARNING',
-            'class': 'logstash.TCPLogstashHandler',
-            'host': LOGSTASH_HOST,
-            'port': 5000,
-            'version': 1,
-            # Version of logstash event schema. Default value: 0 (for backward compatibility of the library)
-            'message_type': 'django',  # 'type' field in logstash message. Default value: 'logstash'.
-            'fqdn': False,  # Fully qualified domain name. Default value: false.
-            'tags': ['django.request'],  # list of tags. Default: None.
-        },
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': '/var/log/finmars/django.log',
+            'maxBytes': 1024*1024*15,  # 15MB
+            'backupCount': 10,
+            'formatter': 'verbose'
+        }
+        # 'logstash': {
+        #     'level': 'DEBUG',
+        #     'class': 'logstash.TCPLogstashHandler',
+        #     'host': LOGSTASH_HOST,
+        #     'port': 5000,
+        #     'version': 1,
+        #     # Version of logstash event schema. Default value: 0 (for backward compatibility of the library)
+        #     'message_type': 'django',  # 'type' field in logstash message. Default value: 'logstash'.
+        #     'fqdn': False,  # Fully qualified domain name. Default value: false.
+        #     'tags': ['django'],  # list of tags. Default: None.
+        # },
     },
     'loggers': {
         'py.warnings': {
-            'handlers': ['console', 'logstash'],
+            'handlers': ['console'],
             'propagate': False,
         },
         'django': {
             'level': 'INFO',
-            'handlers': ['console', 'logstash'],
+            'handlers': ['console'],
             'propagate': False,
         },
         'django_test': {
-            'handlers': ['console', 'logstash'],
+            'handlers': ['console'],
             'level': 'DEBUG',
         },
-        'django.request': {
-            'handlers': ['logstash'],
-            'level': 'WARNING',
-            'propagate': True,
-        },
+        # 'django.request': {
+        #     'handlers': ['logstash'],
+        #     'level': 'DEBUG',
+        #     'propagate': True,
+        # },
         # 'django.request': {
         #     'handlers': ['console', 'mail_admins'],
         #     'level': 'ERROR',

@@ -6,13 +6,21 @@
 
 echo "Finmars"
 
-echo "Create celery log file /var/log/uwsgi/app/finmars-celery.log"
+echo "Create Finmars log file /var/log/finmars/"
 
-touch /var/log/uwsgi/app/finmars-celery.log
+mkdir /var/log/finmars/
 
-echo "set chmod 777 /var/log/uwsgi/app/finmars-celery.log"
+echo "set chmod 777 /var/log/finmars/"
 
-chmod 777 /var/log/uwsgi/app/finmars-celery.log
+chmod 777 /var/log/finmars/
+
+echo "Create celery log file /var/log/finmars/celery.log"
+
+touch /var/log/finmars/celery.log
+
+echo "set chmod 777 /var/log/finmars/celery.log"
+
+chmod 777 /var/log/finmars/celery.log
 
 echo "Migrating"
 
