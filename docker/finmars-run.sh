@@ -52,6 +52,10 @@ export DJANGO_SETTINGS_MODULE=poms_app.settings
 
 /etc/init.d/celerybeat start
 
+echo "Run Filebeat"
+
+service filebeat start
+
 echo "Run uwsgi"
 
 /usr/bin/uwsgi /etc/uwsgi/apps-enabled/finmars.ini
