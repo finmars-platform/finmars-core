@@ -705,8 +705,8 @@ if BackendRole.ALL in BACKEND_ROLES or BackendRole.DATA_PROVIDER in BACKEND_ROLE
     print("Role: DATA_PROVIDER. CELERY BEAT SCHEDULE INITIALIZED")
 
     CELERY_BEAT_SCHEDULE = {
-        'integrations.process_pricing_procedures_schedules': {
-            'task': 'schedules.process_pricing_procedures_schedules',
+        'schedules.auto_process_pricing_procedures_schedules': {
+            'task': 'schedules.auto_process_pricing_procedures_schedules',
             'schedule': crontab(minute='0,10,20,30,40,50'),
         },
         'instruments.generate_events_do_not_inform_apply_default': {

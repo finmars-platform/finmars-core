@@ -21,3 +21,13 @@ class PricingScheduleSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['last_run_at', 'next_run_at']
 
+
+class RunScheduleSerializer(serializers.Serializer):
+
+    schedules = serializers.CharField(allow_blank=False)
+
+    def __init__(self, **kwargs):
+        kwargs['context'] = context = kwargs.get('context', {}) or {}
+        super(RunScheduleSerializer, self).__init__(**kwargs)
+        context['instance'] = self.instance
+
