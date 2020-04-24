@@ -19,9 +19,9 @@ def process_pricing_procedure_async(self, procedure, master_user):
     from time import sleep
     from random import randint
 
-    val = randint(5, 10)
-
-    _l.info("PricingSchedule: Sleep for %s seconds" % val)
+    # val = randint(5, 10)
+    #
+    # _l.info("PricingSchedule: Sleep for %s seconds" % val)
 
     # sleep(val)
     instance.process()
