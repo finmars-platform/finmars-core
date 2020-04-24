@@ -41,20 +41,20 @@ class TransactionReportBuilder(BaseReportBuilder):
 
     def build(self):
         st = time.perf_counter()
-        _l.debug('build transaction')
+        _l.info('build transaction')
 
         with transaction.atomic():
             try:
                 # if settings.DEBUG:
-                #     _l.debug('> _make_transactions')
+                #     _l.info('> _make_transactions')
                 #     self._make_transactions(10000)
-                #     _l.debug('< _make_transactions')
+                #     _l.info('< _make_transactions')
 
                 load_st = time.perf_counter()
 
                 self._load()
 
-                _l.debug('build load_st done: %s', (time.perf_counter() - load_st))
+                _l.info('build load_st done: %s', (time.perf_counter() - load_st))
 
                 # self._set_trns_refs(self._transactions)
 
@@ -62,13 +62,13 @@ class TransactionReportBuilder(BaseReportBuilder):
 
                 self._items = [TransactionReportItem(self.instance, trn=t) for t in self._transactions]
                 self.instance.items = self._items
-                _l.debug('build to_transaction_report_item done: %s', (time.perf_counter() - to_transaction_report_item_st))
+                _l.info('build to_transaction_report_item done: %s', (time.perf_counter() - to_transaction_report_item_st))
 
                 _refresh_from_db_st = time.perf_counter()
 
                 self._refresh_from_db()
 
-                _l.debug('build refresh_from_db done: %s', (time.perf_counter() - _refresh_from_db_st))
+                _l.info('build refresh_from_db done: %s', (time.perf_counter() - _refresh_from_db_st))
 
                 # self._set_items_refs(self._items)
                 # self._update_instance()
@@ -77,7 +77,7 @@ class TransactionReportBuilder(BaseReportBuilder):
 
                 self.instance.close()
 
-                _l.debug('build close_st done: %s', (time.perf_counter() - close_st))
+                _l.info('build close_st done: %s', (time.perf_counter() - close_st))
 
             finally:
                 transaction.set_rollback(True)
@@ -87,9 +87,9 @@ class TransactionReportBuilder(BaseReportBuilder):
 
         self.instance.custom_fields = TransactionReportCustomField.objects.filter(master_user=self.instance.master_user)
 
-        _l.debug('build custom_fields_st done: %s', (time.perf_counter() - custom_fields_st))
+        _l.info('build custom_fields_st done: %s', (time.perf_counter() - custom_fields_st))
 
-        _l.debug('done: %s', (time.perf_counter() - st))
+        _l.info('done: %s', (time.perf_counter() - st))
 
         return self.instance
 
@@ -170,7 +170,7 @@ class TransactionReportBuilder(BaseReportBuilder):
 
         )
 
-        # _l.debug('_trn_qs_prefetch  done: %s', (time.perf_counter() - _qs_st))
+        # _l.info('_trn_qs_prefetch  done: %s', (time.perf_counter() - _qs_st))
 
         return qs
 
@@ -202,7 +202,7 @@ class TransactionReportBuilder(BaseReportBuilder):
         return qs
 
     def _load(self):
-        # _l.debug('> _load')
+        # _l.info('> _load')
 
         trn_qs_st = time.perf_counter()
 
@@ -215,10 +215,10 @@ class TransactionReportBuilder(BaseReportBuilder):
         trn_qs = self._trn_qs_permission_filter(trn_qs)
         trn_qs = self._trn_qs_filter(trn_qs)
 
-        _l.debug('_load_transactions trn_qs_st done: %s', (time.perf_counter() - trn_qs_st))
+        _l.info('_load_transactions trn_qs_st done: %s', (time.perf_counter() - trn_qs_st))
 
-        _l.debug('self.instance.begin_date %s', str(self.instance.begin_date))
-        _l.debug('self.instance.end_date: %s', str(self.instance.end_date))
+        _l.info('self.instance.begin_date %s', str(self.instance.begin_date))
+        _l.info('self.instance.end_date: %s', str(self.instance.end_date))
 
         filter_obj = {}
 
@@ -236,7 +236,7 @@ class TransactionReportBuilder(BaseReportBuilder):
 
         self._transactions = list(trn_qs)
 
-        _l.debug('_load len: %s', len(self._transactions))
+        _l.info('_load len: %s', len(self._transactions))
 
     def _refresh_from_db(self):
         # _l.info('> _refresh_from_db')

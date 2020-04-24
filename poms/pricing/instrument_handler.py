@@ -397,10 +397,6 @@ class PricingInstrumentHandler(object):
                         except formula.InvalidExpression:
                             error.price_error_text = 'Invalid Error Text Expression'
 
-                    _l.info("Error here? %s" % has_error)
-
-                    _l.info('principal_price %s' % principal_price)
-
                     if scheme_parameters.accrual_calculation_method == 2:  # ACCRUAL_PER_SCHEDULE
 
                         try:
