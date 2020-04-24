@@ -359,26 +359,27 @@ class FillPricesBrokerBloombergProcess(object):
 
                 _l.info('Create new %s' % price)
 
+            price.principal_price = 0
+            price.accrued_price = 0
+
+            if principal_price:
+                price.principal_price = principal_price
+                error.principal_price = principal_price
+
+            if accrued_price:
+                price.accrued_price = accrued_price
+                error.accrued_price = accrued_price
+
             if can_write:
-
-                price.principal_price = 0
-                price.accrued_price = 0
-
-                if principal_price:
-                    price.principal_price = principal_price
-                    error.principal_price = principal_price
-
-                if accrued_price:
-                    price.accrued_price = accrued_price
-                    error.accrued_price = accrued_price
-
-                price.save()
 
                 if has_error:
                     error.save()
+                else:
+                    price.save()
+
             else:
 
-                error.error_text =  "Prices already exists. Principal Price: " + str(principal_price) +"; Accrued: "+ str(accrued_price) +"."
+                error.error_text = "Prices already exists. Principal Price: " + str(principal_price) +"; Accrued: "+ str(accrued_price) +"."
 
                 error.status = PriceHistoryError.STATUS_SKIP
                 error.save()
@@ -482,15 +483,17 @@ class FillPricesBrokerBloombergProcess(object):
 
                 _l.info('Create new %s' % price)
 
+            price.fx_rate = 0
+
+            if fx_rate:
+                price.fx_rate = fx_rate
+
             if can_write:
-
-                if fx_rate:
-                    price.fx_rate = fx_rate
-
-                price.save()
 
                 if has_error:
                     error.save()
+                else:
+                    price.save()
 
             else:
                 error.error_text = "Prices already exists. Fx rate: " + str(fx_rate) + "."
@@ -728,23 +731,24 @@ class FillPricesBrokerWtradeProcess(object):
 
                 _l.info('Create new %s' % price)
 
+
+            price.principal_price = 0
+            price.accrued_price = 0
+
+            if principal_price:
+                price.principal_price = principal_price
+                error.principal_price = principal_price
+
+            if accrued_price:
+                price.accrued_price = accrued_price
+                error.accrued_price = accrued_price
+
             if can_write:
-
-                price.principal_price = 0
-                price.accrued_price = 0
-
-                if principal_price:
-                    price.principal_price = principal_price
-                    error.principal_price = principal_price
-
-                if accrued_price:
-                    price.accrued_price = accrued_price
-                    error.accrued_price = accrued_price
-
-                price.save()
 
                 if has_error:
                     error.save()
+                else:
+                    price.save()
 
             else:
 
@@ -914,15 +918,17 @@ class FillPricesBrokerFixerProcess(object):
 
                 _l.info('Create new %s' % price)
 
+            price.fx_rate = 0
+
+            if fx_rate:
+                price.fx_rate = fx_rate
+
             if can_write:
-
-                if fx_rate:
-                    price.fx_rate = fx_rate
-
-                price.save()
 
                 if has_error:
                     error.save()
+                else:
+                    price.save()
 
             else:
                 error.error_text = "Prices already exists. Fx rate: " + str(fx_rate) + "."

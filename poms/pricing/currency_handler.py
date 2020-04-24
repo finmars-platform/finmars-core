@@ -377,15 +377,17 @@ class PricingCurrencyHandler(object):
                             date=date
                         )
 
+                    price.fx_rate = 0
+
+                    if fx_rate:
+                        price.fx_rate = fx_rate
+
                     if can_write:
-
-                        if fx_rate:
-                            price.fx_rate = fx_rate
-
-                        price.save()
 
                         if has_error:
                             error.save()
+                        else:
+                            price.save()
 
                     else:
 
@@ -599,15 +601,18 @@ class PricingCurrencyHandler(object):
 
                         _l.info('Create new %s' % price)
 
+                    price.fx_rate = 0
+
+                    if fx_rate:
+                        price.fx_rate = fx_rate
+
                     if can_write:
-
-                        if fx_rate:
-                            price.fx_rate = fx_rate
-
-                        price.save()
 
                         if has_error:
                             error.save()
+                        else:
+                            price.save()
+
                     else:
                         error.error_text = "Prices already exists. Fx rate: " + str(fx_rate) + "."
 

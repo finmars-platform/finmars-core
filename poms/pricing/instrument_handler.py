@@ -455,23 +455,24 @@ class PricingInstrumentHandler(object):
 
                         _l.info('Create new %s' % price)
 
+                    price.principal_price = 0
+                    price.accrued_price = 0
+
+                    if principal_price:
+                        price.principal_price = principal_price
+                        error.principal_price = principal_price
+
+                    if accrued_price:
+                        price.accrued_price = accrued_price
+                        error.accrued_price = accrued_price
+
                     if can_write:
-
-                        price.principal_price = 0
-                        price.accrued_price = 0
-
-                        if principal_price:
-                            price.principal_price = principal_price
-                            error.principal_price = principal_price
-
-                        if accrued_price:
-                            price.accrued_price = accrued_price
-                            error.accrued_price = accrued_price
-
-                        price.save()
 
                         if has_error:
                             error.save()
+                        else:
+                            price.save()
+
                     else:
 
                         error.error_text = "Prices already exists. Principal Price: " + str(principal_price) + "; Accrued: " + str(accrued_price) + "."
@@ -711,23 +712,23 @@ class PricingInstrumentHandler(object):
 
                         _l.info('Create new %s' % price)
 
+                    price.principal_price = 0
+                    price.accrued_price = 0
+
+                    if principal_price:
+                        price.principal_price = principal_price
+                        error.principal_price = principal_price
+
+                    if accrued_price:
+                        price.accrued_price = accrued_price
+                        error.accrued_price = accrued_price
+
                     if can_write:
-
-                        price.principal_price = 0
-                        price.accrued_price = 0
-
-                        if principal_price:
-                            price.principal_price = principal_price
-                            error.principal_price = principal_price
-
-                        if accrued_price:
-                            price.accrued_price = accrued_price
-                            error.accrued_price = accrued_price
-
-                        price.save()
 
                         if has_error:
                             error.save()
+                        else:
+                            price.save()
 
                     else:
 
