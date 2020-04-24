@@ -10,6 +10,22 @@ from poms.schedules.models import PricingSchedule
 
 _l = logging.getLogger('poms.schedules')
 
+@shared_task(name='schedules.process_pricing_procedure_async', bind=True, ignore_result=True)
+def process_pricing_procedure_async(self, procedure, master_user):
+
+    _l.info("PricingSchedule: Subprocess process_pricing_procedure_async. Master User: %s. Procedure: %s" % (master_user, procedure) )
+
+    instance = PricingProcedureProcess(procedure=procedure, master_user=master_user)
+    from time import sleep
+    from random import randint
+
+    val = randint(5, 10)
+
+    _l.info("PricingSchedule: Sleep for %s seconds" % val)
+
+    # sleep(val)
+    instance.process()
+
 
 @shared_task(name='schedules.process_pricing_procedures_schedules', bind=True, ignore_result=True)
 def process_pricing_procedures_schedules(self):
@@ -19,7 +35,7 @@ def process_pricing_procedures_schedules(self):
     )
 
     if schedule_qs.count():
-        _l.info('Schedules initialized: %s', schedule_qs.count())
+        _l.info('PricingSchedule: Schedules initialized: %s', schedule_qs.count())
 
     # TODO tmp limit
 
@@ -33,7 +49,6 @@ def process_pricing_procedures_schedules(self):
             next_run_at = timezone.localtime(s.next_run_at)
             s.schedule(save=True)
 
-
             _l.info('PricingSchedule: master_user=%s, next_run_at=%s. STARTED',
                     master_user.id, s.next_run_at)
 
@@ -43,8 +58,7 @@ def process_pricing_procedures_schedules(self):
 
                 try:
 
-                    instance = PricingProcedureProcess(procedure=procedure, master_user=master_user)
-                    instance.process()
+                    process_pricing_procedure_async.apply_async(kwargs={'procedure':procedure, 'master_user':master_user})
 
                     _l.info('PricingSchedule: master_user=%s, next_run_at=%s. PROCESSED',
                             master_user.id, s.next_run_at)
@@ -56,7 +70,7 @@ def process_pricing_procedures_schedules(self):
                     _l.info('PricingSchedule: master_user=%s, next_run_at=%s. Error',
                             master_user.id, s.next_run_at)
 
-                    _l.info('Error %s' % e)
+                    _l.info('PricingSchedule: Error %s' % e)
 
                     pass
 
@@ -64,4 +78,4 @@ def process_pricing_procedures_schedules(self):
         s.save(update_fields=['last_run_at'])
 
     if procedures_count:
-        _l.info('Finished. Procedures initialized: %s' % procedures_count)
+        _l.info('PricingSchedule: Finished. Procedures initialized: %s' % procedures_count)

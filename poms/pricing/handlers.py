@@ -26,6 +26,8 @@ class PricingProcedureProcess(object):
 
     def __init__(self, procedure=None, master_user=None, date_from=None, date_to=None):
 
+        _l.info('PricingProcedureProcess. Master user: %s. Procedure: %s' % (master_user, procedure))
+
         self.master_user = master_user
         self.procedure = procedure
 
