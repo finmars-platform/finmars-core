@@ -56,7 +56,7 @@ class BaseSchedule(NamedModel):
                     break
                 next_run_at = cron.get_next(datetime)
 
-        self.next_run_at = next_run_at
+        # self.next_run_at = next_run_at
 
         if save:
             self.save(update_fields=['last_run_at', 'next_run_at', ])
