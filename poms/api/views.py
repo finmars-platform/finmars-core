@@ -8,14 +8,19 @@ from babel.dates import get_timezone, get_timezone_gmt, get_timezone_name
 from django.conf import settings
 from django.http import HttpResponse
 from django.utils import translation, timezone
+from django.views.generic import TemplateView
 from rest_framework import response, schemas
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from poms.api.serializers import LanguageSerializer, Language, TimezoneSerializer, Timezone, ExpressionSerializer
 from poms.common.views import AbstractViewSet, AbstractApiView
 
 _languages = [Language(code, name) for code, name in settings.LANGUAGES]
+
+from django.views.decorators.cache import never_cache
+from django.http import HttpResponse, JsonResponse
 
 
 def index(request):

@@ -92,6 +92,8 @@ INSTALLED_APPS = [
 
     'mptt',
 
+    'healthcheck',
+
     'poms.system',
     'poms.http_sessions',
     'poms.users',

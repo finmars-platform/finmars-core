@@ -25,6 +25,7 @@ RUN /var/app-venv/bin/pip install -U pip wheel && /var/app-venv/bin/pip install 
 ADD docker/finmars-run.sh /var/app/docker/finmars-run.sh
 ADD data/ /var/app/data/
 ADD poms/ /var/app/poms/
+ADD healthcheck/ /var/app/healthcheck/
 ADD poms_app/ /var/app/poms_app/
 ADD manage.py /var/app/manage.py
 ADD requirements.txt /var/app/requirements.txt

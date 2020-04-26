@@ -40,6 +40,7 @@ import poms.configuration_sharing.views as configuration_sharing
 import poms.pricing.views as pricing
 import poms.schedules.views as schedules
 import poms.layout_recovery.views as layout_recovery
+from healthcheck.views import HealthcheckView
 
 router = routers.DefaultRouter()
 
@@ -386,6 +387,7 @@ router.register(r'recovery/layout', layout_recovery.FixLayoutViewSet, 'recovery_
 
 urlpatterns = [
     url(r'^v1/', include(router.urls)),
+    url(r'^healthcheck', HealthcheckView.as_view()),
 
     # external callbacks
 
