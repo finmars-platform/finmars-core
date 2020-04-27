@@ -692,13 +692,24 @@ class PricingProcedure(NamedModel):
     price_date_to_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                           verbose_name=ugettext_lazy('price date to expr'))
 
-    price_balance_date = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price balance date'))
-
-    price_balance_date_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                               verbose_name=ugettext_lazy('price balance date expr'))
+    # DEPRECATED since 27.04.2020
+    # price_balance_date = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price balance date'))
+    #
+    # price_balance_date_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+    #                                            verbose_name=ugettext_lazy('price balance date expr'))
 
     price_fill_days = models.PositiveSmallIntegerField(default=0, verbose_name=ugettext_lazy('price fill days'))
-    price_override_existed = models.BooleanField(default=True, verbose_name=ugettext_lazy('price override existed'))
+
+    # DEPRECATED since 27.04.2020
+    # price_override_existed = models.BooleanField(default=True, verbose_name=ugettext_lazy('price override existed'))
+
+    price_get_principal_prices = models.BooleanField(default=False, verbose_name=ugettext_lazy('price get principal prices'))
+    price_get_accrued_prices = models.BooleanField(default=False, verbose_name=ugettext_lazy('price get accrued prices'))
+    price_get_fx_rates = models.BooleanField(default=False, verbose_name=ugettext_lazy('price get fx rates'))
+
+    price_overwrite_principal_prices = models.BooleanField(default=False, verbose_name=ugettext_lazy('price overwrite principal prices'))
+    price_overwrite_accrued_prices = models.BooleanField(default=False, verbose_name=ugettext_lazy('price overwrite accrued prices'))
+    price_overwrite_fx_rates = models.BooleanField(default=False, verbose_name=ugettext_lazy('price overwrite fx rates'))
 
     # DEPRECATED since 21.02.2020
     # accrual_is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('accrual is active'))
@@ -714,9 +725,21 @@ class PricingProcedure(NamedModel):
     pricing_policy_filters = models.TextField(blank=True, default='',
                                               verbose_name=ugettext_lazy('pricing policy filters'))
 
-    instrument_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('instrument filters'))
+    portfolio_filters = models.TextField(blank=True, default='',
+                                              verbose_name=ugettext_lazy('portfolio filters'))
+
+    # DEPRECATED since 27.04.2020
+    # instrument_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('instrument filters'))
 
     instrument_type_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('instrument type filters'))
+
+    instrument_pricing_scheme_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('instrument pricing scheme filters'))
+
+    instrument_pricing_condition_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('instrument pricing condition filters'))
+
+    currency_pricing_scheme_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('currency pricing scheme filters'))
+
+    currency_pricing_condition_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('currency pricing condition filters'))
 
     class Meta:
         unique_together = (

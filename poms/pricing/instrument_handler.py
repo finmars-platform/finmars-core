@@ -125,7 +125,7 @@ class InstrumentItem(object):
 
 class PricingInstrumentHandler(object):
 
-    def __init__(self, procedure=None, parent_procedure=None, master_user=None, report=None):
+    def __init__(self, procedure=None, parent_procedure=None, master_user=None, base_transactions=None):
 
         self.master_user = master_user
         self.procedure = procedure
@@ -142,7 +142,7 @@ class PricingInstrumentHandler(object):
         # self.broker_bloomberg = BrokerBloomberg()
         self.transport = PricingTransport()
 
-        self.report = report
+        self.base_transactions = base_transactions
 
     def process(self):
 
@@ -190,50 +190,43 @@ class PricingInstrumentHandler(object):
             is_deleted=False
         ).exclude(user_code='-')
 
-        # instruments = instruments.filter(
-        #     pricing_condition__in=[PricingCondition.RUN_VALUATION_ALWAYS, PricingCondition.RUN_VALUATION_IF_NON_ZERO])
-
         instruments_opened = set()
         instruments_always = set()
 
-        for i in instruments:
+        # User configured pricing condition filters
+        active_pricing_conditions = []
 
-            if i.pricing_condition_id in [PricingCondition.RUN_VALUATION_ALWAYS, PricingCondition.RUN_VALUATION_IF_NON_ZERO]:
-                instruments_always.add(i.id)
+        if self.procedure.instrument_pricing_condition_filters:
+            active_pricing_conditions = list(map(int, self.procedure.instrument_pricing_condition_filters.split(",")))
 
-        # if self.procedure.price_balance_date:
-        #
-        #     owner_or_admin = self.procedure.master_user.members.filter(Q(is_owner=True) | Q(is_admin=True)).first()
-        #
-        #     report = Report(master_user=self.procedure.master_user, member=owner_or_admin,
-        #                     report_date=self.procedure.price_balance_date)
-        #
-        #     builder = ReportBuilder(instance=report)
-        #
-        #     builder.build_position_only()
-        #
-        #     for i in report.items:
-        #         if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
-        #             if i.instr:
-        #                 instruments_opened.add(i.instr.id)
+        # Add RUN_VALUATION_ALWAYS currencies only if pricing condition is enabled
+        if PricingCondition.RUN_VALUATION_ALWAYS in active_pricing_conditions:
 
-        if self.report:
-            for i in self.report.items:
-                if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
-                    if i.instr:
-                        instruments_opened.add(i.instr.id)
+            for i in instruments:
+
+                if i.pricing_condition_id in [PricingCondition.RUN_VALUATION_ALWAYS]:
+                    instruments_always.add(i.id)
+
+        # Add RUN_VALUATION_IF_NON_ZERO currencies only if pricing condition is enabled
+        if PricingCondition.RUN_VALUATION_IF_NON_ZERO in active_pricing_conditions:
+            if self.base_transactions:
+
+                instruments_positions = {}
+
+                for trn in self.base_transactions:
+
+                    if trn.instrument_id in instruments_positions:
+                        instruments_positions[trn.instrument_id] = instruments_positions[trn.instrument_id] + trn.position_size_with_sign
+                    else:
+
+                        instruments_positions[trn.instrument_id] = trn.position_size_with_sign
+
+                for id, pos in instruments_positions.items():
+                    if not isclose(i.pos, 0.0):
+
+                        instruments_opened.add(id)
 
         instruments = instruments.filter(pk__in=(instruments_always | instruments_opened))
-
-        # Filter by Procedure Filter Settings
-
-        # if self.procedure.instrument_filters:
-        #     for instrument in instruments:
-        #
-        #         if instrument.user_code in self.procedure.instrument_filters:
-        #             result.append(instrument)
-        # else:
-        #     result = instruments
 
         if self.procedure.instrument_type_filters:
             user_codes = self.procedure.instrument_type_filters.split(",")
@@ -256,19 +249,19 @@ class PricingInstrumentHandler(object):
 
             for policy in instrument.pricing_policies.all():
 
-                # Filter By Procedure Filter Settings
-                # TODO refactor soon
-
                 if policy.pricing_scheme:
 
+                    allowed_policy = True  # Policy that will pass all filters
+
+                    if self.procedure.instrument_pricing_scheme_filters:
+                        if policy.pricing_scheme.user_code not in self.procedure.instrument_pricing_scheme_filters:
+                            allowed_policy = False
+
                     if self.procedure.pricing_policy_filters:
+                        if policy.pricing_policy.user_code not in self.procedure.pricing_policy_filters:
+                            allowed_policy = False
 
-                        if policy.pricing_policy.user_code in self.procedure.pricing_policy_filters:
-                            item = InstrumentItem(instrument, policy, policy.pricing_scheme)
-
-                            result.append(item)
-
-                    else:
+                    if allowed_policy:
 
                         item = InstrumentItem(instrument, policy, policy.pricing_scheme)
 

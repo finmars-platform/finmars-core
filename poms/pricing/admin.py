@@ -72,7 +72,7 @@ admin.site.register(PricingProcedureWtradeInstrumentResult, PricingProcedureWtra
 
 class PricingProcedureAdmin(admin.ModelAdmin):
     model = PricingProcedure
-    list_display = ['id', 'name', 'master_user', 'notes', 'notes_for_users', 'price_date_from', 'price_date_to', 'price_balance_date']
+    list_display = ['id', 'name', 'master_user', 'notes', 'notes_for_users', 'price_date_from', 'price_date_to']
 
 
 admin.site.register(PricingProcedure, PricingProcedureAdmin)

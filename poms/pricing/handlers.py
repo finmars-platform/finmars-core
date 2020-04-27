@@ -18,6 +18,7 @@ import logging
 from poms.pricing.utils import roll_price_history_for_n_day_forward, roll_currency_history_for_n_day_forward
 from poms.reports.builders.balance_item import Report
 from poms.reports.builders.balance_pl import ReportBuilder
+from poms.transactions.models import Transaction
 
 _l = logging.getLogger('poms.pricing')
 
@@ -41,36 +42,53 @@ class PricingProcedureProcess(object):
 
         _l.info('price_date_from %s' % self.procedure.price_date_from)
         _l.info('price_date_to %s' % self.procedure.price_date_to)
-        _l.info('price_balance_date %s' % self.procedure.price_balance_date)
-
 
         self.parent_procedure = PricingParentProcedureInstance(pricing_procedure=procedure, master_user=master_user)
         self.parent_procedure.save()
 
-        self.report = self.build_report_positions_only()
+        self.base_transactions = self.get_base_transactions()
 
-        self.pricing_instrument_handler = PricingInstrumentHandler(procedure=procedure, parent_procedure=self.parent_procedure, master_user=master_user, report=self.report)
-        self.pricing_currency_handler = PricingCurrencyHandler(procedure=procedure, parent_procedure=self.parent_procedure, master_user=master_user, report=self.report)
+        self.pricing_instrument_handler = PricingInstrumentHandler(procedure=procedure, parent_procedure=self.parent_procedure, master_user=master_user, base_transactions=self.base_transactions)
+        self.pricing_currency_handler = PricingCurrencyHandler(procedure=procedure, parent_procedure=self.parent_procedure, master_user=master_user, base_transactions=self.base_transactions)
 
-        _l.info("Procedure settings - Overwrite: %s" % self.procedure.price_override_existed)
+        _l.info("Procedure settings - Get Principal Prices: %s" % self.procedure.price_get_principal_prices)
+        _l.info("Procedure settings - Get Accrued Prices: %s" % self.procedure.price_get_accrued_prices)
+        _l.info("Procedure settings - Get FX Rates: %s" % self.procedure.price_get_fx_rates)
+        _l.info("Procedure settings - Overwrite Principal Prices: %s" % self.procedure.price_overwrite_principal_prices)
+        _l.info("Procedure settings - Overwrite Accrued Prices: %s" % self.procedure.price_overwrite_accrued_prices)
+        _l.info("Procedure settings - Overwrite FX Rates: %s" % self.procedure.price_overwrite_fx_rates)
         _l.info("Procedure settings - Roll Days N Forward: %s" % self.procedure.price_fill_days)
 
-    def build_report_positions_only(self):
+    def get_base_transactions(self):
 
         processing_st = time.perf_counter()
 
-        owner_or_admin = self.procedure.master_user.members.filter(Q(is_owner=True) | Q(is_admin=True)).first()
+        results = Transaction.objects.filter(master_user=self.procedure.master_user)
 
-        report = Report(master_user=self.procedure.master_user, member=owner_or_admin,
-                        report_date=self.procedure.price_balance_date)
+        # We are looking for transaction with the earliest date from account/settlement dates
+        results = results.filter(Q(accounting_date__gt=self.procedure.price_date_from) | Q(cash_date__gt=self.procedure.price_date_from))
 
-        builder = ReportBuilder(instance=report)
+        # Here the same pattern, we are looking for the earliest date
+        # so firstly get slice by accounting date (order is not important, but we require both filters)
+        results = results.filter(accounting_date__lte=self.procedure.price_date_to)
+        # Then we filter our result even more
 
-        builder.build_position_only()
+        # Filter pattern in other words:
+        # date_from < Min(accounting_date, cash_date) <= date_to
 
-        _l.info('< build_report_positions_only : %s', (time.perf_counter() - processing_st))
+        results = results.filter(cash_date__lte=self.procedure.price_date_to)
 
-        return report
+        if self.procedure.portfolio_filters:
+
+            portfolio_user_codes = self.procedure.portfolio_filters.split(",")
+
+            results = results.filter(portfolio__user_code__in=portfolio_user_codes)
+
+        results = list(results)  # execute query
+
+        _l.info('< get_base_transactions : %s', (time.perf_counter() - processing_st))
+
+        return results
 
     def execute_procedure_date_expressions(self):
 
@@ -85,13 +103,6 @@ class PricingProcedureProcess(object):
                 self.procedure.price_date_to = formula.safe_eval(self.procedure.price_date_to_expr, names={})
             except formula.InvalidExpression as e:
                 _l.info("Cant execute price date to expression %s " % e)
-
-        if self.procedure.price_balance_date_expr:
-            try:
-                self.procedure.price_balance_date = formula.safe_eval(self.procedure.price_balance_date_expr, names={})
-            except formula.InvalidExpression as e:
-                _l.info("Cant execute balance date expression %s " % e)
-
 
     def process(self):
 

@@ -102,7 +102,7 @@ class CurrencyItem(object):
 
 class PricingCurrencyHandler(object):
 
-    def __init__(self, procedure=None, parent_procedure=None, master_user=None, report=None):
+    def __init__(self, procedure=None, parent_procedure=None, master_user=None, base_transactions=None):
 
         self.master_user = master_user
         self.procedure = procedure
@@ -119,7 +119,7 @@ class PricingCurrencyHandler(object):
         # self.broker_bloomberg = BrokerBloomberg()
         self.transport = PricingTransport()
 
-        self.report = report
+        self.base_transactions = base_transactions
 
     def process(self):
 
@@ -176,43 +176,39 @@ class PricingCurrencyHandler(object):
             is_deleted=False
         ).exclude(user_code='-')
 
-        # instruments = instruments.filter(
-        #     pricing_condition__in=[PricingCondition.RUN_VALUATION_ALWAYS, PricingCondition.RUN_VALUATION_IF_NON_ZERO])
-
         currencies_opened = set()
         currencies_always = set()
 
-        for i in currencies:
+        # TODO need task clarification
+        # User configured pricing condition filters
+        # active_pricing_conditions = []
+        #
+        # if self.procedure.instrument_pricing_condition_filters:
+        #     active_pricing_conditions = list(map(int, self.procedure.instrument_pricing_condition_filters.split(",")))
 
-            if i.pricing_condition_id in [PricingCondition.RUN_VALUATION_ALWAYS, PricingCondition.RUN_VALUATION_IF_NON_ZERO]:
-                currencies_always.add(i.id)
+        # Add RUN_VALUATION_ALWAYS currencies only if pricing condition is enabled
+        # if PricingCondition.RUN_VALUATION_ALWAYS in active_pricing_conditions:
+        #
+        #     for i in currencies:
+        #
+        #         if i.pricing_condition_id in [PricingCondition.RUN_VALUATION_ALWAYS]:
+        #             currencies_always.add(i.id)
 
-        # if self.procedure.price_balance_date:
+        # Add RUN_VALUATION_IF_NON_ZERO currencies only if pricing condition is enabled
+        # if PricingCondition.RUN_VALUATION_IF_NON_ZERO in active_pricing_conditions:
+        #     if self.base_transactions:
         #
-        #     owner_or_admin = self.procedure.master_user.members.filter(Q(is_owner=True) | Q(is_admin=True)).first()
-        #
-        #     report = Report(master_user=self.procedure.master_user, member=owner_or_admin,
-        #                     report_date=self.procedure.price_balance_date)
-        #
-        #     builder = ReportBuilder(instance=report)
-        #
-        #     builder.build_position_only()
-        #
-        #     for i in report.items:
-        #         if i.type == ReportItem.TYPE_CURRENCY and not isclose(i.pos_size, 0.0):
-        #             if i.instr:
-        #                 currencies_opened.add(i.instr.id)
+        #         for base_transaction in self.base_transactions:
+        #             if base_transaction.transaction_currency.pricing_condition_id in [PricingCondition.RUN_VALUATION_IF_NON_ZERO]:
+        #                 currencies_opened.add(base_transaction.transaction_currency.id)
 
-        if self.report:
+        if self.base_transactions:
 
-            for i in self.report.items:
-                if i.type == ReportItem.TYPE_CURRENCY and not isclose(i.pos_size, 0.0):
-                    if i.ccy:
-                        currencies_opened.add(i.ccy.id)
+            for base_transaction in self.base_transactions:
+
+                currencies_opened.add(base_transaction.transaction_currency.id)
 
         currencies = currencies.filter(pk__in=(currencies_always | currencies_opened))
-
-        # _l.info("After condition filter %s" % len(currencies))
 
         return currencies
 
@@ -226,9 +222,21 @@ class PricingCurrencyHandler(object):
 
                 if policy.pricing_scheme:
 
-                    item = CurrencyItem(currency, policy, policy.pricing_scheme)
+                    allowed_policy = True  # Policy that will pass all filters
 
-                    result.append(item)
+                    if self.procedure.currency_pricing_scheme_filters:
+                        if policy.pricing_scheme.user_code not in self.procedure.currency_pricing_scheme_filters:
+                            allowed_policy = False
+
+                    if self.procedure.pricing_policy_filters:
+                        if policy.pricing_policy.user_code not in self.procedure.pricing_policy_filters:
+                            allowed_policy = False
+
+                    if allowed_policy:
+
+                        item = CurrencyItem(currency, policy, policy.pricing_scheme)
+
+                        result.append(item)
 
         return result
 

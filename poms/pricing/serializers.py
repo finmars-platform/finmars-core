@@ -863,43 +863,32 @@ class PricingProcedureSerializer(serializers.ModelSerializer):
                                            allow_blank=True, default='')
     price_date_to_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True,
                                          allow_blank=True, default='')
-    price_balance_date_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True,
-                                              allow_blank=True, default='')
-
-    # accrual_date_from_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,default='')
-    # accrual_date_to_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,default='')
 
     class Meta:
         model = PricingProcedure
         fields = ('master_user', 'id', 'name', 'notes', 'notes_for_users',
                   'user_code',
-                  # 'price_is_active', 'accrual_is_active',
+
                   'price_date_from', 'price_date_to',
                   'price_date_from_expr', 'price_date_to_expr',
-                  'price_balance_date', 'price_balance_date_expr',
-                  'price_fill_days', 'price_override_existed',
-                  # 'accrual_date_from', 'accrual_date_to',
-                  # 'accrual_date_from_expr', 'accrual_date_to_expr',
 
-                  'pricing_policy_filters', 'instrument_filters',
-                  'instrument_type_filters'
+                  'price_fill_days',
+
+                  'price_get_principal_prices', 'price_get_accrued_prices', 'price_get_fx_rates',
+                  'price_overwrite_principal_prices', 'price_overwrite_accrued_prices', 'price_overwrite_fx_rates',
+
+                  'pricing_policy_filters',
+                  'portfolio_filters',
+                  'instrument_type_filters',
+                  'instrument_pricing_scheme_filters',
+                  'instrument_pricing_condition_filters',
+                  'currency_pricing_scheme_filters',
+                  'currency_pricing_condition_filters',
 
                   )
 
     def to_representation(self, instance):
         data = super(PricingProcedureSerializer, self).to_representation(instance)
-
-        if data['price_balance_date_expr']:
-
-            try:
-                data['price_balance_date_calculated'] = formula.safe_eval(data['price_balance_date_expr'], names={})
-            except formula.InvalidExpression as e:
-                data['price_balance_date_calculated'] = 'Invalid Expression'
-
-        else:
-            data['price_balance_date_calculated'] = data['price_balance_date']
-
-
 
         if data['price_date_from_expr']:
 
@@ -909,8 +898,6 @@ class PricingProcedureSerializer(serializers.ModelSerializer):
                 data['price_date_from_calculated'] = 'Invalid Expression'
         else:
             data['price_date_from_calculated'] = data['price_date_from']
-
-
 
         if data['price_date_to_expr']:
 
