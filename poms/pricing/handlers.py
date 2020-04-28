@@ -46,10 +46,8 @@ class PricingProcedureProcess(object):
         self.parent_procedure = PricingParentProcedureInstance(pricing_procedure=procedure, master_user=master_user)
         self.parent_procedure.save()
 
-        self.base_transactions = self.get_base_transactions()
-
-        self.pricing_instrument_handler = PricingInstrumentHandler(procedure=procedure, parent_procedure=self.parent_procedure, master_user=master_user, base_transactions=self.base_transactions)
-        self.pricing_currency_handler = PricingCurrencyHandler(procedure=procedure, parent_procedure=self.parent_procedure, master_user=master_user, base_transactions=self.base_transactions)
+        self.pricing_instrument_handler = PricingInstrumentHandler(procedure=procedure, parent_procedure=self.parent_procedure, master_user=master_user)
+        self.pricing_currency_handler = PricingCurrencyHandler(procedure=procedure, parent_procedure=self.parent_procedure, master_user=master_user)
 
         _l.info("Procedure settings - Get Principal Prices: %s" % self.procedure.price_get_principal_prices)
         _l.info("Procedure settings - Get Accrued Prices: %s" % self.procedure.price_get_accrued_prices)

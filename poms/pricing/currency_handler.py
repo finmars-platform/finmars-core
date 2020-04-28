@@ -1,3 +1,4 @@
+import time
 from datetime import timedelta
 
 from django.db import transaction
@@ -20,6 +21,7 @@ import logging
 
 from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
+from poms.transactions.models import Transaction
 
 _l = logging.getLogger('poms.pricing')
 
@@ -102,7 +104,7 @@ class CurrencyItem(object):
 
 class PricingCurrencyHandler(object):
 
-    def __init__(self, procedure=None, parent_procedure=None, master_user=None, base_transactions=None):
+    def __init__(self, procedure=None, parent_procedure=None, master_user=None):
 
         self.master_user = master_user
         self.procedure = procedure
@@ -118,8 +120,6 @@ class PricingCurrencyHandler(object):
 
         # self.broker_bloomberg = BrokerBloomberg()
         self.transport = PricingTransport()
-
-        self.base_transactions = base_transactions
 
     def process(self):
 
@@ -202,9 +202,24 @@ class PricingCurrencyHandler(object):
         #             if base_transaction.transaction_currency.pricing_condition_id in [PricingCondition.RUN_VALUATION_IF_NON_ZERO]:
         #                 currencies_opened.add(base_transaction.transaction_currency.id)
 
-        if self.base_transactions:
+        processing_st = time.perf_counter()
 
-            for base_transaction in self.base_transactions:
+        base_transactions = Transaction.objects.filter(master_user=self.procedure.master_user)
+
+        base_transactions = base_transactions.filter(Q(accounting_date__lte=self.procedure.price_date_to) | Q(cash_date__lte=self.procedure.price_date_to))
+
+        if self.procedure.portfolio_filters:
+
+            portfolio_user_codes = self.procedure.portfolio_filters.split(",")
+
+            base_transactions = base_transactions.filter(portfolio__user_code__in=portfolio_user_codes)
+
+        _l.info('< get_currencies base transactions len %s', len(base_transactions))
+        _l.info('< get_currencies base transactions done in %s', (time.perf_counter() - processing_st))
+
+        if len(list(base_transactions)):
+
+            for base_transaction in base_transactions:
 
                 currencies_opened.add(base_transaction.transaction_currency.id)
 

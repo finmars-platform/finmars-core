@@ -1,4 +1,5 @@
 import json
+import time
 from datetime import timedelta
 
 from django.db import transaction
@@ -19,6 +20,8 @@ from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
 
 import logging
+
+from poms.transactions.models import Transaction
 
 _l = logging.getLogger('poms.pricing')
 
@@ -125,7 +128,7 @@ class InstrumentItem(object):
 
 class PricingInstrumentHandler(object):
 
-    def __init__(self, procedure=None, parent_procedure=None, master_user=None, base_transactions=None):
+    def __init__(self, procedure=None, parent_procedure=None, master_user=None):
 
         self.master_user = master_user
         self.procedure = procedure
@@ -142,7 +145,6 @@ class PricingInstrumentHandler(object):
         # self.broker_bloomberg = BrokerBloomberg()
         self.transport = PricingTransport()
 
-        self.base_transactions = base_transactions
 
     def process(self):
 
@@ -209,22 +211,81 @@ class PricingInstrumentHandler(object):
 
         # Add RUN_VALUATION_IF_NON_ZERO currencies only if pricing condition is enabled
         if PricingCondition.RUN_VALUATION_IF_NON_ZERO in active_pricing_conditions:
-            if self.base_transactions:
+
+            # Here we have two steps
+            # Step "a" we took base transaction until procedure.price_date_from
+            # And take only that instruments with position size that is not size
+
+            # Step "b" we took base transactions from procedure.price_date_from (exclude)
+            # and procedure.price_date_to. Instruments from that query we add up to instruments from step "a"
+
+            # Step "a" starts here
+
+            processing_st_a = time.perf_counter()
+
+            base_transactions_a = Transaction.objects.filter(master_user=self.procedure.master_user)
+
+            base_transactions_a = base_transactions_a.filter(Q(accounting_date__lte=self.procedure.price_date_from) | Q(cash_date__lte=self.procedure.price_date_from))
+
+            if self.procedure.portfolio_filters:
+
+                portfolio_user_codes = self.procedure.portfolio_filters.split(",")
+
+                base_transactions_a = base_transactions_a.filter(portfolio__user_code__in=portfolio_user_codes)
+
+            _l.info('< get_instruments base transactions (step a) len %s', len(base_transactions_a))
+            _l.info('< get_instruments base transactions (step a) done in %s', (time.perf_counter() - processing_st_a))
+
+            if len(list(base_transactions_a)):
 
                 instruments_positions = {}
 
-                for trn in self.base_transactions:
+                for trn in base_transactions_a:
 
-                    if trn.instrument_id in instruments_positions:
-                        instruments_positions[trn.instrument_id] = instruments_positions[trn.instrument_id] + trn.position_size_with_sign
-                    else:
+                    if trn.instrument_id:
 
-                        instruments_positions[trn.instrument_id] = trn.position_size_with_sign
+                        if trn.instrument_id in instruments_positions:
+                            instruments_positions[trn.instrument_id] = instruments_positions[trn.instrument_id] + trn.position_size_with_sign
+                        else:
+
+                            instruments_positions[trn.instrument_id] = trn.position_size_with_sign
 
                 for id, pos in instruments_positions.items():
                     if not isclose(pos, 0.0):
 
                         instruments_opened.add(id)
+
+            _l.info('< get_instruments instruments_opened (step a) len %s' % len(instruments_opened))
+
+            # Step "a" ends here
+
+            # Step "b" starts here
+
+            processing_st_b = time.perf_counter()
+
+            base_transactions_b = Transaction.objects.filter(master_user=self.procedure.master_user)
+
+            base_transactions_b = base_transactions_b.filter(Q(accounting_date__gt=self.procedure.price_date_from) | Q(cash_date__gt=self.procedure.price_date_from))
+            base_transactions_b = base_transactions_b.filter(Q(accounting_date__lte=self.procedure.price_date_to) | Q(cash_date__lte=self.procedure.price_date_to))
+
+            if self.procedure.portfolio_filters:
+
+                portfolio_user_codes = self.procedure.portfolio_filters.split(",")
+
+                base_transactions_b = base_transactions_b.filter(portfolio__user_code__in=portfolio_user_codes)
+
+            _l.info('< get_instruments base transactions (step b) len %s', len(base_transactions_b))
+            _l.info('< get_instruments base transactions (step b) done in %s', (time.perf_counter() - processing_st_b))
+
+            for trn in base_transactions_b:
+
+                if trn.instrument_id:
+
+                    instruments_opened.add(trn.instrument_id)
+
+            _l.info('< get_instruments instruments_opened (step b) len %s' % len(instruments_opened))
+
+            # Step "b" ends here
 
         instruments = instruments.filter(pk__in=(instruments_always | instruments_opened))
 
