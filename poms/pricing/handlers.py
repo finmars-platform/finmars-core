@@ -65,18 +65,20 @@ class PricingProcedureProcess(object):
 
         results = Transaction.objects.filter(master_user=self.procedure.master_user)
 
+        results = results.filter(Q(accounting_date__lte=self.procedure.price_date_to) | Q(cash_date__lte=self.procedure.price_date_to))
+
         # We are looking for transaction with the earliest date from account/settlement dates
-        results = results.filter(Q(accounting_date__gt=self.procedure.price_date_from) | Q(cash_date__gt=self.procedure.price_date_from))
+        # results = results.filter(Q(accounting_date__gt=self.procedure.price_date_from) | Q(cash_date__gt=self.procedure.price_date_from))
 
         # Here the same pattern, we are looking for the earliest date
         # so firstly get slice by accounting date (order is not important, but we require both filters)
-        results = results.filter(accounting_date__lte=self.procedure.price_date_to)
+        # results = results.filter(accounting_date__lte=self.procedure.price_date_to)
         # Then we filter our result even more
 
         # Filter pattern in other words:
         # date_from < Min(accounting_date, cash_date) <= date_to
 
-        results = results.filter(cash_date__lte=self.procedure.price_date_to)
+        # results = results.filter(cash_date__lte=self.procedure.price_date_to)
 
         if self.procedure.portfolio_filters:
 
