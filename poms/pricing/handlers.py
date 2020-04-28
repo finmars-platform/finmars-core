@@ -86,7 +86,8 @@ class PricingProcedureProcess(object):
 
         results = list(results)  # execute query
 
-        _l.info('< get_base_transactions : %s', (time.perf_counter() - processing_st))
+        _l.info('< get_base_transactions len %s', len(results))
+        _l.info('< get_base_transactions done in %s', (time.perf_counter() - processing_st))
 
         return results
 
