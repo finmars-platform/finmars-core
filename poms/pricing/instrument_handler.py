@@ -222,7 +222,7 @@ class PricingInstrumentHandler(object):
                         instruments_positions[trn.instrument_id] = trn.position_size_with_sign
 
                 for id, pos in instruments_positions.items():
-                    if not isclose(i.pos, 0.0):
+                    if not isclose(pos, 0.0):
 
                         instruments_opened.add(id)
 
