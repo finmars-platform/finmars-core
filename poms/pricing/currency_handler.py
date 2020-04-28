@@ -407,7 +407,7 @@ class PricingCurrencyHandler(object):
 
                     if can_write:
 
-                        if has_error:
+                        if has_error or fx_rate == 0:
                             error.save()
                         else:
                             price.save()
@@ -631,7 +631,7 @@ class PricingCurrencyHandler(object):
 
                     if can_write:
 
-                        if has_error:
+                        if has_error or fx_rate == 0:
                             error.save()
                         else:
                             price.save()

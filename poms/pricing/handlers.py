@@ -404,7 +404,7 @@ class FillPricesBrokerBloombergProcess(object):
 
             if can_write:
 
-                if has_error:
+                if has_error or (price.accrued_price == 0 and price.principal_price):
                     error.save()
                 else:
                     price.save()
@@ -522,7 +522,7 @@ class FillPricesBrokerBloombergProcess(object):
 
             if can_write:
 
-                if has_error:
+                if has_error or fx_rate == 0:
                     error.save()
                 else:
                     price.save()
@@ -788,7 +788,7 @@ class FillPricesBrokerWtradeProcess(object):
 
             if can_write:
 
-                if has_error:
+                if has_error or (price.accrued_price == 0 and price.principal_price):
                     error.save()
                 else:
                     price.save()
@@ -969,7 +969,7 @@ class FillPricesBrokerFixerProcess(object):
 
             if can_write:
 
-                if has_error:
+                if has_error or fx_rate == 0:
                     error.save()
                 else:
                     price.save()

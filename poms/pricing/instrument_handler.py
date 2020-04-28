@@ -534,7 +534,7 @@ class PricingInstrumentHandler(object):
 
                     if can_write:
 
-                        if has_error:
+                        if has_error or (price.accrued_price == 0 and price.principal_price):
                             error.save()
                         else:
                             price.save()
@@ -803,7 +803,7 @@ class PricingInstrumentHandler(object):
 
                     if can_write:
 
-                        if has_error:
+                        if has_error or (price.accrued_price == 0 and price.principal_price):
                             error.save()
                         else:
                             price.save()
