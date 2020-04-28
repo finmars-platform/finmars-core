@@ -7,6 +7,9 @@ filebeat.inputs:
   multiline.negate: true
   multiline.match: after
 
+  fields:
+    type: django
+
   encoding: 'utf8'
 
 output.logstash:

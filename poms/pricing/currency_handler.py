@@ -221,7 +221,9 @@ class PricingCurrencyHandler(object):
 
             for base_transaction in base_transactions:
 
-                currencies_opened.add(base_transaction.transaction_currency.id)
+                if base_transaction.transaction_currency_id:
+
+                    currencies_opened.add(base_transaction.transaction_currency_id)
 
         currencies = currencies.filter(pk__in=(currencies_always | currencies_opened))
 
