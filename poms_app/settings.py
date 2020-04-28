@@ -382,6 +382,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 # REDIS_HOST = os.environ.get('REDIS_HOST', '127.0.0.1:6379')
 # REDIS_HOST = os.environ.get('REDIS_HOST', '0.0.0.0:6379')
 REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost:6379')
+
+print('REDIS_HOST %s' % REDIS_HOST)
 # if DEBUG and REDIS_HOST == '127.0.0.1:6379':
 #     REDIS_HOST = '192.168.57.2:6379'
 

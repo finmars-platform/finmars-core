@@ -106,8 +106,11 @@ class PricingProcedureProcess(object):
 
     def process(self):
 
-        self.pricing_instrument_handler.process()
-        self.pricing_currency_handler.process()
+        if self.procedure.price_get_principal_prices or self.procedure.price_get_accrued_prices:
+            self.pricing_instrument_handler.process()
+
+        if self.procedure.price_get_fx_rates:
+            self.pricing_currency_handler.process()
 
 
 class FillPricesBrokerBloombergProcess(object):
@@ -120,8 +123,13 @@ class FillPricesBrokerBloombergProcess(object):
         self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
         self.procedure = self.procedure_instance.pricing_procedure
 
-        _l.info('Broker Bloomberg - Overwrite: %s' % self.procedure.price_override_existed)
-        _l.info('Broker Bloomberg - Roll Days N Forward: %s' % self.procedure.price_fill_days)
+        _l.info("Broker Bloomberg - Get Principal Prices: %s" % self.procedure.price_get_principal_prices)
+        _l.info("Broker Bloomberg - Get Accrued Prices: %s" % self.procedure.price_get_accrued_prices)
+        _l.info("Broker Bloomberg - Get FX Rates: %s" % self.procedure.price_get_fx_rates)
+        _l.info("Broker Bloomberg - Overwrite Principal Prices: %s" % self.procedure.price_overwrite_principal_prices)
+        _l.info("Broker Bloomberg - Overwrite Accrued Prices: %s" % self.procedure.price_overwrite_accrued_prices)
+        _l.info("Broker Bloomberg - Overwrite FX Rates: %s" % self.procedure.price_overwrite_fx_rates)
+        _l.info("Broker Bloomberg - Roll Days N Forward: %s" % self.procedure.price_fill_days)
 
     def process(self):
 
@@ -353,7 +361,7 @@ class FillPricesBrokerBloombergProcess(object):
                     date=record.date
                 )
 
-                if not self.procedure.price_override_existed:
+                if not self.procedure.price_overwrite_principal_prices and not self.procedure.price_overwrite_accrued_prices:
                     can_write = False
                     _l.info('Skip %s' % price)
                 else:
@@ -374,11 +382,23 @@ class FillPricesBrokerBloombergProcess(object):
             price.accrued_price = 0
 
             if principal_price:
-                price.principal_price = principal_price
+
+                if hasattr(price, 'id'):
+                    if self.procedure.price_overwrite_principal_prices:
+                        price.principal_price = principal_price
+                else:
+                    price.principal_price = principal_price
+
                 error.principal_price = principal_price
 
             if accrued_price:
-                price.accrued_price = accrued_price
+
+                if hasattr(price, 'id'):
+                    if self.procedure.price_overwrite_accrued_prices:
+                        price.accrued_price = accrued_price
+                else:
+                    price.accrued_price = accrued_price
+
                 error.accrued_price = accrued_price
 
             if can_write:
@@ -477,7 +497,7 @@ class FillPricesBrokerBloombergProcess(object):
                     date=record.date
                 )
 
-                if not self.procedure.price_override_existed:
+                if not self.procedure.price_overwrite_fx_rates:
                     can_write = False
                     _l.info('Skip %s' % price)
                 else:
@@ -534,7 +554,6 @@ class FillPricesBrokerWtradeProcess(object):
         self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
         self.procedure = self.procedure_instance.pricing_procedure
 
-        _l.info('Broker Wtrade - Overwrite: %s' % self.procedure.price_override_existed)
         _l.info('Broker Wtrade - Roll Days N Forward: %s' % self.procedure.price_fill_days)
 
     def process(self):
@@ -725,7 +744,7 @@ class FillPricesBrokerWtradeProcess(object):
                     date=record.date
                 )
 
-                if not self.procedure.price_override_existed:
+                if not self.procedure.price_overwrite_principal_prices and not self.procedure.price_overwrite_accrued_prices:
                     can_write = False
                     _l.info('Skips %s' % price)
                 else:
@@ -747,11 +766,23 @@ class FillPricesBrokerWtradeProcess(object):
             price.accrued_price = 0
 
             if principal_price:
-                price.principal_price = principal_price
+
+                if hasattr(price, 'id'):
+                    if self.procedure.price_overwrite_principal_prices:
+                        price.principal_price = principal_price
+                else:
+                    price.principal_price = principal_price
+
                 error.principal_price = principal_price
 
             if accrued_price:
-                price.accrued_price = accrued_price
+
+                if hasattr(price, 'id'):
+                    if self.procedure.price_overwrite_accrued_prices:
+                        price.accrued_price = accrued_price
+                else:
+                    price.accrued_price = accrued_price
+
                 error.accrued_price = accrued_price
 
             if can_write:
@@ -790,7 +821,8 @@ class FillPricesBrokerFixerProcess(object):
         self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
         self.procedure = self.procedure_instance.pricing_procedure
 
-        _l.info('Broker Fixer - Overwrite: %s' % self.procedure.price_override_existed)
+        _l.info("Broker Fixer - Get FX Rates: %s" % self.procedure.price_get_fx_rates)
+        _l.info("Broker Fixer - Overwrite FX Rates: %s" % self.procedure.price_overwrite_fx_rates)
         _l.info('Broker Fixer - Roll Days N Forward: %s' % self.procedure.price_fill_days)
 
     def process(self):
@@ -913,7 +945,7 @@ class FillPricesBrokerFixerProcess(object):
                     date=record.date
                 )
 
-                if not self.procedure.price_override_existed:
+                if not self.procedure.price_overwrite_fx_rates:
                     can_write = False
                     _l.info('Skip %s' % price)
                 else:

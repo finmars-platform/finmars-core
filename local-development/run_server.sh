@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 . ../venv/bin/activate
 REGISTER_ACCESS_KEY=B5A9ZCHA \
-REDIS_HOST=localhost:6379 \
+REDIS_HOST=0.0.0.0:6379 \
 RDS_DB_NAME=finmars_dev \
 RDS_USERNAME=postgres \
 RDS_PASSWORD=postgres \

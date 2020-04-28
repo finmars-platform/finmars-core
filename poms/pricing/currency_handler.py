@@ -371,7 +371,7 @@ class PricingCurrencyHandler(object):
                             date=date
                         )
 
-                        if not self.procedure.price_override_existed:
+                        if not self.procedure.price_overwrite_fx_rates:
                             can_write = False
                             _l.info('Skip %s' % price)
                         else:
@@ -593,7 +593,7 @@ class PricingCurrencyHandler(object):
                             date=date
                         )
 
-                        if not self.procedure.price_override_existed:
+                        if not self.procedure.price_overwrite_fx_rates:
                             can_write = False
                             _l.info('Skip %s' % price)
                         else:

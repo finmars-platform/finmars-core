@@ -432,7 +432,7 @@ class PricingInstrumentHandler(object):
                             date=date
                         )
 
-                        if not self.procedure.price_override_existed:
+                        if not self.procedure.price_overwrite_principal_prices and not self.procedure.price_overwrite_accrued_prices:
                             can_write = False
                             _l.info('Skip %s' % price)
                         else:
@@ -452,11 +452,23 @@ class PricingInstrumentHandler(object):
                     price.accrued_price = 0
 
                     if principal_price:
-                        price.principal_price = principal_price
+
+                        if hasattr(price, 'id'):
+                            if self.procedure.price_overwrite_principal_prices:
+                                price.principal_price = principal_price
+                        else:
+                            price.principal_price = principal_price
+
                         error.principal_price = principal_price
 
                     if accrued_price:
-                        price.accrued_price = accrued_price
+
+                        if hasattr(price, 'id'):
+                            if self.procedure.price_overwrite_accrued_prices:
+                                price.accrued_price = accrued_price
+                        else:
+                            price.accrued_price = accrued_price
+
                         error.accrued_price = accrued_price
 
                     if can_write:
@@ -689,7 +701,7 @@ class PricingInstrumentHandler(object):
                             date=date
                         )
 
-                        if not self.procedure.price_override_existed:
+                        if not self.procedure.price_overwrite_principal_prices and not self.procedure.price_overwrite_accrued_prices:
                             can_write = False
                             _l.info('Skip %s' % price)
                         else:
@@ -709,11 +721,23 @@ class PricingInstrumentHandler(object):
                     price.accrued_price = 0
 
                     if principal_price:
-                        price.principal_price = principal_price
+
+                        if hasattr(price, 'id'):
+                            if self.procedure.price_overwrite_principal_prices:
+                                price.principal_price = principal_price
+                        else:
+                            price.principal_price = principal_price
+
                         error.principal_price = principal_price
 
                     if accrued_price:
-                        price.accrued_price = accrued_price
+
+                        if hasattr(price, 'id'):
+                            if self.procedure.price_overwrite_accrued_prices:
+                                price.accrued_price = accrued_price
+                        else:
+                            price.accrued_price = accrued_price
+
                         error.accrued_price = accrued_price
 
                     if can_write:
