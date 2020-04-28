@@ -33,7 +33,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from poms.common.grouping_handlers import handle_groups
 import time
-import sys
+
 
 _l = logging.getLogger('poms.common')
 

@@ -496,10 +496,18 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose'
         },
-        'logstash': {
+        'filebeat-info': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
-            'filename': '/var/log/finmars/django.log',
+            'filename': '/var/log/finmars/django-info.log',
+            'maxBytes': 1024*1024*15,  # 15MB
+            'backupCount': 10,
+            'formatter': 'verbose'
+        },
+        'filebeat-error': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': '/var/log/finmars/django-error.log',
             'maxBytes': 1024*1024*15,  # 15MB
             'backupCount': 10,
             'formatter': 'verbose'
@@ -515,31 +523,22 @@ LOGGING = {
             'handlers': ['console'],
             'propagate': False,
         },
+        'django.request': {
+            'level': 'ERROR',
+            'handlers': ['console',  'filebeat-error'],
+        },
         'django_test': {
             'handlers': ['console'],
             'level': 'DEBUG',
         },
-        # 'django.request': {
-        #     'handlers': ['logstash'],
-        #     'level': 'DEBUG',
-        #     'propagate': True,
-        # },
-        # 'django.request': {
-        #     'handlers': ['console', 'mail_admins'],
-        #     'level': 'ERROR',
-        #     'propagate': False,
-        # },
-        # 'django.db': {
-        #     'level': 'DEBUG',
-        # },
         'poms': {
             'level': 'DEBUG',
-            'handlers': ['console', 'logstash'],
+            'handlers': ['console', 'filebeat-info'],
             'propagate': False,
         },
         'celery': {
             'level': 'INFO',
-            'handlers': ['console', 'logstash'],
+            'handlers': ['console', 'filebeat-info'],
         },
         'suds': {
             'level': 'INFO',
@@ -823,7 +822,7 @@ MEDIATOR_URL = os.environ.get('MEDIATOR_URL', None)
 
 # ----
 
-INSTRUMENT_EVENTS_REGULAR_MAX_INTERVALS =    1000
+INSTRUMENT_EVENTS_REGULAR_MAX_INTERVALS = 1000
 try:
     from poms_app.settings_local import *
 except ImportError:
