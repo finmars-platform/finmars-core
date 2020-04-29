@@ -867,7 +867,7 @@ class PricingProcedureSerializer(serializers.ModelSerializer):
     class Meta:
         model = PricingProcedure
         fields = ('master_user', 'id', 'name', 'notes', 'notes_for_users',
-                  'user_code',
+                  'user_code', 'type',
 
                   'price_date_from', 'price_date_to',
                   'price_date_from_expr', 'price_date_to_expr',
@@ -877,6 +877,7 @@ class PricingProcedureSerializer(serializers.ModelSerializer):
                   'price_get_principal_prices', 'price_get_accrued_prices', 'price_get_fx_rates',
                   'price_overwrite_principal_prices', 'price_overwrite_accrued_prices', 'price_overwrite_fx_rates',
 
+                  'instrument_filters',
                   'pricing_policy_filters',
                   'portfolio_filters',
                   'instrument_type_filters',

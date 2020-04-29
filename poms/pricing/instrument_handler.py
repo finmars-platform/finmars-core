@@ -12,7 +12,8 @@ from poms.integrations.models import ProviderClass
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
 from poms.pricing.models import InstrumentPricingSchemeType, PricingProcedureInstance, \
-    PricingProcedureBloombergInstrumentResult, PricingProcedureWtradeInstrumentResult, PriceHistoryError
+    PricingProcedureBloombergInstrumentResult, PricingProcedureWtradeInstrumentResult, PriceHistoryError, \
+    PricingProcedure
 from poms.pricing.transport.transport import PricingTransport
 from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_between_two_dates, group_items_by_provider, \
     get_is_yesterday, optimize_items, roll_price_history_for_n_day_forward
@@ -195,110 +196,125 @@ class PricingInstrumentHandler(object):
         instruments_opened = set()
         instruments_always = set()
 
-        # User configured pricing condition filters
-        active_pricing_conditions = []
+        if self.procedure.type == PricingProcedure.CREATED_BY_USER:
 
-        if self.procedure.instrument_pricing_condition_filters:
-            active_pricing_conditions = list(map(int, self.procedure.instrument_pricing_condition_filters.split(",")))
+            # User configured pricing condition filters
+            active_pricing_conditions = []
 
-        # Add RUN_VALUATION_ALWAYS currencies only if pricing condition is enabled
-        if PricingCondition.RUN_VALUATION_ALWAYS in active_pricing_conditions:
+            if self.procedure.instrument_pricing_condition_filters:
+                active_pricing_conditions = list(map(int, self.procedure.instrument_pricing_condition_filters.split(",")))
 
-            for i in instruments:
+            # Add RUN_VALUATION_ALWAYS currencies only if pricing condition is enabled
+            if PricingCondition.RUN_VALUATION_ALWAYS in active_pricing_conditions:
 
-                if i.pricing_condition_id in [PricingCondition.RUN_VALUATION_ALWAYS]:
-                    instruments_always.add(i.id)
+                for i in instruments:
 
-        # Add RUN_VALUATION_IF_NON_ZERO currencies only if pricing condition is enabled
-        if PricingCondition.RUN_VALUATION_IF_NON_ZERO in active_pricing_conditions:
+                    if i.pricing_condition_id in [PricingCondition.RUN_VALUATION_ALWAYS]:
+                        instruments_always.add(i.id)
 
-            # Here we have two steps
-            # Step "a" we took base transaction until procedure.price_date_from
-            # And take only that instruments with position size that is not size
+            # Add RUN_VALUATION_IF_NON_ZERO currencies only if pricing condition is enabled
+            if PricingCondition.RUN_VALUATION_IF_NON_ZERO in active_pricing_conditions:
 
-            # Step "b" we took base transactions from procedure.price_date_from (exclude)
-            # and procedure.price_date_to. Instruments from that query we add up to instruments from step "a"
+                # Here we have two steps
+                # Step "a" we took base transaction until procedure.price_date_from
+                # And take only that instruments with position size that is not size
 
-            # Step "a" starts here
+                # Step "b" we took base transactions from procedure.price_date_from (exclude)
+                # and procedure.price_date_to. Instruments from that query we add up to instruments from step "a"
 
-            processing_st_a = time.perf_counter()
+                # Step "a" starts here
 
-            base_transactions_a = Transaction.objects.filter(master_user=self.procedure.master_user)
+                processing_st_a = time.perf_counter()
 
-            base_transactions_a = base_transactions_a.filter(Q(accounting_date__lte=self.procedure.price_date_from) | Q(cash_date__lte=self.procedure.price_date_from))
+                base_transactions_a = Transaction.objects.filter(master_user=self.procedure.master_user)
 
-            if self.procedure.portfolio_filters:
+                base_transactions_a = base_transactions_a.filter(Q(accounting_date__lte=self.procedure.price_date_from) | Q(cash_date__lte=self.procedure.price_date_from))
 
-                portfolio_user_codes = self.procedure.portfolio_filters.split(",")
+                if self.procedure.portfolio_filters:
 
-                base_transactions_a = base_transactions_a.filter(portfolio__user_code__in=portfolio_user_codes)
+                    portfolio_user_codes = self.procedure.portfolio_filters.split(",")
 
-            _l.info('< get_instruments base transactions (step a) len %s', len(base_transactions_a))
-            _l.info('< get_instruments base transactions (step a) done in %s', (time.perf_counter() - processing_st_a))
+                    base_transactions_a = base_transactions_a.filter(portfolio__user_code__in=portfolio_user_codes)
 
-            if len(list(base_transactions_a)):
+                _l.info('< get_instruments base transactions (step a) len %s', len(base_transactions_a))
+                _l.info('< get_instruments base transactions (step a) done in %s', (time.perf_counter() - processing_st_a))
 
-                instruments_positions = {}
+                if len(list(base_transactions_a)):
 
-                for trn in base_transactions_a:
+                    instruments_positions = {}
+
+                    for trn in base_transactions_a:
+
+                        if trn.instrument_id:
+
+                            if trn.instrument_id in instruments_positions:
+                                instruments_positions[trn.instrument_id] = instruments_positions[trn.instrument_id] + trn.position_size_with_sign
+                            else:
+
+                                instruments_positions[trn.instrument_id] = trn.position_size_with_sign
+
+                    for id, pos in instruments_positions.items():
+                        if not isclose(pos, 0.0):
+
+                            instruments_opened.add(id)
+
+                _l.info('< get_instruments instruments_opened (step a) len %s' % len(instruments_opened))
+
+                # Step "a" ends here
+
+                # Step "b" starts here
+
+                processing_st_b = time.perf_counter()
+
+                base_transactions_b = Transaction.objects.filter(master_user=self.procedure.master_user)
+
+                base_transactions_b = base_transactions_b.filter(Q(accounting_date__gt=self.procedure.price_date_from) | Q(cash_date__gt=self.procedure.price_date_from))
+                base_transactions_b = base_transactions_b.filter(Q(accounting_date__lte=self.procedure.price_date_to) | Q(cash_date__lte=self.procedure.price_date_to))
+
+                if self.procedure.portfolio_filters:
+
+                    portfolio_user_codes = self.procedure.portfolio_filters.split(",")
+
+                    base_transactions_b = base_transactions_b.filter(portfolio__user_code__in=portfolio_user_codes)
+
+                _l.info('< get_instruments base transactions (step b) len %s', len(base_transactions_b))
+                _l.info('< get_instruments base transactions (step b) done in %s', (time.perf_counter() - processing_st_b))
+
+                for trn in base_transactions_b:
 
                     if trn.instrument_id:
 
-                        if trn.instrument_id in instruments_positions:
-                            instruments_positions[trn.instrument_id] = instruments_positions[trn.instrument_id] + trn.position_size_with_sign
-                        else:
+                        instruments_opened.add(trn.instrument_id)
 
-                            instruments_positions[trn.instrument_id] = trn.position_size_with_sign
+                _l.info('< get_instruments instruments_opened (step b) len %s' % len(instruments_opened))
 
-                for id, pos in instruments_positions.items():
-                    if not isclose(pos, 0.0):
+                # Step "b" ends here
 
-                        instruments_opened.add(id)
+            instruments = instruments.filter(pk__in=(instruments_always | instruments_opened))
 
-            _l.info('< get_instruments instruments_opened (step a) len %s' % len(instruments_opened))
+            if self.procedure.instrument_type_filters:
+                user_codes = self.procedure.instrument_type_filters.split(",")
 
-            # Step "a" ends here
+                print("Filter by Instrument Types %s " % user_codes)
 
-            # Step "b" starts here
+                print("instruments before filter %s " % len(instruments))
+                instruments = instruments.filter(instrument_type__user_code__in=user_codes)
+                print("instruments after filter %s " % len(instruments))
 
-            processing_st_b = time.perf_counter()
+            result = instruments
 
-            base_transactions_b = Transaction.objects.filter(master_user=self.procedure.master_user)
+        if self.procedure.type == PricingProcedure.CREATED_BY_INSTRUMENT:
 
-            base_transactions_b = base_transactions_b.filter(Q(accounting_date__gt=self.procedure.price_date_from) | Q(cash_date__gt=self.procedure.price_date_from))
-            base_transactions_b = base_transactions_b.filter(Q(accounting_date__lte=self.procedure.price_date_to) | Q(cash_date__lte=self.procedure.price_date_to))
+            if self.procedure.instrument_filters:
+                user_codes = self.procedure.instrument_filters.split(",")
 
-            if self.procedure.portfolio_filters:
+                print("Filter by Instruments %s " % user_codes)
 
-                portfolio_user_codes = self.procedure.portfolio_filters.split(",")
+                print("instruments before filter %s " % len(instruments))
+                instruments = instruments.filter(user_code__in=user_codes)
+                print("instruments after filter %s " % len(instruments))
 
-                base_transactions_b = base_transactions_b.filter(portfolio__user_code__in=portfolio_user_codes)
-
-            _l.info('< get_instruments base transactions (step b) len %s', len(base_transactions_b))
-            _l.info('< get_instruments base transactions (step b) done in %s', (time.perf_counter() - processing_st_b))
-
-            for trn in base_transactions_b:
-
-                if trn.instrument_id:
-
-                    instruments_opened.add(trn.instrument_id)
-
-            _l.info('< get_instruments instruments_opened (step b) len %s' % len(instruments_opened))
-
-            # Step "b" ends here
-
-        instruments = instruments.filter(pk__in=(instruments_always | instruments_opened))
-
-        if self.procedure.instrument_type_filters:
-            user_codes = self.procedure.instrument_type_filters.split(",")
-
-            print("Filter by Instrument Types %s " % user_codes)
-
-            print("instruments before filter %s " % len(instruments))
-            instruments = instruments.filter(instrument_type__user_code__in=user_codes)
-            print("instruments after filter %s " % len(instruments))
-
-        result = instruments
+                result = instruments
 
         return result
 

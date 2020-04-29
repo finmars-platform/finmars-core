@@ -120,7 +120,7 @@ class PricingProcedureFilterSet(FilterSet):
 
 
 class PricingProcedureViewSet(AbstractModelViewSet):
-    queryset = PricingProcedure.objects
+    queryset = PricingProcedure.objects.filter(type=PricingProcedure.CREATED_BY_USER)
     serializer_class = PricingProcedureSerializer
     filter_class = PricingProcedureFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
