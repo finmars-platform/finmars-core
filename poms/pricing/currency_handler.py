@@ -269,7 +269,12 @@ class PricingCurrencyHandler(object):
                                                       master_user=self.master_user,
                                                       status=PricingProcedureInstance.STATUS_PENDING,
                                                       action='single_parameter_formula_get_currency_prices',
-                                                      provider='finmars')
+                                                      provider='finmars',
+
+                                                      action_verbose='Get FX Rates from Single Parameter Formula',
+                                                      provider_verbose='Finmars'
+
+                                                      )
         procedure_instance.save()
 
         _l.info('process_to_single_parameter_formula dates %s' % dates)
@@ -442,7 +447,11 @@ class PricingCurrencyHandler(object):
                                                       master_user=self.master_user,
                                                       status=PricingProcedureInstance.STATUS_PENDING,
                                                       action='multiple_parameter_formula_get_currency_prices',
-                                                      provider='finmars')
+                                                      provider='finmars',
+
+                                                      action_verbose='Get FX Rates from Multiple Parameter Formula',
+                                                      provider_verbose='Finmars'
+                                                      )
         procedure_instance.save()
 
         for item in items:
@@ -664,7 +673,12 @@ class PricingCurrencyHandler(object):
                                                           master_user=self.master_user,
                                                           status=PricingProcedureInstance.STATUS_PENDING,
                                                           action='bloomberg_get_currency_prices',
-                                                          provider='bloomberg')
+                                                          provider='bloomberg',
+
+                                                          action_verbose='Get FX Rates from Bloomberg',
+                                                          provider_verbose='Bloomberg'
+
+                                                          )
             procedure_instance.save()
 
         body = {}
@@ -774,7 +788,12 @@ class PricingCurrencyHandler(object):
                                                           master_user=self.master_user,
                                                           status=PricingProcedureInstance.STATUS_PENDING,
                                                           action='fixer_get_currency_prices',
-                                                          provider='fixer')
+                                                          provider='fixer',
+
+                                                          action_verbose='Get FX Rates from Fixer',
+                                                          provider_verbose='Fixer'
+
+                                                          )
             procedure_instance.save()
 
         body = {}

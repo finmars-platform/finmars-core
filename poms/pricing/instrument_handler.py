@@ -358,7 +358,12 @@ class PricingInstrumentHandler(object):
                                                       master_user=self.master_user,
                                                       status=PricingProcedureInstance.STATUS_PENDING,
                                                       action='single_parameter_formula_get_instrument_prices',
-                                                      provider='finmars')
+                                                      provider='finmars',
+
+                                                      action_verbose='Get Instrument Prices from Single Parameter Formula',
+                                                      provider_verbose='Finmars'
+
+                                                      )
         procedure_instance.save()
 
         for item in items:
@@ -582,7 +587,12 @@ class PricingInstrumentHandler(object):
                                                       master_user=self.master_user,
                                                       status=PricingProcedureInstance.STATUS_PENDING,
                                                       action='multiple_parameter_formula_get_instrument_prices',
-                                                      provider='finmars')
+                                                      provider='finmars',
+
+                                                      action_verbose='Get Instrument Prices Multiple Parameter Formula',
+                                                      provider_verbose='Finmars'
+
+                                                      )
         procedure_instance.save()
 
         for item in items:
@@ -850,7 +860,12 @@ class PricingInstrumentHandler(object):
                                                           master_user=self.master_user,
                                                           status=PricingProcedureInstance.STATUS_PENDING,
                                                           action='bloomberg_get_instrument_prices',
-                                                          provider='bloomberg')
+                                                          provider='bloomberg',
+
+                                                          action_verbose='Get Instrument Prices from Bloomberg',
+                                                          provider_verbose='Bloomberg'
+
+                                                          )
             procedure_instance.save()
 
         body = {}
@@ -1068,7 +1083,12 @@ class PricingInstrumentHandler(object):
                                                       master_user=self.master_user,
                                                       status=PricingProcedureInstance.STATUS_PENDING,
                                                       action='wtrade_get_instrument_prices',
-                                                      provider='wtrade')
+                                                      provider='wtrade',
+
+                                                      action_verbose='Get Instrument Prices from World Trade Data',
+                                                      provider_verbose='World Trade Data'
+
+                                                      )
         procedure_instance.save()
 
         body = {}

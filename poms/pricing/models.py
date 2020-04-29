@@ -967,6 +967,9 @@ class PricingProcedureInstance(models.Model):
     action = models.CharField(max_length=255, null=True, blank=True)
     provider = models.CharField(max_length=255, null=True, blank=True)
 
+    action_verbose = models.CharField(max_length=255, null=True, blank=True)
+    provider_verbose = models.CharField(max_length=255, null=True, blank=True)
+
 
 class PriceHistoryError(models.Model):
 

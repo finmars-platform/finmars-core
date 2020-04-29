@@ -918,7 +918,11 @@ class PricingProcedureInstanceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PricingProcedureInstance
-        fields = ('master_user', 'id', 'parent_procedure_instance',  'created', 'modified', 'status', 'pricing_procedure', 'pricing_procedure_object')
+        fields = ('master_user', 'id', 'parent_procedure_instance',
+                  'created', 'modified',
+                  'status',
+                  'pricing_procedure', 'pricing_procedure_object',
+                  'provider_verbose', 'action_verbose')
 
 
 class PricingParentProcedureInstanceSerializer(serializers.ModelSerializer):
