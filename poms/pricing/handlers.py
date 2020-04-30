@@ -384,7 +384,7 @@ class FillPricesBrokerBloombergProcess(object):
 
             if principal_price:
 
-                if hasattr(price, 'id'):
+                if price.id:
                     if self.procedure.price_overwrite_principal_prices:
                         price.principal_price = principal_price
                 else:
@@ -394,7 +394,7 @@ class FillPricesBrokerBloombergProcess(object):
 
             if accrued_price:
 
-                if hasattr(price, 'id'):
+                if price.id:
                     if self.procedure.price_overwrite_accrued_prices:
                         price.accrued_price = accrued_price
                 else:
@@ -769,7 +769,7 @@ class FillPricesBrokerWtradeProcess(object):
 
             if principal_price:
 
-                if hasattr(price, 'id'):
+                if price.id:
                     if self.procedure.price_overwrite_principal_prices:
                         price.principal_price = principal_price
                 else:
@@ -779,7 +779,7 @@ class FillPricesBrokerWtradeProcess(object):
 
             if accrued_price:
 
-                if hasattr(price, 'id'):
+                if price.id:
                     if self.procedure.price_overwrite_accrued_prices:
                         price.accrued_price = accrued_price
                 else:
