@@ -379,6 +379,8 @@ class FillPricesBrokerBloombergProcess(object):
 
                 _l.info('Create new %s' % price)
 
+            _l.info('Price %s. Can write %s . Has Error %s ' % (price, can_write, has_error))
+
             price.principal_price = 0
             price.accrued_price = 0
 
@@ -762,6 +764,7 @@ class FillPricesBrokerWtradeProcess(object):
 
                 _l.info('Create new %s' % price)
 
+            _l.info('Price %s. Can write %s . Has Error %s ' % (price, can_write, has_error))
 
             price.principal_price = 0
             price.accrued_price = 0
