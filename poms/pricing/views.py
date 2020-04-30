@@ -5,13 +5,15 @@ from django_filters.rest_framework import FilterSet
 
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 from poms.common.filters import NoOpFilter
+from poms.common.pagination import CustomPaginationMixin
 from poms.common.utils import date_now, datetime_now
 
 from poms.celery_tasks.models import CeleryTask
-from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet, AbstractViewSet
+from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet, AbstractViewSet, AbstractEvGroupViewSet
 
 from poms.csv_import.tasks import data_csv_file_import, data_csv_file_import_validate
 from poms.integrations.providers.base import parse_date_iso
@@ -294,6 +296,20 @@ class PriceHistoryErrorViewSet(AbstractModelViewSet):
     ]
 
 
+class PriceHistoryErrorEvGroupViewSet(AbstractEvGroupViewSet, CustomPaginationMixin):
+    queryset = PriceHistoryError.objects.select_related(
+        'master_user',
+    )
+
+    serializer_class = PriceHistoryErrorSerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = PriceHistoryErrorFilterSet
+
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+
+
 class CurrencyHistoryErrorFilterSet(FilterSet):
     id = NoOpFilter()
 
@@ -315,3 +331,16 @@ class CurrencyHistoryErrorViewSet(AbstractModelViewSet):
         'date'
     ]
 
+
+class CurrencyHistoryErrorEvGroupViewSet(AbstractEvGroupViewSet, CustomPaginationMixin):
+    queryset = CurrencyHistoryError.objects.select_related(
+        'master_user',
+    )
+
+    serializer_class = CurrencyHistoryErrorSerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = CurrencyHistoryErrorFilterSet
+
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]

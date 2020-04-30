@@ -373,7 +373,9 @@ router.register(r'pricing/currency-pricing-scheme-type', pricing.CurrencyPricing
 router.register(r'pricing/procedure', pricing.PricingProcedureViewSet, 'pricing_procedure')
 router.register(r'pricing/parent-procedure-instance', pricing.PricingParentProcedureInstanceViewSet, 'pricing_parent_procedure_instance')
 
+router.register(r'pricing/price-history-error-ev-group', pricing.PriceHistoryErrorEvGroupViewSet, 'pricehistoryerrorevgroup')
 router.register(r'pricing/price-history-error', pricing.PriceHistoryErrorViewSet)
+router.register(r'pricing/currency-history-error-ev-group', pricing.CurrencyHistoryErrorEvGroupViewSet, 'currencyhistoryerrorevgroup')
 router.register(r'pricing/currency-history-error', pricing.CurrencyHistoryErrorViewSet)
 router.register(r'schedules/pricing', schedules.PricingScheduleViewSet)
 

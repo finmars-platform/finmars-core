@@ -142,7 +142,7 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
 
         content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
 
-        if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy', 'transaction']:
+        if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy', 'transaction', 'currencyhistoryerror', 'pricehistoryerror']:
             filtered_qs = filtered_qs.filter(is_deleted=False)
 
         try:
@@ -193,10 +193,10 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
 
         # filtered_qs = filtered_qs.filter(id__in=qs)
 
-        if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy', 'transaction']:
+        if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy', 'transaction', 'currencyhistoryerror', 'pricehistoryerror']:
             filtered_qs = filtered_qs.filter(is_deleted=False)
 
-        if content_type.model not in ['currencyhistory', 'pricehistory']:
+        if content_type.model not in ['currencyhistory', 'pricehistory', 'currencyhistoryerror', 'pricehistoryerror']:
 
             is_enabled = request.data.get('is_enabled', 'true')
 
