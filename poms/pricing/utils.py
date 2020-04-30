@@ -171,7 +171,7 @@ def roll_currency_history_for_n_day_forward(item, procedure, last_price, master_
                     procedure_instance=procedure_instance,
                     currency=item.currency,
                     pricing_scheme=item.pricing_scheme,
-                    pricing_policy=item.pricing_policy,
+                    pricing_policy=last_price.pricing_policy,
                     date=new_date,
                 )
 
@@ -239,7 +239,7 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
                     procedure_instance=procedure_instance,
                     instrument=item.instrument,
                     pricing_scheme=item.pricing_scheme,
-                    pricing_policy=item.pricing_policy,
+                    pricing_policy=last_price.pricing_policy,
                     date=new_date,
                 )
 
