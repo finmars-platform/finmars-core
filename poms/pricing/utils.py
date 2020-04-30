@@ -155,10 +155,12 @@ def roll_currency_history_for_n_day_forward(item, procedure, last_price, master_
                     date=new_date
                 )
 
-            if can_write:
+            price.fx_rate = 0
 
-                if last_price.fx_rate:
-                    price.fx_rate = last_price.fx_rate
+            if last_price.fx_rate:
+                price.fx_rate = last_price.fx_rate
+
+            if can_write and price.fx_rate != 0:
 
                 price.save()
 
@@ -217,16 +219,16 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
 
                 _l.info('Roll Price History Create new %s ' % price)
 
-            if can_write:
+            price.principal_price = 0
+            price.accrued_price = 0
 
-                price.principal_price = 0
-                price.accrued_price = 0
+            if last_price.principal_price:
+                price.principal_price = last_price.principal_price
 
-                if last_price.principal_price:
-                    price.principal_price = last_price.principal_price
+            if last_price.accrued_price:
+                price.accrued_price = last_price.accrued_price
 
-                if last_price.accrued_price:
-                    price.accrued_price = last_price.accrued_price
+            if can_write and price.accrued_price != 0 and price.principal_price != 0:
 
                 price.save()
 
