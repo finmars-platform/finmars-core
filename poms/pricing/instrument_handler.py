@@ -196,6 +196,7 @@ class PricingInstrumentHandler(object):
         instruments_opened = set()
         instruments_always = set()
 
+
         if self.procedure.type == PricingProcedure.CREATED_BY_USER:
 
             # User configured pricing condition filters
@@ -211,6 +212,8 @@ class PricingInstrumentHandler(object):
 
                     if i.pricing_condition_id in [PricingCondition.RUN_VALUATION_ALWAYS]:
                         instruments_always.add(i.id)
+
+            _l.info('PricingInstrumentHandler.get_instruments: instruments always len %s' % len(instruments_always))
 
             # Add RUN_VALUATION_IF_NON_ZERO currencies only if pricing condition is enabled
             if PricingCondition.RUN_VALUATION_IF_NON_ZERO in active_pricing_conditions:
@@ -290,16 +293,20 @@ class PricingInstrumentHandler(object):
 
                 # Step "b" ends here
 
+            _l.info('PricingInstrumentHandler.get_instruments: instruments opened len %s' % len(instruments_opened))
+
             instruments = instruments.filter(pk__in=(instruments_always | instruments_opened))
+
+            _l.info('PricingInstrumentHandler.get_instruments: instruments filtered len %s' % len(instruments))
 
             if self.procedure.instrument_type_filters:
                 user_codes = self.procedure.instrument_type_filters.split(",")
 
-                print("Filter by Instrument Types %s " % user_codes)
+                _l.info("Filter by Instrument Types %s " % user_codes)
 
-                print("instruments before filter %s " % len(instruments))
+                _l.info("instruments before filter %s " % len(instruments))
                 instruments = instruments.filter(instrument_type__user_code__in=user_codes)
-                print("instruments after filter %s " % len(instruments))
+                _l.info("instruments after filter %s " % len(instruments))
 
             result = instruments
 
@@ -308,11 +315,11 @@ class PricingInstrumentHandler(object):
             if self.procedure.instrument_filters:
                 user_codes = self.procedure.instrument_filters.split(",")
 
-                print("Filter by Instruments %s " % user_codes)
+                _l.info("Filter by Instruments %s " % user_codes)
 
-                print("instruments before filter %s " % len(instruments))
+                _l.info("instruments before filter %s " % len(instruments))
                 instruments = instruments.filter(user_code__in=user_codes)
-                print("instruments after filter %s " % len(instruments))
+                _l.info("instruments after filter %s " % len(instruments))
 
                 result = instruments
 
