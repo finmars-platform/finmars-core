@@ -153,6 +153,118 @@ def only_generate_events_at_date(master_user, date):
                 generated_event.save()
 
 
+@shared_task(name='instruments.only_generate_events_at_date_for_single_instrument', ignore_result=True)
+def only_generate_events_at_date_for_single_instrument(master_user, date, instrument):
+    _l.info('only_generate_events_at_date_for_single_instrument: master_user=%s, instrument=%s', (master_user.id, instrument))
+
+    opened_instrument_items = []
+
+    report = Report(
+        master_user=master_user,
+        report_date=date,
+        allocation_mode=Report.MODE_IGNORE,
+    )
+    builder = ReportBuilder(instance=report)
+    builder.build_position_only()
+
+    for i in report.items:
+        if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
+
+            if i.instr:
+                if i.instr.id == instrument.id:
+                    opened_instrument_items.append(i)
+
+    _l.info('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
+    if not opened_instrument_items:
+        return
+
+    event_schedule_qs = EventSchedule.objects.prefetch_related(
+        'instrument',
+        'event_class',
+        'notification_class',
+        'periodicity',
+        'actions',
+        'actions__transaction_type'
+    ).filter(
+        effective_date__lte=(date - F("notify_in_n_days")),
+        final_date__gte=date,
+        instrument__in={i.instr.id for i in opened_instrument_items}
+    ).order_by(
+        'instrument__master_user__id',
+        'instrument__id'
+    )
+
+    if not event_schedule_qs.exists():
+        _l.debug('event schedules not found')
+        return
+
+    event_schedules_cache = defaultdict(list)
+    for event_schedule in event_schedule_qs:
+        event_schedules_cache[event_schedule.instrument_id].append(event_schedule)
+
+    for item in opened_instrument_items:
+        portfolio = item.prtfl
+        account = item.acc
+        strategy1 = item.str1
+        strategy2 = item.str2
+        strategy3 = item.str3
+        instr = item.instr
+        position = item.pos_size
+
+        event_schedules = event_schedules_cache.get(instr.id, None)
+        _l.debug('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
+                 'instrument=%s, position=%s, event_schedules=%s',
+                 portfolio.id, account.id, strategy1.id, strategy2.id, strategy3.id,
+                 instr.id, position, [e.id for e in event_schedules] if event_schedules else [])
+
+        if not event_schedules:
+            continue
+
+        for event_schedule in event_schedules:
+            _l.debug('event_schedule=%s, event_class=%s, notification_class=%s, periodicity=%s, n=%s',
+                     event_schedule.id, event_schedule.event_class, event_schedule.notification_class,
+                     event_schedule.periodicity, event_schedule.periodicity_n)
+
+            is_complies, effective_date, notification_date = event_schedule.check_date(date)
+
+            _l.debug('is_complies=%s', is_complies)
+            if is_complies:
+                ge_dup_qs = GeneratedEvent.objects.filter(
+                    master_user=master_user,
+                    event_schedule=event_schedule,
+                    effective_date=effective_date,
+                    # notification_date=notification_date,
+                    instrument=instr,
+                    portfolio=portfolio,
+                    account=account,
+                    strategy1=strategy1,
+                    strategy2=strategy2,
+                    strategy3=strategy3,
+                    position=position
+                )
+                if ge_dup_qs.exists():
+                    _l.debug('generated event already exist')
+                    continue
+
+                print('event_schedule %s' % event_schedule)
+
+                generated_event = GeneratedEvent()
+                generated_event.master_user = master_user
+                generated_event.event_schedule = event_schedule
+                generated_event.status = GeneratedEvent.NEW
+                generated_event.status_modified = timezone.now()
+                generated_event.effective_date = effective_date
+                generated_event.notification_date = notification_date
+                generated_event.instrument = instr
+                generated_event.portfolio = portfolio
+                generated_event.account = account
+                generated_event.strategy1 = strategy1
+                generated_event.strategy2 = strategy2
+                generated_event.strategy3 = strategy3
+                generated_event.position = position
+                generated_event.save()
+
+
 @shared_task(name='instruments.generate_events0', ignore_result=True)
 def generate_events0(master_user):
     _l.debug('generate_events0: master_user=%s', master_user.id)

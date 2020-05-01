@@ -39,7 +39,7 @@ from poms.instruments.serializers import InstrumentSerializer, PriceHistorySeria
     GeneratedEventSerializer, EventScheduleActionSerializer
 from poms.instruments.tasks import calculate_prices_accrued_price, generate_events, process_events, \
     only_generate_events_at_date, generate_events_do_not_inform_apply_default0, \
-    generate_events_do_not_inform_apply_default
+    generate_events_do_not_inform_apply_default, only_generate_events_at_date_for_single_instrument
 from poms.integrations.models import PriceDownloadScheme
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
@@ -439,8 +439,10 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
     @action(detail=False, methods=['post'], url_path='generate-events-range', serializer_class=serializers.Serializer)
     def generate_events_range(self, request):
 
-        date_from_string = request.query_params.get('effective_date_0', None)
-        date_to_string = request.query_params.get('effective_date_1', None)
+        print('request.data %s ' % request.data)
+
+        date_from_string = request.data.get('effective_date_0', None)
+        date_to_string = request.data.get('effective_date_1', None)
 
         if date_from_string is None or date_to_string is None:
             raise ValidationError('Date range is incorrect')
@@ -460,6 +462,52 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
         for dte in dates:
             res = only_generate_events_at_date.apply_async(
                 kwargs={'master_user': request.user.master_user, 'date': dte})
+            tasks_ids.append(res.id)
+
+        return Response({
+            'success': True,
+            'tasks_ids': tasks_ids
+        })
+
+    @action(detail=False, methods=['post'], url_path='generate-events-range-for-single-instrument', serializer_class=serializers.Serializer)
+    def generate_events_range_for_single_instrument(self, request):
+
+        print('request.data %s ' % request.data)
+
+        date_from_string = request.data.get('effective_date_0', None)
+        date_to_string = request.data.get('effective_date_1', None)
+
+        if date_from_string is None or date_to_string is None:
+            raise ValidationError('Date range is incorrect')
+
+        instrument_id = request.data.get('instrument', None)
+
+        if instrument_id is None:
+            raise ValidationError('Instrument is not set')
+
+        date_from = datetime.datetime.strptime(date_from_string, '%Y-%m-%d').date()
+        date_to = datetime.datetime.strptime(date_to_string, '%Y-%m-%d').date()
+
+        try:
+
+            instrument = Instrument.objects.get(master_user=request.user.master_user, id=instrument_id)
+
+        except Instrument.DoesNotExist:
+
+            raise ValidationError('Instrument is not found')
+
+        # print('date_from %s' % date_from)
+        # print('date_to %s' % date_to)
+
+        dates = [date_from + datetime.timedelta(days=i) for i in range((date_to - date_from).days + 1)]
+
+        tasks_ids = []
+
+        # print('dates %s' % dates)
+
+        for dte in dates:
+            res = only_generate_events_at_date_for_single_instrument.apply_async(
+                kwargs={'master_user': request.user.master_user, 'date': dte, 'instrument': instrument})
             tasks_ids.append(res.id)
 
         return Response({
