@@ -994,19 +994,21 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
 
                     if celery_task:
 
-                        celery_task.data = { }
+                        celery_task_data = {}
 
                         if 'total_rows' in res.result:
-                            celery_task.data["total_rows"] = res.result['total_rows']
+                            celery_task_data["total_rows"] = res.result['total_rows']
 
                         if 'processed_rows' in res.result:
-                            celery_task.data["processed_rows"] = res.result['processed_rows']
+                            celery_task_data["processed_rows"] = res.result['processed_rows']
 
                         if 'scheme_name' in res.result:
-                            celery_task.data["scheme_name"] = res.result['scheme_name']
+                            celery_task_data["scheme_name"] = res.result['scheme_name']
 
                         if 'file_name' in res.result:
-                            celery_task.data["file_name"]  = res.result['file_name']
+                            celery_task_data["file_name"]  = res.result['file_name']
+
+                        celery_task.data = celery_task_data
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
 
@@ -1103,19 +1105,21 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
                         _l.info('celery_task %s' % celery_task)
                         _l.info('res %s' % res)
 
-                        celery_task.data = {}
+                        celery_task_data = {}
 
                         if 'total_rows' in res.result:
-                            celery_task.data["total_rows"] = res.result['total_rows']
+                            celery_task_data["total_rows"] = res.result['total_rows']
 
                         if 'processed_rows' in res.result:
-                            celery_task.data["processed_rows"] = res.result['processed_rows']
+                            celery_task_data["processed_rows"] = res.result['processed_rows']
 
                         if 'scheme_name' in res.result:
-                            celery_task.data["scheme_name"] = res.result['scheme_name']
+                            celery_task_data["scheme_name"] = res.result['scheme_name']
 
                         if 'file_name' in res.result:
-                            celery_task.data["file_name"]  = res.result['file_name']
+                            celery_task_data["file_name"]  = res.result['file_name']
+
+                        celery_task.data = celery_task_data
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
 
