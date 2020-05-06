@@ -114,12 +114,20 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
                         instance.total_rows = res.result['total_rows']
 
                     if celery_task:
-                        celery_task.data = {
-                            "total_rows": res.result['total_rows'],
-                            "processed_rows": res.result['processed_rows'],
-                            "scheme_name": res.result['scheme_name'],
-                            "file_name": res.result['file_name']
-                        }
+
+                        celery_task.data = { }
+
+                        if 'total_rows' in res.result:
+                            celery_task.data["total_rows"] = res.result['total_rows']
+
+                        if 'processed_rows' in res.result:
+                            celery_task.data["processed_rows"] = res.result['processed_rows']
+
+                        if 'scheme_name' in res.result:
+                            celery_task.data["scheme_name"] = res.result['scheme_name']
+
+                        if 'file_name' in res.result:
+                            celery_task.data["file_name"]  = res.result['file_name']
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
 
@@ -226,12 +234,20 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
                         instance.total_rows = res.result['total_rows']
 
                     if celery_task:
-                        celery_task.data = {
-                            "total_rows": res.result['total_rows'],
-                            "processed_rows": res.result['processed_rows'],
-                            "scheme_name": res.result['scheme_name'],
-                            "file_name": res.result['file_name']
-                        }
+
+                        celery_task.data = { }
+
+                        if 'total_rows' in res.result:
+                            celery_task.data["total_rows"] = res.result['total_rows']
+
+                        if 'processed_rows' in res.result:
+                            celery_task.data["processed_rows"] = res.result['processed_rows']
+
+                        if 'scheme_name' in res.result:
+                            celery_task.data["scheme_name"] = res.result['scheme_name']
+
+                        if 'file_name' in res.result:
+                            celery_task.data["file_name"]  = res.result['file_name']
 
             if instance.master_user.id != request.user.master_user.id:
                 raise PermissionDenied()
