@@ -179,51 +179,48 @@ class PricingCurrencyHandler(object):
         currencies_opened = set()
         currencies_always = set()
 
-        # TODO need task clarification
-        # User configured pricing condition filters
-        # active_pricing_conditions = []
-        #
-        # if self.procedure.instrument_pricing_condition_filters:
-        #     active_pricing_conditions = list(map(int, self.procedure.instrument_pricing_condition_filters.split(",")))
+        active_pricing_conditions = []
+
+        if self.procedure.instrument_pricing_condition_filters:
+            active_pricing_conditions = list(map(int, self.procedure.instrument_pricing_condition_filters.split(",")))
 
         # Add RUN_VALUATION_ALWAYS currencies only if pricing condition is enabled
-        # if PricingCondition.RUN_VALUATION_ALWAYS in active_pricing_conditions:
-        #
-        #     for i in currencies:
-        #
-        #         if i.pricing_condition_id in [PricingCondition.RUN_VALUATION_ALWAYS]:
-        #             currencies_always.add(i.id)
+        if PricingCondition.RUN_VALUATION_ALWAYS in active_pricing_conditions:
+
+            for i in currencies:
+
+                if i.pricing_condition_id in [PricingCondition.RUN_VALUATION_ALWAYS]:
+                    currencies_always.add(i.id)
 
         # Add RUN_VALUATION_IF_NON_ZERO currencies only if pricing condition is enabled
-        # if PricingCondition.RUN_VALUATION_IF_NON_ZERO in active_pricing_conditions:
-        #     if self.base_transactions:
-        #
-        #         for base_transaction in self.base_transactions:
-        #             if base_transaction.transaction_currency.pricing_condition_id in [PricingCondition.RUN_VALUATION_IF_NON_ZERO]:
-        #                 currencies_opened.add(base_transaction.transaction_currency.id)
+        if PricingCondition.RUN_VALUATION_IF_NON_ZERO in active_pricing_conditions:
 
-        processing_st = time.perf_counter()
+            processing_st = time.perf_counter()
 
-        base_transactions = Transaction.objects.filter(master_user=self.procedure.master_user)
+            base_transactions = Transaction.objects.filter(master_user=self.procedure.master_user)
 
-        base_transactions = base_transactions.filter(Q(accounting_date__lte=self.procedure.price_date_to) | Q(cash_date__lte=self.procedure.price_date_to))
+            base_transactions = base_transactions.filter(Q(accounting_date__lte=self.procedure.price_date_to) | Q(cash_date__lte=self.procedure.price_date_to))
 
-        if self.procedure.portfolio_filters:
+            if self.procedure.portfolio_filters:
 
-            portfolio_user_codes = self.procedure.portfolio_filters.split(",")
+                portfolio_user_codes = self.procedure.portfolio_filters.split(",")
 
-            base_transactions = base_transactions.filter(portfolio__user_code__in=portfolio_user_codes)
+                base_transactions = base_transactions.filter(portfolio__user_code__in=portfolio_user_codes)
 
-        _l.info('< get_currencies base transactions len %s', len(base_transactions))
-        _l.info('< get_currencies base transactions done in %s', (time.perf_counter() - processing_st))
+            _l.info('< get_currencies base transactions len %s', len(base_transactions))
+            _l.info('< get_currencies base transactions done in %s', (time.perf_counter() - processing_st))
 
-        if len(list(base_transactions)):
+            if len(list(base_transactions)):
 
-            for base_transaction in base_transactions:
+                for base_transaction in base_transactions:
 
-                if base_transaction.transaction_currency_id:
+                    if base_transaction.transaction_currency_id:
 
-                    currencies_opened.add(base_transaction.transaction_currency_id)
+                        currencies_opened.add(base_transaction.transaction_currency_id)
+
+                    if base_transaction.settlement_currency_id:
+
+                        currencies_opened.add(base_transaction.settlement_currency_id)
 
         currencies = currencies.filter(pk__in=(currencies_always | currencies_opened))
 

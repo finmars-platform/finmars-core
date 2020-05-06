@@ -228,9 +228,17 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
             if last_price.accrued_price:
                 price.accrued_price = last_price.accrued_price
 
-            if can_write and price.accrued_price != 0 and price.principal_price != 0:
+            if can_write:
 
-                price.save()
+                if price.accrued_price == 0 and price.principal_price == 0:
+
+                    _l.info("Can't roll Price History with zero values")
+
+                    pass
+
+                else:
+
+                    price.save()
 
             else:
 
