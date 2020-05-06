@@ -59,6 +59,8 @@ from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.models import Member
 from poms.users.permissions import SuperUserOrReadOnly, SuperUserOnly
 
+import logging
+_l = logging.getLogger('poms.integrations')
 
 
 from rest_framework import permissions, status
@@ -1098,7 +1100,10 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
 
                     if celery_task:
 
-                        celery_task.data = { }
+                        _l.info('celery_task %s' % celery_task)
+                        _l.info('res %s' % res)
+
+                        celery_task.data = {}
 
                         if 'total_rows' in res.result:
                             celery_task.data["total_rows"] = res.result['total_rows']
