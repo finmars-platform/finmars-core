@@ -376,27 +376,46 @@ class MasterUserLightSerializer(serializers.ModelSerializer):
     # url = serializers.HyperlinkedIdentityField(view_name='masteruser-detail')
     language = serializers.ChoiceField(choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE)
     timezone = serializers.ChoiceField(choices=TIMEZONE_CHOICES)
-    is_current = serializers.SerializerMethodField()
-    is_admin = serializers.SerializerMethodField()
-    is_owner = serializers.SerializerMethodField()
+    # is_current = serializers.SerializerMethodField()
+    # is_admin = serializers.SerializerMethodField()
+    # is_owner = serializers.SerializerMethodField()
+
+    members = MemberField(many=True, required=False)
+    members_object = serializers.PrimaryKeyRelatedField(source='members', read_only=True, many=True)
+
 
     class Meta:
         model = MasterUser
         fields = [
-            'id', 'name', 'description', 'is_current', 'is_admin', 'is_owner', 'language',
-            'timezone',
+            'id', 'name', 'description', 'language',
+            'timezone', 'members', 'members_object'
 
         ]
 
+    def __init__(self, *args, **kwargs):
+        super(MasterUserLightSerializer, self).__init__(*args, **kwargs)
+
+        self.fields['members_object'] = MemberViewSerializer(source='members', many=True, read_only=True)
+
     def to_representation(self, instance):
         ret = super(MasterUserLightSerializer, self).to_representation(instance)
-        is_current = self.get_is_current(instance)
-        is_admin = self.get_is_admin(instance)
-        is_owner = self.get_is_owner(instance)
-        if not is_current:
-            for k in list(ret.keys()):
-                if k not in ['id', 'name', 'is_current', 'description', 'is_admin', 'is_owner']:
-                    ret.pop(k)
+
+        print('ret %s' % ret)
+
+        # is_current = self.get_is_current(instance)
+        # is_admin = self.get_is_admin(ret)
+        # is_owner = self.get_is_owner(ret)
+        # if not is_current:
+        #     for k in list(ret.keys()):
+        #         if k not in ['id', 'name', 'is_current', 'description', 'is_admin', 'is_owner']:
+        #             ret.pop(k)
+
+        ret['is_current'] = self.get_is_current(instance)
+        ret['is_admin'] = self.get_is_admin(ret)
+        ret['is_owner'] = self.get_is_owner(ret)
+        ret.pop('members')
+        ret.pop('members_object')
+
         return ret
 
     def get_is_current(self, obj):
@@ -405,22 +424,28 @@ class MasterUserLightSerializer(serializers.ModelSerializer):
 
     def get_is_admin(self, obj):
 
+        result = False
+
         user = get_user_from_context(self.context)
 
-        member = Member.objects.get(master_user=obj.id, user=user.id)
-        # member = get_member_from_context(self.context)
+        for member in obj['members_object']:
+            if member['user'] == user.id:
+                result = member['is_admin']
 
-        return member.is_admin
+        return result
+
 
     def get_is_owner(self, obj):
 
+        result = False
+
         user = get_user_from_context(self.context)
 
-        member = Member.objects.get(master_user=obj.id, user=user.id)
+        for member in obj['members_object']:
+            if member['user'] == user.id:
+                result = member['is_owner']
 
-        # member = get_member_from_context(self.context)
-
-        return member.is_owner
+        return result
 
 class OtpTokenSerializer(serializers.ModelSerializer):
 
@@ -663,7 +688,7 @@ class MemberSerializer(serializers.ModelSerializer):
 class MemberViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
-        fields = ['id', 'username', 'first_name', 'last_name', 'display_name', ]
+        fields = ['id', 'username', 'first_name', 'last_name', 'display_name', 'is_owner', 'is_admin', 'user']
         read_only_fields = ['id', 'username', 'first_name', 'last_name', 'display_name', ]
 
     def get_is_current(self, obj):
