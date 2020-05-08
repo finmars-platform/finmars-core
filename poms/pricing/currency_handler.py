@@ -181,8 +181,10 @@ class PricingCurrencyHandler(object):
 
         active_pricing_conditions = []
 
-        if self.procedure.instrument_pricing_condition_filters:
-            active_pricing_conditions = list(map(int, self.procedure.instrument_pricing_condition_filters.split(",")))
+        if self.procedure.currency_pricing_condition_filters:
+            active_pricing_conditions = list(map(int, self.procedure.currency_pricing_condition_filters.split(",")))
+
+        _l.info('active_pricing_conditions %s' % active_pricing_conditions)
 
         # Add RUN_VALUATION_ALWAYS currencies only if pricing condition is enabled
         if PricingCondition.RUN_VALUATION_ALWAYS in active_pricing_conditions:
