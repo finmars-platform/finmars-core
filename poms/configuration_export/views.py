@@ -1,4 +1,5 @@
 import csv
+import os
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
@@ -64,6 +65,7 @@ from poms.ui.models import EditLayout, ListLayout, Bookmark, TransactionUserFiel
 from django.forms.models import model_to_dict
 
 from poms.ui.serializers import BookmarkSerializer
+from poms_app import settings
 
 
 def to_json_objects(items):
@@ -96,6 +98,25 @@ def unwrap_items(items):
 
 codename_set = ['view_%(model_name)s', 'change_%(model_name)s', 'manage_%(model_name)s',
                 'view_%(model_name)s_show_parameters', 'view_%(model_name)s_hide_parameters']
+
+
+def get_current_version():
+
+    version_path = os.path.join(settings.BASE_DIR, 'data', 'version.txt')
+
+    version = None
+
+    if os.path.isfile(version_path):
+
+        with open(version_path, 'r') as f:
+
+            try:
+                version = f.read()
+
+            except Exception as e:
+                print("Can't get Version")
+
+    return version
 
 
 def check_configuration_section(access_table):
@@ -193,6 +214,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         configuration = {}
         configuration["head"] = {}
         configuration["head"]["date"] = str(datetime.now().date())
+        configuration["head"]["version"] = str(get_current_version())
         configuration["body"] = []
 
         can_export = check_configuration_section(self.access_table)
