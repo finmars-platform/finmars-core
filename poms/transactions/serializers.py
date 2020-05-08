@@ -123,7 +123,7 @@ class TransactionTypeActionInstrumentEventSchedulePhantomField(serializers.Integ
 class TransactionTypeInputSettingsSerializer(serializers.ModelSerializer):
 
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
-    linked_inputs_names = serializers.CharField(required=False, allow_null=True)
+    linked_inputs_names = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
     def __init__(self, **kwargs):
         kwargs['required'] = False
