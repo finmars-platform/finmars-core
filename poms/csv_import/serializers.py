@@ -239,6 +239,16 @@ class CsvImportSchemeSerializer(serializers.ModelSerializer):
         return scheme
 
 
+class CsvImportSchemeLightSerializer(serializers.ModelSerializer):
+    master_user = MasterUserField()
+    content_type = CsvImportContentTypeField()
+
+    class Meta:
+
+        model = CsvImportScheme
+        fields = ('id', 'master_user', 'scheme_name', 'filter_expr', 'content_type')
+
+
 class CsvDataImportSerializer(serializers.Serializer):
     task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     task_status = serializers.ReadOnlyField()

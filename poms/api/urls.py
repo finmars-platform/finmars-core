@@ -321,6 +321,7 @@ router.register(r'import/pricing-automated-schedule', integrations.PricingAutoma
 router.register(r'import/task', integrations.TaskViewSet)
 
 router.register(r'import/complex-transaction-import-scheme', integrations.ComplexTransactionImportSchemeViewSet)
+router.register(r'import/complex-transaction-import-scheme-light', integrations.ComplexTransactionImportSchemeLightViewSet)
 router.register(r'import/complex-transaction-csv-file-import', integrations.ComplexTransactionCsvFileImportViewSet,
                 'complextransactioncsvfileimport')
 
@@ -331,6 +332,7 @@ router.register(r'import/complex-transaction-csv-file-import-validate',
 router.register(r'utils/expression', api.ExpressionViewSet, 'expression')
 
 router.register(r'import/csv/scheme', csv_import.SchemeViewSet, 'import_csv_scheme')
+router.register(r'import/csv/scheme-light', csv_import.SchemeLightViewSet, 'import_csv_scheme_light')
 router.register(r'import/csv', csv_import.CsvDataImportViewSet, 'import_csv')
 
 router.register(r'import/csv-validate', csv_import.CsvDataImportValidateViewSet, 'import_csv-validate')

@@ -1631,7 +1631,28 @@ def complex_transaction_csv_file_import(self, instance):
                     return
                 else:
                     continue
-            _l.info('rule value: %s', rule_value)
+
+
+
+            if not rule_value:
+
+                _l.info('no rule value: %s', rule_value)
+
+                error_rows['level'] = 'error'
+
+                error_rows['error_message'] = error_rows['error_message'] + str(ugettext('Rule expression is invalid'))
+
+                if instance.break_on_error:
+                    instance.error_row_index = row_index
+                    error_rows['error_reaction'] = 'Break'
+                    instance.error_rows.append(error_rows)
+                    return
+                else:
+                    error_rows['error_reaction'] = 'Continue import'
+                    continue
+
+            else:
+                _l.info('rule value: %s', rule_value)
 
             matched_selector = False
             processed_scenarios = 0
@@ -2047,11 +2068,12 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
             try:
                 rule_value = formula.safe_eval(scheme.rule_expr, names=inputs)
-            except:
+            except Exception as e:
 
                 error_rows['level'] = 'error'
 
                 _l.info('can\'t process rule expression', exc_info=True)
+                _l.info('error %s' % e)
                 error_rows['error_message'] = error_rows['error_message'] + str(ugettext('Can\'t eval rule expression'))
                 instance.error_rows.append(error_rows)
                 if instance.break_on_error:
@@ -2062,7 +2084,26 @@ def complex_transaction_csv_file_import_validate(self, instance):
                 else:
                     error_rows['error_reaction'] = 'Continue import'
                     continue
-            _l.info('rule value: %s', rule_value)
+
+            if not rule_value:
+
+                _l.info('no rule value: %s', rule_value)
+
+                error_rows['level'] = 'error'
+
+                error_rows['error_message'] = error_rows['error_message'] + str(ugettext('Rule expression is invalid'))
+
+                if instance.break_on_error:
+                    instance.error_row_index = row_index
+                    error_rows['error_reaction'] = 'Break'
+                    instance.error_rows.append(error_rows)
+                    return
+                else:
+                    error_rows['error_reaction'] = 'Continue import'
+                    continue
+
+            else:
+                _l.info('rule value: %s', rule_value)
 
             processed_scenarios = 0
             matched_rule = False

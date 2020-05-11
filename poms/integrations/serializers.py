@@ -1723,6 +1723,15 @@ class ComplexTransactionImportSchemeSerializer(serializers.ModelSerializer):
         rule_scenario.fields.exclude(pk__in=pk_set).delete()
 
 
+class ComplexTransactionImportSchemeLightSerializer(serializers.ModelSerializer):
+    master_user = MasterUserField()
+    rule_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
+
+    class Meta:
+        model = ComplexTransactionImportScheme
+        fields = ['id', 'master_user', 'scheme_name', 'rule_expr']
+
+
 class ComplexTransactionCsvFileImport:
     def __init__(self, task_id=None, task_status=None, master_user=None, member=None,
                  scheme=None, file_path=None, skip_first_line=None, delimiter=None, quotechar=None, encoding=None,

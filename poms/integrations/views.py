@@ -48,7 +48,8 @@ from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer
     DailyPricingModelMappingSerializer, PaymentSizeDetailMappingSerializer, PriceDownloadSchemeMappingSerializer, \
     ComplexTransactionImportSchemeSerializer, PortfolioClassifierMappingSerializer, AccountClassifierMappingSerializer, \
     CounterpartyClassifierMappingSerializer, ResponsibleClassifierMappingSerializer, PricingPolicyMappingSerializer, \
-    InstrumentClassifierMappingSerializer, AccountTypeMappingSerializer, TestCertificateSerializer
+    InstrumentClassifierMappingSerializer, AccountTypeMappingSerializer, TestCertificateSerializer, \
+    ComplexTransactionImportSchemeLightSerializer
 from poms.integrations.tasks import complex_transaction_csv_file_import, complex_transaction_csv_file_import_validate
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
@@ -885,6 +886,22 @@ class ComplexTransactionImportSchemeViewSet(AbstractModelViewSet):
     #     )
     # )
     serializer_class = ComplexTransactionImportSchemeSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = ComplexTransactionImportSchemeFilterSet
+    ordering_fields = [
+        'scheme_name',
+    ]
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        PomsConfigurationPermission
+    ]
+
+
+class ComplexTransactionImportSchemeLightViewSet(AbstractModelViewSet):
+    queryset = ComplexTransactionImportScheme.objects
+
+    serializer_class = ComplexTransactionImportSchemeLightSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]

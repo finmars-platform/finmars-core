@@ -17,7 +17,7 @@ from poms.users.filters import OwnerByMasterUserFilter
 
 from .filters import SchemeContentTypeFilter
 from .models import CsvDataImport, CsvImportScheme
-from .serializers import CsvDataImportSerializer, CsvImportSchemeSerializer
+from .serializers import CsvDataImportSerializer, CsvImportSchemeSerializer, CsvImportSchemeLightSerializer
 
 from django.forms.models import model_to_dict
 
@@ -53,6 +53,19 @@ class SchemeViewSet(AbstractModelViewSet):
     permission_classes = AbstractModelViewSet.permission_classes + [
         PomsConfigurationPermission
     ]
+
+
+class SchemeLightViewSet(AbstractModelViewSet):
+    queryset = CsvImportScheme.objects
+    serializer_class = CsvImportSchemeLightSerializer
+    filter_class = SchemeFilterSet
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        PomsConfigurationPermission
+    ]
+
 
 
 class CsvDataImportViewSet(AbstractAsyncViewSet):
