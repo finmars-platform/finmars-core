@@ -1145,7 +1145,7 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Can\'t Overwrite Edit Layout for %s' % content_type.model
+                                        'message'] = 'Error. Can\'t Overwrite Edit Layout for %s' % content_type.model
 
                             else:
 
@@ -1254,7 +1254,7 @@ class ImportManager(object):
                                 except Exception as error:
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Can\'t Overwrite List Layout for %s' % content_object['name']
+                                        'message'] = 'Error. Can\'t Overwrite List Layout for %s' % content_object['name']
                             else:
 
                                 stats['status'] = 'error'
@@ -1325,7 +1325,7 @@ class ImportManager(object):
                                 except Exception as error:
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Can\'t Overwrite Context Menu Layout for %s' % content_object['name']
+                                        'message'] = 'Error. Can\'t Overwrite Context Menu Layout for %s' % content_object['name']
                             else:
 
                                 stats['status'] = 'error'
@@ -1389,7 +1389,7 @@ class ImportManager(object):
                                 except Exception as error:
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Can\'t Overwrite Reference Table Layout for %s' % content_object['name']
+                                        'message'] = 'Error. Can\'t Overwrite Reference Table Layout for %s' % content_object['name']
                             else:
 
                                 stats['status'] = 'error'
@@ -1461,7 +1461,7 @@ class ImportManager(object):
                                 except Exception as error:
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Can\'t Overwrite Template Layout for %s' % content_object['name']
+                                        'message'] = 'Error. Can\'t Overwrite Template Layout for %s' % content_object['name']
                             else:
 
                                 stats['status'] = 'error'
@@ -1573,7 +1573,7 @@ class ImportManager(object):
                                 except Exception as error:
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Can\'t Overwrite Dashboard Layout for %s' % content_object['name']
+                                        'message'] = 'Error. Can\'t Overwrite Dashboard Layout for %s' % content_object['name']
                             else:
 
                                 stats['status'] = 'error'
@@ -1646,7 +1646,7 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Can\'t Overwrite Instrument Download Scheme for %s' % content_object['scheme_name']
+                                        'message'] = 'Error. Can\'t Overwrite Instrument Download Scheme for %s' % content_object['scheme_name']
 
                             else:
 
@@ -1734,7 +1734,7 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Can\'t Overwrite Transaction Import Scheme for %s' % content_object['scheme_name']
+                                        'message'] = 'Error. Can\'t Overwrite Transaction Import Scheme for %s' % content_object['scheme_name']
 
                             else:
 
@@ -1820,7 +1820,7 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Can\'t Overwrite Simple Import Scheme for %s' % content_object['scheme_name']
+                                        'message'] = 'Error. Can\'t Overwrite Simple Import Scheme for %s' % content_object['scheme_name']
 
                             else:
 
@@ -1904,7 +1904,7 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Can\'t Overwrite Complex Import Scheme for %s' % content_object['scheme_name']
+                                        'message'] = 'Error. Can\'t Overwrite Complex Import Scheme for %s' % content_object['scheme_name']
 
                             else:
 
@@ -2000,7 +2000,7 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Can\'t Overwrite Currency %s' % content_object['name']
+                                        'message'] = 'Error. Can\'t Overwrite Currency %s' % content_object['name']
 
                             else:
 
@@ -2088,7 +2088,7 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Can\'t Overwrite Pricing Policy %s' % content_object['name']
+                                        'message'] = 'Error. Can\'t Overwrite Pricing Policy %s' % content_object['name']
 
                             else:
 
@@ -2305,7 +2305,7 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Can\'t Overwrite Instrument Pricing Scheme for %s' % content_object['name']
+                                        'message'] = 'Error. Can\'t Overwrite Instrument Pricing Scheme for %s' % content_object['name']
 
                             else:
 
@@ -2367,7 +2367,7 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Can\'t Overwrite Currency Pricing Scheme for %s' % content_object['name']
+                                        'message'] = 'Error. Can\'t Overwrite Currency Pricing Scheme for %s' % content_object['name']
 
                             else:
 
@@ -2437,7 +2437,7 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Can\'t Overwrite Pricing Schedule for %s' % content_object['name']
+                                        'message'] = 'Error. Can\'t Overwrite Pricing Schedule for %s' % content_object['name']
 
                             else:
 
@@ -2499,7 +2499,7 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Can\'t Overwrite Pricing Procedure for %s' % content_object['name']
+                                        'message'] = 'Error. Can\'t Overwrite Pricing Procedure for %s' % content_object['name']
 
                             else:
 
@@ -2738,13 +2738,13 @@ class ImportManager(object):
                                             stats['status'] = 'error'
 
                                             if '___system_code' in content_object:
-                                                stats['error']['message'] = 'Can\'t Overwrite Mapping %s' % content_object['___system_code']
+                                                stats['error']['message'] = 'Error. Can\'t Overwrite Mapping %s' % content_object['___system_code']
 
                                             if '___user_code' in content_object:
-                                                stats['error']['message'] = 'Can\'t Overwrite  Mapping %s' % content_object['___user_code']
+                                                stats['error']['message'] = 'Error. Can\'t Overwrite  Mapping %s' % content_object['___user_code']
 
                                             if '___scheme_name' in content_object:
-                                                stats['error']['message'] = 'Can\'t Overwrite  Mapping %s' % content_object['___scheme_name']
+                                                stats['error']['message'] = 'Error. Can\'t Overwrite  Mapping %s' % content_object['___scheme_name']
 
                                     else:
                                         stats['status'] = 'error'
