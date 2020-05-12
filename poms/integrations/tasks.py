@@ -1207,14 +1207,16 @@ def generate_file_report(instance, master_user, type, name):
 
             _l.debug('instance %s' % instance)
 
-            columns = columns + instance.error_rows[0]['error_data']['columns']['imported_columns']
-            columns = columns + instance.error_rows[0]['error_data']['columns']['converted_imported_columns']
-            columns = columns + instance.error_rows[0]['error_data']['columns']['transaction_type_selector']
+            if len(instance.error_rows):
 
-            unique_columns = get_unique_columns(instance)
+                columns = columns + instance.error_rows[0]['error_data']['columns']['imported_columns']
+                columns = columns + instance.error_rows[0]['error_data']['columns']['converted_imported_columns']
+                columns = columns + instance.error_rows[0]['error_data']['columns']['transaction_type_selector']
 
-            for unique_column in unique_columns:
-                columns.append(unique_column)
+                unique_columns = get_unique_columns(instance)
+
+                for unique_column in unique_columns:
+                    columns.append(unique_column)
 
             columns.append('Error Message')
             columns.append('Reaction')

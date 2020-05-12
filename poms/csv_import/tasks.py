@@ -48,26 +48,28 @@ def generate_file_report(instance, master_user, type, name):
 
     columns = ['Row number']
 
-    columns = columns + instance.stats[0]['error_data']['columns']['imported_columns']
-    columns = columns + instance.stats[0]['error_data']['columns']['data_matching']
+    if len(instance.stats):
+        columns = columns + instance.stats[0]['error_data']['columns']['imported_columns']
+        columns = columns + instance.stats[0]['error_data']['columns']['data_matching']
 
     columns.append('Error Message')
     columns.append('Reaction')
 
     rows_content = []
 
-    for errorRow in instance.stats:
-        localResult = []
+    if len(instance.stats):
+        for errorRow in instance.stats:
+            localResult = []
 
-        localResult.append(errorRow['original_row_index'])
+            localResult.append(errorRow['original_row_index'])
 
-        localResult = localResult + errorRow['error_data']['data']['imported_columns']
-        localResult = localResult + errorRow['error_data']['data']['data_matching']
+            localResult = localResult + errorRow['error_data']['data']['imported_columns']
+            localResult = localResult + errorRow['error_data']['data']['data_matching']
 
-        localResult.append('"' + errorRow['error_message'] + '"')
-        localResult.append(errorRow['error_reaction'])
+            localResult.append('"' + errorRow['error_message'] + '"')
+            localResult.append(errorRow['error_reaction'])
 
-        rows_content.append(localResult)
+            rows_content.append(localResult)
 
     columnRow = ','.join(columns)
 

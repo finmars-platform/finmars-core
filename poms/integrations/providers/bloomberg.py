@@ -197,9 +197,9 @@ class BloombergDataProvider(AbstractProvider):
         overrides = [o[1:] for o in allparts if o.startswith('@')]
         if not parts:
             raise BloombergException('Invalid code')
-        id0 = parts[0]
+        id0 = ' '.join(parts[:-1])
         try:
-            yellowkey = parts[1]
+            yellowkey = parts[::-1][0]
         except IndexError:
             yellowkey = None
 
@@ -1017,8 +1017,12 @@ class FakeBloombergDataProvider(BloombergDataProvider):
         if not req:
             raise RuntimeError('invalid response_id')
 
-        instr = req['instrument'].split(maxsplit=2)
-        instr_id = instr[0]
+        # instr = req['instrument'].split(maxsplit=2)
+        # instr_id = instr[0]
+
+        parts = req['instrument'].split(' ')
+        instr_id = ' '.join(parts[:-1])
+
         # instr_yellowkey = instr[1]
 
         fake_data = {
