@@ -1887,11 +1887,19 @@ class TransactionTypeProcess(object):
                             self.value_errors.append(errors)
 
                 else:
+
+                    print('inp %s' % inp)
+                    print('inp %s' % inp.value_expr)
+
                     errors = {}
                     try:
                         res = formula.safe_eval(inp.value_expr, names=self.values, now=self._now, context=self._context)
                         self.values[name] = res
                     except formula.InvalidExpression as e:
+
+                        if inp.value_type == TransactionTypeInput.STRING:
+                            self.values[name] = 'Invalid Expression'
+
                         self._set_eval_error(errors, inp.name, inp.value_expr, e)
                         self.value_errors.append(errors)
 
