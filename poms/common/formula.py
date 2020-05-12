@@ -1174,6 +1174,37 @@ def _get_instrument_factor(evaluator, instrument, date):
 _get_instrument_factor.evaluator = True
 
 
+def _get_rt_value(evaluator, key, table_name, default=None):
+
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+
+    master_user = get_master_user_from_context(context)
+
+    from poms.reference_tables.models import ReferenceTable, ReferenceTableRow
+
+    try:
+        table = ReferenceTable.objects.get(master_user=master_user, name=table_name)
+
+        try:
+
+            row = ReferenceTableRow.objects.get(reference_table=table, key=key)
+
+            return row.value
+
+        except ReferenceTableRow.DoesNotExist:
+            return default
+
+    except ReferenceTable.DoesNotExist:
+        print("_get_rt_value error")
+
+    return default
+
+
+_get_rt_value.evaluator = True
+
+
 def _simple_group(val, ranges, default=None):
     for begin, end, text in ranges:
         if begin is None:
@@ -1476,6 +1507,7 @@ FUNCTIONS = [
     SimpleEval2Def('get_instrument_user_attribute_value', _get_instrument_user_attribute_value),
 
     SimpleEval2Def('get_ttype_default_input', _get_ttype_default_input),
+    SimpleEval2Def('get_rt_value', _get_rt_value),
     SimpleEval2Def('convert_to_number', _convert_to_number),
     SimpleEval2Def('if_null', _if_null),
 
