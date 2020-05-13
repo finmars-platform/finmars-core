@@ -843,6 +843,27 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
                                               status)
                     generated_event.save()
 
+                else:
+
+                    generated_event.status = GeneratedEvent.ERROR
+                    generated_event.status_date = timezone.now()
+                    generated_event.member = self.request.user.member
+
+                    instance = GeneratedEventProcess(
+                        generated_event=generated_event,
+                        action=action,
+                        context=self.get_serializer_context()
+                    )
+
+                    instance.process_as_pending()
+
+                    generated_event.processed(self.request.user.member, action, instance.complex_transaction,
+                                              GeneratedEvent.ERROR)
+
+                    generated_event.save()
+
+
+
                 history.set_actor_content_object(instance.complex_transaction)
 
                 return Response(serializer.data)

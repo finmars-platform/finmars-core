@@ -82,8 +82,9 @@ def only_generate_events_at_date(master_user, date):
         'instrument__id'
     )
 
+
     if not event_schedule_qs.exists():
-        _l.debug('event schedules not found')
+        _l.debug('event schedules not found. Date %s' % date)
         return
 
     event_schedules_cache = defaultdict(list)
@@ -195,7 +196,7 @@ def only_generate_events_at_date_for_single_instrument(master_user, date, instru
     )
 
     if not event_schedule_qs.exists():
-        _l.debug('event schedules not found')
+        _l.debug('event schedules not found. Date %s' % date)
         return
 
     event_schedules_cache = defaultdict(list)

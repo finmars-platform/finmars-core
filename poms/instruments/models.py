@@ -1071,6 +1071,10 @@ class EventSchedule(models.Model):
         #             break
         #
         # return False, None, None
+
+        # _l.debug('self.all_dates %s' % self.all_dates)
+        # _l.debug('now %s' % now)
+
         for edate, ndate in self.all_dates:
             if edate == now or ndate == now:
                 return True, edate, ndate

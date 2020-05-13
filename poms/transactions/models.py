@@ -1283,45 +1283,45 @@ class ComplexTransaction(FakeDeletableModel):
 
     user_text_20 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 20'))
 
-    user_number_1 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 1'))
+    user_number_1 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 1'))
 
-    user_number_2 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 2'))
+    user_number_2 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 2'))
 
-    user_number_3 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 3'))
+    user_number_3 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 3'))
 
-    user_number_4 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 4'))
+    user_number_4 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 4'))
 
-    user_number_5 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 5'))
+    user_number_5 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 5'))
 
-    user_number_6 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 6'))
+    user_number_6 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 6'))
 
-    user_number_7 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 7'))
+    user_number_7 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 7'))
 
-    user_number_8 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 8'))
+    user_number_8 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 8'))
 
-    user_number_9 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 9'))
+    user_number_9 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 9'))
 
-    user_number_10 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 10'))
+    user_number_10 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 10'))
 
-    user_number_11 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 11'))
+    user_number_11 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 11'))
 
-    user_number_12 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 12'))
+    user_number_12 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 12'))
 
-    user_number_13 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 13'))
+    user_number_13 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 13'))
 
-    user_number_14 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 14'))
+    user_number_14 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 14'))
 
-    user_number_15 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 15'))
+    user_number_15 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 15'))
 
-    user_number_16 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 16'))
+    user_number_16 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 16'))
 
-    user_number_17 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 17'))
+    user_number_17 = models.IntegerField(null=True,  verbose_name=ugettext_lazy('user number 17'))
 
-    user_number_18 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 18'))
+    user_number_18 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 18'))
 
-    user_number_19 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 19'))
+    user_number_19 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 19'))
 
-    user_number_20 = models.IntegerField(default=0, verbose_name=ugettext_lazy('user number 20'))
+    user_number_20 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 20'))
 
     user_date_1 = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("user date 1"))
 
