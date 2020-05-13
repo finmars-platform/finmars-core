@@ -134,6 +134,7 @@ router.register(r'instruments/event-schedule-config', instruments.EventScheduleC
 
 router.register(r'instruments/instrument-type-ev-group', instruments.InstrumentTypeEvGroupViewSet)
 router.register(r'instruments/instrument-type', instruments.InstrumentTypeViewSet)
+router.register(r'instruments/instrument-type-light', instruments.InstrumentTypeLightViewSet)
 router.register(r'instruments/instrument-type-attribute-type', instruments.InstrumentTypeAttributeTypeViewSet)
 
 # router.register(r'instruments/instrument-attribute-type', instruments.InstrumentAttributeTypeViewSet)

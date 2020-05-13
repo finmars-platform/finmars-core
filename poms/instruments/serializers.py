@@ -409,6 +409,18 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
             InstrumentTypePricingPolicy.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
 
 
+class InstrumentTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = InstrumentType
+        fields = [
+            'id', 'master_user',
+            'user_code', 'name', 'short_name', 'public_name',
+            'is_default', 'is_deleted', 'is_enabled'
+        ]
+
+
 class InstrumentTypeViewSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
     instrument_class_object = InstrumentClassSerializer(source='instrument_class', read_only=True)
 
