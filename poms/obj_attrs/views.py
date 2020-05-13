@@ -21,6 +21,10 @@ from rest_framework.response import Response
 
 from rest_framework import viewsets, status
 
+from logging import getLogger
+
+_l = getLogger('poms.obj_attrs')
+
 
 class AbstractAttributeTypeViewSet(AbstractWithObjectPermissionViewSet):
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
@@ -258,18 +262,25 @@ class GenericAttributeTypeViewSet(AbstractModelViewSet):
             attribute_type=attribute_type,
             content_type=self.target_model_content_type)
 
+        _l.info('recalculate_attributes: attributes len %s' % len(attributes))
+        _l.info('recalculate_attributes: attribute_type.expr %s' % attribute_type.expr)
+
         context = {'request': request}
 
-        json_objs = self.get_json_objs(master_user, context, )
+        json_objs = self.get_json_objs(master_user, context)
 
         for attr in attributes:
 
             data = json_objs[attr.object_id]
 
+            # _l.info('data %s' % data)
+
             try:
-                executed_expression = safe_eval(attribute_type.expr, names={'this': data}, context={})
+                executed_expression = safe_eval(attribute_type.expr, names={'this': data}, context=context)
             except (ExpressionEvalError, TypeError, Exception, KeyError):
                 executed_expression = 'Invalid Expression'
+
+            # print('executed_expression %s' % executed_expression)
 
             if attr.attribute_type.value_type == GenericAttributeType.STRING:
 
