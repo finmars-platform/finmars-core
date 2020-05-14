@@ -21,7 +21,7 @@ from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierFi
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier, GenericAttribute
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.obj_perms.utils import has_view_perms, get_permissions_prefetch_lookups, obj_perms_filter_objects_for_view
-from poms.users.fields import MasterUserField
+from poms.users.fields import MasterUserField, HiddenMemberField
 from poms.users.utils import get_member_from_context, get_master_user_from_context
 
 
@@ -810,3 +810,46 @@ class GenericAttributeSerializer(serializers.ModelSerializer):
             instance.classifier = self._attribute_type_classifiers[instance.classifier_id]
 
         return super(GenericAttributeSerializer, self).to_representation(instance)
+
+
+class RecalculateAttributes:
+    def __init__(self, task_id=None, task_status=None, master_user=None, member=None, attribute_type_id=None,
+                 target_model_content_type=None, target_model=None, target_model_serializer=None,
+                 total_rows=None, processed_rows=None, stats_file_report=None, stats=None):
+        self.task_id = task_id
+        self.task_status = task_status
+
+        self.master_user = master_user
+        self.member = member
+        self.attribute_type_id = attribute_type_id
+        self.target_model_content_type = target_model_content_type
+        self.target_model = target_model
+        self.target_model_serializer = target_model_serializer
+
+        self.total_rows = total_rows
+        self.processed_rows = processed_rows
+
+        self.stats = stats
+        self.stats_file_report = stats_file_report
+
+    def __str__(self):
+        return '%s' % (getattr(self.master_user, 'name', None))
+
+
+class RecalculateAttributesSerializer(serializers.Serializer):
+    task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    task_status = serializers.ReadOnlyField()
+
+    master_user = MasterUserField()
+    member = HiddenMemberField()
+    # attribute_type_id = serializers.IntegerField(allow_null=True, required=False)
+
+    processed_rows = serializers.ReadOnlyField()
+    total_rows = serializers.ReadOnlyField()
+
+    stats = serializers.ReadOnlyField()
+    stats_file_report = serializers.ReadOnlyField()
+
+    def create(self, validated_data):
+
+        return RecalculateAttributes(**validated_data)
