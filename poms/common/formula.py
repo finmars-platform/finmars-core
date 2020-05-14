@@ -785,7 +785,7 @@ def _get_factor_schedule(evaluator, date, instrument):
         else:
             result = None
 
-    if result is not None:
+    if result is not None and result.factor_value:
         return result.factor_value
 
     return 1
