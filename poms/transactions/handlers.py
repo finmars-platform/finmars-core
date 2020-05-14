@@ -241,10 +241,14 @@ class TransactionTypeProcess(object):
                 if value is not None:
                     self.values[i.name] = value
 
+        # print('self.inputs %s' % self.inputs)
+
         for i in self.inputs:
 
-            if i.name in self.values:
-                continue
+            # Weird check
+            # if i.name in self.values:
+            #     continue
+
             value = None
 
             if i.is_fill_from_context:

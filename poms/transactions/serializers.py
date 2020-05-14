@@ -245,7 +245,7 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
         super(TransactionTypeInputSerializer, self).__init__(*args, **kwargs)
 
         from poms.accounts.serializers import AccountViewSerializer
-        from poms.instruments.serializers import InstrumentTypeViewSerializer, DailyPricingModelSerializer, \
+        from poms.instruments.serializers import InstrumentTypeViewSerializer, InstrumentViewSerializer, DailyPricingModelSerializer, \
             PaymentSizeDetailSerializer, PricingPolicySerializer
         from poms.currencies.serializers import CurrencyViewSerializer
         from poms.counterparties.serializers import CounterpartyViewSerializer, ResponsibleViewSerializer
@@ -256,6 +256,7 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
 
         self.fields['account_object'] = AccountViewSerializer(source='account', read_only=True)
 
+        self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
         self.fields['instrument_type_object'] = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
         self.fields['daily_pricing_model_object'] = DailyPricingModelSerializer(source='daily_pricing_model',
                                                                                 read_only=True)
