@@ -1205,6 +1205,331 @@ def _get_rt_value(evaluator, key, table_name, default=None):
 _get_rt_value.evaluator = True
 
 
+def _get_default_portfolio(evaluator):
+
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+
+    master_user = get_master_user_from_context(context)
+
+    from poms.users.models import EcosystemDefault
+
+    try:
+
+        item = EcosystemDefault.objects.get(master_user=master_user)
+
+        return item.portfolio_id
+
+    except Exception as e:
+        print("get_default_portfolio error %s" % e)
+
+    return None
+
+
+_get_default_portfolio.evaluator = True
+
+
+def _get_default_instrument(evaluator):
+
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+
+    master_user = get_master_user_from_context(context)
+
+    from poms.users.models import EcosystemDefault
+
+    try:
+
+        item = EcosystemDefault.objects.get(master_user=master_user)
+
+        return item.instrument_id
+
+    except Exception as e:
+        print("get_default_instrument error %s" % e)
+
+    return None
+
+
+_get_default_instrument.evaluator = True
+
+
+def _get_default_account(evaluator):
+
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+
+    master_user = get_master_user_from_context(context)
+
+    from poms.users.models import EcosystemDefault
+
+    try:
+
+        item = EcosystemDefault.objects.get(master_user=master_user)
+
+        return item.account_id
+
+    except Exception as e:
+        print("get_default_account error %s" % e)
+
+    return None
+
+
+_get_default_account.evaluator = True
+
+
+def _get_default_currency(evaluator):
+
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+
+    master_user = get_master_user_from_context(context)
+
+    from poms.users.models import EcosystemDefault
+
+    try:
+
+        item = EcosystemDefault.objects.get(master_user=master_user)
+
+        return item.currency_id
+
+    except Exception as e:
+        print("get_default_currency error %s" % e)
+
+    return None
+
+
+_get_default_currency.evaluator = True
+
+
+def _get_default_transaction_type(evaluator):
+
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+
+    master_user = get_master_user_from_context(context)
+
+    from poms.users.models import EcosystemDefault
+
+    try:
+
+        item = EcosystemDefault.objects.get(master_user=master_user)
+
+        return item.transaction_type_id
+
+    except Exception as e:
+        print("get_default_transaction_type error %s" % e)
+
+    return None
+
+
+_get_default_transaction_type.evaluator = True
+
+
+def _get_default_instrument_type(evaluator):
+
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+
+    master_user = get_master_user_from_context(context)
+
+    from poms.users.models import EcosystemDefault
+
+    try:
+
+        item = EcosystemDefault.objects.get(master_user=master_user)
+
+        return item.instrument_type_id
+
+    except Exception as e:
+        print("get_default_instrument_type error %s" % e)
+
+    return None
+
+
+_get_default_instrument_type.evaluator = True
+
+
+def _get_default_account_type(evaluator):
+
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+
+    master_user = get_master_user_from_context(context)
+
+    from poms.users.models import EcosystemDefault
+
+    try:
+
+        item = EcosystemDefault.objects.get(master_user=master_user)
+
+        return item.account_type_id
+
+    except Exception as e:
+        print("get_default_account_type error %s" % e)
+
+    return None
+
+
+_get_default_account_type.evaluator = True
+
+
+def _get_default_pricing_policy(evaluator):
+
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+
+    master_user = get_master_user_from_context(context)
+
+    from poms.users.models import EcosystemDefault
+
+    try:
+
+        item = EcosystemDefault.objects.get(master_user=master_user)
+
+        return item.pricing_policy_id
+
+    except Exception as e:
+        print("get_default_pricing_policy error %s" % e)
+
+    return None
+
+
+_get_default_pricing_policy.evaluator = True
+
+
+def _get_default_responsible(evaluator):
+
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+
+    master_user = get_master_user_from_context(context)
+
+    from poms.users.models import EcosystemDefault
+
+    try:
+
+        item = EcosystemDefault.objects.get(master_user=master_user)
+
+        return item.responsible_id
+
+    except Exception as e:
+        print("get_default_responsible error %s" % e)
+
+    return None
+
+
+_get_default_responsible.evaluator = True
+
+
+def _get_default_counterparty(evaluator):
+
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+
+    master_user = get_master_user_from_context(context)
+
+    from poms.users.models import EcosystemDefault
+
+    try:
+
+        item = EcosystemDefault.objects.get(master_user=master_user)
+
+        return item.counterparty_id
+
+    except Exception as e:
+        print("get_default_counterparty error %s" % e)
+
+    return None
+
+
+_get_default_counterparty.evaluator = True
+
+
+def _get_default_strategy1(evaluator):
+
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+
+    master_user = get_master_user_from_context(context)
+
+    from poms.users.models import EcosystemDefault
+
+    try:
+
+        item = EcosystemDefault.objects.get(master_user=master_user)
+
+        return item.strategy1_id
+
+    except Exception as e:
+        print("get_default_strategy1 error %s" % e)
+
+    return None
+
+
+_get_default_strategy1.evaluator = True
+
+
+def _get_default_strategy2(evaluator):
+
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+
+    master_user = get_master_user_from_context(context)
+
+    from poms.users.models import EcosystemDefault
+
+    try:
+
+        item = EcosystemDefault.objects.get(master_user=master_user)
+
+        return item.strategy2_id
+
+    except Exception as e:
+        print("get_default_strategy2 error %s" % e)
+
+    return None
+
+
+_get_default_strategy2.evaluator = True
+
+
+def _get_default_strategy3(evaluator):
+
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+
+    master_user = get_master_user_from_context(context)
+
+    from poms.users.models import EcosystemDefault
+
+    try:
+
+        item = EcosystemDefault.objects.get(master_user=master_user)
+
+        return item.strategy3_id
+
+    except Exception as e:
+        print("get_default_strategy3 error %s" % e)
+
+    return None
+
+
+_get_default_strategy3.evaluator = True
+
+
 def _simple_group(val, ranges, default=None):
     for begin, end, text in ranges:
         if begin is None:
@@ -1525,6 +1850,23 @@ FUNCTIONS = [
 
     SimpleEval2Def('has_var', _has_var),
     SimpleEval2Def('get_var', _get_var),
+
+
+    SimpleEval2Def('get_default_portfolio', _get_default_portfolio),
+    SimpleEval2Def('get_default_instrument', _get_default_instrument),
+    SimpleEval2Def('get_default_account', _get_default_account),
+    SimpleEval2Def('get_default_currency', _get_default_currency),
+    SimpleEval2Def('get_default_transaction_type', _get_default_transaction_type),
+    SimpleEval2Def('get_default_instrument_type', _get_default_instrument_type),
+    SimpleEval2Def('get_default_account_type', _get_default_account_type),
+    SimpleEval2Def('get_default_pricing_policy', _get_default_pricing_policy),
+    SimpleEval2Def('get_default_responsible', _get_default_responsible),
+    SimpleEval2Def('get_default_counterparty', _get_default_counterparty),
+    SimpleEval2Def('get_default_strategy1', _get_default_strategy1),
+    SimpleEval2Def('get_default_strategy2', _get_default_strategy2),
+    SimpleEval2Def('get_default_strategy3', _get_default_strategy3),
+
+
 ]
 
 empty = object()
