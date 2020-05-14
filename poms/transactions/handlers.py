@@ -245,9 +245,8 @@ class TransactionTypeProcess(object):
 
         for i in self.inputs:
 
-            # Weird check
-            # if i.name in self.values:
-            #     continue
+            if i.name in self.values:
+                continue
 
             value = None
 
