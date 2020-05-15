@@ -12,7 +12,7 @@ from poms.integrations.models import ProviderClass
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
 from poms.pricing.models import PricingProcedureInstance, PricingProcedureBloombergCurrencyResult, \
-    CurrencyPricingSchemeType, CurrencyHistoryError, PricingProcedureFixerCurrencyResult
+    CurrencyPricingSchemeType, CurrencyHistoryError, PricingProcedureFixerCurrencyResult, PricingProcedure
 from poms.pricing.transport.transport import PricingTransport
 from poms.pricing.utils import get_unique_pricing_schemes, group_items_by_provider, get_list_of_dates_between_two_dates, \
     get_is_yesterday, optimize_items, roll_currency_history_for_n_day_forward
@@ -179,52 +179,66 @@ class PricingCurrencyHandler(object):
         currencies_opened = set()
         currencies_always = set()
 
-        active_pricing_conditions = []
+        if self.procedure.type == PricingProcedure.CREATED_BY_USER:
 
-        if self.procedure.currency_pricing_condition_filters:
-            active_pricing_conditions = list(map(int, self.procedure.currency_pricing_condition_filters.split(",")))
+            active_pricing_conditions = []
 
-        _l.info('active_pricing_conditions %s' % active_pricing_conditions)
+            if self.procedure.currency_pricing_condition_filters:
+                active_pricing_conditions = list(map(int, self.procedure.currency_pricing_condition_filters.split(",")))
 
-        # Add RUN_VALUATION_ALWAYS currencies only if pricing condition is enabled
-        if PricingCondition.RUN_VALUATION_ALWAYS in active_pricing_conditions:
+            _l.info('active_pricing_conditions %s' % active_pricing_conditions)
 
-            for i in currencies:
+            # Add RUN_VALUATION_ALWAYS currencies only if pricing condition is enabled
+            if PricingCondition.RUN_VALUATION_ALWAYS in active_pricing_conditions:
 
-                if i.pricing_condition_id in [PricingCondition.RUN_VALUATION_ALWAYS]:
-                    currencies_always.add(i.id)
+                for i in currencies:
 
-        # Add RUN_VALUATION_IF_NON_ZERO currencies only if pricing condition is enabled
-        if PricingCondition.RUN_VALUATION_IF_NON_ZERO in active_pricing_conditions:
+                    if i.pricing_condition_id in [PricingCondition.RUN_VALUATION_ALWAYS]:
+                        currencies_always.add(i.id)
 
-            processing_st = time.perf_counter()
+            # Add RUN_VALUATION_IF_NON_ZERO currencies only if pricing condition is enabled
+            if PricingCondition.RUN_VALUATION_IF_NON_ZERO in active_pricing_conditions:
 
-            base_transactions = Transaction.objects.filter(master_user=self.procedure.master_user)
+                processing_st = time.perf_counter()
 
-            base_transactions = base_transactions.filter(Q(accounting_date__lte=self.procedure.price_date_to) | Q(cash_date__lte=self.procedure.price_date_to))
+                base_transactions = Transaction.objects.filter(master_user=self.procedure.master_user)
 
-            if self.procedure.portfolio_filters:
+                base_transactions = base_transactions.filter(Q(accounting_date__lte=self.procedure.price_date_to) | Q(cash_date__lte=self.procedure.price_date_to))
 
-                portfolio_user_codes = self.procedure.portfolio_filters.split(",")
+                if self.procedure.portfolio_filters:
 
-                base_transactions = base_transactions.filter(portfolio__user_code__in=portfolio_user_codes)
+                    portfolio_user_codes = self.procedure.portfolio_filters.split(",")
 
-            _l.info('< get_currencies base transactions len %s', len(base_transactions))
-            _l.info('< get_currencies base transactions done in %s', (time.perf_counter() - processing_st))
+                    base_transactions = base_transactions.filter(portfolio__user_code__in=portfolio_user_codes)
 
-            if len(list(base_transactions)):
+                _l.info('< get_currencies base transactions len %s', len(base_transactions))
+                _l.info('< get_currencies base transactions done in %s', (time.perf_counter() - processing_st))
 
-                for base_transaction in base_transactions:
+                if len(list(base_transactions)):
 
-                    if base_transaction.transaction_currency_id:
+                    for base_transaction in base_transactions:
 
-                        currencies_opened.add(base_transaction.transaction_currency_id)
+                        if base_transaction.transaction_currency_id:
 
-                    if base_transaction.settlement_currency_id:
+                            currencies_opened.add(base_transaction.transaction_currency_id)
 
-                        currencies_opened.add(base_transaction.settlement_currency_id)
+                        if base_transaction.settlement_currency_id:
 
-        currencies = currencies.filter(pk__in=(currencies_always | currencies_opened))
+                            currencies_opened.add(base_transaction.settlement_currency_id)
+
+            currencies = currencies.filter(pk__in=(currencies_always | currencies_opened))
+
+        if self.procedure.type == PricingProcedure.CREATED_BY_CURRENCY:
+
+            if self.procedure.currency_filters:
+                user_codes = self.procedure.currency_filters.split(",")
+
+                _l.info("Filter by Currencies %s " % user_codes)
+
+                _l.info("currencies before filter %s " % len(currencies))
+                currencies = currencies.filter(user_code__in=user_codes)
+                _l.info("instruments after filter %s " % len(currencies))
+
 
         return currencies
 
