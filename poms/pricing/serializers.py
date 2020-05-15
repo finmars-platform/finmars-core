@@ -502,7 +502,7 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
                     parameters = InstrumentPricingSchemeAlphavParameters(instrument_pricing_scheme_id=instance.id)
 
                 if 'default_value' in type_settings:
-                    wtrade.default_value = type_settings['default_value']
+                    parameters.default_value = type_settings['default_value']
                 else:
                     parameters.default_value = None
 
