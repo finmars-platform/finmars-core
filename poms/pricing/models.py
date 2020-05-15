@@ -807,6 +807,7 @@ class PricingProcedure(NamedModel):
 
     currency_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('currency filters'))
 
+
     instrument_type_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('instrument type filters'))
 
     instrument_pricing_scheme_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('instrument pricing scheme filters'))

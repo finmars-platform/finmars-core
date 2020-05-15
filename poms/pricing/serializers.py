@@ -944,7 +944,7 @@ class PricingProcedureSerializer(serializers.ModelSerializer):
                   'price_overwrite_principal_prices', 'price_overwrite_accrued_prices', 'price_overwrite_fx_rates',
 
                   'instrument_filters',
-                  'currency_filers',
+                  'currency_filters',
 
                   'pricing_policy_filters',
                   'portfolio_filters',
