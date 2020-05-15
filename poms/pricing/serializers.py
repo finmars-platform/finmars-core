@@ -15,7 +15,7 @@ from poms.pricing.models import InstrumentPricingScheme, InstrumentPricingScheme
     CurrencyPricingSchemeBloombergParameters, CurrencyPricingPolicy, InstrumentTypePricingPolicy, \
     InstrumentPricingPolicy, InstrumentPricingSchemeWtradeParameters, \
     PriceHistoryError, CurrencyHistoryError, PricingProcedureInstance, CurrencyPricingSchemeFixerParameters, \
-    PricingParentProcedureInstance
+    PricingParentProcedureInstance, InstrumentPricingSchemeAlphavParameters
 from poms.users.fields import MasterUserField
 
 
@@ -131,10 +131,10 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
 
                 try:
 
-                    manual_formula = InstrumentPricingSchemeManualPricingParameters.objects.get(
+                    parameters = InstrumentPricingSchemeManualPricingParameters.objects.get(
                         instrument_pricing_scheme=instance.id)
 
-                    result = InstrumentPricingSchemeManualPricingParametersSerializer(instance=manual_formula).data
+                    result = InstrumentPricingSchemeManualPricingParametersSerializer(instance=parameters).data
 
                 except InstrumentPricingSchemeManualPricingParameters.DoesNotExist:
                     pass
@@ -143,11 +143,11 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
 
                 try:
 
-                    single_parameter_formula = InstrumentPricingSchemeSingleParameterFormulaParameters.objects.get(
+                    parameters = InstrumentPricingSchemeSingleParameterFormulaParameters.objects.get(
                         instrument_pricing_scheme=instance.id)
 
                     result = InstrumentPricingSchemeSingleParameterFormulaParametersSerializer(
-                        instance=single_parameter_formula).data
+                        instance=parameters).data
 
                 except InstrumentPricingSchemeSingleParameterFormulaParameters.DoesNotExist:
                     pass
@@ -156,11 +156,11 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
 
                 try:
 
-                    multiple_parameters_formula = InstrumentPricingSchemeMultipleParametersFormulaParameters.objects.get(
+                    parameters = InstrumentPricingSchemeMultipleParametersFormulaParameters.objects.get(
                         instrument_pricing_scheme=instance.id)
 
                     result = InstrumentPricingSchemeMultipleParametersFormulaParametersSerializer(
-                        instance=multiple_parameters_formula).data
+                        instance=parameters).data
 
                 except InstrumentPricingSchemeMultipleParametersFormulaParameters.DoesNotExist:
                     pass
@@ -169,11 +169,11 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
 
                 try:
 
-                    multiple_parameters_formula = InstrumentPricingSchemeBloombergParameters.objects.get(
+                    parameters = InstrumentPricingSchemeBloombergParameters.objects.get(
                         instrument_pricing_scheme=instance.id)
 
                     result = InstrumentPricingSchemeBloombergParametersSerializer(
-                        instance=multiple_parameters_formula).data
+                        instance=parameters).data
 
                 except InstrumentPricingSchemeBloombergParameters.DoesNotExist:
                     pass
@@ -182,27 +182,31 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
 
                 try:
 
-                    multiple_parameters_formula = InstrumentPricingSchemeWtradeParameters.objects.get(
+                    parameters = InstrumentPricingSchemeWtradeParameters.objects.get(
                         instrument_pricing_scheme=instance.id)
 
                     result = InstrumentPricingSchemeWtradeParametersSerializer(
-                        instance=multiple_parameters_formula).data
+                        instance=parameters).data
 
                 except InstrumentPricingSchemeWtradeParameters.DoesNotExist:
                     pass
 
+            if instance.type_id == 7:  # alphav
+
+                try:
+
+                    parameters = InstrumentPricingSchemeAlphavParameters.objects.get(
+                        instrument_pricing_scheme=instance.id)
+
+                    result = InstrumentPricingSchemeWtradeParametersSerializer(
+                        instance=parameters).data
+
+                except InstrumentPricingSchemeWtradeParameters.DoesNotExist:
+                    pass
+
+
+
         return result
-
-    def to_internal_value(self, data):
-
-        type_settings = data.pop('type_settings', None)
-
-        ret = super(InstrumentPricingSchemeSerializer, self).to_internal_value(data)
-
-        # Special thing to ignore type_settings type check
-        ret['type_settings'] = type_settings
-
-        return ret
 
     def set_type_settings(self, instance, type_settings):
 
@@ -487,6 +491,68 @@ class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
 
                 wtrade.save()
 
+            if instance.type_id == 7:  # alphav
+
+                try:
+                    parameters = InstrumentPricingSchemeAlphavParameters.objects.get(
+                        instrument_pricing_scheme_id=instance.id)
+
+                except InstrumentPricingSchemeAlphavParameters.DoesNotExist:
+
+                    parameters = InstrumentPricingSchemeAlphavParameters(instrument_pricing_scheme_id=instance.id)
+
+                if 'default_value' in type_settings:
+                    wtrade.default_value = type_settings['default_value']
+                else:
+                    parameters.default_value = None
+
+                if 'attribute_key' in type_settings:
+                    parameters.attribute_key = type_settings['attribute_key']
+                else:
+                    parameters.attribute_key = None
+
+                if 'value_type' in type_settings:
+                    parameters.value_type = type_settings['value_type']
+                else:
+                    parameters.value_type = None
+
+                if 'expr' in type_settings:
+                    parameters.expr = type_settings['expr']
+                else:
+                    parameters.expr = None
+
+                if 'pricing_error_text_expr' in type_settings:
+                    parameters.pricing_error_text_expr = type_settings['pricing_error_text_expr']
+                else:
+                    parameters.pricing_error_text_expr = None
+
+                if 'accrual_calculation_method' in type_settings:
+                    parameters.accrual_calculation_method = type_settings['accrual_calculation_method']
+                else:
+                    parameters.accrual_calculation_method = None
+
+                if 'accrual_expr' in type_settings:
+                    parameters.accrual_expr = type_settings['accrual_expr']
+                else:
+                    parameters.accrual_expr = None
+
+                if 'accrual_error_text_expr' in type_settings:
+                    parameters.accrual_error_text_expr = type_settings['accrual_error_text_expr']
+                else:
+                    parameters.accrual_error_text_expr = None
+
+                parameters.save()
+
+    def to_internal_value(self, data):
+
+        type_settings = data.pop('type_settings', None)
+
+        ret = super(InstrumentPricingSchemeSerializer, self).to_internal_value(data)
+
+        # Special thing to ignore type_settings type check
+        ret['type_settings'] = type_settings
+
+        return ret
 
     def create(self, validated_data):
 
