@@ -21,7 +21,7 @@ from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfiguration
 from poms.portfolios.models import Portfolio
 from poms.pricing.brokers.broker_serializers import DataRequestSerializer
 from poms.pricing.handlers import PricingProcedureProcess, FillPricesBrokerBloombergProcess, \
-    FillPricesBrokerWtradeProcess, FillPricesBrokerFixerProcess
+    FillPricesBrokerWtradeProcess, FillPricesBrokerFixerProcess, FillPricesBrokerAlphavProcess
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, InstrumentPricingSchemeType, \
     CurrencyPricingSchemeType, PricingProcedure, PricingProcedureInstance, PriceHistoryError, \
     CurrencyHistoryError, PricingParentProcedureInstance
@@ -260,6 +260,37 @@ class PricingBrokerFixerHandler(APIView):
             procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
 
             instance = FillPricesBrokerFixerProcess(instance=request.data, master_user=procedure.master_user)
+            instance.process()
+
+            procedure.status = PricingProcedureInstance.STATUS_DONE
+            procedure.save()
+
+        except PricingProcedureInstance.DoesNotExist:
+
+            _l.info("Does not exist? Procedure %s" % procedure_id)
+
+            return Response({'status': '404'})  # TODO handle 404 properly
+
+        return Response({'status': 'ok'})
+
+
+class PricingBrokerAlphavHandler(APIView):
+
+    permission_classes = []
+
+    def post(self, request):
+
+        # _l.info('request.data %s' % request.data)
+
+        procedure_id = request.data['procedure']
+
+        _l.info("> handle_callback broker alphav: procedure_id %s" % procedure_id)
+
+        try:
+
+            procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
+
+            instance = FillPricesBrokerAlphavProcess(instance=request.data, master_user=procedure.master_user)
             instance.process()
 
             procedure.status = PricingProcedureInstance.STATUS_DONE
