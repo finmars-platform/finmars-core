@@ -47,17 +47,9 @@ if os.environ.get('LOCAL') == 'True':
     LOCAL = True
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-if os.environ.get('DEBUG') == 'False':
-    DEBUG = False
-
-# DEBUG = False # TODO do not forget to turn of before push
-
-print('DEBUG %s' % DEBUG)
-
-DEV = True
-if os.environ.get('POMS_DEV') == 'False':
-    DEBUG = False
+DEBUG = False
+if os.environ.get('DEBUG') == 'True':
+    DEBUG = True
 
 if not DEBUG:
     print('Debug disabled')
@@ -538,7 +530,7 @@ REST_FRAMEWORK = {
     # 'DATETIME_INPUT_FORMATS': (ISO_8601, '%c', '%Y-%m-%d %H:%M:%S %Z'),
 }
 
-if DEBUG or DEV:
+if DEBUG:
     REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] += (
         'rest_framework.renderers.BrowsableAPIRenderer',
         'rest_framework.renderers.AdminRenderer',
@@ -726,15 +718,6 @@ else:
         }
     }
 
-
-
-PRICING_AUTO_DOWNLOAD_DISABLED = True
-if os.environ.get('POMS_PRICING_AUTO_DOWNLOAD_DISABLED') == 'False':
-    PRICING_AUTO_DOWNLOAD_DISABLED = False
-
-print('PRICING_AUTO_DOWNLOAD_DISABLED %s' % PRICING_AUTO_DOWNLOAD_DISABLED)
-
-PRICING_AUTO_DOWNLOAD_MIN_TIMEDELTA = 6 * 60  # min delta is 12 hour
 
 BLOOMBERG_WSDL = 'https://service.bloomberg.com/assets/dl/dlws.wsdl'
 BLOOMBERG_RETRY_DELAY = 5

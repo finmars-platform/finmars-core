@@ -10,9 +10,7 @@ services:
       DB_HOST: database
       DB_PORT: 5432
       REDIS_HOST: redis
-      POMS_DEV: "False"
       POMS_BLOOMBERG_SANDBOX: "True"
-      POMS_PRICING_AUTO_DOWNLOAD_DISABLED: "True"
     ports:
       - 8080:8080
     depends_on:

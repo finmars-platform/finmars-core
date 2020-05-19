@@ -402,11 +402,6 @@ urlpatterns = [
     url(r'internal/brokers/alphav/callback', csrf_exempt(pricing.PricingBrokerAlphavHandler.as_view()))
 ]
 
-if settings.DEV:
-    urlpatterns += [
-        url(r'^dev/auth/', include('rest_framework.urls', namespace='rest_framework')),
-    ]
-
 if 'rest_framework_swagger' in settings.INSTALLED_APPS:
     urlpatterns += [
         url(r'^schema/', api.SchemaViewSet.as_view()),
@@ -417,4 +412,8 @@ if settings.DEBUG:
 
     urlpatterns += [
         url('__debug__/', include(debug_toolbar.urls)),
+    ]
+
+    urlpatterns += [
+        url(r'^dev/auth/', include('rest_framework.urls', namespace='rest_framework')),
     ]

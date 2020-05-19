@@ -6,6 +6,5 @@ DB_USER=postgres \
 DB_PASSWORD=postgres \
 DB_HOST=localhost \
 DB_PORT=5434 \
-POMS_PRICING_AUTO_DOWNLOAD_DISABLED=False \
 DEBUG=True \
 celery -A poms_app purge -f

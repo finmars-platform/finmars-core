@@ -7,7 +7,6 @@ DB_USER=postgres \
 DB_PASSWORD=postgres \
 DB_HOST=localhost \
 DB_PORT=5434 \
-POMS_PRICING_AUTO_DOWNLOAD_DISABLED=False \
 DEBUG=True \
 MEDIATOR_URL=http://localhost:8082/ \
 LOGSTASH_HOST=18.185.108.86 \
