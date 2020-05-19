@@ -137,7 +137,7 @@ class PLReport2Builder(BaseReport2Builder):
 
         self.instance.items = items
 
-        if settings.DEV:
+        if settings.DEBUG:
             self.instance.transactions = self.transactions
 
         return self.instance

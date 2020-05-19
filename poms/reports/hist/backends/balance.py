@@ -211,7 +211,7 @@ class BalanceReport2Builder(BaseReport2Builder):
         summary.current_value_report_ccy = self.system_ccy_to_report_ccy(summary.current_value_system_ccy)
         summary.p_l_report_ccy = self.system_ccy_to_report_ccy(summary.p_l_system_ccy)
 
-        if settings.DEV:
+        if settings.DEBUG:
             self.instance.transactions = self.transactions
 
         return self.instance

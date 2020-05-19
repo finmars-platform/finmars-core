@@ -81,7 +81,7 @@ def calc_cash_for_contract_for_difference(transaction, instrument, portfolio, ac
 
     rb._calc_fifo_multipliers()
 
-    if settings.DEV:
+    if settings.DEBUG:
         VirtualTransaction.dumps(rb._transactions)
 
     processed = set()
@@ -110,18 +110,18 @@ def calc_cash_for_contract_for_difference(transaction, instrument, portfolio, ac
             t_save = True
 
         if t_save and not isclose(vt.trn.cash_consideration, vt.cash):
-            if settings.DEV:
+            if settings.DEBUG:
                 _l.debug('+ => %s: cash=(%s => %s)', vt, vt.trn.cash_consideration, vt.cash)
             vt.trn.cash_consideration = vt.cash
             if save:
                 vt.trn.save()
                 vt.pk = vt.trn.pk
         else:
-            if settings.DEV:
+            if settings.DEBUG:
                 _l.debug('- => %s: cash=(%s <> %s)', vt, vt.trn.cash_consideration, vt.cash)
             pass
 
-    if settings.DEV:
+    if settings.DEBUG:
         VirtualTransaction.dumps(rb._transactions)
 
     return [vt.trn for vt in rb._transactions]
