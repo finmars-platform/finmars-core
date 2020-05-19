@@ -9,5 +9,4 @@ DB_HOST=localhost \
 DB_PORT=5434 \
 DEBUG=True \
 MEDIATOR_URL=http://localhost:8082/ \
-LOGSTASH_HOST=18.185.108.86 \
 BACKEND_ROLES="ALL" python manage.py runserver
