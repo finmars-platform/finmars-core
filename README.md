@@ -52,11 +52,11 @@ How to compile django app
     
 3) Execute following command to build
 
-   `REDIS_HOST=localhost RDS_DB_NAME=finmars_dev RDS_USERNAME=postgres RDS_PASSWORD=postgres RDS_HOSTNAME=localhost RDS_PORT=5434 python3 -m PyInstaller backend.spec -y --debug --log-level TRACE`
+   `REDIS_HOST=localhost DB_NAME=finmars_dev DB_USER=postgres DB_PASSWORD=postgres DB_HOST=localhost DB_PORT=5434 python3 -m PyInstaller backend.spec -y --debug --log-level TRACE`
     
 4) Execute following command to runserver
 
-   `REDIS_HOST=localhost RDS_DB_NAME=finmars_dev RDS_USERNAME=postgres RDS_PASSWORD=postgres RDS_HOSTNAME=localhost RDS_PORT=5434 dist/backend/backend manage.py runserver 8080`
+   `REDIS_HOST=localhost DB_NAME=finmars_dev DB_USER=postgres DB_PASSWORD=postgres DB_HOST=localhost DB_PORT=5434 dist/backend/backend manage.py runserver 8080`
    
 
 ## Backend Settings

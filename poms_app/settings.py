@@ -218,80 +218,22 @@ AWS_SECRET_NAME = os.environ.get('AWS_SECRET_NAME', None)
 db_password = ''
 
 
-# if "/run/secrets/" in os.environ.get('RDS_PASSWORD', None):
-#     f = open(os.environ.get('RDS_PASSWORD', None), 'r')
+# if "/run/secrets/" in os.environ.get('DB_PASSWORD', None):
+#     f = open(os.environ.get('DB_PASSWORD', None), 'r')
 #     db_password = f.read()
 # else:
-#     db_password = os.environ.get('RDS_PASSWORD', None)
+#     db_password = os.environ.get('DB_PASSWORD', None)
 
-
-def get_secret():
-    secret_name = AWS_SECRET_NAME
-    region_name = "eu-central-1"
-
-    session = boto3.session.Session()
-    client = session.client(
-        aws_access_key_id=AWS_SECRETS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRETS_SECRET_ACCESS_KEY,
-        service_name='secretsmanager',
-        region_name=region_name
-    )
-
-    secret = None
-    decoded_binary_secret = None
-
-    try:
-
-        get_secret_value_response = client.get_secret_value(
-            SecretId=secret_name
-        )
-
-    except ClientError as e:
-        if e.response['Error']['Code'] == 'DecryptionFailureException':
-            raise e
-        elif e.response['Error']['Code'] == 'InternalServiceErrorException':
-            raise e
-        elif e.response['Error']['Code'] == 'InvalidParameterException':
-            raise e
-        elif e.response['Error']['Code'] == 'InvalidRequestException':
-            raise e
-        elif e.response['Error']['Code'] == 'ResourceNotFoundException':
-            raise e
-    else:
-        if 'SecretString' in get_secret_value_response:
-            secret = get_secret_value_response['SecretString']
-        else:
-            decoded_binary_secret = base64.b64decode(get_secret_value_response['SecretBinary'])
-
-    secret_result = json.loads(secret)
-
-    return secret_result
-
-
-secret = None
-
-if os.environ.get('AWS_SECRET_NAME', None):
-    secret = get_secret()
-
-if os.environ.get('RDS_USERNAME', None):
-    db_username = os.environ.get('RDS_USERNAME', None)
-else:
-    db_username = secret["username"]
-
-if os.environ.get('RDS_PASSWORD', None):
-    db_password = os.environ.get('RDS_PASSWORD', None)
-else:
-    db_password = secret["password"]
 
 DATABASES = {
     'default': {
         # 'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('RDS_DB_NAME', None),
-        'USER': db_username,
-        'PASSWORD': db_password,
-        'HOST': os.environ.get('RDS_HOSTNAME', None),
-        'PORT': os.environ.get('RDS_PORT', None),
+        'NAME': os.environ.get('DB_NAME', None),
+        'USER': os.environ.get('DB_USER', None),
+        'PASSWORD': os.environ.get('DB_PASSWORD', None),
+        'HOST': os.environ.get('DB_HOST', None),
+        'PORT': os.environ.get('DB_PORT', None),
         # 'ATOMIC_REQUESTS': True,
     }
 }
