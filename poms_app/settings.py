@@ -628,6 +628,8 @@ SFTP_STORAGE_PARAMS = {
 
 SFTP_STORAGE_INTERACTIVE = False
 
+SFTP_KNOWN_HOST_FILE = os.path.join(BASE_DIR, '.ssh/known_hosts')
+
 
 # INTEGRATIONS ------------------------------------------------
 
