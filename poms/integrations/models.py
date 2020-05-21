@@ -93,6 +93,16 @@ class BloombergDataProviderCredential(models.Model):
     def has_password(self):
         return bool(self.password)
 
+    @property
+    def pair(self):
+        if self.p12cert:
+            try:
+                from poms.integrations.providers.bloomberg import get_certs
+                return get_certs(self.p12cert.read(), self.password, is_base64=False)
+            except FileNotFoundError:
+                raise ValueError(ugettext("Can't read cert file"))
+        return None, None
+
 
 class ImportConfig(models.Model):
 
