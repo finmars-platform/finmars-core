@@ -281,6 +281,7 @@ router.register(r'security/http-session', sessions.SessionViewSet)
 router.register(r'audit/auth-log', audit.AuthLogViewSet)
 router.register(r'audit/history', audit.ObjectHistory4ViewSet)
 
+router.register(r'data-provider/bloomberg/credential', integrations.BloombergDataProviderCredentialViewSet)
 router.register(r'import/config', integrations.ImportConfigViewSet)
 
 router.register(r'import/provider', integrations.ProviderClassViewSet)

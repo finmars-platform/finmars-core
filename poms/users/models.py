@@ -190,6 +190,8 @@ class MasterUser(models.Model):
 
     user_code_counters = ArrayField(models.IntegerField(null=True, blank=True), null=True, blank=True)
 
+    token = models.CharField(unique=True, max_length=32, null=True, blank=True, verbose_name=ugettext_lazy('token'))
+
     objects = MasterUserManager()
 
     class Meta:

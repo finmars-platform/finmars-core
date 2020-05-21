@@ -5,6 +5,7 @@ from django.core.files.storage import get_storage_class
 from django.utils.functional import LazyObject
 
 
+# DEPRECATED DELETE SOON
 class FileReportsStorage(LazyObject):
     def _setup(self):
         clazz = get_storage_class(settings.FILE_REPORTS_STORAGE['BACKEND'])

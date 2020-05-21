@@ -58,6 +58,10 @@ from celery.utils.log import get_task_logger
 celery_logger = get_task_logger(__name__)
 
 
+from storages.backends.sftpstorage import SFTPStorage
+SFS = SFTPStorage()
+
+
 @shared_task(name='integrations.health_check')
 def health_check_async():
     return True
@@ -1711,7 +1715,8 @@ def complex_transaction_csv_file_import(self, instance):
 
     instance.error_rows = []
     try:
-        with import_file_storage.open(instance.file_path, 'rb') as f:
+        # with import_file_storage.open(instance.file_path, 'rb') as f:
+        with SFS.open(instance.file_path, 'rb') as f:
             with NamedTemporaryFile() as tmpf:
                 _l.info('tmpf')
                 _l.info(tmpf)
@@ -1736,7 +1741,8 @@ def complex_transaction_csv_file_import(self, instance):
         _l.info('Can\'t process file', exc_info=True)
         instance.error_message = ugettext("Invalid file format or file already deleted.")
     finally:
-        import_file_storage.delete(instance.file_path)
+        # import_file_storage.delete(instance.file_path)
+        SFS.delete(instance.file_path)
 
     instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
 
@@ -2198,7 +2204,8 @@ def complex_transaction_csv_file_import_validate(self, instance):
     instance.error_rows = []
 
     try:
-        with import_file_storage.open(instance.file_path, 'rb') as f:
+        # with import_file_storage.open(instance.file_path, 'rb') as f:
+        with SFS.open(instance.file_path, 'rb') as f:
             with NamedTemporaryFile() as tmpf:
                 _l.info('tmpf')
                 _l.info(tmpf)
@@ -2225,7 +2232,8 @@ def complex_transaction_csv_file_import_validate(self, instance):
         _l.info('Can\'t process file', exc_info=True)
         instance.error_message = ugettext("Invalid file format or file already deleted.")
     finally:
-        import_file_storage.delete(instance.file_path)
+        # import_file_storage.delete(instance.file_path)
+        SFS.delete(instance.file_path)
 
     instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
 

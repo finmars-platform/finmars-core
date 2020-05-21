@@ -7,6 +7,11 @@ from poms.users.models import MasterUser
 
 import io
 
+
+from storages.backends.sftpstorage import SFTPStorage
+SFS = SFTPStorage()
+
+
 from logging import getLogger
 
 _l = getLogger('poms.file_reports')
@@ -48,7 +53,7 @@ class FileReport(models.Model):
 
                 _l.debug(tmpf)
 
-                file_reports_storage.save(file_url, tmpf)
+                SFS.save(file_url, tmpf)
 
         except Exception as e:
             _l.debug('Exception %s' % e)
@@ -64,7 +69,7 @@ class FileReport(models.Model):
         print('get_file self.file_url %s' % self.file_url)
 
         try:
-            with file_reports_storage.open(self.file_url, 'rb') as f:
+            with SFS.open(self.file_url, 'rb') as f:
 
                 result = f.read()
 
@@ -73,5 +78,5 @@ class FileReport(models.Model):
 
         return result
 
-    def _get_path(self, owner, file_name):
-        return '%s/%s' % (owner.pk, file_name)
+    def _get_path(self, master_user, file_name):
+        return '%s/file_reports/%s' % (master_user.token, file_name)

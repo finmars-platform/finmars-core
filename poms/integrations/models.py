@@ -20,6 +20,12 @@ from poms.obj_attrs.models import GenericClassifier, GenericAttributeType
 
 _l = getLogger('poms.integrations')
 
+from storages.backends.sftpstorage import SFTPStorage
+SFS = SFTPStorage()
+
+# SFS._connect()
+# print(SFS.sftp)
+
 
 class ProviderClass(AbstractClassModel):
     BLOOMBERG = 1
@@ -60,13 +66,45 @@ def import_cert_upload_to(instance, filename):
     return '%s/%s-%s' % (instance.master_user_id, instance.provider_id, uuid.uuid4().hex)
 
 
+def bloomberg_cert_upload_to(instance, filename):
+
+    hex = uuid.uuid4().hex[:6]
+
+    return '%s/data_providers/bloomberg/cert_%s.p12' % (instance.master_user.token, hex)
+
+
+class BloombergDataProviderCredential(models.Model):
+
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+
+    is_valid = models.BooleanField(default=False, verbose_name=ugettext_lazy('is valid'))
+
+    p12cert = models.FileField(null=True, blank=True, upload_to=bloomberg_cert_upload_to, storage=SFS,
+                               verbose_name=ugettext_lazy('p12cert'))
+
+    password = models.CharField(max_length=64, null=True, blank=True, verbose_name=ugettext_lazy('password'))
+
+
+    @property
+    def has_p12cert(self):
+        return bool(self.p12cert)
+
+    @property
+    def has_password(self):
+        return bool(self.password)
+
+
 class ImportConfig(models.Model):
+
     master_user = models.ForeignKey('users.MasterUser', related_name='import_configs',
                                     verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+
     provider = models.ForeignKey(ProviderClass, verbose_name=ugettext_lazy('provider'), on_delete=models.CASCADE)
+
     p12cert = models.FileField(null=True, blank=True, upload_to=import_cert_upload_to, storage=import_config_storage,
                                verbose_name=ugettext_lazy('p12cert'))
     password = models.CharField(max_length=64, null=True, blank=True, verbose_name=ugettext_lazy('password'))
+
     cert = models.FileField(null=True, blank=True, upload_to=import_cert_upload_to, storage=import_config_storage,
                             verbose_name=ugettext_lazy('cert'))
     key = models.FileField(null=True, blank=True, upload_to=import_cert_upload_to, storage=import_config_storage,
@@ -816,6 +854,7 @@ def validate_crontab(value):
         raise ValidationError(ugettext_lazy('A valid cron string is required.'))
 
 
+# DEPRECATED
 class PricingAutomatedSchedule(models.Model):
 
     name = models.CharField(max_length=255, default='', null=True, blank=True, verbose_name=ugettext_lazy('name'))

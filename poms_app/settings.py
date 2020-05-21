@@ -585,6 +585,7 @@ except (ValueError, TypeError):
 # CELERY_SEND_EVENTS = True
 # CELERY_TASK_SEND_SENT_EVENT = True
 
+PRICING_AUTO_DOWNLOAD_MIN_TIMEDELTA = 6 * 60  # min delta is 12 hour
 
 if BackendRole.ALL in BACKEND_ROLES or BackendRole.DATA_PROVIDER in BACKEND_ROLES:
 
@@ -604,6 +605,29 @@ if BackendRole.ALL in BACKEND_ROLES or BackendRole.DATA_PROVIDER in BACKEND_ROLE
         #     'schedule': crontab(minute='2,32'),
         # },
     }
+
+# FILE STORAGE ----------------------------------------------
+
+DEFAULT_FILE_STORAGE = 'storages.backends.sftpstorage.SFTPStorage'
+
+SFTP_HOST = os.environ.get('SFTP_HOST', None)
+if SFTP_HOST:
+    SFTP_HOST = SFTP_HOST.strip()
+
+print("SFTP HOST %s" % SFTP_HOST)
+
+# SFTP_STORAGE_HOST = os.environ.get('SFTP_HOST', None)
+SFTP_STORAGE_HOST = SFTP_HOST
+SFTP_STORAGE_ROOT = '/finmars/'
+SFTP_STORAGE_PARAMS = {
+    'username': os.environ.get('SFTP_USERNAME', None),
+    'password': os.environ.get('SFTP_PASSWORD', None),
+    'allow_agent': False,
+    'look_for_keys': False,
+}
+
+SFTP_STORAGE_INTERACTIVE = False
+
 
 # INTEGRATIONS ------------------------------------------------
 

@@ -5,6 +5,7 @@ from django.core.files.storage import get_storage_class
 from django.utils.functional import LazyObject
 
 
+# DEPRECATED, DELETE SOON
 class ImportFileStorage(LazyObject):
     def _setup(self):
         clazz = get_storage_class(settings.IMPORT_FILE_STORAGE['BACKEND'])
@@ -18,6 +19,7 @@ class ImportFileStorage(LazyObject):
 import_file_storage = ImportFileStorage()
 
 
+# DEPRECATED, DELETE SOON
 class ImportConfigStorage(LazyObject):
     def _setup(self):
         clazz = get_storage_class(settings.IMPORT_CONFIG_STORAGE['BACKEND'])

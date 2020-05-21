@@ -35,7 +35,7 @@ from poms.integrations.models import ImportConfig, Task, InstrumentDownloadSchem
     DailyPricingModelMapping, \
     PaymentSizeDetailMapping, PriceDownloadSchemeMapping, ComplexTransactionImportScheme, PortfolioClassifierMapping, \
     AccountClassifierMapping, CounterpartyClassifierMapping, ResponsibleClassifierMapping, PricingPolicyMapping, \
-    InstrumentClassifierMapping, AccountTypeMapping
+    InstrumentClassifierMapping, AccountTypeMapping, BloombergDataProviderCredential
 from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer, ImportInstrumentSerializer, \
     ImportPricingSerializer, InstrumentDownloadSchemeSerializer, ProviderClassSerializer, \
     FactorScheduleDownloadMethodSerializer, AccrualScheduleDownloadMethodSerializer, PriceDownloadSchemeSerializer, \
@@ -49,7 +49,7 @@ from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer
     ComplexTransactionImportSchemeSerializer, PortfolioClassifierMappingSerializer, AccountClassifierMappingSerializer, \
     CounterpartyClassifierMappingSerializer, ResponsibleClassifierMappingSerializer, PricingPolicyMappingSerializer, \
     InstrumentClassifierMappingSerializer, AccountTypeMappingSerializer, TestCertificateSerializer, \
-    ComplexTransactionImportSchemeLightSerializer
+    ComplexTransactionImportSchemeLightSerializer, BloombergDataProviderCredentialSerializer
 from poms.integrations.tasks import complex_transaction_csv_file_import, complex_transaction_csv_file_import_validate
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
@@ -83,6 +83,18 @@ class FactorScheduleDownloadMethodViewSet(AbstractClassModelViewSet):
 class AccrualScheduleDownloadMethodViewSet(AbstractClassModelViewSet):
     queryset = AccrualScheduleDownloadMethod.objects
     serializer_class = AccrualScheduleDownloadMethodSerializer
+
+
+
+class BloombergDataProviderCredentialViewSet(AbstractModelViewSet):
+    queryset = BloombergDataProviderCredential.objects
+    serializer_class = BloombergDataProviderCredentialSerializer
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        SuperUserOnly,
+    ]
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
 
 
 class ImportConfigFilterSet(FilterSet):

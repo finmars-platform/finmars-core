@@ -16,7 +16,6 @@ from poms.csv_import.filters import SchemeContentTypeFilter
 from poms.csv_import.tasks import data_csv_file_import, data_csv_file_import_validate
 from poms.file_reports.models import FileReport
 from poms.file_reports.serializers import FileReportSerializer
-from poms.file_reports.storage import file_reports_storage
 from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
 
 from poms.users.filters import OwnerByMasterUserFilter

@@ -38,7 +38,8 @@ from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDo
     AccountClassifierMapping, CounterpartyClassifierMapping, ResponsibleClassifierMapping, PricingPolicyMapping, \
     InstrumentClassifierMapping, AccountTypeMapping, ComplexTransactionImportSchemeSelectorValue, \
     ComplexTransactionImportSchemeReconField, ComplexTransactionImportSchemeReconScenario, \
-    ComplexTransactionImportSchemeRuleScenario, ComplexTransactionImportSchemeCalculatedInput
+    ComplexTransactionImportSchemeRuleScenario, ComplexTransactionImportSchemeCalculatedInput, \
+    BloombergDataProviderCredential
 from poms.integrations.providers.base import get_provider, ProviderException
 from poms.integrations.storage import import_file_storage
 from poms.integrations.tasks import download_pricing, download_instrument, test_certificate
@@ -57,6 +58,9 @@ from django.core.validators import RegexValidator
 
 _l = getLogger('poms.integrations')
 
+from storages.backends.sftpstorage import SFTPStorage
+SFS = SFTPStorage()
+
 
 class ProviderClassSerializer(PomsClassSerializer):
     class Meta(PomsClassSerializer.Meta):
@@ -71,6 +75,19 @@ class FactorScheduleDownloadMethodSerializer(PomsClassSerializer):
 class AccrualScheduleDownloadMethodSerializer(PomsClassSerializer):
     class Meta(PomsClassSerializer.Meta):
         model = AccrualScheduleDownloadMethod
+
+
+class BloombergDataProviderCredentialSerializer(serializers.ModelSerializer):
+    master_user = MasterUserField()
+    p12cert = serializers.FileField(allow_null=True, allow_empty_file=False, write_only=True)
+    password = serializers.CharField(allow_null=True, allow_blank=True, write_only=True)
+
+    class Meta:
+        model = BloombergDataProviderCredential
+        fields = [
+            'id', 'master_user', 'p12cert', 'password', 'has_p12cert',
+            'has_password', 'is_valid'
+        ]
 
 
 class ImportConfigSerializer(serializers.ModelSerializer):
@@ -1832,14 +1849,15 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
                 master_user = validated_data['master_user']
                 file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
                 file_path = self._get_path(master_user, file_name)
-                import_file_storage.save(file_path, file)
+
+                SFS.save(file_path, file)
                 validated_data['file_path'] = file_path
             else:
                 raise serializers.ValidationError({'file': ugettext('Required field.')})
         return ComplexTransactionCsvFileImport(**validated_data)
 
-    def _get_path(self, owner, file_name):
-        return '%s/%s.dat' % (owner.pk, file_name)
+    def _get_path(self, master_user, file_name):
+        return '%s/transaction_import_files/%s.dat' % (master_user.token, file_name)
 
         # def create(self, validated_data):
         #     _l.info('create: %s', validated_data)

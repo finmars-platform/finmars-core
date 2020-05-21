@@ -7,7 +7,4 @@ DB_PASSWORD=postgres \
 DB_HOST=localhost \
 DB_PORT=5434 \
 DEBUG=True \
-SFTP_HOST=sftp.finmars.com \
-SFTP_USERNAME=finmars \
-SFTP_PASSWORD=97cZgv1pL2pz \
-celery worker --app poms_app --beat --loglevel=DEBUG
+python manage.py set_master_user_tokens
