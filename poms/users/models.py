@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import json
+import uuid
 
 import pytz
 from django.conf import settings
@@ -86,6 +87,11 @@ class ResetPasswordToken(models.Model):
 class MasterUserManager(models.Manager):
     def create_master_user(self, user=None, **kwargs):
         obj = MasterUser(**kwargs)
+
+        token = uuid.uuid4().hex
+
+        obj.token = token
+
         obj.save()
         obj.create_defaults()
 
