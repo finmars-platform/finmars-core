@@ -24,6 +24,13 @@ echo "set chmod 777 /var/log/finmars/django-error.log"
 
 chmod 777 /var/log/finmars/django-error.log
 
+echo "Create known_hosts for SFTP"
+
+mkdir /var/app/.ssh
+touch /var/app/.ssh/known_hosts
+chmod 777 /var/app/.ssh
+chmod 777 /var/app/.ssh/known_hosts
+
 ############################################
 
 echo "Migrating"
