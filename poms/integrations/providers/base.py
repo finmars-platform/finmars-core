@@ -11,7 +11,7 @@ from poms.common import formula
 from poms.currencies.models import CurrencyHistory
 from poms.instruments.models import Instrument, PriceHistory
 from poms.integrations.models import InstrumentDownloadScheme, ProviderClass, CurrencyMapping, InstrumentTypeMapping, \
-    InstrumentAttributeValueMapping, AccrualCalculationModelMapping, PeriodicityMapping
+    InstrumentAttributeValueMapping, AccrualCalculationModelMapping, PeriodicityMapping, BloombergDataProviderCredential
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 
 _l = getLogger('poms.integrations')
@@ -406,12 +406,25 @@ def get_provider(master_user=None, provider=None, task=None):
             return FakeBloombergDataProvider()
         else:
             from poms.integrations.providers.bloomberg import BloombergDataProvider
+
+
             try:
-                config = master_user.import_configs.get(provider=ProviderClass.BLOOMBERG)
+
+                config = BloombergDataProviderCredential.objects.get(master_user=master_user)
                 cert, key = config.pair
                 return BloombergDataProvider(cert=cert, key=key)
-            except (ObjectDoesNotExist, FileNotFoundError, ValueError):
-                raise ProviderNotConfiguredException()
+
+            except Exception as e:
+
+                try:
+                    config = master_user.import_configs.get(provider=ProviderClass.BLOOMBERG)
+                    cert, key = config.pair
+                    return BloombergDataProvider(cert=cert, key=key)
+                except (ObjectDoesNotExist, FileNotFoundError, ValueError):
+                    raise ProviderNotConfiguredException()
+
+
+
     return None
 
 

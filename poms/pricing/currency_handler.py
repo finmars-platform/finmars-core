@@ -8,7 +8,7 @@ from poms.common import formula
 from poms.common.utils import isclose
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import PricingCondition
-from poms.integrations.models import ProviderClass
+from poms.integrations.models import ProviderClass, BloombergDataProviderCredential
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
 from poms.pricing.models import PricingProcedureInstance, PricingProcedureBloombergCurrencyResult, \
@@ -699,9 +699,19 @@ class PricingCurrencyHandler(object):
         body['procedure'] = procedure_instance.id
         body['provider'] = procedure_instance.provider
 
-        config = self.master_user.import_configs.get(provider=ProviderClass.BLOOMBERG)
+        config = None
+
+        try:
+
+            config = BloombergDataProviderCredential.objects.get(master_user=self.master_user)
+
+        except Exception as e:
+
+            config = self.master_user.import_configs.get(provider=ProviderClass.BLOOMBERG)
+
+
         body['user'] = {
-            'token': self.master_user.id,
+            'token': self.master_user.token,
             'credentials': {
                 'p12cert': str(config.p12cert),
                 'password': config.password

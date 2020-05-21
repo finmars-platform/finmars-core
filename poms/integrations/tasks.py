@@ -34,7 +34,8 @@ from poms.instruments.models import Instrument, DailyPricingModel, PricingPolicy
 from poms.integrations.models import Task, PriceDownloadScheme, InstrumentDownloadScheme, PricingAutomatedSchedule, \
     AccountMapping, CurrencyMapping, PortfolioMapping, CounterpartyMapping, InstrumentTypeMapping, ResponsibleMapping, \
     Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, DailyPricingModelMapping, PaymentSizeDetailMapping, \
-    PriceDownloadSchemeMapping, InstrumentMapping, PeriodicityMapping, AccrualCalculationModelMapping
+    PriceDownloadSchemeMapping, InstrumentMapping, PeriodicityMapping, AccrualCalculationModelMapping, \
+    BloombergDataProviderCredential
 from poms.integrations.providers.base import get_provider, parse_date_iso, fill_instrument_price, fill_currency_price, \
     AbstractProvider
 from poms.integrations.storage import import_file_storage
@@ -344,7 +345,17 @@ def test_certificate_async(self, task_id):
         task.options_object = options
         task.save()
 
-        import_config = ImportConfig.objects.get(master_user=task.master_user, provider=1)
+        import_config = None
+
+        try:
+
+            import_config = BloombergDataProviderCredential.objects.get(master_user=self.master_user)
+
+        except Exception as e:
+
+            import_config = ImportConfig.objects.get(master_user=task.master_user, provider=1)
+
+
         import_config.is_valid = result['is_authorized']
         import_config.save()
 
