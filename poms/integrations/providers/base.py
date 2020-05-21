@@ -412,6 +412,9 @@ def get_provider(master_user=None, provider=None, task=None):
 
                 config = BloombergDataProviderCredential.objects.get(master_user=master_user)
                 cert, key = config.pair
+
+                _l.info("Took bloomberg credentials")
+
                 return BloombergDataProvider(cert=cert, key=key)
 
             except Exception as e:
@@ -419,6 +422,9 @@ def get_provider(master_user=None, provider=None, task=None):
                 try:
                     config = master_user.import_configs.get(provider=ProviderClass.BLOOMBERG)
                     cert, key = config.pair
+
+                    _l.info("Took from old config credentials")
+
                     return BloombergDataProvider(cert=cert, key=key)
                 except (ObjectDoesNotExist, FileNotFoundError, ValueError):
                     raise ProviderNotConfiguredException()
