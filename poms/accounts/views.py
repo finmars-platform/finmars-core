@@ -5,7 +5,7 @@ from django_filters.rest_framework import FilterSet
 from rest_framework.settings import api_settings
 
 from poms.accounts.models import Account, AccountType
-from poms.accounts.serializers import AccountSerializer, AccountTypeSerializer
+from poms.accounts.serializers import AccountSerializer, AccountTypeSerializer, AccountLightSerializer
 from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMultipleChoiceFilter, \
     GroupsAttributeFilter, AttributeFilter
 from poms.common.pagination import CustomPaginationMixin
@@ -91,37 +91,6 @@ class AccountTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cust
         AttributeFilter
     ]
 
-
-# class AccountAttributeTypeFilterSet(FilterSet):
-#     id = NoOpFilter()
-#     user_code = CharFilter()
-#     name = CharFilter()
-#     short_name = CharFilter()
-#     public_name = CharFilter()
-#     value_type = AttributeTypeValueTypeFilter()
-#     member = ObjectPermissionMemberFilter(object_permission_model=AccountAttributeType)
-#     member_group = ObjectPermissionGroupFilter(object_permission_model=AccountAttributeType)
-#     permission = ObjectPermissionPermissionFilter(object_permission_model=AccountAttributeType)
-#
-#     class Meta:
-#         model = AccountAttributeType
-#         fields = []
-#
-#
-# class AccountAttributeTypeViewSet(AbstractAttributeTypeViewSet):
-#     queryset = AccountAttributeType.objects.select_related(
-#         'master_user'
-#     ).prefetch_related(
-#         'classifiers',
-#         *get_permissions_prefetch_lookups(
-#             (None, AccountAttributeType)
-#         )
-#     )
-#     serializer_class = AccountAttributeTypeSerializer
-#     # bulk_objects_permissions_serializer_class = AccountAttributeTypeBulkObjectPermissionSerializer
-#     filter_class = AccountAttributeTypeFilterSet
-
-
 class AccountAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Account
     target_model_serializer = AccountSerializer
@@ -129,22 +98,6 @@ class AccountAttributeTypeViewSet(GenericAttributeTypeViewSet):
     permission_classes = GenericAttributeTypeViewSet.permission_classes + [
         PomsConfigurationPermission
     ]
-
-# class AccountClassifierFilterSet(FilterSet):
-#     id = NoOpFilter()
-#     name = CharFilter()
-#     level = django_filters.NumberFilter()
-#     attribute_type = ModelExtWithPermissionMultipleChoiceFilter(model=AccountAttributeType)
-#
-#     class Meta:
-#         model = AccountClassifier
-#         fields = []
-#
-#
-# class AccountClassifierViewSet(AbstractClassifierViewSet):
-#     queryset = AccountClassifier.objects
-#     serializer_class = AccountClassifierNodeSerializer
-#     filter_class = AccountClassifierFilterSet
 
 
 class AccountClassifierViewSet(GenericClassifierViewSet):
@@ -205,10 +158,42 @@ class AccountViewSet(AbstractWithObjectPermissionViewSet):
         AttributeFilter
         # TagFilterBackend,
     ]
-    # filter_class = AccountFilterSet
+    filter_class = AccountFilterSet
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name', 'is_valid_for_all_portfolios',
         'type', 'type__user_code', 'type__name', 'type__short_name', 'type__public_name',
+    ]
+
+
+class AccountLightFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+    public_name = CharFilter()
+
+    class Meta:
+        model = Account
+        fields = []
+
+
+class AccountLightViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = Account.objects.select_related(
+        'master_user',
+    ).prefetch_related(
+        *get_permissions_prefetch_lookups(
+            (None, Account),
+
+        )
+    )
+    serializer_class = AccountLightSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = AccountLightFilterSet
+    ordering_fields = [
+        'user_code', 'name', 'short_name', 'public_name'
     ]
 
 

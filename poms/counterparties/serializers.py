@@ -12,33 +12,6 @@ from poms.tags.serializers import ModelWithTagSerializer
 from poms.users.fields import MasterUserField
 
 
-# class CounterpartyClassifierSerializer(AbstractClassifierSerializer):
-#     class Meta(AbstractClassifierSerializer.Meta):
-#         model = CounterpartyClassifier
-#
-#
-# class CounterpartyClassifierNodeSerializer(AbstractClassifierNodeSerializer):
-#     class Meta(AbstractClassifierNodeSerializer.Meta):
-#         model = CounterpartyClassifier
-#
-#
-# class CounterpartyAttributeTypeSerializer(AbstractAttributeTypeSerializer):
-#     classifiers = CounterpartyClassifierSerializer(required=False, allow_null=True, many=True)
-#
-#     class Meta(AbstractAttributeTypeSerializer.Meta):
-#         model = CounterpartyAttributeType
-#         fields = AbstractAttributeTypeSerializer.Meta.fields + ['classifiers']
-#
-#
-# class CounterpartyAttributeSerializer(AbstractAttributeSerializer):
-#     attribute_type = CounterpartyAttributeTypeField()
-#     classifier = CounterpartyClassifierField(required=False, allow_null=True)
-#
-#     class Meta(AbstractAttributeSerializer.Meta):
-#         model = CounterpartyAttribute
-#         fields = AbstractAttributeSerializer.Meta.fields + ['attribute_type', 'classifier']
-
-
 class CounterpartyGroupSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
                                   ModelWithTagSerializer):
     master_user = MasterUserField()
@@ -91,6 +64,17 @@ class CounterpartySerializer(ModelWithObjectPermissionSerializer, ModelWithAttri
         self.fields['portfolios_object'] = PortfolioViewSerializer(source='portfolios', many=True, read_only=True)
 
 
+class CounterpartyLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = Counterparty
+        fields = [
+            'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name',
+            'is_default',  'is_deleted', 'is_enabled'
+        ]
+
+
 class CounterpartyViewSerializer(ModelWithObjectPermissionSerializer):
     group = CounterpartyGroupField()
     group_object = CounterpartyGroupViewSerializer(source='group', read_only=True)
@@ -100,42 +84,6 @@ class CounterpartyViewSerializer(ModelWithObjectPermissionSerializer):
         fields = [
             'id', 'group', 'group_object', 'user_code', 'name', 'short_name', 'public_name',
         ]
-
-
-# ----
-
-# class ResponsibleClassifierSerializer(AbstractClassifierSerializer):
-#     class Meta(AbstractClassifierSerializer.Meta):
-#         model = ResponsibleClassifier
-#
-#
-# class ResponsibleClassifierNodeSerializer(AbstractClassifierNodeSerializer):
-#     class Meta(AbstractClassifierNodeSerializer.Meta):
-#         model = ResponsibleClassifier
-#
-#
-# class ResponsibleAttributeTypeSerializer(AbstractAttributeTypeSerializer):
-#     classifiers = ResponsibleClassifierSerializer(required=False, allow_null=True, many=True)
-#
-#     class Meta(AbstractAttributeTypeSerializer.Meta):
-#         model = ResponsibleAttributeType
-#         fields = AbstractAttributeTypeSerializer.Meta.fields + ['classifiers']
-
-
-# class ResponsibleAttributeTypeBulkObjectPermissionSerializer(AbstractBulkObjectPermissionSerializer):
-#     content_objects = ResponsibleAttributeTypeField(many=True, allow_null=False, allow_empty=False)
-#
-#     class Meta:
-#         model = ResponsibleAttributeType
-
-#
-# class ResponsibleAttributeSerializer(AbstractAttributeSerializer):
-#     attribute_type = ResponsibleAttributeTypeField()
-#     classifier = ResponsibleClassifierField(required=False, allow_null=True)
-#
-#     class Meta(AbstractAttributeSerializer.Meta):
-#         model = ResponsibleAttribute
-#         fields = AbstractAttributeSerializer.Meta.fields + ['attribute_type', 'classifier']
 
 
 class ResponsibleGroupSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
@@ -190,6 +138,18 @@ class ResponsibleSerializer(ModelWithObjectPermissionSerializer, ModelWithAttrib
 
         from poms.portfolios.serializers import PortfolioViewSerializer
         self.fields['portfolios_object'] = PortfolioViewSerializer(source='portfolios', many=True, read_only=True)
+
+
+class ResponsibleLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+
+    master_user = MasterUserField()
+
+    class Meta:
+        model = Responsible
+        fields = [
+            'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name',
+             'is_default',  'is_deleted', 'is_enabled'
+        ]
 
 
 class ResponsibleViewSerializer(ModelWithObjectPermissionSerializer):

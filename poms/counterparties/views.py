@@ -11,7 +11,7 @@ from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMu
 from poms.common.pagination import CustomPaginationMixin
 from poms.counterparties.models import Counterparty, Responsible, CounterpartyGroup, ResponsibleGroup
 from poms.counterparties.serializers import CounterpartySerializer, ResponsibleSerializer, CounterpartyGroupSerializer, \
-    ResponsibleGroupSerializer
+    ResponsibleGroupSerializer, ResponsibleLightSerializer, CounterpartyLightSerializer
 from poms.obj_attrs.filters import AttributeTypeValueTypeFilter
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import AbstractAttributeTypeViewSet, AbstractClassifierViewSet, GenericAttributeTypeViewSet, \
@@ -27,35 +27,6 @@ from poms.tags.utils import get_tag_prefetch
 from poms.users.filters import OwnerByMasterUserFilter
 
 
-# class CounterpartyAttributeTypeFilterSet(FilterSet):
-#     id = NoOpFilter()
-#     user_code = CharFilter()
-#     name = CharFilter()
-#     short_name = CharFilter()
-#     public_name = CharFilter()
-#     value_type = AttributeTypeValueTypeFilter()
-#     member = ObjectPermissionMemberFilter(object_permission_model=CounterpartyAttributeType)
-#     member_group = ObjectPermissionGroupFilter(object_permission_model=CounterpartyAttributeType)
-#     permission = ObjectPermissionPermissionFilter(object_permission_model=CounterpartyAttributeType)
-#
-#     class Meta:
-#         model = CounterpartyAttributeType
-#         fields = []
-#
-#
-# class CounterpartyAttributeTypeViewSet(AbstractAttributeTypeViewSet):
-#     queryset = CounterpartyAttributeType.objects.select_related(
-#         'master_user'
-#     ).prefetch_related(
-#         'classifiers',
-#         *get_permissions_prefetch_lookups(
-#             (None, CounterpartyAttributeType)
-#         )
-#     )
-#     serializer_class = CounterpartyAttributeTypeSerializer
-#     filter_class = CounterpartyAttributeTypeFilterSet
-
-
 class CounterpartyAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Counterparty
     target_model_serializer = CounterpartySerializer
@@ -63,23 +34,6 @@ class CounterpartyAttributeTypeViewSet(GenericAttributeTypeViewSet):
     permission_classes = GenericAttributeTypeViewSet.permission_classes + [
         PomsConfigurationPermission
     ]
-
-
-# class CounterpartyClassifierFilterSet(FilterSet):
-#     id = NoOpFilter()
-#     name = CharFilter()
-#     level = django_filters.NumberFilter()
-#     attribute_type = ModelExtWithPermissionMultipleChoiceFilter(model=CounterpartyAttributeType)
-#
-#     class Meta:
-#         model = CounterpartyClassifier
-#         fields = []
-#
-#
-# class CounterpartyClassifierViewSet(AbstractClassifierViewSet):
-#     queryset = CounterpartyClassifier.objects.select_related('attribute_type')
-#     serializer_class = CounterpartyClassifierNodeSerializer
-#     filter_class = CounterpartyClassifierFilterSet
 
 
 class CounterpartyClassifierViewSet(GenericClassifierViewSet):
@@ -196,6 +150,36 @@ class CounterpartyViewSet(AbstractWithObjectPermissionViewSet):
     ]
 
 
+class CounterpartyLightFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+
+    class Meta:
+        model = Counterparty
+        fields = []
+
+
+class CounterpartyLightViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = Counterparty.objects.select_related(
+        'master_user'
+    ).prefetch_related(
+        *get_permissions_prefetch_lookups(
+            (None, Counterparty)
+        )
+    )
+    serializer_class = CounterpartyLightSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter
+    ]
+    filter_class = CounterpartyLightFilterSet
+    ordering_fields = [
+        'user_code', 'name', 'short_name', 'public_name'
+    ]
+
+
 class CounterpartyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Counterparty.objects.select_related(
         'master_user',
@@ -222,38 +206,6 @@ class CounterpartyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cus
     ]
 
 
-# Responsible ----
-
-
-# class ResponsibleAttributeTypeFilterSet(FilterSet):
-#     id = NoOpFilter()
-#     user_code = CharFilter()
-#     name = CharFilter()
-#     short_name = CharFilter()
-#     public_name = CharFilter()
-#     value_type = AttributeTypeValueTypeFilter()
-#     member = ObjectPermissionMemberFilter(object_permission_model=ResponsibleAttributeType)
-#     member_group = ObjectPermissionGroupFilter(object_permission_model=ResponsibleAttributeType)
-#     permission = ObjectPermissionPermissionFilter(object_permission_model=ResponsibleAttributeType)
-#
-#     class Meta:
-#         model = ResponsibleAttributeType
-#         fields = []
-#
-#
-# class ResponsibleAttributeTypeViewSet(AbstractAttributeTypeViewSet):
-#     queryset = ResponsibleAttributeType.objects.select_related(
-#         'master_user'
-#     ).prefetch_related(
-#         'classifiers',
-#         *get_permissions_prefetch_lookups(
-#             (None, ResponsibleAttributeType)
-#         )
-#     )
-#     serializer_class = ResponsibleAttributeTypeSerializer
-#     filter_class = ResponsibleAttributeTypeFilterSet
-
-
 class ResponsibleAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Responsible
     target_model_serializer = ResponsibleSerializer
@@ -261,23 +213,6 @@ class ResponsibleAttributeTypeViewSet(GenericAttributeTypeViewSet):
     permission_classes = GenericAttributeTypeViewSet.permission_classes + [
         PomsConfigurationPermission
     ]
-
-
-# class ResponsibleClassifierFilterSet(FilterSet):
-#     id = NoOpFilter()
-#     name = CharFilter()
-#     level = django_filters.NumberFilter()
-#     attribute_type = ModelExtWithPermissionMultipleChoiceFilter(model=ResponsibleAttributeType)
-#
-#     class Meta:
-#         model = ResponsibleClassifier
-#         fields = []
-#
-#
-# class ResponsibleClassifierViewSet(AbstractClassifierViewSet):
-#     queryset = ResponsibleClassifier.objects
-#     serializer_class = ResponsibleClassifierNodeSerializer
-#     filter_class = ResponsibleClassifierFilterSet
 
 
 class ResponsibleClassifierViewSet(GenericClassifierViewSet):
@@ -397,6 +332,37 @@ class ResponsibleViewSet(AbstractWithObjectPermissionViewSet):
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
         'group', 'group__user_code', 'group__name', 'group__short_name', 'group__public_name',
+    ]
+
+
+class ResponsibleLightFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+    public_name = CharFilter()
+
+    class Meta:
+        model = Responsible
+        fields = []
+
+
+class ResponsibleLightViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = Responsible.objects.select_related(
+        'master_user',
+    ).prefetch_related(
+        *get_permissions_prefetch_lookups(
+            (None, Responsible),
+        )
+    )
+    serializer_class = ResponsibleLightSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter
+    ]
+    filter_class = ResponsibleLightFilterSet
+    ordering_fields = [
+        'user_code', 'name', 'short_name', 'public_name',
     ]
 
 

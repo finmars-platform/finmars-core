@@ -195,6 +195,17 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
             CurrencyPricingPolicy.objects.filter(currency=instance).exclude(id__in=ids).delete()
 
 
+class CurrencyLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+
+    master_user = MasterUserField()
+
+    class Meta(ModelWithObjectPermissionSerializer.Meta):
+        model = Currency
+        fields = [
+            'id', 'master_user', 'user_code', 'name', 'short_name',
+            'is_default', 'is_deleted', 'is_enabled',
+        ]
+
 class CurrencyViewSerializer(ModelWithUserCodeSerializer):
     # url = serializers.HyperlinkedIdentityField(view_name='currency-detail')
 

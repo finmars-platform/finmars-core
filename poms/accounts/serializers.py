@@ -102,6 +102,18 @@ class AccountSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributes
         self.fields['portfolios_object'] = PortfolioViewSerializer(source='portfolios', many=True, read_only=True)
 
 
+class AccountLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+
+    master_user = MasterUserField()
+
+    class Meta(ModelWithObjectPermissionSerializer.Meta):
+        model = Account
+        fields = [
+            'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name',
+            'is_default', 'is_deleted',
+            'is_enabled'
+        ]
+
 class AccountViewSerializer(ModelWithObjectPermissionSerializer):
     type = AccountTypeField(default=AccountTypeDefault())
     type_object = AccountTypeViewSerializer(source='type', read_only=True)

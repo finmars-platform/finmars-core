@@ -86,6 +86,7 @@ router.register(r'accounts/account-attribute-type', accounts.AccountAttributeTyp
 router.register(r'accounts/account-classifier', accounts.AccountClassifierViewSet, 'accountclassifier')
 router.register(r'accounts/account-ev-group', accounts.AccountEvGroupViewSet, 'accountevgroup')
 router.register(r'accounts/account', accounts.AccountViewSet)
+router.register(r'accounts/account-light', accounts.AccountLightViewSet)
 
 # router.register(r'counterparties/counterparty-attribute-type', counterparties.CounterpartyAttributeTypeViewSet)
 router.register(r'counterparties/counterparty-attribute-type', counterparties.CounterpartyAttributeTypeViewSet,
@@ -100,6 +101,7 @@ router.register(r'counterparties/counterparty-group', counterparties.Counterpart
 router.register(r'counterparties/counterparty-ev-group', counterparties.CounterpartyEvGroupViewSet,
                 'counterpartyevgroup')
 router.register(r'counterparties/counterparty', counterparties.CounterpartyViewSet)
+router.register(r'counterparties/counterparty-light', counterparties.CounterpartyLightViewSet)
 
 # router.register(r'counterparties/responsible-attribute-type', counterparties.ResponsibleAttributeTypeViewSet)
 router.register(r'counterparties/responsible-attribute-type', counterparties.ResponsibleAttributeTypeViewSet,
@@ -113,9 +115,11 @@ router.register(r'counterparties/responsible-group', counterparties.ResponsibleG
 
 router.register(r'counterparties/responsible-ev-group', counterparties.ResponsibleEvGroupViewSet, 'responsibleevgroup')
 router.register(r'counterparties/responsible', counterparties.ResponsibleViewSet)
+router.register(r'counterparties/responsible-light', counterparties.ResponsibleLightViewSet)
 
 router.register(r'currencies/currency-ev-group', currencies.CurrencyEvGroupViewSet, 'currencyevgroup')
 router.register(r'currencies/currency', currencies.CurrencyViewSet)
+router.register(r'currencies/currency-light', currencies.CurrencyLightViewSet)
 
 router.register(r'currencies/currency-history-ev-group', currencies.CurrencyHistoryEvGroupViewSet)
 router.register(r'currencies/currency-attribute-type', currencies.CurrencyAttributeTypeViewSet, 'currencyattributetype')
@@ -129,6 +133,7 @@ router.register(r'instruments/periodicity', instruments.PeriodicityViewSet)
 router.register(r'instruments/cost-method', instruments.CostMethodViewSet)
 router.register(r'instruments/pricing-policy-ev-group', instruments.PricingPolicyEvGroupViewSet)
 router.register(r'instruments/pricing-policy', instruments.PricingPolicyViewSet)
+router.register(r'instruments/pricing-policy-light', instruments.PricingPolicyLightViewSet)
 
 router.register(r'instruments/event-schedule-config', instruments.EventScheduleConfigViewSet)
 
@@ -145,6 +150,7 @@ router.register(r'instruments/instrument-classifier', instruments.InstrumentClas
 
 router.register(r'instruments/instrument-ev-group', instruments.InstrumentEvGroupViewSet)
 router.register(r'instruments/instrument', instruments.InstrumentViewSet)
+router.register(r'instruments/instrument-light', instruments.InstrumentLightViewSet)
 
 router.register(r'instruments/price-history-ev-group', instruments.PriceHistoryEvGroupViewSet, 'instrumentevgroup')
 router.register(r'instruments/price-history', instruments.PriceHistoryViewSet)
@@ -159,6 +165,7 @@ router.register(r'portfolios/portfolio-classifier', portfolios.PortfolioClassifi
 
 router.register(r'portfolios/portfolio-ev-group', portfolios.PortfolioEvGroupViewSet, 'portfolioevgroup')
 router.register(r'portfolios/portfolio', portfolios.PortfolioViewSet)
+router.register(r'portfolios/portfolio-light', portfolios.PortfolioLightViewSet)
 
 router.register(r'strategies/1/group-ev-group', strategies.Strategy1GroupEvGroupViewSet, 'strategy1groupevgroup')
 router.register(r'strategies/1/group', strategies.Strategy1GroupViewSet)
@@ -169,6 +176,7 @@ router.register(r'strategies/1/subgroup', strategies.Strategy1SubgroupViewSet)
 
 router.register(r'strategies/1/strategy-ev-group', strategies.Strategy1EvGroupViewSet, 'strategy1evgroup')
 router.register(r'strategies/1/strategy', strategies.Strategy1ViewSet)
+router.register(r'strategies/1/strategy-light', strategies.Strategy1LightViewSet)
 
 router.register(r'strategies/1/strategy-attribute-type', strategies.Strategy1AttributeTypeViewSet)
 
@@ -181,6 +189,7 @@ router.register(r'strategies/2/subgroup', strategies.Strategy2SubgroupViewSet)
 
 router.register(r'strategies/2/strategy-ev-group', strategies.Strategy2EvGroupViewSet, 'strategy2evgroup')
 router.register(r'strategies/2/strategy', strategies.Strategy2ViewSet)
+router.register(r'strategies/2/strategy-light', strategies.Strategy2LightViewSet)
 
 router.register(r'strategies/2/strategy-attribute-type', strategies.Strategy2AttributeTypeViewSet)
 
@@ -193,6 +202,7 @@ router.register(r'strategies/3/subgroup', strategies.Strategy3SubgroupViewSet)
 
 router.register(r'strategies/3/strategy-ev-group', strategies.Strategy3EvGroupViewSet, 'strategy3evgroup')
 router.register(r'strategies/3/strategy', strategies.Strategy3ViewSet)
+router.register(r'strategies/3/strategy-light', strategies.Strategy3LightViewSet)
 
 router.register(r'strategies/3/strategy-attribute-type', strategies.Strategy3AttributeTypeViewSet)
 

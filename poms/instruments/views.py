@@ -36,7 +36,8 @@ from poms.instruments.serializers import InstrumentSerializer, PriceHistorySeria
     InstrumentClassSerializer, DailyPricingModelSerializer, AccrualCalculationModelSerializer, \
     PaymentSizeDetailSerializer, PeriodicitySerializer, CostMethodSerializer, InstrumentTypeSerializer, \
     PricingPolicySerializer, EventScheduleConfigSerializer, InstrumentCalculatePricesAccruedPriceSerializer, \
-    GeneratedEventSerializer, EventScheduleActionSerializer, InstrumentTypeLightSerializer
+    GeneratedEventSerializer, EventScheduleActionSerializer, InstrumentTypeLightSerializer, InstrumentLightSerializer, \
+    PricingPolicyLightSerializer
 from poms.instruments.tasks import calculate_prices_accrued_price, generate_events, process_events, \
     only_generate_events_at_date, generate_events_do_not_inform_apply_default0, \
     generate_events_do_not_inform_apply_default, only_generate_events_at_date_for_single_instrument
@@ -96,6 +97,7 @@ class PricingPolicyFilterSet(FilterSet):
     id = NoOpFilter()
     user_code = CharFilter()
     name = CharFilter()
+    short_name = CharFilter()
 
     class Meta:
         model = PricingPolicy
@@ -109,6 +111,21 @@ class PricingPolicyViewSet(AbstractModelViewSet):
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
+    ]
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        SuperUserOrReadOnly,
+    ]
+    ordering_fields = [
+        'user_code', 'name', 'short_name', 'public_name'
+    ]
+    filter_class = PricingPolicyFilterSet
+
+
+class PricingPolicyLightViewSet(AbstractModelViewSet):
+    queryset = PricingPolicy.objects
+    serializer_class = PricingPolicyLightSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
     ]
     permission_classes = AbstractModelViewSet.permission_classes + [
         SuperUserOrReadOnly,
@@ -594,6 +611,37 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
         # ).wait()
 
         return Response(serializer.data)
+
+
+class InstrumentLightFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    public_name = CharFilter()
+    short_name = CharFilter()
+
+    class Meta:
+        model = Instrument
+        fields = []
+
+
+class InstrumentLightViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = Instrument.objects.select_related(
+        'master_user'
+    ).prefetch_related(
+        *get_permissions_prefetch_lookups(
+            (None, Instrument)
+        )
+    )
+    serializer_class = InstrumentLightSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = InstrumentLightFilterSet
+    ordering_fields = [
+        'user_code', 'name', 'short_name', 'public_name',
+    ]
 
 
 class InstrumentEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):

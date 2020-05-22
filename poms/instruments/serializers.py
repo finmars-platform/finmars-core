@@ -218,6 +218,15 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer):
         return instance
 
 
+class PricingPolicyLightSerializer(ModelWithUserCodeSerializer):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = PricingPolicy
+        fields = ['id', 'master_user', 'user_code', 'name', 'short_name']
+
+
+
 class PricingPolicyViewSerializer(ModelWithUserCodeSerializer):
     class Meta:
         model = PricingPolicy
@@ -754,6 +763,18 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
             instrument.rebuild_event_schedules()
         except ValueError as e:
             raise ValidationError({'instrument_type': '%s' % e})
+
+
+class InstrumentLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+
+    master_user = MasterUserField()
+
+    class Meta:
+        model = Instrument
+        fields = [
+            'id', 'master_user', 'user_code', 'name', 'short_name',
+            'public_name', 'is_active', 'is_deleted', 'is_enabled'
+        ]
 
 
 class InstrumentViewSerializer(ModelWithObjectPermissionSerializer):

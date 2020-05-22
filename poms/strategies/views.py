@@ -18,7 +18,8 @@ from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1,
     Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
 from poms.strategies.serializers import Strategy1GroupSerializer, Strategy1Serializer, Strategy2GroupSerializer, \
     Strategy2SubgroupSerializer, Strategy2Serializer, Strategy1SubgroupSerializer, Strategy3GroupSerializer, \
-    Strategy3SubgroupSerializer, Strategy3Serializer
+    Strategy3SubgroupSerializer, Strategy3Serializer, Strategy1LightSerializer, Strategy2LightSerializer, \
+    Strategy3LightSerializer
 from poms.tags.filters import TagFilter
 from poms.tags.models import Tag
 from poms.tags.utils import get_tag_prefetch
@@ -209,6 +210,37 @@ class Strategy1ViewSet(AbstractWithObjectPermissionViewSet):
     ]
 
 
+class Strategy1LightFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+    public_name = CharFilter()
+
+    class Meta:
+        model = Strategy1
+        fields = []
+
+
+class Strategy1LightViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = Strategy1.objects.select_related(
+        'master_user'
+    ).prefetch_related(
+        *get_permissions_prefetch_lookups(
+            (None, Strategy1)
+        )
+    )
+    serializer_class = Strategy1LightSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = Strategy1LightFilterSet
+    ordering_fields = [
+        'user_code', 'name', 'short_name', 'public_name'
+    ]
+
+
 class Strategy1EvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Strategy1.objects.select_related(
         'master_user',
@@ -379,6 +411,34 @@ class Strategy2ViewSet(Strategy1ViewSet):
     filter_class = Strategy2FilterSet
 
 
+class Strategy2LightFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+    public_name = CharFilter()
+
+    class Meta:
+        model = Strategy2
+        fields = []
+
+
+class Strategy2LightViewSet(Strategy1ViewSet):
+    queryset = Strategy2.objects.select_related(
+        'master_user',
+    ).prefetch_related(
+        *get_permissions_prefetch_lookups(
+            (None, Strategy2)
+        )
+    )
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter
+    ]
+    serializer_class = Strategy2LightSerializer
+    filter_class = Strategy2LightFilterSet
+
+
 class Strategy2EvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Strategy2.objects.select_related(
         'master_user',
@@ -543,6 +603,34 @@ class Strategy3ViewSet(Strategy1ViewSet):
     ]
     serializer_class = Strategy3Serializer
     filter_class = Strategy3FilterSet
+
+
+class Strategy3LightFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+    public_name = CharFilter()
+
+    class Meta:
+        model = Strategy3
+        fields = []
+
+
+class Strategy3LightViewSet(Strategy1ViewSet):
+    queryset = Strategy3.objects.select_related(
+        'master_user'
+    ).prefetch_related(
+        *get_permissions_prefetch_lookups(
+            (None, Strategy3),
+        )
+    )
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter
+    ]
+    serializer_class = Strategy3LightSerializer
+    filter_class = Strategy3LightFilterSet
 
 
 class Strategy3EvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
