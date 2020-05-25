@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy
 
-from poms.common.models import NamedModel
+from poms.common.models import NamedModel, DataTimeStampedModel
 from poms.users.models import MasterUser
 
 from croniter import croniter
@@ -71,7 +71,7 @@ class BaseSchedule(NamedModel):
         return self.user_code
 
 
-class PricingSchedule(BaseSchedule):
+class PricingSchedule(BaseSchedule, DataTimeStampedModel):
 
     pricing_procedures = models.ManyToManyField('pricing.PricingProcedure', blank=True, verbose_name=ugettext_lazy('pricing procedures'))
 

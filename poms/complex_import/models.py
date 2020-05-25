@@ -2,10 +2,11 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy
 
+from poms.common.models import DataTimeStampedModel
 from poms.users.models import MasterUser
 
 
-class ComplexImportScheme(models.Model):
+class ComplexImportScheme(DataTimeStampedModel):
     scheme_name = models.CharField(max_length=255)
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 

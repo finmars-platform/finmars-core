@@ -16,7 +16,8 @@ from mptt.models import MPTTModel
 
 from poms.common import formula
 from poms.common.formula_accruals import get_coupon
-from poms.common.models import NamedModel, AbstractClassModel, FakeDeletableModel, EXPRESSION_FIELD_LENGTH
+from poms.common.models import NamedModel, AbstractClassModel, FakeDeletableModel, EXPRESSION_FIELD_LENGTH, \
+    DataTimeStampedModel
 from poms.common.utils import date_now, isclose
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
@@ -59,6 +60,7 @@ class InstrumentClass(AbstractClassModel):
         return self.id in [self.REGULAR_EVENT_AT_MATURITY, self.PERPETUAL_REGULAR_EVENT]
 
 
+# DEPRECATED (25.05.2020), delete soon
 class DailyPricingModel(AbstractClassModel):
     SKIP = 1
     FORMULA_ALWAYS = 2
@@ -304,7 +306,7 @@ class CostMethod(AbstractClassModel):
         verbose_name_plural = ugettext_lazy('cost methods')
 
 
-class PricingPolicy(NamedModel):
+class PricingPolicy(NamedModel, DataTimeStampedModel):
     # DISABLED = 0
     # BLOOMBERG = 1
     # TYPES = (
@@ -345,7 +347,7 @@ class PricingPolicy(NamedModel):
     #     super(PricingPolicy, self).delete(*args, **kwargs)
 
 
-class InstrumentType(NamedModelAutoMapping, FakeDeletableModel):
+class InstrumentType(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='instrument_types',
                                     verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     instrument_class = models.ForeignKey(InstrumentClass, related_name='instrument_types', on_delete=models.PROTECT,
@@ -384,7 +386,7 @@ class InstrumentType(NamedModelAutoMapping, FakeDeletableModel):
         return self.master_user.instrument_type_id == self.id if self.master_user_id else False
 
 
-class Instrument(NamedModelAutoMapping, FakeDeletableModel):
+class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='instruments', verbose_name=ugettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
@@ -855,6 +857,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel):
         return 1.0
 
 
+# DEPRECTATED (25.05.2020) delete soon
 class ManualPricingFormula(models.Model):
     instrument = models.ForeignKey(Instrument, related_name='manual_pricing_formulas',
                                    verbose_name=ugettext_lazy('instrument'), on_delete=models.CASCADE)
@@ -873,29 +876,6 @@ class ManualPricingFormula(models.Model):
 
     def __str__(self):
         return self.expr
-
-
-class PriceHistory(models.Model):
-    instrument = models.ForeignKey(Instrument, related_name='prices', verbose_name=ugettext_lazy('instrument'),
-                                   on_delete=models.CASCADE)
-    pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE, null=True, blank=True,
-                                       verbose_name=ugettext_lazy('pricing policy'))
-    date = models.DateField(db_index=True, default=date_now, verbose_name=ugettext_lazy('date'))
-    principal_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('principal price'))
-    accrued_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('accrued price'))
-
-    class Meta:
-        verbose_name = ugettext_lazy('price history')
-        verbose_name_plural = ugettext_lazy('price histories')
-        unique_together = (
-            ('instrument', 'pricing_policy', 'date',)
-        )
-        ordering = ['date']
-
-    def __str__(self):
-        # return '%s:%s:%s:%s:%s' % (
-        #     self.instrument_id, self.pricing_policy_id, self.date, self.principal_price, self.accrued_price)
-        return '%s;%s @%s' % (self.principal_price, self.accrued_price, self.date)
 
 
 class AccrualCalculationSchedule(models.Model):
@@ -920,6 +900,29 @@ class AccrualCalculationSchedule(models.Model):
 
     def __str__(self):
         return '%s' % self.accrual_start_date
+
+
+class PriceHistory(DataTimeStampedModel):
+    instrument = models.ForeignKey(Instrument, related_name='prices', verbose_name=ugettext_lazy('instrument'),
+                                   on_delete=models.CASCADE)
+    pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE, null=True, blank=True,
+                                       verbose_name=ugettext_lazy('pricing policy'))
+    date = models.DateField(db_index=True, default=date_now, verbose_name=ugettext_lazy('date'))
+    principal_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('principal price'))
+    accrued_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('accrued price'))
+
+    class Meta:
+        verbose_name = ugettext_lazy('price history')
+        verbose_name_plural = ugettext_lazy('price histories')
+        unique_together = (
+            ('instrument', 'pricing_policy', 'date',)
+        )
+        ordering = ['date']
+
+    def __str__(self):
+        # return '%s:%s:%s:%s:%s' % (
+        #     self.instrument_id, self.pricing_policy_id, self.date, self.principal_price, self.accrued_price)
+        return '%s;%s @%s' % (self.principal_price, self.accrued_price, self.date)
 
 
 class InstrumentFactorSchedule(models.Model):

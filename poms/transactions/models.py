@@ -11,7 +11,8 @@ from django.utils.translation import ugettext_lazy
 from mptt.models import MPTTModel
 
 from poms.accounts.models import Account
-from poms.common.models import NamedModel, AbstractClassModel, FakeDeletableModel, EXPRESSION_FIELD_LENGTH
+from poms.common.models import NamedModel, AbstractClassModel, FakeDeletableModel, EXPRESSION_FIELD_LENGTH, \
+    DataTimeStampedModel
 from poms.common.utils import date_now
 from poms.counterparties.models import Responsible, Counterparty
 from poms.currencies.models import Currency
@@ -279,25 +280,7 @@ class TransactionTypeGroup(NamedModel, FakeDeletableModel):
         ]
 
 
-# class TransactionTypeGroupUserObjectPermission(AbstractUserObjectPermission):
-#     content_object = models.ForeignKey(TransactionTypeGroup, related_name='user_object_permissions',
-#                                        verbose_name=ugettext_lazy('content object'))
-#
-#     class Meta(AbstractUserObjectPermission.Meta):
-#         verbose_name = ugettext_lazy('transaction type groups - user permission')
-#         verbose_name_plural = ugettext_lazy('transaction type groups - user permissions')
-#
-#
-# class TransactionTypeGroupGroupObjectPermission(AbstractGroupObjectPermission):
-#     content_object = models.ForeignKey(TransactionTypeGroup, related_name='group_object_permissions',
-#                                        verbose_name=ugettext_lazy('content object'))
-#
-#     class Meta(AbstractGroupObjectPermission.Meta):
-#         verbose_name = ugettext_lazy('transaction type groups - group permission')
-#         verbose_name_plural = ugettext_lazy('transaction type groups - group permissions')
-
-
-class TransactionType(NamedModel, FakeDeletableModel):
+class TransactionType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
     SHOW_PARAMETERS = 1
     HIDE_PARAMETERS = 2
@@ -498,24 +481,6 @@ class TransactionType(NamedModel, FakeDeletableModel):
     @book_transaction_layout.setter
     def book_transaction_layout(self, data):
         self.book_transaction_layout_json = json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True) if data else None
-
-
-# class TransactionTypeUserObjectPermission(AbstractUserObjectPermission):
-#     content_object = models.ForeignKey(TransactionType, related_name='user_object_permissions',
-#                                        verbose_name=ugettext_lazy('content object'))
-#
-#     class Meta(AbstractUserObjectPermission.Meta):
-#         verbose_name = ugettext_lazy('transaction types - user permission')
-#         verbose_name_plural = ugettext_lazy('transaction types - user permissions')
-#
-#
-# class TransactionTypeGroupObjectPermission(AbstractGroupObjectPermission):
-#     content_object = models.ForeignKey(TransactionType, related_name='group_object_permissions',
-#                                        verbose_name=ugettext_lazy('content object'))
-#
-#     class Meta(AbstractGroupObjectPermission.Meta):
-#         verbose_name = ugettext_lazy('transaction types - group permission')
-#         verbose_name_plural = ugettext_lazy('transaction types - group permissions')
 
 
 # name - expr
@@ -1001,7 +966,7 @@ class TransactionTypeActionInstrumentFactorSchedule(TransactionTypeAction):
     def __str__(self):
         return 'InstrumentFactor action #%s' % self.order
 
-
+# DEPRECATED (25.05.2020), delete soon
 class TransactionTypeActionInstrumentManualPricingFormula(TransactionTypeAction):
     instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
                                    verbose_name=ugettext_lazy('instrument'))
@@ -1205,7 +1170,7 @@ class EventToHandle(NamedModel):
         verbose_name_plural = ugettext_lazy('events to handle')
 
 
-class ComplexTransaction(FakeDeletableModel):
+class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
     PRODUCTION = 1
     PENDING = 2
     STATUS_CHOICES = (
@@ -1429,7 +1394,7 @@ class ComplexTransactionInput(models.Model):
             ['complex_transaction', 'transaction_type_input', ]
         ]
 
-# class Transaction(FakeDeletableModel):
+
 class Transaction(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='transactions', verbose_name=ugettext_lazy('master user'),
                                     on_delete=models.CASCADE)
@@ -1650,71 +1615,6 @@ class Transaction(models.Model):
                 is_calculate_for_all=False,
                 save=save
             )
-
-
-# class TransactionAttributeType(AbstractAttributeType):
-#     object_permissions = GenericRelation(GenericObjectPermission)
-#
-#     class Meta(AbstractAttributeType.Meta):
-#         verbose_name = ugettext_lazy('transaction attribute type')
-#         verbose_name_plural = ugettext_lazy('transaction attribute types')
-#         permissions = [
-#             ('view_transactionattributetype', 'Can view transaction attribute type'),
-#             ('manage_transactionattributetype', 'Can manage transaction attribute type'),
-#         ]
-
-
-# class TransactionAttributeTypeUserObjectPermission(AbstractUserObjectPermission):
-#     content_object = models.ForeignKey(TransactionAttributeType, related_name='user_object_permissions',
-#                                        verbose_name=ugettext_lazy("content object"))
-#
-#     class Meta(AbstractUserObjectPermission.Meta):
-#         verbose_name = ugettext_lazy('transaction attribute types - user permission')
-#         verbose_name_plural = ugettext_lazy('transaction attribute types - user permissions')
-#
-#
-# class TransactionAttributeTypeGroupObjectPermission(AbstractGroupObjectPermission):
-#     content_object = models.ForeignKey(TransactionAttributeType, related_name='group_object_permissions',
-#                                        verbose_name=ugettext_lazy("content object"))
-#
-#     class Meta(AbstractGroupObjectPermission.Meta):
-#         verbose_name = ugettext_lazy('transaction attribute types - group permission')
-#         verbose_name_plural = ugettext_lazy('transaction attribute types - group permissions')
-
-
-# class TransactionClassifier(AbstractClassifier):
-#     attribute_type = models.ForeignKey(TransactionAttributeType, related_name='classifiers',
-#                                        verbose_name=ugettext_lazy('attribute type'))
-#     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True,
-#                             verbose_name=ugettext_lazy('parent'))
-#
-#     class Meta(AbstractClassifier.Meta):
-#         verbose_name = ugettext_lazy('transaction classifier')
-#         verbose_name_plural = ugettext_lazy('transaction classifiers')
-#
-#
-# class TransactionAttributeTypeOption(AbstractAttributeTypeOption):
-#     member = models.ForeignKey(Member, related_name='transaction_attribute_type_options',
-#                                verbose_name=ugettext_lazy("member"))
-#     attribute_type = models.ForeignKey(TransactionAttributeType, related_name='options',
-#                                        verbose_name=ugettext_lazy("attribute type"))
-#
-#     class Meta(AbstractAttributeTypeOption.Meta):
-#         verbose_name = ugettext_lazy('transaction attribute types - option')
-#         verbose_name_plural = ugettext_lazy('transaction attribute types - options')
-#
-#
-# class TransactionAttribute(AbstractAttribute):
-#     attribute_type = models.ForeignKey(TransactionAttributeType, related_name='attributes',
-#                                        verbose_name=ugettext_lazy("attribute type"))
-#     content_object = models.ForeignKey(Transaction, related_name='attributes',
-#                                        verbose_name=ugettext_lazy("content object"))
-#     classifier = models.ForeignKey(TransactionClassifier, on_delete=models.SET_NULL, null=True, blank=True,
-#                                    verbose_name=ugettext_lazy('classifier'))
-#
-#     class Meta(AbstractAttribute.Meta):
-#         verbose_name = ugettext_lazy('transaction attribute')
-#         verbose_name_plural = ugettext_lazy('transaction attributes')
 
 
 class ExternalCashFlow(models.Model):

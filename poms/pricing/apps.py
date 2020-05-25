@@ -128,5 +128,3 @@ class PricingConfig(AppConfig):
 
             else:
                 InstrumentPricingSchemeType.objects.create(**type)
-
-        print("here?")

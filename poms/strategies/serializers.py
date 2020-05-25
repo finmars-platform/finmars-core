@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from poms.common.serializers import ModelWithUserCodeSerializer
+from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.strategies.fields import Strategy1GroupField, Strategy1SubgroupField, Strategy2GroupField, \
@@ -65,7 +65,8 @@ class Strategy1SubgroupViewSerializer(ModelWithObjectPermissionSerializer):
         ]
 
 
-class Strategy1Serializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer, ModelWithTagSerializer, ModelWithAttributesSerializer):
+class Strategy1Serializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
+                          ModelWithTagSerializer, ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     subgroup = Strategy1SubgroupField(default=Strategy1SubgroupDefault())
     subgroup_object = Strategy1SubgroupViewSerializer(source='subgroup', read_only=True)

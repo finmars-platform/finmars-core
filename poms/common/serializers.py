@@ -15,6 +15,21 @@ class PomsClassSerializer(serializers.ModelSerializer):
         fields = ['id', 'system_code', 'name', 'description', ]
 
 
+class ModelWithTimeStampSerializer(serializers.ModelSerializer):
+
+    def __init__(self, *args, **kwargs):
+        super(ModelWithTimeStampSerializer, self).__init__(*args, **kwargs)
+        self.fields['modified'] = serializers.DateTimeField()
+
+    def validate(self, data):
+
+        if data['modified'] != self.instance.modified:
+            raise serializers.ValidationError("Synchronization error")
+
+        return data
+
+
+
 class ModelWithUserCodeSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(ModelWithUserCodeSerializer, self).__init__(*args, **kwargs)

@@ -13,7 +13,7 @@ from poms.accounts.models import Account
 from poms.common import formula
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer
+from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
 from poms.counterparties.fields import ResponsibleField, CounterpartyField, ResponsibleDefault, CounterpartyDefault
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.fields import CurrencyField, CurrencyDefault, SystemCurrencyDefault
@@ -93,13 +93,6 @@ class TransactionTypeGroupViewSerializer(ModelWithObjectPermissionSerializer):
         fields = [
             'id', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_deleted',
         ]
-
-
-# class TransactionTypeGroupBulkObjectPermissionSerializer(AbstractBulkObjectPermissionSerializer):
-#     content_objects = TransactionTypeGroupField(many=True, allow_null=False, allow_empty=False)
-#
-#     class Meta:
-#         model = TransactionTypeGroup
 
 
 class TransactionInputField(serializers.CharField):
@@ -362,7 +355,6 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
             instance.settings.update_or_create(**settings)
 
         return instance
-
 
 
 class TransactionTypeInputViewSerializer(serializers.ModelSerializer):
@@ -932,9 +924,6 @@ class TransactionTypeActionSerializer(serializers.ModelSerializer):
         return attrs
 
 
-
-
-
 class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
                                      ModelWithTagSerializer, ModelWithAttributesSerializer):
     master_user = MasterUserField()
@@ -1114,7 +1103,7 @@ class TransactionTypeLightSerializerWithInputs(TransactionTypeLightSerializer):
 
 
 class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
-                                ModelWithTagSerializer, ModelWithAttributesSerializer):
+                                ModelWithTagSerializer, ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     group = TransactionTypeGroupField(required=False, allow_null=False)
     date_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
@@ -1808,46 +1797,6 @@ class TransactionTypeViewSerializer(ModelWithObjectPermissionSerializer):
         ]
 
 
-# class TransactionTypeBulkObjectPermissionSerializer(AbstractBulkObjectPermissionSerializer):
-#     content_objects = TransactionTypeField(many=True, allow_null=False, allow_empty=False)
-#
-#     class Meta:
-#         model = TransactionType
-
-
-# class TransactionClassifierSerializer(AbstractClassifierSerializer):
-#     class Meta(AbstractClassifierSerializer.Meta):
-#         model = TransactionClassifier
-#
-#
-# class TransactionClassifierNodeSerializer(AbstractClassifierNodeSerializer):
-#     class Meta(AbstractClassifierNodeSerializer.Meta):
-#         model = TransactionClassifier
-#
-#
-# class TransactionAttributeTypeSerializer(AbstractAttributeTypeSerializer):
-#     classifiers = TransactionClassifierSerializer(required=False, allow_null=True, many=True)
-#
-#     class Meta(AbstractAttributeTypeSerializer.Meta):
-#         model = TransactionAttributeType
-#         fields = AbstractAttributeTypeSerializer.Meta.fields + ['classifiers']
-#
-
-# class TransactionAttributeTypeBulkObjectPermissionSerializer(AbstractBulkObjectPermissionSerializer):
-#     content_objects = TransactionAttributeTypeField(many=True, allow_null=False, allow_empty=False)
-#
-#     class Meta:
-#         model = TransactionAttributeType
-
-
-# class TransactionAttributeSerializer(AbstractAttributeSerializer):
-#     attribute_type = TransactionAttributeTypeField()
-#     classifier = TransactionClassifierField(required=False, allow_null=True)
-#
-#     class Meta(AbstractAttributeSerializer.Meta):
-#         model = TransactionAttribute
-#         fields = AbstractAttributeSerializer.Meta.fields + ['attribute_type', 'classifier']
-
 class TransactionSimpleSerializer(ModelWithObjectPermissionSerializer):
     class Meta:
         model = Transaction
@@ -2082,7 +2031,7 @@ class ComplexTransactionMixin:
         return data
 
 
-class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer):
+class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
     # text = serializers.SerializerMethodField()
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)

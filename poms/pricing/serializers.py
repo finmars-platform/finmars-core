@@ -3,7 +3,7 @@ from rest_framework import serializers
 from poms.common import formula
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import ModelWithUserCodeSerializer
+from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
 from poms.currencies.models import CurrencyHistory
 from poms.instruments.fields import InstrumentField, PricingPolicyField
 from poms.instruments.models import PricingPolicy, PriceHistory
@@ -105,7 +105,7 @@ class InstrumentPricingSchemeTypeSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'notes', 'input_type')
 
 
-class InstrumentPricingSchemeSerializer(serializers.ModelSerializer):
+class InstrumentPricingSchemeSerializer(ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
     type_settings = serializers.SerializerMethodField()
@@ -583,7 +583,7 @@ class CurrencyPricingSchemeTypeSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'notes', 'input_type')
 
 
-class CurrencyPricingSchemeSerializer(serializers.ModelSerializer):
+class CurrencyPricingSchemeSerializer(ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
     type_settings = serializers.SerializerMethodField()

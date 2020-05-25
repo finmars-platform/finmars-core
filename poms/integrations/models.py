@@ -14,7 +14,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import ugettext, ugettext_lazy
 
-from poms.common.models import TimeStampedModel, AbstractClassModel, EXPRESSION_FIELD_LENGTH
+from poms.common.models import TimeStampedModel, AbstractClassModel, EXPRESSION_FIELD_LENGTH, DataTimeStampedModel
 from poms.integrations.storage import import_config_storage
 from poms.obj_attrs.models import GenericClassifier, GenericAttributeType
 
@@ -956,7 +956,7 @@ class PricingAutomatedSchedule(models.Model):
 
 
 
-class ComplexTransactionImportScheme(models.Model):
+class ComplexTransactionImportScheme(DataTimeStampedModel):
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     scheme_name = models.CharField(max_length=255, verbose_name=ugettext_lazy('scheme name'))
     rule_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('rule expressions'))

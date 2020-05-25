@@ -9,7 +9,7 @@ from django.db import models
 from django.utils.functional import SimpleLazyObject
 from django.utils.translation import ugettext_lazy
 
-from poms.common.models import NamedModel, FakeDeletableModel
+from poms.common.models import NamedModel, FakeDeletableModel, DataTimeStampedModel
 from poms.common.utils import date_now
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
@@ -31,7 +31,7 @@ def _load_currencies_data():
 currencies_data = SimpleLazyObject(_load_currencies_data)
 
 
-class Currency(NamedModelAutoMapping, FakeDeletableModel):
+class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='currencies', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     reference_for_pricing = models.CharField(max_length=100, blank=True, default='',
                                              verbose_name=ugettext_lazy('reference for pricing'))
@@ -67,28 +67,7 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel):
         return self.master_user.currency_id == self.id if self.master_user_id else False
 
 
-# class CurrencyUserObjectPermission(AbstractUserObjectPermission):
-#     content_object = models.ForeignKey(Currency, related_name='user_object_permissions',
-#                                        verbose_name=ugettext_lazy('content object'))
-#
-#     class Meta(AbstractUserObjectPermission.Meta):
-#         verbose_name = ugettext_lazy('currencies - user permission')
-#         verbose_name_plural = ugettext_lazy('currencies - user permissions')
-#
-#
-# class CurrencyGroupObjectPermission(AbstractGroupObjectPermission):
-#     content_object = models.ForeignKey(Currency, related_name='group_object_permissions',
-#                                        verbose_name=ugettext_lazy('content object'))
-#
-#     class Meta(AbstractGroupObjectPermission.Meta):
-#         verbose_name = ugettext_lazy('currencies - group permission')
-#         verbose_name_plural = ugettext_lazy('currencies - group permissions')
-
-
-# EUR -> USD
-# RUB -> USD
-# ...
-class CurrencyHistory(models.Model):
+class CurrencyHistory(DataTimeStampedModel):
     currency = models.ForeignKey(Currency, related_name='histories', verbose_name=ugettext_lazy('currency'), on_delete=models.CASCADE)
     pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, null=True, blank=True,
                                        verbose_name=ugettext_lazy('pricing policy'))

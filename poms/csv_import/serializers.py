@@ -5,6 +5,7 @@ from rest_framework.exceptions import ValidationError
 
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
+from poms.common.serializers import ModelWithTimeStampSerializer
 from poms.users.fields import MasterUserField, HiddenMemberField
 from .models import CsvField, EntityField, CsvDataImport, CsvImportScheme
 from .fields import CsvImportContentTypeField, CsvImportSchemeField
@@ -61,7 +62,7 @@ class EntityFieldSerializer(serializers.ModelSerializer):
         }
 
 
-class CsvImportSchemeSerializer(serializers.ModelSerializer):
+class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     csv_fields = CsvFieldSerializer(many=True)
     entity_fields = EntityFieldSerializer(many=True)

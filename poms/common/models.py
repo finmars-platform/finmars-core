@@ -1,10 +1,13 @@
 from __future__ import unicode_literals
 
+
 from django.db import models
 from django.utils.text import Truncator
 from django.utils.translation import ugettext_lazy
 
 from poms.common import formula
+
+from django.utils.timezone import now
 
 EXPRESSION_FIELD_LENGTH = 1024
 
@@ -35,6 +38,16 @@ class NamedModel(models.Model):
         if not self.short_name:
             self.short_name = Truncator(self.name).chars(50)
         super(NamedModel, self).save(*args, **kwargs)
+
+
+class DataTimeStampedModel(models.Model):
+    created = models.DateTimeField(auto_now_add=True, editable=False, db_index=True,
+                                   verbose_name=ugettext_lazy('created'))
+    modified = models.DateTimeField(auto_now=True, editable=False, db_index=True,
+                                    verbose_name=ugettext_lazy('modified'))
+
+    class Meta:
+        abstract = True
 
 
 class TimeStampedModel(models.Model):

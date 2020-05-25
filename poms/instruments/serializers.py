@@ -10,7 +10,7 @@ from rest_framework.serializers import ListSerializer
 
 from poms.common.fields import ExpressionField, FloatEvalField, DateTimeTzAwareField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer
+from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
 from poms.common.utils import date_now
 from poms.currencies.fields import CurrencyDefault
 from poms.currencies.serializers import CurrencyField
@@ -140,7 +140,7 @@ def set_instrument_pricing_scheme_parameters(pricing_policy, parameters):
             pricing_policy.attribute_key = parameters.attribute_key
 
 
-class PricingPolicySerializer(ModelWithUserCodeSerializer):
+class PricingPolicySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     # expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True, allow_null=True)
 
@@ -226,25 +226,14 @@ class PricingPolicyLightSerializer(ModelWithUserCodeSerializer):
         fields = ['id', 'master_user', 'user_code', 'name', 'short_name']
 
 
-
 class PricingPolicyViewSerializer(ModelWithUserCodeSerializer):
     class Meta:
         model = PricingPolicy
         fields = ['id', 'user_code', 'name', 'short_name', 'notes', 'expr']
 
 
-# class InstrumentClassifierSerializer(AbstractClassifierSerializer):
-#     class Meta(AbstractClassifierSerializer.Meta):
-#         model = InstrumentClassifier
-#
-#
-# class InstrumentClassifierNodeSerializer(AbstractClassifierNodeSerializer):
-#     class Meta(AbstractClassifierNodeSerializer.Meta):
-#         model = InstrumentClassifier
-
-
 class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
-                               ModelWithTagSerializer, ModelWithAttributesSerializer):
+                               ModelWithTagSerializer, ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     instrument_class_object = InstrumentClassSerializer(source='instrument_class', read_only=True)
     one_off_event = TransactionTypeField(allow_null=True, required=False)
@@ -441,30 +430,8 @@ class InstrumentTypeViewSerializer(ModelWithObjectPermissionSerializer, ModelWit
         ]
 
 
-# class InstrumentAttributeTypeSerializer(AbstractAttributeTypeSerializer):
-#     classifiers = InstrumentClassifierSerializer(required=False, allow_null=True, many=True)
-#
-#     class Meta(AbstractAttributeTypeSerializer.Meta):
-#         model = InstrumentAttributeType
-#         fields = AbstractAttributeTypeSerializer.Meta.fields + ['classifiers']
-#
-#
-# class InstrumentAttributeTypeViewSerializer(AbstractAttributeTypeSerializer):
-#     class Meta(AbstractAttributeTypeSerializer.Meta):
-#         model = InstrumentAttributeType
-#
-#
-# class InstrumentAttributeSerializer(AbstractAttributeSerializer):
-#     attribute_type = InstrumentAttributeTypeField()
-#     classifier = InstrumentClassifierField(required=False, allow_null=True)
-#
-#     class Meta(AbstractAttributeSerializer.Meta):
-#         model = InstrumentAttribute
-#         fields = AbstractAttributeSerializer.Meta.fields + ['attribute_type', 'classifier']
-
-
 class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermissionSerializer,
-                           ModelWithUserCodeSerializer, ModelWithTagSerializer):
+                           ModelWithUserCodeSerializer, ModelWithTagSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     instrument_type = InstrumentTypeField(default=InstrumentTypeDefault())
     instrument_type_object = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
@@ -803,6 +770,7 @@ class InstrumentViewSerializer(ModelWithObjectPermissionSerializer):
         # self.fields['accrued_currency_object'] = CurrencyViewSerializer(source='accrued_currency', read_only=True)
 
 
+# DEPRECTATED (25.05.2020) delete soon
 class ManualPricingFormulaSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
     pricing_policy = PricingPolicyField(allow_null=False)

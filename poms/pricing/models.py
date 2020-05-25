@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy
 
-from poms.common.models import EXPRESSION_FIELD_LENGTH, NamedModel
+from poms.common.models import EXPRESSION_FIELD_LENGTH, NamedModel, DataTimeStampedModel
 from poms.common.utils import date_now
 from poms.users.models import MasterUser
 
@@ -31,7 +31,7 @@ class InstrumentPricingSchemeType(models.Model):
         return self.name
 
 
-class InstrumentPricingScheme(NamedModel):
+class InstrumentPricingScheme(NamedModel, DataTimeStampedModel):
 
     ADD_TO_ERROR_TABLE_AND_NOTIFY_IN_THE_END = 1
     ADD_TO_ERROR_TABLE_AND_NO_NOTIFICATION = 2
@@ -165,7 +165,7 @@ class CurrencyPricingSchemeType(models.Model):
         return self.name
 
 
-class CurrencyPricingScheme(NamedModel):
+class CurrencyPricingScheme(NamedModel, DataTimeStampedModel):
 
     ADD_TO_ERROR_TABLE_AND_NOTIFY_IN_THE_END = 1
     ADD_TO_ERROR_TABLE_AND_NO_NOTIFICATION = 2

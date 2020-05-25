@@ -31,7 +31,7 @@ admin.site.register(AccountType, AccountTypeAdmin)
 class AccountAdmin(AbstractModelAdmin):
     model = Account
     master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'type', 'user_code', 'name', 'is_deleted', ]
+    list_display = ['id', 'master_user', 'type', 'user_code', 'name', 'is_deleted', 'modified']
     list_select_related = ['master_user', 'type']
     list_filter = ['is_deleted', ]
     search_fields = ['id', 'user_code', 'name']

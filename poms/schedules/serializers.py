@@ -2,11 +2,12 @@
 from rest_framework import serializers
 
 from poms.common.fields import DateTimeTzAwareField
+from poms.common.serializers import ModelWithTimeStampSerializer
 from poms.schedules.models import PricingSchedule
 from poms.users.fields import MasterUserField
 
 
-class PricingScheduleSerializer(serializers.ModelSerializer):
+class PricingScheduleSerializer(ModelWithTimeStampSerializer):
 
     master_user = MasterUserField()
     last_run_at = DateTimeTzAwareField(read_only=True)

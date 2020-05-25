@@ -4,7 +4,7 @@ from poms.accounts.fields import AccountTypeField, AccountTypeDefault
 from poms.accounts.models import Account, AccountType
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import ModelWithUserCodeSerializer
+from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.portfolios.fields import PortfolioField
@@ -12,17 +12,8 @@ from poms.tags.serializers import ModelWithTagSerializer
 from poms.users.fields import MasterUserField
 
 
-# class AccountClassifierSerializer(AbstractClassifierSerializer):
-#     class Meta(AbstractClassifierSerializer.Meta):
-#         model = AccountClassifier
-#
-#
-# class AccountClassifierNodeSerializer(AbstractClassifierNodeSerializer):
-#     class Meta(AbstractClassifierNodeSerializer.Meta):
-#         model = AccountClassifier
-
-
-class AccountTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer, ModelWithTagSerializer, ModelWithAttributesSerializer):
+class AccountTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
+                            ModelWithTagSerializer, ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     transaction_details_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                                allow_null=True, default='""')
@@ -49,28 +40,8 @@ class AccountTypeViewSerializer(ModelWithObjectPermissionSerializer):
         ]
 
 
-# class AccountAttributeTypeSerializer(AbstractAttributeTypeSerializer):
-#     classifiers = AccountClassifierSerializer(required=False, allow_null=True, many=True)
-#
-#     class Meta(AbstractAttributeTypeSerializer.Meta):
-#         model = AccountAttributeType
-#         fields = AbstractAttributeTypeSerializer.Meta.fields + ['classifiers']
-#
-#
-# class AccountAttributeSerializer(AbstractAttributeSerializer):
-#     attribute_type = AccountAttributeTypeField()
-#     # attribute_type_object = AccountAttributeTypeSerializer(source='attribute_type', read_only=True)
-#     classifier = AccountClassifierField(required=False, allow_null=True)
-#
-#     # classifier_object = AccountClassifierSerializer(source='classifier', read_only=True)
-#
-#     class Meta(AbstractAttributeSerializer.Meta):
-#         model = AccountAttribute
-#         fields = AbstractAttributeSerializer.Meta.fields + ['attribute_type', 'classifier']
-
-
 class AccountSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
-                        ModelWithUserCodeSerializer, ModelWithTagSerializer):
+                        ModelWithUserCodeSerializer, ModelWithTagSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     type = AccountTypeField(default=AccountTypeDefault())
     portfolios = PortfolioField(many=True, required=False, allow_null=True)
@@ -113,6 +84,7 @@ class AccountLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserC
             'is_default', 'is_deleted',
             'is_enabled'
         ]
+
 
 class AccountViewSerializer(ModelWithObjectPermissionSerializer):
     type = AccountTypeField(default=AccountTypeDefault())

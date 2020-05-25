@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from rest_framework import serializers
 
 from poms.common.fields import FloatEvalField
-from poms.common.serializers import ModelWithUserCodeSerializer
+from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
 from poms.currencies.fields import CurrencyField
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.fields import PricingPolicyField
@@ -37,7 +37,7 @@ def set_currency_pricing_scheme_parameters(pricing_policy, parameters):
 
 
 class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
-                         ModelWithAttributesSerializer, ModelWithTagSerializer):
+                         ModelWithAttributesSerializer, ModelWithTagSerializer, ModelWithTimeStampSerializer):
     # url = serializers.HyperlinkedIdentityField(view_name='currency-detail')
     master_user = MasterUserField()
     price_download_scheme = PriceDownloadSchemeField(allow_null=True, required=False)
@@ -206,6 +206,7 @@ class CurrencyLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUser
             'is_default', 'is_deleted', 'is_enabled',
         ]
 
+
 class CurrencyViewSerializer(ModelWithUserCodeSerializer):
     # url = serializers.HyperlinkedIdentityField(view_name='currency-detail')
 
@@ -216,7 +217,7 @@ class CurrencyViewSerializer(ModelWithUserCodeSerializer):
         ]
 
 
-class CurrencyHistorySerializer(serializers.ModelSerializer):
+class CurrencyHistorySerializer(ModelWithTimeStampSerializer):
     # url = serializers.HyperlinkedIdentityField(view_name='currencyhistory-detail')
     currency = CurrencyField()
     currency_object = CurrencyViewSerializer(source='currency', read_only=True)

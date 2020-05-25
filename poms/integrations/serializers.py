@@ -18,7 +18,7 @@ import uuid
 from poms.accounts.fields import AccountField, AccountTypeField
 from poms.common.fields import ExpressionField, DateTimeTzAwareField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer
+from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
 from poms.counterparties.fields import CounterpartyField, ResponsibleField
 from poms.currencies.fields import CurrencyField, CurrencyDefault
 from poms.currencies.models import CurrencyHistory
@@ -1499,7 +1499,7 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
         return ret
 
 
-class ComplexTransactionImportSchemeSerializer(serializers.ModelSerializer):
+class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     rule_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
 

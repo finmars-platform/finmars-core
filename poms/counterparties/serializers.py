@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from rest_framework import serializers
 
-from poms.common.serializers import ModelWithUserCodeSerializer
+from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
 from poms.counterparties.fields import CounterpartyGroupField, ResponsibleGroupField
 from poms.counterparties.models import Counterparty, Responsible, CounterpartyGroup, ResponsibleGroup
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
@@ -35,7 +35,7 @@ class CounterpartyGroupViewSerializer(ModelWithObjectPermissionSerializer):
 
 
 class CounterpartySerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
-                             ModelWithUserCodeSerializer, ModelWithTagSerializer):
+                             ModelWithUserCodeSerializer, ModelWithTagSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     group = CounterpartyGroupField()
     group_object = CounterpartyGroupViewSerializer(source='group', read_only=True)
@@ -111,7 +111,7 @@ class ResponsibleGroupViewSerializer(ModelWithObjectPermissionSerializer):
 
 
 class ResponsibleSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
-                            ModelWithUserCodeSerializer, ModelWithTagSerializer):
+                            ModelWithUserCodeSerializer, ModelWithTagSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     group = ResponsibleGroupField()
     group_object = ResponsibleGroupViewSerializer(source='group', read_only=True)
