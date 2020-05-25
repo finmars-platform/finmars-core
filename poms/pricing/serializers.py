@@ -1092,7 +1092,7 @@ class PriceHistoryErrorSerializer(serializers.ModelSerializer):
     class Meta:
         model = PriceHistoryError
         fields = ('id', 'master_user', 'instrument', 'pricing_policy', 'pricing_scheme', 'date', 'principal_price',
-                  'accrued_price', 'price_error_text', 'accrual_error_text', 'procedure_instance',
+                  'accrued_price', 'error_text', 'price_error_text', 'accrual_error_text', 'procedure_instance',
 
                   'status',
 

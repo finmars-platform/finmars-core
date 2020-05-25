@@ -477,10 +477,10 @@ class PricingInstrumentHandler(object):
 
                             _l.info('pricing_error_text_expr %s' % pricing_error_text_expr)
 
-                            error.price_error_text = formula.safe_eval(pricing_error_text_expr, names=values)
+                            error.error_text = formula.safe_eval(pricing_error_text_expr, names=values)
 
                         except formula.InvalidExpression:
-                            error.price_error_text = 'Invalid Error Text Expression'
+                            error.error_text = 'Invalid Error Text Expression'
 
                     if scheme_parameters.accrual_calculation_method == 2:  # ACCRUAL_PER_SCHEDULE
 
@@ -493,10 +493,10 @@ class PricingInstrumentHandler(object):
 
                                 _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
 
-                                error.accrual_error_text = formula.safe_eval(accrual_error_text_expr, names=values)
+                                error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
                             except formula.InvalidExpression:
-                                error.accrual_error_text = 'Invalid Error Text Expression'
+                                error.error_text = 'Invalid Error Text Expression'
 
                     if scheme_parameters.accrual_calculation_method == 3:  # ACCRUAL_PER_FORMULA
 
@@ -509,10 +509,10 @@ class PricingInstrumentHandler(object):
 
                                 _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
 
-                                error.accrual_error_text = formula.safe_eval(accrual_error_text_expr, names=values)
+                                error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
                             except formula.InvalidExpression:
-                                error.accrual_error_text = 'Invalid Error Text Expression'
+                                error.error_text = 'Invalid Error Text Expression'
 
                     can_write = True
 
@@ -752,9 +752,9 @@ class PricingInstrumentHandler(object):
                         has_error = True
 
                         try:
-                            error.price_error_text = formula.safe_eval(pricing_error_text_expr, names=values)
+                            error.error_text = formula.safe_eval(pricing_error_text_expr, names=values)
                         except formula.InvalidExpression:
-                            error.price_error_text = 'Invalid Error Text Expression'
+                            error.error_text = 'Invalid Error Text Expression'
 
                     _l.info('principal_price %s' % principal_price)
 
@@ -769,10 +769,10 @@ class PricingInstrumentHandler(object):
 
                                 _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
 
-                                error.accrual_error_text = formula.safe_eval(accrual_error_text_expr, names=values)
+                                error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
                             except formula.InvalidExpression:
-                                error.accrual_error_text = 'Invalid Error Text Expression'
+                                error.error_text = 'Invalid Error Text Expression'
 
                     if scheme_parameters.accrual_calculation_method == 3:  # ACCRUAL_PER_FORMULA
 
@@ -785,10 +785,10 @@ class PricingInstrumentHandler(object):
 
                                 _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
 
-                                error.accrual_error_text = formula.safe_eval(accrual_error_text_expr, names=values)
+                                error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
                             except formula.InvalidExpression:
-                                error.accrual_error_text = 'Invalid Error Text Expression'
+                                error.error_text = 'Invalid Error Text Expression'
 
                     can_write = True
 

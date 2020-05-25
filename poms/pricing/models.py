@@ -1095,8 +1095,10 @@ class PriceHistoryError(models.Model):
     principal_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('principal price'))
     accrued_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('accrued price'))
 
+    # DEPRECATED
     price_error_text = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('price error text'))
 
+    # DEPRECATED
     accrual_error_text = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('accrual error text'))
 
     procedure_instance = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE,
@@ -1104,6 +1106,8 @@ class PriceHistoryError(models.Model):
 
     status = models.CharField(max_length=1, default=STATUS_ERROR, choices=STATUS_CHOICES,
                               verbose_name=ugettext_lazy('status'))
+
+    error_text = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('error text'))
 
 
 class CurrencyHistoryError(models.Model):
