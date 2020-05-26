@@ -1714,6 +1714,8 @@ class ImportManager(object):
                             serializer.save()
                         except Exception as error:
 
+                            _l.info("Error? %s" % error)
+
                             if self.instance.mode == 'overwrite':
 
                                 try:

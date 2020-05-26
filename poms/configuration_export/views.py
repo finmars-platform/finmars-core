@@ -31,7 +31,7 @@ from poms.integrations.models import InstrumentDownloadScheme, InstrumentDownloa
     PeriodicityMapping, DailyPricingModelMapping, PaymentSizeDetailMapping, AccrualCalculationModelMapping, \
     PriceDownloadSchemeMapping, AccountTypeMapping, PricingPolicyMapping, ComplexTransactionImportSchemeRuleScenario, \
     ComplexTransactionImportSchemeReconScenario, ComplexTransactionImportSchemeReconField, \
-    ComplexTransactionImportSchemeSelectorValue
+    ComplexTransactionImportSchemeSelectorValue, ComplexTransactionImportSchemeCalculatedInput
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_attrs.serializers import GenericClassifierViewSerializer, GenericClassifierNodeSerializer, \
     GenericAttributeTypeSerializer
@@ -1749,6 +1749,16 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return results
 
+    def get_complex_transaction_import_scheme_calculated_inputs(self, scheme):
+
+        fields = to_json_objects(ComplexTransactionImportSchemeCalculatedInput.objects.filter(scheme=scheme["pk"]))
+
+        results = unwrap_items(fields)
+
+        delete_prop(results, 'scheme')
+
+        return results
+
     def get_complex_transaction_import_scheme_inputs(self, scheme):
 
         fields = to_json_objects(ComplexTransactionImportSchemeInput.objects.filter(scheme=scheme["pk"]))
@@ -1817,6 +1827,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
             result_item.pop("master_user", None)
 
+            result_item["calculated_inputs"] = self.get_complex_transaction_import_scheme_calculated_inputs(scheme)
             result_item["inputs"] = self.get_complex_transaction_import_scheme_inputs(scheme)
             result_item["selector_values"] = self.get_complex_transaction_import_scheme_selector_values(scheme)
             result_item["rule_scenarios"] = self.get_complex_transaction_import_scheme_rule_scenarios(scheme)

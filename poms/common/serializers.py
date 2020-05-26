@@ -19,12 +19,13 @@ class ModelWithTimeStampSerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super(ModelWithTimeStampSerializer, self).__init__(*args, **kwargs)
-        self.fields['modified'] = serializers.DateTimeField()
+        self.fields['modified'] = serializers.DateTimeField(required=False, allow_null=True)
 
     def validate(self, data):
 
-        if data['modified'] != self.instance.modified:
-            raise serializers.ValidationError("Synchronization error")
+        if self.instance:
+            if data['modified'] != self.instance.modified:
+                raise serializers.ValidationError("Synchronization error")
 
         return data
 
