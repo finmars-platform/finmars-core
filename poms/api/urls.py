@@ -129,6 +129,7 @@ router.register(r'instruments/instrument-class', instruments.InstrumentClassView
 router.register(r'instruments/daily-pricing-model', instruments.DailyPricingModelViewSet)
 router.register(r'instruments/accrual-calculation-model', instruments.AccrualCalculationModelClassViewSet)
 router.register(r'instruments/payment-size-detail', instruments.PaymentSizeDetailViewSet)
+router.register(r'instruments/pricing-condition', instruments.PricingConditionViewSet)
 router.register(r'instruments/periodicity', instruments.PeriodicityViewSet)
 router.register(r'instruments/cost-method', instruments.CostMethodViewSet)
 router.register(r'instruments/pricing-policy-ev-group', instruments.PricingPolicyEvGroupViewSet)
@@ -324,6 +325,7 @@ router.register(r'import/strategy3-mapping', integrations.Strategy3MappingViewSe
 router.register(r'import/daily-pricing-model-mapping', integrations.DailyPricingModelMappingViewSet)
 router.register(r'import/payment-size-detail-mapping', integrations.PaymentSizeDetailMappingViewSet)
 router.register(r'import/price-download-scheme-mapping', integrations.PriceDownloadSchemeMappingViewSet)
+router.register(r'import/pricing-condition-mapping', integrations.PricingConditionMappingViewSet)
 
 router.register(r'import/instrument', integrations.ImportInstrumentViewSet, 'importinstrument')
 router.register(r'import/pricing', integrations.ImportPricingViewSet, 'importpricing')

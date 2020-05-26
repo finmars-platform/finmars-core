@@ -31,13 +31,13 @@ from poms.instruments.handlers import GeneratedEventProcess
 from poms.instruments.models import Instrument, PriceHistory, InstrumentClass, DailyPricingModel, \
     AccrualCalculationModel, PaymentSizeDetail, Periodicity, CostMethod, InstrumentType, PricingPolicy, \
     EventScheduleConfig, ManualPricingFormula, \
-    AccrualCalculationSchedule, EventSchedule, EventScheduleAction, GeneratedEvent
+    AccrualCalculationSchedule, EventSchedule, EventScheduleAction, GeneratedEvent, PricingCondition
 from poms.instruments.serializers import InstrumentSerializer, PriceHistorySerializer, \
     InstrumentClassSerializer, DailyPricingModelSerializer, AccrualCalculationModelSerializer, \
     PaymentSizeDetailSerializer, PeriodicitySerializer, CostMethodSerializer, InstrumentTypeSerializer, \
     PricingPolicySerializer, EventScheduleConfigSerializer, InstrumentCalculatePricesAccruedPriceSerializer, \
     GeneratedEventSerializer, EventScheduleActionSerializer, InstrumentTypeLightSerializer, InstrumentLightSerializer, \
-    PricingPolicyLightSerializer
+    PricingPolicyLightSerializer, PricingConditionSerializer
 from poms.instruments.tasks import calculate_prices_accrued_price, generate_events, process_events, \
     only_generate_events_at_date, generate_events_do_not_inform_apply_default0, \
     generate_events_do_not_inform_apply_default, only_generate_events_at_date_for_single_instrument
@@ -81,6 +81,11 @@ class AccrualCalculationModelClassViewSet(AbstractClassModelViewSet):
 class PaymentSizeDetailViewSet(AbstractClassModelViewSet):
     queryset = PaymentSizeDetail.objects
     serializer_class = PaymentSizeDetailSerializer
+
+
+class PricingConditionViewSet(AbstractClassModelViewSet):
+    queryset = PricingCondition.objects
+    serializer_class = PricingConditionSerializer
 
 
 class PeriodicityViewSet(AbstractClassModelViewSet):

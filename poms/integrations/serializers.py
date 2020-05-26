@@ -24,7 +24,7 @@ from poms.currencies.fields import CurrencyField, CurrencyDefault
 from poms.currencies.models import CurrencyHistory
 from poms.instruments.fields import InstrumentTypeField, InstrumentTypeDefault, InstrumentField, PricingPolicyField
 from poms.instruments.models import PriceHistory, Instrument, AccrualCalculationModel, Periodicity, DailyPricingModel, \
-    PaymentSizeDetail
+    PaymentSizeDetail, PricingCondition
 from poms.integrations.fields import InstrumentDownloadSchemeField, PriceDownloadSchemeField, \
     ComplexTransactionImportSchemeRestField
 from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDownloadSchemeAttribute, \
@@ -39,7 +39,7 @@ from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDo
     InstrumentClassifierMapping, AccountTypeMapping, ComplexTransactionImportSchemeSelectorValue, \
     ComplexTransactionImportSchemeReconField, ComplexTransactionImportSchemeReconScenario, \
     ComplexTransactionImportSchemeRuleScenario, ComplexTransactionImportSchemeCalculatedInput, \
-    BloombergDataProviderCredential
+    BloombergDataProviderCredential, PricingConditionMapping
 from poms.integrations.providers.base import get_provider, ProviderException
 from poms.integrations.storage import import_file_storage
 from poms.integrations.tasks import download_pricing, download_instrument, test_certificate
@@ -832,6 +832,20 @@ class PaymentSizeDetailMappingSerializer(AbstractMappingSerializer):
     def get_content_object_view_serializer(self):
         from poms.instruments.serializers import PaymentSizeDetailSerializer
         return PaymentSizeDetailSerializer
+
+
+class PricingConditionMappingSerializer(AbstractMappingSerializer):
+    content_object = serializers.PrimaryKeyRelatedField(queryset=PricingCondition.objects.all())
+
+    class Meta(AbstractMappingSerializer.Meta):
+        model = PricingConditionMapping
+
+    def __init__(self, *args, **kwargs):
+        super(PricingConditionMappingSerializer, self).__init__(*args, **kwargs)
+
+    def get_content_object_view_serializer(self):
+        from poms.instruments.serializers import PricingConditionSerializer
+        return PricingConditionSerializer
 
 
 class PriceDownloadSchemeMappingSerializer(AbstractMappingSerializer):

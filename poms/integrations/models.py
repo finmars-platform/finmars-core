@@ -740,6 +740,20 @@ class PriceDownloadSchemeMapping(AbstractMapping):
         return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
 
 
+class PricingConditionMapping(AbstractMapping):
+    content_object = models.ForeignKey('instruments.PricingCondition',
+                                       verbose_name=ugettext_lazy('pricing condition'), on_delete=models.CASCADE)
+
+    class Meta(AbstractMapping.Meta):
+        verbose_name = ugettext_lazy('pricing condition mapping')
+        verbose_name_plural = ugettext_lazy('pricing condition model mappings')
+        unique_together = [
+            ['master_user', 'provider', 'value'],
+        ]
+
+    def __str__(self):
+        return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
+
 # -------
 
 

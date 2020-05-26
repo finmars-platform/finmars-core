@@ -73,6 +73,11 @@ class PaymentSizeDetailSerializer(PomsClassSerializer):
         model = PaymentSizeDetail
 
 
+class PricingConditionSerializer(PomsClassSerializer):
+    class Meta(PomsClassSerializer.Meta):
+        model = PricingCondition
+
+
 class PaymentSizeDetailViewSerializer(PomsClassSerializer):
     class Meta:
         model = PaymentSizeDetail

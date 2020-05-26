@@ -20,7 +20,7 @@ from poms.common.views import AbstractViewSet, AbstractModelViewSet, AbstractRea
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
 from poms.instruments.models import InstrumentType, AccrualCalculationModel, Periodicity, Instrument, PaymentSizeDetail, \
-    PricingPolicy
+    PricingPolicy, PricingCondition
 from poms.integrations.filters import TaskFilter, InstrumentAttributeValueMappingObjectPermissionFilter, \
     InstrumentTypeMappingObjectPermissionFilter, AccountMappingObjectPermissionFilter, \
     InstrumentMappingObjectPermissionFilter, CounterpartyMappingObjectPermissionFilter, \
@@ -35,7 +35,7 @@ from poms.integrations.models import ImportConfig, Task, InstrumentDownloadSchem
     DailyPricingModelMapping, \
     PaymentSizeDetailMapping, PriceDownloadSchemeMapping, ComplexTransactionImportScheme, PortfolioClassifierMapping, \
     AccountClassifierMapping, CounterpartyClassifierMapping, ResponsibleClassifierMapping, PricingPolicyMapping, \
-    InstrumentClassifierMapping, AccountTypeMapping, BloombergDataProviderCredential
+    InstrumentClassifierMapping, AccountTypeMapping, BloombergDataProviderCredential, PricingConditionMapping
 from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer, ImportInstrumentSerializer, \
     ImportPricingSerializer, InstrumentDownloadSchemeSerializer, ProviderClassSerializer, \
     FactorScheduleDownloadMethodSerializer, AccrualScheduleDownloadMethodSerializer, PriceDownloadSchemeSerializer, \
@@ -49,7 +49,8 @@ from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer
     ComplexTransactionImportSchemeSerializer, PortfolioClassifierMappingSerializer, AccountClassifierMappingSerializer, \
     CounterpartyClassifierMappingSerializer, ResponsibleClassifierMappingSerializer, PricingPolicyMappingSerializer, \
     InstrumentClassifierMappingSerializer, AccountTypeMappingSerializer, TestCertificateSerializer, \
-    ComplexTransactionImportSchemeLightSerializer, BloombergDataProviderCredentialSerializer
+    ComplexTransactionImportSchemeLightSerializer, BloombergDataProviderCredentialSerializer, \
+    PricingConditionMappingSerializer
 from poms.integrations.tasks import complex_transaction_csv_file_import, complex_transaction_csv_file_import_validate
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
@@ -762,6 +763,21 @@ class PaymentSizeDetailMappingViewSet(AbstractMappingViewSet):
     )
     serializer_class = PaymentSizeDetailMappingSerializer
     filter_class = PaymentSizeDetailMappingFilterSet
+
+
+class PricingConditionMappingFilterSet(AbstractMappingFilterSet):
+    content_object = django_filters.ModelMultipleChoiceFilter(queryset=PricingCondition.objects)
+
+    class Meta(AbstractMappingFilterSet.Meta):
+        model = PricingConditionMapping
+
+
+class PricingConditionMappingViewSet(AbstractMappingViewSet):
+    queryset = PricingConditionMapping.objects.select_related(
+        'master_user', 'provider', 'content_object'
+    )
+    serializer_class = PricingConditionMappingSerializer
+    filter_class = PricingConditionMappingFilterSet
 
 
 class PriceDownloadSchemeMappingFilterSet(AbstractMappingFilterSet):
