@@ -363,6 +363,9 @@ class PricingInstrumentHandler(object):
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
 
+        successful_prices_count = 0
+        error_prices_count = 0
+
         procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
                                                       parent_procedure_instance=self.parent_procedure,
                                                       master_user=self.master_user,
@@ -568,11 +571,20 @@ class PricingInstrumentHandler(object):
                     if can_write:
 
                         if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+
+                            error_prices_count = error_prices_count + 1
+
                             error.save()
+
                         else:
+
+                            successful_prices_count = successful_prices_count + 1
+
                             price.save()
 
                     else:
+
+                        error_prices_count = error_prices_count + 1
 
                         error.error_text = "Prices already exists. Principal Price: " + str(principal_price) + "; Accrued: " + str(accrued_price) + "."
 
@@ -581,7 +593,13 @@ class PricingInstrumentHandler(object):
 
                     last_price = price
 
-            roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user, procedure_instance)
+            successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user, procedure_instance)
+
+            successful_prices_count = successful_prices_count + successes
+            error_prices_count = error_prices_count + errors
+
+        procedure_instance.successful_prices_count = successful_prices_count
+        procedure_instance.error_prices_count = error_prices_count
 
         procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
@@ -593,6 +611,9 @@ class PricingInstrumentHandler(object):
 
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
+
+        successful_prices_count = 0
+        error_prices_count = 0
 
         procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
                                                       parent_procedure_instance=self.parent_procedure,
@@ -844,11 +865,19 @@ class PricingInstrumentHandler(object):
                     if can_write:
 
                         if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+
+                            error_prices_count = error_prices_count + 1
+
                             error.save()
                         else:
+
+                            successful_prices_count = successful_prices_count + 1
+
                             price.save()
 
                     else:
+
+                        error_prices_count = error_prices_count + 1
 
                         error.error_text = "Prices already exists. Principal Price: " + str(principal_price) + "; Accrued: " + str(accrued_price) + "."
 
@@ -857,7 +886,14 @@ class PricingInstrumentHandler(object):
 
                     last_price = price
 
-            roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user, procedure_instance)
+            successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user, procedure_instance)
+
+            successful_prices_count = successful_prices_count + successes
+            error_prices_count = error_prices_count + errors
+
+
+        procedure_instance.successful_prices_count = successful_prices_count
+        procedure_instance.error_prices_count = error_prices_count
 
         procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
@@ -867,20 +903,20 @@ class PricingInstrumentHandler(object):
 
         _l.info("Pricing Instrument Handler - Bloomberg Provider: len %s" % len(items))
 
-        with transaction.atomic():
 
-            procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
-                                                          parent_procedure_instance=self.parent_procedure,
-                                                          master_user=self.master_user,
-                                                          status=PricingProcedureInstance.STATUS_PENDING,
-                                                          action='bloomberg_get_instrument_prices',
-                                                          provider='bloomberg',
 
-                                                          action_verbose='Get Instrument Prices from Bloomberg',
-                                                          provider_verbose='Bloomberg'
+        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+                                                      parent_procedure_instance=self.parent_procedure,
+                                                      master_user=self.master_user,
+                                                      status=PricingProcedureInstance.STATUS_PENDING,
+                                                      action='bloomberg_get_instrument_prices',
+                                                      provider='bloomberg',
 
-                                                          )
-            procedure_instance.save()
+                                                      action_verbose='Get Instrument Prices from Bloomberg',
+                                                      provider_verbose='Bloomberg'
+
+                                                      )
+        procedure_instance.save()
 
         body = {}
         body['action'] = procedure_instance.action

@@ -1067,6 +1067,9 @@ class PricingProcedureInstance(models.Model):
     action_verbose = models.CharField(max_length=255, null=True, blank=True)
     provider_verbose = models.CharField(max_length=255, null=True, blank=True)
 
+    successful_prices_count = models.IntegerField(default=0, verbose_name=ugettext_lazy('successful prices count'))
+    error_prices_count = models.IntegerField(default=0, verbose_name=ugettext_lazy('error prices count'))
+
 
 class PriceHistoryError(models.Model):
 

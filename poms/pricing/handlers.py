@@ -258,6 +258,9 @@ class FillPricesBrokerBloombergProcess(object):
 
         _l.info("Creating price history")
 
+        successful_prices_count = 0
+        error_prices_count = 0
+
         records = PricingProcedureBloombergInstrumentResult.objects.filter(
             master_user=self.master_user,
             procedure=self.instance['procedure'],
@@ -408,11 +411,20 @@ class FillPricesBrokerBloombergProcess(object):
             if can_write:
 
                 if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+
+                    error_prices_count = error_prices_count + 1
+
                     error.save()
+
                 else:
+
+                    successful_prices_count = successful_prices_count + 1
+
                     price.save()
 
             else:
+
+                error_prices_count = error_prices_count + 1
 
                 error.error_text = "Prices already exists. Principal Price: " + str(principal_price) +"; Accrued: "+ str(accrued_price) +"."
 
@@ -431,9 +443,19 @@ class FillPricesBrokerBloombergProcess(object):
                                                        date__gte=self.instance['data']['date_from'],
                                                        date__lte=self.instance['data']['date_to']).delete()
 
+        self.procedure_instance.successful_prices_count = successful_prices_count
+        self.procedure_instance.error_prices_count = error_prices_count
+
+        self.procedure_instance.status = PricingProcedureInstance.STATUS_DONE
+
+        self.procedure_instance.save()
+
     def create_currency_history(self):
 
         _l.info("Creating currency history")
+
+        successful_prices_count = 0
+        error_prices_count = 0
 
         records = PricingProcedureBloombergCurrencyResult.objects.filter(
             master_user=self.master_user,
@@ -526,11 +548,20 @@ class FillPricesBrokerBloombergProcess(object):
             if can_write:
 
                 if has_error or fx_rate == 0:
+
+                    error_prices_count = error_prices_count + 1
+
                     error.save()
                 else:
+
+                    successful_prices_count = successful_prices_count + 1
+
                     price.save()
 
             else:
+
+                error_prices_count = error_prices_count + 1
+
                 error.error_text = "Prices already exists. Fx rate: " + str(fx_rate) + "."
 
                 error.status = CurrencyHistoryError.STATUS_SKIP
@@ -540,12 +571,22 @@ class FillPricesBrokerBloombergProcess(object):
 
                 _l.info("Bloomberg Roll Prices for Currency History")
 
-                roll_currency_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance)
+                successes, errors = roll_currency_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance)
+
+                successful_prices_count = successful_prices_count + successes
+                error_prices_count = error_prices_count + errors
 
         PricingProcedureBloombergCurrencyResult.objects.filter(master_user=self.master_user,
                                                                  procedure=self.instance['procedure'],
                                                                  date__gte=self.instance['data']['date_from'],
                                                                  date__lte=self.instance['data']['date_to']).delete()
+
+        self.procedure_instance.successful_prices_count = successful_prices_count
+        self.procedure_instance.error_prices_count = error_prices_count
+
+        self.procedure_instance.status = PricingProcedureInstance.STATUS_DONE
+
+        self.procedure_instance.save()
 
 
 class FillPricesBrokerWtradeProcess(object):
@@ -641,6 +682,9 @@ class FillPricesBrokerWtradeProcess(object):
     def create_price_history(self):
 
         _l.info("Creating price history")
+
+        successful_prices_count = 0
+        error_prices_count = 0
 
         records = PricingProcedureWtradeInstrumentResult.objects.filter(
             master_user=self.master_user,
@@ -793,11 +837,20 @@ class FillPricesBrokerWtradeProcess(object):
             if can_write:
 
                 if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+
+                    error_prices_count = error_prices_count + 1
+
                     error.save()
+
                 else:
+
+                    successful_prices_count = successful_prices_count + 1
+
                     price.save()
 
             else:
+
+                error_prices_count = error_prices_count + 1
 
                 error.error_text =  "Prices already exists. Principal Price: " + str(principal_price) +"; Accrued: "+ str(accrued_price) +"."
 
@@ -808,12 +861,22 @@ class FillPricesBrokerWtradeProcess(object):
 
                 _l.info("Wtrade Roll Prices for Price History")
 
-                roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance)
+                successes, errors = roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance)
+
+                successful_prices_count = successful_prices_count + successes
+                error_prices_count = error_prices_count + errors
 
         PricingProcedureWtradeInstrumentResult.objects.filter(master_user=self.master_user,
                                                                  procedure=self.instance['procedure'],
                                                                  date__gte=self.instance['data']['date_from'],
                                                                  date__lte=self.instance['data']['date_to']).delete()
+
+        self.procedure_instance.successful_prices_count = successful_prices_count
+        self.procedure_instance.error_prices_count = error_prices_count
+
+        self.procedure_instance.status = PricingProcedureInstance.STATUS_DONE
+
+        self.procedure_instance.save()
 
 
 class FillPricesBrokerFixerProcess(object):
@@ -883,6 +946,9 @@ class FillPricesBrokerFixerProcess(object):
     def create_currency_history(self):
 
         _l.info("Creating currency history")
+
+        successful_prices_count = 0
+        error_prices_count = 0
 
         records = PricingProcedureFixerCurrencyResult.objects.filter(
             master_user=self.master_user,
@@ -974,11 +1040,21 @@ class FillPricesBrokerFixerProcess(object):
             if can_write:
 
                 if has_error or fx_rate == 0:
+
+                    error_prices_count = error_prices_count + 1
+
                     error.save()
+
                 else:
+
+                    successful_prices_count = successful_prices_count + 1
+
                     price.save()
 
             else:
+
+                error_prices_count = error_prices_count + 1
+
                 error.error_text = "Prices already exists. Fx rate: " + str(fx_rate) + "."
 
                 error.status = CurrencyHistoryError.STATUS_SKIP
@@ -988,12 +1064,22 @@ class FillPricesBrokerFixerProcess(object):
 
                 _l.info("Fixer Roll Prices for Currency History")
 
-                roll_currency_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance)
+                successes, errors = roll_currency_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance)
+
+                successful_prices_count = successful_prices_count + successes
+                error_prices_count = error_prices_count + errors
 
         PricingProcedureFixerCurrencyResult.objects.filter(master_user=self.master_user,
                                                                procedure=self.instance['procedure'],
                                                                date__gte=self.instance['data']['date_from'],
                                                                date__lte=self.instance['data']['date_to']).delete()
+
+        self.procedure_instance.successful_prices_count = successful_prices_count
+        self.procedure_instance.error_prices_count = error_prices_count
+
+        self.procedure_instance.status = PricingProcedureInstance.STATUS_DONE
+
+        self.procedure_instance.save()
 
 
 class FillPricesBrokerAlphavProcess(object):
@@ -1061,6 +1147,9 @@ class FillPricesBrokerAlphavProcess(object):
     def create_price_history(self):
 
         _l.info("Creating price history")
+
+        successful_prices_count = 0
+        error_prices_count = 0
 
         records = PricingProcedureAlphavInstrumentResult.objects.filter(
             master_user=self.master_user,
@@ -1209,11 +1298,20 @@ class FillPricesBrokerAlphavProcess(object):
             if can_write:
 
                 if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+
+                    error_prices_count = error_prices_count + 1
+
                     error.save()
+
                 else:
+
+                    successful_prices_count = successful_prices_count + 1
+
                     price.save()
 
             else:
+
+                error_prices_count = error_prices_count + 1
 
                 error.error_text =  "Prices already exists. Principal Price: " + str(principal_price) +"; Accrued: "+ str(accrued_price) +"."
 
@@ -1224,10 +1322,20 @@ class FillPricesBrokerAlphavProcess(object):
 
                 _l.info("Wtrade Roll Prices for Price History")
 
-                roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance)
+                successes, errors = roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance)
+
+                successful_prices_count = successful_prices_count + successes
+                error_prices_count = error_prices_count + errors
 
         PricingProcedureAlphavInstrumentResult.objects.filter(master_user=self.master_user,
                                                               procedure=self.instance['procedure'],
                                                               date__gte=self.instance['data']['date_from'],
                                                               date__lte=self.instance['data']['date_to']).delete()
+
+        self.procedure_instance.successful_prices_count = successful_prices_count
+        self.procedure_instance.error_prices_count = error_prices_count
+
+        self.procedure_instance.status = PricingProcedureInstance.STATUS_DONE
+
+        self.procedure_instance.save()
 

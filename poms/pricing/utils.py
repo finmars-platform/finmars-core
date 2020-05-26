@@ -126,6 +126,9 @@ def roll_currency_history_for_n_day_forward(item, procedure, last_price, master_
 
     _l.info("Roll Currency History for %s " % last_price)
 
+    successful_prices_count = 0
+    error_prices_count = 0
+
     if procedure.price_fill_days:
 
         for i in range(procedure.price_fill_days):
@@ -162,9 +165,13 @@ def roll_currency_history_for_n_day_forward(item, procedure, last_price, master_
 
             if can_write and price.fx_rate != 0:
 
+                successful_prices_count = successful_prices_count + 1
+
                 price.save()
 
             else:
+
+                error_prices_count = error_prices_count + 1
 
                 error = CurrencyHistoryError(
                     master_user=master_user,
@@ -182,10 +189,15 @@ def roll_currency_history_for_n_day_forward(item, procedure, last_price, master_
                 error.status = CurrencyHistoryError.STATUS_SKIP
                 error.save()
 
+    return successful_prices_count, error_prices_count
+
 
 def roll_price_history_for_n_day_forward(item, procedure, last_price, master_user, procedure_instance):
 
     _l.info("Roll Price History for  %s for %s days" % (last_price, procedure.price_fill_days))
+
+    successful_prices_count = 0
+    error_prices_count = 0
 
     if procedure.price_fill_days:
 
@@ -230,19 +242,15 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
             if last_price.accrued_price:
                 price.accrued_price = last_price.accrued_price
 
-            if can_write:
+            if can_write and not (price.accrued_price == 0 and price.principal_price == 0):
 
-                if price.accrued_price == 0 and price.principal_price == 0:
+                successful_prices_count = successful_prices_count + 1
 
-                    _l.info("Can't roll Price History with zero values")
-
-                    pass
-
-                else:
-
-                    price.save()
+                price.save()
 
             else:
+
+                error_prices_count = error_prices_count + 1
 
                 error = PriceHistoryError(
                     master_user=master_user,
@@ -259,3 +267,5 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
 
                 error.status = PriceHistoryError.STATUS_SKIP
                 error.save()
+
+    return successful_prices_count, error_prices_count

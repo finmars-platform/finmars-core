@@ -277,6 +277,9 @@ class PricingCurrencyHandler(object):
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
 
+        successful_prices_count = 0
+        error_prices_count = 0
+
         procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
                                                       parent_procedure_instance=self.parent_procedure,
                                                       master_user=self.master_user,
@@ -428,11 +431,19 @@ class PricingCurrencyHandler(object):
                     if can_write:
 
                         if has_error or fx_rate == 0:
+
+                            error_prices_count = error_prices_count + 1
+
                             error.save()
                         else:
+
+                            successful_prices_count = successful_prices_count + 1
+
                             price.save()
 
                     else:
+
+                        error_prices_count = error_prices_count + 1
 
                         error.error_text = "Prices already exists. Fx rate: " + str(fx_rate) + "."
 
@@ -442,7 +453,13 @@ class PricingCurrencyHandler(object):
                     last_price = price
 
             if last_price:
-                roll_currency_history_for_n_day_forward(item, self.procedure, last_price, self.master_user, procedure_instance)
+                successes, errors = roll_currency_history_for_n_day_forward(item, self.procedure, last_price, self.master_user, procedure_instance)
+                successful_prices_count = successful_prices_count + successes
+                error_prices_count = error_prices_count + errors
+
+
+        procedure_instance.successful_prices_count = successful_prices_count
+        procedure_instance.error_prices_count = error_prices_count
 
         procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
@@ -454,6 +471,9 @@ class PricingCurrencyHandler(object):
 
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
+
+        successful_prices_count = 0
+        error_prices_count = 0
 
         procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
                                                       parent_procedure_instance=self.parent_procedure,
@@ -656,11 +676,20 @@ class PricingCurrencyHandler(object):
                     if can_write:
 
                         if has_error or fx_rate == 0:
+
+                            error_prices_count = error_prices_count + 1
+
                             error.save()
                         else:
+
+                            successful_prices_count = successful_prices_count + 1
+
                             price.save()
 
                     else:
+
+                        error_prices_count = error_prices_count + 1
+
                         error.error_text = "Prices already exists. Fx rate: " + str(fx_rate) + "."
 
                         error.status = CurrencyHistoryError.STATUS_SKIP
@@ -669,7 +698,14 @@ class PricingCurrencyHandler(object):
                     last_price = price
 
             if last_price:
-                roll_currency_history_for_n_day_forward(item, self.procedure, last_price, self.master_user, procedure_instance)
+
+                successes, errors = roll_currency_history_for_n_day_forward(item, self.procedure, last_price, self.master_user, procedure_instance)
+
+                successful_prices_count = successful_prices_count + successes
+                error_prices_count = error_prices_count + errors
+
+        procedure_instance.successful_prices_count = successful_prices_count
+        procedure_instance.error_prices_count = error_prices_count
 
         procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
@@ -679,20 +715,19 @@ class PricingCurrencyHandler(object):
 
         _l.info("Pricing Currency Handler - Bloomberg Provider: len %s" % len(items))
 
-        with transaction.atomic():
 
-            procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
-                                                          parent_procedure_instance=self.parent_procedure,
-                                                          master_user=self.master_user,
-                                                          status=PricingProcedureInstance.STATUS_PENDING,
-                                                          action='bloomberg_get_currency_prices',
-                                                          provider='bloomberg',
+        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+                                                      parent_procedure_instance=self.parent_procedure,
+                                                      master_user=self.master_user,
+                                                      status=PricingProcedureInstance.STATUS_PENDING,
+                                                      action='bloomberg_get_currency_prices',
+                                                      provider='bloomberg',
 
-                                                          action_verbose='Get FX Rates from Bloomberg',
-                                                          provider_verbose='Bloomberg'
+                                                      action_verbose='Get FX Rates from Bloomberg',
+                                                      provider_verbose='Bloomberg'
 
-                                                          )
-            procedure_instance.save()
+                                                      )
+        procedure_instance.save()
 
         body = {}
         body['action'] = procedure_instance.action
