@@ -199,7 +199,7 @@ class ImportManager(object):
 
         self.configuration_recovery_handler = ConfigurationRecoveryHandler(master_user=self.master_user)
 
-        # _l.info('self.master_user %s ' % self.master_user)
+        _l.info('self.master_user %s ' % self.master_user)
         # _l.info('self.class instance %s' % self.master_user.__class__.__name__)
 
     def count_progress_total(self):
@@ -2799,13 +2799,25 @@ def configuration_import_as_json(self, instance):
 
     import_manager.count_progress_total()
 
-    if configuration_section:
-        import_manager.import_configuration(configuration_section)
+    try:
 
-    if mappings_section:
-        import_manager.import_mappings(mappings_section)
+        if configuration_section:
 
-    _l.info('Import done %s' % (time.perf_counter() - st))
+            _l.info('Importing configuration')
+
+            import_manager.import_configuration(configuration_section)
+
+        if mappings_section:
+
+            _l.info('Importing mappings')
+
+            import_manager.import_mappings(mappings_section)
+
+        _l.info('Import done %s' % (time.perf_counter() - st))
+
+    except Exception as e:
+
+        _l.info("Error occurred %s" % e)
 
     return instance
 
