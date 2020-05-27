@@ -41,7 +41,7 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
 
         _l.info('TASK: configuration_import_as_json')
 
-        request.data['request'] = request
+        # request.data['request'] = request
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
