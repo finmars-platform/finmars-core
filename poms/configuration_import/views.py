@@ -17,10 +17,14 @@ import time
 
 from rest_framework.exceptions import PermissionDenied
 
+from logging import getLogger
+
+_l = getLogger('poms.configuration_import')
+
 
 def dump(obj):
     for attr in dir(obj):
-        print("obj.%s = %r" % (attr, getattr(obj, attr)))
+        _l.info("obj.%s = %r" % (attr, getattr(obj, attr)))
 
 class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
 
@@ -34,7 +38,7 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
 
     def create(self, request, *args, **kwargs):
 
-        print('TASK: configuration_import_as_json')
+        _l.info('TASK: configuration_import_as_json')
 
         request.data['request'] = request
 
@@ -54,9 +58,9 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
                 celery_task = CeleryTask.objects.get(master_user=request.user.master_user, task_id=task_id)
             except CeleryTask.DoesNotExist:
                 celery_task = None
-                print("Cant create Celery Task")
+                _l.info("Cant create Celery Task")
 
-            print('celery_task %s' % celery_task)
+            _l.info('celery_task %s' % celery_task)
 
             st = time.perf_counter()
 
@@ -83,18 +87,20 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
                                 "processed_rows": res.result['processed_rows']
                             }
                     except TypeError:
-                        print('Type erro')
+                        _l.info('Type erro')
 
-                # print('TASK ITEMS LEN %s' % len(res.result.items))
+                # _l.info('TASK ITEMS LEN %s' % len(res.result.items))
 
-            print('AsyncResult res.ready: %s' % (time.perf_counter() - st))
+            _l.info('AsyncResult res.ready: %s' % (time.perf_counter() - st))
 
-            print('instance %s' % instance)
-            print('res.status %s' % res.status)
-            print('celery_task %s' % celery_task)
-            print('instance.master_user %s' % instance.master_user)
-            print('request.user %s' % request.user)
-            print('request.user.master_user %s' % request.user.master_user)
+            _l.info('instance %s' % instance)
+            _l.info('res.status %s' % res.status)
+            _l.info('celery_task %s' % celery_task)
+
+            _l.info('request.user %s' % request.user)
+            _l.info('request.user.master_user %s' % request.user.master_user)
+
+            _l.info('instance.master_user %s' % instance.master_user)
 
             if instance.master_user.id != request.user.master_user.id:
                 raise PermissionDenied()
@@ -123,7 +129,7 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
             celery_task.save()
 
 
-            print('celery_task.task_status %s ' % celery_task.task_status)
+            _l.info('celery_task.task_status %s ' % celery_task.task_status)
 
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)
@@ -158,13 +164,13 @@ class GenerateConfigurationEntityArchetypeViewSet(AbstractAsyncViewSet):
 
                 instance = res.result
 
-            print('AsyncResult res.ready: %s' % (time.perf_counter() - st))
+            _l.info('AsyncResult res.ready: %s' % (time.perf_counter() - st))
 
             if instance.master_user.id != request.user.master_user.id:
                 raise PermissionDenied()
 
-            print('TASK RESULT %s' % res.result)
-            print('TASK STATUS %s' % res.status)
+            _l.info('TASK RESULT %s' % res.result)
+            _l.info('TASK STATUS %s' % res.status)
 
             instance.task_id = task_id
             instance.task_status = res.status
@@ -177,7 +183,7 @@ class GenerateConfigurationEntityArchetypeViewSet(AbstractAsyncViewSet):
             res = self.celery_task.apply_async(kwargs={'instance': instance})
             instance.task_id = signer.sign('%s' % res.id)
 
-            print('CREATE CELERY TASK %s' % res.id)
+            _l.info('CREATE CELERY TASK %s' % res.id)
 
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)
