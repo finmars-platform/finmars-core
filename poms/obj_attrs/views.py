@@ -173,29 +173,29 @@ class GenericAttributeTypeViewSet(AbstractModelViewSet):
 
         print('Create attribute type for %s' % self.target_model)
 
-        attrs = []
-
-        content_type = ContentType.objects.get_for_model(self.target_model)
-
-        master_user = request.user.master_user
-
-        items = self.target_model.objects.filter(master_user=master_user)
-
-        print('items len %s' % len(items))
-
-        attr_type = GenericAttributeType.objects.get(pk=serializer.data['id'])
-
-        for item in items:
-
-            try:
-                exists = GenericAttribute.objects.get(attribute_type=attr_type, content_type=content_type,
-                                                      object_id=item.pk)
-
-            except GenericAttribute.DoesNotExist:
-
-                attrs.append(GenericAttribute(attribute_type=attr_type, content_type=content_type, object_id=item.pk))
-
-        GenericAttribute.objects.bulk_create(attrs)
+        # attrs = []
+        #
+        # content_type = ContentType.objects.get_for_model(self.target_model)
+        #
+        # master_user = request.user.master_user
+        #
+        # items = self.target_model.objects.filter(master_user=master_user)
+        #
+        # print('items len %s' % len(items))
+        #
+        # attr_type = GenericAttributeType.objects.get(pk=serializer.data['id'])
+        #
+        # for item in items:
+        #
+        #     try:
+        #         exists = GenericAttribute.objects.get(attribute_type=attr_type, content_type=content_type,
+        #                                               object_id=item.pk)
+        #
+        #     except GenericAttribute.DoesNotExist:
+        #
+        #         attrs.append(GenericAttribute(attribute_type=attr_type, content_type=content_type, object_id=item.pk))
+        #
+        # GenericAttribute.objects.bulk_create(attrs)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
