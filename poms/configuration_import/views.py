@@ -26,6 +26,7 @@ def dump(obj):
     for attr in dir(obj):
         _l.info("obj.%s = %r" % (attr, getattr(obj, attr)))
 
+
 class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
 
     serializer_class = ConfigurationImportAsJsonSerializer
@@ -124,7 +125,7 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
             celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                     member=request.user.member,
                                                     started_at=datetime_now(),
-                                                    task_type='configuration_import', task_id=instance.task_id)
+                                                    task_type='configuration_import', task_id=res.id)
 
             celery_task.save()
 
