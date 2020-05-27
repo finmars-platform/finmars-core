@@ -2774,32 +2774,33 @@ class ImportManager(object):
 
 @shared_task(name='configuration_import.configuration_import_as_json', bind=True)
 def configuration_import_as_json(self, instance):
-    _l.info('instance %s' % instance)
-    _l.info('instance.mode %s' % instance.mode)
-    # _l.info('instance.data %s' % instance.data)
-
-    import_manager = ImportManager(instance, self.update_state)
-
-    configuration_section = None
-    mappings_section = None
-
-    st = time.perf_counter()
-
-    if 'body' in instance.data:
-
-        for section in instance.data['body']:
-
-            _l.info('section_name %s' % section['section_name'])
-
-            if section['section_name'] == 'configuration':
-                configuration_section = section
-
-            if section['section_name'] == 'mappings':
-                mappings_section = section
-
-    import_manager.count_progress_total()
 
     try:
+
+        _l.info('instance %s' % instance)
+        _l.info('instance.mode %s' % instance.mode)
+        # _l.info('instance.data %s' % instance.data)
+
+        import_manager = ImportManager(instance, self.update_state)
+
+        configuration_section = None
+        mappings_section = None
+
+        st = time.perf_counter()
+
+        if 'body' in instance.data:
+
+            for section in instance.data['body']:
+
+                _l.info('section_name %s' % section['section_name'])
+
+                if section['section_name'] == 'configuration':
+                    configuration_section = section
+
+                if section['section_name'] == 'mappings':
+                    mappings_section = section
+
+        import_manager.count_progress_total()
 
         if configuration_section:
 
