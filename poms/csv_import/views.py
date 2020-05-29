@@ -233,7 +233,8 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
 
                 instance = res.result
 
-                _l.info('instance %s' % instance)
+                _l.info('instance')
+                _l.info(instance)
 
                 _l.info('instance %s' % instance.stats_file_report)
                 _l.info('instance.total_rows %s' % instance.total_rows)
