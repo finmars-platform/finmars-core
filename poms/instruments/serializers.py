@@ -57,6 +57,12 @@ class DailyPricingModelViewSerializer(PomsClassSerializer):
         fields = ['id', 'system_code', 'name']
 
 
+class PricingConditionViewSerializer(PomsClassSerializer):
+    class Meta:
+        model = PricingCondition
+        fields = ['id', 'system_code', 'name']
+
+
 class AccrualCalculationModelSerializer(PomsClassSerializer):
     class Meta(PomsClassSerializer.Meta):
         model = AccrualCalculationModel

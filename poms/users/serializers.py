@@ -500,7 +500,7 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
             'thread_group',
             'mismatch_portfolio', 'mismatch_account',
             'pricing_policy', 'transaction_type',
-            'instrument_class', 'daily_pricing_model', 'accrual_calculation_model',
+            'instrument_class', 'daily_pricing_model', 'accrual_calculation_model', 'pricing_condition',
             'payment_size_detail', 'periodicity'
         ]
 
@@ -514,7 +514,7 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
         from poms.instruments.serializers import InstrumentViewSerializer, InstrumentTypeViewSerializer, \
             AccrualCalculationModelViewSerializer, \
             InstrumentClassViewSerializer, DailyPricingModelViewSerializer, PaymentSizeDetailViewSerializer, \
-            PeriodicityViewSerializer, CostMethodViewSerializer
+            PeriodicityViewSerializer, CostMethodViewSerializer, PricingConditionViewSerializer
         from poms.portfolios.serializers import PortfolioViewSerializer
         from poms.strategies.serializers import Strategy1GroupViewSerializer, Strategy1SubgroupViewSerializer, \
             Strategy1ViewSerializer, Strategy2GroupViewSerializer, Strategy2SubgroupViewSerializer, \
@@ -530,6 +530,9 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
 
         self.fields['daily_pricing_model_object'] = DailyPricingModelViewSerializer(
             source='daily_pricing_model', read_only=True)
+
+        self.fields['pricing_condition_object'] = PricingConditionViewSerializer(
+            source='pricing_condition', read_only=True)
 
         self.fields['payment_size_detail_object'] = PaymentSizeDetailViewSerializer(
             source='payment_size_detail', read_only=True)

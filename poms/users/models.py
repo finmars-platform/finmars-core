@@ -583,6 +583,10 @@ class EcosystemDefault(models.Model):
                                     on_delete=models.PROTECT,
                                     verbose_name=ugettext_lazy('periodicity'))
 
+    pricing_condition = models.ForeignKey('instruments.PricingCondition', null=True, blank=True,
+                                            on_delete=models.PROTECT,
+                                            verbose_name=ugettext_lazy('pricing condition'))
+
 
 class Member(FakeDeletableModel):
     DO_NOT_NOTIFY = 1

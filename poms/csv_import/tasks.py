@@ -429,6 +429,12 @@ def process_csv_file(master_user,
                     'counterparty': CounterpartyClassifierMapping
                 }
 
+                instance_property_to_default_ecosystem_property = {
+                    'pricing_currency': 'currency',
+                    'accrued_currency': 'currency',
+                    'type': 'account_type'
+                }
+
                 for entity_field in entity_fields:
 
                     key = entity_field.system_property_key
@@ -464,7 +470,7 @@ def process_csv_file(master_user,
 
                                         try:
 
-                                            # _l.info('Lookup by user code %s' % executed_expression)
+                                            _l.info('Lookup by user code %s' % executed_expression)
 
                                             if key == 'price_download_scheme':
                                                 instance[key] = PriceDownloadScheme.objects.get(master_user=master_user,
@@ -495,8 +501,13 @@ def process_csv_file(master_user,
                                                 ecosystem_default = EcosystemDefault.objects.get(
                                                     master_user=master_user)
 
-                                                if hasattr(ecosystem_default, key):
-                                                    instance[key] = getattr(ecosystem_default, key)
+                                                eco_key = key
+
+                                                if key in instance_property_to_default_ecosystem_property:
+                                                    eco_key = instance_property_to_default_ecosystem_property[key]
+
+                                                if hasattr(ecosystem_default, eco_key):
+                                                    instance[key] = getattr(ecosystem_default, eco_key)
                                                 else:
                                                     _l.info("Can't set default value for %s" % key)
                                             else:
@@ -553,14 +564,33 @@ def process_csv_file(master_user,
 
                             except (ExpressionEvalError, TypeError, Exception, KeyError):
 
-                                _l.info('ExpressionEvalError %s' % ExpressionEvalError)
+                                if missing_data_handler == 'set_defaults':
 
-                                inputs_error.append(
-                                    {"field": entity_field,
-                                     "reason": "Invalid Expression"}
-                                )
+                                    _l.info('ExpressionEvalError Settings Default %s' % ExpressionEvalError)
 
-                                executed_expressions.append(ugettext('Invalid expression'))
+                                    ecosystem_default = EcosystemDefault.objects.get(
+                                        master_user=master_user)
+
+                                    eco_key = key
+
+                                    if key in instance_property_to_default_ecosystem_property:
+                                        eco_key = instance_property_to_default_ecosystem_property[key]
+
+                                    if hasattr(ecosystem_default, eco_key):
+                                        instance[key] = getattr(ecosystem_default, eco_key)
+                                    else:
+                                        _l.info("Can't set default value for %s" % key)
+
+                                else:
+
+                                    _l.info('ExpressionEvalError Appending Error %s' % ExpressionEvalError)
+
+                                    inputs_error.append(
+                                        {"field": entity_field,
+                                         "reason": "Invalid Expression"}
+                                    )
+
+                                    executed_expressions.append(ugettext('Invalid expression'))
 
                             # _l.info('executed_expression %s' % executed_expression)
 
