@@ -1603,12 +1603,18 @@ class TransactionTypeProcess(object):
 
                     # print('epxr %s' % getattr(self.complex_transaction.transaction_type, field_key))
 
-                    setattr(self.complex_transaction, field_key, formula.safe_eval(
+                    val = formula.safe_eval(
                         getattr(self.complex_transaction.transaction_type, field_key), names=names,
-                        context=self._context))
+                        context=self._context)
 
-                except formula.InvalidExpression:
-                    setattr(self.complex_transaction, field_key, '<InvalidExpression>')
+                    setattr(self.complex_transaction, field_key, val)
+
+                except Exception as e:
+                    try:
+                        setattr(self.complex_transaction, field_key, '<InvalidExpression>')
+                    except Exception as e:
+                        setattr(self.complex_transaction, field_key, None)
+
 
     def execute_recon_fields_expressions(self):
 

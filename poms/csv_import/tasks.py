@@ -15,11 +15,12 @@ from poms.integrations.models import CounterpartyMapping, AccountMapping, Respon
     PortfolioClassifierMapping, AccountClassifierMapping, ResponsibleClassifierMapping, CounterpartyClassifierMapping, \
     PricingPolicyMapping, InstrumentMapping, CurrencyMapping, InstrumentTypeMapping, PaymentSizeDetailMapping, \
     DailyPricingModelMapping, PriceDownloadSchemeMapping, InstrumentClassifierMapping, AccountTypeMapping, \
-    PriceDownloadScheme, Task
+    PriceDownloadScheme, Task, PricingConditionMapping
 
 from poms.portfolios.models import Portfolio
 from poms.currencies.models import Currency
-from poms.instruments.models import PricingPolicy, Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail
+from poms.instruments.models import PricingPolicy, Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail, \
+    PricingCondition
 from poms.counterparties.models import Counterparty, Responsible
 from poms.accounts.models import Account, AccountType
 
@@ -278,6 +279,7 @@ def process_csv_file(master_user,
                      update_state,
                      mode,
                      process_result_handler, member):
+
     csv_fields = scheme.csv_fields.all()
     entity_fields = scheme.entity_fields.all()
 
@@ -399,6 +401,7 @@ def process_csv_file(master_user,
                     'price_download_scheme': PriceDownloadSchemeMapping,
                     'daily_pricing_model': DailyPricingModelMapping,
                     'payment_size_detail': PaymentSizeDetailMapping,
+                    'pricing_condition': PricingConditionMapping,
                     'currency': CurrencyMapping,
                     'pricing_currency': CurrencyMapping,
                     'accrued_currency': CurrencyMapping
@@ -469,6 +472,10 @@ def process_csv_file(master_user,
 
                                             elif key == 'daily_pricing_model':
                                                 instance[key] = DailyPricingModel.objects.get(
+                                                    system_code=executed_expression)
+
+                                            elif key == 'pricing_condition':
+                                                instance[key] = PricingCondition.objects.get(
                                                     system_code=executed_expression)
 
                                             elif key == 'payment_size_detail':
