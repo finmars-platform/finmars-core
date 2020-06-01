@@ -26,4 +26,6 @@ class Command(BaseCommand):
 
                 count = count + 1
 
+                item.save()
+
         self.stdout.write("Job Done. Ecosystems Affected %s " % count)
