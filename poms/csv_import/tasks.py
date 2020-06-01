@@ -63,7 +63,12 @@ def generate_file_report(instance, master_user, type, name):
 
     rows_content = []
 
+    _l.info(instance.stats)
+
     for errorRow in instance.stats:
+
+        _l.info('errorRow %s' % errorRow)
+
         localResult = []
 
         localResult.append(errorRow['original_row_index'])
@@ -71,8 +76,8 @@ def generate_file_report(instance, master_user, type, name):
         localResult = localResult + errorRow['error_data']['data']['imported_columns']
         localResult = localResult + errorRow['error_data']['data']['data_matching']
 
-        localResult.append('"' + errorRow['error_message'] + '"')
-        localResult.append(errorRow['error_reaction'])
+        localResult.append('"' + str(errorRow['error_message']) + '"')
+        localResult.append(str(errorRow['error_reaction']))
 
         rows_content.append(localResult)
 
