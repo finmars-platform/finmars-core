@@ -1725,6 +1725,7 @@ def complex_transaction_csv_file_import(self, instance):
         return row_index
 
     instance.error_rows = []
+
     try:
         # with import_file_storage.open(instance.file_path, 'rb') as f:
         with SFS.open(instance.file_path, 'rb') as f:
@@ -1742,12 +1743,6 @@ def complex_transaction_csv_file_import(self, instance):
                     # instance.save()
                 with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
                     _process_csv_file(cf)
-    # except csv.Error:
-    #     _l.info('Can\'t process file', exc_info=True)
-    #     instance.error_message = ugettext("Invalid file format or file already deleted.")
-    # except (FileNotFoundError, IOError):
-    #     _l.info('Can\'t process file', exc_info=True)
-    #     instance.error_message = ugettext("Invalid file format or file already deleted.")
     except:
         _l.info('Can\'t process file', exc_info=True)
         instance.error_message = ugettext("Invalid file format or file already deleted.")

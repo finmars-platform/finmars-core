@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib.contenttypes.models import ContentType
 from django.apps import apps
 from rest_framework import serializers
@@ -11,21 +13,35 @@ from .models import CsvField, EntityField, CsvDataImport, CsvImportScheme
 from .fields import CsvImportContentTypeField, CsvImportSchemeField
 
 
+from django.utils import timezone
+
+from storages.backends.sftpstorage import SFTPStorage
+SFS = SFTPStorage()
+
+
 class CsvDataFileImport:
     def __init__(self, task_id=None, task_status=None, master_user=None, member=None, status=None,
-                 scheme=None, file=None, delimiter=None, mode=None,
+                 scheme=None, file_path=None, delimiter=None, mode=None, quotechar=None, encoding=None,
                  error_handler=None, missing_data_handler=None, classifier_handler=None,
-                 total_rows=None, processed_rows=None, stats=None, imported=None, stats_file_report=None):
+                 total_rows=None, processed_rows=None, stats=None, filename=None, imported=None, stats_file_report=None):
         self.task_id = task_id
         self.task_status = task_status
 
-        self.file = file
+        # self.file = file
+
+        self.filename = filename
+
+        self.file_path = file_path
         self.master_user = master_user
         self.member = member
         self.scheme = scheme
         self.status = status
         self.mode = mode
         self.delimiter = delimiter
+
+        self.quotechar = quotechar or '"'
+        self.encoding = encoding or 'utf-8'
+
         self.error_handler = error_handler
         self.missing_data_handler = missing_data_handler
         self.classifier_handler = classifier_handler
@@ -263,6 +279,9 @@ class CsvDataImportSerializer(serializers.Serializer):
 
     delimiter = serializers.CharField(max_length=2, required=False, initial=',', default=',')
 
+    quotechar = serializers.CharField(max_length=1, required=False, initial='"', default='"')
+    encoding = serializers.CharField(max_length=20, required=False, initial='utf-8', default='utf-8')
+
     error_handler = serializers.ChoiceField(
         choices=[('break', 'Break on first error'), ('continue', 'Try continue')],
         required=False, initial='continue', default='continue'
@@ -293,12 +312,35 @@ class CsvDataImportSerializer(serializers.Serializer):
     scheme_object = CsvImportSchemeSerializer(source='scheme', read_only=True)
 
     def create(self, validated_data):
+
+        filetmp = file = validated_data.get('file', None)
+
+        print('filetmp %s' % filetmp)
+
+        filename = None
+        if filetmp:
+            filename = filetmp.name
+
+            print('filename %s' % filename)
+
+            validated_data['filename'] = filename
+
         if validated_data.get('task_id', None):
             validated_data.pop('file', None)
+        else:
+            file = validated_data.pop('file', None)
+            if file:
+                master_user = validated_data['master_user']
+                file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
+                file_path = self._get_path(master_user, file_name)
+
+                SFS.save(file_path, file)
+                validated_data['file_path'] = file_path
+            else:
+                raise serializers.ValidationError({'file': 'Required field.'})
+
 
         return CsvDataFileImport(**validated_data)
 
-    # class Meta:
-    #     model = CsvDataImport
-
-    # fields = ('file', 'scheme', 'error_handler', 'mode', 'delimiter', 'missing_data_handler', 'classifier_handler', 'task_id', 'task_status', 'stats', 'imported', 'total_rows', 'processed_rows')
+    def _get_path(self, master_user, file_name):
+        return '%s/simple_import_files/%s.dat' % (master_user.token, file_name)

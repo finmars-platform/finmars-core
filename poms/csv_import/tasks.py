@@ -43,33 +43,38 @@ from io import StringIO
 import csv
 
 
+from storages.backends.sftpstorage import SFTPStorage
+SFS = SFTPStorage()
+
+from tempfile import NamedTemporaryFile
+
+
+
 def generate_file_report(instance, master_user, type, name):
     _l.debug('instance %s' % instance)
 
     columns = ['Row number']
 
-    if len(instance.stats):
-        columns = columns + instance.stats[0]['error_data']['columns']['imported_columns']
-        columns = columns + instance.stats[0]['error_data']['columns']['data_matching']
+    columns = columns + instance.stats[0]['error_data']['columns']['imported_columns']
+    columns = columns + instance.stats[0]['error_data']['columns']['data_matching']
 
     columns.append('Error Message')
     columns.append('Reaction')
 
     rows_content = []
 
-    if len(instance.stats):
-        for errorRow in instance.stats:
-            localResult = []
+    for errorRow in instance.stats:
+        localResult = []
 
-            localResult.append(errorRow['original_row_index'])
+        localResult.append(errorRow['original_row_index'])
 
-            localResult = localResult + errorRow['error_data']['data']['imported_columns']
-            localResult = localResult + errorRow['error_data']['data']['data_matching']
+        localResult = localResult + errorRow['error_data']['data']['imported_columns']
+        localResult = localResult + errorRow['error_data']['data']['data_matching']
 
-            localResult.append('"' + errorRow['error_message'] + '"')
-            localResult.append(errorRow['error_reaction'])
+        localResult.append('"' + errorRow['error_message'] + '"')
+        localResult.append(errorRow['error_reaction'])
 
-            rows_content.append(localResult)
+        rows_content.append(localResult)
 
     columnRow = ','.join(columns)
 
@@ -77,7 +82,7 @@ def generate_file_report(instance, master_user, type, name):
 
     result.append('Type, ' + 'Transaction Import')
     result.append('Error handle, ' + instance.error_handler)
-    result.append('Filename, ' + instance.file.name)
+    # result.append('Filename, ' + instance.file.name)
     result.append('Mode, ' + instance.mode)
     result.append('Import Rules - if object is not found, ' + instance.missing_data_handler)
     # result.push('Entity, ' + vm.scheme.content_type)
@@ -259,7 +264,7 @@ def get_item(scheme, result):
 
 def process_csv_file(master_user,
                      scheme,
-                     rows,
+                     file,
                      error_handler,
                      missing_data_handler,
                      classifier_handler,
@@ -276,7 +281,12 @@ def process_csv_file(master_user,
 
     row_index = 0
 
-    for row in rows:
+    delimiter = task_instance.delimiter.encode('utf-8').decode('unicode_escape')
+
+    reader = csv.reader(file, delimiter=delimiter, quotechar=task_instance.quotechar,
+                        strict=False, skipinitialspace=True)
+
+    for row_index, row in enumerate(reader):
 
         if row_index != 0:
 
@@ -669,7 +679,7 @@ def process_csv_file(master_user,
         update_state(task_id=task_instance.task_id, state=Task.STATUS_PENDING,
                      meta={'processed_rows': task_instance.processed_rows,
                            'total_rows': task_instance.total_rows, 'scheme_name': scheme.scheme_name,
-                           'file_name': task_instance.file.name})
+                           'file_name': task_instance.filename})
 
     return results, errors
 
@@ -814,6 +824,19 @@ class ValidateHandler:
 
         return result_item, error_row
 
+    def _row_count(self, file, instance):
+
+        delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
+
+        reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
+                            strict=False, skipinitialspace=True)
+
+        row_index = 0
+
+        for row_index, row in enumerate(reader):
+            pass
+        return row_index
+
     def process(self, instance, update_state):
 
         _l.info('ValidateHandler.process: initialized')
@@ -829,63 +852,46 @@ class ValidateHandler:
 
         scheme = CsvImportScheme.objects.get(pk=scheme_id)
 
-        _l.info('ValidateHandler.mode %s' % mode)
+        try:
+            with SFS.open(instance.file_path, 'rb') as f:
+                with NamedTemporaryFile() as tmpf:
+                    _l.info('tmpf')
+                    _l.info(tmpf)
 
-        if not instance.file.name.endswith('.csv'):
-            raise ValidationError('File is not csv format')
+                    for chunk in f.chunks():
+                        tmpf.write(chunk)
+                    tmpf.flush()
 
-        # csv_contents = request.data['file'].read().decode('utf-8-sig')
-        # rows = csv_contents.splitlines()
+                    with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
+                        instance.total_rows = self._row_count(cfr, instance)
+                        update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
+                                     meta={'total_rows': instance.total_rows, 'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
 
-        # _l.info('instance task id %s' % instance.task_id)
-        # _l.info('instance %s' % instance.file.name)
+                    with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
 
-        delimiter = delimiter.encode('utf-8').decode('unicode_escape')
+                        context = {}
 
-        rows = []
+                        results, process_errors = process_csv_file(master_user, scheme, cf, error_handler, missing_data_handler,
+                                                                   classifier_handler,
+                                                                   context, instance, update_state, mode, self.full_clean_result, member)
 
-        print('instance.file filename %s' % instance.file.name)
+                        _l.info('ValidateHandler.process_csv_file: finished')
+                        _l.info('ValidateHandler.process_csv_file process_errors %s: ' % len(process_errors))
 
-        scsv = instance.file.read().decode('utf-8-sig')
+                        instance.imported = len(results)
+                        instance.stats = process_errors
+        except Exception as e:
 
-        f = StringIO(scsv)
-        reader = csv.reader(f, delimiter=delimiter, strict=False, skipinitialspace=True)
-        for row in reader:
-            rows.append(row)
+            _l.info(e)
+            _l.info('Can\'t process file', exc_info=True)
+            instance.error_message = ugettext("Invalid file format or file already deleted.")
+        finally:
+            # import_file_storage.delete(instance.file_path)
+            SFS.delete(instance.file_path)
 
-        # rows = list(map(lambda x: re.split(delimiter, x), rows))
-
-        instance.total_rows = len(rows)
-
-        update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                     meta={'total_rows': instance.total_rows, 'scheme_name': scheme.scheme_name,
-                           'file_name': instance.file.name})
-
-        # context = super(CsvDataImportValidateViewSet, self).get_serializer_context()
-
-        context = {}
-
-        classifier_handler_skip = ' skip'  # only for import
-
-        _l.info('ValidateHandler.process_csv_file: initialized')
-
-        results, process_errors = process_csv_file(master_user,
-                                                   scheme,
-                                                   rows,
-                                                   error_handler,
-                                                   missing_data_handler,
-                                                   classifier_handler_skip,
-                                                   context,
-                                                   instance,
-                                                   update_state, mode, self.full_clean_result, member)
-
-        _l.info('ValidateHandler.process_csv_file: finished')
-        _l.info('ValidateHandler.process_csv_file process_errors %s: ' % len(process_errors))
-
-        instance.imported = len(results)
-        instance.stats = process_errors
-        instance.stats_file_report = generate_file_report(instance, master_user, 'csv_import.validate',
-                                                          'Simple Data Import Validation')
+        if instance.stats and len(instance.stats):
+            instance.stats_file_report = generate_file_report(instance, master_user, 'csv_import.validate',
+                                                              'Simple Data Import Validation')
 
         return instance
 
@@ -1198,6 +1204,19 @@ class ImportHandler:
 
         return result_item, error_row
 
+    def _row_count(self, file, instance):
+
+        delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
+
+        reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
+                            strict=False, skipinitialspace=True)
+
+        row_index = 0
+
+        for row_index, row in enumerate(reader):
+            pass
+        return row_index
+
     def process(self, instance, update_state):
 
         _l.info('ImportHandler.process: initialized')
@@ -1215,46 +1234,46 @@ class ImportHandler:
 
         scheme = CsvImportScheme.objects.get(pk=scheme_id)
 
-        if not instance.file.name.endswith('.csv'):
-            raise ValidationError('File is not csv format')
+        try:
+            with SFS.open(instance.file_path, 'rb') as f:
+                with NamedTemporaryFile() as tmpf:
+                    _l.info('tmpf')
+                    _l.info(tmpf)
 
-        # csv_contents = request.data['file'].read().decode('utf-8-sig')
-        # rows = csv_contents.splitlines()
+                    for chunk in f.chunks():
+                        tmpf.write(chunk)
+                    tmpf.flush()
 
-        delimiter = delimiter.encode('utf-8').decode('unicode_escape')
+                    with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
+                        instance.total_rows = self._row_count(cfr, instance)
+                        update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
+                                          meta={'total_rows': instance.total_rows, 'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
 
-        rows = []
+                    with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
 
-        scsv = instance.file.read().decode('utf-8-sig')
+                        context = {}
 
-        f = StringIO(scsv)
-        reader = csv.reader(f, delimiter=delimiter, strict=False, skipinitialspace=True)
-        for row in reader:
-            rows.append(row)
+                        results, process_errors = process_csv_file(master_user, scheme, cf, error_handler, missing_data_handler,
+                                                                   classifier_handler,
+                                                                   context, instance, update_state, mode, self.import_result, member)
 
-        instance.total_rows = len(rows)
+                        _l.info('ImportHandler.process_csv_file: finished')
+                        _l.info('ImportHandler.process_csv_file process_errors %s: ' % len(process_errors))
 
-        update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                     meta={'total_rows': instance.total_rows, 'scheme_name': scheme.scheme_name,
-                           'file_name': instance.file.name})
+                        instance.imported = len(results)
+                        instance.stats = process_errors
+        except Exception as e:
 
-        context = {}
+            _l.info(e)
+            _l.info('Can\'t process file', exc_info=True)
+            instance.error_message = ugettext("Invalid file format or file already deleted.")
+        finally:
+            # import_file_storage.delete(instance.file_path)
+            SFS.delete(instance.file_path)
 
-        _l.info('ImportHandler.process_csv_file: initialized')
-        _l.info('ImportHandler.total_rows %s' % instance.total_rows)
-
-        results, process_errors = process_csv_file(master_user, scheme, rows, error_handler, missing_data_handler,
-                                                   classifier_handler,
-                                                   context, instance, update_state, mode, self.import_result, member)
-
-        _l.info('ImportHandler.process_csv_file: finished')
-        _l.info('ImportHandler.process_csv_file process_errors %s: ' % len(process_errors))
-
-        instance.imported = len(results)
-        instance.stats = process_errors
-
-        instance.stats_file_report = generate_file_report(instance, master_user, 'csv_import.import',
-                                                          'Simple Data Import')
+        if instance.stats and len(instance.stats):
+            instance.stats_file_report = generate_file_report(instance, master_user, 'csv_import.import',
+                                                              'Simple Data Import')
 
         return instance
 

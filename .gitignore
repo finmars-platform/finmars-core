@@ -6,3 +6,5 @@ __pycache__
 tests.log
 celery-schedule
 celerybeat-schedule
+.ssh
+.ssh/*

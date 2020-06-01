@@ -1868,82 +1868,8 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
                 validated_data['file_path'] = file_path
             else:
                 raise serializers.ValidationError({'file': ugettext('Required field.')})
+
         return ComplexTransactionCsvFileImport(**validated_data)
 
     def _get_path(self, master_user, file_name):
         return '%s/transaction_import_files/%s.dat' % (master_user.token, file_name)
-
-        # def create(self, validated_data):
-        #     _l.info('create: %s', validated_data)
-        #     try:
-        #         master_user = validated_data['master_user']
-        #
-        #         if validated_data.get('token', None):
-        #             file = None
-        #             try:
-        #                 token = TimestampSigner().unsign(validated_data['token'])
-        #                 # token = loads(validated_data['token'])
-        #             except BadSignature:
-        #                 raise serializers.ValidationError({'token': ugettext('Invalid token.')})
-        #             remote_file_path = self._get_path(master_user, token)
-        #         else:
-        #             file = validated_data['file']
-        #             if not file:
-        #                 raise serializers.ValidationError({'file': ugettext('This field is required.')})
-        #
-        #             token = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
-        #             # token = {'token': str(uuid.uuid4()), 'date': timezone.now()}
-        #             # validated_data['token'] = dumps(token)
-        #             validated_data['token'] = TimestampSigner().sign(token)
-        #             remote_file_path = self._get_path(master_user, token)
-        #
-        #             import_file_storage.save(remote_file_path, file)
-        #
-        #             from poms.integrations.tasks import schedule_file_import_delete
-        #             schedule_file_import_delete(remote_file_path)
-        #
-        #         try:
-        #             with import_file_storage.open(remote_file_path, 'rb') as f:
-        #                 with NamedTemporaryFile() as tmpf:
-        #                     for chunk in f.chunks():
-        #                         tmpf.write(chunk)
-        #                     tmpf.flush()
-        #                     with open(tmpf.name, mode='rt', encoding=validated_data.get('encoding', None)) as cf:
-        #                         if validated_data['format'] == FILE_FORMAT_CSV:
-        #                             self._read_csv(validated_data, File(cf))
-        #
-        #         except csv.Error:
-        #             raise serializers.ValidationError(ugettext("Invalid file format or file already deleted."))
-        #         except (FileNotFoundError, IOError):
-        #             raise serializers.ValidationError(ugettext("Invalid file format or file already deleted."))
-        #         except:
-        #             raise serializers.ValidationError(ugettext("Invalid file format or file already deleted."))
-        #
-        #         # with import_file_storage.open(tmp_file_name, 'rb') as f:
-        #         #     rows = []
-        #         #     for row_index, row in enumerate(csv.reader(f)):
-        #         #         if row_index == 0 and validated_data['skip_first_line']:
-        #         #             continue
-        #         #         rows.append(row)
-        #         #     validated_data['rows'] = rows
-        #
-        #         return validated_data
-        #     finally:
-        #         if validated_data.get('mode', None) != IMPORT_PROCESS:
-        #             transaction.set_rollback(True)
-        #
-        # def _get_path(self, owner, token):
-        #     return '%s/%s/%s.dat' % (owner.pk, self.object_type, token)
-        #
-        # def _read_csv(self, validated_data, file):
-        #     rows = []
-        #     for row_index, row in enumerate(csv.reader(file, delimiter=validated_data['delimiter'],
-        #                                                quotechar=validated_data['quotechar'])):
-        #         if (row_index == 0 and validated_data['skip_first_line']) or not row:
-        #             continue
-        #         self._process_row(validated_data, row_index, row)
-        #         rows.append(row)
-        #     validated_data['rows'] = rows
-        #
-        # def _process_row(self, validated_data, row_index, row):
-        #     pass
