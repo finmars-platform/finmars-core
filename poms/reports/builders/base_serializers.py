@@ -330,8 +330,8 @@ class ReportResponsibleSerializer(ResponsibleSerializer):
         # self.fields.pop('group_object_permissions')
         # self.fields.pop('object_permissions')
 
-        self.fields.pop('tags')
-        self.fields.pop('tags_object')
+        # self.fields.pop('tags')
+        # self.fields.pop('tags_object')
 
         self.fields.pop('is_default')
 
@@ -351,8 +351,8 @@ class ReportCounterpartySerializer(CounterpartySerializer):
         # self.fields.pop('group_object_permissions')
         # self.fields.pop('object_permissions')
 
-        self.fields.pop('tags')
-        self.fields.pop('tags_object')
+        # self.fields.pop('tags')
+        # self.fields.pop('tags_object')
 
         self.fields.pop('is_default')
 
