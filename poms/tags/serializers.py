@@ -101,6 +101,7 @@ class TagField(serializers.RelatedField):
 
 
 class TagViewListSerializer(serializers.ListSerializer):
+
     def get_attribute(self, instance):
         objects = super(TagViewListSerializer, self).get_attribute(instance)
         objects = objects.all() if isinstance(objects, models.Manager) else objects
@@ -126,8 +127,10 @@ class ModelWithTagSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(ModelWithTagSerializer, self).__init__(*args, **kwargs)
 
-        self.fields['tags'] = TagField(many=True, queryset=Tag.objects.all(), required=False, allow_null=True, allow_empty=True)
-        self.fields['tags_object'] = TagViewSerializer(source='tags', many=True, read_only=True)
+        # DISABLE TAGS
+
+        # self.fields['tags'] = TagField(many=True, queryset=Tag.objects.all(), required=False, allow_null=True, allow_empty=True)
+        # self.fields['tags_object'] = TagViewSerializer(source='tags', many=True, read_only=True)
 
     def create(self, validated_data):
         tags = validated_data.pop('tags', empty)
