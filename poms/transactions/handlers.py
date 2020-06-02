@@ -1689,7 +1689,10 @@ class TransactionTypeProcess(object):
                 self.complex_transaction.text = formula.safe_eval(
                     self.complex_transaction.transaction_type.display_expr, names=names,
                     context=self._context)
-            except formula.InvalidExpression:
+            except Exception as e:
+
+                _l.info("Cant process text %s" % e)
+
                 self.complex_transaction.text = '<InvalidExpression>'
 
         if self.complex_transaction.transaction_type.date_expr:
