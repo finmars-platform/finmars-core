@@ -1610,6 +1610,9 @@ class TransactionTypeProcess(object):
                     setattr(self.complex_transaction, field_key, val)
 
                 except Exception as e:
+
+                    _l.info("User Field Expression Eval error %s" % e)
+
                     try:
                         setattr(self.complex_transaction, field_key, '<InvalidExpression>')
                     except Exception as e:
