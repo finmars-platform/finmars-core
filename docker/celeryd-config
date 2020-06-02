@@ -26,7 +26,7 @@ CELERYD_CHDIR="/var/app/"
 
 # Extra command-line arguments to the worker
 
-CELERYD_OPTS="--time-limit=300 --autoscale=4,2 --without-gossip --without-mingle --without-heartbeat"
+CELERYD_OPTS="--time-limit=3000 --autoscale=4,2 --without-gossip --without-mingle --without-heartbeat"
 
 # Configure node-specific settings by appending node name to arguments:
 #CELERYD_OPTS="--time-limit=300 -c 8 -c:worker2 4 -c:worker3 2 -Ofair:worker1"
