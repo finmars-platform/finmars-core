@@ -1681,11 +1681,14 @@ def complex_transaction_csv_file_import(self, instance):
                                                     'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
 
 
-                        except:
+                        except Exception as e:
 
                             error_rows['level'] = 'error'
 
                             _l.info("can't process transaction type", exc_info=True)
+
+                            _l.info('error %s' % e)
+
                             transaction.set_rollback(True)
                             if instance.break_on_error:
                                 instance.error_row_index = row_index
@@ -2240,6 +2243,8 @@ def complex_transaction_csv_file_import_validate(self, instance):
     finally:
         # import_file_storage.delete(instance.file_path)
         SFS.delete(instance.file_path)
+
+    _l.info("ransaction import validation completed")
 
     instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
 
