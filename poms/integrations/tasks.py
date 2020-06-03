@@ -1757,6 +1757,11 @@ def complex_transaction_csv_file_import(self, instance):
 
     instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.import', 'Transaction Import');
 
+    self.update_state(task_id=instance.task_id, state=Task.STATUS_DONE,
+                      meta={'processed_rows': instance.processed_rows,
+                            'total_rows': instance.total_rows,
+                            'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
+
     return instance
 
 
@@ -2248,6 +2253,11 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
     instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
 
-    instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.validate', 'Transaction Import Validation');
+    instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.validate', 'Transaction Import Validation')
+
+    self.update_state(task_id=instance.task_id, state=Task.STATUS_DONE,
+                      meta={'processed_rows': instance.processed_rows,
+                            'total_rows': instance.total_rows,
+                            'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
 
     return instance
