@@ -351,7 +351,9 @@ def test_certificate_async(self, task_id):
 
             import_config = BloombergDataProviderCredential.objects.get(master_user=self.master_user)
 
-        except Exception as e:
+        except (BloombergDataProviderCredential.DoesNotExist, Exception) as e:
+
+            _l.info('handle_test_certificate_async get config error', e)
 
             import_config = ImportConfig.objects.get(master_user=task.master_user, provider=1)
 
