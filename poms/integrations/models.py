@@ -98,6 +98,9 @@ class BloombergDataProviderCredential(models.Model):
 
         super(BloombergDataProviderCredential, self).save(*args, **kwargs)
 
+    def __str__(self):
+        return 'BloombergDataProviderCredential'
+
     @property
     def has_p12cert(self):
         return bool(self.p12cert)
