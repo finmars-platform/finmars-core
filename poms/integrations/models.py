@@ -73,7 +73,7 @@ def bloomberg_cert_upload_to(instance, filename):
     return '%s/data_providers/bloomberg/cert_%s.p12' % (instance.master_user.token, hex)
 
 
-class BloombergDataProviderCredential(models.Model):
+class BloombergDataProviderCredential(TimeStampedModel):
 
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 

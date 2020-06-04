@@ -17,7 +17,7 @@ from poms.integrations.models import Task, ImportConfig, ProviderClass, Currency
     PortfolioClassifierMapping, AccountClassifierMapping, \
     CounterpartyClassifierMapping, ResponsibleClassifierMapping, InstrumentClassifierMapping, \
     ComplexTransactionImportSchemeRuleScenario, ComplexTransactionImportSchemeReconScenario, \
-    ComplexTransactionImportSchemeReconField
+    ComplexTransactionImportSchemeReconField, BloombergDataProviderCredential
 
 admin.site.register(ProviderClass, ClassModelAdmin)
 admin.site.register(FactorScheduleDownloadMethod, ClassModelAdmin)
@@ -42,6 +42,23 @@ class ImportConfigAdmin(AbstractModelAdmin):
 
 
 admin.site.register(ImportConfig, ImportConfigAdmin)
+
+
+class BloombergDataProviderCredentialForm(forms.ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput(), required=False)
+
+    class Meta:
+        model = BloombergDataProviderCredential
+        fields = ['master_user', 'p12cert', 'password', 'is_valid']
+
+
+class BloombergDataProviderCredentialAdmin(AbstractModelAdmin):
+    model = BloombergDataProviderCredential
+    form = BloombergDataProviderCredentialForm
+    master_user_path = 'master_user'
+    list_display = ['id', 'master_user', 'created', 'modified', 'is_valid']
+
+admin.site.register(BloombergDataProviderCredential, BloombergDataProviderCredentialAdmin)
 
 
 class InstrumentDownloadSchemeInputInline(admin.TabularInline):
