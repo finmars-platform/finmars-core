@@ -349,7 +349,7 @@ def test_certificate_async(self, task_id):
 
         try:
 
-            import_config = BloombergDataProviderCredential.objects.get(master_user=self.master_user)
+            import_config = BloombergDataProviderCredential.objects.get(master_user=task.master_user)
 
             _l.info('handle_test_certificate_async get actual bloomberg credential')
 
@@ -362,6 +362,7 @@ def test_certificate_async(self, task_id):
         import_config.is_valid = result['is_authorized']
         import_config.save()
 
+        _l.info('handle_test_certificate_async import_config: import_config id', import_config.id)
         _l.info('handle_test_certificate_async import_config: import_config=%s, is_valid=%s', import_config,
                 import_config.is_valid)
         _l.info('handle_test_certificate_async task: master_user_id=%s, task=%s', task.master_user_id, task.result)
