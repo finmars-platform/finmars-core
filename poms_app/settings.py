@@ -600,6 +600,10 @@ if BackendRole.ALL in BACKEND_ROLES or BackendRole.DATA_PROVIDER in BACKEND_ROLE
             'task': 'instruments.generate_events_do_not_inform_apply_default',
             'schedule': crontab(minute=0, hour=0),
         },
+        'file_reports.clear_old_file_reports': {
+            'task': 'file_reports.clear_old_file_reports',
+            'schedule': crontab(minute=0, hour=0)
+        }
         # 'instruments.process_events': {
         #     'task': 'instruments.process_events',
         #     'schedule': crontab(minute='2,32'),

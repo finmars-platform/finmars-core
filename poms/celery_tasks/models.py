@@ -20,7 +20,7 @@ class CeleryTask(models.Model):
 
     json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
 
-    file_report = models.ForeignKey('file_reports.FileReport',null=True, blank=True, verbose_name=ugettext_lazy('file report'), on_delete=models.CASCADE)
+    file_report = models.ForeignKey('file_reports.FileReport',null=True, blank=True, verbose_name=ugettext_lazy('file report'), on_delete=models.SET_NULL)
 
     class Meta:
         unique_together = (
