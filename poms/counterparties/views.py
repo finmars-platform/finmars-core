@@ -7,7 +7,7 @@ from django_filters.rest_framework import FilterSet
 from rest_framework.settings import api_settings
 
 from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMultipleChoiceFilter, AttributeFilter, \
-    GroupsAttributeFilter
+    GroupsAttributeFilter, EntitySpecificFilter
 from poms.common.pagination import CustomPaginationMixin
 from poms.counterparties.models import Counterparty, Responsible, CounterpartyGroup, ResponsibleGroup
 from poms.counterparties.serializers import CounterpartySerializer, ResponsibleSerializer, CounterpartyGroupSerializer, \
@@ -99,7 +99,8 @@ class CounterpartyGroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet
 
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
-        AttributeFilter
+        AttributeFilter,
+        EntitySpecificFilter
     ]
 
 class CounterpartyFilterSet(FilterSet):
@@ -142,6 +143,7 @@ class CounterpartyViewSet(AbstractWithObjectPermissionViewSet):
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
+        EntitySpecificFilter
     ]
     filter_class = CounterpartyFilterSet
     ordering_fields = [
@@ -172,7 +174,8 @@ class CounterpartyLightViewSet(AbstractWithObjectPermissionViewSet):
     )
     serializer_class = CounterpartyLightSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter
+        OwnerByMasterUserFilter,
+        EntitySpecificFilter
     ]
     filter_class = CounterpartyLightFilterSet
     ordering_fields = [
@@ -202,7 +205,8 @@ class CounterpartyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cus
 
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
-        AttributeFilter
+        AttributeFilter,
+        EntitySpecificFilter
     ]
 
 
@@ -247,6 +251,7 @@ class ResponsibleGroupViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = ResponsibleGroupSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        EntitySpecificFilter
     ]
     filter_class = ResponsibleGroupFilterSet
     ordering_fields = [
@@ -277,7 +282,8 @@ class ResponsibleGroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet,
 
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
-        AttributeFilter
+        AttributeFilter,
+        EntitySpecificFilter
     ]
 
 
@@ -327,6 +333,7 @@ class ResponsibleViewSet(AbstractWithObjectPermissionViewSet):
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
+        EntitySpecificFilter
     ]
     filter_class = ResponsibleFilterSet
     ordering_fields = [
@@ -388,5 +395,6 @@ class ResponsibleEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cust
 
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
-        AttributeFilter
+        AttributeFilter,
+        EntitySpecificFilter
     ]

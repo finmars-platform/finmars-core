@@ -23,7 +23,7 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
 from poms.audit.mixins import HistoricalModelMixin
 from poms.common.filtering_handlers import handle_filters
 from poms.common.filters import ByIdFilterBackend, ByIsDeletedFilterBackend, OrderingPostFilter, \
-    ByIsEnabledFilterBackend
+    ByIsEnabledFilterBackend, EntitySpecificFilter
 from poms.common.mixins import BulkModelMixin, DestroyModelFakeMixin, UpdateModelMixinExt
 from poms.common.sorting import sort_by_dynamic_attrs
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
@@ -142,8 +142,8 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
 
         content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
 
-        if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy', 'transaction', 'currencyhistoryerror', 'pricehistoryerror']:
-            filtered_qs = filtered_qs.filter(is_deleted=False)
+        # if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy', 'transaction', 'currencyhistoryerror', 'pricehistoryerror']:
+        #     filtered_qs = filtered_qs.filter(is_deleted=False)
 
         try:
             filtered_qs.model._meta.get_field('is_enabled')
@@ -193,8 +193,8 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
 
         # filtered_qs = filtered_qs.filter(id__in=qs)
 
-        if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy', 'transaction', 'currencyhistoryerror', 'pricehistoryerror']:
-            filtered_qs = filtered_qs.filter(is_deleted=False)
+        # if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy', 'transaction', 'currencyhistoryerror', 'pricehistoryerror']:
+        #     filtered_qs = filtered_qs.filter(is_deleted=False)
 
         if content_type.model not in ['currencyhistory', 'pricehistory', 'currencyhistoryerror', 'pricehistoryerror']:
 
@@ -231,7 +231,7 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         ByIsEnabledFilterBackend,
         DjangoFilterBackend,
         OrderingFilter,
-        OrderingPostFilter
+        OrderingPostFilter,
     ]
 
     def list(self, request, *args, **kwargs):
@@ -278,8 +278,8 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
 
         queryset = self.filter_queryset(self.get_queryset())
 
-        if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy', 'transaction', 'currencyhistoryerror', 'pricehistoryerror']:
-            queryset = queryset.filter(is_deleted=False)
+        # if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy', 'transaction', 'currencyhistoryerror', 'pricehistoryerror']:
+        #     queryset = queryset.filter(is_deleted=False)
 
         if content_type.model not in ['currencyhistory', 'pricehistory', 'complextransaction', 'transaction', 'currencyhistoryerror', 'pricehistoryerror']:
 

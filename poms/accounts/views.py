@@ -7,7 +7,7 @@ from rest_framework.settings import api_settings
 from poms.accounts.models import Account, AccountType
 from poms.accounts.serializers import AccountSerializer, AccountTypeSerializer, AccountLightSerializer
 from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMultipleChoiceFilter, \
-    GroupsAttributeFilter, AttributeFilter
+    GroupsAttributeFilter, AttributeFilter, EntitySpecificFilter
 from poms.common.pagination import CustomPaginationMixin
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, GenericClassifierViewSet
@@ -65,6 +65,7 @@ class AccountTypeViewSet(AbstractWithObjectPermissionViewSet):
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
+        EntitySpecificFilter
         # TagFilterBackend,
     ]
     filter_class = AccountTypeFilterSet
@@ -88,7 +89,8 @@ class AccountTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cust
 
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
-        AttributeFilter
+        AttributeFilter,
+        EntitySpecificFilter
     ]
 
 class AccountAttributeTypeViewSet(GenericAttributeTypeViewSet):

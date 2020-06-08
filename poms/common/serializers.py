@@ -23,7 +23,7 @@ class ModelWithTimeStampSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
 
-        if self.instance:
+        if self.instance and 'modified' in data:
             if data['modified'] != self.instance.modified:
                 raise serializers.ValidationError("Synchronization error")
 

@@ -19,6 +19,8 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils import six
 from django.core.exceptions import ImproperlyConfigured
 
+from django.core.exceptions import FieldDoesNotExist
+
 import time
 
 import logging
@@ -597,3 +599,49 @@ class OrderingPostFilter(BaseFilterBackend):
 
     def get_fields(self, view):
         return [self.ordering_param]
+
+
+class EntitySpecificFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+
+        if not view.detail:
+
+            is_disabled = False
+            is_deleted = False
+            is_inactive = False
+
+            if 'ev_options' in request.data:
+
+                if 'entity_filters' in request.data['ev_options']:
+
+                    if 'disabled' in request.data['ev_options']['entity_filters']:
+
+                        is_disabled = True
+
+                    if 'deleted' in request.data['ev_options']['entity_filters']:
+
+                        is_deleted = True
+
+                    if 'inactive' in request.data['ev_options']['entity_filters']:
+
+                        is_inactive = True
+
+            # Show Disabled
+            if is_disabled == False:
+                queryset = queryset.filter(is_enabled=True)
+
+            # Show Deleted
+            if is_deleted == False:
+                queryset = queryset.filter(is_deleted=False)
+
+            if is_inactive == False:
+
+                try:
+                    field = queryset.model._meta.get_field('is_active')
+
+                    queryset = queryset.filter(is_active=True)
+                except FieldDoesNotExist:
+                    pass
+
+
+        return queryset

@@ -19,7 +19,7 @@ from poms.accounts.models import Account
 from poms.accounts.models import AccountType
 from poms.audit import history
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
-    ModelExtMultipleChoiceFilter, AttributeFilter, GroupsAttributeFilter
+    ModelExtMultipleChoiceFilter, AttributeFilter, GroupsAttributeFilter, EntitySpecificFilter
 from poms.common.mixins import UpdateModelMixinExt
 from poms.common.pagination import CustomPaginationMixin
 from poms.common.utils import date_now
@@ -221,6 +221,7 @@ class InstrumentTypeViewSet(AbstractWithObjectPermissionViewSet):
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
+        EntitySpecificFilter
     ]
     filter_class = InstrumentTypeFilterSet
     ordering_fields = [
@@ -300,7 +301,8 @@ class InstrumentTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, C
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         AttributeFilter,
-        GroupsAttributeFilter
+        GroupsAttributeFilter,
+        EntitySpecificFilter
     ]
 
 
@@ -314,7 +316,8 @@ class InstrumentTypeLightViewSet(AbstractWithObjectPermissionViewSet):
     )
     serializer_class = InstrumentTypeLightSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter
+        OwnerByMasterUserFilter,
+        EntitySpecificFilter
     ]
     filter_class = InstrumentTypeFilterSet
     ordering_fields = [
@@ -456,8 +459,9 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = InstrumentSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
-            AttributeFilter,
-            GroupsAttributeFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+        EntitySpecificFilter
     ]
     filter_class = InstrumentFilterSet
     ordering_fields = [
@@ -642,6 +646,7 @@ class InstrumentLightViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = InstrumentLightSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        EntitySpecificFilter
     ]
     filter_class = InstrumentLightFilterSet
     ordering_fields = [
@@ -706,7 +711,8 @@ class InstrumentEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Custo
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         AttributeFilter,
-        GroupsAttributeFilter
+        GroupsAttributeFilter,
+        EntitySpecificFilter
     ]
 
 

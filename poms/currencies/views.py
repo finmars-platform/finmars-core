@@ -6,7 +6,7 @@ from django_filters.rest_framework import FilterSet
 from rest_framework.settings import api_settings
 
 from poms.common.filters import CharFilter, ModelExtMultipleChoiceFilter, NoOpFilter, AttributeFilter, \
-    GroupsAttributeFilter
+    GroupsAttributeFilter, EntitySpecificFilter
 from poms.common.pagination import CustomPaginationMixin
 from poms.common.views import AbstractModelViewSet
 from poms.currencies.filters import OwnerByCurrencyFilter
@@ -68,6 +68,7 @@ class CurrencyViewSet(AbstractWithObjectPermissionViewSet):
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
+        EntitySpecificFilter
     ]
     filter_class = CurrencyFilterSet
     ordering_fields = [
@@ -119,7 +120,8 @@ class CurrencyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomP
 
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
-        AttributeFilter
+        AttributeFilter,
+        EntitySpecificFilter
     ]
 
 
@@ -150,6 +152,7 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
         OwnerByCurrencyFilter,
         AttributeFilter,
         GroupsAttributeFilter,
+        EntitySpecificFilter
     ]
     filter_class = CurrencyHistoryFilterSet
     ordering_fields = [
@@ -172,5 +175,6 @@ class CurrencyHistoryEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, 
 
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByCurrencyFilter,
-        AttributeFilter
+        AttributeFilter,
+        EntitySpecificFilter
     ]

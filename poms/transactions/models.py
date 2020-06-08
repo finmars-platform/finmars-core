@@ -1530,8 +1530,6 @@ class Transaction(models.Model):
 
     attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
 
-
-
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
 
     class Meta:
@@ -1587,6 +1585,12 @@ class Transaction(models.Model):
 
     def save(self, *args, **kwargs):
         calc_cash = kwargs.pop('calc_cash', False)
+
+        if not self.accounting_date:
+            self.accounting_date = date_now()
+
+        if not self.cash_date:
+            self.cash_date = date_now()
 
         self.transaction_date = min(self.accounting_date, self.cash_date)
         if self.transaction_code is None or self.transaction_code == 0:
