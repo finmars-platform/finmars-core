@@ -77,10 +77,16 @@ def generate_file_report(instance, master_user, type, name):
         localResult = localResult + errorRow['error_data']['data']['imported_columns']
         localResult = localResult + errorRow['error_data']['data']['data_matching']
 
-        localResult.append('"' + str(errorRow['error_message']) + '"')
+        localResult.append(str(errorRow['error_message']))
         localResult.append(str(errorRow['error_reaction']))
 
-        rows_content.append(localResult)
+        localResultWrapper = []
+
+        for item in localResult:
+
+            localResultWrapper.append('"' + str(item) + '"')
+
+        rows_content.append(localResultWrapper)
 
     columnRow = ','.join(columns)
 
