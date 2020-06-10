@@ -151,8 +151,7 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByCurrencyFilter,
         AttributeFilter,
-        GroupsAttributeFilter,
-        EntitySpecificFilter
+        GroupsAttributeFilter
     ]
     filter_class = CurrencyHistoryFilterSet
     ordering_fields = [
@@ -175,6 +174,5 @@ class CurrencyHistoryEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, 
 
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByCurrencyFilter,
-        AttributeFilter,
-        EntitySpecificFilter
+        AttributeFilter
     ]
