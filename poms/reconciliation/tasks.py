@@ -5,7 +5,7 @@ import logging
 
 from poms.common import formula
 from poms.integrations.models import Task
-from poms.integrations.storage import import_file_storage
+# from poms.integrations.storage import import_file_storage
 from tempfile import NamedTemporaryFile
 from django.utils.translation import ugettext
 from django.db import transaction
@@ -16,6 +16,11 @@ from poms.reconciliation.serializers import ReconciliationNewBankFileFieldSerial
     ReconciliationBankFileFieldSerializer
 
 _l = logging.getLogger('poms.reconciliation')
+
+
+from storages.backends.sftpstorage import SFTPStorage
+SFS = SFTPStorage()
+
 
 
 @shared_task(name='reconciliation.process_bank_file_for_reconcile', bind=True)
@@ -287,7 +292,7 @@ def process_bank_file_for_reconcile(self, instance):
 
     instance.error_rows = []
     try:
-        with import_file_storage.open(instance.file_path, 'rb') as f:
+        with SFS.open(instance.file_path, 'rb') as f:
             with NamedTemporaryFile() as tmpf:
                 _l.info('tmpf')
                 _l.info(tmpf)
@@ -308,7 +313,7 @@ def process_bank_file_for_reconcile(self, instance):
         _l.info('Can\'t process file', exc_info=True)
         instance.error_message = ugettext("Invalid file format or file already deleted.")
     finally:
-        import_file_storage.delete(instance.file_path)
+        SFS.delete(instance.file_path)
 
     instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
 
