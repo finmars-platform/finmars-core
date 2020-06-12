@@ -1,4 +1,6 @@
 # Changelog
+## 12.06.2020
+- Copy Database functionality
 
 ## 04.02.2020
 - Pricing

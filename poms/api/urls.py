@@ -57,6 +57,7 @@ router.register(r'users/reset-password', users.ResetPasswordRequestTokenViewSet,
 
 router.register(r'users/user-register', users.UserRegisterViewSet, 'userregister')
 router.register(r'users/master-user-create', users.MasterUserCreateViewSet, 'masterusercreate')
+router.register(r'users/master-user-copy', users.MasterUserCopyViewSet, 'masterusercopy')
 router.register(r'users/master-user-check-uniqueness', users.MasterUserCreateCheckUniquenessViewSet,
                 'masterusercreatecheckuniqueness')
 router.register(r'users/user', users.UserViewSet)

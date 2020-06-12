@@ -11,7 +11,10 @@ from django.utils import timezone
 
 from poms.accounts.models import AccountType, Account
 from poms.chats.models import ThreadGroup
+from poms.complex_import.models import ComplexImportScheme, ComplexImportSchemeActionCsvImport, \
+    ComplexImportSchemeActionTransactionImport
 from poms.counterparties.models import CounterpartyGroup, Counterparty, ResponsibleGroup, Responsible
+from poms.csv_import.models import CsvImportScheme, CsvField, EntityField
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import PricingPolicy, DailyPricingModel, InstrumentClass, AccrualCalculationModel, \
     PaymentSizeDetail, Periodicity, CostMethod, InstrumentType, Instrument, ManualPricingFormula, PriceHistory, \
@@ -22,7 +25,9 @@ from poms.integrations.models import PriceDownloadScheme, ProviderClass, Accrual
     InstrumentMapping, CounterpartyMapping, ResponsibleMapping, PortfolioMapping, Strategy1Mapping, Strategy2Mapping, \
     Strategy3Mapping, DailyPricingModelMapping, PaymentSizeDetailMapping, PriceDownloadSchemeMapping, \
     PricingAutomatedSchedule, ComplexTransactionImportScheme, ComplexTransactionImportSchemeInput, \
-    ComplexTransactionImportSchemeField, ImportConfig
+    ComplexTransactionImportSchemeField, ImportConfig, ComplexTransactionImportSchemeCalculatedInput, \
+    ComplexTransactionImportSchemeSelectorValue, ComplexTransactionImportSchemeRuleScenario, \
+    ComplexTransactionImportSchemeReconScenario, ComplexTransactionImportSchemeReconField
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, Strategy2Subgroup, \
     Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
@@ -36,16 +41,31 @@ _l = logging.getLogger('poms.users.cloner')
 
 
 class FullDataCloner(object):
-    def __init__(self, source_master_user):
+    def __init__(self, source_master_user, name=None, copy_settings=None, current_user=None):
         self._now = None
         self._source_master_user = source_master_user
         self._source_owner = None
         self._target_master_user = None
         self._target_owner = None
 
+        self.current_user = current_user
+
+        if copy_settings:
+            self.copy_settings = copy_settings
+        else:
+            self.copy_settings = self.get_default_copy_settings()
+
+        self.name = name
+
         self._pk_map = defaultdict(dict)
         self._source_objects = defaultdict(dict)
         self._target_objects = defaultdict(dict)
+
+    def get_default_copy_settings(self):
+
+        return {
+            "members": True
+        }
 
     @transaction.atomic()
     def clone(self):
@@ -63,16 +83,25 @@ class FullDataCloner(object):
             self._now = timezone.localtime(timezone.now())
             self._clone()
 
+        return self._target_master_user
+
     def _clone(self):
         self._target_master_user = self._simple_clone(None, self._source_master_user, 'name', 'language', 'timezone')
-        self._target_master_user.name = '{} ({:%H:%M %d.%m.%Y})'.format(
-            self._target_master_user,
-            self._now
-        )
+
+        if self.name:
+            self._target_master_user.name = self.name
+        else:
+            self._target_master_user.name = '{} ({:%H:%M %d.%m.%Y})'.format(
+                self._target_master_user,
+                self._now
+            )
 
         self._load_consts()
 
-        self._users_1()
+        # self._users_1()
+
+        self._copy_current_member()
+
         self._accounts()
         self._chats()
         self._counterparties()
@@ -89,9 +118,14 @@ class FullDataCloner(object):
 
         self._transactions_1()
 
-        # the end
         self._instruments_3()
+
+
         self._integrations_2()
+
+        self._csv_import_schemes()
+
+        self._complex_import_schemes()
 
         self._simple_clone(self._target_master_user, self._source_master_user,
                            'system_currency', 'currency', 'account_type', 'account', 'counterparty_group',
@@ -101,7 +135,7 @@ class FullDataCloner(object):
                            'thread_group', 'transaction_type_group', 'mismatch_portfolio', 'mismatch_account',
                            'notification_business_days')
 
-        self._tags()
+        # self._tags()
         self._ui()
 
         # transaction.set_rollback(True)
@@ -152,12 +186,23 @@ class FullDataCloner(object):
         for source in NotificationClass.objects.all():
             self._add_pk_map(source, source)
 
-    def _users_1(self):
+    # def _users_1(self):
+    #     self._source_owner = self._source_master_user.members.filter(is_owner=True).order_by('join_date').first()
+    #
+    #     username = '%s@fake.finmars.com' % str(uuid4().hex)
+    #     user = User.objects.create_user(username, email=username)
+    #     self._target_owner = Member.objects.create(master_user=self._target_master_user, user=user, is_owner=True,
+    #                                                is_admin=True)
+    #     if self._source_owner:
+    #         self._add_pk_map(self._target_owner, self._source_owner)
+    #
+    #     self._simple_list_clone(Group, None, 'master_user', 'name')
+
+    def _copy_current_member(self):
         self._source_owner = self._source_master_user.members.filter(is_owner=True).order_by('join_date').first()
 
-        username = '%s@fake.finmars.com' % str(uuid4().hex)
-        user = User.objects.create_user(username, email=username)
-        self._target_owner = Member.objects.create(master_user=self._target_master_user, user=user, is_owner=True,
+        self._target_owner = Member.objects.create(master_user=self._target_master_user, user=self.current_user,
+                                                   is_owner=True,
                                                    is_admin=True)
         if self._source_owner:
             self._add_pk_map(self._target_owner, self._source_owner)
@@ -313,11 +358,25 @@ class FullDataCloner(object):
 
         self._simple_list_clone(ComplexTransactionImportSchemeInput, 'scheme__master_user', 'scheme', 'name', 'column')
 
-        self._simple_list_clone(ComplexTransactionImportSchemeRule, 'scheme__master_user', 'scheme', 'value',
-                                'transaction_type')
+        self._simple_list_clone(ComplexTransactionImportSchemeCalculatedInput, 'scheme__master_user', 'scheme', 'name',
+                                'column', 'name_expr')
 
-        self._simple_list_clone(ComplexTransactionImportSchemeField, 'rule__scheme__master_user', 'rule',
+        self._simple_list_clone(ComplexTransactionImportSchemeSelectorValue, 'scheme__master_user', 'scheme', 'value',
+                                'notes', 'order')
+
+        self._simple_list_clone(ComplexTransactionImportSchemeRuleScenario, 'scheme__master_user', 'scheme', 'name',
+                                'transaction_type', 'selector_values')
+
+        self._simple_list_clone(ComplexTransactionImportSchemeField, 'rule_scenario__scheme__master_user',
+                                'rule_scenario',
                                 'transaction_type_input', 'value_expr')
+
+        self._simple_list_clone(ComplexTransactionImportSchemeReconScenario, 'scheme__master_user', 'scheme', 'name',
+                                'line_reference_id', 'reference_date', 'selector_values')
+
+        self._simple_list_clone(ComplexTransactionImportSchemeReconField, 'recon_scenario__scheme__master_user',
+                                'recon_scenario', 'reference_name', 'description', 'value_string', 'value_float',
+                                'value_date')
 
     def _portfolios_1(self):
         self._simple_list_clone(Portfolio, None, 'master_user', 'user_code', 'name', 'short_name',
@@ -360,9 +419,26 @@ class FullDataCloner(object):
                                 'public_name', 'notes', 'is_deleted')
 
         self._simple_list_clone(TransactionType, None, 'master_user', 'user_code', 'name', 'short_name',
-                                'public_name', 'notes', 'is_deleted', 'group', 'date_expr', 'display_expr',
+                                'public_name', 'notes', 'type', 'visibility_status', 'is_deleted', 'group', 'date_expr',
+                                'display_expr',
                                 'instrument_types', 'is_valid_for_all_portfolios', 'is_valid_for_all_instruments',
-                                'book_transaction_layout_json')
+                                'book_transaction_layout_json',
+
+                                'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
+                                'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
+                                'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
+                                'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
+
+                                'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
+                                'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+                                'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14',
+                                'user_number_15',
+                                'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19',
+                                'user_number_20',
+
+                                'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
+
+                                )
 
         self._simple_list_clone(TransactionTypeInput, 'transaction_type__master_user',
                                 'transaction_type', 'name', 'verbose_name', 'value_type', 'content_type',
@@ -421,6 +497,31 @@ class FullDataCloner(object):
 
         pass
 
+    def _csv_import_schemes(self):
+
+        self._simple_list_clone(CsvImportScheme, None, 'master_user', 'scheme_name', 'content_type', 'filter_expr')
+
+        self._simple_list_clone(CsvField, 'scheme__master_user', 'scheme', 'column', 'name', 'name_expr')
+
+        self._simple_list_clone(EntityField, 'scheme__master_user', 'scheme', 'name', 'expression', 'order',
+                                'system_property_key', 'dynamic_attribute_id')
+
+    def _complex_import_schemes(self):
+
+        self._simple_list_clone(ComplexImportScheme, None, 'master_user', 'scheme_name')
+
+        self._simple_list_clone(ComplexImportSchemeActionCsvImport, 'complex_import_scheme__master_user',
+                                'complex_import_scheme',
+                                'action_notes', 'order', 'skip',
+                                'csv_import_scheme', 'mode', 'missing_data_handler',
+                                'classifier_handler', 'error_handler', 'notes')
+
+        self._simple_list_clone(ComplexImportSchemeActionTransactionImport, 'complex_import_scheme__master_user',
+                                'complex_import_scheme',
+                                'action_notes', 'order', 'skip',
+                                'complex_transaction_import_scheme', 'missing_data_handler',
+                                'error_handler', 'notes')
+
     def _attribute_types(self, type_model, classifier_model, value_model):
         _l.debug('clone %s', type_model)
         for source in type_model.objects.filter(master_user=self._source_master_user):
@@ -465,6 +566,9 @@ class FullDataCloner(object):
 
         filter = filter or {}
         filter[master_user_path] = self._source_master_user
+
+        # print('_simple_list_clone filter %s' % filter)
+
         qs = model.objects.filter(**filter)
         # qs = model.objects.filter(**{master_user_path: self._source_master_user})
 
@@ -518,9 +622,20 @@ class FullDataCloner(object):
             field = target._meta.get_field(item)
             if field.many_to_many:
                 values = getattr(source, item).values_list('id', flat=True)
-                values = [self._get_related_from_pk_map(field.rel.to, pk) for pk in values]
-                values = field.rel.to.objects.filter(pk__in=values)
-                setattr(target, item, values)
+                values = [self._get_related_from_pk_map(field.remote_field.model, pk) for pk in values]
+
+                print('field %s' % field)
+
+                values = field.remote_field.model.objects.filter(pk__in=values)
+
+                # setattr(target, item, values)
+
+                attr = getattr(target, item)
+
+                attr.set(values)
+
+                # for val in values:
+                #     target[item].add(val)
 
         if pk_map:
             self._add_pk_map(target, source)
@@ -570,5 +685,8 @@ class FullDataCloner(object):
         if pk is None:
             return None
         content_type = ContentType.objects.get_for_model(model)
+
+        # print(' _get_related_from_pk_map content_type %s' % content_type)
+
         objects = self._pk_map[content_type.pk]
         return objects[pk]

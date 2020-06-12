@@ -48,7 +48,7 @@ from poms.users.serializers import GroupSerializer, UserSerializer, MasterUserSe
     PingSerializer, UserSetPasswordSerializer, MasterUserSetCurrentSerializer, UserUnsubscribeSerializer, \
     UserRegisterSerializer, MasterUserCreateSerializer, EmailSerializer, PasswordTokenSerializer, \
     InviteToMasterUserSerializer, InviteCreateSerializer, EcosystemDefaultSerializer, MasterUserLightSerializer, \
-    OtpTokenSerializer
+    OtpTokenSerializer, MasterUserCopySerializer
 from poms.users.utils import set_master_user
 
 from datetime import timedelta
@@ -177,6 +177,36 @@ class MasterUserCreateViewSet(ViewSet):
         admin_group.save()
 
         return Response({'id': master_user.id, 'name': master_user.name, 'description': master_user.description})
+
+
+class MasterUserCopyViewSet(ViewSet):
+
+    serializer_class = MasterUserCopySerializer
+
+    permission_classes = [
+        IsAuthenticated
+    ]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.save()
+        name = validated_data['name']
+
+        reference_master_user = MasterUser.objects.get(id=validated_data['reference_master_user'])
+
+        # TODO ADD VALIDATION THAT WE ARE MEMBER OF REFERENCE MASTER USER
+
+        from poms.users.cloner import FullDataCloner
+
+        copy_settings = {
+            "members": False
+        }
+
+        cloner = FullDataCloner(source_master_user=reference_master_user, name=name, copy_settings=copy_settings, current_user=request.user)
+        new_master_user = cloner.clone()
+
+        return Response({'id': new_master_user.id, 'name': new_master_user.name, 'description': new_master_user.description})
 
 
 class MasterUserCreateCheckUniquenessViewSet(ViewSet):
