@@ -718,10 +718,9 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
         default_values = self.get_context_for_book(request)
 
         print("context_values %s" % context_values)
+        print("pk %s" % pk)
 
         transaction_type = TransactionType.objects.get(pk=pk)
-
-
 
         if request.method == 'GET':
 

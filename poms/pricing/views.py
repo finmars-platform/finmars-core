@@ -137,7 +137,7 @@ class PricingProcedureViewSet(AbstractModelViewSet):
 
         _l.info("Run Procedure %s" % pk)
 
-        _l.info("Request data %s" % request.data)
+        _l.info("Run Procedure data %s" % request.data)
 
         procedure = PricingProcedure.objects.get(pk=pk)
 

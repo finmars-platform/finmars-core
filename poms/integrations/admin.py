@@ -29,7 +29,7 @@ class ImportConfigForm(forms.ModelForm):
 
     class Meta:
         model = ImportConfig
-        fields = ['master_user', 'provider', 'p12cert', 'password', 'cert', 'key']
+        fields = ['master_user', 'provider', 'p12cert', 'password', 'cert', 'key', ]
 
 
 class ImportConfigAdmin(AbstractModelAdmin):

@@ -16,7 +16,7 @@ from poms.pricing.models import InstrumentPricingSchemeType, PricingProcedureIns
     PricingProcedure, PricingProcedureAlphavInstrumentResult
 from poms.pricing.transport.transport import PricingTransport
 from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_between_two_dates, group_items_by_provider, \
-    get_is_yesterday, optimize_items, roll_price_history_for_n_day_forward
+    get_is_yesterday, optimize_items, roll_price_history_for_n_day_forward, get_empty_values_for_dates
 from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
 
@@ -899,6 +899,18 @@ class PricingInstrumentHandler(object):
 
         procedure_instance.save()
 
+    def is_valid_parameter_for_bloomberg(self, parameters):
+
+        reference = parameters[0]
+
+        pieces = reference.split(' ')
+
+        if len(pieces) > 1:
+            return True
+
+        return False
+
+
     def process_to_bloomberg_provider(self, items):
 
         _l.info("Pricing Instrument Handler - Bloomberg Provider: len %s" % len(items))
@@ -960,6 +972,10 @@ class PricingInstrumentHandler(object):
 
         full_items = []
 
+        empty_values = get_empty_values_for_dates(dates)
+
+        _l.info('empty_values %s' % empty_values)
+
         for item in items:
 
             if len(item.parameters):
@@ -1015,28 +1031,28 @@ class PricingInstrumentHandler(object):
                         item_obj['fields'].append({
                             'code': item.scheme_fields_map['ask_yesterday'],
                             'parameters': [],
-                            'values': []
+                            'values': empty_values
                         })
 
                     if 'bid_yesterday' in item.scheme_fields_map:
                         item_obj['fields'].append({
                             'code': item.scheme_fields_map['bid_yesterday'],
                             'parameters': [],
-                            'values': []
+                            'values': empty_values
                         })
 
                     if 'last_yesterday' in item.scheme_fields_map:
                         item_obj['fields'].append({
                             'code': item.scheme_fields_map['last_yesterday'],
                             'parameters': [],
-                            'values': []
+                            'values': empty_values
                         })
 
                     if 'accrual_yesterday' in item.scheme_fields_map:
                         item_obj['fields'].append({
                             'code': item.scheme_fields_map['accrual_yesterday'],
                             'parameters': [],
-                            'values': []
+                            'values': empty_values
                         })
 
                     full_items.append(item_obj)
@@ -1089,28 +1105,28 @@ class PricingInstrumentHandler(object):
                         item_obj['fields'].append({
                             'code': item.scheme_fields_map['ask_historical'],
                             'parameters': [],
-                            'values': []
+                            'values': empty_values
                         })
 
                     if 'bid_historical' in item.scheme_fields_map:
                         item_obj['fields'].append({
                             'code': item.scheme_fields_map['bid_historical'],
                             'parameters': [],
-                            'values': []
+                            'values': empty_values
                         })
 
                     if 'last_historical' in item.scheme_fields_map:
                         item_obj['fields'].append({
                             'code': item.scheme_fields_map['last_historical'],
                             'parameters': [],
-                            'values': []
+                            'values': empty_values
                         })
 
                     if 'accrual_historical' in item.scheme_fields_map:
                         item_obj['fields'].append({
                             'code': item.scheme_fields_map['accrual_historical'],
                             'parameters': [],
-                            'values': []
+                            'values': empty_values
                         })
 
                     full_items.append(item_obj)
@@ -1171,6 +1187,8 @@ class PricingInstrumentHandler(object):
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
 
+        empty_values = get_empty_values_for_dates(dates)
+
         _l.info('procedure id %s' % body['procedure'])
 
         full_items = []
@@ -1211,31 +1229,31 @@ class PricingInstrumentHandler(object):
                 item_obj['fields'].append({
                     'code': 'close',
                     'parameters': [],
-                    'values': []
+                    'values': empty_values
                 })
 
                 item_obj['fields'].append({
                     'code': 'open',
                     'parameters': [],
-                    'values': []
+                    'values': empty_values
                 })
 
                 item_obj['fields'].append({
                     'code': 'high',
                     'parameters': [],
-                    'values': []
+                    'values': empty_values
                 })
 
                 item_obj['fields'].append({
                     'code': 'low',
                     'parameters': [],
-                    'values': []
+                    'values': empty_values
                 })
 
                 item_obj['fields'].append({
                     'code': 'volume',
                     'parameters': [],
-                    'values': []
+                    'values': empty_values
                 })
 
                 full_items.append(item_obj)
@@ -1298,6 +1316,8 @@ class PricingInstrumentHandler(object):
 
         _l.info('procedure id %s' % body['procedure'])
 
+        empty_values = get_empty_values_for_dates(dates)
+
         full_items = []
 
         for item in items:
@@ -1336,7 +1356,7 @@ class PricingInstrumentHandler(object):
                 item_obj['fields'].append({
                     'code': 'close',
                     'parameters': [],
-                    'values': []
+                    'values': empty_values
                 })
 
                 full_items.append(item_obj)

@@ -11,6 +11,19 @@ from poms.pricing.models import PriceHistoryError, CurrencyHistoryError
 _l = logging.getLogger('poms.pricing')
 
 
+def get_empty_values_for_dates(dates):
+
+    result = []
+
+    for date in dates:
+
+        result.append({
+            "date": str(date),
+            "value": None
+        })
+
+    return result
+
 
 def get_unique_pricing_schemes(items):
 

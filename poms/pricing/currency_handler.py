@@ -15,7 +15,7 @@ from poms.pricing.models import PricingProcedureInstance, PricingProcedureBloomb
     CurrencyPricingSchemeType, CurrencyHistoryError, PricingProcedureFixerCurrencyResult, PricingProcedure
 from poms.pricing.transport.transport import PricingTransport
 from poms.pricing.utils import get_unique_pricing_schemes, group_items_by_provider, get_list_of_dates_between_two_dates, \
-    get_is_yesterday, optimize_items, roll_currency_history_for_n_day_forward
+    get_is_yesterday, optimize_items, roll_currency_history_for_n_day_forward, get_empty_values_for_dates
 
 import logging
 
@@ -766,6 +766,8 @@ class PricingCurrencyHandler(object):
 
         is_yesterday = get_is_yesterday(self.procedure.price_date_from, self.procedure.price_date_to)
 
+        empty_values = get_empty_values_for_dates(dates)
+
         _l.info('is_yesterday %s' % is_yesterday)
         _l.info('procedure id %s' % body['procedure'])
 
@@ -811,7 +813,7 @@ class PricingCurrencyHandler(object):
                     item_obj['fields'].append({
                         'code': item.scheme_fields_map['fx_rate'],
                         'parameters': [],
-                        'values': []
+                        'values': empty_values
                     })
 
                 full_items.append(item_obj)
@@ -876,6 +878,8 @@ class PricingCurrencyHandler(object):
 
         _l.info('procedure id %s' % body['procedure'])
 
+        empty_values = get_empty_values_for_dates(dates)
+
         full_items = []
 
         for item in items:
@@ -913,7 +917,7 @@ class PricingCurrencyHandler(object):
                 item_obj['fields'].append({
                     'code': 'close',
                     'parameters': [],
-                    'values': []
+                    'values': empty_values
                 })
 
                 full_items.append(item_obj)
