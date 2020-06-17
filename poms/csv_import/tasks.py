@@ -7,6 +7,7 @@ from poms.common.formula import safe_eval, ExpressionEvalError
 from poms.common.utils import date_now
 from poms.file_reports.models import FileReport
 from poms.obj_perms.models import GenericObjectPermission
+from poms.pricing.models import InstrumentPricingPolicy
 
 from poms.users.models import EcosystemDefault, Group
 from django.apps import apps
@@ -68,7 +69,7 @@ def generate_file_report(instance, master_user, type, name):
 
     for errorRow in instance.stats:
 
-        _l.info('errorRow %s' % errorRow)
+        # _l.info('errorRow %s' % errorRow)
 
         localResult = []
 
@@ -1154,6 +1155,34 @@ class ImportHandler:
                                                            content_type=scheme.content_type,
                                                            permission=account_perm)
 
+    def add_instrument_type_pricing_policies(self, instance, scheme, member, master_user):
+
+        _l.info("Add Pricing Policies instrument_type %s" % instance.instrument_type)
+
+        if instance.instrument_type:
+
+            InstrumentPricingPolicy.objects.filter(instrument=instance).delete()
+
+            for pp_item in instance.instrument_type.pricing_policies.all():
+
+                item = InstrumentPricingPolicy()
+
+                item.instrument = instance
+                item.pricing_policy = pp_item.pricing_policy
+                item.pricing_scheme = pp_item.pricing_scheme
+                item.notes = pp_item.notes
+                item.default_value = pp_item.default_value
+                item.attribute_key = pp_item.attribute_key
+                item.json_data = pp_item.json_data
+
+                item.save()
+
+            _l.info("Add Pricing Policies instrument_type %s" % instance.instrument_type)
+            _l.info("Add Pricing Policies for instance %s" % instance)
+
+
+
+
     def save_instance(self, scheme, result, error_handler, error_row, member, master_user):
 
         try:
@@ -1171,6 +1200,9 @@ class ImportHandler:
 
                     if self.is_inherit_rights(scheme, member):
                         self.add_inherited_permissions(instance, scheme, member, master_user)
+
+                if scheme.content_type.model == 'instrument':
+                    self.add_instrument_type_pricing_policies(instance, scheme, member, master_user)
 
                 instance.save()
 
@@ -1206,6 +1238,9 @@ class ImportHandler:
                 self.delete_dynamic_attributes(item, result['attributes'])
                 self.fill_with_dynamic_attributes(item, result['attributes'])
                 self.add_permissions(item, scheme, member, master_user)
+
+            if scheme.content_type.model == 'instrument':
+                self.add_instrument_type_pricing_policies(item, scheme, member, master_user)
 
             item.save()
 
