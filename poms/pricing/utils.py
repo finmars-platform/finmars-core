@@ -197,7 +197,7 @@ def roll_currency_history_for_n_day_forward(item, procedure, last_price, master_
 
                 error.error_text = "Prices already exists. Fx rate: " + str(price.fx_rate) + "."
 
-                _l.info('Roll Currency History Error Skip %s ' % error)
+                # _l.info('Roll Currency History Error Skip %s ' % error)
 
                 error.status = CurrencyHistoryError.STATUS_SKIP
                 error.save()
@@ -244,7 +244,7 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
                     date=new_date
                 )
 
-                _l.info('Roll Price History Create new %s ' % price)
+                # _l.info('Roll Price History Create new %s ' % price)
 
             price.principal_price = 0
             price.accrued_price = 0
@@ -276,7 +276,7 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
 
                 error.error_text = "Prices already exists. Principal Price: " + str(price.principal_price) +"; Accrued: "+ str(price.accrued_price) +"."
 
-                _l.info('Roll Price History Error Skip %s ' % error)
+                # _l.info('Roll Price History Error Skip %s ' % error)
 
                 error.status = PriceHistoryError.STATUS_SKIP
                 error.save()

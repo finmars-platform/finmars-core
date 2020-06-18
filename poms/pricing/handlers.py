@@ -1085,8 +1085,8 @@ class FillPricesBrokerFixerProcess(object):
         _l.info('fixer fx successful_prices_count %s' % successful_prices_count)
         _l.info('fixer fx error_prices_count %s' % error_prices_count)
 
-        self.procedure_instance.successful_prices_count = successful_prices_count
-        self.procedure_instance.error_prices_count = error_prices_count
+        self.procedure_instance.successful_prices_count = int(successful_prices_count)
+        self.procedure_instance.error_prices_count = int(error_prices_count)
 
         self.procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
