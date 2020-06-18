@@ -10,6 +10,10 @@ from poms.users.models import MasterUser
 
 from django.core.serializers.json import DjangoJSONEncoder
 
+import logging
+
+_l = logging.getLogger('poms.pricing')
+
 
 class InstrumentPricingSchemeType(models.Model):
     NONE = 1
@@ -1069,6 +1073,14 @@ class PricingProcedureInstance(models.Model):
 
     successful_prices_count = models.IntegerField(default=0, verbose_name=ugettext_lazy('successful prices count'))
     error_prices_count = models.IntegerField(default=0, verbose_name=ugettext_lazy('error prices count'))
+
+    def save(self, *args, **kwargs):
+
+        _l.info("before PricingProcedureInstance save id", self.pk)
+        _l.info("before PricingProcedureInstance save successful_prices_count", self.successful_prices_count)
+        _l.info("before PricingProcedureInstance save error_prices_count", self.error_prices_count)
+
+        super(PricingProcedureInstance, self).save(*args, **kwargs)
 
 
 class PriceHistoryError(models.Model):
