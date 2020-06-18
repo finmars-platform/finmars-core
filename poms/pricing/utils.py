@@ -232,9 +232,9 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
 
                 if not procedure.price_overwrite_principal_prices and not procedure.price_overwrite_accrued_prices:
                     can_write = False
-                    _l.info('Roll Price History Skip %s ' % price)
-                else:
-                    _l.info('Roll Price History Overwrite %s ' % price)
+                    # _l.info('Roll Price History Skip %s ' % price)
+                # else:
+                    # _l.info('Roll Price History Overwrite %s ' % price)
 
             except PriceHistory.DoesNotExist:
 
