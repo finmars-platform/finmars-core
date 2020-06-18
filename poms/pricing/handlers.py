@@ -1088,8 +1088,8 @@ class FillPricesBrokerFixerProcess(object):
 
         self.procedure_instance.save()
 
-        l.info('fixer self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
-        l.info('fixer self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
+        _l.info('fixer self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
+        _l.info('fixer self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
 
 
 class FillPricesBrokerAlphavProcess(object):
