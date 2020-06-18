@@ -151,6 +151,8 @@ class GenericAttributeType(NamedModel):
     value_type = models.PositiveSmallIntegerField(choices=VALUE_TYPES, default=STRING,
                                                   verbose_name=ugettext_lazy('value type'))
 
+    tooltip = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('tooltip'))
+
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True, verbose_name=ugettext_lazy('expression'))
 
     can_recalculate = models.BooleanField(default=False, verbose_name=ugettext_lazy("can recalculate"))

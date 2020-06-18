@@ -4,13 +4,13 @@ from django_filters.rest_framework import FilterSet
 
 from poms.common.filters import NoOpFilter, CharFilter
 from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet
-from poms.ui.models import  ListLayout, EditLayout, Bookmark, Configuration, \
+from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
     ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
-    DashboardLayout, TemplateLayout, ContextMenuLayout
+    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltipModel
 from poms.ui.serializers import ListLayoutSerializer, \
     EditLayoutSerializer, BookmarkSerializer, ConfigurationSerializer, ConfigurationExportLayoutSerializer, \
     TransactionUserFieldSerializer, InstrumentUserFieldSerializer, PortalInterfaceAccessModelSerializer, \
-    DashboardLayoutSerializer, TemplateLayoutSerializer, ContextMenuLayoutSerializer
+    DashboardLayoutSerializer, TemplateLayoutSerializer, ContextMenuLayoutSerializer, EntityTooltipModelSerializer
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 from poms.users.permissions import SuperUserOnly
 
@@ -26,6 +26,16 @@ class TransactionUserFieldViewSet(AbstractModelViewSet):
         'master_user',
     )
     serializer_class = TransactionUserFieldSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+
+
+class EntityTooltipModelViewSet(AbstractModelViewSet):
+    queryset = EntityTooltipModel.objects.select_related(
+        'master_user',
+    )
+    serializer_class = EntityTooltipModelSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]

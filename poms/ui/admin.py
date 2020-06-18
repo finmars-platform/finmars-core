@@ -3,7 +3,8 @@ from django.contrib import admin
 from poms.common.admin import AbstractModelAdmin
 from poms.ui.filters import LayoutContentTypeFilter
 from poms.ui.models import ListLayout, EditLayout, Bookmark, \
-    TransactionUserFieldModel, PortalInterfaceAccessModel, DashboardLayout, ContextMenuLayout, TemplateLayout
+    TransactionUserFieldModel, PortalInterfaceAccessModel, DashboardLayout, ContextMenuLayout, TemplateLayout, \
+    EntityTooltipModel
 
 
 class PortalInterfaceAccessModelAdmin(AbstractModelAdmin):
@@ -20,6 +21,20 @@ class BaseLayoutAdmin(AbstractModelAdmin):
             qs = kwargs.get('queryset', db_field.remote_field.model.objects)
             kwargs['queryset'] = LayoutContentTypeFilter().filter_queryset(request, qs, None)
         return super(BaseLayoutAdmin, self).formfield_for_foreignkey(db_field, request=request, **kwargs)
+
+
+
+
+class EntityTooltipModelAdmin(BaseLayoutAdmin):
+    model = EntityTooltipModel
+    master_user_path = 'master_user'
+    list_display = ['id', 'master_user', 'text', 'key']
+    list_select_related = ['master_user']
+    search_fields = ['id', 'name', 'text']
+    raw_id_fields = ['master_user']
+
+
+admin.site.register(EntityTooltipModel, EntityTooltipModelAdmin)
 
 
 class TransactionUserFieldModelAdmin(BaseLayoutAdmin):

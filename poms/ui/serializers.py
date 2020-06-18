@@ -10,7 +10,7 @@ from poms.layout_recovery.utils import recursive_dict_fix
 from poms.ui.fields import LayoutContentTypeField, ListLayoutField
 from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
     ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
-    DashboardLayout, TemplateLayout, ContextMenuLayout
+    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltipModel
 from poms.users.fields import MasterUserField, HiddenMemberField
 
 
@@ -28,6 +28,17 @@ class TransactionUserFieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = TransactionUserFieldModel
         fields = ['id', 'master_user', 'key', 'name']
+
+
+class EntityTooltipModelSerializer(serializers.ModelSerializer):
+
+    master_user = MasterUserField()
+
+    content_type = LayoutContentTypeField()
+
+    class Meta:
+        model = EntityTooltipModel
+        fields = ['id', 'master_user', 'content_type', 'key', 'text']
 
 
 class InstrumentUserFieldSerializer(serializers.ModelSerializer):

@@ -547,6 +547,9 @@ class TransactionTypeInput(models.Model):
     transaction_type = models.ForeignKey(TransactionType, related_name='inputs',
                                          verbose_name=ugettext_lazy('transaction type'), on_delete=models.CASCADE)
     name = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('name'))
+
+    tooltip = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('tooltip'))
+
     verbose_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('verbose name'))
     value_type = models.PositiveSmallIntegerField(default=NUMBER, choices=TYPES,
                                                   verbose_name=ugettext_lazy('value type'))

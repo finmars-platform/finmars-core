@@ -213,6 +213,9 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'verbose_name', 'value_type', 'reference_table', 'content_type', 'order', 'can_recalculate',
             'value_expr',
+
+            'tooltip',
+
             'is_fill_from_context', 'context_property', 'value', 'account', 'instrument_type', 'instrument', 'currency',
             'counterparty',
             'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3', 'daily_pricing_model',
@@ -1078,8 +1081,10 @@ class TransactionTypeLightSerializerWithInputs(TransactionTypeLightSerializer):
         model = TransactionType
         fields = [
             'id', 'master_user', 'group',
+
             'user_code', 'name', 'short_name', 'public_name', 'notes',
             'date_expr', 'display_expr',
+
 
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
