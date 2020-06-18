@@ -1077,6 +1077,7 @@ class FillPricesBrokerFixerProcess(object):
                                                                date__gte=self.instance['data']['date_from'],
                                                                date__lte=self.instance['data']['date_to']).delete()
 
+        _l.info('fixer self.procedure_instance %s' % self.procedure_instance)
         _l.info('fixer fx successful_prices_count %s' % successful_prices_count)
         _l.info('fixer fx error_prices_count %s' % error_prices_count)
 
@@ -1086,6 +1087,9 @@ class FillPricesBrokerFixerProcess(object):
         self.procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
         self.procedure_instance.save()
+
+        l.info('fixer self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
+        l.info('fixer self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
 
 
 class FillPricesBrokerAlphavProcess(object):
