@@ -181,8 +181,10 @@ class PricingBrokerBloombergHandler(APIView):
             instance = FillPricesBrokerBloombergProcess(instance=request.data, master_user=procedure.master_user)
             instance.process()
 
-            procedure.status = PricingProcedureInstance.STATUS_DONE
-            procedure.save()
+            # procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
+            #
+            # procedure.status = PricingProcedureInstance.STATUS_DONE
+            # procedure.save()
 
         except PricingProcedureInstance.DoesNotExist:
 
@@ -212,8 +214,10 @@ class PricingBrokerWtradeHandler(APIView):
             instance = FillPricesBrokerWtradeProcess(instance=request.data, master_user=procedure.master_user)
             instance.process()
 
-            procedure.status = PricingProcedureInstance.STATUS_DONE
-            procedure.save()
+            # procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
+            #
+            # procedure.status = PricingProcedureInstance.STATUS_DONE
+            # procedure.save()
 
         except PricingProcedureInstance.DoesNotExist:
 
@@ -262,8 +266,10 @@ class PricingBrokerFixerHandler(APIView):
             instance = FillPricesBrokerFixerProcess(instance=request.data, master_user=procedure.master_user)
             instance.process()
 
-            procedure.status = PricingProcedureInstance.STATUS_DONE
-            procedure.save()
+            # procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
+            #
+            # procedure.status = PricingProcedureInstance.STATUS_DONE
+            # procedure.save()
 
         except PricingProcedureInstance.DoesNotExist:
 
@@ -293,8 +299,10 @@ class PricingBrokerAlphavHandler(APIView):
             instance = FillPricesBrokerAlphavProcess(instance=request.data, master_user=procedure.master_user)
             instance.process()
 
-            procedure.status = PricingProcedureInstance.STATUS_DONE
-            procedure.save()
+            # procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
+            #
+            # procedure.status = PricingProcedureInstance.STATUS_DONE
+            # procedure.save()
 
         except PricingProcedureInstance.DoesNotExist:
 
