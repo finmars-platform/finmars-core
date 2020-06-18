@@ -443,6 +443,7 @@ class FillPricesBrokerBloombergProcess(object):
                                                        date__gte=self.instance['data']['date_from'],
                                                        date__lte=self.instance['data']['date_to']).delete()
 
+        _l.info('bloomberg price procedure_instance %s' % self.procedure_instance)
         _l.info('bloomberg price successful_prices_count %s' % successful_prices_count)
         _l.info('bloomberg price error_prices_count %s' % error_prices_count)
 
@@ -452,6 +453,9 @@ class FillPricesBrokerBloombergProcess(object):
         self.procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
         self.procedure_instance.save()
+
+        _l.info('bloomberg price self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
+        _l.info('bloomberg price self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
 
     def create_currency_history(self):
 
