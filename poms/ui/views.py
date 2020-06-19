@@ -14,43 +14,6 @@ from poms.ui.serializers import ListLayoutSerializer, \
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 from poms.users.permissions import SuperUserOnly
 
-
-class PortalInterfaceAccessViewSet(AbstractReadOnlyModelViewSet):
-    queryset = PortalInterfaceAccessModel.objects
-    serializer_class = PortalInterfaceAccessModelSerializer
-    pagination_class = None
-
-
-class TransactionUserFieldViewSet(AbstractModelViewSet):
-    queryset = TransactionUserFieldModel.objects.select_related(
-        'master_user',
-    )
-    serializer_class = TransactionUserFieldSerializer
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-    ]
-
-
-class EntityTooltipViewSet(AbstractModelViewSet):
-    queryset = EntityTooltip.objects.select_related(
-        'master_user',
-    )
-    serializer_class = EntityTooltipSerializer
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-    ]
-
-
-class InstrumentUserFieldViewSet(AbstractModelViewSet):
-    queryset = InstrumentUserFieldModel.objects.select_related(
-        'master_user',
-    )
-    serializer_class = InstrumentUserFieldSerializer
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-    ]
-
-
 class LayoutContentTypeFilter(django_filters.CharFilter):
     def filter(self, qs, value):
         if isinstance(value, Lookup):
@@ -72,6 +35,53 @@ class LayoutContentTypeFilter(django_filters.CharFilter):
             'content_type__model__%s' % lookup: model,
         })
         return qs
+
+
+class PortalInterfaceAccessViewSet(AbstractReadOnlyModelViewSet):
+    queryset = PortalInterfaceAccessModel.objects
+    serializer_class = PortalInterfaceAccessModelSerializer
+    pagination_class = None
+
+
+class TransactionUserFieldViewSet(AbstractModelViewSet):
+    queryset = TransactionUserFieldModel.objects.select_related(
+        'master_user',
+    )
+    serializer_class = TransactionUserFieldSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+
+
+class TemplateLayoutFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    content_type = LayoutContentTypeFilter()
+
+    class Meta:
+        model = EntityTooltip
+        fields = []
+
+
+class EntityTooltipViewSet(AbstractModelViewSet):
+    queryset = EntityTooltip.objects.select_related(
+        'master_user',
+    )
+    serializer_class = EntityTooltipSerializer
+    filter_class = TemplateLayoutFilterSet
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+
+
+class InstrumentUserFieldViewSet(AbstractModelViewSet):
+    queryset = InstrumentUserFieldModel.objects.select_related(
+        'master_user',
+    )
+    serializer_class = InstrumentUserFieldSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
 
 
 class TemplateLayoutFilterSet(FilterSet):
