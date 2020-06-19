@@ -43,9 +43,10 @@ from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import TransactionClass, TransactionTypeGroup, TransactionType, TransactionTypeInput
 from poms.transactions.serializers import TransactionTypeGroupSerializer, TransactionTypeSerializer
 from poms.ui.models import ListLayout, InstrumentUserFieldModel, TransactionUserFieldModel, DashboardLayout, EditLayout, \
-    ContextMenuLayout, TemplateLayout
+    ContextMenuLayout, TemplateLayout, EntityTooltip
 from poms.ui.serializers import EditLayoutSerializer, ListLayoutSerializer, DashboardLayoutSerializer, \
-    InstrumentUserFieldSerializer, TransactionUserFieldSerializer, ContextMenuLayoutSerializer, TemplateLayoutSerializer
+    InstrumentUserFieldSerializer, TransactionUserFieldSerializer, ContextMenuLayoutSerializer, \
+    TemplateLayoutSerializer, EntityTooltipSerializer
 from poms.users.models import EcosystemDefault
 
 from logging import getLogger
@@ -2151,6 +2152,57 @@ class ImportManager(object):
 
         _l.info('Import Configuration Pricing Automated Schedule done %s' % (time.perf_counter() - st))
 
+    def import_entity_tooltips(self, configuration_section):
+
+        st = time.perf_counter()
+
+        for item in configuration_section['items']:
+
+            if 'ui.entitytooltip' in item['entity']:
+
+                self.instance.stats['configuration'][item['entity']] = []
+
+                if 'content' in item:
+
+                    for content_object in item['content']:
+
+                        serializer = EntityTooltipSerializer(data=content_object,
+                                                                    context=self.get_serializer_context())
+
+                        stats = {
+                            'content_type': item['entity'],
+                            'mode': self.instance.mode,
+                            'item': content_object,
+                            'error': {
+                                'message': None
+                            },
+                            'status': 'info'
+                        }
+
+                        try:
+
+                            serializer.is_valid(raise_exception=True)
+
+                            content_type = get_content_type_by_name(content_object['content_type'])
+
+                            try:
+                                serializer.instance = EntityTooltip.objects.get(
+                                    content_type=content_type,
+                                    master_user=self.master_user, key=content_object['key'])
+                            except EntityTooltip.DoesNotExist:
+                                pass
+
+                            serializer.save()
+                        except Exception as error:
+                            stats['status'] = 'error'
+                            stats['error']['message'] = 'Entity Tooltip  %s already exists' % content_object['name']
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
+
+                        self.update_progress()
+
+        _l.info('Import Configuration Entity Tooltips done %s' % (time.perf_counter() - st))
+
     def import_instrument_user_fields(self, configuration_section):
         st = time.perf_counter()
 
@@ -2601,6 +2653,7 @@ class ImportManager(object):
 
                 self.import_instrument_user_fields(configuration_section)
                 self.import_transaction_user_fields(configuration_section)
+                self.import_entity_tooltips(configuration_section)
 
             if can_import:
                 self.import_pricing_automated_schedule(configuration_section)  # configuration section

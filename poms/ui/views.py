@@ -6,11 +6,11 @@ from poms.common.filters import NoOpFilter, CharFilter
 from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet
 from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
     ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
-    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltipModel
+    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip
 from poms.ui.serializers import ListLayoutSerializer, \
     EditLayoutSerializer, BookmarkSerializer, ConfigurationSerializer, ConfigurationExportLayoutSerializer, \
     TransactionUserFieldSerializer, InstrumentUserFieldSerializer, PortalInterfaceAccessModelSerializer, \
-    DashboardLayoutSerializer, TemplateLayoutSerializer, ContextMenuLayoutSerializer, EntityTooltipModelSerializer
+    DashboardLayoutSerializer, TemplateLayoutSerializer, ContextMenuLayoutSerializer, EntityTooltipSerializer
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 from poms.users.permissions import SuperUserOnly
 
@@ -31,11 +31,11 @@ class TransactionUserFieldViewSet(AbstractModelViewSet):
     ]
 
 
-class EntityTooltipModelViewSet(AbstractModelViewSet):
-    queryset = EntityTooltipModel.objects.select_related(
+class EntityTooltipViewSet(AbstractModelViewSet):
+    queryset = EntityTooltip.objects.select_related(
         'master_user',
     )
-    serializer_class = EntityTooltipModelSerializer
+    serializer_class = EntityTooltipSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]

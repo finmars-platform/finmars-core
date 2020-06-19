@@ -4,7 +4,7 @@ from poms.common.admin import AbstractModelAdmin
 from poms.ui.filters import LayoutContentTypeFilter
 from poms.ui.models import ListLayout, EditLayout, Bookmark, \
     TransactionUserFieldModel, PortalInterfaceAccessModel, DashboardLayout, ContextMenuLayout, TemplateLayout, \
-    EntityTooltipModel
+    EntityTooltip
 
 
 class PortalInterfaceAccessModelAdmin(AbstractModelAdmin):
@@ -25,8 +25,8 @@ class BaseLayoutAdmin(AbstractModelAdmin):
 
 
 
-class EntityTooltipModelAdmin(BaseLayoutAdmin):
-    model = EntityTooltipModel
+class EntityTooltipAdmin(BaseLayoutAdmin):
+    model = EntityTooltip
     master_user_path = 'master_user'
     list_display = ['id', 'master_user', 'text', 'key']
     list_select_related = ['master_user']
@@ -34,7 +34,7 @@ class EntityTooltipModelAdmin(BaseLayoutAdmin):
     raw_id_fields = ['master_user']
 
 
-admin.site.register(EntityTooltipModel, EntityTooltipModelAdmin)
+admin.site.register(EntityTooltip, EntityTooltipAdmin)
 
 
 class TransactionUserFieldModelAdmin(BaseLayoutAdmin):

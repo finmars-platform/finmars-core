@@ -172,7 +172,7 @@ class PortalInterfaceAccessModel(AbstractClassModel):
         verbose_name_plural = ugettext_lazy('portal interface accesses')
 
 
-class EntityTooltipModel(models.Model):
+class EntityTooltip(models.Model):
     master_user = models.ForeignKey(MasterUser,
                                     verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
@@ -181,6 +181,10 @@ class EntityTooltipModel(models.Model):
     key = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('key'))
     text = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('text'))
 
+    class Meta:
+        unique_together = [
+            ['master_user', 'content_type', 'key'],
+        ]
 
 
 class TransactionUserFieldModel(models.Model):

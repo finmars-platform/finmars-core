@@ -60,7 +60,7 @@ import json
 
 from poms.transactions.serializers import TransactionTypeSerializer
 from poms.ui.models import EditLayout, ListLayout, Bookmark, TransactionUserFieldModel, InstrumentUserFieldModel, \
-    DashboardLayout, TemplateLayout, ContextMenuLayout
+    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip
 
 from django.forms.models import model_to_dict
 
@@ -223,6 +223,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         transaction_type_groups = self.get_transaction_type_groups()
         edit_layouts = self.get_edit_layouts()
         list_layouts = self.get_list_layouts()
+        entity_tooltips = self.get_entity_tooltips()
         template_layouts = self.get_template_layouts()
         context_menu_layouts = self.get_context_menu_layouts()
         dashboard_layouts = self.get_dashboard_layouts()
@@ -1205,6 +1206,31 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         result = {
             "entity": "ui.listlayout",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_entity_tooltips(self):
+
+        content_types = ContentType.objects.all()
+
+        results = to_json_objects(EntityTooltip.objects.filter(master_user=self._master_user, content_type__in=content_types))
+
+        for item_model in EntityTooltip.objects.filter(master_user=self._master_user, content_type__in=content_types):
+
+            if item_model.content_type:
+                for item_json in results:
+
+                    if item_model.pk == item_json['pk']:
+                        item_json["fields"]["content_type"] = '%s.%s' % (
+                            item_model.content_type.app_label, item_model.content_type.model)
+
+        results = unwrap_items(results)
+
+        result = {
+            "entity": "ui.entitytooltip",
             "count": len(results),
             "content": results
         }
