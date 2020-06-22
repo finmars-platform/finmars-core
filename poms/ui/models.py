@@ -178,6 +178,7 @@ class EntityTooltip(models.Model):
 
     content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'), on_delete=models.CASCADE)
 
+    name = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('name'))
     key = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('key'))
     text = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('text'))
 

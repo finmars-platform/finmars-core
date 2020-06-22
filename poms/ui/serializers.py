@@ -38,7 +38,7 @@ class EntityTooltipSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = EntityTooltip
-        fields = ['id', 'master_user', 'content_type', 'key', 'text']
+        fields = ['id', 'master_user', 'content_type', 'name', 'key', 'text']
 
 
 class InstrumentUserFieldSerializer(serializers.ModelSerializer):

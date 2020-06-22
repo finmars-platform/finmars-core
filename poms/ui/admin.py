@@ -28,7 +28,7 @@ class BaseLayoutAdmin(AbstractModelAdmin):
 class EntityTooltipAdmin(BaseLayoutAdmin):
     model = EntityTooltip
     master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'text', 'key']
+    list_display = ['id', 'master_user', 'text', 'name', 'key']
     list_select_related = ['master_user']
     search_fields = ['id', 'name', 'text']
     raw_id_fields = ['master_user']
@@ -39,7 +39,7 @@ admin.site.register(EntityTooltip, EntityTooltipAdmin)
 
 class TransactionUserFieldModelAdmin(BaseLayoutAdmin):
     model = TransactionUserFieldModel
-    master_user_path = 'master_user'
+    master_user_pasth = 'master_user'
     list_display = ['id', 'master_user', 'name', 'key']
     list_select_related = ['master_user']
     search_fields = ['id', 'name', 'key']
