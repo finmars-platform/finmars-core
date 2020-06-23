@@ -19,4 +19,4 @@ class Command(BaseCommand):
 
             master_user.create_color_palettes()
 
-        self.stdout.write("Job Done. Tooltips created")
+        self.stdout.write("Job Done. Color Palettes created")

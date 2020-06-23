@@ -707,24 +707,43 @@ class MasterUser(models.Model):
 
         for i in range(5):
 
-            palette = ColorPalette.objects.create(master_user=self)
+            try:
 
-            if i == 0:
+                user_code = None
 
-                palette.name = "Default Palette"
-                palette.is_default = True
+                if i == 0:
+                    user_code = "Default Palette"
 
-            else:
-                palette.name = "Palette " + str(i)
+                else:
+                    user_code = "Palette " + str(i)
 
-            palette.save()
+                palette = ColorPalette.objects.get(master_user=self, user_code=user_code)
+
+            except ColorPalette.DoesNotExist:
+
+                palette = ColorPalette.objects.create(master_user=self)
+
+                if i == 0:
+
+                    palette.name = "Default Palette"
+                    palette.user_code = "Default Palette"
+                    palette.is_default = True
+
+                else:
+                    palette.name = "Palette " + str(i)
+                    palette.user_code = "Palette " + str(i)
+
+                palette.save()
 
             for x in range(16):
 
-                color = ColorPaletteColor.objects.create(color_palette=palette)
-                color.name = "Color " + str(x + 1)
-                color.order = x
-                color.save()
+                try:
+                    color = ColorPaletteColor.objects.get(color_palette=palette, order=x)
+                except ColorPaletteColor.DoesNotExist:
+                    color = ColorPaletteColor.objects.create(color_palette=palette, order=x)
+
+                    color.name = "Color " + str(x + 1)
+                    color.save()
 
 
 
