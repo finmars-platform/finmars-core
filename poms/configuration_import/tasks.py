@@ -5,6 +5,7 @@ from rest_framework.exceptions import ValidationError
 
 from poms.accounts.models import Account, AccountType
 from poms.accounts.serializers import AccountTypeSerializer
+from poms.common.utils import get_content_type_by_name
 from poms.complex_import.models import ComplexImportScheme
 from poms.complex_import.serializers import ComplexImportSchemeSerializer
 from poms.configuration_import.handlers import ConfigurationEntityArchetypeGenerateHandler
@@ -58,15 +59,6 @@ def dump(obj):
     for attr in dir(obj):
         _l.info("obj.%s = %r" % (attr, getattr(obj, attr)))
 
-
-def get_content_type_by_name(name):
-    pieces = name.split('.')
-    app_label_title = pieces[0]
-    model_title = pieces[1]
-
-    content_type = ContentType.objects.get(app_label=app_label_title, model=model_title)
-
-    return content_type
 
 
 class ProxyUser(object):

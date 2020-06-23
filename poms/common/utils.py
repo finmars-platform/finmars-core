@@ -1,6 +1,7 @@
 import math
 from collections import OrderedDict
 
+from django.contrib.contenttypes.models import ContentType
 from django.views.generic.dates import timezone_today
 from django.utils.timezone import now
 
@@ -225,3 +226,13 @@ def format_float_to_2(val):
         return val
 
     return float(format(round(val, 2), '.2f').rstrip("0").rstrip('.'))
+
+
+def get_content_type_by_name(name):
+    pieces = name.split('.')
+    app_label_title = pieces[0]
+    model_title = pieces[1]
+
+    content_type = ContentType.objects.get(app_label=app_label_title, model=model_title)
+
+    return content_type

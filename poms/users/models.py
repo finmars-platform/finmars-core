@@ -21,6 +21,7 @@ from poms.common.models import NamedModel, FakeDeletableModel
 import binascii
 import os
 
+from poms.common.utils import get_content_type_by_name
 
 AVAILABLE_APPS = ['accounts', 'counterparties', 'currencies', 'instruments', 'portfolios', 'strategies', 'transactions',
                   'reports', 'users']
@@ -229,6 +230,479 @@ class MasterUser(models.Model):
             num = str(i + 1)
             InstrumentUserFieldModel.objects.create(master_user=self, key='user_text_' + num, name='User Text ' + num)
 
+    def create_entity_tooltips(self):
+
+        from poms.ui.models import EntityTooltip
+
+        entity_fields = [
+            {
+                "content_type": "instruments.instrument",
+                "fields": [
+                    {
+                        "name": "User Code",
+                        "key": "user_code"
+                    },
+                    {
+                        "name": "Name",
+                        "key": "name"
+                    },
+                    {
+                        "name": "Short Name",
+                        "key": "short_name"
+                    },
+                    {
+                        "name": "Public Name",
+                        "key": "public_name"
+                    },
+                    {
+                        "name": "Notes",
+                        "key": "notes"
+                    },
+                    {
+                        "name": "Instrument Tye",
+                        "key": "instrument_type"
+                    },
+                    {
+                        "name": "Is Active",
+                        "key": "is_active"
+                    },
+                    {
+                        "name": "Reference for Pricing",
+                        "key": "reference_for_pricing"
+                    },
+                    {
+                        "name": "Maturity Date",
+                        "key": "maturity_date"
+                    },
+                    {
+                        "name": "Default Price",
+                        "key": "default_price"
+                    },
+                    {
+                        "name": "Default Accrued",
+                        "key": "default_accrued"
+                    },
+                    {
+                        "name": "Pricing Currency",
+                        "key": "pricing_currency"
+                    },
+                    {
+                        "name": "Accrued Currency",
+                        "key": "accrued_currency"
+                    },
+                    {
+                        "name": "Pricing Condition",
+                        "key": "pricing_condition"
+                    },
+                    {
+                        "name": "Price Multiplier",
+                        "key": "price_multiplier"
+                    },
+                    {
+                        "name": "Accrued Multiplier",
+                        "key": "accrued_multiplier"
+                    },
+                    {
+                        "name": "Payment Size Detail",
+                        "key": "payment_size_detail"
+                    },
+                    {
+                        "name": "Maturity Price",
+                        "key": "maturity_price"
+                    },
+                    {
+                        "name": "User Text 1",
+                        "key": "user_text_1"
+                    },
+                    {
+                        "name": "User Text 2",
+                        "key": "user_text_2"
+                    },
+                    {
+                        "name": "User Text 3",
+                        "key": "user_text_3"
+                    },
+                ]
+            },
+            {
+                "content_type": "instruments.instrumenttype",
+                "fields": [
+                    {
+                        "name": "User Code",
+                        "key": "user_code"
+                    },
+                    {
+                        "name": "Name",
+                        "key": "name"
+                    },
+                    {
+                        "name": "Short Name",
+                        "key": "short_name"
+                    },
+                    {
+                        "name": "Public Name",
+                        "key": "public_name"
+                    },
+                    {
+                        "name": "Notes",
+                        "key": "notes"
+                    },
+                    {
+                        "name": "Factor Down",
+                        "key": "factor_down"
+                    },
+                    {
+                        "name": "Factor Same",
+                        "key": "factor_same"
+                    },
+                    {
+                        "name": "Factor Up",
+                        "key": "factor_up"
+                    },
+                    {
+                        "name": "Instrument Class",
+                        "key": "instrument_class"
+                    },
+                    {
+                        "name": "One Off Event",
+                        "key": "one_off_event"
+                    },
+                    {
+                        "name": "Regular Event",
+                        "key": "regular_event"
+                    }
+                ]
+            },
+            {
+                "content_type": "portfolios.portfolio",
+                "fields": [
+                    {
+                        "name": "User Code",
+                        "key": "user_code"
+                    },
+                    {
+                        "name": "Name",
+                        "key": "name"
+                    },
+                    {
+                        "name": "Short Name",
+                        "key": "short_name"
+                    },
+                    {
+                        "name": "Public Name",
+                        "key": "public_name"
+                    },
+                    {
+                        "name": "Notes",
+                        "key": "notes"
+                    }
+                ]
+            },
+            {
+                "content_type": "accounts.account",
+                "fields": [
+                    {
+                        "name": "User Code",
+                        "key": "user_code"
+                    },
+                    {
+                        "name": "Name",
+                        "key": "name"
+                    },
+                    {
+                        "name": "Short Name",
+                        "key": "short_name"
+                    },
+                    {
+                        "name": "Public Name",
+                        "key": "public_name"
+                    },
+                    {
+                        "name": "Notes",
+                        "key": "notes"
+                    },
+                    {
+                        "name": "Type",
+                        "key": "type"
+                    },
+                ]
+            },
+            {
+                "content_type": "accounts.accounttype",
+                "fields": [
+                    {
+                        "name": "User Code",
+                        "key": "user_code"
+                    },
+                    {
+                        "name": "Name",
+                        "key": "name"
+                    },
+                    {
+                        "name": "Short Name",
+                        "key": "short_name"
+                    },
+                    {
+                        "name": "Public Name",
+                        "key": "public_name"
+                    },
+                    {
+                        "name": "Notes",
+                        "key": "notes"
+                    },
+                    {
+                        "name": "Transaction Details Expression",
+                        "key": "transaction_details_expr"
+                    },
+                    {
+                        "name": "Show Transaction Details",
+                        "key": "show_transaction_details"
+                    }
+                ]
+            },
+            {
+                "content_type": "counterparties.responsible",
+                "fields": [
+                    {
+                        "name": "User Code",
+                        "key": "user_code"
+                    },
+                    {
+                        "name": "Name",
+                        "key": "name"
+                    },
+                    {
+                        "name": "Short Name",
+                        "key": "short_name"
+                    },
+                    {
+                        "name": "Public Name",
+                        "key": "public_name"
+                    },
+                    {
+                        "name": "Group",
+                        "key": "group"
+                    }
+                ]
+            },
+            {
+                "content_type": "counterparties.counterparty",
+                "fields": [
+                    {
+                        "name": "User Code",
+                        "key": "user_code"
+                    },
+                    {
+                        "name": "Name",
+                        "key": "name"
+                    },
+                    {
+                        "name": "Short Name",
+                        "key": "short_name"
+                    },
+                    {
+                        "name": "Public Name",
+                        "key": "public_name"
+                    },
+                    {
+                        "name": "Notes",
+                        "key": "notes"
+                    },
+                    {
+                        "name": "Group",
+                        "key": "group"
+                    }
+                ]
+            },
+            {
+                "content_type": "strategies.strategy1",
+                "fields": [
+                    {
+                        "name": "User Code",
+                        "key": "user_code"
+                    },
+                    {
+                        "name": "Name",
+                        "key": "name"
+                    },
+                    {
+                        "name": "Short Name",
+                        "key": "short_name"
+                    },
+                    {
+                        "name": "Public Name",
+                        "key": "public_name"
+                    },
+                    {
+                        "name": "Notes",
+                        "key": "notes"
+                    },
+                    {
+                        "name": "Group",
+                        "key": "subgroup"
+                    }
+                ]
+            },
+            {
+                "content_type": "strategies.strategy2",
+                "fields": [
+                    {
+                        "name": "User Code",
+                        "key": "user_code"
+                    },
+                    {
+                        "name": "Name",
+                        "key": "name"
+                    },
+                    {
+                        "name": "Short Name",
+                        "key": "short_name"
+                    },
+                    {
+                        "name": "Public Name",
+                        "key": "public_name"
+                    },
+                    {
+                        "name": "Notes",
+                        "key": "notes"
+                    },
+                    {
+                        "name": "Group",
+                        "key": "subgroup"
+                    }
+                ]
+            },
+            {
+                "content_type": "strategies.strategy3",
+                "fields": [
+                    {
+                        "name": "User Code",
+                        "key": "user_code"
+                    },
+                    {
+                        "name": "Name",
+                        "key": "name"
+                    },
+                    {
+                        "name": "Short Name",
+                        "key": "short_name"
+                    },
+                    {
+                        "name": "Public Name",
+                        "key": "public_name"
+                    },
+                    {
+                        "name": "Notes",
+                        "key": "notes"
+                    },
+                    {
+                        "name": "Group",
+                        "key": "subgroup"
+                    }
+
+                ]
+            },
+            {
+                "content_type": "currencies.currency",
+                "fields": [
+                    {
+                        "name": "User Code",
+                        "key": "user_code"
+                    },
+                    {
+                        "name": "Name",
+                        "key": "name"
+                    },
+                    {
+                        "name": "Short Name",
+                        "key": "short_name"
+                    },
+                    {
+                        "name": "Public Name",
+                        "key": "public_name"
+                    },
+                    {
+                        "name": "Notes",
+                        "key": "notes"
+                    },
+                    {
+                        "name": "Default FX Rate",
+                        "key": "default_fx_rate"
+                    },
+                    {
+                        "name": "Reference For Pricing",
+                        "key": "reference_for_pricing"
+                    }
+                ]
+            },
+            {
+                "content_type": "instruments.pricehistory",
+                "fields": [
+                    {
+                        "name": "Instrument",
+                        "key": "instrument"
+                    },
+                    {
+                        "name": "Date",
+                        "key": "date"
+                    },
+                    {
+                        "name": "Pricing Policy",
+                        "key": "pricing_policy"
+                    },
+                    {
+                        "name": "Principal Price",
+                        "key": "principal_price"
+                    },
+                    {
+                        "name": "Accrued Price",
+                        "key": "accrued_price"
+                    },
+                ]
+            },
+            {
+                "content_type": "currencies.currencyhistory",
+                "fields": [
+                    {
+                        "name": "Currency",
+                        "key": "currency"
+                    },
+                    {
+                        "name": "Date",
+                        "key": "date"
+                    },
+                    {
+                        "name": "Pricing Policy",
+                        "key": "pricing_policy"
+                    },
+                    {
+                        "name": "FX Rate",
+                        "key": "fx_rate"
+                    },
+                ]
+            }
+        ]
+
+        for entity in entity_fields:
+
+            content_type = get_content_type_by_name(entity['content_type'])
+
+            for field in entity["fields"]:
+
+                try:
+
+                    item = EntityTooltip.objects.get(master_user=self, key=field["key"], content_type=content_type)
+
+                    item.name = field["name"]
+                    item.save()
+
+                except EntityTooltip.DoesNotExist:
+
+                    item = EntityTooltip.objects.create(master_user=self, name=field["name"], key=field["key"], content_type=content_type)
+                    item.save()
+
+
+
     def create_defaults(self, user=None):
         from poms.currencies.models import currencies_data, Currency
         from poms.accounts.models import AccountType, Account
@@ -401,7 +875,7 @@ class MasterUser(models.Model):
         ecosystem_defaults.save()
 
         self.create_user_fields()
-
+        self.create_entity_tooltips()
 
         group = Group.objects.create(master_user=self, name='%s' % ugettext_lazy('Administrators'), role=Group.ADMIN)
         group.grant_all_permissions_to_public_group(group, master_user=self)
