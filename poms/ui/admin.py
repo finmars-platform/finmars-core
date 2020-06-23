@@ -4,7 +4,7 @@ from poms.common.admin import AbstractModelAdmin
 from poms.ui.filters import LayoutContentTypeFilter
 from poms.ui.models import ListLayout, EditLayout, Bookmark, \
     TransactionUserFieldModel, PortalInterfaceAccessModel, DashboardLayout, ContextMenuLayout, TemplateLayout, \
-    EntityTooltip
+    EntityTooltip, ColorPalette, ColorPaletteColor
 
 
 class PortalInterfaceAccessModelAdmin(AbstractModelAdmin):
@@ -23,6 +23,33 @@ class BaseLayoutAdmin(AbstractModelAdmin):
         return super(BaseLayoutAdmin, self).formfield_for_foreignkey(db_field, request=request, **kwargs)
 
 
+class ColorPaletteColorAdmin(BaseLayoutAdmin):
+    model = ColorPaletteColor
+    list_display = ['id', 'color_palette', 'name', 'order', 'value']
+    list_select_related = ['color_palette']
+    search_fields = ['id', 'name', 'value']
+    raw_id_fields = ['color_palette']
+
+
+admin.site.register(ColorPaletteColor, ColorPaletteColorAdmin)
+
+
+class ColorPaletteColorInline(admin.TabularInline):
+    model = ColorPaletteColor
+    fields = ['id', 'name', 'value', 'order']
+
+
+class ColorPaletteAdmin(BaseLayoutAdmin):
+    model = ColorPalette
+    master_user_path = 'master_user'
+    list_display = ['id', 'master_user', 'name', 'user_code', 'is_default']
+    list_select_related = ['master_user']
+    search_fields = ['id', 'name', 'user_code']
+    raw_id_fields = ['master_user']
+    inlines = [ColorPaletteColorInline]
+
+
+admin.site.register(ColorPalette, ColorPaletteAdmin)
 
 
 class EntityTooltipAdmin(BaseLayoutAdmin):

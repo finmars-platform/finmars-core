@@ -701,6 +701,31 @@ class MasterUser(models.Model):
                     item = EntityTooltip.objects.create(master_user=self, name=field["name"], key=field["key"], content_type=content_type)
                     item.save()
 
+    def create_color_palettes(self):
+
+        from poms.ui.models import ColorPalette, ColorPaletteColor
+
+        for i in range(5):
+
+            palette = ColorPalette.objects.create(master_user=self)
+
+            if i == 0:
+
+                palette.name = "Default Palette"
+                palette.is_default = True
+
+            else:
+                palette.name = "Palette " + str(i)
+
+            palette.save()
+
+            for x in range(16):
+
+                color = ColorPaletteColor.objects.create(color_palette=palette)
+                color.name = "Color " + str(x + 1)
+                color.order = x
+                color.save()
+
 
 
     def create_defaults(self, user=None):
@@ -876,6 +901,7 @@ class MasterUser(models.Model):
 
         self.create_user_fields()
         self.create_entity_tooltips()
+        self.create_color_palettes()
 
         group = Group.objects.create(master_user=self, name='%s' % ugettext_lazy('Administrators'), role=Group.ADMIN)
         group.grant_all_permissions_to_public_group(group, master_user=self)

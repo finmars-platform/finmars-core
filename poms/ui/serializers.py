@@ -10,7 +10,7 @@ from poms.layout_recovery.utils import recursive_dict_fix
 from poms.ui.fields import LayoutContentTypeField, ListLayoutField
 from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
     ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
-    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip
+    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPaletteColor, ColorPalette
 from poms.users.fields import MasterUserField, HiddenMemberField
 
 
@@ -28,6 +28,56 @@ class TransactionUserFieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = TransactionUserFieldModel
         fields = ['id', 'master_user', 'key', 'name']
+
+
+class ColorPaletteColorSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ColorPaletteColor
+        fields = ['id', 'order', 'name', 'value']
+
+
+class ColorPaletteSerializer(serializers.ModelSerializer):
+
+    colors = ColorPaletteColorSerializer(many=True)
+
+    class Meta:
+        model = ColorPalette
+        fields = ['id', 'name', 'user_code', 'short_name', 'is_default', 'colors']
+
+    def save_colors(self, instance, colors):
+
+        for color in colors:
+
+            try:
+
+                item = ColorPaletteColor.objects.get(color_palette=instance, order=color.order)
+                item.value = color.value
+                item.name = color.name
+                item.save()
+
+            except ColorPaletteColor.DoesNotExist:
+
+                item = ColorPaletteColor.objects.create(color_palette=instance, order=color.order)
+                item.value = color.value
+                item.name = color.name
+                item.save()
+
+    def create(self, validated_data):
+
+        colors = validated_data.pop('colors')
+
+        instance = super(ColorPaletteSerializer, self).create(validated_data)
+
+        self.save_colors(instance=instance, colors=colors)
+
+    def update(self, instance, validated_data):
+
+        colors = validated_data.pop('colors')
+
+        instance = super(ColorPaletteSerializer, self).update(instance, validated_data)
+
+        self.save_colors(instance=instance, colors=colors)
 
 
 class EntityTooltipSerializer(serializers.ModelSerializer):

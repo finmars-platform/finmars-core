@@ -6,11 +6,12 @@ from poms.common.filters import NoOpFilter, CharFilter
 from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet
 from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
     ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
-    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip
+    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette
 from poms.ui.serializers import ListLayoutSerializer, \
     EditLayoutSerializer, BookmarkSerializer, ConfigurationSerializer, ConfigurationExportLayoutSerializer, \
     TransactionUserFieldSerializer, InstrumentUserFieldSerializer, PortalInterfaceAccessModelSerializer, \
-    DashboardLayoutSerializer, TemplateLayoutSerializer, ContextMenuLayoutSerializer, EntityTooltipSerializer
+    DashboardLayoutSerializer, TemplateLayoutSerializer, ContextMenuLayoutSerializer, EntityTooltipSerializer, \
+    ColorPaletteSerializer
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 from poms.users.permissions import SuperUserOnly
 
@@ -63,12 +64,42 @@ class TemplateLayoutFilterSet(FilterSet):
         fields = []
 
 
+class ColorPaletteFilterSet(FilterSet):
+    id = NoOpFilter()
+
+
+    class Meta:
+        model = EntityTooltip
+        fields = []
+
+
+class ColorPaletteViewSet(AbstractModelViewSet):
+    queryset = ColorPalette.objects.select_related(
+        'master_user',
+    )
+    serializer_class = ColorPaletteSerializer
+    filter_class = ColorPaletteFilterSet
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+
+
+class EntityTooltipFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    content_type = LayoutContentTypeFilter()
+
+    class Meta:
+        model = EntityTooltip
+        fields = []
+
+
 class EntityTooltipViewSet(AbstractModelViewSet):
     queryset = EntityTooltip.objects.select_related(
         'master_user',
     )
     serializer_class = EntityTooltipSerializer
-    filter_class = TemplateLayoutFilterSet
+    filter_class = EntityTooltipFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]

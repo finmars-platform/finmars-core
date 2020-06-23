@@ -8,7 +8,7 @@ from django.utils.translation import ugettext_lazy
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
-from poms.common.models import AbstractClassModel
+from poms.common.models import AbstractClassModel, NamedModel
 from poms.configuration_sharing.models import SharedConfigurationFile
 from poms.users.models import MasterUser, Member, Group
 
@@ -185,6 +185,35 @@ class EntityTooltip(models.Model):
     class Meta:
         unique_together = [
             ['master_user', 'content_type', 'key'],
+        ]
+
+
+class ColorPalette(NamedModel):
+    master_user = models.ForeignKey(MasterUser, verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('name'))
+    is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
+
+    def save(self, *args, **kwargs):
+
+        if self.is_default:
+            qs = ColorPalette.objects.filter(master_user=self.master_user, is_default=True)
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            qs.update(is_default=False)
+        return super(ColorPalette, self).save(*args, **kwargs)
+
+
+class ColorPaletteColor(models.Model):
+    color_palette = models.ForeignKey(ColorPalette,  related_name='colors', verbose_name=ugettext_lazy('color palette'), on_delete=models.CASCADE)
+
+    order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
+
+    name = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('name'))
+    value = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('value'))
+
+    class Meta:
+        unique_together = [
+            ['color_palette', 'order'],
         ]
 
 
