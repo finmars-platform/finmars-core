@@ -66,10 +66,10 @@ class TemplateLayoutFilterSet(FilterSet):
 
 class ColorPaletteFilterSet(FilterSet):
     id = NoOpFilter()
-
+    name = CharFilter()
 
     class Meta:
-        model = EntityTooltip
+        model = ColorPalette
         fields = []
 
 
