@@ -60,7 +60,7 @@ import json
 
 from poms.transactions.serializers import TransactionTypeSerializer
 from poms.ui.models import EditLayout, ListLayout, Bookmark, TransactionUserFieldModel, InstrumentUserFieldModel, \
-    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip
+    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, ColorPaletteColor
 
 from django.forms.models import model_to_dict
 
@@ -224,6 +224,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         edit_layouts = self.get_edit_layouts()
         list_layouts = self.get_list_layouts()
         entity_tooltips = self.get_entity_tooltips()
+        color_palettes = self.get_color_palettes()
         template_layouts = self.get_template_layouts()
         context_menu_layouts = self.get_context_menu_layouts()
         dashboard_layouts = self.get_dashboard_layouts()
@@ -335,6 +336,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             if self.access_table['ui.userfield']:
                 configuration["body"].append(get_transaction_user_fields)
                 configuration["body"].append(instrument_user_fields)
+
+            configuration["body"].append(entity_tooltips)
+            configuration["body"].append(color_palettes)
 
 
             # pricing
@@ -1236,6 +1240,41 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         }
 
         return result
+
+    def get_color_palette_colors(self, color_palette):
+
+        colors = to_json_objects(ColorPaletteColor.objects.filter(color_palette=color_palette["pk"]))
+
+        results = unwrap_items(colors)
+
+        delete_prop(results, 'color_palette')
+
+        return results
+
+    def get_color_palettes(self):
+
+        color_palettes = to_json_objects(ColorPalette.objects.filter(master_user=self._master_user))
+        results = []
+
+        for color_palette in color_palettes:
+            result_item = color_palette["fields"]
+
+            result_item.pop("master_user", None)
+
+            result_item["colors"] = self.get_color_palette_colors(color_palette)
+
+            results.append(result_item)
+
+        # results = unwrap_items(results)
+
+        result = {
+            "entity": "ui.colorpalette",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
 
     def get_reference_table_rows(self, reference_table):
 

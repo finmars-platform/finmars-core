@@ -44,10 +44,10 @@ from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import TransactionClass, TransactionTypeGroup, TransactionType, TransactionTypeInput
 from poms.transactions.serializers import TransactionTypeGroupSerializer, TransactionTypeSerializer
 from poms.ui.models import ListLayout, InstrumentUserFieldModel, TransactionUserFieldModel, DashboardLayout, EditLayout, \
-    ContextMenuLayout, TemplateLayout, EntityTooltip
+    ContextMenuLayout, TemplateLayout, EntityTooltip, ColorPalette
 from poms.ui.serializers import EditLayoutSerializer, ListLayoutSerializer, DashboardLayoutSerializer, \
     InstrumentUserFieldSerializer, TransactionUserFieldSerializer, ContextMenuLayoutSerializer, \
-    TemplateLayoutSerializer, EntityTooltipSerializer
+    TemplateLayoutSerializer, EntityTooltipSerializer, ColorPaletteSerializer
 from poms.users.models import EcosystemDefault
 
 from logging import getLogger
@@ -2144,6 +2144,8 @@ class ImportManager(object):
 
         _l.info('Import Configuration Pricing Automated Schedule done %s' % (time.perf_counter() - st))
 
+
+
     def import_entity_tooltips(self, configuration_section):
 
         st = time.perf_counter()
@@ -2194,6 +2196,54 @@ class ImportManager(object):
                         self.update_progress()
 
         _l.info('Import Configuration Entity Tooltips done %s' % (time.perf_counter() - st))
+
+    def import_color_palettes(self, configuration_section):
+
+        st = time.perf_counter()
+
+        for item in configuration_section['items']:
+
+            if 'ui.colorpalette' in item['entity']:
+
+                self.instance.stats['configuration'][item['entity']] = []
+
+                if 'content' in item:
+
+                    for content_object in item['content']:
+
+                        serializer = ColorPaletteSerializer(data=content_object,
+                                                             context=self.get_serializer_context())
+
+                        stats = {
+                            'content_type': item['entity'],
+                            'mode': self.instance.mode,
+                            'item': content_object,
+                            'error': {
+                                'message': None
+                            },
+                            'status': 'info'
+                        }
+
+                        try:
+
+                            serializer.is_valid(raise_exception=True)
+
+                            try:
+                                serializer.instance = ColorPalette.objects.get(
+                                    master_user=self.master_user, user_code=content_object['user_code'])
+                            except ColorPalette.DoesNotExist:
+                                pass
+
+                            serializer.save()
+                        except Exception as error:
+                            stats['status'] = 'error'
+                            stats['error']['message'] = 'Color Palette %s already exists' % content_object['name']
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
+
+                        self.update_progress()
+
+        _l.info('Import Configuration Color Palettes done %s' % (time.perf_counter() - st))
 
     def import_instrument_user_fields(self, configuration_section):
         st = time.perf_counter()
@@ -2646,6 +2696,7 @@ class ImportManager(object):
                 self.import_instrument_user_fields(configuration_section)
                 self.import_transaction_user_fields(configuration_section)
                 self.import_entity_tooltips(configuration_section)
+                self.import_color_palettes(configuration_section)
 
             if can_import:
                 self.import_pricing_automated_schedule(configuration_section)  # configuration section
