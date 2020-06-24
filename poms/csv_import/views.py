@@ -5,6 +5,7 @@ from django_filters.rest_framework import FilterSet
 from rest_framework.response import Response
 from rest_framework import status
 
+from poms.common.filters import CharFilter
 from poms.common.utils import date_now, datetime_now
 
 from poms.celery_tasks.models import CeleryTask
@@ -31,6 +32,7 @@ _l = getLogger('poms.csv_import')
 
 
 class SchemeFilterSet(FilterSet):
+    scheme_name = CharFilter()
     content_type = SchemeContentTypeFilter(field_name='content_type')
 
     class Meta:
