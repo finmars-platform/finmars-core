@@ -18,7 +18,7 @@ _l = getLogger('poms.csv_import')
 
 class ComplexImportSchemeFilterSet(FilterSet):
     id = NoOpFilter()
-    name = CharFilter()
+    scheme_name = CharFilter()
 
     class Meta:
         model = ComplexImportScheme
@@ -26,12 +26,10 @@ class ComplexImportSchemeFilterSet(FilterSet):
 
 
 class ComplexImportSchemeViewSet(AbstractModelViewSet):
-    queryset = ComplexImportScheme.objects.select_related(
-        'master_user',
-    )
+    queryset = ComplexImportScheme.objects
     serializer_class = ComplexImportSchemeSerializer
     filter_class = ComplexImportSchemeFilterSet
-    filter_backends = [
+    filter_backends = AbstractModelViewSet.filter_backends +  [
         OwnerByMasterUserFilter,
     ]
     permission_classes = AbstractModelViewSet.permission_classes + [
