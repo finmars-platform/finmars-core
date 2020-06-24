@@ -124,7 +124,7 @@ class ReconciliationNewBankFileField(models.Model):
     description = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('description'))
 
     value_string = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('value string'))
-    value_float = models.IntegerField(default=0, verbose_name=ugettext_lazy('value float'))
+    value_float = models.FloatField(blank=True, null=True, verbose_name=ugettext_lazy('value float'))
     value_date = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("value date"))
 
     is_canceled = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is canceled'))
