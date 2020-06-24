@@ -67,6 +67,7 @@ class TemplateLayoutFilterSet(FilterSet):
 class ColorPaletteFilterSet(FilterSet):
     id = NoOpFilter()
     name = CharFilter()
+    user_code = CharFilter()
 
     class Meta:
         model = ColorPalette
