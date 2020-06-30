@@ -73,6 +73,8 @@ class ColorPaletteSerializer(serializers.ModelSerializer):
 
         self.save_colors(instance=instance, colors=colors)
 
+        return instance
+
     def update(self, instance, validated_data):
 
         colors = validated_data.pop('colors')
@@ -80,6 +82,8 @@ class ColorPaletteSerializer(serializers.ModelSerializer):
         instance = super(ColorPaletteSerializer, self).update(instance, validated_data)
 
         self.save_colors(instance=instance, colors=colors)
+
+        return instance
 
 
 class EntityTooltipSerializer(serializers.ModelSerializer):

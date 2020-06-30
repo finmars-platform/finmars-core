@@ -35,7 +35,7 @@ from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1,
 from poms.tags.models import Tag
 from poms.transactions.models import TransactionClass, ActionClass, EventClass, NotificationClass, TransactionTypeGroup, \
     TransactionType, TransactionTypeInput, TransactionTypeActionInstrument, TransactionTypeActionTransaction
-from poms.ui.models import ListLayout, EditLayout
+from poms.ui.models import ListLayout, EditLayout, DashboardLayout, ContextMenuLayout
 from poms.users.models import Group, Member, EcosystemDefault
 
 _l = logging.getLogger('poms.users.cloner')
@@ -599,9 +599,17 @@ class FullDataCloner(object):
 
             self._simple_list_clone_member_specific(ListLayout, member,
                                                     'member',  'name', 'is_default', 'is_fixed', 'is_active',
-                                                    'user_code', 'content_type', 'json_data',
-                                    'is_default')
+                                                    'user_code', 'content_type', 'json_data', 'is_default')
+
             self._simple_list_clone_member_specific(EditLayout, member, 'member', 'content_type', 'json_data')
+
+            self._simple_list_clone_member_specific(DashboardLayout, member,
+                                                    'member',  'name', 'is_default', 'is_fixed', 'is_active',
+                                                    'user_code', 'content_type', 'json_data', 'is_default')
+
+            self._simple_list_clone_member_specific(ContextMenuLayout, member,
+                                                    'member',  'name', 'user_code', 'type', 'json_data')
+
 
 
         _l.info("Master User Clone: UI finished")
