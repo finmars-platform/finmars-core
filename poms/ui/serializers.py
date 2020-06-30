@@ -34,7 +34,7 @@ class ColorPaletteColorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ColorPaletteColor
-        fields = ['id', 'order', 'name', 'value']
+        fields = ['id', 'order', 'name', 'value', 'tooltip']
 
 
 class ColorPaletteSerializer(serializers.ModelSerializer):
@@ -54,6 +54,7 @@ class ColorPaletteSerializer(serializers.ModelSerializer):
             try:
 
                 item = ColorPaletteColor.objects.get(color_palette=instance, order=color['order'])
+                item.tooltip = color['tooltip']
                 item.value = color['value']
                 item.name = color['name']
                 item.save()
@@ -61,6 +62,7 @@ class ColorPaletteSerializer(serializers.ModelSerializer):
             except ColorPaletteColor.DoesNotExist:
 
                 item = ColorPaletteColor.objects.create(color_palette=instance, order=color['order'])
+                item.tooltip = color['tooltip']
                 item.value = color['value']
                 item.name = color['name']
                 item.save()

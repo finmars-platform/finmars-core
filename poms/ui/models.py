@@ -210,6 +210,7 @@ class ColorPaletteColor(models.Model):
 
     name = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('name'))
     value = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('value'))
+    tooltip = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('tooltip'))
 
     class Meta:
         unique_together = [
