@@ -216,7 +216,7 @@ admin.site.register(EcosystemDefault, EcosystemDefaultAdmin)
 class MemberAdmin(AbstractModelAdmin):
     model = Member
     master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'user', 'is_deleted', 'is_owner', 'is_admin']
+    list_display = ['id', 'master_user', 'username', 'user', 'is_deleted', 'is_owner', 'is_admin']
     list_select_related = ['master_user', 'user']
     list_filter = ['is_deleted', 'is_owner', 'is_admin']
     raw_id_fields = ['master_user', 'user', 'groups']

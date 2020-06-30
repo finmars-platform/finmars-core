@@ -705,7 +705,7 @@ class MasterUser(models.Model):
 
         from poms.ui.models import ColorPalette, ColorPaletteColor
 
-        for i in range(5):
+        for i in range(1):
 
             try:
 

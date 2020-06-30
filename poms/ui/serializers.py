@@ -39,11 +39,13 @@ class ColorPaletteColorSerializer(serializers.ModelSerializer):
 
 class ColorPaletteSerializer(serializers.ModelSerializer):
 
+    master_user = MasterUserField()
+
     colors = ColorPaletteColorSerializer(many=True)
 
     class Meta:
         model = ColorPalette
-        fields = ['id', 'name', 'user_code', 'short_name', 'is_default', 'colors']
+        fields = ['id', 'master_user', 'name', 'user_code', 'short_name', 'is_default', 'colors']
 
     def save_colors(self, instance, colors):
 
@@ -51,16 +53,16 @@ class ColorPaletteSerializer(serializers.ModelSerializer):
 
             try:
 
-                item = ColorPaletteColor.objects.get(color_palette=instance, order=color.order)
-                item.value = color.value
-                item.name = color.name
+                item = ColorPaletteColor.objects.get(color_palette=instance, order=color['order'])
+                item.value = color['value']
+                item.name = color['name']
                 item.save()
 
             except ColorPaletteColor.DoesNotExist:
 
-                item = ColorPaletteColor.objects.create(color_palette=instance, order=color.order)
-                item.value = color.value
-                item.name = color.name
+                item = ColorPaletteColor.objects.create(color_palette=instance, order=color['order'])
+                item.value = color['value']
+                item.name = color['name']
                 item.save()
 
     def create(self, validated_data):

@@ -22,7 +22,7 @@ from poms.counterparties.models import Counterparty, Responsible
 from poms.csv_import.models import CsvField, EntityField, CsvImportScheme
 from poms.currencies.models import Currency
 from poms.instruments.models import InstrumentType, Instrument, Periodicity, DailyPricingModel, PaymentSizeDetail, \
-    AccrualCalculationModel, PricingPolicy
+    AccrualCalculationModel, PricingPolicy, PricingCondition
 from poms.integrations.models import InstrumentDownloadScheme, InstrumentDownloadSchemeInput, \
     InstrumentDownloadSchemeAttribute, PriceDownloadScheme, ComplexTransactionImportScheme, \
     ComplexTransactionImportSchemeInput, ComplexTransactionImportSchemeField, \
@@ -31,7 +31,7 @@ from poms.integrations.models import InstrumentDownloadScheme, InstrumentDownloa
     PeriodicityMapping, DailyPricingModelMapping, PaymentSizeDetailMapping, AccrualCalculationModelMapping, \
     PriceDownloadSchemeMapping, AccountTypeMapping, PricingPolicyMapping, ComplexTransactionImportSchemeRuleScenario, \
     ComplexTransactionImportSchemeReconScenario, ComplexTransactionImportSchemeReconField, \
-    ComplexTransactionImportSchemeSelectorValue, ComplexTransactionImportSchemeCalculatedInput
+    ComplexTransactionImportSchemeSelectorValue, ComplexTransactionImportSchemeCalculatedInput, PricingConditionMapping
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_attrs.serializers import GenericClassifierViewSerializer, GenericClassifierNodeSerializer, \
     GenericAttributeTypeSerializer
@@ -41,6 +41,7 @@ from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, 
     InstrumentTypePricingPolicy
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
     CurrencyPricingPolicySerializer, InstrumentTypePricingPolicySerializer
+from poms.reconciliation.models import TransactionTypeReconField
 from poms.reference_tables.models import ReferenceTable, ReferenceTableRow
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
 from poms.schedules.models import PricingSchedule
@@ -500,6 +501,17 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return results
 
+    def get_transaction_recon_fields(self, transaction_type):
+
+        recon_fields = to_json_objects(
+            TransactionTypeReconField.objects.filter(transaction_type__id=transaction_type["pk"]))
+        results = unwrap_items(recon_fields)
+
+        delete_prop(results, 'transaction_type')
+
+        return results
+
+
     def add_user_code_to_relation(self, json_obj, transaction_type_action_key):
 
         relation_keys = {
@@ -796,6 +808,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
             result_item["inputs"] = self.get_transaction_type_inputs(transaction_type)
             result_item["actions"] = self.get_transaction_type_actions(transaction_type)
+            result_item["recon_fields"] = self.get_transaction_recon_fields(transaction_type)
 
             result_item["book_transaction_layout"] = TransactionType.objects.get(
                 pk=result_item["pk"]).book_transaction_layout
@@ -2123,6 +2136,7 @@ class MappingExportViewSet(AbstractModelViewSet):
                 pricing_policy_mapping = self.get_pricing_policy_mapping()
                 periodicity_mapping = self.get_periodicity_mapping()
                 daily_pricing_model_mapping = self.get_daily_pricing_model_mapping()
+                pricing_condition_mapping = self.get_pricing_condition_mapping()
                 payment_size_detail_mapping = self.get_payment_size_detail_mapping()
                 accrual_calculation_model_mapping = self.get_accrual_calculation_model_mapping()
                 price_download_scheme_mapping = self.get_price_download_scheme_mapping()
@@ -2574,6 +2588,38 @@ class MappingExportViewSet(AbstractModelViewSet):
 
         result = {
             "entity": "integrations.dailypricingmodelmapping",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_pricing_condition_mapping(self):
+
+        items = to_json_objects(
+            PricingConditionMapping.objects.filter(master_user=self._master_user))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item["pk"] = item["pk"]
+
+            result_item.pop("master_user", None)
+            # result_item.pop("provider", None)
+
+            result_item["___system_code"] = PricingCondition.objects.get(pk=result_item["content_object"]).system_code
+
+            result_item.pop("content_object", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "integrations.pricingconditionmapping",
             "count": len(results),
             "content": results
         }

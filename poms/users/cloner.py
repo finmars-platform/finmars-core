@@ -6,6 +6,7 @@ import pytz
 from django.conf import settings
 from django.contrib.auth.models import Permission, User
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import FieldDoesNotExist
 from django.db import transaction
 from django.utils import timezone
 
@@ -35,7 +36,7 @@ from poms.tags.models import Tag
 from poms.transactions.models import TransactionClass, ActionClass, EventClass, NotificationClass, TransactionTypeGroup, \
     TransactionType, TransactionTypeInput, TransactionTypeActionInstrument, TransactionTypeActionTransaction
 from poms.ui.models import ListLayout, EditLayout
-from poms.users.models import Group, Member
+from poms.users.models import Group, Member, EcosystemDefault
 
 _l = logging.getLogger('poms.users.cloner')
 
@@ -98,42 +99,46 @@ class FullDataCloner(object):
 
         self._load_consts()
 
+
         # self._users_1()
 
-        self._copy_current_member()
+        # self._copy_current_member()
 
-        self._accounts()
-        self._chats()
-        self._counterparties()
+        self._members_1()
 
-        self._instruments_1()
-        self._integrations_1()
-
-        self._currencies()
-
-        self._instruments_2()
-
-        self._portfolios_1()
-        self._strategies_1()
-
-        self._transactions_1()
-
-        self._instruments_3()
-
-
-        self._integrations_2()
-
-        self._csv_import_schemes()
-
-        self._complex_import_schemes()
-
-        self._simple_clone(self._target_master_user, self._source_master_user,
-                           'system_currency', 'currency', 'account_type', 'account', 'counterparty_group',
-                           'counterparty', 'responsible_group', 'responsible', 'portfolio', 'instrument_type',
-                           'instrument', 'strategy1_group', 'strategy1_subgroup', 'strategy1', 'strategy2_group',
-                           'strategy2_subgroup', 'strategy2', 'strategy3_group', 'strategy3_subgroup', 'strategy3',
-                           'thread_group', 'transaction_type_group', 'mismatch_portfolio', 'mismatch_account',
-                           'notification_business_days')
+        # self._accounts()
+        # self._chats()
+        # self._counterparties()
+        #
+        # self._instruments_1()
+        # self._integrations_1()
+        #
+        # self._currencies()
+        #
+        # self._instruments_2()
+        #
+        # self._portfolios_1()
+        # self._strategies_1()
+        #
+        # self._transactions_1()
+        #
+        # self._instruments_3()
+        #
+        # self._integrations_2()
+        #
+        # self._csv_import_schemes()
+        #
+        # self._complex_import_schemes()
+        #
+        # self._simple_clone(self._target_master_user, self._source_master_user,
+        #                    'system_currency', 'currency', 'account_type', 'account', 'counterparty_group',
+        #                    'counterparty', 'responsible_group', 'responsible', 'portfolio', 'instrument_type',
+        #                    'instrument', 'strategy1_group', 'strategy1_subgroup', 'strategy1', 'strategy2_group',
+        #                    'strategy2_subgroup', 'strategy2', 'strategy3_group', 'strategy3_subgroup', 'strategy3',
+        #                    'thread_group', 'transaction_type_group', 'mismatch_portfolio', 'mismatch_account',
+        #                    'notification_business_days')
+        #
+        # self._ecosystem_defaults()
 
         # self._tags()
         self._ui()
@@ -198,16 +203,111 @@ class FullDataCloner(object):
     #
     #     self._simple_list_clone(Group, None, 'master_user', 'name')
 
-    def _copy_current_member(self):
+    def _ecosystem_defaults(self):
+
+        source_ecosystem_default = EcosystemDefault.objects.get(master_user=self._source_master_user)
+        target_ecosystem_default = EcosystemDefault()
+
+        target_ecosystem_default.master_user = self._target_master_user
+
+        for field in EcosystemDefault._meta.get_fields():
+
+            if field.name != 'master_user' and field.name != 'id':
+
+                print("field_name %s" % field.name)
+
+                attr = getattr(source_ecosystem_default, field.name)
+
+                print('attr %s' % attr)
+
+                try:
+                    prop = field.remote_field.model._meta.get_field('system_code')
+
+                    code = attr.system_code
+
+                    value = field.remote_field.model.objects.get(system_code=code)
+
+                    setattr(target_ecosystem_default, field.name, value)
+
+                except (FieldDoesNotExist, AttributeError):
+
+                    try:
+
+                        prop = field.remote_field.model._meta.get_field('user_code')
+
+                        code = attr.user_code
+
+                        value = field.remote_field.model.objects.get(master_user=self._target_master_user, user_code=code)
+
+                        setattr(target_ecosystem_default, field.name, value)
+
+                    except (FieldDoesNotExist, AttributeError):
+
+                        try:
+
+                            prop = field.remote_field.model._meta.get_field('scheme_name')
+
+                            scheme_name = attr.scheme_name
+
+                            value = field.remote_field.model.objects.get(master_user=self._target_master_user, scheme_name=scheme_name)
+
+                            setattr(target_ecosystem_default, field.name, value)
+
+                        except (FieldDoesNotExist, AttributeError):
+
+                            name = attr.name
+
+                            value = field.remote_field.model.objects.get(master_user=self._target_master_user, name=name)
+
+                            setattr(target_ecosystem_default, field.name, value)
+
+
+        target_ecosystem_default.save()
+
+
+    def _members_1(self):
+
         self._source_owner = self._source_master_user.members.filter(is_owner=True).order_by('join_date').first()
 
-        self._target_owner = Member.objects.create(master_user=self._target_master_user, user=self.current_user,
-                                                   is_owner=True,
-                                                   is_admin=True)
-        if self._source_owner:
-            self._add_pk_map(self._target_owner, self._source_owner)
-
         self._simple_list_clone(Group, None, 'master_user', 'name')
+
+        self._source_members = self._source_owner = self._source_master_user.members.all()
+
+        for source_member in self._source_members:
+
+            target_member = Member.objects.create(master_user=self._target_master_user, user=source_member.user)
+
+            target_member.username = source_member.username
+            target_member.first_name = source_member.first_name
+            target_member.last_name = source_member.last_name
+            target_member.email = source_member.email
+            target_member.notification_level = source_member.notification_level
+            target_member.interface_level = source_member.interface_level
+            target_member.join_date = source_member.join_date
+            target_member.is_owner = source_member.is_owner
+            target_member.is_admin = source_member.is_admin
+            # target_member.groups = source_member.groups
+
+            for source_group in source_member.groups.all():
+
+                group = Group.objects.get(master_user=self._target_master_user, name=source_group.name)
+
+                target_member.groups.add(group)
+
+            target_member.save()
+
+        self._target_owner = self._target_master_user.members.filter(is_owner=True).order_by('join_date').first()
+
+    # def _copy_current_member(self):
+    #     self._source_owner = self._source_master_user.members.filter(is_owner=True).order_by('join_date').first()
+    #
+    #     self._target_owner = Member.objects.create(master_user=self._target_master_user, user=self.current_user,
+    #                                                is_owner=True,
+    #                                                is_admin=True)
+    #     if self._source_owner:
+    #         self._add_pk_map(self._target_owner, self._source_owner)
+    #
+    #     self._simple_list_clone(Group, None, 'master_user', 'name')
 
     def _accounts(self):
         self._simple_list_clone(AccountType, None, 'master_user', 'user_code', 'name', 'short_name',
@@ -489,11 +589,22 @@ class FullDataCloner(object):
 
     def _ui(self):
 
-        if self._source_owner:
-            self._simple_list_clone(ListLayout, 'member__master_user', 'member', 'content_type', 'json_data', 'name',
-                                    'is_default', pk_map=False, filter={'member': self._source_owner})
-            self._simple_list_clone(EditLayout, 'member__master_user', 'member', 'content_type', 'json_data',
-                                    pk_map=False, filter={'member': self._source_owner})
+        # if self._source_owner:
+        #     self._simple_list_clone(ListLayout, 'member__master_user', 'member', 'content_type', 'json_data', 'name',
+        #                             'is_default', pk_map=False, filter={'member': self._source_owner})
+        #     self._simple_list_clone(EditLayout, 'member__master_user', 'member', 'content_type', 'json_data',
+        #                             pk_map=False, filter={'member': self._source_owner})
+
+        for member in self._target_master_user.members.all():
+
+            self._simple_list_clone_member_specific(ListLayout, member,
+                                                    'member',  'name', 'is_default', 'is_fixed', 'is_active',
+                                                    'user_code', 'content_type', 'json_data',
+                                    'is_default')
+            self._simple_list_clone_member_specific(EditLayout, member, 'member', 'content_type', 'json_data')
+
+
+        _l.info("Master User Clone: UI finished")
 
         pass
 
@@ -588,6 +699,38 @@ class FullDataCloner(object):
             target = self._target_get_object(source, target_pk)
             self._simple_clone(target, source, *fields, pk_map=False)
 
+    def _simple_list_clone_member_specific(self, model, member, *fields,  pk_map=True, store=False, filter=None):
+        # _l.debug('clone %s', model)
+
+        fields_select_related = []
+        fields_prefetch_related = []
+        for item in fields:
+            field = model._meta.get_field(item)
+            if field.one_to_one:
+                pass
+            elif field.one_to_many:
+                # fields_select_related.append(field.name)
+                pass
+            elif field.many_to_many:
+                fields_prefetch_related.append(field.name)
+
+        filter = filter or {}
+        filter['member'] = member
+
+        # print('_simple_list_clone filter %s' % filter)
+
+        qs = model.objects.filter(**filter)
+        # qs = model.objects.filter(**{master_user_path: self._source_master_user})
+
+        if fields_select_related:
+            qs = qs.select_related(*fields_select_related)
+        if fields_prefetch_related:
+            qs = qs.prefetch_related(*fields_prefetch_related)
+
+        _l.debug('clone member specific %s: count=%s', model._meta.model_name, qs.count())
+        for source in qs:
+            self._simple_clone_member_specific(member, None, source, *fields, pk_map=pk_map, store=store)
+
     def _simple_clone(self, target, source, *fields, pk_map=True, store=False):
         content_type = ContentType.objects.get_for_model(source)
         if not target:
@@ -646,6 +789,67 @@ class FullDataCloner(object):
 
         return target
 
+    def _simple_clone_member_specific(self, member, target, source, *fields, pk_map=True, store=False):
+
+        content_type = ContentType.objects.get_for_model(source)
+
+        if not target:
+            target = content_type.model_class()()
+
+        for item in fields:
+            field = target._meta.get_field(item)
+
+            if field.one_to_one:
+                attr_name = field.get_attname()
+                value = getattr(source, attr_name)
+                value = self._get_related_from_pk_map(field.related_model, value)
+                setattr(target, attr_name, value)
+            elif field.one_to_many:
+                pass
+            elif field.many_to_one:
+                attr_name = field.get_attname()
+
+                _l.info('attr_name %s' % attr_name)
+
+                if attr_name == 'member_id':
+                    setattr(target, attr_name, member.id)
+                else:
+                    value = getattr(source, attr_name)
+                    value = self._get_related_from_pk_map(field.related_model, value)
+                    setattr(target, attr_name, value)
+            elif field.many_to_many:
+                pass
+            else:
+                value = getattr(source, item)
+                setattr(target, item, value)
+
+        print('target %s' % target.member)
+        print('target user_code %s' % target.user_code)
+
+        target.save()
+
+        for item in fields:
+
+            field = target._meta.get_field(item)
+            if field.many_to_many:
+                values = getattr(source, item).values_list('id', flat=True)
+                values = [self._get_related_from_pk_map(field.remote_field.model, pk) for pk in values]
+
+                values = field.remote_field.model.objects.filter(pk__in=values)
+
+                attr = getattr(target, item)
+
+                attr.set(values)
+
+        if pk_map:
+            self._add_pk_map(target, source)
+
+        if store:
+            self._source_add_object(source)
+            self._target_add_object(target)
+
+        return target
+
     def _source_add_object(self, source):
         content_type = ContentType.objects.get_for_model(source)
         objects = self._source_objects[content_type.id]
@@ -686,7 +890,8 @@ class FullDataCloner(object):
             return None
         content_type = ContentType.objects.get_for_model(model)
 
-        # print(' _get_related_from_pk_map content_type %s' % content_type)
+        print(' _get_related_from_pk_map content_type %s' % content_type)
+        print(' _get_related_from_pk_map _pk_map %s' % content_type.pk)
 
         objects = self._pk_map[content_type.pk]
         return objects[pk]
