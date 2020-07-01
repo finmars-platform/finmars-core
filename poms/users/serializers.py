@@ -25,7 +25,7 @@ from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Fiel
 from poms.transactions.fields import TransactionTypeField
 
 from poms.ui.models import ListLayout, EditLayout
-from poms.users.fields import MasterUserField, MemberField, GroupField
+from poms.users.fields import MasterUserField, MemberField, GroupField, HiddenMemberField
 from poms.users.models import MasterUser, UserProfile, Group, Member, TIMEZONE_CHOICES, InviteToMasterUser, \
     EcosystemDefault, OtpToken
 from poms.users.utils import get_user_from_context, get_master_user_from_context, get_member_from_context
@@ -69,20 +69,50 @@ class MasterUserCreateSerializer(serializers.Serializer):
         return validated_data
 
 
+class MasterUserCopy:
+    def __init__(self, task_id=None, task_status=None, master_user=None, member=None, name=None, description=None,
+                 reference_master_user=None):
+
+        self.task_id = task_id
+        self.task_status = task_status
+
+        self.name = name
+        self.reference_master_user = reference_master_user
+
+        self.master_user = master_user
+        self.member = member
+
+    def __str__(self):
+        return '%s:%s' % (getattr(self.master_user, 'name', None), self.name)
+
+
+
 class MasterUserCopySerializer(serializers.Serializer):
-    name = serializers.CharField(max_length=255, required=True)
-    reference_master_user = serializers.IntegerField()
+    name = serializers.CharField(max_length=255, required=False, allow_null=True)
+    reference_master_user = serializers.IntegerField(required=False, allow_null=True)
+
+    task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    task_status = serializers.ReadOnlyField()
+
+    master_user = MasterUserField()
+    member = HiddenMemberField()
 
     def create(self, validated_data):
-        name = validated_data.get('name')
-
-        if MasterUser.objects.filter(name=name).exists():
-            error = {"name": [ugettext_lazy('Name already in use.')]}
-            raise serializers.ValidationError(error)
-
-        return validated_data
 
 
+        if validated_data.get('task_id', None):
+            validated_data.pop('name', None)
+            validated_data.pop('reference_master_user', None)
+
+        else:
+
+            name = validated_data.get('name')
+
+            if MasterUser.objects.filter(name=name).exists():
+                error = {"name": [ugettext_lazy('Name already in use.')]}
+                raise serializers.ValidationError(error)
+
+        return MasterUserCopy(**validated_data)
 
 
 class UserRegisterSerializer(serializers.Serializer):
@@ -281,6 +311,7 @@ class MasterUserSerializer(serializers.ModelSerializer):
         model = MasterUser
         fields = [
             'id', 'name', 'description', 'user_code_counters', 'is_current', 'is_admin', 'is_owner', 'language',
+            'status',
             'timezone',
             'notification_business_days',
             'system_currency',
@@ -415,8 +446,6 @@ class MasterUserLightSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         ret = super(MasterUserLightSerializer, self).to_representation(instance)
-
-        print('ret %s' % ret)
 
         # is_current = self.get_is_current(instance)
         # is_admin = self.get_is_admin(ret)

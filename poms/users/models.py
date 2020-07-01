@@ -102,10 +102,24 @@ class MasterUserManager(models.Manager):
         return obj
 
 class MasterUser(models.Model):
+
+    STATUS_ONLINE = 1
+    STATUS_OFFLINE = 2
+    STATUS_BACKUP = 3
+
+    STATUSES = (
+        (STATUS_ONLINE, ugettext_lazy('Online')),
+        (STATUS_OFFLINE, ugettext_lazy('Offline')),
+        (STATUS_BACKUP, ugettext_lazy('Backup')),
+    )
+
     name = models.CharField(max_length=255, null=True, blank=True,
                             verbose_name=ugettext_lazy('name'))
 
     description = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('description'))
+
+    status = models.PositiveSmallIntegerField(default=STATUS_ONLINE, choices=STATUSES,
+                                                  verbose_name=ugettext_lazy('status'))
 
     language = models.CharField(max_length=LANGUAGE_MAX_LENGTH, default=settings.LANGUAGE_CODE,
                                 verbose_name=ugettext_lazy('language'))

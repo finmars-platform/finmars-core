@@ -24,7 +24,7 @@ from poms.chats.models import ThreadGroup, Thread
 from poms.common.filters import CharFilter, NoOpFilter, ModelExtMultipleChoiceFilter
 from poms.common.mixins import UpdateModelMixinExt, DestroyModelFakeMixin
 from poms.common.pagination import BigPagination
-from poms.common.views import AbstractModelViewSet, AbstractApiView, AbstractViewSet
+from poms.common.views import AbstractModelViewSet, AbstractApiView, AbstractViewSet, AbstractAsyncViewSet
 from poms.complex_import.models import ComplexImportSchemeAction, ComplexImportScheme
 from poms.counterparties.models import CounterpartyGroup, Counterparty, ResponsibleGroup, Responsible
 from poms.currencies.models import Currency
@@ -40,7 +40,7 @@ from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy1Group,
 from poms.transactions.models import TransactionType, TransactionTypeInput, TransactionTypeAction, \
     TransactionTypeActionInstrument, Transaction, ComplexTransaction, TransactionTypeGroup
 from poms.users.filters import OwnerByMasterUserFilter, MasterUserFilter, OwnerByUserFilter, InviteToMasterUserFilter, \
-    IsMemberFilterBackend
+    IsMemberFilterBackend, MasterUserBackupsForOwnerOnlyFilter
 from poms.users.models import MasterUser, Member, Group, ResetPasswordToken, InviteToMasterUser, EcosystemDefault, \
     OtpToken
 from poms.users.permissions import SuperUserOrReadOnly, IsCurrentMasterUser, IsCurrentUser
@@ -49,6 +49,7 @@ from poms.users.serializers import GroupSerializer, UserSerializer, MasterUserSe
     UserRegisterSerializer, MasterUserCreateSerializer, EmailSerializer, PasswordTokenSerializer, \
     InviteToMasterUserSerializer, InviteCreateSerializer, EcosystemDefaultSerializer, MasterUserLightSerializer, \
     OtpTokenSerializer, MasterUserCopySerializer
+from poms.users.tasks import clone_master_user
 from poms.users.utils import set_master_user
 
 from datetime import timedelta
@@ -59,9 +60,20 @@ from rest_framework.response import Response
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy
 
+from django.core.signing import TimestampSigner
+from celery.result import AsyncResult
+from poms.common.utils import date_now, datetime_now
+import time
+from poms.celery_tasks.models import CeleryTask
+
+
 from django.core.mail import send_mail
 
 import pyotp
+
+from logging import getLogger
+
+_l = getLogger('poms.users')
 
 
 class ObtainAuthTokenViewSet(AbstractApiView, ViewSet):
@@ -179,8 +191,9 @@ class MasterUserCreateViewSet(ViewSet):
         return Response({'id': master_user.id, 'name': master_user.name, 'description': master_user.description})
 
 
-class MasterUserCopyViewSet(ViewSet):
+class MasterUserCopyViewSet(AbstractAsyncViewSet):
 
+    celery_task = clone_master_user
     serializer_class = MasterUserCopySerializer
 
     permission_classes = [
@@ -188,25 +201,84 @@ class MasterUserCopyViewSet(ViewSet):
     ]
 
     def create(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        validated_data = serializer.save()
-        name = validated_data['name']
+        instance = serializer.save()
 
-        reference_master_user = MasterUser.objects.get(id=validated_data['reference_master_user'])
+        task_id = instance.task_id
 
-        # TODO ADD VALIDATION THAT WE ARE MEMBER OF REFERENCE MASTER USER
+        signer = TimestampSigner()
 
-        from poms.users.cloner import FullDataCloner
+        _l.info("TASK id: %s" % task_id)
 
-        copy_settings = {
-            "members": False
-        }
+        if task_id:
 
-        cloner = FullDataCloner(source_master_user=reference_master_user, name=name, copy_settings=copy_settings, current_user=request.user)
-        new_master_user = cloner.clone()
+            res = AsyncResult(signer.unsign(task_id))
 
-        return Response({'id': new_master_user.id, 'name': new_master_user.name, 'description': new_master_user.description})
+            try:
+                celery_task = CeleryTask.objects.get(master_user=request.user.master_user, task_id=task_id)
+            except CeleryTask.DoesNotExist:
+                celery_task = None
+                _l.info("Cant create Celery Task")
+
+            _l.info('celery_task %s' % celery_task)
+
+            st = time.perf_counter()
+
+            if res.ready():
+
+                instance = res.result
+
+                if celery_task:
+                    celery_task.finished_at = datetime_now()
+
+            else:
+
+                if res.result:
+
+                    if celery_task:
+
+                        celery_task_data = {}
+
+                        celery_task.data = celery_task_data
+
+                # _l.info('TASK ITEMS LEN %s' % len(res.result.items))
+
+            _l.info('AsyncResult res.ready: %s' % (time.perf_counter() - st))
+
+            if instance.master_user.id != request.user.master_user.id:
+                raise PermissionDenied()
+
+            # _l.info('TASK RESULT %s' % res.result)
+            _l.info('TASK STATUS %s' % res.status)
+            _l.info('TASK STATUS celery_task %s' % celery_task)
+
+            instance.task_id = task_id
+            instance.task_status = res.status
+
+            if celery_task:
+                celery_task.task_status = res.status
+                celery_task.save()
+
+            serializer = self.get_serializer(instance=instance, many=False)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        else:
+
+            res = self.celery_task.apply_async(kwargs={'instance': instance, 'current_user': request.user})
+            instance.task_id = signer.sign('%s' % res.id)
+
+            celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
+                                                    member=request.user.member,
+                                                    started_at=datetime_now(),
+                                                    task_type='clone_master_user', task_id=res.id)
+
+            celery_task.save()
+
+
+            instance.task_status = res.status
+            serializer = self.get_serializer(instance=instance, many=False)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class MasterUserCreateCheckUniquenessViewSet(ViewSet):
@@ -510,6 +582,7 @@ class MasterUserViewSet(AbstractModelViewSet):
     ]
     filter_backends = AbstractModelViewSet.filter_backends + [
         MasterUserFilter,
+        MasterUserBackupsForOwnerOnlyFilter
     ]
     ordering_fields = [
         'name',
@@ -540,6 +613,7 @@ class MasterUserViewSet(AbstractModelViewSet):
             if len(list(member_qs)):
                 master_user.name = request.data['name']
                 master_user.description = request.data['description']
+                master_user.status = request.data['status']
                 master_user.save()
             else:
                 raise PermissionDenied()
@@ -566,6 +640,7 @@ class MasterUserLightViewSet(AbstractModelViewSet):
     ]
     filter_backends = AbstractModelViewSet.filter_backends + [
         MasterUserFilter,
+        MasterUserBackupsForOwnerOnlyFilter
     ]
     ordering_fields = [
         'name',

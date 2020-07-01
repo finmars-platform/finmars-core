@@ -1,6 +1,6 @@
 from rest_framework.filters import BaseFilterBackend
 
-from poms.users.models import InviteToMasterUser
+from poms.users.models import InviteToMasterUser, MasterUser
 
 
 class OwnerByUserFilter(BaseFilterBackend):
@@ -46,6 +46,30 @@ class MasterUserFilter(BaseFilterBackend):
         user = request.user
 
         return queryset.filter(members__user=user)
+
+
+class MasterUserBackupsForOwnerOnlyFilter(BaseFilterBackend):
+
+    def filter_queryset(self, request, queryset, view):
+        user = request.user
+
+        ids = []
+
+        for item in queryset:
+
+            if item.status == MasterUser.STATUS_BACKUP:
+
+                for member in item.members.all():
+
+                    if member.user_id == user.id and member.is_owner:
+
+                        ids.append(item.id)
+
+            else:
+
+                ids.append(item.id)
+
+        return queryset.filter(id__in=ids)
 
 
 class InviteToMasterUserFilter(BaseFilterBackend):

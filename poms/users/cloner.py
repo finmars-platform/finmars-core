@@ -14,12 +14,14 @@ from poms.accounts.models import AccountType, Account
 from poms.chats.models import ThreadGroup
 from poms.complex_import.models import ComplexImportScheme, ComplexImportSchemeActionCsvImport, \
     ComplexImportSchemeActionTransactionImport
+from poms.configuration_sharing.models import SharedConfigurationFile
 from poms.counterparties.models import CounterpartyGroup, Counterparty, ResponsibleGroup, Responsible
 from poms.csv_import.models import CsvImportScheme, CsvField, EntityField
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import PricingPolicy, DailyPricingModel, InstrumentClass, AccrualCalculationModel, \
     PaymentSizeDetail, Periodicity, CostMethod, InstrumentType, Instrument, ManualPricingFormula, PriceHistory, \
-    AccrualCalculationSchedule, InstrumentFactorSchedule, EventScheduleConfig, EventSchedule, EventScheduleAction
+    AccrualCalculationSchedule, InstrumentFactorSchedule, EventScheduleConfig, EventSchedule, EventScheduleAction, \
+    PricingCondition
 from poms.integrations.models import PriceDownloadScheme, ProviderClass, AccrualScheduleDownloadMethod, \
     FactorScheduleDownloadMethod, InstrumentDownloadScheme, InstrumentDownloadSchemeInput, \
     CurrencyMapping, InstrumentTypeMapping, AccrualCalculationModelMapping, PeriodicityMapping, AccountMapping, \
@@ -29,14 +31,23 @@ from poms.integrations.models import PriceDownloadScheme, ProviderClass, Accrual
     ComplexTransactionImportSchemeField, ImportConfig, ComplexTransactionImportSchemeCalculatedInput, \
     ComplexTransactionImportSchemeSelectorValue, ComplexTransactionImportSchemeRuleScenario, \
     ComplexTransactionImportSchemeReconScenario, ComplexTransactionImportSchemeReconField
+from poms.obj_attrs.models import GenericAttributeType, GenericAttributeTypeOption
 from poms.portfolios.models import Portfolio
+from poms.reconciliation.models import TransactionTypeReconField, ReconciliationBankFileField, \
+    ReconciliationNewBankFileField, ReconciliationComplexTransactionField
+from poms.reference_tables.models import ReferenceTable, ReferenceTableRow
 from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, Strategy2Subgroup, \
     Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
 from poms.tags.models import Tag
 from poms.transactions.models import TransactionClass, ActionClass, EventClass, NotificationClass, TransactionTypeGroup, \
-    TransactionType, TransactionTypeInput, TransactionTypeActionInstrument, TransactionTypeActionTransaction
-from poms.ui.models import ListLayout, EditLayout, DashboardLayout, ContextMenuLayout
-from poms.users.models import Group, Member, EcosystemDefault
+    TransactionType, TransactionTypeInput, TransactionTypeActionInstrument, TransactionTypeActionTransaction, \
+    TransactionTypeInputSettings, TransactionTypeActionInstrumentFactorSchedule, \
+    TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentEventSchedule, \
+    TransactionTypeActionInstrumentEventScheduleAction, TransactionTypeActionExecuteCommand, ComplexTransaction, \
+    ComplexTransactionInput, Transaction
+from poms.ui.models import ListLayout, EditLayout, DashboardLayout, ContextMenuLayout, ColorPalette, ColorPaletteColor, \
+    EntityTooltip, TransactionUserFieldModel, InstrumentUserFieldModel, ConfigurationExportLayout, Bookmark
+from poms.users.models import Group, Member, EcosystemDefault, MasterUser
 
 _l = logging.getLogger('poms.users.cloner')
 
@@ -97,6 +108,8 @@ class FullDataCloner(object):
                 self._now
             )
 
+        self._target_master_user.status = MasterUser.STATUS_BACKUP
+
         self._load_consts()
 
 
@@ -106,42 +119,50 @@ class FullDataCloner(object):
 
         self._members_1()
 
-        # self._accounts()
-        # self._chats()
-        # self._counterparties()
-        #
-        # self._instruments_1()
-        # self._integrations_1()
-        #
-        # self._currencies()
-        #
-        # self._instruments_2()
-        #
-        # self._portfolios_1()
-        # self._strategies_1()
-        #
-        # self._transactions_1()
-        #
-        # self._instruments_3()
-        #
-        # self._integrations_2()
-        #
-        # self._csv_import_schemes()
-        #
-        # self._complex_import_schemes()
-        #
-        # self._simple_clone(self._target_master_user, self._source_master_user,
-        #                    'system_currency', 'currency', 'account_type', 'account', 'counterparty_group',
-        #                    'counterparty', 'responsible_group', 'responsible', 'portfolio', 'instrument_type',
-        #                    'instrument', 'strategy1_group', 'strategy1_subgroup', 'strategy1', 'strategy2_group',
-        #                    'strategy2_subgroup', 'strategy2', 'strategy3_group', 'strategy3_subgroup', 'strategy3',
-        #                    'thread_group', 'transaction_type_group', 'mismatch_portfolio', 'mismatch_account',
-        #                    'notification_business_days')
-        #
-        # self._ecosystem_defaults()
+        self._attr_types()
+
+        self._accounts()
+        self._chats()
+        self._counterparties()
+
+        self._instruments_1()
+        self._integrations_1()
+
+        self._currencies()
+
+        self._instruments_2()
+
+        self._portfolios_1()
+        self._strategies_1()
+
+        self._transaction_types_1()
+
+        self._instruments_3()
+
+        self._integrations_2()
+
+        self._transactions_1()
+
+        self._reconciliation_1()
+
+        self._csv_import_schemes()
+
+        self._complex_import_schemes()
+
+        self._simple_clone(self._target_master_user, self._source_master_user,
+                           'system_currency', 'currency', 'account_type', 'account', 'counterparty_group',
+                           'counterparty', 'responsible_group', 'responsible', 'portfolio', 'instrument_type',
+                           'instrument', 'strategy1_group', 'strategy1_subgroup', 'strategy1', 'strategy2_group',
+                           'strategy2_subgroup', 'strategy2', 'strategy3_group', 'strategy3_subgroup', 'strategy3',
+                           'thread_group', 'transaction_type_group', 'mismatch_portfolio', 'mismatch_account',
+                           'notification_business_days')
+
+        self._ecosystem_defaults()
 
         # self._tags()
         self._ui()
+        self._ui_for_members()
+        self._reference_tables()
 
         # transaction.set_rollback(True)
 
@@ -189,6 +210,12 @@ class FullDataCloner(object):
             self._add_pk_map(source, source)
 
         for source in NotificationClass.objects.all():
+            self._add_pk_map(source, source)
+
+        for source in PricingCondition.objects.all():
+            self._add_pk_map(source, source)
+
+        for source in SharedConfigurationFile.objects.all():
             self._add_pk_map(source, source)
 
     # def _users_1(self):
@@ -264,7 +291,6 @@ class FullDataCloner(object):
 
         target_ecosystem_default.save()
 
-
     def _members_1(self):
 
         self._source_owner = self._source_master_user.members.filter(is_owner=True).order_by('join_date').first()
@@ -308,6 +334,18 @@ class FullDataCloner(object):
     #         self._add_pk_map(self._target_owner, self._source_owner)
     #
     #     self._simple_list_clone(Group, None, 'master_user', 'name')
+
+    def _attr_types(self):
+
+        self._simple_list_clone(GenericAttributeType, None, 'master_user',
+
+                                'name', 'short_name', 'user_code', 'notes', 'public_name',
+
+                                'content_type', 'value_type', 'tooltip',
+                                'expr', 'can_recalculate', 'order')
+
+        # self._simple_list_clone(GenericAttributeTypeOption, 'attribute_type__master_user', 'attribute_type', 'member', 'is_hidden',)
+
 
     def _accounts(self):
         self._simple_list_clone(AccountType, None, 'master_user', 'user_code', 'name', 'short_name',
@@ -514,7 +552,7 @@ class FullDataCloner(object):
         self._simple_list_clone(Strategy3, 'subgroup__group__master_user', 'master_user', 'subgroup', 'user_code',
                                 'name', 'short_name', 'public_name', 'notes', 'is_deleted')
 
-    def _transactions_1(self):
+    def _transaction_types_1(self):
         self._simple_list_clone(TransactionTypeGroup, None, 'master_user', 'user_code', 'name', 'short_name',
                                 'public_name', 'notes', 'is_deleted')
 
@@ -540,12 +578,19 @@ class FullDataCloner(object):
 
                                 )
 
+        self._simple_list_clone(TransactionTypeReconField,
+                                'transaction_type__master_user', 'transaction_type',
+                                'reference_name', 'description',
+                                'value_string', 'value_float', 'value_date')
+
         self._simple_list_clone(TransactionTypeInput, 'transaction_type__master_user',
-                                'transaction_type', 'name', 'verbose_name', 'value_type', 'content_type',
-                                'order', 'value_expr', 'is_fill_from_context', 'value', 'account', 'instrument_type',
+                                'transaction_type', 'name', 'tooltip',  'verbose_name', 'value_type', 'content_type',
+                                'order', 'value_expr', 'is_fill_from_context', 'context_property', 'value', 'account', 'instrument_type',
                                 'instrument', 'currency', 'counterparty', 'responsible', 'portfolio', 'strategy1',
                                 'strategy2', 'strategy3', 'daily_pricing_model', 'payment_size_detail',
                                 'price_download_scheme')
+
+        self._simple_list_clone(TransactionTypeInputSettings, 'transaction_type_input__transaction_type__master_user', 'transaction_type_input', 'linked_inputs_names')
 
         self._simple_list_clone(TransactionTypeActionInstrument, 'transaction_type__master_user',
                                 'transaction_type', 'order', 'action_notes',
@@ -576,18 +621,102 @@ class FullDataCloner(object):
                                 'reference_fx_rate', 'factor', 'trade_price', 'position_amount', 'principal_amount',
                                 'carry_amount', 'overheads', 'notes', )
 
-    def _tags(self):
-        # self._simple_list_clone(Tag, None, 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes',
-        #                         'content_types', 'account_types', 'accounts', 'currencies', 'instrument_types',
-        #                         'instruments', 'counterparty_groups', 'counterparties', 'responsible_groups',
-        #                         'responsibles', 'portfolios', 'transaction_type_groups', 'transaction_types',
-        #                         'strategy1_groups', 'strategy1_subgroups', 'strategies1', 'strategy2_groups',
-        #                         'strategy2_subgroups', 'strategies2', 'strategy3_groups', 'strategy3_subgroups',
-        #                         'strategies3', 'thread_groups', )
-        self._simple_list_clone(Tag, 'master_user', 'master_user', 'user_code', 'name', 'short_name', 'public_name',
-                                'notes', 'content_types')
+        self._simple_list_clone(TransactionTypeActionInstrumentFactorSchedule, 'transaction_type__master_user',
+                                'transaction_type', 'order', 'action_notes',
+                                'instrument', 'instrument_input', 'instrument_phantom',
+                                'effective_date', 'factor_value')
 
-    def _ui(self):
+        self._simple_list_clone(TransactionTypeActionInstrumentAccrualCalculationSchedules, 'transaction_type__master_user',
+                                'transaction_type', 'order', 'action_notes',
+                                'instrument', 'instrument_input', 'instrument_phantom',
+                                'accrual_calculation_model', 'accrual_calculation_model_input',
+                                'periodicity', 'periodicity_input', 'accrual_start_date', 'first_payment_date',
+                                'accrual_size', 'periodicity_n', 'notes')
+
+        self._simple_list_clone(TransactionTypeActionInstrumentEventSchedule, 'transaction_type__master_user',
+                                'transaction_type', 'order', 'action_notes',
+                                'instrument', 'instrument_input', 'instrument_phantom',
+                                'periodicity', 'periodicity_input',
+                                'notification_class', 'notification_class_input', 'event_class', 'event_class_input',
+                                'effective_date', 'final_date', 'is_auto_generated', 'notify_in_n_days', 'periodicity_n', 'name', 'description')
+
+        self._simple_list_clone(TransactionTypeActionInstrumentEventScheduleAction, 'transaction_type__master_user',
+                                'transaction_type', 'order', 'action_notes',
+                                'event_schedule', 'event_schedule_input', 'event_schedule_phantom',
+                                'transaction_type_from_instrument_type',
+                                'is_book_automatic', 'is_sent_to_pending', 'button_position', 'text'
+                               )
+
+        self._simple_list_clone(TransactionTypeActionExecuteCommand, 'transaction_type__master_user',
+                                'transaction_type', 'order', 'action_notes',
+                                'expr')
+
+    def _transactions_1(self):
+
+        self._simple_list_clone(ComplexTransaction, None, 'master_user', 'transaction_type',
+                                'is_locked', 'is_canceled', 'error_code',
+                                'date', 'status', 'visibility_status', 'code', 'text',
+
+                                'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
+                                'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
+                                'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
+                                'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
+
+                                'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
+                                'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+                                'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14',
+                                'user_number_15',
+                                'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19',
+                                'user_number_20',
+
+                                'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
+
+                                )
+
+        self._simple_list_clone(ComplexTransactionInput, 'complex_transaction__master_user', 'complex_transaction', 'transaction_type_input',
+                                'value_string', 'value_float', 'value_date', 'account', 'instrument_type',
+                                'instrument', 'currency', 'counterparty', 'responsible', 'portfolio', 'strategy1', 'strategy2',
+                                'strategy3', 'daily_pricing_model', 'payment_size_detail', 'price_download_scheme',
+                                'pricing_policy', 'periodicity', 'accrual_calculation_model', 'event_class', 'notification_class')
+
+
+        self._simple_list_clone(Transaction, None, 'master_user', 'complex_transaction', 'complex_transaction_order', 'transaction_code',
+                                'transaction_class', 'is_canceled', 'error_code', 'instrument', 'transaction_currency', 'position_size_with_sign',
+                                'settlement_currency', 'cash_consideration',
+                                'principal_with_sign', 'carry_with_sign', 'overheads_with_sign',
+                                'transaction_date', 'accounting_date', 'cash_date',
+                                'portfolio', 'account_position', 'account_cash', 'account_interim',
+
+                                'strategy1_position', 'strategy1_cash',
+                                'strategy2_position', 'strategy2_cash',
+                                'strategy3_position', 'strategy3_cash',
+
+                                'responsible', 'counterparty',
+                                'linked_instrument', 'allocation_balance', 'allocation_pl',
+
+                                'reference_fx_rate', 'is_locked', 'factor',
+
+                                'trade_price', 'ytm_at_cost', 'position_amount',
+                                'principal_amount', 'carry_amount', 'overheads', 'notes'
+
+                                )
+
+        self._simple_list_clone(ReconciliationComplexTransactionField, None, 'master_user', 'complex_transaction', 'reference_name', 'description',
+                                'value_string', 'value_float', 'value_date', 'status', 'match_date', 'notes')
+
+
+    def _tags(self):
+            # self._simple_list_clone(Tag, None, 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes',
+            #                         'content_types', 'account_types', 'accounts', 'currencies', 'instrument_types',
+            #                         'instruments', 'counterparty_groups', 'counterparties', 'responsible_groups',
+            #                         'responsibles', 'portfolios', 'transaction_type_groups', 'transaction_types',
+            #                         'strategy1_groups', 'strategy1_subgroups', 'strategies1', 'strategy2_groups',
+            #                         'strategy2_subgroups', 'strategies2', 'strategy3_groups', 'strategy3_subgroups',
+            #                         'strategies3', 'thread_groups', )
+            self._simple_list_clone(Tag, 'master_user', 'master_user', 'user_code', 'name', 'short_name', 'public_name',
+                                    'notes', 'content_types')
+
+    def _ui_for_members(self):
 
         # if self._source_owner:
         #     self._simple_list_clone(ListLayout, 'member__master_user', 'member', 'content_type', 'json_data', 'name',
@@ -595,26 +724,66 @@ class FullDataCloner(object):
         #     self._simple_list_clone(EditLayout, 'member__master_user', 'member', 'content_type', 'json_data',
         #                             pk_map=False, filter={'member': self._source_owner})
 
-        for member in self._target_master_user.members.all():
+        for target_member in self._target_master_user.members.all():
 
-            self._simple_list_clone_member_specific(ListLayout, member,
-                                                    'member',  'name', 'is_default', 'is_fixed', 'is_active',
-                                                    'user_code', 'content_type', 'json_data', 'is_default')
+            for source_member in self._source_master_user.members.all():
 
-            self._simple_list_clone_member_specific(EditLayout, member, 'member', 'content_type', 'json_data')
+                if target_member.username == source_member.username:
 
-            self._simple_list_clone_member_specific(DashboardLayout, member,
-                                                    'member',  'name', 'is_default', 'is_fixed', 'is_active',
-                                                    'user_code', 'content_type', 'json_data', 'is_default')
+                    self._simple_list_clone_member_specific(ListLayout, target_member, source_member,
+                                                            'member',  'name', 'is_default', 'is_fixed', 'is_active',
+                                                            'user_code', 'content_type', 'json_data', 'is_default',
+                                                            'origin_for_global_layout', 'sourced_from_global_layout')
 
-            self._simple_list_clone_member_specific(ContextMenuLayout, member,
-                                                    'member',  'name', 'user_code', 'type', 'json_data')
+                    self._simple_list_clone_member_specific(EditLayout, target_member, source_member, 'member', 'content_type', 'json_data')
 
+                    self._simple_list_clone_member_specific(DashboardLayout, target_member, source_member,
+                                                            'member',  'name', 'is_default', 'is_active',
+                                                            'user_code', 'json_data',
+                                                            'origin_for_global_layout', 'sourced_from_global_layout')
 
+                    self._simple_list_clone_member_specific(ContextMenuLayout, target_member, source_member,
+                                                            'member',  'name', 'user_code', 'type', 'json_data')
+
+                    self._simple_list_clone_member_specific(ConfigurationExportLayout, target_member, source_member,
+                                                            'member',  'name',  'json_data', 'is_default')
+
+                    self._simple_list_clone_member_specific(Bookmark, target_member, source_member,
+                                                            'member',  'name', 'parent', 'uri', 'json_data', 'list_layout')
+
+        _l.info("Master User Clone: Members UI finished")
+
+    def _ui(self):
+
+        self._simple_list_clone(ColorPalette, None, 'master_user', 'name', 'is_default')
+
+        self._simple_list_clone(ColorPaletteColor, 'color_palette__master_user',
+                                'color_palette',
+                                'order', 'name', 'value', 'tooltip')
+
+        self._simple_list_clone(EntityTooltip, None, 'master_user', 'content_type', 'name', 'key', 'text')
+
+        self._simple_list_clone(TransactionUserFieldModel, None, 'master_user', 'name', 'key')
+
+        self._simple_list_clone(InstrumentUserFieldModel, None, 'master_user', 'name', 'key')
 
         _l.info("Master User Clone: UI finished")
 
-        pass
+    def _reference_tables(self):
+
+        self._simple_list_clone(ReferenceTable, None, 'master_user', 'name')
+
+        self._simple_list_clone(ReferenceTableRow, 'reference_table__master_user', 'reference_table', 'key', 'value', 'order')
+
+
+    def _reconciliation_1(self):
+
+        self._simple_list_clone(ReconciliationBankFileField, None, 'master_user', 'source_id', 'reference_name', 'description',
+                                'value_string', 'value_float', 'value_date', 'is_canceled', 'status', 'file_name', 'import_scheme_name',
+                                'reference_date', 'notes', 'linked_complex_transaction_field')
+
+        self._simple_list_clone(ReconciliationNewBankFileField, None, 'master_user', 'source_id', 'reference_name', 'description',
+                                'value_string', 'value_float', 'value_date', 'is_canceled', 'file_name', 'import_scheme_name', 'reference_date')
 
     def _csv_import_schemes(self):
 
@@ -665,6 +834,8 @@ class FullDataCloner(object):
             self._simple_clone(None, source, 'content_object', 'group', 'permission', 'value_string', 'value_float',
                                'value_date')
 
+    # Copy logic starts here
+
     def _simple_list_clone(self, model, master_user_path, *fields, pk_map=True, store=False, filter=None):
         # _l.debug('clone %s', model)
 
@@ -707,7 +878,7 @@ class FullDataCloner(object):
             target = self._target_get_object(source, target_pk)
             self._simple_clone(target, source, *fields, pk_map=False)
 
-    def _simple_list_clone_member_specific(self, model, member, *fields,  pk_map=True, store=False, filter=None):
+    def _simple_list_clone_member_specific(self, model, target_member, source_member, *fields,  pk_map=True, store=False, filter=None):
         # _l.debug('clone %s', model)
 
         fields_select_related = []
@@ -723,7 +894,7 @@ class FullDataCloner(object):
                 fields_prefetch_related.append(field.name)
 
         filter = filter or {}
-        filter['member'] = member
+        filter['member'] = source_member
 
         # print('_simple_list_clone filter %s' % filter)
 
@@ -735,9 +906,9 @@ class FullDataCloner(object):
         if fields_prefetch_related:
             qs = qs.prefetch_related(*fields_prefetch_related)
 
-        _l.debug('clone member specific %s: count=%s', model._meta.model_name, qs.count())
+        _l.debug('clone member %s specific %s: count=%s', source_member, model._meta.model_name, qs.count())
         for source in qs:
-            self._simple_clone_member_specific(member, None, source, *fields, pk_map=pk_map, store=store)
+            self._simple_clone_member_specific(target_member, source_member, None, source, *fields, pk_map=pk_map, store=store)
 
     def _simple_clone(self, target, source, *fields, pk_map=True, store=False):
         content_type = ContentType.objects.get_for_model(source)
@@ -797,7 +968,7 @@ class FullDataCloner(object):
 
         return target
 
-    def _simple_clone_member_specific(self, member, target, source, *fields, pk_map=True, store=False):
+    def _simple_clone_member_specific(self, target_member, source_member, target, source, *fields, pk_map=True, store=False):
 
         content_type = ContentType.objects.get_for_model(source)
 
@@ -817,10 +988,10 @@ class FullDataCloner(object):
             elif field.many_to_one:
                 attr_name = field.get_attname()
 
-                _l.info('attr_name %s' % attr_name)
+                # _l.info('attr_name %s' % attr_name)
 
                 if attr_name == 'member_id':
-                    setattr(target, attr_name, member.id)
+                    setattr(target, attr_name, target_member.id)
                 else:
                     value = getattr(source, attr_name)
                     value = self._get_related_from_pk_map(field.related_model, value)
@@ -831,8 +1002,8 @@ class FullDataCloner(object):
                 value = getattr(source, item)
                 setattr(target, item, value)
 
-        print('target %s' % target.member)
-        print('target user_code %s' % target.user_code)
+        # print('target %s' % target.member)
+        # print('target user_code %s' % target.user_code)
 
         target.save()
 
@@ -898,8 +1069,8 @@ class FullDataCloner(object):
             return None
         content_type = ContentType.objects.get_for_model(model)
 
-        print(' _get_related_from_pk_map content_type %s' % content_type)
-        print(' _get_related_from_pk_map _pk_map %s' % content_type.pk)
+        # print(' _get_related_from_pk_map content_type %s' % content_type)
+        # print(' _get_related_from_pk_map _pk_map %s' % content_type.pk)
 
         objects = self._pk_map[content_type.pk]
         return objects[pk]
