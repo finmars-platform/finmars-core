@@ -246,6 +246,8 @@ class MasterUserCopyViewSet(AbstractAsyncViewSet):
 
             _l.info('AsyncResult res.ready: %s' % (time.perf_counter() - st))
 
+            _l.info('instance %s' % instance)
+
             if instance.master_user.id != request.user.master_user.id:
                 raise PermissionDenied()
 
