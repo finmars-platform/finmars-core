@@ -33,9 +33,18 @@ from poms.integrations.models import PriceDownloadScheme, ProviderClass, Accrual
     ComplexTransactionImportSchemeReconScenario, ComplexTransactionImportSchemeReconField
 from poms.obj_attrs.models import GenericAttributeType, GenericAttributeTypeOption
 from poms.portfolios.models import Portfolio
+from poms.pricing.models import InstrumentPricingSchemeType, CurrencyPricingSchemeType, InstrumentPricingScheme, \
+    CurrencyPricingScheme, InstrumentPricingSchemeManualPricingParameters, CurrencyPricingSchemeManualPricingParameters, \
+    InstrumentPricingSchemeSingleParameterFormulaParameters, CurrencyPricingSchemeSingleParameterFormulaParameters, \
+    InstrumentPricingSchemeMultipleParametersFormulaParameters, \
+    CurrencyPricingSchemeMultipleParametersFormulaParameters, InstrumentPricingSchemeBloombergParameters, \
+    CurrencyPricingSchemeBloombergParameters, InstrumentPricingSchemeAlphavParameters, \
+    CurrencyPricingSchemeFixerParameters, PricingProcedure, CurrencyPricingPolicy, InstrumentPricingPolicy, \
+    InstrumentTypePricingPolicy
 from poms.reconciliation.models import TransactionTypeReconField, ReconciliationBankFileField, \
     ReconciliationNewBankFileField, ReconciliationComplexTransactionField
 from poms.reference_tables.models import ReferenceTable, ReferenceTableRow
+from poms.schedules.models import PricingSchedule
 from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, Strategy2Subgroup, \
     Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
 from poms.tags.models import Tag
@@ -125,6 +134,8 @@ class FullDataCloner(object):
         self._chats()
         self._counterparties()
 
+        self._pricing_1()
+
         self._instruments_1()
         self._integrations_1()
 
@@ -145,9 +156,13 @@ class FullDataCloner(object):
 
         self._reconciliation_1()
 
-        self._csv_import_schemes()
+        self._csv_import_schemes_1()
 
-        self._complex_import_schemes()
+        self._complex_import_schemes_1()
+
+        self._pricing_2()
+
+        self._schedules_1()
 
         self._simple_clone(self._target_master_user, self._source_master_user,
                            'system_currency', 'currency', 'account_type', 'account', 'counterparty_group',
@@ -216,6 +231,12 @@ class FullDataCloner(object):
             self._add_pk_map(source, source)
 
         for source in SharedConfigurationFile.objects.all():
+            self._add_pk_map(source, source)
+
+        for source in InstrumentPricingSchemeType.objects.all():
+            self._add_pk_map(source, source)
+
+        for source in CurrencyPricingSchemeType.objects.all():
             self._add_pk_map(source, source)
 
     # def _users_1(self):
@@ -379,8 +400,10 @@ class FullDataCloner(object):
                                 'fx_rate', pk_map=False)
 
     def _instruments_1(self):
-        self._simple_list_clone(PricingPolicy, None, 'master_user', 'user_code', 'name', 'short_name',
-                                'public_name', 'notes', 'expr')
+        self._simple_list_clone(PricingPolicy, None, 'master_user',
+                                'user_code', 'name', 'short_name', 'public_name', 'notes',
+                                'expr',
+                                'default_instrument_pricing_scheme', 'default_currency_pricing_scheme')
 
     def _instruments_2(self):
         self._simple_list_clone(InstrumentType, None, 'master_user', 'user_code', 'name', 'short_name',
@@ -785,7 +808,91 @@ class FullDataCloner(object):
         self._simple_list_clone(ReconciliationNewBankFileField, None, 'master_user', 'source_id', 'reference_name', 'description',
                                 'value_string', 'value_float', 'value_date', 'is_canceled', 'file_name', 'import_scheme_name', 'reference_date')
 
-    def _csv_import_schemes(self):
+    def _pricing_1(self):
+
+        self._simple_list_clone(InstrumentPricingScheme, None, 'master_user',
+                                'name', 'short_name', 'public_name', 'user_code', 'notes',
+                                'notes_for_users', 'notes_for_parameter',
+                                'error_handler', 'type')
+
+        self._simple_list_clone(CurrencyPricingScheme, None, 'master_user',
+                                'name', 'short_name', 'public_name', 'user_code', 'notes',
+                                'notes_for_users', 'notes_for_parameter',
+                                'error_handler', 'type')
+
+        self._simple_list_clone(InstrumentPricingSchemeManualPricingParameters, 'instrument_pricing_scheme__master_user', 'instrument_pricing_scheme',
+                                'default_value', 'attribute_key')
+
+        self._simple_list_clone(CurrencyPricingSchemeManualPricingParameters, 'currency_pricing_scheme__master_user', 'currency_pricing_scheme',
+                                'default_value', 'attribute_key')
+
+        self._simple_list_clone(InstrumentPricingSchemeSingleParameterFormulaParameters, 'instrument_pricing_scheme__master_user', 'instrument_pricing_scheme',
+                                'expr', 'pricing_error_text_expr', 'accrual_calculation_method',
+                                'accrual_expr', 'accrual_error_text_expr', 'default_value', 'attribute_key', 'value_type')
+
+        self._simple_list_clone(CurrencyPricingSchemeSingleParameterFormulaParameters, 'currency_pricing_scheme__master_user', 'currency_pricing_scheme',
+                                'expr', 'error_text_expr', 'default_value',
+                                'attribute_key', 'value_type')
+
+        self._simple_list_clone(InstrumentPricingSchemeMultipleParametersFormulaParameters, 'instrument_pricing_scheme__master_user', 'instrument_pricing_scheme',
+                                'expr', 'pricing_error_text_expr', 'accrual_calculation_method',
+                                'accrual_expr', 'accrual_error_text_expr', 'default_value', 'attribute_key',
+                                'value_type', 'json_data')
+
+        self._simple_list_clone(CurrencyPricingSchemeMultipleParametersFormulaParameters, 'currency_pricing_scheme__master_user', 'currency_pricing_scheme',
+                                'expr', 'error_text_expr', 'default_value', 'attribute_key', 'value_type', 'json_data')
+
+        self._simple_list_clone(InstrumentPricingSchemeBloombergParameters, 'instrument_pricing_scheme__master_user', 'instrument_pricing_scheme',
+                                'expr', 'pricing_error_text_expr', 'accrual_calculation_method', 'accrual_expr',
+                                'accrual_error_text_expr', 'default_value', 'attribute_key', 'value_type',
+                                'bid_historical', 'bid_yesterday', 'ask_historical', 'ask_yesterday', 'last_historical',
+                                'last_yesterday', 'accrual_historical', 'accrual_yesterday')
+
+        self._simple_list_clone(CurrencyPricingSchemeBloombergParameters, 'currency_pricing_scheme__master_user', 'currency_pricing_scheme',
+                                'expr', 'error_text_expr', 'default_value', 'attribute_key', 'value_type', 'fx_rate')
+
+        self._simple_list_clone(InstrumentPricingSchemeAlphavParameters, 'instrument_pricing_scheme__master_user', 'instrument_pricing_scheme',
+                                'expr', 'pricing_error_text_expr', 'accrual_calculation_method',
+                                'accrual_expr', 'accrual_error_text_expr', 'default_value', 'attribute_key', 'value_type')
+
+        self._simple_list_clone(CurrencyPricingSchemeFixerParameters, 'currency_pricing_scheme__master_user', 'currency_pricing_scheme',
+                                'expr', 'error_text_expr', 'default_value', 'attribute_key', 'value_type')
+
+    def _pricing_2(self):
+
+        self._simple_list_clone(PricingProcedure, None, 'master_user',
+                                'name', 'short_name', 'public_name', 'user_code', 'notes',
+                                'notes_for_users', 'type',
+                                'price_date_from', 'price_date_from_expr',
+                                'price_date_to', 'price_date_to_expr',
+                                'price_fill_days',
+
+                                'price_get_principal_prices', 'price_get_accrued_prices', 'price_get_fx_rates',
+                                'price_overwrite_principal_prices', 'price_overwrite_accrued_prices', 'price_overwrite_fx_rates',
+
+                                'pricing_policy_filters', 'portfolio_filters', 'instrument_filters', 'currency_filters',
+                                'instrument_type_filters', 'instrument_pricing_scheme_filters', 'instrument_pricing_condition_filters',
+                                'currency_pricing_scheme_filters', 'currency_pricing_condition_filters'
+
+                                )
+
+        self._simple_list_clone(CurrencyPricingPolicy, 'currency__master_user', 'currency',
+                                'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'json_data')
+
+        self._simple_list_clone(InstrumentTypePricingPolicy, 'instrument_type__master_user', 'instrument_type',
+                                'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'json_data', 'overwrite_default_parameters')
+
+        self._simple_list_clone(InstrumentPricingPolicy, 'instrument__master_user', 'instrument',
+                                'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'json_data')
+
+    def _schedules_1(self):
+
+        self._simple_list_clone(PricingSchedule, None, 'master_user',
+                                'name', 'short_name', 'public_name', 'user_code', 'notes',
+                                'cron_expr', 'last_run_at', 'next_run_at',
+                                'pricing_procedures')
+
+    def _csv_import_schemes_1(self):
 
         self._simple_list_clone(CsvImportScheme, None, 'master_user', 'scheme_name', 'content_type', 'filter_expr')
 
@@ -794,7 +901,7 @@ class FullDataCloner(object):
         self._simple_list_clone(EntityField, 'scheme__master_user', 'scheme', 'name', 'expression', 'order',
                                 'system_property_key', 'dynamic_attribute_id')
 
-    def _complex_import_schemes(self):
+    def _complex_import_schemes_1(self):
 
         self._simple_list_clone(ComplexImportScheme, None, 'master_user', 'scheme_name')
 
