@@ -867,12 +867,14 @@ class FullDataCloner(object):
         if fields_prefetch_related:
             qs = qs.prefetch_related(*fields_prefetch_related)
 
-        _l.debug('clone %s: count=%s', model._meta.model_name, qs.count())
+        # _l.debug('clone %s: count=%s', model._meta.model_name, qs.count())
+        _l.info('clone %s: count=%s', model._meta.model_name, qs.count())
         for source in qs:
             self._simple_clone(None, source, *fields, pk_map=pk_map, store=store)
 
     def _simple_list_clone_2(self, model, master_user_path, *fields, pk_map=True, store=False):
-        _l.debug('clone2 %s ', model._meta.model_name)
+        # _l.debug('clone2 %s ', model._meta.model_name)
+        _l.info('clone2 %s ', model._meta.model_name)
         for source in self._source_get_objects(model).values():
             target_pk = self._get_related_from_pk_map(source, source.pk)
             target = self._target_get_object(source, target_pk)
@@ -906,7 +908,8 @@ class FullDataCloner(object):
         if fields_prefetch_related:
             qs = qs.prefetch_related(*fields_prefetch_related)
 
-        _l.debug('clone member %s specific %s: count=%s', source_member, model._meta.model_name, qs.count())
+        # _l.debug('clone member %s specific %s: count=%s', source_member, model._meta.model_name, qs.count())
+        _l.info('clone member %s specific %s: count=%s', source_member, model._meta.model_name, qs.count())
         for source in qs:
             self._simple_clone_member_specific(target_member, source_member, None, source, *fields, pk_map=pk_map, store=store)
 
@@ -945,8 +948,6 @@ class FullDataCloner(object):
             if field.many_to_many:
                 values = getattr(source, item).values_list('id', flat=True)
                 values = [self._get_related_from_pk_map(field.remote_field.model, pk) for pk in values]
-
-                print('field %s' % field)
 
                 values = field.remote_field.model.objects.filter(pk__in=values)
 
