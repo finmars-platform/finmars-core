@@ -914,60 +914,66 @@ class FullDataCloner(object):
             self._simple_clone_member_specific(target_member, source_member, None, source, *fields, pk_map=pk_map, store=store)
 
     def _simple_clone(self, target, source, *fields, pk_map=True, store=False):
-        content_type = ContentType.objects.get_for_model(source)
-        if not target:
-            target = content_type.model_class()()
 
-        for item in fields:
-            field = target._meta.get_field(item)
+        try:
+            content_type = ContentType.objects.get_for_model(source)
+            if not target:
+                target = content_type.model_class()()
 
-            if field.one_to_one:
-                attr_name = field.get_attname()
-                value = getattr(source, attr_name)
-                value = self._get_related_from_pk_map(field.related_model, value)
-                setattr(target, attr_name, value)
-            elif field.one_to_many:
-                pass
-            elif field.many_to_one:
-                attr_name = field.get_attname()
-                value = getattr(source, attr_name)
-                value = self._get_related_from_pk_map(field.related_model, value)
-                setattr(target, attr_name, value)
-            elif field.many_to_many:
-                pass
-            else:
-                value = getattr(source, item)
-                setattr(target, item, value)
+            for item in fields:
+                field = target._meta.get_field(item)
 
-        target.save()
-        # if settings.DEBUG:
-        #     _l.debug('cloned - %s: %s -> %s', content_type, source.pk, target.pk)
+                if field.one_to_one:
+                    attr_name = field.get_attname()
+                    value = getattr(source, attr_name)
+                    value = self._get_related_from_pk_map(field.related_model, value)
+                    setattr(target, attr_name, value)
+                elif field.one_to_many:
+                    pass
+                elif field.many_to_one:
+                    attr_name = field.get_attname()
+                    value = getattr(source, attr_name)
+                    value = self._get_related_from_pk_map(field.related_model, value)
+                    setattr(target, attr_name, value)
+                elif field.many_to_many:
+                    pass
+                else:
+                    value = getattr(source, item)
+                    setattr(target, item, value)
 
-        for item in fields:
-            field = target._meta.get_field(item)
-            if field.many_to_many:
-                values = getattr(source, item).values_list('id', flat=True)
-                values = [self._get_related_from_pk_map(field.remote_field.model, pk) for pk in values]
+            target.save()
+            # if settings.DEBUG:
+            #     _l.debug('cloned - %s: %s -> %s', content_type, source.pk, target.pk)
 
-                values = field.remote_field.model.objects.filter(pk__in=values)
+            for item in fields:
+                field = target._meta.get_field(item)
+                if field.many_to_many:
+                    values = getattr(source, item).values_list('id', flat=True)
+                    values = [self._get_related_from_pk_map(field.remote_field.model, pk) for pk in values]
 
-                # setattr(target, item, values)
+                    values = field.remote_field.model.objects.filter(pk__in=values)
 
-                attr = getattr(target, item)
+                    # setattr(target, item, values)
 
-                attr.set(values)
+                    attr = getattr(target, item)
 
-                # for val in values:
-                #     target[item].add(val)
+                    attr.set(values)
 
-        if pk_map:
-            self._add_pk_map(target, source)
+                    # for val in values:
+                    #     target[item].add(val)
 
-        if store:
-            self._source_add_object(source)
-            self._target_add_object(target)
+            if pk_map:
+                self._add_pk_map(target, source)
 
-        return target
+            if store:
+                self._source_add_object(source)
+                self._target_add_object(target)
+
+            return target
+
+        except Exception as e:
+            _l.info('_simple_clone error')
+            _l.info(e)
 
     def _simple_clone_member_specific(self, target_member, source_member, target, source, *fields, pk_map=True, store=False):
 
