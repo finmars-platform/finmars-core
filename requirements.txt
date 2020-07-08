@@ -39,7 +39,7 @@ idna==2.2
 itypes==1.1.0
 Jinja2==2.9.6
 jmespath==0.9.1
-kombu==4.0.2
+kombu==4.6.11
 MarkupSafe==1.0
 maxminddb==1.2.3
 mpmath==0.19
