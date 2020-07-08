@@ -93,6 +93,11 @@ class PricingConfig(AppConfig):
                 "name": "Alpha Vantage",
                 "input_type": InstrumentPricingSchemeType.SINGLE_PARAMETER
             },
+            {
+                "id": 8,
+                "name": "Bloomberg Forwards",
+                "input_type": InstrumentPricingSchemeType.MULTIPLE_PARAMETERS
+            },
 
         ]
 

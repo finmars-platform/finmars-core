@@ -15,7 +15,8 @@ from poms.pricing.models import InstrumentPricingScheme, InstrumentPricingScheme
     CurrencyPricingSchemeBloombergParameters, CurrencyPricingPolicy, InstrumentTypePricingPolicy, \
     InstrumentPricingPolicy, InstrumentPricingSchemeWtradeParameters, \
     PriceHistoryError, CurrencyHistoryError, PricingProcedureInstance, CurrencyPricingSchemeFixerParameters, \
-    PricingParentProcedureInstance, InstrumentPricingSchemeAlphavParameters
+    PricingParentProcedureInstance, InstrumentPricingSchemeAlphavParameters, \
+    InstrumentForwardsPricingSchemeBloombergParameters
 from poms.users.fields import MasterUserField
 
 
@@ -97,6 +98,21 @@ class CurrencyPricingSchemeFixerParametersSerializer(serializers.ModelSerializer
     class Meta:
         model = CurrencyPricingSchemeFixerParameters
         fields = ('id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'error_text_expr')
+
+
+class InstrumentForwardsPricingSchemeBloombergParametersSerializer(serializers.ModelSerializer):
+
+    data = serializers.JSONField(allow_null=False)
+
+    class Meta:
+        model = InstrumentForwardsPricingSchemeBloombergParameters
+        fields = ('id', 'instrument_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type',
+                  'pricing_error_text_expr',
+                  'accrual_calculation_method', 'accrual_expr', 'accrual_error_text_expr',
+                  'price_code',
+                  'data'
+                  )
+
 
 
 class InstrumentPricingSchemeTypeSerializer(serializers.ModelSerializer):
@@ -202,6 +218,19 @@ class InstrumentPricingSchemeSerializer(ModelWithTimeStampSerializer):
                         instance=parameters).data
 
                 except InstrumentPricingSchemeWtradeParameters.DoesNotExist:
+                    pass
+
+            if instance.type_id == 8:  # bloomberg forwards
+
+                try:
+
+                    parameters = InstrumentForwardsPricingSchemeBloombergParameters.objects.get(
+                        instrument_pricing_scheme=instance.id)
+
+                    result = InstrumentForwardsPricingSchemeBloombergParametersSerializer(
+                        instance=parameters).data
+
+                except InstrumentForwardsPricingSchemeBloombergParameters.DoesNotExist:
                     pass
 
 
@@ -542,6 +571,69 @@ class InstrumentPricingSchemeSerializer(ModelWithTimeStampSerializer):
                     parameters.accrual_error_text_expr = None
 
                 parameters.save()
+
+            if instance.type_id == 8:  # bloomberg forwards
+
+                try:
+                    parameters = InstrumentForwardsPricingSchemeBloombergParameters.objects.get(
+                        instrument_pricing_scheme_id=instance.id)
+
+                except InstrumentForwardsPricingSchemeBloombergParameters.DoesNotExist:
+
+                    parameters = InstrumentForwardsPricingSchemeBloombergParameters(instrument_pricing_scheme_id=instance.id)
+
+                if 'default_value' in type_settings:
+                    parameters.default_value = type_settings['default_value']
+                else:
+                    parameters.default_value = None
+
+                if 'attribute_key' in type_settings:
+                    parameters.attribute_key = type_settings['attribute_key']
+                else:
+                    parameters.attribute_key = None
+
+                if 'value_type' in type_settings:
+                    parameters.value_type = type_settings['value_type']
+                else:
+                    parameters.value_type = None
+
+                if 'expr' in type_settings:
+                    parameters.expr = type_settings['expr']
+                else:
+                    parameters.expr = None
+
+                if 'pricing_error_text_expr' in type_settings:
+                    parameters.pricing_error_text_expr = type_settings['pricing_error_text_expr']
+                else:
+                    parameters.pricing_error_text_expr = None
+
+                if 'accrual_calculation_method' in type_settings:
+                    parameters.accrual_calculation_method = type_settings['accrual_calculation_method']
+                else:
+                    parameters.accrual_calculation_method = None
+
+                if 'accrual_expr' in type_settings:
+                    parameters.accrual_expr = type_settings['accrual_expr']
+                else:
+                    parameters.accrual_expr = None
+
+                if 'accrual_error_text_expr' in type_settings:
+                    parameters.accrual_error_text_expr = type_settings['accrual_error_text_expr']
+                else:
+                    parameters.accrual_error_text_expr = None
+
+                if 'accrual_yesterday' in type_settings:
+                    parameters.price_code = type_settings['price_code']
+                else:
+                    parameters.price_code = None
+
+                if 'data' in type_settings:
+                    parameters.data = type_settings['data']
+                else:
+                    parameters.data = None
+
+                parameters.save()
+
 
     def to_internal_value(self, data):
 

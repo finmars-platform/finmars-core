@@ -144,6 +144,16 @@ class InstrumentPricingScheme(NamedModel, DataTimeStampedModel):
 
                     result = None
 
+            if self.type.id == 8: # bloomberg
+
+                try:
+
+                    result = InstrumentForwardsPricingSchemeBloombergParameters.objects.get(instrument_pricing_scheme=self)
+
+                except InstrumentForwardsPricingSchemeBloombergParameters.DoesNotExist:
+
+                    result = None
+
         # print('result %s' % result)
 
         return result
@@ -707,6 +717,78 @@ class InstrumentPricingSchemeAlphavParameters(models.Model):
     value_type = models.PositiveSmallIntegerField(default=STRING, choices=TYPES,
                                                   verbose_name=ugettext_lazy('value type'))
 
+
+class InstrumentForwardsPricingSchemeBloombergParameters(models.Model):
+    STRING = 10
+    NUMBER = 20
+    DATE = 40
+
+    TYPES = (
+        (NUMBER, ugettext_lazy('Number')),
+        (STRING, ugettext_lazy('String')),
+        (DATE, ugettext_lazy('Date')),
+    )
+
+    ACCRUAL_NOT_APPLICABLE = 1
+    ACCRUAL_PER_SCHEDULE = 2
+    ACCRUAL_PER_FORMULA = 3
+
+    ACCRUAL_METHODS = (
+        (ACCRUAL_NOT_APPLICABLE, ugettext_lazy('Not applicable')),
+        (ACCRUAL_PER_SCHEDULE, ugettext_lazy('As per Accrual Schedule')),
+        (ACCRUAL_PER_FORMULA, ugettext_lazy('As per Formula')),
+
+    )
+
+    instrument_pricing_scheme = models.ForeignKey(InstrumentPricingScheme,
+                                                  verbose_name=ugettext_lazy('Instrument Pricing Scheme'),
+                                                  on_delete=models.CASCADE)
+
+    expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                            verbose_name=ugettext_lazy('expr'))
+
+    pricing_error_text_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
+                                               verbose_name=ugettext_lazy('pricing error text expr'))
+
+    accrual_calculation_method = models.PositiveSmallIntegerField(default=ACCRUAL_NOT_APPLICABLE,
+                                                                  choices=ACCRUAL_METHODS,
+                                                                  verbose_name=ugettext_lazy(
+                                                                      'accrual calculation method'))
+
+    accrual_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
+                                    verbose_name=ugettext_lazy('accrual expr'))
+
+    accrual_error_text_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
+                                               verbose_name=ugettext_lazy('accrual error text expr'))
+
+
+    default_value = models.CharField(max_length=255, null=True, blank=True)
+    attribute_key = models.CharField(max_length=255, null=True, blank=True)
+    value_type = models.PositiveSmallIntegerField(default=STRING, choices=TYPES,
+                                                  verbose_name=ugettext_lazy('value type'))
+
+
+    price_code = models.CharField(max_length=50, blank=True, null=True,
+                                      verbose_name=ugettext_lazy('price code'))
+
+    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+
+    @property
+    def data(self):
+        if self.json_data:
+            try:
+                return json.loads(self.json_data)
+            except (ValueError, TypeError):
+                return None
+        else:
+            return None
+
+    @data.setter
+    def data(self, val):
+        if val:
+            self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+        else:
+            self.json_data = None
 
 
 class CurrencyPricingSchemeFixerParameters(models.Model):
