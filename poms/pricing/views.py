@@ -178,13 +178,18 @@ class PricingBrokerBloombergHandler(APIView):
 
             procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
 
-            instance = FillPricesBrokerBloombergProcess(instance=request.data, master_user=procedure.master_user)
-            instance.process()
+            if not request.data['error_code']:
 
-            # procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
-            #
-            # procedure.status = PricingProcedureInstance.STATUS_DONE
-            # procedure.save()
+                instance = FillPricesBrokerBloombergProcess(instance=request.data, master_user=procedure.master_user)
+                instance.process()
+
+            else:
+
+                procedure.error_code = request.data['error_code']
+                procedure.error_message = request.data['error_message']
+
+                procedure.status = PricingProcedureInstance.STATUS_ERROR
+                procedure.save()
 
         except PricingProcedureInstance.DoesNotExist:
 
@@ -211,13 +216,18 @@ class PricingBrokerWtradeHandler(APIView):
 
             procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
 
-            instance = FillPricesBrokerWtradeProcess(instance=request.data, master_user=procedure.master_user)
-            instance.process()
+            if not request.data['error_code']:
 
-            # procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
-            #
-            # procedure.status = PricingProcedureInstance.STATUS_DONE
-            # procedure.save()
+                instance = FillPricesBrokerWtradeProcess(instance=request.data, master_user=procedure.master_user)
+                instance.process()
+
+            else:
+
+                procedure.error_code = request.data['error_code']
+                procedure.error_message = request.data['error_message']
+
+                procedure.status = PricingProcedureInstance.STATUS_ERROR
+                procedure.save()
 
         except PricingProcedureInstance.DoesNotExist:
 
@@ -263,13 +273,18 @@ class PricingBrokerFixerHandler(APIView):
 
             procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
 
-            instance = FillPricesBrokerFixerProcess(instance=request.data, master_user=procedure.master_user)
-            instance.process()
+            if not request.data['error_code']:
 
-            # procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
-            #
-            # procedure.status = PricingProcedureInstance.STATUS_DONE
-            # procedure.save()
+                instance = FillPricesBrokerFixerProcess(instance=request.data, master_user=procedure.master_user)
+                instance.process()
+
+            else:
+
+                procedure.error_code = request.data['error_code']
+                procedure.error_message = request.data['error_message']
+
+                procedure.status = PricingProcedureInstance.STATUS_ERROR
+                procedure.save()
 
         except PricingProcedureInstance.DoesNotExist:
 
@@ -296,13 +311,18 @@ class PricingBrokerAlphavHandler(APIView):
 
             procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
 
-            instance = FillPricesBrokerAlphavProcess(instance=request.data, master_user=procedure.master_user)
-            instance.process()
+            if not request.data['error_code']:
 
-            # procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
-            #
-            # procedure.status = PricingProcedureInstance.STATUS_DONE
-            # procedure.save()
+                instance = FillPricesBrokerAlphavProcess(instance=request.data, master_user=procedure.master_user)
+                instance.process()
+
+            else:
+
+                procedure.error_code = request.data['error_code']
+                procedure.error_message = request.data['error_message']
+
+                procedure.status = PricingProcedureInstance.STATUS_ERROR
+                procedure.save()
 
         except PricingProcedureInstance.DoesNotExist:
 
