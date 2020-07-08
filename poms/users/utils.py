@@ -4,15 +4,20 @@ from rest_framework.exceptions import NotFound, PermissionDenied
 from poms.http_sessions.models import Session
 from poms.users.models import Member, MasterUser
 
+import time
+
+import logging
+_l = logging.getLogger('poms.users')
+
 
 def set_master_user(request, master_user):
+
+    set_st = time.perf_counter()
+
     session = Session.objects.get(session_key=request.session.session_key)
 
     master_user_id = master_user.id
     old_master_user_id = session.current_master_user.id
-
-    # print('set_master_user master_user_id %s ' % master_user_id)
-    # print('set_master_user old_master_user_id %s ' % old_master_user_id)
 
     sessions = Session.objects.filter(user=request.user.id)
 
@@ -32,6 +37,8 @@ def set_master_user(request, master_user):
                 session.current_master_user = MasterUser.objects.get(id=master_user_id)
 
                 session.save()
+
+    _l.info('set_master_user done: %s' % (time.perf_counter() - set_st))
 
 
 def get_master_user_and_member(request):
