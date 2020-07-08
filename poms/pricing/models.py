@@ -1156,6 +1156,9 @@ class PricingProcedureInstance(models.Model):
     successful_prices_count = models.IntegerField(default=0, verbose_name=ugettext_lazy('successful prices count'))
     error_prices_count = models.IntegerField(default=0, verbose_name=ugettext_lazy('error prices count'))
 
+    error_code = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=ugettext_lazy('error code'))
+    error_message = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('error message'))
+
     def save(self, *args, **kwargs):
 
         _l.info("before PricingProcedureInstance save id %s"  % self.pk)

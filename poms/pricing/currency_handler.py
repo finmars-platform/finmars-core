@@ -753,6 +753,9 @@ class PricingCurrencyHandler(object):
             }
         }
 
+        body['error_code'] = None
+        body['error_message'] = None
+
         body['data'] = {}
 
         body['data']['date_from'] = str(self.procedure.price_date_from)
@@ -864,6 +867,9 @@ class PricingCurrencyHandler(object):
         body['user'] = {
             'token': self.master_user.id
         }
+
+        body['error_code'] = None
+        body['error_message'] = None
 
         body['data'] = {}
 

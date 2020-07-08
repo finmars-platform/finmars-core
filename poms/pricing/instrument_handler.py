@@ -954,6 +954,9 @@ class PricingInstrumentHandler(object):
             }
         }
 
+        body['error_code'] = None
+        body['error_message'] = None
+
         body['data'] = {}
 
         body['data']['date_from'] = str(self.procedure.price_date_from)
@@ -1176,6 +1179,9 @@ class PricingInstrumentHandler(object):
             'token': self.master_user.id
         }
 
+        body['error_code'] = None
+        body['error_message'] = None
+
         body['data'] = {}
 
         body['data']['date_from'] = str(self.procedure.price_date_from)
@@ -1302,6 +1308,9 @@ class PricingInstrumentHandler(object):
         body['user'] = {
             'token': self.master_user.id
         }
+
+        body['error_code'] = None
+        body['error_message'] = None
 
         body['data'] = {}
 

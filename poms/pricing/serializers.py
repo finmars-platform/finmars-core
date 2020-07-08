@@ -1084,7 +1084,9 @@ class PricingProcedureInstanceSerializer(serializers.ModelSerializer):
                   'pricing_procedure', 'pricing_procedure_object',
                   'provider_verbose', 'action_verbose',
 
-                  'successful_prices_count', 'error_prices_count'
+                  'successful_prices_count', 'error_prices_count',
+
+                  'error_code', 'error_message'
 
                   )
 
