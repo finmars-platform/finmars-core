@@ -719,6 +719,26 @@ class MasterUser(models.Model):
 
         from poms.ui.models import ColorPalette, ColorPaletteColor
 
+
+        default_color_map = {
+            1: "#000000",
+            2: "#0080FF",
+            3: "#8080C0",
+            4: "#8080FF",
+            5: "#FF8080",
+            6: "#FF80C0",
+            7: "#FF00FF",
+            8: "#0F87FF",
+            9: "#FFFF80",
+            10: "#FF0000",
+            11: "#804040",
+            12: "#8000FF",
+            13: "#80FFFF",
+            14: "#0080C0",
+            15: "#FF8040",
+            16: "#808040"
+        }
+
         for i in range(1):
 
             try:
@@ -753,6 +773,11 @@ class MasterUser(models.Model):
 
                 try:
                     color = ColorPaletteColor.objects.get(color_palette=palette, order=x)
+
+                    if not color.value:
+                        color.value = default_color_map[x]
+                        color.save()
+
                 except ColorPaletteColor.DoesNotExist:
                     color = ColorPaletteColor.objects.create(color_palette=palette, order=x)
 

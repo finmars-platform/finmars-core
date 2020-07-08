@@ -6,7 +6,9 @@ CELERY_APP="poms_app"
 
 CELERYD_CHDIR="/var/app/"
 
+#Flower can't monitor celery if we turn off heartbeat and other things
 #CELERYD_OPTS="--time-limit=3000 --autoscale=4,2 --without-gossip --without-mingle --without-heartbeat"
+
 CELERYD_OPTS="--time-limit=3000 --autoscale=4,2"
 
 CELERYD_LOG_LEVEL="INFO"
