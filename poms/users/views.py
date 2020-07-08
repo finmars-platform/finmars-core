@@ -500,82 +500,7 @@ class UserMemberViewSet(AbstractModelViewSet):
 
 class MasterUserViewSet(AbstractModelViewSet):
     queryset = MasterUser.objects.select_related(
-        'currency',
         'system_currency',
-        'account_type',
-        'account',
-        'account__type',
-        'counterparty_group',
-        'counterparty',
-        'counterparty__group',
-        'responsible_group',
-        'responsible',
-        'responsible__group',
-        'instrument_type',
-        'instrument_type__instrument_class',
-        'instrument',
-        'instrument__instrument_type',
-        'instrument__instrument_type__instrument_class',
-        'portfolio',
-        'strategy1_group',
-        'strategy1_subgroup',
-        'strategy1_subgroup__group',
-        'strategy1',
-        'strategy1__subgroup',
-        'strategy1__subgroup__group',
-        'strategy2_group',
-        'strategy2_subgroup',
-        'strategy2_subgroup__group',
-        'strategy2',
-        'strategy2__subgroup',
-        'strategy2__subgroup__group',
-        'strategy3_group',
-        'strategy3_subgroup',
-        'strategy3_subgroup__group',
-        'strategy3',
-        'strategy3__subgroup',
-        'strategy3__subgroup__group',
-        'thread_group',
-        'mismatch_portfolio',
-        'mismatch_account',
-    ).prefetch_related(
-        *get_permissions_prefetch_lookups(
-            ('account_type', AccountType),
-            ('account', Account),
-            ('account__type', AccountType),
-            ('counterparty_group', CounterpartyGroup),
-            ('counterparty', Counterparty),
-            ('counterparty__group', CounterpartyGroup),
-            ('responsible_group', ResponsibleGroup),
-            ('responsible', Responsible),
-            ('responsible__group', ResponsibleGroup),
-            ('instrument_type', InstrumentType),
-            ('instrument', Instrument),
-            ('instrument__instrument_type', InstrumentType),
-            ('portfolio', Portfolio),
-            ('strategy1_group', Strategy1Group),
-            ('strategy1_subgroup', Strategy1Subgroup),
-            ('strategy1_subgroup__group', Strategy1Group),
-            ('strategy1', Strategy1),
-            ('strategy1__subgroup', Strategy1Subgroup),
-            ('strategy1__subgroup__group', Strategy1Group),
-            ('strategy2_group', Strategy2Group),
-            ('strategy2_subgroup', Strategy2Subgroup),
-            ('strategy2_subgroup__group', Strategy2Group),
-            ('strategy2', Strategy2),
-            ('strategy2__subgroup', Strategy2Subgroup),
-            ('strategy2__subgroup__group', Strategy2Group),
-            ('strategy3_group', Strategy3Group),
-            ('strategy3_subgroup', Strategy3Subgroup),
-            ('strategy3_subgroup__group', Strategy3Group),
-            ('strategy3', Strategy3),
-            ('strategy3__subgroup', Strategy3Subgroup),
-            ('strategy3__subgroup__group', Strategy3Group),
-            ('thread_group', ThreadGroup),
-            ('mismatch_portfolio', Portfolio),
-            ('mismatch_account', Account),
-            ('mismatch_account__type', AccountType),
-        )
     )
     serializer_class = MasterUserSerializer
     permission_classes = AbstractModelViewSet.permission_classes + [
@@ -592,11 +517,19 @@ class MasterUserViewSet(AbstractModelViewSet):
     pagination_class = BigPagination
 
     def get_object(self):
+
+        set_st = time.perf_counter()
+
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
         lookup_value = self.kwargs[lookup_url_kwarg]
         if lookup_value == '0':
             return self.request.user.master_user
-        return super(MasterUserViewSet, self).get_object()
+        obj = super(MasterUserViewSet, self).get_object()
+
+        _l.info('set_master_user get_object done: %s' % (time.perf_counter() - set_st))
+
+        return obj
+
 
     def create(self, request, *args, **kwargs):
         raise PermissionDenied()
