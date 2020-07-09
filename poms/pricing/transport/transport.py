@@ -29,4 +29,6 @@ class PricingTransport(object):
         except Exception:
             _l.info("Can't send request to Mediator. Is Mediator offline?")
 
+            raise Exception("Mediator is unavailable")
+
         return response

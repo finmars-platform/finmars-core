@@ -838,7 +838,18 @@ class PricingCurrencyHandler(object):
         _l.info('self.procedure %s' % self.procedure.id)
         _l.info('send request %s' % body)
 
-        self.transport.send_request(body)
+        try:
+
+            self.transport.send_request(body)
+
+        except Exception as e:
+
+            procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+            procedure_instance.error_code = 500
+            procedure_instance.error_message = "Mediator is unavailable. Please try later."
+
+            procedure_instance.save()
+
 
     def process_to_fixer_provider(self, items):
 
@@ -945,7 +956,19 @@ class PricingCurrencyHandler(object):
         _l.info('self.procedure %s' % self.procedure.id)
         _l.info('send request %s' % body)
 
-        self.transport.send_request(body)
+        try:
+
+            self.transport.send_request(body)
+
+        except Exception as e:
+
+            procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+            procedure_instance.error_code = 500
+            procedure_instance.error_message = "Mediator is unavailable. Please try later."
+
+            procedure_instance.save()
+
+
 
     def print_grouped_currencies(self):
 
