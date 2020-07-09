@@ -1,8 +1,9 @@
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.exceptions import NotFound, PermissionDenied
 
 from poms.http_sessions.models import Session
-from poms.users.models import Member, MasterUser
+from poms.users.models import Member, MasterUser, UserProfile
 
 import time
 
@@ -20,6 +21,8 @@ def set_master_user(request, master_user):
     old_master_user_id = session.current_master_user.id
 
     sessions = Session.objects.filter(user=request.user.id)
+    user = User.objects.get(id=request.user.id)
+    user_profile = UserProfile.objects.get(user=user)
 
     if old_master_user_id != master_user_id:
         if master_user_id is None:
@@ -35,6 +38,10 @@ def set_master_user(request, master_user):
 
             for session in sessions:
                 session.current_master_user = MasterUser.objects.get(id=master_user_id)
+
+                user_profile.active_master_user = session.current_master_user
+                print("Set active Master user to User Profile")
+                user_profile.save()
 
                 session.save()
 

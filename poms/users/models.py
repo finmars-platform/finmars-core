@@ -1265,6 +1265,8 @@ class UserProfile(models.Model):
 
     two_factor_verification = models.BooleanField(default=False, verbose_name=ugettext_lazy('two factor verification'))
 
+    active_master_user = models.ForeignKey(MasterUser, null=True, blank=True, verbose_name=ugettext_lazy('master user'), on_delete=models.SET_NULL)
+
     class Meta:
         verbose_name = ugettext_lazy('profile')
         verbose_name_plural = ugettext_lazy('profiles')

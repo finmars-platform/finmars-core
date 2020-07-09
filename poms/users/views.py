@@ -530,7 +530,6 @@ class MasterUserViewSet(AbstractModelViewSet):
 
         return obj
 
-
     def create(self, request, *args, **kwargs):
         raise PermissionDenied()
 

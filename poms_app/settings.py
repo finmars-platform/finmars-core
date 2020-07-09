@@ -610,7 +610,7 @@ if BackendRole.ALL in BACKEND_ROLES or BackendRole.DATA_PROVIDER in BACKEND_ROLE
         },
         'pricing.clear_old_pricing_procedure_instances': {
             'task': 'pricing.clear_old_pricing_procedure_instances',
-            'schedule': crontab(minute='0,10,20,30,40,50')
+            'schedule': crontab(minute=0, hour=0)
         }
         # 'instruments.process_events': {
         #     'task': 'instruments.process_events',
