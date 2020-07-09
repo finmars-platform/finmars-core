@@ -603,6 +603,14 @@ if BackendRole.ALL in BACKEND_ROLES or BackendRole.DATA_PROVIDER in BACKEND_ROLE
         'file_reports.clear_old_file_reports': {
             'task': 'file_reports.clear_old_file_reports',
             'schedule': crontab(minute=0, hour=0)
+        },
+        'pricing.set_old_processing_procedure_instances_to_error': {
+            'task': 'pricing.set_old_processing_procedure_instances_to_error',
+            'schedule': crontab(minute=0, hour=0)
+        },
+        'pricing.clear_old_pricing_procedure_instances': {
+            'task': 'pricing.clear_old_pricing_procedure_instances',
+            'schedule': crontab(minute='0,10,20,30,40,50')
         }
         # 'instruments.process_events': {
         #     'task': 'instruments.process_events',
