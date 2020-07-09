@@ -1162,6 +1162,7 @@ def generate_file_report(instance, master_user, type, name):
 
                 columns = columns + instance.error_rows[0]['error_data']['columns']['imported_columns']
                 columns = columns + instance.error_rows[0]['error_data']['columns']['converted_imported_columns']
+                columns = columns + instance.error_rows[0]['error_data']['columns']['calculated_columns']
                 columns = columns + instance.error_rows[0]['error_data']['columns']['transaction_type_selector']
 
                 unique_columns = get_unique_columns(instance)
@@ -1249,6 +1250,7 @@ def generate_file_report(instance, master_user, type, name):
 
         content = content + error_row['error_data']['data']['imported_columns']
         content = content + error_row['error_data']['data']['converted_imported_columns']
+        content = content + error_row['error_data']['data']['calculated_columns']
         content = content + error_row['error_data']['data']['transaction_type_selector']
         content = content + generate_columns_data_for_file(instance, error_row)
 
