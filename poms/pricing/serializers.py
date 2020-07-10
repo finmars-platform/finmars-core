@@ -597,6 +597,11 @@ class InstrumentPricingSchemeSerializer(ModelWithTimeStampSerializer):
                 else:
                     parameters.value_type = None
 
+                if 'price_code' in type_settings:
+                    parameters.price_code = type_settings['price_code']
+                else:
+                    parameters.price_code = None
+
                 if 'expr' in type_settings:
                     parameters.expr = type_settings['expr']
                 else:
