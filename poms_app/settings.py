@@ -249,12 +249,16 @@ USE_TZ = True
 USE_ETAGS = True
 
 if not LOCAL:
+
+    ENV_CSRF_COOKIE_DOMAIN = os.environ.get('ENV_CSRF_COOKIE_DOMAIN', 'finmars.com')
+    ENV_CSRF_TRUSTED_ORIGINS = os.environ.get('ENV_CSRF_TRUSTED_ORIGINS', 'finmars.com')
+
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    CSRF_COOKIE_DOMAIN = 'finmars.com'
-    CSRF_TRUSTED_ORIGINS = ['finmars.com', 'dev.finmars.com', 'localhost:8080', 'localhost:8081', '0.0.0.0:8080', 'www.finmars.com']
+    CSRF_COOKIE_DOMAIN = ENV_CSRF_COOKIE_DOMAIN
+    CSRF_TRUSTED_ORIGINS = ENV_CSRF_TRUSTED_ORIGINS.split(',')
 
 CORS_ORIGIN_WHITELIST = ('dev.finmars.com', 'finmars.com', 'localhost:8080', 'localhost:8081', '0.0.0.0:8080', 'www.finmars.com')
 
