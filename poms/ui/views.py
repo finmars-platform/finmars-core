@@ -169,6 +169,7 @@ class ListLayoutFilterSet(FilterSet):
     is_default = django_filters.BooleanFilter()
     is_active = django_filters.BooleanFilter()
     name = CharFilter()
+    user_code = CharFilter()
     content_type = LayoutContentTypeFilter()
 
     class Meta:

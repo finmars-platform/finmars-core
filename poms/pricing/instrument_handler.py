@@ -13,12 +13,15 @@ from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
 from poms.pricing.models import InstrumentPricingSchemeType, PricingProcedureInstance, \
     PricingProcedureBloombergInstrumentResult, PricingProcedureWtradeInstrumentResult, PriceHistoryError, \
-    PricingProcedure, PricingProcedureAlphavInstrumentResult
+    PricingProcedure, PricingProcedureAlphavInstrumentResult, PricingProcedureBloombergForwardInstrumentResult
 from poms.pricing.transport.transport import PricingTransport
 from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_between_two_dates, group_items_by_provider, \
     get_is_yesterday, optimize_items, roll_price_history_for_n_day_forward, get_empty_values_for_dates
 from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
+
+from datetime import date
+
 
 import logging
 
@@ -186,6 +189,9 @@ class PricingInstrumentHandler(object):
 
                 if provider_id == 7:
                     self.process_to_alphav_provider(items)
+
+                # if provider_id == 8:
+                #     self.process_to_bloomberg_forwards_provider(items)
 
     def get_instruments(self):
 
@@ -910,7 +916,6 @@ class PricingInstrumentHandler(object):
 
         return False
 
-
     def process_to_bloomberg_provider(self, items):
 
         _l.info("Pricing Instrument Handler - Bloomberg Provider: len %s" % len(items))
@@ -1163,6 +1168,178 @@ class PricingInstrumentHandler(object):
 
             procedure_instance.save()
 
+    def process_to_bloomberg_forwards_provider(self, items):
+
+        _l.info("Pricing Instrument Handler - Bloomberg Forwards Provider: len %s" % len(items))
+
+        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+                                                      parent_procedure_instance=self.parent_procedure,
+                                                      master_user=self.master_user,
+                                                      status=PricingProcedureInstance.STATUS_PENDING,
+                                                      action='bloomberg_forwards_get_instrument_prices',
+                                                      provider='bloomberg_forwards',
+
+                                                      action_verbose='Get Instrument Prices from Bloomberg Forwards',
+                                                      provider_verbose='Bloomberg Forwards'
+
+                                                      )
+        procedure_instance.save()
+
+        body = {}
+        body['action'] = procedure_instance.action
+        body['procedure'] = procedure_instance.id
+        body['provider'] = procedure_instance.provider
+
+        config = None
+
+        try:
+
+            config = BloombergDataProviderCredential.objects.get(master_user=self.master_user)
+
+        except Exception as e:
+
+            config = self.master_user.import_configs.get(provider=ProviderClass.BLOOMBERG)
+
+
+        body['user'] = {
+            'token': self.master_user.token,
+            'credentials': {
+                'p12cert': str(config.p12cert),
+                'password': config.password
+            }
+        }
+
+        body['error_code'] = None
+        body['error_message'] = None
+
+        body['data'] = {}
+
+        body['data']['date_from'] = str(self.procedure.price_date_from)
+        body['data']['date_to'] = str(self.procedure.price_date_to)
+        body['data']['items'] = []
+
+        items_with_missing_parameters = []
+
+        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
+                                                    date_to=self.procedure.price_date_to)
+
+        today = date.today()
+
+        _l.info('procedure id %s' % body['procedure'])
+
+        full_items = []
+
+        empty_values = get_empty_values_for_dates(dates)
+
+        _l.info('empty_values %s' % empty_values)
+
+        for item in items:
+
+            if len(item.parameters):
+
+                item_parameters = item.parameters.copy()
+                item_parameters.pop()
+
+                pricing_scheme_parameters = item.policy.pricing_scheme.get_parameters()
+
+                for date in dates:
+
+                    if date < today:
+
+                        with transaction.atomic():
+
+                            try:
+
+                                matched_tenors = []
+
+                                maturity_date = None
+
+                                if pricing_scheme_parameters.attribute_key:
+
+                                    maturity_date = getattr(item.instrument, pricing_scheme_parameters.attribute_key)
+
+                                else:
+                                    maturity_date = pricing_scheme_parameters.default_value
+
+                                if pricing_scheme_parameters.data and maturity_date:
+
+                                    if "tenors" in pricing_scheme_parameters.data and len(pricing_scheme_parameters.data["tenors"]):
+
+                                        pass
+
+                                        # for tenor in pricing_scheme_parameters.data["tenors"]:
+                                        #
+                                        #
+
+
+                                for matched_tenor in matched_tenors:
+
+                                        record = PricingProcedureBloombergForwardInstrumentResult(master_user=self.master_user,
+                                                                                           procedure=procedure_instance,
+                                                                                           instrument=item.instrument,
+                                                                                           instrument_parameters=str(
+                                                                                               item_parameters),
+                                                                                           pricing_policy=item.policy.pricing_policy,
+                                                                                           pricing_scheme=item.pricing_scheme,
+                                                                                           reference=matched_tenor['price_ticker'],
+                                                                                           date=date)
+
+
+                                        if 'price_code' in item.scheme_fields_map:
+                                            record.price_code = item.scheme_fields_map[
+                                                'price_code']
+
+                                        record.save()
+
+                                        item_obj = {
+                                            'reference': matched_tenor['price_ticker'],
+                                            'parameters': [],
+                                            'fields': []
+                                        }
+
+                                        if 'price_code' in item.scheme_fields_map:
+                                            item_obj['fields'].append({
+                                                'code': item.scheme_fields_map['price_code'],
+                                                'parameters': [],
+                                                'values': empty_values
+                                            })
+
+
+                                        full_items.append(item_obj)
+
+
+                            except Exception as e:
+                                _l.info("Cant create Result Record %s" % e)
+
+
+            else:
+                items_with_missing_parameters.append(item)
+
+        _l.info('full_items len: %s' % len(full_items))
+
+        optimized_items = optimize_items(full_items)
+
+        _l.info('optimized_items len: %s' % len(optimized_items))
+
+        body['data']['items'] = optimized_items
+
+        _l.info('items_with_missing_parameters %s' % len(items_with_missing_parameters))
+        # _l.info('data %s' % data)
+
+        _l.info('self.procedure %s' % self.procedure.id)
+        _l.info('send request %s' % body)
+
+        try:
+
+            self.transport.send_request(body)
+
+        except Exception as e:
+
+            procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+            procedure_instance.error_code = 500
+            procedure_instance.error_message = "Mediator is unavailable. Please try later."
+
+            procedure_instance.save()
 
     def process_to_wtrade_provider(self, items):
 
@@ -1433,7 +1610,8 @@ class PricingInstrumentHandler(object):
             4: 'Multiple Parameter Formula',
             5: 'Bloomberg',
             6: 'Wtrade',
-            7: 'Alphav'
+            7: 'Alphav',
+            8: 'Bloomberg Forwards'
 
         }
 

@@ -1289,6 +1289,39 @@ class PricingProcedureBloombergInstrumentResult(models.Model):
         ordering = ['date']
 
 
+class PricingProcedureBloombergForwardInstrumentResult(models.Model):
+
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
+
+    procedure = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE,
+                                  verbose_name=ugettext_lazy('procedure'))
+
+    instrument = models.ForeignKey('instruments.Instrument', on_delete=models.CASCADE,
+                                   verbose_name=ugettext_lazy('instrument'))
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE,
+                                       verbose_name=ugettext_lazy('pricing policy'))
+
+    pricing_scheme = models.ForeignKey(InstrumentPricingScheme, null=True, blank=True, on_delete=models.SET_NULL,
+                                       verbose_name=ugettext_lazy('pricing scheme'))
+
+    reference = models.CharField(max_length=255, null=True, blank=True)
+
+    date = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('date'))
+
+    instrument_parameters = models.CharField(max_length=255, null=True, blank=True)
+
+    price_code_parameters = models.CharField(max_length=255, null=True, blank=True,
+                                      verbose_name=ugettext_lazy('ask parameters'))
+    price_code_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('ask value'))
+
+    class Meta:
+        unique_together = (
+            ('master_user', 'instrument', 'date', 'pricing_policy', 'procedure', 'reference')
+        )
+        ordering = ['date']
+
+
 class PricingProcedureBloombergCurrencyResult(models.Model):
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
                                     on_delete=models.CASCADE)
