@@ -144,6 +144,7 @@ class TemplateLayoutViewSet(AbstractModelViewSet):
 class ContextMenuLayoutFilterSet(FilterSet):
     id = NoOpFilter()
     name = CharFilter()
+    user_code = CharFilter()
 
     class Meta:
         model = ContextMenuLayout
@@ -151,18 +152,15 @@ class ContextMenuLayoutFilterSet(FilterSet):
 
 
 class ContextMenuLayoutViewSet(AbstractModelViewSet):
-    queryset = ContextMenuLayout.objects
+    queryset = ContextMenuLayout.objects.select_related(
+        'member'
+    )
     serializer_class = ContextMenuLayoutSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMemberFilter,
     ]
     filter_class = ContextMenuLayoutFilterSet
-    permission_classes = AbstractModelViewSet.permission_classes + [
-        SuperUserOnly,
-    ]
-    ordering_fields = [
-        'type', 'name',
-    ]
+
 
 class ListLayoutFilterSet(FilterSet):
     id = NoOpFilter()

@@ -16,7 +16,8 @@ from poms.pricing.models import InstrumentPricingSchemeType, PricingProcedureIns
     PricingProcedure, PricingProcedureAlphavInstrumentResult, PricingProcedureBloombergForwardInstrumentResult
 from poms.pricing.transport.transport import PricingTransport
 from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_between_two_dates, group_items_by_provider, \
-    get_is_yesterday, optimize_items, roll_price_history_for_n_day_forward, get_empty_values_for_dates
+    get_is_yesterday, optimize_items, roll_price_history_for_n_day_forward, get_empty_values_for_dates, \
+    get_closest_tenors
 from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
 
@@ -190,8 +191,8 @@ class PricingInstrumentHandler(object):
                 if provider_id == 7:
                     self.process_to_alphav_provider(items)
 
-                # if provider_id == 8:
-                #     self.process_to_bloomberg_forwards_provider(items)
+                if provider_id == 8:
+                    self.process_to_bloomberg_forwards_provider(items)
 
     def get_instruments(self):
 
@@ -982,7 +983,7 @@ class PricingInstrumentHandler(object):
 
         empty_values = get_empty_values_for_dates(dates)
 
-        _l.info('empty_values %s' % empty_values)
+        # _l.info('empty_values %s' % empty_values)
 
         for item in items:
 
@@ -1223,7 +1224,6 @@ class PricingInstrumentHandler(object):
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
 
-        today = date.today()
 
         _l.info('procedure id %s' % body['procedure'])
 
@@ -1231,89 +1231,71 @@ class PricingInstrumentHandler(object):
 
         empty_values = get_empty_values_for_dates(dates)
 
-        _l.info('empty_values %s' % empty_values)
-
         for item in items:
 
-            if len(item.parameters):
+            pricing_scheme_parameters = item.policy.pricing_scheme.get_parameters()
 
-                item_parameters = item.parameters.copy()
-                item_parameters.pop()
+            for date in dates:
 
-                pricing_scheme_parameters = item.policy.pricing_scheme.get_parameters()
+                with transaction.atomic():
 
-                for date in dates:
+                    try:
 
-                    if date < today:
+                        matched_tenors = []
 
-                        with transaction.atomic():
+                        maturity_date = None
 
-                            try:
+                        if pricing_scheme_parameters.attribute_key:
 
-                                matched_tenors = []
+                            maturity_date = getattr(item.instrument, pricing_scheme_parameters.attribute_key)
 
-                                maturity_date = None
+                        else:
+                            maturity_date = pricing_scheme_parameters.default_value
 
-                                if pricing_scheme_parameters.attribute_key:
+                        if pricing_scheme_parameters.data and maturity_date:
 
-                                    maturity_date = getattr(item.instrument, pricing_scheme_parameters.attribute_key)
+                            if "tenors" in pricing_scheme_parameters.data and len(pricing_scheme_parameters.data["tenors"]):
 
-                                else:
-                                    maturity_date = pricing_scheme_parameters.default_value
-
-                                if pricing_scheme_parameters.data and maturity_date:
-
-                                    if "tenors" in pricing_scheme_parameters.data and len(pricing_scheme_parameters.data["tenors"]):
-
-                                        pass
-
-                                        # for tenor in pricing_scheme_parameters.data["tenors"]:
-                                        #
-                                        #
+                                matched_tenors = get_closest_tenors(maturity_date, date, pricing_scheme_parameters.data["tenors"])
 
 
-                                for matched_tenor in matched_tenors:
+                        for matched_tenor in matched_tenors:
 
-                                        record = PricingProcedureBloombergForwardInstrumentResult(master_user=self.master_user,
-                                                                                           procedure=procedure_instance,
-                                                                                           instrument=item.instrument,
-                                                                                           instrument_parameters=str(
-                                                                                               item_parameters),
-                                                                                           pricing_policy=item.policy.pricing_policy,
-                                                                                           pricing_scheme=item.pricing_scheme,
-                                                                                           reference=matched_tenor['price_ticker'],
-                                                                                           date=date)
-
-
-                                        if 'price_code' in item.scheme_fields_map:
-                                            record.price_code = item.scheme_fields_map[
-                                                'price_code']
-
-                                        record.save()
-
-                                        item_obj = {
-                                            'reference': matched_tenor['price_ticker'],
-                                            'parameters': [],
-                                            'fields': []
-                                        }
-
-                                        if 'price_code' in item.scheme_fields_map:
-                                            item_obj['fields'].append({
-                                                'code': item.scheme_fields_map['price_code'],
-                                                'parameters': [],
-                                                'values': empty_values
-                                            })
+                                record = PricingProcedureBloombergForwardInstrumentResult(master_user=self.master_user,
+                                                                                   procedure=procedure_instance,
+                                                                                   instrument=item.instrument,
+                                                                                   instrument_parameters=None,
+                                                                                   pricing_policy=item.policy.pricing_policy,
+                                                                                   pricing_scheme=item.pricing_scheme,
+                                                                                   reference=matched_tenor['price_ticker'],
+                                                                                   date=date)
 
 
-                                        full_items.append(item_obj)
+
+                                record.price_code = pricing_scheme_parameters.price_code
+
+                                record.save()
+
+                                item_obj = {
+                                    'reference': matched_tenor['price_ticker'],
+                                    'parameters': [],
+                                    'fields': []
+                                }
+
+                                if pricing_scheme_parameters.price_code:
+                                    item_obj['fields'].append({
+                                        'code': pricing_scheme_parameters.price_code,
+                                        'parameters': [],
+                                        'values': empty_values
+                                    })
 
 
-                            except Exception as e:
-                                _l.info("Cant create Result Record %s" % e)
+                                full_items.append(item_obj)
 
 
-            else:
-                items_with_missing_parameters.append(item)
+                    except Exception as e:
+                        _l.info("Cant create Result Record %s" % e)
+
 
         _l.info('full_items len: %s' % len(full_items))
 

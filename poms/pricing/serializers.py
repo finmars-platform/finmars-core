@@ -627,11 +627,6 @@ class InstrumentPricingSchemeSerializer(ModelWithTimeStampSerializer):
                 else:
                     parameters.accrual_error_text_expr = None
 
-                if 'accrual_yesterday' in type_settings:
-                    parameters.price_code = type_settings['price_code']
-                else:
-                    parameters.price_code = None
-
                 if 'data' in type_settings:
                     parameters.data = type_settings['data']
                 else:

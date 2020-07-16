@@ -307,6 +307,7 @@ class ContextMenuLayout(BaseUIModel):
         unique_together = [
             ['member', 'type', 'user_code'],
         ]
+        ordering = ['name']
 
     def save(self, *args, **kwargs):
         if not self.user_code:

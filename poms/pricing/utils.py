@@ -282,3 +282,101 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
                 error.save()
 
     return successful_prices_count, error_prices_count
+
+
+def get_closest_tenors(maturity_date, date, tenors):
+
+    result = []
+
+    diff = maturity_date - date
+
+    tenor_from = None
+    tenor_to = None
+
+    # TODO add check for weekends
+
+    tenor_map = {
+        "overnight": 1,
+        "tomorrow_next": 2,
+        "spot": 2,
+        "spot_next": 2 + 1,
+        "1w": 2 + 7,
+        "2w": 2 + 14,
+        "3w": 2 + 21,
+        "1m": 2 + 30,
+        "2m": 2 + 60,
+        "3m": 2 + 90,
+        "4m": 2 + 120,
+        "5m": 2 + 150,
+        "6m": 2 + 180,
+        "7m": 2 + 210,
+        "8m": 2 + 240,
+        "9m": 2 + 270,
+        "10m": 2 + 300,
+        "11m": 2 + 330,
+        "12m": 2 + 360,
+        "1y": 2 + 365,
+        "15m": 2 + 450,
+        "18m": 2 + 540
+    }
+
+    # _l.info('tenors %s' % tenors)
+
+    # looking for tenor from
+
+    for tenor in tenors:
+
+        tenor_type = tenor["tenor_type"]
+        days = tenor_map[tenor_type]
+
+        current_tenor_from_date = timedelta(days=days) + date
+
+        if tenor_from is None:
+
+            if current_tenor_from_date < maturity_date:
+
+                tenor_from = tenor
+
+        else:
+
+            last_tenor_from_date = timedelta(days=tenor_map[tenor_from["tenor_type"]]) + date
+
+            if current_tenor_from_date > last_tenor_from_date and current_tenor_from_date < maturity_date:
+                tenor_from = tenor
+
+
+    # looking for tenor to
+
+    for tenor in tenors:
+
+        tenor_type = tenor["tenor_type"]
+
+        days = tenor_map[tenor_type]
+        current_tenor_to_date = timedelta(days=days) + date
+
+        if tenor_to is None:
+
+            if current_tenor_to_date > maturity_date:
+
+                tenor_to = tenor
+
+        else:
+
+            last_tenor_to_date = timedelta(days=tenor_map[tenor_to["tenor_type"]]) + date
+
+            if current_tenor_to_date < last_tenor_to_date and current_tenor_to_date > maturity_date:
+                tenor_to = tenor
+
+    if tenor_from and tenor_to:
+        result.append(tenor_from)
+        result.append(tenor_to)
+
+    if tenor_from and not tenor_to:
+        result.append(tenor_from)
+        result.append(tenor_from)
+
+    if not tenor_from and tenor_to:
+        result.append(tenor_to)
+        result.append(tenor_to)
+
+    return result
