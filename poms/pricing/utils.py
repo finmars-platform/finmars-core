@@ -404,23 +404,25 @@ def convert_results_for_calc_avg_price(records):
 
             if (item.tenor_clause == 'from'):
                 setattr(unique_rows[pattern_key], 'tenor_from_price', item.price_code_value)
-                setattr(unique_rows[pattern_key], 'tenor_from_clause', item.tenor_clause)
                 setattr(unique_rows[pattern_key], 'tenor_from_type', item.tenor_type)
             else:
                 setattr(unique_rows[pattern_key], 'tenor_to_price', item.price_code_value)
-                setattr(unique_rows[pattern_key], 'tenor_to_clause', item.tenor_clause)
                 setattr(unique_rows[pattern_key], 'tenor_to_type', item.tenor_type)
 
         else:
+
             unique_rows[pattern_key] = item
+
+            setattr(unique_rows[pattern_key], 'tenor_from_price', None)
+            setattr(unique_rows[pattern_key], 'tenor_from_type', None)
+            setattr(unique_rows[pattern_key], 'tenor_to_price', None)
+            setattr(unique_rows[pattern_key], 'tenor_to_type', None)
 
             if (item.tenor_clause == 'from'):
                 setattr(unique_rows[pattern_key], 'tenor_from_price', item.price_code_value)
-                setattr(unique_rows[pattern_key], 'tenor_from_clause', item.tenor_clause)
                 setattr(unique_rows[pattern_key], 'tenor_from_type', item.tenor_type)
             else:
                 setattr(unique_rows[pattern_key], 'tenor_to_price', item.price_code_value)
-                setattr(unique_rows[pattern_key], 'tenor_to_clause', item.tenor_clause)
                 setattr(unique_rows[pattern_key], 'tenor_to_type', item.tenor_type)
 
     for key in unique_rows:
@@ -429,17 +431,33 @@ def convert_results_for_calc_avg_price(records):
 
         average_weighted_price = None
 
-        date_from = item.date + timedelta(days=tenor_map[item.tenor_from_type])
-        date_to = item.date + timedelta(days=tenor_map[item.tenor_to_type])
-        maturity_date = item.instrument.maturity_date
+        _l.info('item.tenor_from_price %s' % item.tenor_from_price)
+        _l.info('item.tenor_from_type %s' % item.tenor_from_type)
 
-        w = (date_to - maturity_date) / (date_to - date_from)
+        _l.info('item.tenor_to_price %s' % item.tenor_to_price)
+        _l.info('item.tenor_to_type %s' % item.tenor_to_type)
 
-        _l.info("w %s" % w)
+        if item.tenor_from_price and item.tenor_to_price:
 
-        average_weighted_price = item.tenor_from_price * w + item.tenor_to_price * (1 - w)
+            date_from = item.date + timedelta(days=tenor_map[item.tenor_from_type])
+            date_to = item.date + timedelta(days=tenor_map[item.tenor_to_type])
+            maturity_date = item.instrument.maturity_date
 
-        setattr(item, 'average_weighted_price', average_weighted_price)
+            w = (date_to - maturity_date) / (date_to - date_from)
+
+            _l.info("w %s" % w)
+
+            average_weighted_price = item.tenor_from_price * w + item.tenor_to_price * (1 - w)
+
+            setattr(item, 'average_weighted_price', average_weighted_price)
+
+        elif item.tenor_from_price and not item.tenor_to_price:
+
+            setattr(item, 'average_weighted_price', item.tenor_from_price)
+
+        elif not item.tenor_from_price and item.tenor_to_price:
+
+            setattr(item, 'average_weighted_price', item.tenor_to_price)
 
         result.append(item)
 
