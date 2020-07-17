@@ -629,8 +629,7 @@ class FillPricesBrokerBloombergForwardsProcess(object):
                 records = PricingProcedureBloombergForwardInstrumentResult.objects.filter(
                     master_user=self.master_user,
                     procedure=self.instance['procedure'],
-                    reference=item['reference'],
-                    instrument_parameters=str(item['parameters'])
+                    reference=item['reference']
                 )
 
                 _l.info('< fill instrument prices: records for %s len %s' % (item['reference'], len(list(records))))
