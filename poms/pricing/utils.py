@@ -405,9 +405,11 @@ def convert_results_for_calc_avg_price(records):
             if (item.tenor_clause == 'from'):
                 setattr(unique_rows[pattern_key], 'tenor_from_price', item.price_code_value)
                 setattr(unique_rows[pattern_key], 'tenor_from_clause', item.tenor_clause)
+                setattr(unique_rows[pattern_key], 'tenor_from_type', item.tenor_type)
             else:
                 setattr(unique_rows[pattern_key], 'tenor_to_price', item.price_code_value)
                 setattr(unique_rows[pattern_key], 'tenor_to_clause', item.tenor_clause)
+                setattr(unique_rows[pattern_key], 'tenor_to_type', item.tenor_type)
 
         else:
             unique_rows[pattern_key] = item
@@ -415,9 +417,11 @@ def convert_results_for_calc_avg_price(records):
             if (item.tenor_clause == 'from'):
                 setattr(unique_rows[pattern_key], 'tenor_from_price', item.price_code_value)
                 setattr(unique_rows[pattern_key], 'tenor_from_clause', item.tenor_clause)
+                setattr(unique_rows[pattern_key], 'tenor_from_type', item.tenor_type)
             else:
                 setattr(unique_rows[pattern_key], 'tenor_to_price', item.price_code_value)
                 setattr(unique_rows[pattern_key], 'tenor_to_clause', item.tenor_clause)
+                setattr(unique_rows[pattern_key], 'tenor_to_type', item.tenor_type)
 
     for key in unique_rows:
 
@@ -425,8 +429,8 @@ def convert_results_for_calc_avg_price(records):
 
         average_weighted_price = None
 
-        date_from = item.date + timedelta(days=tenor_map[item.tenor_from_clause])
-        date_to = item.date + timedelta(days=tenor_map[item.tenor_to_clause])
+        date_from = item.date + timedelta(days=tenor_map[item.tenor_from_type])
+        date_to = item.date + timedelta(days=tenor_map[item.tenor_to_type])
         maturity_date = item.instrument.maturity_date
 
         w = (date_to - maturity_date) / (date_to - date_from)
