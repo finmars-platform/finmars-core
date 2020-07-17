@@ -459,6 +459,10 @@ def convert_results_for_calc_avg_price(records):
 
             setattr(item, 'average_weighted_price', item.tenor_to_price)
 
+        else:
+
+            setattr(item, 'average_weighted_price', None)
+
         result.append(item)
 
     return result
