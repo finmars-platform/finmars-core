@@ -397,7 +397,7 @@ def convert_results_for_calc_avg_price(records):
 
     for item in records:
 
-        pattern_list = [item.master_user_id, item.procedure_id, item.instrument_id, item.pricing_policy_id, item.reference, item.date]
+        pattern_list = [str(item.master_user_id), str(item.procedure_id), str(item.instrument_id), str(item.pricing_policy_id), str(item.reference), str(item.date)]
         pattern_key = ".".join(pattern_list)
 
         if pattern_key in unique_rows:
