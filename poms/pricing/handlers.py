@@ -12,11 +12,12 @@ from poms.pricing.instrument_handler import PricingInstrumentHandler
 from poms.pricing.models import PricingProcedureBloombergInstrumentResult, PricingProcedureBloombergCurrencyResult, \
     PricingProcedureWtradeInstrumentResult, PriceHistoryError, \
     CurrencyHistoryError, PricingProcedureFixerCurrencyResult, PricingParentProcedureInstance, PricingProcedureInstance, \
-    PricingProcedureAlphavInstrumentResult
+    PricingProcedureAlphavInstrumentResult, PricingProcedureBloombergForwardInstrumentResult
 
 import logging
 
-from poms.pricing.utils import roll_price_history_for_n_day_forward, roll_currency_history_for_n_day_forward
+from poms.pricing.utils import roll_price_history_for_n_day_forward, roll_currency_history_for_n_day_forward, \
+    convert_results_for_calc_avg_price
 from poms.reports.builders.balance_item import Report
 from poms.reports.builders.balance_pl import ReportBuilder
 from poms.transactions.models import Transaction
@@ -594,6 +595,279 @@ class FillPricesBrokerBloombergProcess(object):
         self.procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
         self.procedure_instance.save()
+
+
+class FillPricesBrokerBloombergForwardsProcess(object):
+
+    def __init__(self, instance, master_user):
+
+        self.instance = instance
+        self.master_user = master_user
+
+        self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
+        self.procedure = self.procedure_instance.pricing_procedure
+
+        _l.info("Broker Bloomberg Forwards - Get Principal Prices: %s" % self.procedure.price_get_principal_prices)
+        _l.info("Broker Bloomberg Forwards - Get Accrued Prices: %s" % self.procedure.price_get_accrued_prices)
+        _l.info("Broker Bloomberg Forwards - Get FX Rates: %s" % self.procedure.price_get_fx_rates)
+        _l.info("Broker Bloomberg Forwards - Overwrite Principal Prices: %s" % self.procedure.price_overwrite_principal_prices)
+        _l.info("Broker Bloomberg Forwards - Overwrite Accrued Prices: %s" % self.procedure.price_overwrite_accrued_prices)
+        _l.info("Broker Bloomberg Forwards - Overwrite FX Rates: %s" % self.procedure.price_overwrite_fx_rates)
+        _l.info("Broker Bloomberg Forwards - Roll Days N Forward: %s" % self.procedure.price_fill_days)
+
+    def process(self):
+
+        _l.info('< fill prices: total items len %s' % len(self.instance['data']['items']))
+        _l.info('< action:  %s' % self.instance['action'])
+
+        if self.instance['action'] == 'bloomberg_forwards_get_instrument_prices':
+
+            for item in self.instance['data']['items']:
+
+                records_st = time.perf_counter()
+
+                records = PricingProcedureBloombergForwardInstrumentResult.objects.filter(
+                    master_user=self.master_user,
+                    procedure=self.instance['procedure'],
+                    reference=item['reference'],
+                    instrument_parameters=str(item['parameters'])
+                )
+
+                _l.info('< fill instrument prices: records for %s len %s' % (item['reference'], len(list(records))))
+
+                processing_st = time.perf_counter()
+
+                _l.info('< get records from db done: %s', (time.perf_counter() - records_st))
+
+                for record in records:
+
+                    for field in item['fields']:
+
+                        for val_obj in field['values']:
+
+                            if str(record.date) == str(val_obj['date']):
+
+                                if record.price_code_parameters:
+                                    if field['code'] in record.price_code_parameters:
+
+                                        try:
+                                            record.price_code_value = float(val_obj['value'])
+                                        except Exception as e:
+                                            _l.info('ask value e %s ' % e)
+
+
+                                record.save()
+
+                        if not len(records):
+                            _l.info('Cant fill the value. Related records not found. Reference %s' % item['reference'])
+
+                _l.info('< processing item: %s', (time.perf_counter() - processing_st))
+
+            self.create_price_history()
+
+            _l.info("process fill instrument prices")
+
+    def create_price_history(self):
+
+        _l.info("Creating price history")
+
+        successful_prices_count = 0
+        error_prices_count = 0
+
+        broker_results = PricingProcedureBloombergForwardInstrumentResult.objects.filter(
+            master_user=self.master_user,
+            procedure=self.instance['procedure'],
+            date__gte=self.instance['data']['date_from'],
+            date__lte=self.instance['data']['date_to']
+        )
+
+        records = convert_results_for_calc_avg_price(broker_results)
+
+        for record in records:
+
+            safe_instrument = {
+                'id': record.instrument.id,
+            }
+
+            values = {
+                'd': record.date,
+                'instrument': safe_instrument,
+                'price': record.average_weighted_price,
+            }
+
+            pricing_scheme_parameters = record.pricing_scheme.get_parameters()
+
+            expr = pricing_scheme_parameters.expr
+            accrual_expr = pricing_scheme_parameters.accrual_expr
+            pricing_error_text_expr = pricing_scheme_parameters.pricing_error_text_expr
+            accrual_error_text_expr = pricing_scheme_parameters.accrual_error_text_expr
+
+            _l.info('values %s' % values)
+            _l.info('expr %s' % expr)
+
+            has_error = False
+            error = PriceHistoryError(
+                master_user=self.master_user,
+                procedure_instance_id=self.instance['procedure'],
+                instrument=record.instrument,
+                pricing_scheme=record.pricing_scheme,
+                pricing_policy=record.pricing_policy,
+                date=record.date,
+            )
+
+            principal_price = None
+            accrued_price = None
+
+            try:
+                principal_price = formula.safe_eval(expr, names=values)
+            except formula.InvalidExpression:
+
+                has_error = True
+
+                try:
+                    error.error_text = formula.safe_eval(pricing_error_text_expr, names=values)
+
+                except formula.InvalidExpression:
+
+                    error.error_text = 'Invalid Error Text Expression'
+
+
+            _l.info('principal_price %s' % principal_price)
+            _l.info('instrument %s' % record.instrument.user_code)
+            _l.info('pricing_policy %s' % record.pricing_policy.user_code)
+
+            if pricing_scheme_parameters.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
+
+                try:
+                    accrued_price = record.instrument.get_accrued_price(record.date)
+                except Exception:
+                    has_error = True
+
+                    try:
+
+                        _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
+
+                        error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
+
+                    except formula.InvalidExpression:
+                        error.error_text = 'Invalid Error Text Expression'
+
+            if pricing_scheme_parameters.accrual_calculation_method == 3:   # ACCRUAL_PER_FORMULA
+
+                try:
+                    accrued_price = formula.safe_eval(accrual_expr, names=values)
+                except formula.InvalidExpression:
+                    has_error = True
+
+                    try:
+
+                        _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
+
+                        error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
+
+                    except formula.InvalidExpression:
+                        error.error_text = 'Invalid Error Text Expression'
+
+            can_write = True
+
+            try:
+
+                price = PriceHistory.objects.get(
+                    instrument=record.instrument,
+                    pricing_policy=record.pricing_policy,
+                    date=record.date
+                )
+
+                if not self.procedure.price_overwrite_principal_prices and not self.procedure.price_overwrite_accrued_prices:
+                    can_write = False
+                    _l.info('Skip %s' % price)
+                else:
+                    _l.info('Overwrite existing %s' % price)
+
+            except PriceHistory.DoesNotExist:
+
+                price = PriceHistory(
+                    instrument=record.instrument,
+                    pricing_policy=record.pricing_policy,
+                    date=record.date,
+                    principal_price=principal_price
+                )
+
+                _l.info('Create new %s' % price)
+
+            price.principal_price = 0
+            price.accrued_price = 0
+
+            if principal_price:
+
+                if price.id:
+                    if self.procedure.price_overwrite_principal_prices:
+                        price.principal_price = principal_price
+                else:
+                    price.principal_price = principal_price
+
+                error.principal_price = principal_price
+
+            if accrued_price:
+
+                if price.id:
+                    if self.procedure.price_overwrite_accrued_prices:
+                        price.accrued_price = accrued_price
+                else:
+                    price.accrued_price = accrued_price
+
+                error.accrued_price = accrued_price
+
+            _l.info('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
+
+            if can_write:
+
+                if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+
+                    error_prices_count = error_prices_count + 1
+
+                    error.save()
+
+                else:
+
+                    successful_prices_count = successful_prices_count + 1
+
+                    price.save()
+
+            else:
+
+                error_prices_count = error_prices_count + 1
+
+                error.error_text = "Prices already exists. Principal Price: " + str(principal_price) +"; Accrued: "+ str(accrued_price) +"."
+
+                error.status = PriceHistoryError.STATUS_SKIP
+                error.save()
+
+            if self.instance['data']['date_to'] == str(record.date):
+
+                _l.info("Bloomberg Forwards Roll Prices for Price History")
+
+                # roll_price_history_for_n_day_forward(self.procedure, price)
+                roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance)
+
+        PricingProcedureBloombergInstrumentResult.objects.filter(master_user=self.master_user,
+                                                                 procedure=self.instance['procedure'],
+                                                                 date__gte=self.instance['data']['date_from'],
+                                                                 date__lte=self.instance['data']['date_to']).delete()
+
+        _l.info('bloomberg forwards price procedure_instance %s' % self.procedure_instance)
+        _l.info('bloomberg forwards price successful_prices_count %s' % successful_prices_count)
+        _l.info('bloomberg forwards price error_prices_count %s' % error_prices_count)
+
+        self.procedure_instance.successful_prices_count = successful_prices_count
+        self.procedure_instance.error_prices_count = error_prices_count
+
+        self.procedure_instance.status = PricingProcedureInstance.STATUS_DONE
+
+        self.procedure_instance.save()
+
+        _l.info('bloomberg forwards price self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
+        _l.info('bloomberg forwards price self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
 
 
 class FillPricesBrokerWtradeProcess(object):

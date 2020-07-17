@@ -8,7 +8,7 @@ from poms.pricing.models import InstrumentPricingSchemeType, CurrencyPricingSche
     InstrumentTypePricingPolicy, CurrencyPricingPolicy, PricingProcedureInstance, \
     PricingProcedureBloombergInstrumentResult, PricingProcedureBloombergCurrencyResult, \
     PricingProcedureWtradeInstrumentResult, PriceHistoryError, \
-    CurrencyHistoryError, PricingParentProcedureInstance
+    CurrencyHistoryError, PricingParentProcedureInstance, PricingProcedureBloombergForwardInstrumentResult
 
 
 class InstrumentPricingSchemeTypeAdmin(admin.ModelAdmin):
@@ -50,6 +50,15 @@ class PricingProcedureBloombergInstrumentResultAdmin(admin.ModelAdmin):
 
 
 admin.site.register(PricingProcedureBloombergInstrumentResult, PricingProcedureBloombergInstrumentResultAdmin)
+
+
+class PricingProcedureBloombergForwardInstrumentResultAdmin(admin.ModelAdmin):
+    model = PricingProcedureBloombergForwardInstrumentResult
+    list_display = ['id', 'master_user', 'procedure', 'instrument', 'pricing_policy', 'reference', 'date', 'price_code_parameters', 'price_code_value', 'tenor_type', 'tenor_clause']
+    raw_id_fields = ['instrument', 'pricing_policy']
+
+
+admin.site.register(PricingProcedureBloombergForwardInstrumentResult, PricingProcedureBloombergForwardInstrumentResultAdmin)
 
 
 class PricingProcedureBloombergCurrencyResultAdmin(admin.ModelAdmin):

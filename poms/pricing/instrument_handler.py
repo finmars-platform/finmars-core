@@ -1268,11 +1268,13 @@ class PricingInstrumentHandler(object):
                                                                                    pricing_policy=item.policy.pricing_policy,
                                                                                    pricing_scheme=item.pricing_scheme,
                                                                                    reference=matched_tenor['price_ticker'],
+                                                                                   tenor_type=matched_tenor['tenor_type'],
+                                                                                   tenor_clause=matched_tenor['tenor_clause'],
                                                                                    date=date)
 
 
 
-                                record.price_code = pricing_scheme_parameters.price_code
+                                record.price_code_parameters = pricing_scheme_parameters.price_code
 
                                 record.save()
 

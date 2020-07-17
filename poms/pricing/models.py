@@ -1312,8 +1312,14 @@ class PricingProcedureBloombergForwardInstrumentResult(models.Model):
     instrument_parameters = models.CharField(max_length=255, null=True, blank=True)
 
     price_code_parameters = models.CharField(max_length=255, null=True, blank=True,
-                                      verbose_name=ugettext_lazy('ask parameters'))
-    price_code_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('ask value'))
+                                      verbose_name=ugettext_lazy('price code parameters'))
+    price_code_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('price code value'))
+
+    tenor_type = models.CharField(max_length=255, null=True, blank=True,
+                                             verbose_name=ugettext_lazy('tenor type'))
+
+    tenor_clause = models.CharField(max_length=255, null=True, blank=True,
+                                  verbose_name=ugettext_lazy('tenor clause'))
 
     class Meta:
         unique_together = (

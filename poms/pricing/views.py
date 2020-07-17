@@ -21,7 +21,8 @@ from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfiguration
 from poms.portfolios.models import Portfolio
 from poms.pricing.brokers.broker_serializers import DataRequestSerializer
 from poms.pricing.handlers import PricingProcedureProcess, FillPricesBrokerBloombergProcess, \
-    FillPricesBrokerWtradeProcess, FillPricesBrokerFixerProcess, FillPricesBrokerAlphavProcess
+    FillPricesBrokerWtradeProcess, FillPricesBrokerFixerProcess, FillPricesBrokerAlphavProcess, \
+    FillPricesBrokerBloombergForwardsProcess
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, InstrumentPricingSchemeType, \
     CurrencyPricingSchemeType, PricingProcedure, PricingProcedureInstance, PriceHistoryError, \
     CurrencyHistoryError, PricingParentProcedureInstance
@@ -181,6 +182,44 @@ class PricingBrokerBloombergHandler(APIView):
             if not request.data['error_code']:
 
                 instance = FillPricesBrokerBloombergProcess(instance=request.data, master_user=procedure.master_user)
+                instance.process()
+
+            else:
+
+                procedure.error_code = request.data['error_code']
+                procedure.error_message = request.data['error_message']
+
+                procedure.status = PricingProcedureInstance.STATUS_ERROR
+                procedure.save()
+
+        except PricingProcedureInstance.DoesNotExist:
+
+            _l.info("Does not exist? Procedure %s" % procedure_id)
+
+            return Response({'status': '404'})  # TODO handle 404 properly
+
+        return Response({'status': 'ok'})
+
+
+class PricingBrokerBloombergForwardsHandler(APIView):
+
+    permission_classes = []
+
+    def post(self, request):
+
+        # _l.info('request.data %s' % request.data)
+
+        procedure_id = request.data['procedure']
+
+        _l.info("> handle_callback broker bloomberg forwards: procedure_id %s" % procedure_id)
+
+        try:
+
+            procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
+
+            if not request.data['error_code']:
+
+                instance = FillPricesBrokerBloombergForwardsProcess(instance=request.data, master_user=procedure.master_user)
                 instance.process()
 
             else:

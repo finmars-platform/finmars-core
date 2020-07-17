@@ -283,6 +283,30 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
 
     return successful_prices_count, error_prices_count
 
+tenor_map = {
+    "overnight": 1,
+    "tomorrow_next": 2,
+    "spot": 2,
+    "spot_next": 2 + 1,
+    "1w": 2 + 7,
+    "2w": 2 + 14,
+    "3w": 2 + 21,
+    "1m": 2 + 30,
+    "2m": 2 + 60,
+    "3m": 2 + 90,
+    "4m": 2 + 120,
+    "5m": 2 + 150,
+    "6m": 2 + 180,
+    "7m": 2 + 210,
+    "8m": 2 + 240,
+    "9m": 2 + 270,
+    "10m": 2 + 300,
+    "11m": 2 + 330,
+    "12m": 2 + 360,
+    "1y": 2 + 365,
+    "15m": 2 + 450,
+    "18m": 2 + 540
+}
 
 def get_closest_tenors(maturity_date, date, tenors):
 
@@ -294,31 +318,6 @@ def get_closest_tenors(maturity_date, date, tenors):
     tenor_to = None
 
     # TODO add check for weekends
-
-    tenor_map = {
-        "overnight": 1,
-        "tomorrow_next": 2,
-        "spot": 2,
-        "spot_next": 2 + 1,
-        "1w": 2 + 7,
-        "2w": 2 + 14,
-        "3w": 2 + 21,
-        "1m": 2 + 30,
-        "2m": 2 + 60,
-        "3m": 2 + 90,
-        "4m": 2 + 120,
-        "5m": 2 + 150,
-        "6m": 2 + 180,
-        "7m": 2 + 210,
-        "8m": 2 + 240,
-        "9m": 2 + 270,
-        "10m": 2 + 300,
-        "11m": 2 + 330,
-        "12m": 2 + 360,
-        "1y": 2 + 365,
-        "15m": 2 + 450,
-        "18m": 2 + 540
-    }
 
     # _l.info('tenors %s' % tenors)
 
@@ -368,15 +367,75 @@ def get_closest_tenors(maturity_date, date, tenors):
                 tenor_to = tenor
 
     if tenor_from and tenor_to:
+
+        tenor_from['tenor_clause'] = 'from'
+        tenor_to['tenor_clause'] = 'to'
+
         result.append(tenor_from)
         result.append(tenor_to)
 
     if tenor_from and not tenor_to:
+        tenor_from['tenor_clause'] = 'from'
         result.append(tenor_from)
+        tenor_from['tenor_clause'] = 'to'
         result.append(tenor_from)
 
     if not tenor_from and tenor_to:
+        tenor_to['tenor_clause'] = 'from'
         result.append(tenor_to)
+        tenor_to['tenor_clause'] = 'to'
         result.append(tenor_to)
 
     return result
+
+
+def convert_results_for_calc_avg_price(records):
+
+    result = []
+
+    unique_rows = {}
+
+    for item in records:
+
+        pattern_list = [item.master_user_id, item.procedure_id, item.instrument_id, item.pricing_policy_id, item.reference, item.date]
+        pattern_key = ".".join(pattern_list)
+
+        if pattern_key in unique_rows:
+
+            if (item.tenor_clause == 'from'):
+                setattr(unique_rows[pattern_key], 'tenor_from_price', item.price_code_value)
+                setattr(unique_rows[pattern_key], 'tenor_from_clause', item.tenor_clause)
+            else:
+                setattr(unique_rows[pattern_key], 'tenor_to_price', item.price_code_value)
+                setattr(unique_rows[pattern_key], 'tenor_to_clause', item.tenor_clause)
+
+        else:
+            unique_rows[pattern_key] = item
+
+            if (item.tenor_clause == 'from'):
+                setattr(unique_rows[pattern_key], 'tenor_from_price', item.price_code_value)
+                setattr(unique_rows[pattern_key], 'tenor_from_clause', item.tenor_clause)
+            else:
+                setattr(unique_rows[pattern_key], 'tenor_to_price', item.price_code_value)
+                setattr(unique_rows[pattern_key], 'tenor_to_clause', item.tenor_clause)
+
+    for key, item in unique_rows:
+
+        average_weighted_price = None
+
+        date_from = item.date + timedelta(days=tenor_map[item.tenor_from_clause])
+        date_to = item.date + timedelta(days=tenor_map[item.tenor_to_clause])
+        maturity_date = item.instrument.maturity_date
+
+        w = (date_to - maturity_date) / (date_to - date_from)
+
+        _l.info("w %s" % w)
+
+        average_weighted_price = item.tenor_from_price * w + item.tenor_to_price * (1 - w)
+
+        setattr(item, 'average_weighted_price', average_weighted_price)
+
+        result.append(item)
+
+    return result
+
