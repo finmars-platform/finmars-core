@@ -419,7 +419,9 @@ def convert_results_for_calc_avg_price(records):
                 setattr(unique_rows[pattern_key], 'tenor_to_price', item.price_code_value)
                 setattr(unique_rows[pattern_key], 'tenor_to_clause', item.tenor_clause)
 
-    for key, item in unique_rows:
+    for key in unique_rows:
+
+        item = unique_rows[key]
 
         average_weighted_price = None
 
