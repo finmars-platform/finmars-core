@@ -13,39 +13,47 @@ _l = logging.getLogger('poms.users')
 
 def set_master_user(request, master_user):
 
-    set_st = time.perf_counter()
+    try:
 
-    session = Session.objects.get(session_key=request.session.session_key)
+        set_st = time.perf_counter()
 
-    master_user_id = master_user.id
-    old_master_user_id = session.current_master_user.id
+        session = Session.objects.get(session_key=request.session.session_key)
 
-    sessions = Session.objects.filter(user=request.user.id)
-    user = User.objects.get(id=request.user.id)
-    user_profile = UserProfile.objects.get(user=user)
+        master_user_id = master_user.id
+        old_master_user_id = session.current_master_user.id
 
-    if old_master_user_id != master_user_id:
-        if master_user_id is None:
-            del request.session['current_master_user']
+        sessions = Session.objects.filter(user=request.user.id)
+        user = User.objects.get(id=request.user.id)
+        user_profile = UserProfile.objects.get(user=user)
 
-            for session in sessions:
-                session.current_master_user = None
+        if old_master_user_id != master_user_id:
+            if master_user_id is None:
+                del request.session['current_master_user']
 
-                session.save()
+                for session in sessions:
+                    session.current_master_user = None
 
-        else:
-            request.session['current_master_user'] = master_user_id
+                    session.save()
 
-            for session in sessions:
-                session.current_master_user = MasterUser.objects.get(id=master_user_id)
+            else:
+                request.session['current_master_user'] = master_user_id
 
-                user_profile.active_master_user = session.current_master_user
-                print("Set active Master user to User Profile")
-                user_profile.save()
+                for session in sessions:
+                    session.current_master_user = MasterUser.objects.get(id=master_user_id)
 
-                session.save()
+                    user_profile.active_master_user = session.current_master_user
+                    print("Set active Master user to User Profile")
+                    user_profile.save()
 
-    _l.info('set_master_user done: %s' % (time.perf_counter() - set_st))
+                    session.save()
+
+        _l.info('set_master_user done: %s' % (time.perf_counter() - set_st))
+
+    except Session.DoesNotExist:
+
+        _l.info('set_master_user: session not found')
+
+        raise NotFound()
 
 
 def get_master_user_and_member(request):
@@ -57,38 +65,45 @@ def get_master_user_and_member(request):
     # if master_user_id is None:
     #     master_user_id = request.session.get('master_user_id', None)
 
-    session = Session.objects.get(session_key=request.session.session_key)
+    print('request.session.session_key %s' % request.session.session_key)
 
-    master_user_id = session.current_master_user_id
+    try:
+        session = Session.objects.get(session_key=request.session.session_key)
 
-    # print('request.session.get master_user_id %s' % master_user_id)
+        master_user_id = session.current_master_user_id
 
-    if master_user_id is None:
-        master_user_id = request.query_params.get('master_user_id', None)
+        # print('request.session.get master_user_id %s' % master_user_id)
 
-    member_qs = Member.objects.prefetch_related('groups').filter(user=user, is_deleted=False)
+        if master_user_id is None:
+            master_user_id = request.query_params.get('master_user_id', None)
 
-    # print('get_master_user_and_member.master_user_id %s' % master_user_id)
+        member_qs = Member.objects.prefetch_related('groups').filter(user=user, is_deleted=False)
 
-    if master_user_id is not None:
+        # print('get_master_user_and_member.master_user_id %s' % master_user_id)
 
-        master_user = MasterUser.objects.get(id=master_user_id)
+        if master_user_id is not None:
 
-        try:
-            member = member_qs.get(master_user=master_user_id)
+            master_user = MasterUser.objects.get(id=master_user_id)
 
-            return member, master_user
-        except ObjectDoesNotExist:
-            pass
+            try:
+                member = member_qs.get(master_user=master_user_id)
 
-    member = member_qs.first()
-    if member:
-        session.current_master_user = member.master_user
-        session.save()
-        # request.session['master_user_id'] = member.master_user.id
-        return member, member.master_user
+                return member, master_user
+            except ObjectDoesNotExist:
+                pass
 
-    # raise NotFound()
+        member = member_qs.first()
+        if member:
+            session.current_master_user = member.master_user
+            session.save()
+            # request.session['master_user_id'] = member.master_user.id
+            return member, member.master_user
+
+    except Session.DoesNotExist:
+
+        _l.info('get_master_user_and_member: session not found')
+
+        raise NotFound()
 
 
 # def get_master_user(request):

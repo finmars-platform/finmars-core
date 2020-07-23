@@ -792,7 +792,10 @@ class MemberViewSet(AbstractModelViewSet):
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
         lookup_value = self.kwargs[lookup_url_kwarg]
         if lookup_value == '0':
-            return self.request.user.member
+            try:
+                return self.request.user.member
+            except AttributeError:
+                return None
         return super(MemberViewSet, self).get_object()
 
     def update(self, request, *args, **kwargs):

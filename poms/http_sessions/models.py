@@ -16,7 +16,7 @@ class Session(AbstractBaseSession):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, verbose_name=ugettext_lazy('user'), on_delete=models.CASCADE)
     user_agent = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user agent'))
     user_ip = models.GenericIPAddressField(null=True, blank=True, verbose_name=ugettext_lazy('user ip'))
-    current_master_user = models.ForeignKey(MasterUser, null=True, blank=True, verbose_name=ugettext_lazy('master user'),  on_delete=models.CASCADE)
+    current_master_user = models.ForeignKey(MasterUser, null=True, blank=True, verbose_name=ugettext_lazy('master user'),  on_delete=models.SET_NULL)
 
     class Meta(AbstractBaseSession.Meta):
         ordering = ['expire_date']

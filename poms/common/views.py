@@ -44,7 +44,9 @@ class AbstractApiView(APIView):
         if request.user.is_authenticated:
             try:
                 request.user.member, request.user.master_user = get_master_user_and_member(request)
-            except TypeError:
+            except Exception as e:
+
+                print('e %s ' % e)
                 print("No master user and member created")
 
     def initial(self, request, *args, **kwargs):

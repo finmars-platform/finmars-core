@@ -8,7 +8,7 @@ from poms_app import settings
 if settings.DEBUG:
     class SessionAdmin(admin.ModelAdmin):
         model = Session
-        list_display = ['id', 'user', 'user_ip', 'human_user_agent', 'expire_date', 'current_master_user']
+        list_display = ['id', 'user', 'user_ip', 'human_user_agent', 'expire_date', 'current_master_user', 'session_key']
         list_display_links = ['id']
         list_select_related = ['user']
         list_filter = ['expire_date']
