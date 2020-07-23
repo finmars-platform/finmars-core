@@ -1426,6 +1426,7 @@ def complex_transaction_csv_file_import(self, instance):
 
             except:
                 _l.info('can\'t process calculated input: %s|%s', i.name, i.column, exc_info=True)
+                row.append(None)
 
         return row
 
@@ -1903,6 +1904,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
             except:
                 _l.info('can\'t process calculated input: %s|%s', i.name, i.column, exc_info=True)
+                row.append(None)
 
         return row
 
