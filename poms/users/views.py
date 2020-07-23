@@ -92,7 +92,7 @@ class ObtainAuthTokenViewSet(AbstractApiView, ViewSet):
 class PingViewSet(AbstractApiView, ViewSet):
     permission_classes = [AllowAny, ]
 
-    @method_decorator(ensure_csrf_cookie)
+    # @method_decorator(ensure_csrf_cookie)
     def list(self, request, *args, **kwargs):
         serializer = PingSerializer(instance={
             'message': 'pong',
