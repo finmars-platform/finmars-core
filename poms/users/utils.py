@@ -65,8 +65,6 @@ def get_master_user_and_member(request):
     # if master_user_id is None:
     #     master_user_id = request.session.get('master_user_id', None)
 
-    print('request.session.session_key %s' % request.session.session_key)
-
     try:
         session = Session.objects.get(session_key=request.session.session_key)
 
