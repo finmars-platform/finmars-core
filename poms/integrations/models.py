@@ -978,6 +978,20 @@ class ComplexTransactionImportScheme(DataTimeStampedModel):
     scheme_name = models.CharField(max_length=255, verbose_name=ugettext_lazy('scheme name'))
     rule_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('rule expressions'))
 
+    recon_layout_json = models.TextField(null=True, blank=True,
+                                                verbose_name=ugettext_lazy('recon layout json'))
+
+    @property
+    def recon_layout(self):
+        try:
+            return json.loads(self.recon_layout_json) if self.recon_layout_json else None
+        except (ValueError, TypeError):
+            return None
+
+    @recon_layout.setter
+    def recon_layout(self, data):
+        self.recon_layout_json = json.dumps(data, cls=DjangoJSONEncoder, sort_keys=True) if data else None
+
     class Meta:
         verbose_name = ugettext_lazy('complex transaction import scheme')
         verbose_name_plural = ugettext_lazy('complex transaction import schemes')
@@ -1007,6 +1021,7 @@ class ComplexTransactionImportSchemeInput(models.Model):
     def __str__(self):
         return self.name
 
+
 class ComplexTransactionImportSchemeCalculatedInput(models.Model):
     scheme = models.ForeignKey(ComplexTransactionImportScheme, related_name='calculated_inputs',
                                verbose_name=ugettext_lazy('scheme'), on_delete=models.CASCADE)
@@ -1024,6 +1039,7 @@ class ComplexTransactionImportSchemeCalculatedInput(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class ComplexTransactionImportSchemeSelectorValue(models.Model):
 

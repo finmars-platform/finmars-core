@@ -1524,10 +1524,12 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
     rule_scenarios = ComplexTransactionImportSchemeRuleScenarioSerializer(many=True, read_only=False)
     recon_scenarios = ComplexTransactionImportSchemeReconScenarioSerializer(many=True, read_only=False)
 
+    recon_layout = serializers.JSONField(required=False, allow_null=True)
+
     class Meta:
         model = ComplexTransactionImportScheme
         fields = ['id', 'master_user', 'scheme_name', 'rule_expr', 'inputs', 'calculated_inputs', 'rule_scenarios', 'selector_values',
-                  'recon_scenarios']
+                  'recon_scenarios', 'recon_layout']
 
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionImportSchemeSerializer, self).__init__(*args, **kwargs)
