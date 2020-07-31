@@ -248,10 +248,10 @@ USE_L10N = True
 USE_TZ = True
 USE_ETAGS = True
 
-if not LOCAL:
+ENV_CSRF_COOKIE_DOMAIN = os.environ.get('ENV_CSRF_COOKIE_DOMAIN', 'finmars.com')
+ENV_CSRF_TRUSTED_ORIGINS = os.environ.get('ENV_CSRF_TRUSTED_ORIGINS', 'finmars.com')
 
-    ENV_CSRF_COOKIE_DOMAIN = os.environ.get('ENV_CSRF_COOKIE_DOMAIN', 'finmars.com')
-    ENV_CSRF_TRUSTED_ORIGINS = os.environ.get('ENV_CSRF_TRUSTED_ORIGINS', 'finmars.com')
+if not LOCAL:
 
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = True
@@ -260,7 +260,7 @@ if not LOCAL:
     CSRF_COOKIE_DOMAIN = ENV_CSRF_COOKIE_DOMAIN
     CSRF_TRUSTED_ORIGINS = ENV_CSRF_TRUSTED_ORIGINS.split(',')
 
-CORS_ORIGIN_WHITELIST = ('dev.finmars.com', 'finmars.com', 'localhost:8080', 'localhost:8081', '0.0.0.0:8080', 'www.finmars.com')
+CORS_ORIGIN_WHITELIST = ENV_CSRF_TRUSTED_ORIGINS.split(',')
 
 CORS_URLS_REGEX = r'^/api/.*$'
 CORS_REPLACE_HTTPS_REFERER = True
@@ -634,7 +634,10 @@ print("SFTP HOST %s" % SFTP_HOST)
 
 # SFTP_STORAGE_HOST = os.environ.get('SFTP_HOST', None)
 SFTP_STORAGE_HOST = SFTP_HOST
-SFTP_STORAGE_ROOT = '/finmars/'
+SFTP_STORAGE_ROOT = '/%s/' % os.environ.get('SFTP_USERNAME', 'finmars'),
+
+print('SFTP_STORAGE_ROOT %s' % SFTP_STORAGE_ROOT)
+
 SFTP_STORAGE_PARAMS = {
     'username': os.environ.get('SFTP_USERNAME', None),
     'password': os.environ.get('SFTP_PASSWORD', None),
