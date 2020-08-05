@@ -235,9 +235,10 @@ class UserProfileForm(forms.ModelForm):
     language = forms.ChoiceField(choices=settings.LANGUAGES, initial=settings.LANGUAGE_CODE)
     timezone = forms.ChoiceField(choices=TIMEZONE_CHOICES)
 
+
     class Meta:
         model = UserProfile
-        fields = ['language', 'timezone']
+        fields = ['language', 'timezone', 'two_factor_verification', 'active_master_user']
 
 
 class UserProfileInline(admin.StackedInline):
