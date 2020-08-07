@@ -1416,17 +1416,17 @@ def complex_transaction_csv_file_import(self, instance):
 
             return v
 
-    def update_row_with_calculated_data(row, inputs_raw):
+    def update_row_with_calculated_data(row, inputs):
 
         for i in scheme_calculated_inputs:
 
             try:
-                value = formula.safe_eval(i.name_expr, names=inputs_raw)
+                value = formula.safe_eval(i.name_expr, names=inputs)
                 row.append(value)
 
             except:
                 _l.info('can\'t process calculated input: %s|%s', i.name, i.column, exc_info=True)
-                row.append(None)
+                row.append("Invalid Expression")
 
         return row
 
@@ -1490,34 +1490,9 @@ def complex_transaction_csv_file_import(self, instance):
                     error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
                     inputs_error.append(i)
 
-            _l.info('inputs: error=%s, values=%s', [i.name for i in inputs_error], inputs_raw)
-
-            _l.info('row %s' % row)
+            _l.info('Row %s inputs_raw: %s' % (row_index, inputs_raw))
 
             original_columns_count = len(row)
-
-            row = update_row_with_calculated_data(row, inputs_raw)
-
-            _l.info('row with calculated %s' % row)
-
-            for i in scheme_calculated_inputs:
-
-                error_rows['error_data']['columns']['calculated_columns'].append(i.name)
-
-                try:
-
-                    index = original_columns_count + i.column - 1
-
-                    print('index %s ' % index)
-                    print('i.name %s ' % i.name)
-
-                    inputs[i.name] = row[index]
-
-                    error_rows['error_data']['data']['calculated_columns'].append(row[index])
-                except:
-                    _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
-                    error_rows['error_data']['data']['calculated_columns'].append(ugettext('Invalid expression'))
-                    calculated_columns_error.append(i)
 
             if inputs_error:
 
@@ -1551,6 +1526,8 @@ def complex_transaction_csv_file_import(self, instance):
                         ugettext('Invalid expression'))
                     inputs_conversion_error.append(i)
 
+            _l.info('Row %s inputs_conversion: %s' % (row_index, inputs))
+
             if inputs_conversion_error:
 
                 error_rows['level'] = 'error'
@@ -1570,6 +1547,29 @@ def complex_transaction_csv_file_import(self, instance):
                 else:
                     error_rows['error_reaction'] = 'Continue import'
                     continue
+
+            row = update_row_with_calculated_data(row, inputs)
+
+            for i in scheme_calculated_inputs:
+
+                error_rows['error_data']['columns']['calculated_columns'].append(i.name)
+
+                try:
+
+                    index = original_columns_count + i.column - 1
+
+                    print('index %s ' % index)
+                    print('i.name %s ' % i.name)
+
+                    inputs[i.name] = row[index]
+
+                    error_rows['error_data']['data']['calculated_columns'].append(row[index])
+                except:
+                    _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                    error_rows['error_data']['data']['calculated_columns'].append(ugettext('Invalid expression'))
+                    calculated_columns_error.append(i)
+
+            _l.info('Row %s inputs_with_calculated: %s' % (row_index, inputs))
 
             try:
                 rule_value = formula.safe_eval(scheme.rule_expr, names=inputs)
@@ -1965,7 +1965,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
                     error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
                     inputs_error.append(i)
 
-            _l.info('inputs: error=%s, values=%s', [i.name for i in inputs_error], inputs_raw)
+            _l.info('Row %s inputs_raw: %s' % (row_index, inputs_raw))
 
             for i in scheme_inputs:
 
@@ -1981,13 +1981,13 @@ def complex_transaction_csv_file_import_validate(self, instance):
                         ugettext('Invalid expression'))
                     inputs_error.append(i)
 
-            _l.info('row %s' % row)
+            _l.info('Row %s inputs_converted: %s' % (row_index, inputs))
 
             original_columns_count = len(row)
 
-            row = update_row_with_calculated_data(row, inputs_raw)
+            row = update_row_with_calculated_data(row, inputs)
 
-            _l.info('row with calculated %s' % row)
+            _l.info('Row %s inputs_with_calculated: %s' % (row_index, inputs))
 
             for i in scheme_calculated_inputs:
 
