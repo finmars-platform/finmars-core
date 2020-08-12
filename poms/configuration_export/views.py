@@ -52,7 +52,8 @@ from poms.transactions.models import TransactionType, TransactionTypeInput, Tran
     TransactionTypeActionInstrument, TransactionTypeActionTransaction, TransactionTypeGroup, \
     TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentEventSchedule, \
     TransactionTypeActionInstrumentEventScheduleAction, TransactionTypeActionInstrumentFactorSchedule, \
-    TransactionTypeActionInstrumentManualPricingFormula, NotificationClass, EventClass, TransactionClass
+    TransactionTypeActionInstrumentManualPricingFormula, NotificationClass, EventClass, TransactionClass, \
+    TransactionTypeInputSettings
 
 from rest_framework.exceptions import ValidationError
 
@@ -459,9 +460,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
     def get_transaction_type_inputs(self, transaction_type):
 
         inputs = to_json_objects(
-            TransactionTypeInput.objects.filter(transaction_type__id=transaction_type["pk"]))
+            TransactionTypeInput.objects.select_related('settings').filter(transaction_type__id=transaction_type["pk"]))
 
-        for input_model in TransactionTypeInput.objects.filter(transaction_type__id=transaction_type["pk"]):
+        for input_model in TransactionTypeInput.objects.select_related('settings').filter(transaction_type__id=transaction_type["pk"]):
 
             if input_model.content_type:
                 for input_json in inputs:
@@ -491,6 +492,13 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
                                 except AttributeError:
                                     input_json["fields"][key] = None
+
+                        if len(input_model.settings.all()):
+                            input_json["fields"]["settings"] = {
+                                "linked_inputs_names": input_model.settings.all()[0].linked_inputs_names
+                            }
+
+
 
         results = unwrap_items(inputs)
 
