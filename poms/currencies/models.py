@@ -35,6 +35,7 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='currencies', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     reference_for_pricing = models.CharField(max_length=100, blank=True, default='',
                                              verbose_name=ugettext_lazy('reference for pricing'))
+
     daily_pricing_model = models.ForeignKey('instruments.DailyPricingModel', null=True, blank=True,
                                             verbose_name=ugettext_lazy('daily pricing model'), on_delete=models.CASCADE)
     price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.PROTECT, null=True,

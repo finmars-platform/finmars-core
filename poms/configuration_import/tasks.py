@@ -1937,8 +1937,12 @@ class ImportManager(object):
                                             master_user=self.master_user,
                                             user_code=policy['___pricing_policy__user_code']).pk
 
+
+
                                     except PricingPolicy.DoesNotExist:
                                         policy['pricing_policy'] = self.ecosystem_default.pricing_policy.pk
+
+                                    policy.pop('___pricing_policy__user_code')
 
                                 if '___pricing_scheme__user_code' in policy:
 
@@ -1953,8 +1957,10 @@ class ImportManager(object):
                                         #     master_user=self.master_user,
                                         #     user_code='-').pk  # TODO Add to EcosystemDefaults
 
-
                         _l.info('content_object %s' % content_object)
+
+                        content_object.pop('created')
+                        content_object.pop('modified')
 
                         serializer = CurrencySerializer(data=content_object,
                                                         context=self.get_serializer_context())
@@ -2236,8 +2242,28 @@ class ImportManager(object):
 
                             serializer.save()
                         except Exception as error:
-                            stats['status'] = 'error'
-                            stats['error']['message'] = 'Color Palette %s already exists' % content_object['name']
+
+                            if self.instance.mode == 'overwrite':
+
+                                try:
+
+                                    instance = ColorPalette.objects.get(
+                                        master_user=self.master_user, user_code=content_object['user_code'])
+
+                                    serializer = ColorPaletteSerializer(data=content_object,
+                                                                               instance=instance,
+                                                                               context=self.get_serializer_context())
+                                    serializer.is_valid(raise_exception=True)
+                                    serializer.save()
+
+                                except Exception as error:
+                                    stats['status'] = 'error'
+                                    stats['error']['message'] = 'Can\'t overwrite Color Palette Field %s ' % content_object['name']
+
+                            else:
+
+                                stats['status'] = 'error'
+                                stats['error']['message'] = 'Color Palette %s already exists' % content_object['name']
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 

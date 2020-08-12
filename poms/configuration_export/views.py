@@ -88,6 +88,13 @@ def clear_none_attrs(item):
         if value is None:
             del item[key]
 
+def clear_system_date_attrs(item):
+
+    if 'created' in item:
+        del item['created']
+    if 'modified' in item:
+        del item['modified']
+
 
 def unwrap_items(items):
     result = []
@@ -493,9 +500,11 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                                 except AttributeError:
                                     input_json["fields"][key] = None
 
-                        if len(input_model.settings.all()):
+                        settings = input_model.settings.all()
+
+                        if len(settings):
                             input_json["fields"]["settings"] = {
-                                "linked_inputs_names": input_model.settings.all()[0].linked_inputs_names
+                                "linked_inputs_names": settings[0].linked_inputs_names
                             }
 
 
@@ -822,6 +831,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 pk=result_item["pk"]).book_transaction_layout
 
             clear_none_attrs(result_item)
+            clear_system_date_attrs(result_item)
 
             results.append(result_item)
 
@@ -855,6 +865,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             result_item.pop("is_deleted", None)
 
             clear_none_attrs(result_item)
+            clear_system_date_attrs(result_item)
 
             results.append(result_item)
 
@@ -885,6 +896,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             result_item.pop("is_deleted", None)
 
             clear_none_attrs(result_item)
+            clear_system_date_attrs(result_item)
 
             results.append(result_item)
 
@@ -938,19 +950,10 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             result_item.pop("master_user", None)
             result_item.pop("is_deleted", None)
 
-            if result_item["daily_pricing_model"]:
-                result_item["___daily_pricing_model__system_code"] = DailyPricingModel.objects.get(
-                    pk=result_item["daily_pricing_model"]).system_code
-                result_item.pop("daily_pricing_model", None)
-
-            if result_item["price_download_scheme"]:
-                result_item["___price_download_scheme__scheme_name"] = PriceDownloadScheme.objects.get(
-                    pk=result_item["price_download_scheme"]).scheme_name
-                result_item.pop("price_download_scheme", None)
-
             result_item['pricing_policies'] = self.get_currency_pricing_policies(currency["pk"])
 
             clear_none_attrs(result_item)
+            clear_system_date_attrs(result_item)
 
             results.append(result_item)
 
@@ -990,8 +993,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             result_item.pop("default_currency_pricing_scheme", None)
             result_item.pop("default_instrument_pricing_scheme", None)
 
-
             clear_none_attrs(result_item)
+            clear_system_date_attrs(result_item)
 
             results.append(result_item)
 
@@ -1077,6 +1080,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             result_item['pricing_policies'] = self.get_instrument_type_pricing_policies(instrument_type["pk"])
 
             clear_none_attrs(result_item)
+            clear_system_date_attrs(result_item)
 
             results.append(result_item)
 
@@ -1295,7 +1299,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         }
 
         return result
-
 
     def get_reference_table_rows(self, reference_table):
 
