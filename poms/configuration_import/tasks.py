@@ -1959,8 +1959,7 @@ class ImportManager(object):
 
                         _l.info('content_object %s' % content_object)
 
-                        content_object.pop('created')
-                        content_object.pop('modified')
+
 
                         serializer = CurrencySerializer(data=content_object,
                                                         context=self.get_serializer_context())
@@ -1979,6 +1978,8 @@ class ImportManager(object):
                             serializer.is_valid(raise_exception=True)
                             serializer.save()
                         except Exception as error:
+
+                            _l.info("Currency error %s" % error)
 
                             if self.instance.mode == 'overwrite':
 
@@ -2425,6 +2426,8 @@ class ImportManager(object):
 
                                 except Exception as error:
 
+                                    _l.info('erro %s' % error )
+
                                     stats['status'] = 'error'
                                     stats['error'][
                                         'message'] = 'Error. Can\'t Overwrite Instrument Pricing Scheme for %s' % content_object['name']
@@ -2662,6 +2665,17 @@ class ImportManager(object):
             # Import order matters
             #
 
+
+            for item in configuration_section['items']:
+
+                if 'content' in item:
+
+                    for content_object in item['content']:
+
+                        if 'created' in content_object:
+                            content_object.pop('created')
+                        if 'modified' in content_object:
+                            content_object.pop('modified')
 
             # Import Pricing
 
