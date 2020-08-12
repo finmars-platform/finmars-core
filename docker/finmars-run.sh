@@ -1,3 +1,8 @@
+#!/bin/sh
+
+USE_CELERY="${USE_CELERY:-False}"
+USE_FILEBEATS="${USE_FILEBEATS:-False}"
+
 echo "Finmars initialization"
 
 echo "Create Finmars log folder /var/log/finmars/"
@@ -49,21 +54,31 @@ echo "Collect static"
 
 /var/app-venv/bin/python /var/app/manage.py collectstatic -c --noinput
 
-echo "Start celery"
+if [ $USE_CELERY == "True" ];
+then
 
-export DJANGO_SETTINGS_MODULE=poms_app.settings
+    echo "Start celery"
 
-/etc/init.d/celeryd start
+    export DJANGO_SETTINGS_MODULE=poms_app.settings
 
-echo "Start celerybeat"
+    /etc/init.d/celeryd start
 
-export DJANGO_SETTINGS_MODULE=poms_app.settings
+    echo "Start celerybeat"
 
-/etc/init.d/celerybeat start
+    export DJANGO_SETTINGS_MODULE=poms_app.settings
 
-echo "Run Filebeat"
+    /etc/init.d/celerybeat start
 
-service filebeat start
+fi
+
+if [ $USE_FILEBEATS == "True" ];
+then
+
+    echo "Run Filebeat"
+
+    service filebeat start
+
+fi
 
 echo "Run uwsgi"
 
