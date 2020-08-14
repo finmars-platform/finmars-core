@@ -599,6 +599,10 @@ if BackendRole.ALL in BACKEND_ROLES or BackendRole.DATA_PROVIDER in BACKEND_ROLE
     print("Role: DATA_PROVIDER. CELERY BEAT SCHEDULE INITIALIZED")
 
     CELERY_BEAT_SCHEDULE = {
+        'schedules.request_transaction_files_schedules': {
+            'task': 'schedules.request_transaction_files_schedules',
+            'schedule': crontab(minute='0,10,20,30,40,50'),
+        },
         'schedules.auto_process_pricing_procedures_schedules': {
             'task': 'schedules.auto_process_pricing_procedures_schedules',
             'schedule': crontab(minute='0,10,20,30,40,50'),
@@ -741,6 +745,7 @@ BLOOMBERG_SANDBOX_WAIT_FAIL = False
 # PRICING SECTION
 
 MEDIATOR_URL = os.environ.get('MEDIATOR_URL', None)
+TRANSACTION_FILE_SERVICE_URL = os.environ.get('TRANSACTION_FILE_SERVICE_URL', None)
 
 
 INSTRUMENT_EVENTS_REGULAR_MAX_INTERVALS = 1000

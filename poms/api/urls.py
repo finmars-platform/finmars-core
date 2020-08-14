@@ -256,6 +256,9 @@ router.register(r'transactions/recalculate-permission-transaction',
 router.register(r'transactions/recalculate-permission-complex-transaction',
                 transactions.RecalculatePermissionComplexTransactionViewSet, 'recalculatepermissioncomplextrasaction')
 
+router.register(r'transactions/bank-file', integrations.TransactionFileResultViewSet)
+
+
 router.register(r'ui/portal-interface-access', ui.PortalInterfaceAccessViewSet)
 router.register(r'ui/list-layout', ui.ListLayoutViewSet)
 router.register(r'ui/template-layout', ui.TemplateLayoutViewSet)
@@ -397,6 +400,7 @@ router.register(r'pricing/price-history-error', pricing.PriceHistoryErrorViewSet
 router.register(r'pricing/currency-history-error-ev-group', pricing.CurrencyHistoryErrorEvGroupViewSet, 'currencyhistoryerrorevgroup')
 router.register(r'pricing/currency-history-error', pricing.CurrencyHistoryErrorViewSet)
 router.register(r'schedules/pricing', schedules.PricingScheduleViewSet)
+router.register(r'schedules/transaction-file-download', schedules.TransactionFileDownloadScheduleViewSet)
 
 router.register(r'recovery/generate-layout-archetype', layout_recovery.GenerateLayoutArchetypeViewSet, 'recovery_generate_layout_archetype')
 router.register(r'recovery/layout', layout_recovery.FixLayoutViewSet, 'recovery_layout')
@@ -416,7 +420,8 @@ urlpatterns = [
     url(r'internal/brokers/bloomberg-forwards/callback', csrf_exempt(pricing.PricingBrokerBloombergForwardsHandler.as_view())),
     url(r'internal/brokers/wtrade/callback', csrf_exempt(pricing.PricingBrokerWtradeHandler.as_view())),
     url(r'internal/brokers/fixer/callback', csrf_exempt(pricing.PricingBrokerFixerHandler.as_view())),
-    url(r'internal/brokers/alphav/callback', csrf_exempt(pricing.PricingBrokerAlphavHandler.as_view()))
+    url(r'internal/brokers/alphav/callback', csrf_exempt(pricing.PricingBrokerAlphavHandler.as_view())),
+    url(r'internal/data/transactions/upload-file', csrf_exempt(integrations.TransactionFileResultUploadHandler.as_view()))
 ]
 
 if 'rest_framework_swagger' in settings.INSTALLED_APPS:

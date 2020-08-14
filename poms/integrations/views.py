@@ -8,6 +8,7 @@ from django.db.models import Prefetch
 from django_filters.rest_framework import FilterSet
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from poms.common.utils import date_now, datetime_now
 
@@ -35,7 +36,8 @@ from poms.integrations.models import ImportConfig, Task, InstrumentDownloadSchem
     DailyPricingModelMapping, \
     PaymentSizeDetailMapping, PriceDownloadSchemeMapping, ComplexTransactionImportScheme, PortfolioClassifierMapping, \
     AccountClassifierMapping, CounterpartyClassifierMapping, ResponsibleClassifierMapping, PricingPolicyMapping, \
-    InstrumentClassifierMapping, AccountTypeMapping, BloombergDataProviderCredential, PricingConditionMapping
+    InstrumentClassifierMapping, AccountTypeMapping, BloombergDataProviderCredential, PricingConditionMapping, \
+    TransactionFileResult
 from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer, ImportInstrumentSerializer, \
     ImportPricingSerializer, InstrumentDownloadSchemeSerializer, ProviderClassSerializer, \
     FactorScheduleDownloadMethodSerializer, AccrualScheduleDownloadMethodSerializer, PriceDownloadSchemeSerializer, \
@@ -50,7 +52,7 @@ from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer
     CounterpartyClassifierMappingSerializer, ResponsibleClassifierMappingSerializer, PricingPolicyMappingSerializer, \
     InstrumentClassifierMappingSerializer, AccountTypeMappingSerializer, TestCertificateSerializer, \
     ComplexTransactionImportSchemeLightSerializer, BloombergDataProviderCredentialSerializer, \
-    PricingConditionMappingSerializer
+    PricingConditionMappingSerializer, TransactionFileResultSerializer
 from poms.integrations.tasks import complex_transaction_csv_file_import, complex_transaction_csv_file_import_validate
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
@@ -58,7 +60,7 @@ from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.users.filters import OwnerByMasterUserFilter
-from poms.users.models import Member
+from poms.users.models import Member, MasterUser
 from poms.users.permissions import SuperUserOrReadOnly, SuperUserOnly
 
 import logging
@@ -902,17 +904,7 @@ class ComplexTransactionImportSchemeFilterSet(FilterSet):
 
 class ComplexTransactionImportSchemeViewSet(AbstractModelViewSet):
     queryset = ComplexTransactionImportScheme.objects
-    # queryset = ComplexTransactionImportScheme.objects.select_related(
-    # ).prefetch_related(
-    #     'inputs',
-    #     'rules',
-    #     'rules__transaction_type',
-    #     'rules__fields',
-    #     'rules__fields__transaction_type_input',
-    #     *get_permissions_prefetch_lookups(
-    #         ('rules__transaction_type', GenericAttributeType),
-    #     )
-    # )
+
     serializer_class = ComplexTransactionImportSchemeSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -940,50 +932,6 @@ class ComplexTransactionImportSchemeLightViewSet(AbstractModelViewSet):
     permission_classes = AbstractModelViewSet.permission_classes + [
         PomsConfigurationPermission
     ]
-
-
-# class TransactionFileImportSchemeFilterSet(FilterSet):
-#     id = NoOpFilter()
-#     scheme_name = CharFilter()
-#     transaction_type = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionType, name='transaction_types')
-#
-#     class Meta:
-#         model = TransactionFileImportScheme
-#         fields = []
-#
-#
-# class TransactionFileImportSchemeViewSet(AbstractModelViewSet):
-#     queryset = TransactionFileImportScheme.objects.select_related(
-#         'transaction_type', 'transaction_type__group',
-#     ).prefetch_related(
-#         'inputs',
-#         *get_permissions_prefetch_lookups(
-#             ('transaction_type', TransactionType),
-#         )
-#     )
-#     serializer_class = TransactionFileImportSchemeSerializer
-#     filter_backends = AbstractModelViewSet.filter_backends + [
-#         OwnerByMasterUserFilter,
-#     ]
-#     filter_class = TransactionFileImportSchemeFilterSet
-#     ordering_fields = [
-#         'scheme_name',
-#         'transaction_type', 'transaction_type__name',
-#     ]
-
-
-# class AbstractFileImportViewSet(AbstractViewSet):
-#     serializer_class = AbstractFileImportSerializer
-#
-#     def create(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         serializer.save()
-#         return Response(serializer.data)
-#
-#
-# class ComplexTransactionFileImportViewSet(AbstractFileImportViewSet):
-#     serializer_class = ComplexTransactionFileImportSerializer
 
 
 class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
@@ -1203,3 +1151,48 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class TransactionFileResultFilterSet(FilterSet):
+    scheme_name = CharFilter()
+
+    class Meta:
+        model = TransactionFileResult
+        fields = []
+
+
+class TransactionFileResultViewSet(AbstractModelViewSet):
+    queryset = TransactionFileResult.objects
+    serializer_class = TransactionFileResultSerializer
+    filter_class = TransactionFileResultFilterSet
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    permission_classes = []
+
+
+class TransactionFileResultUploadHandler(APIView):
+
+    permission_classes = []
+
+    def post(self, request):
+
+        # _l.info('request.data %s' % request.data)
+
+        master_user = MasterUser.objects.get(token=request.data['user']['token'])
+
+        try:
+
+            item = TransactionFileResult.objects.get(master_user=master_user,
+                                                     provider=request.data['provider'],
+                                                     scheme_name=request.data['scheme_name'])
+
+            item.file = request.data['file']
+
+            item.save()
+
+            return Response({'status': 'ok'})
+
+        except TransactionFileResult.DoesNotExist:
+
+            return Response({'status': 'error'})

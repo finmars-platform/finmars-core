@@ -3,6 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy
 
 from poms.common.models import NamedModel, DataTimeStampedModel
+from poms.integrations.models import TransactionProvider
 from poms.users.models import MasterUser
 
 from croniter import croniter
@@ -75,6 +76,18 @@ class PricingSchedule(BaseSchedule, DataTimeStampedModel):
 
     pricing_procedures = models.ManyToManyField('pricing.PricingProcedure', blank=True, verbose_name=ugettext_lazy('pricing procedures'))
 
+
+    class Meta(BaseSchedule.Meta):
+        unique_together = (
+            ('user_code',  'master_user')
+        )
+
+
+class TransactionFileDownloadSchedule(BaseSchedule, DataTimeStampedModel):
+
+    provider = models.ForeignKey(TransactionProvider, verbose_name=ugettext_lazy('provider'), on_delete=models.CASCADE)
+
+    scheme_name = models.CharField(max_length=255)
 
     class Meta(BaseSchedule.Meta):
         unique_together = (
