@@ -9,6 +9,7 @@ from django.db import models
 from django.utils.functional import SimpleLazyObject
 from django.utils.translation import ugettext_lazy
 
+from poms.cache_machine.base import CachingManager, CachingMixin
 from poms.common.models import NamedModel, FakeDeletableModel, DataTimeStampedModel
 from poms.common.utils import date_now
 from poms.common.wrapper_models import NamedModelAutoMapping
@@ -31,7 +32,7 @@ def _load_currencies_data():
 currencies_data = SimpleLazyObject(_load_currencies_data)
 
 
-class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Currency(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='currencies', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     reference_for_pricing = models.CharField(max_length=100, blank=True, default='',
                                              verbose_name=ugettext_lazy('reference for pricing'))
@@ -51,6 +52,8 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
 
+    objects = CachingManager()
+
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = ugettext_lazy('currency')
         verbose_name_plural = ugettext_lazy('currencies')
@@ -58,6 +61,8 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
             # ('view_currency', 'Can view currency'),
             ('manage_currency', 'Can manage currency'),
         ]
+
+        base_manager_name = 'objects'
 
     @property
     def is_system(self):

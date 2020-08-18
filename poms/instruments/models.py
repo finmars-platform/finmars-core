@@ -888,7 +888,7 @@ class ManualPricingFormula(models.Model):
         return self.expr
 
 
-class AccrualCalculationSchedule(models.Model):
+class AccrualCalculationSchedule(CachingMixin, models.Model):
     instrument = models.ForeignKey(Instrument, related_name='accrual_calculation_schedules',
                                    verbose_name=ugettext_lazy('instrument'), on_delete=models.CASCADE)
     accrual_start_date = models.DateField(default=date_now, verbose_name=ugettext_lazy('accrual start date'))
@@ -903,16 +903,20 @@ class AccrualCalculationSchedule(models.Model):
     periodicity_n = models.IntegerField(default=0, verbose_name=ugettext_lazy('periodicity n'))
     notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
 
+    objects = CachingManager()
+
     class Meta:
         verbose_name = ugettext_lazy('accrual calculation schedule')
         verbose_name_plural = ugettext_lazy('accrual calculation schedules')
         ordering = ['accrual_start_date']
 
+        base_manager_name = 'objects'
+
     def __str__(self):
         return '%s' % self.accrual_start_date
 
 
-class PriceHistory(DataTimeStampedModel):
+class PriceHistory(CachingMixin, DataTimeStampedModel):
     instrument = models.ForeignKey(Instrument, related_name='prices', verbose_name=ugettext_lazy('instrument'),
                                    on_delete=models.CASCADE)
     pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE, null=True, blank=True,
@@ -920,6 +924,8 @@ class PriceHistory(DataTimeStampedModel):
     date = models.DateField(db_index=True, default=date_now, verbose_name=ugettext_lazy('date'))
     principal_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('principal price'))
     accrued_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('accrued price'))
+
+    objects = CachingManager()
 
     class Meta:
         verbose_name = ugettext_lazy('price history')
@@ -929,22 +935,28 @@ class PriceHistory(DataTimeStampedModel):
         )
         ordering = ['date']
 
+        base_manager_name = 'objects'
+
     def __str__(self):
         # return '%s:%s:%s:%s:%s' % (
         #     self.instrument_id, self.pricing_policy_id, self.date, self.principal_price, self.accrued_price)
         return '%s;%s @%s' % (self.principal_price, self.accrued_price, self.date)
 
 
-class InstrumentFactorSchedule(models.Model):
+class InstrumentFactorSchedule(CachingMixin, models.Model):
     instrument = models.ForeignKey(Instrument, related_name='factor_schedules',
                                    verbose_name=ugettext_lazy('instrument'), on_delete=models.CASCADE)
     effective_date = models.DateField(default=date_now, verbose_name=ugettext_lazy('effective date'))
     factor_value = models.FloatField(default=0., verbose_name=ugettext_lazy('factor value'))
 
+    objects = CachingManager()
+
     class Meta:
         verbose_name = ugettext_lazy('instrument factor schedule')
         verbose_name_plural = ugettext_lazy('instrument factor schedules')
         ordering = ['effective_date']
+
+        base_manager_name = 'objects'
 
     def __str__(self):
         return '%s' % self.effective_date
