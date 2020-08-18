@@ -1143,7 +1143,6 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
             else:
                 self.mismatch = self.cash - self.total
 
-
             self.round_after_calc()
 
         # def calc_pass2(self, balance_pos_size):

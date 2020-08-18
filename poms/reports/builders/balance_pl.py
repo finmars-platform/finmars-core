@@ -52,7 +52,7 @@ class ReportBuilder(BaseReportBuilder):
 
         build_st = time.perf_counter()
         self.build(full=full)
-        _l.info('build_st done: %s', (time.perf_counter() - build_st))
+        _l.info('build_st done: %s', "{:3.3f}".format(time.perf_counter() - build_st))
 
         def _accepted(item):
             return item.type in [ReportItem.TYPE_INSTRUMENT, ReportItem.TYPE_CURRENCY] and \
@@ -62,7 +62,7 @@ class ReportBuilder(BaseReportBuilder):
 
         self._alloc_aggregation()
 
-        _l.info('build_balance done: %s', (time.perf_counter() - st))
+        _l.info('build_balance done: %s', "{:3.3f}".format(time.perf_counter() - st))
         return self.instance
 
     def build_balance_for_tests(self, full=True):
@@ -108,25 +108,25 @@ class ReportBuilder(BaseReportBuilder):
 
         self._transaction_pricing()
 
-        _l.info('build transactions_pricing_st done: %s', (time.perf_counter() - transactions_pricing_st))
+        _l.info('build transactions_pricing_st done: %s', "{:3.3f}".format(time.perf_counter() - transactions_pricing_st))
 
         transactions_multipliers_st = time.perf_counter()
 
         self._transaction_multipliers()
 
-        _l.info('build transactions_multipliers_st done: %s', (time.perf_counter() - transactions_multipliers_st))
+        _l.info('build transactions_multipliers_st done: %s', "{:3.3f}".format(time.perf_counter() - transactions_multipliers_st))
 
         clone_transactions_if_need_st = time.perf_counter()
 
         self._clone_transactions_if_need()
 
-        _l.info('build clone_transactions_if_need_st done: %s', (time.perf_counter() - clone_transactions_if_need_st))
+        _l.info('build clone_transactions_if_need_st done: %s', "{:3.3f}".format(time.perf_counter() - clone_transactions_if_need_st))
 
         transaction_calc_st = time.perf_counter()
 
         self._transaction_calc()
 
-        _l.info('build transaction_calc_st done: %s', (time.perf_counter() - transaction_calc_st))
+        _l.info('build transaction_calc_st done: %s', "{:3.3f}".format(time.perf_counter() - transaction_calc_st))
 
         # self.instance.transactions = self._transactions
 
@@ -134,13 +134,13 @@ class ReportBuilder(BaseReportBuilder):
 
         self._generate_items()
 
-        _l.info('build _generate_items_st done: %s', (time.perf_counter() - _generate_items_st))
+        _l.info('build _generate_items_st done: %s', "{:3.3f}".format(time.perf_counter() - _generate_items_st))
 
         _aggregate_items = time.perf_counter()
 
         self._aggregate_items()
 
-        _l.info('build _aggregate_items done: %s', (time.perf_counter() - _aggregate_items))
+        _l.info('build _aggregate_items done: %s', "{:3.3f}".format(time.perf_counter() - _aggregate_items))
 
         # self._calc_pass2()
 
@@ -148,24 +148,24 @@ class ReportBuilder(BaseReportBuilder):
 
         self._aggregate_summary()
 
-        _l.info('build _aggregate_summary done: %s', (time.perf_counter() - _aggregate_summary))
+        _l.info('build _aggregate_summary done: %s', "{:3.3f}".format(time.perf_counter() - _aggregate_summary))
 
         _detect_mismatches = time.perf_counter()
 
         self._detect_mismatches()
 
-        _l.info('build _detect_mismatches done: %s', (time.perf_counter() - _detect_mismatches))
+        _l.info('build _detect_mismatches done: %s', "{:3.3f}".format(time.perf_counter() - _detect_mismatches))
 
         _concat_st = time.perf_counter()
 
         self.instance.items = self._items + self._mismatch_items + self._summaries
 
-        _l.info('build _concat_st done: %s', (time.perf_counter() - _concat_st))
+        _l.info('build _concat_st done: %s', "{:3.3f}".format(time.perf_counter() - _concat_st))
 
         if self.instance.pl_first_date and self.instance.pl_first_date != date.min:
             self._build_on_pl_first_date()
 
-        _l.info('build calculations done: %s', (time.perf_counter() - _calculations_st))
+        _l.info('build calculations done: %s', "{:3.3f}".format(time.perf_counter() - _calculations_st))
 
         if full:
             _refresh_st = time.perf_counter()
@@ -193,13 +193,13 @@ class ReportBuilder(BaseReportBuilder):
 
         self._load_transactions()
 
-        _l.info('build_position_only load_transactions_st done: %s', (time.perf_counter() - load_transactions_st))
+        _l.info('build_position_only load_transactions_st done: %s', "{:3.3f}".format(time.perf_counter() - load_transactions_st))
 
         clone_transactions_st = time.perf_counter()
 
         self._clone_transactions_if_need()
 
-        _l.info('build_position_only clone_transactions_st done: %s', (time.perf_counter() - clone_transactions_st))
+        _l.info('build_position_only clone_transactions_st done: %s', "{:3.3f}".format(time.perf_counter() - clone_transactions_st))
 
         # self.instance.transactions = self._transactions
         if not self._transactions:
@@ -209,13 +209,13 @@ class ReportBuilder(BaseReportBuilder):
 
         self._generate_items()
 
-        _l.info('build_position_only generate_items_st done: %s', (time.perf_counter() - generate_items_st))
+        _l.info('build_position_only generate_items_st done: %s', "{:3.3f}".format(time.perf_counter() - generate_items_st))
 
         sorted_items_st = time.perf_counter()
 
         sorted_items = sorted(self._items, key=lambda item: self._item_group_key(item))
 
-        _l.info('build_position_only sorted_items_st done: %s', (time.perf_counter() - sorted_items_st))
+        _l.info('build_position_only sorted_items_st done: %s', "{:3.3f}".format(time.perf_counter() - sorted_items_st))
 
         _l.info('build_position_only aggregate items')
 
@@ -237,9 +237,9 @@ class ReportBuilder(BaseReportBuilder):
 
         self.instance.items = res_items
 
-        _l.info('build_position_only last_action_st done: %s', (time.perf_counter() - last_action_st))
+        _l.info('build_position_only last_action_st done: %s', "{:3.3f}".format(time.perf_counter() - last_action_st))
 
-        _l.info('build_position_only done: %s', (time.perf_counter() - st))
+        _l.info('build_position_only done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
         return self.instance
 
@@ -393,7 +393,7 @@ class ReportBuilder(BaseReportBuilder):
 
         instruments_dict = self.list_as_dict(instruments_list)
 
-        _l.info('_inject_relations load instruments done: %s', (time.perf_counter() - instrument_st))
+        _l.info('_inject_relations load instruments done: %s', "{:3.3f}".format(time.perf_counter() - instrument_st))
 
         currency_st = time.perf_counter()
 
@@ -402,7 +402,7 @@ class ReportBuilder(BaseReportBuilder):
 
         currencies_dict = self.list_as_dict(currencies_list)
 
-        _l.info('_inject_relations load currency done: %s', (time.perf_counter() - currency_st))
+        _l.info('_inject_relations load currency done: %s', "{:3.3f}".format(time.perf_counter() - currency_st))
 
         portfolio_st = time.perf_counter()
 
@@ -415,7 +415,7 @@ class ReportBuilder(BaseReportBuilder):
 
         portfolios_dict = self.list_as_dict(portfolios_list)
 
-        _l.info('_inject_relations load portfolio done: %s', (time.perf_counter() - portfolio_st))
+        _l.info('_inject_relations load portfolio done: %s', "{:3.3f}".format(time.perf_counter() - portfolio_st))
 
         account_st = time.perf_counter()
 
@@ -432,7 +432,7 @@ class ReportBuilder(BaseReportBuilder):
 
         accounts_dict = self.list_as_dict(accounts_list)
 
-        _l.info('_inject_relations load account done: %s', (time.perf_counter() - account_st))
+        _l.info('_inject_relations load account done: %s', "{:3.3f}".format(time.perf_counter() - account_st))
 
         strategy_st = time.perf_counter()
 
@@ -457,7 +457,7 @@ class ReportBuilder(BaseReportBuilder):
 
         strategies3_dict = self.list_as_dict(strategies3_list)
 
-        _l.info('_inject_relations load strategy 1-3 done: %s', (time.perf_counter() - strategy_st))
+        _l.info('_inject_relations load strategy 1-3 done: %s', "{:3.3f}".format(time.perf_counter() - strategy_st))
 
         values_list = self.get_trn_values_list()
         o = self.get_trn_values_list_keys_as_obj(values_list)
@@ -563,9 +563,9 @@ class ReportBuilder(BaseReportBuilder):
 
             result.append(t)
 
-        _l.info('_inject_relations create transactions done: %s', (time.perf_counter() - iteration_st))
+        _l.info('_inject_relations create transactions done: %s', "{:3.3f}".format(time.perf_counter() - iteration_st))
 
-        _l.info('_inject_relations done: %s', (time.perf_counter() - st))
+        _l.info('_inject_relations done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
         return result
 
@@ -609,7 +609,7 @@ class ReportBuilder(BaseReportBuilder):
 
         instruments_dict = self.list_as_dict(instruments_list)
 
-        _l.info('_inject_relations_ids_only load instruments done: %s', (time.perf_counter() - instrument_st))
+        _l.info('_inject_relations_ids_only load instruments done: %s', "{:3.3f}".format(time.perf_counter() - instrument_st))
 
         class Trn:
             pass
@@ -709,9 +709,9 @@ class ReportBuilder(BaseReportBuilder):
 
             result.append(t)
 
-        _l.info('_inject_relations_ids_only create transactions done: %s', (time.perf_counter() - iteration_st))
+        _l.info('_inject_relations_ids_only create transactions done: %s', "{:3.3f}".format(time.perf_counter() - iteration_st))
 
-        _l.info('_inject_relations_ids_only done: %s', (time.perf_counter() - st))
+        _l.info('_inject_relations_ids_only done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
         return result
 
@@ -790,7 +790,7 @@ class ReportBuilder(BaseReportBuilder):
         trn_qs = self._trn_qs_permission_filter(trn_qs)
         trn_qs = self._trn_qs_filter(trn_qs)
 
-        _l.info('_load_transactions trn_qs_st done: %s', (time.perf_counter() - trn_qs_st))
+        _l.info('_load_transactions trn_qs_st done: %s', "{:3.3f}".format(time.perf_counter() - trn_qs_st))
 
         if trn_qs.count() == 0:
             return
@@ -857,11 +857,11 @@ class ReportBuilder(BaseReportBuilder):
 
             self._original_transactions.append(otrn)
 
-        _l.info('_load_transactions iteration done: %s', (time.perf_counter() - _iteration_st))
+        _l.info('_load_transactions iteration done: %s', "{:3.3f}".format(time.perf_counter() - _iteration_st))
 
         _l.info('_load_transactions len %s' % len(self._transactions))
 
-        _l.info('_load_transactions done: %s', (time.perf_counter() - _load_transactions_st))
+        _l.info('_load_transactions done: %s', "{:3.3f}".format(time.perf_counter() - _load_transactions_st))
 
     def _transaction_pricing(self):
         # _l.info('transactions - add pricing')
