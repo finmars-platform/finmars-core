@@ -37,6 +37,9 @@ from poms.transactions.models import TransactionClass
 from poms.transactions.serializers import TransactionClassSerializer
 from poms.users.fields import MasterUserField, HiddenMemberField
 
+import logging
+_l = logging.getLogger('poms.reports')
+
 
 class ReportItemSerializer(serializers.Serializer):
     id = serializers.SerializerMethodField()
@@ -387,10 +390,10 @@ class ReportSerializerWithLogs(serializers.Serializer):
 
                     result_time = time.perf_counter() - field_st
 
-                    print('field %s to representation done %s' % (field.field_name, result_time))
+                    _l.info('field %s to representation done %s' % (field.field_name, result_time))
 
         if hasattr(instance, 'is_report'):
-            print('report to representation done %s' % (time.perf_counter() - st))
+            _l.info('report to representation done %s' % (time.perf_counter() - st))
 
         return ret
 
@@ -551,7 +554,7 @@ class ReportSerializer(ReportSerializerWithLogs):
 
         data = super(ReportSerializer, self).to_representation(instance)
 
-        print('ReportSerializer to_representation_st done: %s' % (time.perf_counter() - to_representation_st))
+        _l.info('ReportSerializer to_representation_st done: %s' % (time.perf_counter() - to_representation_st))
 
         st = time.perf_counter()
 
@@ -579,8 +582,8 @@ class ReportSerializer(ReportSerializerWithLogs):
                         names['%s_object' % pk_attr] = objs[pk]
                     except KeyError:
                         pass
-                        # print('pk %s' % pk)
-                        # print('pk_attr %s' % pk_attr)
+                        # _l.info('pk %s' % pk)
+                        # _l.info('pk_attr %s' % pk_attr)
                     # names[pk_attr] = objs[pk]
 
             for item in items:
@@ -614,7 +617,7 @@ class ReportSerializer(ReportSerializerWithLogs):
 
                 names = formula.value_prepare(names)
 
-                # print('names %s' % names['market_value'])
+                # _l.info('names %s' % names['market_value'])
 
                 cfv = []
 
@@ -690,7 +693,7 @@ class ReportSerializer(ReportSerializerWithLogs):
 
                 item['custom_fields'] = cfv
 
-        print('ReportSerializer custom fields execution done: %s' % (time.perf_counter() - st))
+        _l.info('ReportSerializer custom fields execution done: %s' % (time.perf_counter() - st))
 
         return data
 

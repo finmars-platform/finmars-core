@@ -90,7 +90,7 @@ class DailyPricingModel(AbstractClassModel):
         verbose_name_plural = ugettext_lazy('daily pricing models')
 
 
-class PricingCondition(AbstractClassModel):
+class PricingCondition(CachingMixin, AbstractClassModel):
     NO_VALUATION = 1
     RUN_VALUATION_IF_NON_ZERO = 2
     RUN_VALUATION_ALWAYS = 3
@@ -101,12 +101,16 @@ class PricingCondition(AbstractClassModel):
         (RUN_VALUATION_ALWAYS, 'RUN_VALUATION_ALWAYS', ugettext_lazy("Run Valuation: always"))
     )
 
+    objects = CachingManager()
+
     class Meta(AbstractClassModel.Meta):
         verbose_name = ugettext_lazy('pricing condition')
         verbose_name_plural = ugettext_lazy('pricing conditions ')
 
+        base_manager_name = 'objects'
 
-class AccrualCalculationModel(AbstractClassModel):
+
+class AccrualCalculationModel(CachingMixin, AbstractClassModel):
     NONE = 1
     ACT_ACT = 2
     ACT_ACT_ISDA = 3
@@ -162,12 +166,16 @@ class AccrualCalculationModel(AbstractClassModel):
         (DEFAULT, '-', ugettext_lazy('Default'))
     )
 
+    objects = CachingManager()
+
     class Meta(AbstractClassModel.Meta):
         verbose_name = ugettext_lazy('accrual calculation model')
         verbose_name_plural = ugettext_lazy('accrual calculation models')
 
+        base_manager_name = 'objects'
 
-class PaymentSizeDetail(AbstractClassModel):
+
+class PaymentSizeDetail(CachingMixin, AbstractClassModel):
     PERCENT = 1
     PER_ANNUM = 2
     PER_QUARTER = 3
@@ -185,12 +193,16 @@ class PaymentSizeDetail(AbstractClassModel):
         (DEFAULT, '-', ugettext_lazy("Default")),
     )
 
+    objects = CachingManager()
+
     class Meta(AbstractClassModel.Meta):
         verbose_name = ugettext_lazy('payment size detail')
         verbose_name_plural = ugettext_lazy('payment size details')
 
+        base_manager_name = 'objects'
 
-class Periodicity(AbstractClassModel):
+
+class Periodicity(CachingMixin, AbstractClassModel):
     N_DAY = 1
     N_WEEK_EOBW = 2
     N_MONTH_EOM = 3
@@ -225,9 +237,13 @@ class Periodicity(AbstractClassModel):
         (DEFAULT, '-', ugettext_lazy('-')),
     )
 
+    objects = CachingManager()
+
     class Meta(AbstractClassModel.Meta):
         verbose_name = ugettext_lazy('periodicity')
         verbose_name_plural = ugettext_lazy('periodicities')
+
+        base_manager_name = 'objects'
 
     def to_timedelta(self, n=1, i=1, same_date=None):
         if self.id == Periodicity.N_DAY:
@@ -296,7 +312,7 @@ class Periodicity(AbstractClassModel):
         return 0
 
 
-class CostMethod(AbstractClassModel):
+class CostMethod(CachingMixin, AbstractClassModel):
     AVCO = 1
     FIFO = 2
     LIFO = 3
@@ -306,12 +322,16 @@ class CostMethod(AbstractClassModel):
         # (LIFO, ugettext_lazy('LIFO')),
     )
 
+    objects = CachingManager()
+
     class Meta(AbstractClassModel.Meta):
         verbose_name = ugettext_lazy('cost method')
         verbose_name_plural = ugettext_lazy('cost methods')
 
+        base_manager_name = 'objects'
 
-class PricingPolicy(NamedModel, DataTimeStampedModel):
+
+class PricingPolicy(CachingMixin, NamedModel, DataTimeStampedModel):
     # DISABLED = 0
     # BLOOMBERG = 1
     # TYPES = (
@@ -335,6 +355,8 @@ class PricingPolicy(NamedModel, DataTimeStampedModel):
                                                         verbose_name=ugettext_lazy('default currency pricing scheme'),
                                                         on_delete=models.SET_NULL)
 
+    objects = CachingManager()
+
     class Meta(AbstractClassModel.Meta):
         verbose_name = ugettext_lazy('pricing policy')
         verbose_name_plural = ugettext_lazy('pricing policies')
@@ -342,6 +364,8 @@ class PricingPolicy(NamedModel, DataTimeStampedModel):
             ['master_user', 'user_code']
         ]
         ordering = ['user_code']
+
+        base_manager_name = 'objects'
 
     # def delete(self, *args, **kwargs):
     #
@@ -352,7 +376,7 @@ class PricingPolicy(NamedModel, DataTimeStampedModel):
     #     super(PricingPolicy, self).delete(*args, **kwargs)
 
 
-class InstrumentType(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class InstrumentType(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='instrument_types',
                                     verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     instrument_class = models.ForeignKey(InstrumentClass, related_name='instrument_types', on_delete=models.PROTECT,
@@ -375,6 +399,8 @@ class InstrumentType(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedM
     object_permissions = GenericRelation(GenericObjectPermission)
     tags = GenericRelation(TagLink)
 
+    objects = CachingManager()
+
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = ugettext_lazy('instrument type')
         verbose_name_plural = ugettext_lazy('instrument types')
@@ -382,6 +408,8 @@ class InstrumentType(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedM
             # ('view_instrumenttype', 'Can view instrument type'),
             ('manage_instrumenttype', 'Can manage instrument type'),
         ]
+
+        base_manager_name = 'objects'
 
     def __str__(self):
         return self.user_code

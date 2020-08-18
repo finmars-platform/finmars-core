@@ -73,12 +73,14 @@ class Currency(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTime
         return self.master_user.currency_id == self.id if self.master_user_id else False
 
 
-class CurrencyHistory(DataTimeStampedModel):
+class CurrencyHistory(CachingMixin, DataTimeStampedModel):
     currency = models.ForeignKey(Currency, related_name='histories', verbose_name=ugettext_lazy('currency'), on_delete=models.CASCADE)
     pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, null=True, blank=True,
                                        verbose_name=ugettext_lazy('pricing policy'))
     date = models.DateField(db_index=True, default=date_now, verbose_name=ugettext_lazy('date'))
     fx_rate = models.FloatField(default=0., verbose_name=ugettext_lazy('fx rate'))
+
+    objects = CachingManager()
 
     class Meta:
         verbose_name = ugettext_lazy('currency history')
@@ -87,6 +89,8 @@ class CurrencyHistory(DataTimeStampedModel):
             ('currency', 'pricing_policy', 'date',)
         )
         ordering = ['date']
+
+        base_manager_name = 'objects'
 
     def __str__(self):
         # return '%s:%s:%s:%s' % (self.currency_id, self.pricing_policy_id, self.date, self.fx_rate)
