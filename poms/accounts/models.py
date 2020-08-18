@@ -5,6 +5,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy
 from mptt.models import MPTTModel
 
+from poms.cache_machine.base import CachingMixin, CachingManager
 from poms.common.models import NamedModel, FakeDeletableModel, EXPRESSION_FIELD_LENGTH, DataTimeStampedModel
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.currencies.models import Currency
@@ -39,7 +40,7 @@ class AccountType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         return self.master_user.account_type_id == self.id if self.master_user_id else False
 
 
-class Account(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Account(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='accounts', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     type = models.ForeignKey(AccountType, on_delete=models.PROTECT, null=True, blank=True,
                              verbose_name=ugettext_lazy('account type'))
@@ -50,6 +51,8 @@ class Account(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
 
+    objects = CachingManager()
+
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = ugettext_lazy('account')
         verbose_name_plural = ugettext_lazy('accounts')
@@ -57,6 +60,9 @@ class Account(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
             # ('view_account', 'Can view account'),
             ('manage_account', 'Can manage account'),
         ]
+
+        base_manager_name = 'objects'
+
 
     @property
     def is_default(self):

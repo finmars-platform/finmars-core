@@ -14,6 +14,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import ugettext, ugettext_lazy
 from mptt.models import MPTTModel
 
+from poms.cache_machine.base import CachingManager, CachingMixin
 from poms.common import formula
 from poms.common.formula_accruals import get_coupon
 from poms.common.models import NamedModel, AbstractClassModel, FakeDeletableModel, EXPRESSION_FIELD_LENGTH, \
@@ -30,7 +31,7 @@ from poms.users.models import MasterUser, Member
 _l = logging.getLogger('poms.instruments')
 
 
-class InstrumentClass(AbstractClassModel):
+class InstrumentClass(CachingMixin, AbstractClassModel):
     GENERAL = 1
     EVENT_AT_MATURITY = 2
     REGULAR_EVENT_AT_MATURITY = 3
@@ -47,9 +48,13 @@ class InstrumentClass(AbstractClassModel):
         (DEFAULT, '-', ugettext_lazy("Default"))
     )
 
+    objects = CachingManager()
+
     class Meta(AbstractClassModel.Meta):
         verbose_name = ugettext_lazy('instrument class')
         verbose_name_plural = ugettext_lazy('instrument classes')
+
+        base_manager_name = 'objects'
 
     @property
     def has_one_off_event(self):
@@ -386,7 +391,8 @@ class InstrumentType(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedM
         return self.master_user.instrument_type_id == self.id if self.master_user_id else False
 
 
-class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Instrument(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+# class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='instruments', verbose_name=ugettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
@@ -432,6 +438,8 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
 
+    objects = CachingManager()
+
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = ugettext_lazy('instrument')
         verbose_name_plural = ugettext_lazy('instruments')
@@ -440,6 +448,8 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             ('manage_instrument', 'Can manage instrument'),
         ]
         ordering = ['user_code']
+
+        base_manager_name = 'objects'
 
     @property
     def is_default(self):

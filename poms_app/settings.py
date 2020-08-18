@@ -76,6 +76,9 @@ INSTALLED_APPS = [
 
     'poms.system',
     'poms.http_sessions',
+
+    'poms.cache_machine',
+
     'poms.users',
     'poms.audit',
     'poms.notifications',
@@ -282,8 +285,8 @@ print('REDIS_HOST %s' % REDIS_HOST)
 
 
 CACHE_VERSION = 1
-CACHE_SERIALIZER = "django_redis.serializers.json.JSONSerializer"
-# CACHE_SERIALIZER = "django_redis.serializers.pickle.PickleSerializer"
+# CACHE_SERIALIZER = "django_redis.serializers.json.JSONSerializer"
+CACHE_SERIALIZER = "django_redis.serializers.pickle.PickleSerializer"
 CACHE_COMPRESSOR = 'django_redis.compressors.identity.IdentityCompressor'
 # CACHE_COMPRESSOR = 'django_redis.compressors.zlib.ZlibCompressor'
 CACHE_SOCKET_CONNECT_TIMEOUT = 1
@@ -305,6 +308,7 @@ CACHES = {
             'COMPRESSOR': CACHE_COMPRESSOR,
             "SOCKET_CONNECT_TIMEOUT": CACHE_SOCKET_CONNECT_TIMEOUT,
             "SOCKET_TIMEOUT": CACHE_SOCKET_TIMEOUT,
+            "PICKLE_VERSION": 2
         }
     },
     # 'http_cache': {

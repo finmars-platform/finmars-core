@@ -11,6 +11,7 @@ from django.utils.translation import ugettext_lazy
 from mptt.models import MPTTModel
 
 from poms.accounts.models import Account
+from poms.cache_machine.base import CachingManager, CachingMixin
 from poms.common.models import NamedModel, AbstractClassModel, FakeDeletableModel, EXPRESSION_FIELD_LENGTH, \
     DataTimeStampedModel
 from poms.common.utils import date_now
@@ -27,7 +28,7 @@ from poms.transactions.utils import calc_cash_for_contract_for_difference
 from poms.users.models import MasterUser, Member, FakeSequence
 
 
-class TransactionClass(AbstractClassModel):
+class TransactionClass(CachingMixin, AbstractClassModel):
     BUY = 1
     SELL = 2
     FX_TRADE = 3
@@ -53,9 +54,13 @@ class TransactionClass(AbstractClassModel):
         (DEFAULT, '-', ugettext_lazy("Default")),
     )
 
+    objects = CachingManager()
+
     class Meta(AbstractClassModel.Meta):
         verbose_name = ugettext_lazy('transaction class')
         verbose_name_plural = ugettext_lazy('transaction classes')
+
+        base_manager_name = 'objects'
 
 
 class ActionClass(AbstractClassModel):
