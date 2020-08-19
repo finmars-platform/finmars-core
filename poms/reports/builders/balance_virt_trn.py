@@ -886,264 +886,265 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
         self.total_fixed_opened_loc = format_float(self.total_fixed_opened_loc)
 
     def calc(self):
-            # if not self.is_hidden:
-            #     print(1)
-            if self.trn_cls.id in [TransactionClass.BUY, TransactionClass.SELL, TransactionClass.TRANSACTION_PL,
-                                   TransactionClass.INSTRUMENT_PL, TransactionClass.FX_TRADE]:
-                if self.instr:
-                    self.instr_principal = self.pos_size * self.instr.price_multiplier * self.instr_price_cur_principal_price
-                    self.instr_principal_res = self.instr_principal * self.instr_pricing_ccy_cur_fx
+        # if not self.is_hidden:
+        #     print(1)
 
-                    self.instr_accrued = self.pos_size * self.instr.accrued_multiplier * self.instr_price_cur_accrued_price
-                    self.instr_accrued_res = self.instr_accrued * self.instr_accrued_ccy_cur_fx
+        if self.trn_cls.id in [TransactionClass.BUY, TransactionClass.SELL, TransactionClass.TRANSACTION_PL,
+                               TransactionClass.INSTRUMENT_PL, TransactionClass.FX_TRADE]:
+            if self.instr:
+                self.instr_principal = self.pos_size * self.instr.price_multiplier * self.instr_price_cur_principal_price
+                self.instr_principal_res = self.instr_principal * self.instr_pricing_ccy_cur_fx
 
-                # Cash related
+                self.instr_accrued = self.pos_size * self.instr.accrued_multiplier * self.instr_price_cur_accrued_price
+                self.instr_accrued_res = self.instr_accrued * self.instr_accrued_ccy_cur_fx
 
-                self.cash_res = self.cash * self.stl_ccy_cur_fx
+            # Cash related
 
-                # ------------------
-                # P&L in report ccy
-                # ------------------
-                self.total = self.principal + self.carry + self.overheads
+            self.cash_res = self.cash * self.stl_ccy_cur_fx
 
-                self.pl_fx_mul = self.stl_ccy_cur_fx - self.ref_fx * self.trn_ccy_acc_hist_fx
-                self.pl_fixed_mul = self.ref_fx * self.trn_ccy_acc_hist_fx
+            # ------------------
+            # P&L in report ccy
+            # ------------------
+            self.total = self.principal + self.carry + self.overheads
 
-                self.principal_res = self.principal * self.stl_ccy_cur_fx
-                self.carry_res = self.carry * self.stl_ccy_cur_fx
-                self.overheads_res = self.overheads * self.stl_ccy_cur_fx
-                self.total_res = self.total * self.stl_ccy_cur_fx
+            self.pl_fx_mul = self.stl_ccy_cur_fx - self.ref_fx * self.trn_ccy_acc_hist_fx
+            self.pl_fixed_mul = self.ref_fx * self.trn_ccy_acc_hist_fx
 
-                # full / closed
-                self.principal_closed_res = self.principal_res * self.multiplier
-                self.carry_closed_res = self.carry_res * self.multiplier
-                self.overheads_closed_res = self.overheads_res * self.multiplier
-                self.total_closed_res = self.total_res * self.multiplier
+            self.principal_res = self.principal * self.stl_ccy_cur_fx
+            self.carry_res = self.carry * self.stl_ccy_cur_fx
+            self.overheads_res = self.overheads * self.stl_ccy_cur_fx
+            self.total_res = self.total * self.stl_ccy_cur_fx
 
-                # full / opened
-                self.principal_opened_res = self.principal_res * (1.0 - self.multiplier)
-                self.carry_opened_res = self.carry_res * (1.0 - self.multiplier)
-                self.overheads_opened_res = self.overheads_res * (1.0 - self.multiplier)
-                self.total_opened_res = self.total_res * (1.0 - self.multiplier)
+            # full / closed
+            self.principal_closed_res = self.principal_res * self.multiplier
+            self.carry_closed_res = self.carry_res * self.multiplier
+            self.overheads_closed_res = self.overheads_res * self.multiplier
+            self.total_closed_res = self.total_res * self.multiplier
 
-                # fx
-                self.principal_fx_res = self.principal * self.pl_fx_mul
-                self.carry_fx_res = self.carry * self.pl_fx_mul
-                self.overheads_fx_res = self.overheads * self.pl_fx_mul
-                self.total_fx_res = self.total * self.pl_fx_mul
+            # full / opened
+            self.principal_opened_res = self.principal_res * (1.0 - self.multiplier)
+            self.carry_opened_res = self.carry_res * (1.0 - self.multiplier)
+            self.overheads_opened_res = self.overheads_res * (1.0 - self.multiplier)
+            self.total_opened_res = self.total_res * (1.0 - self.multiplier)
 
-                # fx / closed
-                self.principal_fx_closed_res = self.principal_fx_res * self.multiplier
-                self.carry_fx_closed_res = self.carry_fx_res * self.multiplier
-                self.overheads_fx_closed_res = self.overheads_fx_res * self.multiplier
-                self.total_fx_closed_res = self.total_fx_res * self.multiplier
+            # fx
+            self.principal_fx_res = self.principal * self.pl_fx_mul
+            self.carry_fx_res = self.carry * self.pl_fx_mul
+            self.overheads_fx_res = self.overheads * self.pl_fx_mul
+            self.total_fx_res = self.total * self.pl_fx_mul
 
-                # fx / opened
-                self.principal_fx_opened_res = self.principal_fx_res * (1.0 - self.multiplier)
-                self.carry_fx_opened_res = self.carry_fx_res * (1.0 - self.multiplier)
-                self.overheads_fx_opened_res = self.overheads_fx_res * (1.0 - self.multiplier)
-                self.total_fx_opened_res = self.total_fx_res * (1.0 - self.multiplier)
+            # fx / closed
+            self.principal_fx_closed_res = self.principal_fx_res * self.multiplier
+            self.carry_fx_closed_res = self.carry_fx_res * self.multiplier
+            self.overheads_fx_closed_res = self.overheads_fx_res * self.multiplier
+            self.total_fx_closed_res = self.total_fx_res * self.multiplier
 
-                if self.trn_cls.id in [TransactionClass.FX_TRADE]:
-                    pass
-                else:
-                    # fixed
-                    self.principal_fixed_res = self.principal * self.pl_fixed_mul
-                    self.carry_fixed_res = self.carry * self.pl_fixed_mul
-                    self.overheads_fixed_res = self.overheads * self.pl_fixed_mul
-                    self.total_fixed_res = self.total * self.pl_fixed_mul
+            # fx / opened
+            self.principal_fx_opened_res = self.principal_fx_res * (1.0 - self.multiplier)
+            self.carry_fx_opened_res = self.carry_fx_res * (1.0 - self.multiplier)
+            self.overheads_fx_opened_res = self.overheads_fx_res * (1.0 - self.multiplier)
+            self.total_fx_opened_res = self.total_fx_res * (1.0 - self.multiplier)
 
-                    # fixed / closed
-                    self.principal_fixed_closed_res = self.principal_fixed_res * self.multiplier
-                    self.carry_fixed_closed_res = self.carry_fixed_res * self.multiplier
-                    self.overheads_fixed_closed_res = self.overheads_fixed_res * self.multiplier
-                    self.total_fixed_closed_res = self.total_fixed_res * self.multiplier
-
-                    # fixed / opened
-                    self.principal_fixed_opened_res = self.principal_fixed_res * (1.0 - self.multiplier)
-                    self.carry_fixed_opened_res = self.carry_fixed_res * (1.0 - self.multiplier)
-                    self.overheads_fixed_opened_res = self.overheads_fixed_res * (1.0 - self.multiplier)
-                    self.total_fixed_opened_res = self.total_fixed_res * (1.0 - self.multiplier)
-
-                # ------------------
-                # P&L in pricing ccy
-                # ------------------
-                self.pl_fx_mul_loc = self.stl_ccy_cur_fx_loc - self.ref_fx * self.trn_ccy_acc_hist_fx_loc
-                self.pl_fixed_mul_loc = self.ref_fx * self.trn_ccy_acc_hist_fx_loc
-
-                self.principal_loc = self.principal * self.stl_ccy_cur_fx_loc
-                self.carry_loc = self.carry * self.stl_ccy_cur_fx_loc
-                self.overheads_loc = self.overheads * self.stl_ccy_cur_fx_loc
-                self.total_loc = self.total * self.stl_ccy_cur_fx_loc
-
-                # full / closed
-                self.principal_closed_loc = self.principal_loc * self.multiplier
-                self.carry_closed_loc = self.carry_loc * self.multiplier
-                self.overheads_closed_loc = self.overheads_loc * self.multiplier
-                self.total_closed_loc = self.total_loc * self.multiplier
-
-                # full / opened
-                self.principal_opened_loc = self.principal_loc * (1.0 - self.multiplier)
-                self.carry_opened_loc = self.carry_loc * (1.0 - self.multiplier)
-                self.overheads_opened_loc = self.overheads_loc * (1.0 - self.multiplier)
-                self.total_opened_loc = self.total_loc * (1.0 - self.multiplier)
-
-                # fx
-                self.principal_fx_loc = self.principal * self.pl_fx_mul_loc
-                self.carry_fx_loc = self.carry * self.pl_fx_mul_loc
-                self.overheads_fx_loc = self.overheads * self.pl_fx_mul_loc
-                self.total_fx_loc = self.total * self.pl_fx_mul_loc
-
-                # fx / closed
-                self.principal_fx_closed_loc = self.principal_fx_loc * self.multiplier
-                self.carry_fx_closed_loc = self.carry_fx_loc * self.multiplier
-                self.overheads_fx_closed_loc = self.overheads_fx_loc * self.multiplier
-                self.total_fx_closed_loc = self.total_fx_loc * self.multiplier
-
-                # fx / opened
-                self.principal_fx_opened_loc = self.principal_fx_loc * (1.0 - self.multiplier)
-                self.carry_fx_opened_loc = self.carry_fx_loc * (1.0 - self.multiplier)
-                self.overheads_fx_opened_loc = self.overheads_fx_loc * (1.0 - self.multiplier)
-                self.total_fx_opened_loc = self.total_fx_loc * (1.0 - self.multiplier)
-
-                if self.trn_cls.id in [TransactionClass.FX_TRADE]:
-                    pass
-                else:
-                    # fixed
-                    self.principal_fixed_loc = self.principal * self.pl_fixed_mul_loc
-                    self.carry_fixed_loc = self.carry * self.pl_fixed_mul_loc
-                    self.overheads_fixed_loc = self.overheads * self.pl_fixed_mul_loc
-                    self.total_fixed_loc = self.total * self.pl_fixed_mul_loc
-
-                    # fixed / closed
-                    self.principal_fixed_closed_loc = self.principal_fixed_loc * self.multiplier
-                    self.carry_fixed_closed_loc = self.carry_fixed_loc * self.multiplier
-                    self.overheads_fixed_closed_loc = self.overheads_fixed_loc * self.multiplier
-                    self.total_fixed_closed_loc = self.total_fixed_loc * self.multiplier
-
-                    # fixed / opened
-                    self.principal_fixed_opened_loc = self.principal_fixed_loc * (1.0 - self.multiplier)
-                    self.carry_fixed_opened_loc = self.carry_fixed_loc * (1.0 - self.multiplier)
-                    self.overheads_fixed_opened_loc = self.overheads_fixed_loc * (1.0 - self.multiplier)
-                    self.total_fixed_opened_loc = self.total_fixed_loc * (1.0 - self.multiplier)
-
-                #
-                if not self.is_cloned and self.instr:
-
-                    if self.trn_cls.id in [TransactionClass.BUY, TransactionClass.SELL]:
-                        try:
-                            self.cost_res = self.principal * (self.stl_ccy_cur.fx_rate / self.report_ccy_cur.fx_rate) * \
-                                            (1.0 - self.multiplier)
-                        except ArithmeticError:
-                            self.cost_res = 0.0
-
-                        # gross_cost
-
-                        try:
-                            self.gross_cost_res = self.principal * self.ref_fx * \
-                                                  (self.trn_ccy_acc_hist.fx_rate / self.report_ccy_acc_hist.fx_rate) * \
-                                                  (1.0 - self.multiplier) / self.pos_size / self.instr.price_multiplier
-                        except ArithmeticError:
-                            self.gross_cost_res = 0.0
-
-                        try:
-                            self.gross_cost_loc = self.principal * self.ref_fx * \
-                                                  (self.trn_ccy_acc_hist.fx_rate / self.pricing_ccy_acc_hist.fx_rate) * \
-                                                  (1.0 - self.multiplier) / self.pos_size / self.instr.price_multiplier
-                        except ArithmeticError:
-                            self.gross_cost_loc = 0.0
-
-                        # net_cost
-
-                        try:
-                            self.net_cost_res = (self.principal + self.overheads) * self.ref_fx * \
-                                                (self.trn_ccy_acc_hist.fx_rate / self.report_ccy_acc_hist.fx_rate) * \
-                                                (1.0 - self.multiplier) / self.pos_size / self.instr.price_multiplier
-                        except ArithmeticError:
-                            self.net_cost_res = 0.0
-
-                        try:
-                            self.net_cost_loc = (self.principal + self.overheads) * self.ref_fx * \
-                                                (self.trn_ccy_acc_hist.fx_rate / self.pricing_ccy_acc_hist.fx_rate) * \
-                                                (1.0 - self.multiplier) / self.pos_size / self.instr.price_multiplier
-                        except ArithmeticError:
-                            self.net_cost_loc = 0.0
-
-                        # principal_invested
-
-                        try:
-                            self.principal_invested_res = self.principal * self.ref_fx * \
-                                                          (
-                                                                  self.trn_ccy_acc_hist.fx_rate / self.report_ccy_acc_hist.fx_rate) * \
-                                                          (1.0 - self.multiplier)
-                        except ArithmeticError:
-                            self.principal_invested_res = 0.0
-
-                        try:
-                            self.principal_invested_loc = self.principal * self.ref_fx * \
-                                                          (
-                                                                  self.trn_ccy_acc_hist.fx_rate / self.pricing_ccy_acc_hist.fx_rate) * \
-                                                          (1.0 - self.multiplier)
-                        except ArithmeticError:
-                            self.principal_invested_loc = 0.0
-
-                        # amount_invested
-
-                        try:
-                            self.amount_invested_res = self.total_res * self.ref_fx * \
-                                                       (self.trn_ccy_acc_hist.fx_rate / self.report_ccy_acc_hist.fx_rate) * \
-                                                       (1.0 - self.multiplier)
-                        except ArithmeticError:
-                            self.amount_invested_res = 0.0
-
-                        try:
-                            self.amount_invested_loc = self.total_res * self.ref_fx * \
-                                                       (self.trn_ccy_acc_hist.fx_rate / self.pricing_ccy_acc_hist.fx_rate) * \
-                                                       (1.0 - self.multiplier)
-                        except ArithmeticError:
-                            self.amount_invested_loc = 0.0
-
-                        # ytm_data = ReportBuilder.instr_ytm_data(
-                        #     instr=self.instr,
-                        #     d0=self.acc_date,
-                        #     v0=self.trade_price,
-                        #     pricing_ccy_fx=self.instr_pricing_ccy_cur_fx,
-                        #     accrued_ccy_fx=self.instr_accrued_ccy_cur_fx,
-                        # )
-                        # self.ytm = ReportBuilder.instr_ytm(
-                        #     instr=self.instr,
-                        #     data=ytm_data,
-                        #     x0=self.trade_price * self.instr.price_multiplier
-                        # )
-                        self.ytm = self.get_instr_ytm(self.acc_date)
-
-                        self.time_invested_days = (self.report.report_date - self.acc_date).days
-                        self.time_invested = self.time_invested_days / 365.0
-
-                        try:
-                            self.remaining_pos_size_percent = self.remaining_pos_size / self.balance_pos_size
-                        except ArithmeticError:
-                            self.remaining_pos_size_percent = 0.0
-
-                        self.weighted_ytm = self.ytm * self.remaining_pos_size_percent
-                        self.weighted_time_invested_days = self.time_invested_days * self.remaining_pos_size_percent
-                        self.weighted_time_invested = self.time_invested * self.remaining_pos_size_percent
-
-            elif self.trn_cls.id in [TransactionClass.CASH_INFLOW, TransactionClass.CASH_OUTFLOW]:
-                self.pl_fx_mul = self.stl_ccy_cur_fx - self.ref_fx * self.trn_ccy_acc_hist_fx
-                self.pl_fixed_mul = self.ref_fx * self.trn_ccy_acc_hist_fx
-
-                self.principal_res = self.cash * self.pl_fx_mul
-                self.principal_closed_res = self.principal_res
-                self.principal_fx_res = self.principal_res
-                self.principal_fx_closed_res = self.principal_res
-
-                self.mismatch = 0.0
-
+            if self.trn_cls.id in [TransactionClass.FX_TRADE]:
+                pass
             else:
-                self.mismatch = self.cash - self.total
+                # fixed
+                self.principal_fixed_res = self.principal * self.pl_fixed_mul
+                self.carry_fixed_res = self.carry * self.pl_fixed_mul
+                self.overheads_fixed_res = self.overheads * self.pl_fixed_mul
+                self.total_fixed_res = self.total * self.pl_fixed_mul
 
-            self.round_after_calc()
+                # fixed / closed
+                self.principal_fixed_closed_res = self.principal_fixed_res * self.multiplier
+                self.carry_fixed_closed_res = self.carry_fixed_res * self.multiplier
+                self.overheads_fixed_closed_res = self.overheads_fixed_res * self.multiplier
+                self.total_fixed_closed_res = self.total_fixed_res * self.multiplier
+
+                # fixed / opened
+                self.principal_fixed_opened_res = self.principal_fixed_res * (1.0 - self.multiplier)
+                self.carry_fixed_opened_res = self.carry_fixed_res * (1.0 - self.multiplier)
+                self.overheads_fixed_opened_res = self.overheads_fixed_res * (1.0 - self.multiplier)
+                self.total_fixed_opened_res = self.total_fixed_res * (1.0 - self.multiplier)
+
+            # ------------------
+            # P&L in pricing ccy
+            # ------------------
+            self.pl_fx_mul_loc = self.stl_ccy_cur_fx_loc - self.ref_fx * self.trn_ccy_acc_hist_fx_loc
+            self.pl_fixed_mul_loc = self.ref_fx * self.trn_ccy_acc_hist_fx_loc
+
+            self.principal_loc = self.principal * self.stl_ccy_cur_fx_loc
+            self.carry_loc = self.carry * self.stl_ccy_cur_fx_loc
+            self.overheads_loc = self.overheads * self.stl_ccy_cur_fx_loc
+            self.total_loc = self.total * self.stl_ccy_cur_fx_loc
+
+            # full / closed
+            self.principal_closed_loc = self.principal_loc * self.multiplier
+            self.carry_closed_loc = self.carry_loc * self.multiplier
+            self.overheads_closed_loc = self.overheads_loc * self.multiplier
+            self.total_closed_loc = self.total_loc * self.multiplier
+
+            # full / opened
+            self.principal_opened_loc = self.principal_loc * (1.0 - self.multiplier)
+            self.carry_opened_loc = self.carry_loc * (1.0 - self.multiplier)
+            self.overheads_opened_loc = self.overheads_loc * (1.0 - self.multiplier)
+            self.total_opened_loc = self.total_loc * (1.0 - self.multiplier)
+
+            # fx
+            self.principal_fx_loc = self.principal * self.pl_fx_mul_loc
+            self.carry_fx_loc = self.carry * self.pl_fx_mul_loc
+            self.overheads_fx_loc = self.overheads * self.pl_fx_mul_loc
+            self.total_fx_loc = self.total * self.pl_fx_mul_loc
+
+            # fx / closed
+            self.principal_fx_closed_loc = self.principal_fx_loc * self.multiplier
+            self.carry_fx_closed_loc = self.carry_fx_loc * self.multiplier
+            self.overheads_fx_closed_loc = self.overheads_fx_loc * self.multiplier
+            self.total_fx_closed_loc = self.total_fx_loc * self.multiplier
+
+            # fx / opened
+            self.principal_fx_opened_loc = self.principal_fx_loc * (1.0 - self.multiplier)
+            self.carry_fx_opened_loc = self.carry_fx_loc * (1.0 - self.multiplier)
+            self.overheads_fx_opened_loc = self.overheads_fx_loc * (1.0 - self.multiplier)
+            self.total_fx_opened_loc = self.total_fx_loc * (1.0 - self.multiplier)
+
+            if self.trn_cls.id in [TransactionClass.FX_TRADE]:
+                pass
+            else:
+                # fixed
+                self.principal_fixed_loc = self.principal * self.pl_fixed_mul_loc
+                self.carry_fixed_loc = self.carry * self.pl_fixed_mul_loc
+                self.overheads_fixed_loc = self.overheads * self.pl_fixed_mul_loc
+                self.total_fixed_loc = self.total * self.pl_fixed_mul_loc
+
+                # fixed / closed
+                self.principal_fixed_closed_loc = self.principal_fixed_loc * self.multiplier
+                self.carry_fixed_closed_loc = self.carry_fixed_loc * self.multiplier
+                self.overheads_fixed_closed_loc = self.overheads_fixed_loc * self.multiplier
+                self.total_fixed_closed_loc = self.total_fixed_loc * self.multiplier
+
+                # fixed / opened
+                self.principal_fixed_opened_loc = self.principal_fixed_loc * (1.0 - self.multiplier)
+                self.carry_fixed_opened_loc = self.carry_fixed_loc * (1.0 - self.multiplier)
+                self.overheads_fixed_opened_loc = self.overheads_fixed_loc * (1.0 - self.multiplier)
+                self.total_fixed_opened_loc = self.total_fixed_loc * (1.0 - self.multiplier)
+
+            #
+            if not self.is_cloned and self.instr:
+
+                if self.trn_cls.id in [TransactionClass.BUY, TransactionClass.SELL]:
+                    try:
+                        self.cost_res = self.principal * (self.stl_ccy_cur.fx_rate / self.report_ccy_cur.fx_rate) * \
+                                        (1.0 - self.multiplier)
+                    except ArithmeticError:
+                        self.cost_res = 0.0
+
+                    # gross_cost
+
+                    try:
+                        self.gross_cost_res = self.principal * self.ref_fx * \
+                                              (self.trn_ccy_acc_hist.fx_rate / self.report_ccy_acc_hist.fx_rate) * \
+                                              (1.0 - self.multiplier) / self.pos_size / self.instr.price_multiplier
+                    except ArithmeticError:
+                        self.gross_cost_res = 0.0
+
+                    try:
+                        self.gross_cost_loc = self.principal * self.ref_fx * \
+                                              (self.trn_ccy_acc_hist.fx_rate / self.pricing_ccy_acc_hist.fx_rate) * \
+                                              (1.0 - self.multiplier) / self.pos_size / self.instr.price_multiplier
+                    except ArithmeticError:
+                        self.gross_cost_loc = 0.0
+
+                    # net_cost
+
+                    try:
+                        self.net_cost_res = (self.principal + self.overheads) * self.ref_fx * \
+                                            (self.trn_ccy_acc_hist.fx_rate / self.report_ccy_acc_hist.fx_rate) * \
+                                            (1.0 - self.multiplier) / self.pos_size / self.instr.price_multiplier
+                    except ArithmeticError:
+                        self.net_cost_res = 0.0
+
+                    try:
+                        self.net_cost_loc = (self.principal + self.overheads) * self.ref_fx * \
+                                            (self.trn_ccy_acc_hist.fx_rate / self.pricing_ccy_acc_hist.fx_rate) * \
+                                            (1.0 - self.multiplier) / self.pos_size / self.instr.price_multiplier
+                    except ArithmeticError:
+                        self.net_cost_loc = 0.0
+
+                    # principal_invested
+
+                    try:
+                        self.principal_invested_res = self.principal * self.ref_fx * \
+                                                      (
+                                                              self.trn_ccy_acc_hist.fx_rate / self.report_ccy_acc_hist.fx_rate) * \
+                                                      (1.0 - self.multiplier)
+                    except ArithmeticError:
+                        self.principal_invested_res = 0.0
+
+                    try:
+                        self.principal_invested_loc = self.principal * self.ref_fx * \
+                                                      (
+                                                              self.trn_ccy_acc_hist.fx_rate / self.pricing_ccy_acc_hist.fx_rate) * \
+                                                      (1.0 - self.multiplier)
+                    except ArithmeticError:
+                        self.principal_invested_loc = 0.0
+
+                    # amount_invested
+
+                    try:
+                        self.amount_invested_res = self.total_res * self.ref_fx * \
+                                                   (self.trn_ccy_acc_hist.fx_rate / self.report_ccy_acc_hist.fx_rate) * \
+                                                   (1.0 - self.multiplier)
+                    except ArithmeticError:
+                        self.amount_invested_res = 0.0
+
+                    try:
+                        self.amount_invested_loc = self.total_res * self.ref_fx * \
+                                                   (self.trn_ccy_acc_hist.fx_rate / self.pricing_ccy_acc_hist.fx_rate) * \
+                                                   (1.0 - self.multiplier)
+                    except ArithmeticError:
+                        self.amount_invested_loc = 0.0
+
+                    # ytm_data = ReportBuilder.instr_ytm_data(
+                    #     instr=self.instr,
+                    #     d0=self.acc_date,
+                    #     v0=self.trade_price,
+                    #     pricing_ccy_fx=self.instr_pricing_ccy_cur_fx,
+                    #     accrued_ccy_fx=self.instr_accrued_ccy_cur_fx,
+                    # )
+                    # self.ytm = ReportBuilder.instr_ytm(
+                    #     instr=self.instr,
+                    #     data=ytm_data,
+                    #     x0=self.trade_price * self.instr.price_multiplier
+                    # )
+                    self.ytm = self.get_instr_ytm(self.acc_date)
+
+                    self.time_invested_days = (self.report.report_date - self.acc_date).days
+                    self.time_invested = self.time_invested_days / 365.0
+
+                    try:
+                        self.remaining_pos_size_percent = self.remaining_pos_size / self.balance_pos_size
+                    except ArithmeticError:
+                        self.remaining_pos_size_percent = 0.0
+
+                    self.weighted_ytm = self.ytm * self.remaining_pos_size_percent
+                    self.weighted_time_invested_days = self.time_invested_days * self.remaining_pos_size_percent
+                    self.weighted_time_invested = self.time_invested * self.remaining_pos_size_percent
+
+        elif self.trn_cls.id in [TransactionClass.CASH_INFLOW, TransactionClass.CASH_OUTFLOW]:
+            self.pl_fx_mul = self.stl_ccy_cur_fx - self.ref_fx * self.trn_ccy_acc_hist_fx
+            self.pl_fixed_mul = self.ref_fx * self.trn_ccy_acc_hist_fx
+
+            self.principal_res = self.cash * self.pl_fx_mul
+            self.principal_closed_res = self.principal_res
+            self.principal_fx_res = self.principal_res
+            self.principal_fx_closed_res = self.principal_res
+
+            self.mismatch = 0.0
+
+        else:
+            self.mismatch = self.cash - self.total
+
+        self.round_after_calc()
 
         # def calc_pass2(self, balance_pos_size):
         #     # called after "balance"

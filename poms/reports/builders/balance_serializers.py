@@ -388,12 +388,12 @@ class ReportSerializerWithLogs(serializers.Serializer):
             if 'item_' in field.field_name:
                 if hasattr(instance, 'is_report'):
 
-                    result_time = time.perf_counter() - field_st
+                    result_time = "{:3.3f}".format(time.perf_counter() - field_st)
 
                     _l.info('field %s to representation done %s' % (field.field_name, result_time))
 
         if hasattr(instance, 'is_report'):
-            _l.info('report to representation done %s' % (time.perf_counter() - st))
+            _l.info('report to representation done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
         return ret
 
@@ -554,7 +554,7 @@ class ReportSerializer(ReportSerializerWithLogs):
 
         data = super(ReportSerializer, self).to_representation(instance)
 
-        _l.info('ReportSerializer to_representation_st done: %s' % (time.perf_counter() - to_representation_st))
+        _l.info('ReportSerializer to_representation_st done: %s' % "{:3.3f}".format(time.perf_counter() - to_representation_st))
 
         st = time.perf_counter()
 
@@ -693,7 +693,7 @@ class ReportSerializer(ReportSerializerWithLogs):
 
                 item['custom_fields'] = cfv
 
-        _l.info('ReportSerializer custom fields execution done: %s' % (time.perf_counter() - st))
+        _l.info('ReportSerializer custom fields execution done: %s' % "{:3.3f}".format(time.perf_counter() - st))
 
         return data
 

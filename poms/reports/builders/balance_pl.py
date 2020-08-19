@@ -171,13 +171,13 @@ class ReportBuilder(BaseReportBuilder):
             _refresh_st = time.perf_counter()
             self._refresh_with_perms_optimized()
             # self._refresh_with_perms()
-            _l.info('build _refresh_st done: %s', (time.perf_counter() - _refresh_st))
+            _l.info('build _refresh_st done: %s', "{:3.3f}".format(time.perf_counter() - _refresh_st))
 
         self.instance.custom_fields = BalanceReportCustomField.objects.filter(master_user=self.instance.master_user)
 
         self.instance.close()
 
-        _l.info('done: %s', (time.perf_counter() - st))
+        _l.info('build done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
         return self.instance
 
@@ -1292,6 +1292,7 @@ class ReportBuilder(BaseReportBuilder):
         # _l.info('items - raw.len=%s', len(self._items))
 
     def _aggregate_items(self):
+
         _l.info('items - aggregate')
 
         aggr_items = []
@@ -1683,11 +1684,11 @@ class ReportBuilder(BaseReportBuilder):
         # TODO END HERE
 
         _l.info('_refresh_with_perms_optimized instance relations done: %s',
-                 (time.perf_counter() - instance_relations_st))
+                "{:3.3f}".format(time.perf_counter() - instance_relations_st))
 
         permissions_st = time.perf_counter()
 
-        _l.info('_refresh_with_perms_optimized permissions done: %s', (time.perf_counter() - permissions_st))
+        _l.info('_refresh_with_perms_optimized permissions done: %s', "{:3.3f}".format(time.perf_counter() - permissions_st))
 
         item_relations_st = time.perf_counter()
 
@@ -1720,9 +1721,9 @@ class ReportBuilder(BaseReportBuilder):
                                                                                 attribute_types)
 
         _l.info('_refresh_with_perms_optimized set attribute types done: %s',
-                 (time.perf_counter() - attribute_types_st))
+                "{:3.3f}".format(time.perf_counter() - attribute_types_st))
 
-        _l.info('_refresh_with_perms_optimized item relations done: %s', (time.perf_counter() - item_relations_st))
+        _l.info('_refresh_with_perms_optimized item relations done: %s', "{:3.3f}".format(time.perf_counter() - item_relations_st))
 
         pass
 
@@ -1750,7 +1751,7 @@ class ReportBuilder(BaseReportBuilder):
 
             self.instance.item_accounts = self._get_accounts_by_ids(ids=accounts_ids)
 
-        _l.info('_refresh_with_perms_optimized item_accounts done: %s', (time.perf_counter() - item_accounts_st))
+        _l.info('_refresh_with_perms_optimized item_accounts done: %s', "{:3.3f}".format(time.perf_counter() - item_accounts_st))
 
         # Handle item_accounts END
 
@@ -1781,7 +1782,7 @@ class ReportBuilder(BaseReportBuilder):
             self.instance.item_account_types = self._get_account_types_by_ids(ids=account_types_ids)
 
         _l.info('_refresh_with_perms_optimized item_account_types done: %s',
-                 (time.perf_counter() - item_account_types_st))
+                "{:3.3f}".format(time.perf_counter() - item_account_types_st))
 
         # Handle item_account_types END
 
@@ -1809,7 +1810,7 @@ class ReportBuilder(BaseReportBuilder):
 
             self.instance.item_currencies = self._get_currencies_by_ids(ids=currencies_ids)
 
-        _l.info('_refresh_with_perms_optimized item_currencies done: %s', (time.perf_counter() - item_currencies_st))
+        _l.info('_refresh_with_perms_optimized item_currencies done: %s', "{:3.3f}".format(time.perf_counter() - item_currencies_st))
 
         # Handle item_currencies END
 
@@ -1835,7 +1836,7 @@ class ReportBuilder(BaseReportBuilder):
 
             self.instance.item_portfolios = self._get_portfolios_by_ids(ids=portfolios_ids)
 
-        _l.info('_refresh_with_perms_optimized item_portfolios done: %s', (time.perf_counter() - item_portfolios_st))
+        _l.info('_refresh_with_perms_optimized item_portfolios done: %s', "{:3.3f}".format(time.perf_counter() - item_portfolios_st))
 
         # Handle item_portfolios END
 
@@ -1860,7 +1861,7 @@ class ReportBuilder(BaseReportBuilder):
 
             self.instance.item_instruments = self._get_instruments_by_ids(ids=instruments_ids)
 
-        _l.info('_refresh_with_perms_optimized item_instruments done: %s', (time.perf_counter() - item_instruments_st))
+        _l.info('_refresh_with_perms_optimized item_instruments done: %s', "{:3.3f}".format(time.perf_counter() - item_instruments_st))
 
         # Handle item_instruments END
 
@@ -1889,7 +1890,7 @@ class ReportBuilder(BaseReportBuilder):
             self.instance.item_instrument_types = self._get_instrument_types_by_ids(ids=instrument_types_ids)
 
         _l.info('_refresh_with_perms_optimized item_instrument_types done: %s',
-                 (time.perf_counter() - item_instrument_types_st))
+                "{:3.3f}".format(time.perf_counter() - item_instrument_types_st))
 
         # Handle item_instrument_types END
 
@@ -1916,7 +1917,7 @@ class ReportBuilder(BaseReportBuilder):
 
             self.instance.item_strategies1 = self._get_strategies1_by_ids(ids=strategy1_ids)
 
-        _l.info('_refresh_with_perms_optimized item_strategies1 done: %s', (time.perf_counter() - item_strategies1_st))
+        _l.info('_refresh_with_perms_optimized item_strategies1 done: %s', "{:3.3f}".format(time.perf_counter() - item_strategies1_st))
 
         # Handle item_strategies1 END
 
@@ -1943,7 +1944,7 @@ class ReportBuilder(BaseReportBuilder):
 
             self.instance.item_strategies2 = self._get_strategies2_by_ids(ids=strategy2_ids)
 
-        _l.info('_refresh_with_perms_optimized item_strategies2 done: %s', (time.perf_counter() - item_strategies2_st))
+        _l.info('_refresh_with_perms_optimized item_strategies2 done: %s', "{:3.3f}".format(time.perf_counter() - item_strategies2_st))
 
         # Handle item_strategies2 END
 
@@ -1970,7 +1971,7 @@ class ReportBuilder(BaseReportBuilder):
 
             self.instance.item_strategies3 = self._get_strategies3_by_ids(ids=strategy3_ids)
 
-        _l.info('_refresh_with_perms_optimized item_strategies3 done: %s', (time.perf_counter() - item_strategies3_st))
+        _l.info('_refresh_with_perms_optimized item_strategies3 done: %s', "{:3.3f}".format(time.perf_counter() - item_strategies3_st))
 
         # Handle item_strategies2 END
 

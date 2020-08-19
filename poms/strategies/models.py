@@ -5,6 +5,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy
 from mptt.models import MPTTModel
 
+from poms.cache_machine.base import CachingMixin, CachingManager
 from poms.common.models import NamedModel, FakeDeletableModel, DataTimeStampedModel
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
@@ -65,7 +66,7 @@ class Strategy1Subgroup(NamedModel, FakeDeletableModel):
         return self.master_user.strategy1_subgroup_id == self.id if self.master_user_id else False
 
 
-class Strategy1(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Strategy1(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategies1', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     subgroup = models.ForeignKey(Strategy1Subgroup, null=True, blank=True, on_delete=models.PROTECT,
                                  related_name='strategies')
@@ -74,6 +75,8 @@ class Strategy1(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
+
+    objects = CachingManager()
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = ugettext_lazy('strategy1')
@@ -86,6 +89,8 @@ class Strategy1(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
         # unique_together = [
         #     ['subgroup', 'user_code']
         # ]
+
+        base_manager_name = 'objects'
 
     @property
     def is_default(self):
@@ -144,7 +149,7 @@ class Strategy2Subgroup(NamedModel, FakeDeletableModel):
         return self.master_user.strategy2_subgroup_id == self.id if self.master_user_id else False
 
 
-class Strategy2(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Strategy2(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategies2', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     subgroup = models.ForeignKey(Strategy2Subgroup, null=True, blank=True, on_delete=models.PROTECT,
                                  related_name='strategies')
@@ -153,6 +158,8 @@ class Strategy2(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
+
+    objects = CachingManager()
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = ugettext_lazy('strategy2')
@@ -165,6 +172,8 @@ class Strategy2(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
         # unique_together = [
         #     ['subgroup', 'user_code']
         # ]
+
+        base_manager_name = 'objects'
 
     @property
     def is_default(self):
@@ -223,7 +232,7 @@ class Strategy3Subgroup(NamedModel, FakeDeletableModel):
         return self.master_user.strategy3_subgroup_id == self.id if self.master_user_id else False
 
 
-class Strategy3(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Strategy3(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategies3', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     subgroup = models.ForeignKey(Strategy3Subgroup, null=True, blank=True, on_delete=models.PROTECT,
                                  related_name='strategies')
@@ -232,6 +241,8 @@ class Strategy3(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
+
+    objects = CachingManager()
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = ugettext_lazy('strategy3')
@@ -244,6 +255,8 @@ class Strategy3(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
         # unique_together = [
         #     ['subgroup', 'user_code']
         # ]
+
+        base_manager_name = 'objects'
 
     @property
     def is_default(self):

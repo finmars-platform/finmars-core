@@ -122,7 +122,7 @@ class BalanceReportViewSet(AbstractViewSet):
 
         serializer = self.get_serializer(instance=instance, many=False)
 
-        print('serialize report done: %s' % (time.perf_counter() - serialize_report_st))
+        _l.info('serialize report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 

@@ -122,7 +122,7 @@ class CachingModelIterable(ModelIterable):
 
         cached = cache.get(query_key)
         if cached is not None:
-            log.debug('cache hit: %s' % query_key)
+            # log.debug('cache hit: %s' % query_key)
             for obj in cached:
                 obj.from_cache = True
                 yield obj

@@ -232,7 +232,10 @@ def parse_backend_uri(backend_uri):
 def get_redis_backend():
     """Connect to redis from a string like CACHE_BACKEND."""
     # From django-redis-cache.
-    server, params = parse_backend_uri(settings.REDIS_BACKEND)
+
+    uri = "redis://%s/2" % settings.REDIS_HOST
+
+    server, params = parse_backend_uri(uri)
     db = params.pop('db', 0)
     try:
         db = int(db)
