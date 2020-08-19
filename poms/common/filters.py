@@ -628,7 +628,7 @@ class EntitySpecificFilter(BaseFilterBackend):
 
             # Show Disabled
             if is_disabled == False:
-                queryset = queryset.filter(is_enabled=True)
+                queryset = queryset.filter(is_enabled=False)
 
             # Show Deleted
             if is_deleted == False:
