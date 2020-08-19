@@ -15,7 +15,7 @@ from poms.tags.models import TagLink
 from poms.users.models import MasterUser, Member
 
 
-class AccountType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
+class AccountType(CachingMixin, NamedModel, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='account_types', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     show_transaction_details = models.BooleanField(default=False,
                                                    verbose_name=ugettext_lazy('show transaction details'))
@@ -27,6 +27,8 @@ class AccountType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
 
+    objects = CachingManager()
+
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = ugettext_lazy('account type')
         verbose_name_plural = ugettext_lazy('account types')
@@ -34,6 +36,8 @@ class AccountType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             # ('view_accounttype', 'Can view account type'),
             ('manage_accounttype', 'Can manage account type'),
         ]
+
+        base_manager_name = 'objects'
 
     @property
     def is_default(self):

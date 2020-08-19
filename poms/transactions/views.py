@@ -16,7 +16,7 @@ from rest_framework.settings import api_settings
 from poms.accounts.models import Account, AccountType
 from poms.audit import history
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, ModelExtMultipleChoiceFilter, \
-    NoOpFilter, AttributeFilter, GroupsAttributeFilter
+    NoOpFilter, AttributeFilter, GroupsAttributeFilter, EntitySpecificFilter
 from poms.common.pagination import CustomPaginationMixin
 from poms.common.views import AbstractClassModelViewSet, AbstractModelViewSet, AbstractAsyncViewSet
 from poms.counterparties.models import Responsible, Counterparty, ResponsibleGroup, CounterpartyGroup
@@ -231,6 +231,7 @@ class TransactionTypeLightViewSet(AbstractWithObjectPermissionViewSet):
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
+        EntitySpecificFilter
     ]
     filter_class = TransactionTypeFilterSet
     ordering_fields = [
@@ -261,6 +262,7 @@ class TransactionTypeLightWithInputsViewSet(AbstractWithObjectPermissionViewSet)
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
+        EntitySpecificFilter
     ]
     filter_class = TransactionTypeFilterSet
     ordering_fields = [
@@ -299,7 +301,8 @@ class TransactionTypeLightEvGroupViewSet(AbstractEvGroupWithObjectPermissionView
 
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
-        AttributeFilter
+        AttributeFilter,
+        EntitySpecificFilter
     ]
 
 

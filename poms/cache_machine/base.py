@@ -95,7 +95,7 @@ class CachingModelIterable(ModelIterable):
         log.debug('query_key: %s' % query_key)
         query_flush = flush_key(self.queryset.query_key())
         log.debug('query_flush: %s' % query_flush)
-        print('self.timeout %s' % self.timeout)
+        log.debug('query_model %s' % self.queryset.model)
         cache.add(query_key, objects, timeout=None)
         invalidator.cache_objects(self.queryset.model, objects, query_key, query_flush)
 
