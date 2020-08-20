@@ -1232,10 +1232,10 @@ class GeneratedEvent(models.Model):
     action = models.ForeignKey(EventScheduleAction, null=True, blank=True, on_delete=models.SET_NULL,
                                related_name='generated_events', verbose_name=ugettext_lazy('action'))
     transaction_type = models.ForeignKey('transactions.TransactionType', null=True, blank=True,
-                                         on_delete=models.PROTECT, related_name='generated_events',
+                                         on_delete=models.SET_NULL, related_name='generated_events',
                                          verbose_name=ugettext_lazy('transaction type'))
     complex_transaction = models.ForeignKey('transactions.ComplexTransaction', null=True, blank=True,
-                                            on_delete=models.PROTECT, related_name='generated_events',
+                                            on_delete=models.SET_NULL, related_name='generated_events',
                                             verbose_name=ugettext_lazy('complex transaction'))
     member = models.ForeignKey('users.Member', null=True, blank=True, on_delete=models.SET_NULL,
                                verbose_name=ugettext_lazy('member'))
