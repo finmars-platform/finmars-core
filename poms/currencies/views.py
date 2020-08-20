@@ -21,7 +21,6 @@ from poms.obj_perms.views import AbstractEvGroupWithObjectPermissionViewSet, Abs
 from poms.tags.filters import TagFilter
 from poms.tags.utils import get_tag_prefetch
 from poms.users.filters import OwnerByMasterUserFilter
-from poms.users.permissions import SuperUserOrReadOnly
 
 
 class CurrencyAttributeTypeViewSet(GenericAttributeTypeViewSet):
@@ -96,7 +95,8 @@ class CurrencyLightViewSet(AbstractWithObjectPermissionViewSet):
     )
     serializer_class = CurrencyLightSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter
+        OwnerByMasterUserFilter,
+        EntitySpecificFilter
     ]
     filter_class = CurrencyLightFilterSet
     ordering_fields = [
@@ -160,6 +160,7 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
         'pricing_policy', 'pricing_policy__user_code', 'pricing_policy__name', 'pricing_policy__short_name',
         'pricing_policy__public_name',
     ]
+
 
 class CurrencyHistoryEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = CurrencyHistory.objects.select_related(

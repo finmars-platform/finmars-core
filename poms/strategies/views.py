@@ -6,7 +6,7 @@ from django_filters.rest_framework import FilterSet
 from rest_framework.settings import api_settings
 
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, AttributeFilter, \
-    GroupsAttributeFilter
+    GroupsAttributeFilter, EntitySpecificFilter
 from poms.common.pagination import CustomPaginationMixin
 from poms.obj_attrs.views import GenericAttributeTypeViewSet
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
@@ -200,6 +200,7 @@ class Strategy1ViewSet(AbstractWithObjectPermissionViewSet):
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
+        EntitySpecificFilter
     ]
     filter_class = Strategy1FilterSet
     ordering_fields = [
@@ -406,6 +407,7 @@ class Strategy2ViewSet(Strategy1ViewSet):
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
+        EntitySpecificFilter
     ]
     serializer_class = Strategy2Serializer
     filter_class = Strategy2FilterSet
@@ -600,6 +602,7 @@ class Strategy3ViewSet(Strategy1ViewSet):
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
+        EntitySpecificFilter
     ]
     serializer_class = Strategy3Serializer
     filter_class = Strategy3FilterSet
