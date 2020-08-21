@@ -32,6 +32,12 @@ from poms.users.utils import get_user_from_context, get_master_user_from_context
 
 from django.core.mail import send_mail
 
+import smtplib
+
+from logging import getLogger
+
+_l = getLogger('poms.users')
+
 
 class PingSerializer(serializers.Serializer):
     message = serializers.CharField(read_only=True)
@@ -874,6 +880,9 @@ class InviteCreateSerializer(serializers.Serializer):
         subject = "Invitation to %s database" % member.master_user.name
         recipient_list = [user_to.email]
 
-        send_mail(subject, message, None, recipient_list, html_message=message)
+        try:
+            send_mail(subject, message, None, recipient_list, html_message=message)
+        except (Exception, smtplib.SMTPSenderRefused):
+            _l.info("Can't send email. SMTP is not configured?")
 
         return validated_data
