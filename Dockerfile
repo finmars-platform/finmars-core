@@ -45,8 +45,9 @@ COPY docker/celeryd-config /etc/default/celeryd
 COPY docker/celerybeat /etc/init.d/celerybeat
 COPY docker/celerybeat-config /etc/default/celerybeat
 
-COPY docker/uwsgi-www.ini /etc/uwsgi/finmars-vassals/finmars-www.ini
-COPY docker/uwsgi-emperor.ini /etc/uwsgi/apps-enabled/finmars.ini
+COPY docker/uwsgi-www.ini /etc/uwsgi/apps-enabled/finmars.ini
+#COPY docker/uwsgi-www.ini /etc/uwsgi/finmars-vassals/finmars-www.ini
+#COPY docker/uwsgi-emperor.ini /etc/uwsgi/apps-enabled/finmars.ini
 
 COPY docker/filebeat-config /etc/filebeat/filebeat.yml
 
