@@ -613,7 +613,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Attribute Types done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Attribute Types done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_instrument_types(self, configuration_section):
 
@@ -701,7 +701,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Instrument Types done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Instrument Types done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_account_types(self, configuration_section):
 
@@ -753,7 +753,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Account Types done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Account Types done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_transaction_types_groups(self, configuration_section):
 
@@ -805,7 +805,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Transaction Types Groups done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Transaction Types Groups done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_transaction_types(self, configuration_section):
 
@@ -871,7 +871,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Transaction Types done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Transaction Types done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def overwrite_instrument_types(self, configuration_section):
 
@@ -925,7 +925,7 @@ class ImportManager(object):
 
                         instrument_type.save()
 
-        _l.info('Import Configuration Overwrite Instrument Types done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Overwrite Instrument Types done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_custom_columns_balance_report(self, configuration_section):
 
@@ -978,7 +978,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Custom Columns Balance Report done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Custom Columns Balance Report done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_custom_columns_pl_report(self, configuration_section):
 
@@ -1031,7 +1031,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Custom Columns PL Report done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Custom Columns PL Report done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_custom_columns_transaction_report(self, configuration_section):
 
@@ -1085,7 +1085,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Custom Columns Transaction Report done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Custom Columns Transaction Report done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_edit_layouts(self, configuration_section):
 
@@ -1150,7 +1150,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Edit Layouts done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Edit Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_list_layouts(self, configuration_section):
 
@@ -1167,6 +1167,12 @@ class ImportManager(object):
                     for content_object in item['content']:
 
                         content_object['member'] = self.member.pk
+
+                        if 'origin_for_global_layout' in content_object:
+                            content_object.pop('origin_for_global_layout')
+
+                        if 'sourced_from_global_layout' in content_object:
+                            content_object.pop('sourced_from_global_layout')
 
                         if 'data' in content_object:
 
@@ -1257,7 +1263,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration List Layouts done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration List Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_context_menu_layouts(self, configuration_section):
 
@@ -1328,7 +1334,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration List Layouts done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration List Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_reference_tables(self, configuration_section):
 
@@ -1392,7 +1398,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Reference Table done %s' % (time.perf_counter() - st))
+        _l.info('Import Reference Table done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_template_layouts(self, configuration_section):
 
@@ -1464,7 +1470,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration List Layouts done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration List Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def sync_dashboard_layout_component_type_settings(self, component_type):
 
@@ -1507,6 +1513,13 @@ class ImportManager(object):
                         # _l.info('Dashboard layout name %s' % content_object['name'])
 
                         content_object['member'] = self.member.pk
+
+                        if 'origin_for_global_layout' in content_object:
+                            content_object.pop('origin_for_global_layout')
+
+                        if 'sourced_from_global_layout' in content_object:
+                            content_object.pop('sourced_from_global_layout')
+
 
                         if 'data' in content_object:
 
@@ -1576,7 +1589,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Dashboard Layouts done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Dashboard Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_download_instrument_schemes(self, configuration_section):
 
@@ -1650,7 +1663,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Instrument Download Scheme done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Instrument Download Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_transaction_import_schemes(self, configuration_section):
 
@@ -1740,7 +1753,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Transaction Import Scheme done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Transaction Import Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_simple_import_schemes(self, configuration_section):
 
@@ -1826,7 +1839,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Simple Import Scheme done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Simple Import Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_complex_import_schemes(self, configuration_section):
 
@@ -1910,7 +1923,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Complex Import Scheme done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Complex Import Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_currencies(self, configuration_section):
 
@@ -2013,7 +2026,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Currency done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Currency done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_pricing_policies(self, configuration_section):
 
@@ -2101,7 +2114,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Pricing Policy done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Pricing Policy done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_pricing_automated_schedule(self, configuration_section):
 
@@ -2149,7 +2162,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Pricing Automated Schedule done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Pricing Automated Schedule done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
 
 
@@ -2202,7 +2215,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Entity Tooltips done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Entity Tooltips done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_color_palettes(self, configuration_section):
 
@@ -2270,7 +2283,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Color Palettes done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Color Palettes done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_instrument_user_fields(self, configuration_section):
         st = time.perf_counter()
@@ -2329,7 +2342,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Instrument User Fields done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Instrument User Fields done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_transaction_user_fields(self, configuration_section):
 
@@ -2377,7 +2390,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Transaction User Fields done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Transaction User Fields done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_instrument_pricing_schemes(self, configuration_section):
 
@@ -2441,7 +2454,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Instrument Pricing Scheme done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Instrument Pricing Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_currency_pricing_schemes(self, configuration_section):
 
@@ -2503,7 +2516,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Currency Pricing Scheme done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Currency Pricing Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_pricing_schedules(self, configuration_section):
 
@@ -2573,7 +2586,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Pricing Schedules done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Pricing Schedules done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_pricing_procedures(self, configuration_section):
 
@@ -2635,7 +2648,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Pricing Procedure done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration Pricing Procedure done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     # Configuration import logic end
 
@@ -2752,7 +2765,7 @@ class ImportManager(object):
             self.import_reference_tables(configuration_section)
             self.import_dashboard_layouts(configuration_section)
 
-        _l.info('Import Configuration done %s' % (time.perf_counter() - st))
+        _l.info('Import Configuration done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
         # except Exception as error:
         #
@@ -2902,7 +2915,7 @@ class ImportManager(object):
             else:
                 _l.info('Permission Error: Mappings')
 
-            _l.info('Import Mappings done %s' % (time.perf_counter() - st))
+            _l.info('Import Mappings done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
         except Exception as error:
 
@@ -2950,7 +2963,7 @@ def configuration_import_as_json(self, instance):
 
             import_manager.import_mappings(mappings_section)
 
-        _l.info('Import done %s' % (time.perf_counter() - st))
+        _l.info('Import done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     except Exception as e:
 

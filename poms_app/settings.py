@@ -110,6 +110,7 @@ INSTALLED_APPS = [
     'poms.pricing',
 
     'poms.schedules',
+    'poms.procedures',
 
     'poms.layout_recovery',
 
@@ -609,6 +610,10 @@ if BackendRole.ALL in BACKEND_ROLES or BackendRole.DATA_PROVIDER in BACKEND_ROLE
         },
         'schedules.auto_process_pricing_procedures_schedules': {
             'task': 'schedules.auto_process_pricing_procedures_schedules',
+            'schedule': crontab(minute='0,10,20,30,40,50'),
+        },
+        'schedules.process': {
+            'task': 'schedules.process',
             'schedule': crontab(minute='0,10,20,30,40,50'),
         },
         'instruments.generate_events_do_not_inform_apply_default': {

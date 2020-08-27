@@ -31,8 +31,7 @@ class BaseSchedule(NamedModel):
 
     last_run_at = models.DateTimeField(default=timezone.now, editable=False, db_index=True,
                                        verbose_name=ugettext_lazy('last run at'))
-    # next_run_at = models.DateTimeField(default=timezone.now, editable=False, db_index=True,
-    #                                    verbose_name=ugettext_lazy('next run at')) # TODO Undo when test is passed on prod
+
     next_run_at = models.DateTimeField(default=timezone.now, editable=True, db_index=True,
                                        verbose_name=ugettext_lazy('next run at'))
 
@@ -83,13 +82,66 @@ class PricingSchedule(BaseSchedule, DataTimeStampedModel):
         )
 
 
-class TransactionFileDownloadSchedule(BaseSchedule, DataTimeStampedModel):
+class Schedule(NamedModel):
+    master_user = models.ForeignKey(MasterUser,  verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
-    provider = models.ForeignKey(TransactionProvider, verbose_name=ugettext_lazy('provider'), on_delete=models.CASCADE)
+    cron_expr = models.CharField(max_length=255, blank=True, default='', validators=[validate_crontab],
+                                 verbose_name=ugettext_lazy('cron expr'),
+                                 help_text=ugettext_lazy(
+                                     'Format is "* * * * *" (minute / hour / day_month / month / day_week)'))
 
-    scheme_name = models.CharField(max_length=255)
+    last_run_at = models.DateTimeField(default=timezone.now, editable=False, db_index=True,
+                                       verbose_name=ugettext_lazy('last run at'))
 
-    class Meta(BaseSchedule.Meta):
+    next_run_at = models.DateTimeField(default=timezone.now, editable=True, db_index=True,
+                                       verbose_name=ugettext_lazy('next run at'))
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        if self.is_enabled:
+            self.schedule(save=False)
+        super(Schedule, self).save(force_insert=force_insert, force_update=force_update, using=using,
+                                       update_fields=update_fields)
+
+    def schedule(self, save=False):
+        start_time = timezone.localtime(timezone.now())
+        cron = croniter(self.cron_expr, start_time)
+
+        next_run_at = cron.get_next(datetime)
+
+        min_timedelta = settings.PRICING_AUTO_DOWNLOAD_MIN_TIMEDELTA
+        if min_timedelta is not None:
+            if not isinstance(min_timedelta, timedelta):
+                min_timedelta = timedelta(minutes=min_timedelta)
+            for i in range(100):
+                if (next_run_at - start_time) >= min_timedelta:
+                    break
+                next_run_at = cron.get_next(datetime)
+
+        self.next_run_at = next_run_at
+
+        if save:
+            self.save(update_fields=['last_run_at', 'next_run_at', ])
+
+    class Meta(NamedModel.Meta):
         unique_together = (
             ('user_code',  'master_user')
         )
+
+    def __str__(self):
+        return self.user_code
+
+
+class ScheduleProcedure(models.Model):
+
+    schedule = models.ForeignKey(Schedule,  verbose_name=ugettext_lazy('schedule'), related_name="procedures", on_delete=models.CASCADE)
+    type = models.CharField(max_length=25, null=True, blank=True, verbose_name=ugettext_lazy('type'))
+    user_code = models.CharField(max_length=25, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
+
+
+class TransactionFileDownloadProcedure(NamedModel, DataTimeStampedModel):
+
+    master_user = models.ForeignKey(MasterUser,  verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+
+    provider = models.ForeignKey(TransactionProvider, verbose_name=ugettext_lazy('provider'), on_delete=models.CASCADE)
+    scheme_name = models.CharField(max_length=255)
+

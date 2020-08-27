@@ -1,9 +1,10 @@
 from django.contrib import admin
 
 # Register your models here.
-from poms.schedules.models import PricingSchedule, TransactionFileDownloadSchedule
+from poms.schedules.models import PricingSchedule, Schedule, ScheduleProcedure, TransactionFileDownloadProcedure
 
 
+# DEPRECATED SINCE 26.08.2020 DELETE SOON
 class PricingScheduleAdmin(admin.ModelAdmin):
     model = PricingSchedule
     list_display = ['id', 'master_user', 'name', 'user_code', 'cron_expr', 'next_run_at', 'last_run_at']
@@ -14,11 +15,28 @@ class PricingScheduleAdmin(admin.ModelAdmin):
 admin.site.register(PricingSchedule, PricingScheduleAdmin)
 
 
-class TransactionFileDownloadScheduleAdmin(admin.ModelAdmin):
-    model = TransactionFileDownloadSchedule
-    list_display = ['id', 'master_user', 'name', 'user_code', 'cron_expr', 'next_run_at', 'last_run_at', 'provider', 'scheme_name']
-    raw_id_fields = ['master_user', 'provider']
+class ScheduleProcedureInline(admin.TabularInline):
+    model = ScheduleProcedure
+    fields = ['id', 'type', 'user_code']
 
 
-admin.site.register(TransactionFileDownloadSchedule, TransactionFileDownloadScheduleAdmin)
+class ScheduleAdmin(admin.ModelAdmin):
+    model = Schedule
+    list_display = ['id', 'master_user', 'name', 'user_code', 'cron_expr', 'next_run_at', 'last_run_at']
+    raw_id_fields = ['master_user']
+    inlines = [ScheduleProcedureInline]
+
+
+admin.site.register(Schedule, ScheduleAdmin)
+
+
+class TransactionFileDownloadProcedureAdmin(admin.ModelAdmin):
+    model = TransactionFileDownloadProcedure
+    list_display = ['id', 'master_user', 'name', 'user_code', 'provider', 'scheme_name']
+    raw_id_fields = ['master_user']
+
+
+admin.site.register(TransactionFileDownloadProcedure, TransactionFileDownloadProcedureAdmin)
+
+
 

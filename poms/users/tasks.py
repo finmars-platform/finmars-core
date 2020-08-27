@@ -8,7 +8,7 @@ from logging import getLogger
 _l = getLogger('poms.users')
 
 @shared_task(name='users.clone_master_user', bind=True)
-def clone_master_user(self, instance, current_user):
+def clone_master_user(self, instance, name, current_user):
 
     from poms.users.cloner import FullDataCloner
 

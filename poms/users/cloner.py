@@ -62,6 +62,7 @@ _l = logging.getLogger('poms.users.cloner')
 
 
 class FullDataCloner(object):
+
     def __init__(self, source_master_user, name=None, copy_settings=None, current_user=None):
         self._now = None
         self._source_master_user = source_master_user
@@ -797,7 +798,6 @@ class FullDataCloner(object):
         self._simple_list_clone(ReferenceTable, None, 'master_user', 'name')
 
         self._simple_list_clone(ReferenceTableRow, 'reference_table__master_user', 'reference_table', 'key', 'value', 'order')
-
 
     def _reconciliation_1(self):
 

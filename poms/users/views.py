@@ -267,7 +267,7 @@ class MasterUserCopyViewSet(AbstractAsyncViewSet):
 
         else:
 
-            res = self.celery_task.apply_async(kwargs={'instance': instance, 'current_user': request.user})
+            res = self.celery_task.apply_async(kwargs={'instance': instance, 'name': request.data['name'], 'current_user': request.user})
             instance.task_id = signer.sign('%s' % res.id)
 
             celery_task = CeleryTask.objects.create(master_user=request.user.master_user,

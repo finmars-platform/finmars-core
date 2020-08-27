@@ -39,6 +39,7 @@ import poms.configuration_sharing.views as configuration_sharing
 
 import poms.pricing.views as pricing
 import poms.schedules.views as schedules
+import poms.procedures.views as procedures
 import poms.layout_recovery.views as layout_recovery
 from healthcheck.views import HealthcheckView
 
@@ -399,8 +400,11 @@ router.register(r'pricing/price-history-error-ev-group', pricing.PriceHistoryErr
 router.register(r'pricing/price-history-error', pricing.PriceHistoryErrorViewSet)
 router.register(r'pricing/currency-history-error-ev-group', pricing.CurrencyHistoryErrorEvGroupViewSet, 'currencyhistoryerrorevgroup')
 router.register(r'pricing/currency-history-error', pricing.CurrencyHistoryErrorViewSet)
-router.register(r'schedules/pricing', schedules.PricingScheduleViewSet)
-router.register(r'schedules/transaction-file-download', schedules.TransactionFileDownloadScheduleViewSet)
+
+router.register(r'schedules/pricing', schedules.PricingScheduleViewSet) # DEPRECATED SINCE 26.08.2020 DELETE SOON
+
+router.register(r'schedules/schedule', schedules.PricingScheduleViewSet)
+router.register(r'procedures/procedure', procedures.RequestDataFileProcedureViewSet)
 
 router.register(r'recovery/generate-layout-archetype', layout_recovery.GenerateLayoutArchetypeViewSet, 'recovery_generate_layout_archetype')
 router.register(r'recovery/layout', layout_recovery.FixLayoutViewSet, 'recovery_layout')
@@ -421,7 +425,7 @@ urlpatterns = [
     url(r'internal/brokers/wtrade/callback', csrf_exempt(pricing.PricingBrokerWtradeHandler.as_view())),
     url(r'internal/brokers/fixer/callback', csrf_exempt(pricing.PricingBrokerFixerHandler.as_view())),
     url(r'internal/brokers/alphav/callback', csrf_exempt(pricing.PricingBrokerAlphavHandler.as_view())),
-    url(r'internal/data/transactions/upload-file', csrf_exempt(integrations.TransactionFileResultUploadHandler.as_view()))
+    url(r'internal/data/transactions/callback', csrf_exempt(integrations.TransactionFileResultUploadHandler.as_view()))
 ]
 
 if 'rest_framework_swagger' in settings.INSTALLED_APPS:
