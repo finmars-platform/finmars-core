@@ -17,7 +17,7 @@ from poms.integrations.models import Task, ImportConfig, ProviderClass, Currency
     PortfolioClassifierMapping, AccountClassifierMapping, \
     CounterpartyClassifierMapping, ResponsibleClassifierMapping, InstrumentClassifierMapping, \
     ComplexTransactionImportSchemeRuleScenario, ComplexTransactionImportSchemeReconScenario, \
-    ComplexTransactionImportSchemeReconField, BloombergDataProviderCredential, TransactionProvider, \
+    ComplexTransactionImportSchemeReconField, BloombergDataProviderCredential, DataProvider, \
     TransactionFileResult
 
 admin.site.register(ProviderClass, ClassModelAdmin)
@@ -427,12 +427,12 @@ admin.site.register(ComplexTransactionImportSchemeReconScenario, ComplexTransact
 # admin.site.register(ComplexTransactionImportSchemeField, ComplexTransactionImportSchemeFieldAdmin)
 
 
-class TransactionProviderAdmin(admin.ModelAdmin):
-    model = TransactionProvider
+class DataProviderAdmin(admin.ModelAdmin):
+    model = DataProvider
     list_display = ['id', 'name', 'notes']
 
 
-admin.site.register(TransactionProvider, TransactionProviderAdmin)
+admin.site.register(DataProvider, DataProviderAdmin)
 
 
 class TransactionFileResultAdmin(admin.ModelAdmin):
@@ -440,4 +440,6 @@ class TransactionFileResultAdmin(admin.ModelAdmin):
     list_display = ['id', 'master_user',  'provider', 'scheme_name']
     raw_id_fields = ['master_user', 'provider']
 
+
 admin.site.register(TransactionFileResult, TransactionFileResultAdmin)
+

@@ -3,7 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy
 
 from poms.common.models import NamedModel, DataTimeStampedModel
-from poms.integrations.models import TransactionProvider
+from poms.integrations.models import DataProvider
 from poms.users.models import MasterUser
 
 from croniter import croniter
@@ -136,12 +136,3 @@ class ScheduleProcedure(models.Model):
     schedule = models.ForeignKey(Schedule,  verbose_name=ugettext_lazy('schedule'), related_name="procedures", on_delete=models.CASCADE)
     type = models.CharField(max_length=25, null=True, blank=True, verbose_name=ugettext_lazy('type'))
     user_code = models.CharField(max_length=25, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
-
-
-class TransactionFileDownloadProcedure(NamedModel, DataTimeStampedModel):
-
-    master_user = models.ForeignKey(MasterUser,  verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
-
-    provider = models.ForeignKey(TransactionProvider, verbose_name=ugettext_lazy('provider'), on_delete=models.CASCADE)
-    scheme_name = models.CharField(max_length=255)
-

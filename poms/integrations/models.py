@@ -1134,7 +1134,7 @@ class ComplexTransactionImportSchemeReconField(models.Model):
     value_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('value date'))
 
 
-class TransactionProvider(models.Model):
+class DataProvider(models.Model):
 
     name = models.CharField(max_length=255)
     notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
@@ -1147,7 +1147,7 @@ class TransactionFileResult(DataTimeStampedModel):
 
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
-    provider = models.ForeignKey(TransactionProvider, verbose_name=ugettext_lazy('provider'), on_delete=models.CASCADE)
+    provider = models.ForeignKey(DataProvider, verbose_name=ugettext_lazy('provider'), on_delete=models.CASCADE)
 
     scheme_name = models.CharField(max_length=255)
 

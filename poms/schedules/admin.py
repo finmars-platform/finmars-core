@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from poms.schedules.models import PricingSchedule, Schedule, ScheduleProcedure, TransactionFileDownloadProcedure
+from poms.schedules.models import PricingSchedule, Schedule, ScheduleProcedure
 
 
 # DEPRECATED SINCE 26.08.2020 DELETE SOON
@@ -28,15 +28,4 @@ class ScheduleAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Schedule, ScheduleAdmin)
-
-
-class TransactionFileDownloadProcedureAdmin(admin.ModelAdmin):
-    model = TransactionFileDownloadProcedure
-    list_display = ['id', 'master_user', 'name', 'user_code', 'provider', 'scheme_name']
-    raw_id_fields = ['master_user']
-
-
-admin.site.register(TransactionFileDownloadProcedure, TransactionFileDownloadProcedureAdmin)
-
-
 

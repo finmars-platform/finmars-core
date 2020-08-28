@@ -154,7 +154,7 @@ def process_procedure_async(self, procedure, master_user):
 
         except PricingProcedure.DoesNotExist:
 
-            _l.info("Can't find Pricing Procedure %s" % procedure.user_code )
+            _l.info("Can't find Pricing Procedure %s" % procedure.user_code)
 
     if procedure.type == 'request_data_file':
 
@@ -167,7 +167,7 @@ def process_procedure_async(self, procedure, master_user):
 
         except RequestDataFileProcedure.DoesNotExist:
 
-            _l.info("Can't find Request Data File Procedure %s" % procedure.user_code )
+            _l.info("Can't find Request Data File Procedure %s" % procedure.user_code)
 
 
 

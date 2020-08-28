@@ -7,7 +7,7 @@ import json
 from poms.integrations.models import TransactionFileResult
 
 import logging
-_l = logging.getLogger('poms.pricing')
+_l = logging.getLogger('poms.shedules')
 
 
 class RequestDataFileProcedureProcess(object):
@@ -21,9 +21,9 @@ class RequestDataFileProcedureProcess(object):
 
     def process(self):
 
-        if settings.TRANSACTION_FILE_SERVICE_URL:
+        if settings.DATA_FILE_SERVICE_URL:
 
-            _l.info("TransactionFileDownloadSchedule: Subprocess process_request_transaction_file_async. Master User: %s. Provider: %s, Scheme name: %s" % (master_user, provider, scheme_name) )
+            _l.info("RequestDataFileProcedureProcess: Subprocess process_request_transaction_file_async. Master User: %s. Provider: %s, Scheme name: %s" % (master_user, provider, scheme_name) )
 
             item = TransactionFileResult.objects.create(
                 master_user=self.master_user,
@@ -34,10 +34,16 @@ class RequestDataFileProcedureProcess(object):
             data = {
                 "id": item.id,
                 "user": {
-                    "token": self.master_user.token
+                    "token": self.master_user.token,
+                    "credentials": {}
                 },
+                "date_from": self.procedure.date_from,
+                "date_to": self.procedure.date_to,
                 "provider": self.procedure.provider,
-                "scheme_name": self.procedure.scheme_name
+                "scheme_name": self.procedure.scheme_name,
+                "files": [
+                    {"host": "sftp", "path": "SNAP"}
+                ]
             }
 
             headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
@@ -46,12 +52,12 @@ class RequestDataFileProcedureProcess(object):
 
             try:
 
-                response = requests.post(url=settings.TRANSACTION_FILE_SERVICE_URL, data=json.dumps(data), headers=headers)
+                response = requests.post(url=settings.DATA_FILE_SERVICE_URL, data=json.dumps(data), headers=headers)
 
             except Exception:
-                _l.info("Can't send request to Transaction File Service. Is Transaction File Service offline?")
+                _l.info("Can't send request to Data File Service. Is Transaction File Service offline?")
 
-                raise Exception("Transaction File Service is unavailable")
+                raise Exception("Data File Service is unavailable")
 
         else:
-            _l.info('TRANSACTION_FILE_SERVICE_URL is not set')
+            _l.info('DATA_FILE_SERVICE_URL is not set')

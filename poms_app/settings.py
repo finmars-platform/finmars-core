@@ -111,6 +111,8 @@ INSTALLED_APPS = [
 
     'poms.schedules',
     'poms.procedures',
+    'poms.credentials',
+
 
     'poms.layout_recovery',
 
@@ -754,7 +756,7 @@ BLOOMBERG_SANDBOX_WAIT_FAIL = False
 # PRICING SECTION
 
 MEDIATOR_URL = os.environ.get('MEDIATOR_URL', None)
-TRANSACTION_FILE_SERVICE_URL = os.environ.get('TRANSACTION_FILE_SERVICE_URL', None)
+DATA_FILE_SERVICE_URL = os.environ.get('DATA_FILE_SERVICE_URL', None)
 
 
 INSTRUMENT_EVENTS_REGULAR_MAX_INTERVALS = 1000
