@@ -61,7 +61,7 @@ class IntegrationsConfig(AppConfig):
                 item = DataProvider.objects.get(id=type['id'])
 
                 item.name = type['name']
-                item.input_type = type['input_type']
+                item.user_code = type['user_code']
 
                 item.save()
 
