@@ -10,10 +10,12 @@ class Credentials(NamedModel, DataTimeStampedModel):
 
     USERNAME_WITH_PASSWORD = 1
     SSH_USERNAME_WITH_PRIVATE_KEY = 2
+    USERNAME_WITH_PASSWORD_AND_PRIVATE_KEY = 2
 
     TYPE_CHOICES = (
         (USERNAME_WITH_PASSWORD, ugettext_lazy('Username with password')),
         (SSH_USERNAME_WITH_PRIVATE_KEY, ugettext_lazy('SSH username with private key')),
+        (USERNAME_WITH_PASSWORD_AND_PRIVATE_KEY, ugettext_lazy('Username with password and private key')),
     )
 
     master_user = models.ForeignKey(MasterUser,  verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)

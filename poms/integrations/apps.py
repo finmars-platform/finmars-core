@@ -12,6 +12,7 @@ class IntegrationsConfig(AppConfig):
 
     def ready(self):
         post_migrate.connect(self.update_transaction_classes, sender=self)
+        post_migrate.connect(self.update_data_providers, sender=self)
 
         # noinspection PyUnresolvedReferences
         import poms.integrations.handlers
@@ -26,3 +27,44 @@ class IntegrationsConfig(AppConfig):
         db_class_check_data(ProviderClass, verbosity, using)
         db_class_check_data(FactorScheduleDownloadMethod, verbosity, using)
         db_class_check_data(AccrualScheduleDownloadMethod, verbosity, using)
+
+
+    def update_data_providers(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
+
+        from poms.common.utils import db_class_check_data
+        from .models import DataProvider
+
+        provider_types = [
+            {
+                "id": 1,
+                "name": "CIM bank",
+                "user_code": "cim_bank",
+            },
+            {
+                "id": 2,
+                "name": "Julius Baer",
+                "user_code": "julius_baer",
+            },
+            {
+                "id": 3,
+                "name": "Lombard Odier",
+                "user_code": "lombard_odier",
+            },
+        ]
+
+        providers_exists = DataProvider.objects.values_list('pk', flat=True)
+
+        for type in provider_types:
+
+            if type['id'] in providers_exists:
+
+                item = DataProvider.objects.get(id=type['id'])
+
+                item.name = type['name']
+                item.input_type = type['input_type']
+
+                item.save()
+
+            else:
+                DataProvider.objects.create(**type)
+

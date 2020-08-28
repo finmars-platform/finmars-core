@@ -14,7 +14,8 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import ugettext, ugettext_lazy
 
-from poms.common.models import TimeStampedModel, AbstractClassModel, EXPRESSION_FIELD_LENGTH, DataTimeStampedModel
+from poms.common.models import TimeStampedModel, AbstractClassModel, EXPRESSION_FIELD_LENGTH, DataTimeStampedModel, \
+    NamedModel
 from poms.integrations.storage import import_config_storage
 from poms.obj_attrs.models import GenericClassifier, GenericAttributeType
 
@@ -1137,6 +1138,7 @@ class ComplexTransactionImportSchemeReconField(models.Model):
 class DataProvider(models.Model):
 
     name = models.CharField(max_length=255)
+    user_code = models.CharField(max_length=25, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
     notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
 
     def __str__(self):
