@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
 import functools
-import logging
 
 import django
 from django.core.cache.backends.base import DEFAULT_TIMEOUT
@@ -12,6 +11,12 @@ from django.utils import encoding
 
 from poms.cache_machine import config
 from poms.cache_machine.invalidation import byid, cache, flush_key, invalidator, make_key
+
+
+from logging import getLogger
+
+_l = getLogger('poms.cache_machine')
+
 
 try:
     # ModelIterable is defined in Django 1.9+, and if it's present, we use it
@@ -25,8 +30,6 @@ except ImportError:
 
         def __iter__(self):
             return super(CachingQuerySet, self.queryset).iterator()
-
-log = logging.getLogger('poms.cache_machine')
 
 
 class CachingManager(models.Manager):
@@ -44,10 +47,16 @@ class CachingManager(models.Manager):
         return super(CachingManager, self).contribute_to_class(cls, name)
 
     def post_save(self, instance, **kwargs):
+
+        _l.info("post_save %s" % instance)
+
         self.invalidate(instance, is_new_instance=kwargs['created'],
                         model_cls=kwargs['sender'])
 
     def post_delete(self, instance, **kwargs):
+
+        _l.info("post_delete %s" % instance)
+
         self.invalidate(instance)
 
     def invalidate(self, *objects, **kwargs):
@@ -92,10 +101,10 @@ class CachingModelIterable(ModelIterable):
 
     def cache_objects(self, objects, query_key):
         """Cache query_key => objects, then update the flush lists."""
-        log.debug('query_key: %s' % query_key)
+        _l.debug('query_key: %s' % query_key)
         query_flush = flush_key(self.queryset.query_key())
-        log.debug('query_flush: %s' % query_flush)
-        log.debug('query_model %s' % self.queryset.model)
+        _l.debug('query_flush: %s' % query_flush)
+        _l.debug('query_model %s' % self.queryset.model)
         cache.add(query_key, objects, timeout=None)
         invalidator.cache_objects(self.queryset.model, objects, query_key, query_flush)
 
@@ -122,7 +131,7 @@ class CachingModelIterable(ModelIterable):
 
         cached = cache.get(query_key)
         if cached is not None:
-            # log.debug('cache hit: %s' % query_key)
+            # _l.debug('cache hit: %s' % query_key)
             for obj in cached:
                 obj.from_cache = True
                 yield obj
@@ -341,11 +350,11 @@ def cached(function, key_, duration=DEFAULT_TIMEOUT):
     key = _function_cache_key(key_)
     val = cache.get(key)
     if val is None:
-        log.debug('cache miss for %s' % key)
+        _l.debug('cache miss for %s' % key)
         val = function()
         cache.set(key, val, duration)
     else:
-        log.debug('cache hit for %s' % key)
+        _l.debug('cache hit for %s' % key)
     return val
 
 
@@ -356,7 +365,7 @@ def cached_with(obj, f, f_key, timeout=DEFAULT_TIMEOUT):
         obj_key = (obj.query_key() if hasattr(obj, 'query_key')
                    else obj.cache_key)
     except (AttributeError, EmptyResultSet):
-        log.warning('%r cannot be cached.' % encoding.smart_text(obj))
+        _l.warning('%r cannot be cached.' % encoding.smart_text(obj))
         return f()
 
     key = '%s:%s' % tuple(map(encoding.smart_text, (f_key, obj_key)))

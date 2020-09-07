@@ -26,7 +26,9 @@ try:
 except (InvalidCacheBackendError, ValueError):
     cache = default_cache
 
-log = logging.getLogger('caching.invalidation')
+from logging import getLogger
+
+_l = getLogger('poms.cache_machine')
 
 
 def make_key(k, with_locale=True):
@@ -61,8 +63,8 @@ def safe_redis(return_type):
             try:
                 return f(*args, **kw)
             except (socket.error, redislib.RedisError) as e:
-                log.error('redis error: %s' % e)
-                # log.error('%r\n%r : %r' % (f.__name__, args[1:], kw))
+                _l.error('redis error: %s' % e)
+                # _l.error('%r\n%r : %r' % (f.__name__, args[1:], kw))
                 if hasattr(return_type, '__call__'):
                     return return_type()
                 else:
@@ -80,40 +82,49 @@ class Invalidator(object):
         # If whole-model invalidation on create is enabled, include this model's
         # key in the list to be invalidated. Note that the key itself won't
         # contain anything in the cache, but its corresponding flush key will.
-        if (config.CACHE_INVALIDATE_ON_CREATE == config.WHOLE_MODEL and
-                is_new_instance and model_cls and hasattr(model_cls, 'model_flush_key')):
-            flush_keys.append(model_cls.model_flush_key())
+        # if (config.CACHE_INVALIDATE_ON_CREATE == config.WHOLE_MODEL and
+        #         is_new_instance and model_cls and hasattr(model_cls, 'model_flush_key')):
+
+        _l.info('flush_keys before append %s' % flush_keys)
+
+        flush_keys.append(model_cls.model_flush_key())
+
+        _l.info('flush_keys after append %s' % flush_keys)
+
         if not obj_keys or not flush_keys:
             return
         obj_keys, flush_keys = self.expand_flush_lists(obj_keys, flush_keys)
         if obj_keys:
-            log.debug('deleting object keys: %s' % obj_keys)
+            _l.debug('deleting object keys: %s' % obj_keys)
             cache.delete_many(obj_keys)
         if flush_keys:
-            log.debug('clearing flush lists: %s' % flush_keys)
+            _l.debug('clearing flush lists: %s' % flush_keys)
             self.clear_flush_lists(flush_keys)
 
     def cache_objects(self, model, objects, query_key, query_flush):
         # Add this query to the flush list of each object.  We include
         # query_flush so that other things can be cached against the queryset
         # and still participate in invalidation.
+
+        _l.info('objects %s' % objects)
+
         flush_keys = [o.flush_key() for o in objects]
 
         flush_lists = collections.defaultdict(set)
         for key in flush_keys:
-            log.debug('adding %s to %s' % (query_flush, key))
+            _l.debug('adding %s to %s' % (query_flush, key))
             flush_lists[key].add(query_flush)
         flush_lists[query_flush].add(query_key)
         # Add this query to the flush key for the entire model, if enabled
         model_flush = model.model_flush_key()
-        if config.CACHE_INVALIDATE_ON_CREATE == config.WHOLE_MODEL:
-            flush_lists[model_flush].add(query_key)
+        # if config.CACHE_INVALIDATE_ON_CREATE == config.WHOLE_MODEL:
+        flush_lists[model_flush].add(query_key)
         # Add each object to the flush lists of its foreign keys.
         for obj in objects:
             obj_flush = obj.flush_key()
             for key in obj._flush_keys():
                 if key not in (obj_flush, model_flush):
-                    log.debug('related: adding %s to %s' % (obj_flush, key))
+                    _l.debug('related: model %s adding %s to %s' % (obj.model_class, obj_flush, key))
                     flush_lists[key].add(obj_flush)
                 if config.FETCH_BY_ID:
                     flush_lists[key].add(byid(obj))
@@ -125,7 +136,7 @@ class Invalidator(object):
         The search starts with the lists in `keys` and expands to any flush
         lists found therein.  Returns ({objects to flush}, {flush keys found}).
         """
-        log.debug('in expand_flush_lists')
+        _l.debug('in expand_flush_lists')
         obj_keys = set(obj_keys)
         search_keys = flush_keys = set(flush_keys)
 
@@ -139,7 +150,7 @@ class Invalidator(object):
                 else:
                     obj_keys.add(key)
             if new_keys:
-                log.debug('search for %s found keys %s' % (search_keys, new_keys))
+                _l.debug('search for %s found keys %s' % (search_keys, new_keys))
                 flush_keys.update(new_keys)
                 search_keys = new_keys
             else:
@@ -171,7 +182,7 @@ class RedisInvalidator(Invalidator):
 
     def safe_key(self, key):
         if ' ' in key or '\n' in key:
-            log.warning('BAD KEY: "%s"' % key)
+            _l.warning('BAD KEY: "%s"' % key)
             return ''
         return key
 
