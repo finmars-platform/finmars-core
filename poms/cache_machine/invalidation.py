@@ -124,7 +124,7 @@ class Invalidator(object):
             obj_flush = obj.flush_key()
             for key in obj._flush_keys():
                 if key not in (obj_flush, model_flush):
-                    _l.debug('related: model %s adding %s to %s' % (obj.model_class, obj_flush, key))
+                    _l.debug('related:  adding %s to %s' % (obj_flush, key))
                     flush_lists[key].add(obj_flush)
                 if config.FETCH_BY_ID:
                     flush_lists[key].add(byid(obj))
