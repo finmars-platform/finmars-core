@@ -61,7 +61,8 @@ class CachingManager(models.Manager):
 
     def invalidate(self, *objects, **kwargs):
         """Invalidate all the flush lists associated with ``objects``."""
-        invalidator.invalidate_objects(objects, **kwargs)
+        # invalidator.invalidate_objects(objects, **kwargs)
+        invalidator.clear_all()
 
     def raw(self, raw_query, params=None, *args, **kwargs):
         return CachingRawQuerySet(raw_query, self.model, params=params,

@@ -177,6 +177,10 @@ class Invalidator(object):
         """Remove the given keys from the database."""
         cache.delete_many(keys)
 
+    def clear_all(self):
+        _l.info("Clear all cache")
+        cache.clear()
+
 
 class RedisInvalidator(Invalidator):
 
