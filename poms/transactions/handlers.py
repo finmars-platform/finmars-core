@@ -221,6 +221,7 @@ class TransactionTypeProcess(object):
 
         self.values = {}
         self.values.update(self.default_values)
+        self.values.update(self.context_values)
 
         # if complex transaction already exists
         if self.complex_transaction and self.complex_transaction.id is not None and self.complex_transaction.id > 0:
@@ -279,12 +280,12 @@ class TransactionTypeProcess(object):
                         try:
                             value = formula.safe_eval(i.value, names=self.values, now=self._now, context=self._context)
 
-                            _l.info("Set from default. input %s value %s" % (i.name, i.context_property))
+                            _l.info("Set from default. input %s value %s" % (i.name, i.value))
 
                         except formula.InvalidExpression as e:
                             self._set_eval_error(errors, i.name, i.value, e)
                             self.value_errors.append(errors)
-                            _l.info("ERROR Set from default. input %s value %s" % (i.name, i.context_property))
+                            _l.info("ERROR Set from default. input %s" % i.name)
                             value = None
 
                 if value:
