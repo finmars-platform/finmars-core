@@ -498,12 +498,13 @@ class MasterUserLightSerializer(serializers.ModelSerializer):
 
         return result
 
+
 class OtpTokenSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OtpToken
         fields = [
-            'id', 'name',
+            'id', 'name', 'is_active'
         ]
 
 class EcosystemDefaultSerializer(serializers.ModelSerializer):

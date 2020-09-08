@@ -131,7 +131,14 @@ class LoginViewSet(ViewSet):
 
             tokens = OtpToken.objects.filter(user=existing_user)
 
+            active_tokens = False
+
             if len(list(tokens)):
+                for token in tokens:
+                    if token.is_active :
+                        active_tokens = True
+
+            if active_tokens:
                 response['two_factor_check'] = True
             else:
                 response['two_factor_check'] = False

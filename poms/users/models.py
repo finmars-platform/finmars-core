@@ -1221,6 +1221,8 @@ class OtpToken(models.Model):
     secret = models.CharField(max_length=16, blank=True, default='', editable=False,
                                 verbose_name=ugettext_lazy('secret'))
 
+    is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('is active'))
+
 
 class InviteToMasterUser(models.Model):
 
