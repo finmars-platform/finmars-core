@@ -641,7 +641,7 @@ class OtpTokenViewSet(AbstractModelViewSet):
 
         url = totp.provisioning_uri(name, "finmars.com") # u'otpauth://totp/finmars.com:szhitenev?secret=7PXELOEQIHBUKLYS&issuer=finmars.com'
 
-        return Response({'provisioning_uri': url})
+        return Response({'provisioning_uri': url, "token_id": token.id})
 
     @action(detail=False, methods=('PUT', 'PATCH',), url_path='validate-code', permission_classes=[])
     def validate_code(self, request, pk=None):
