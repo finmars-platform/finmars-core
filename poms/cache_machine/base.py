@@ -48,14 +48,14 @@ class CachingManager(models.Manager):
 
     def post_save(self, instance, **kwargs):
 
-        _l.info("post_save %s" % instance)
+        # _l.info("post_save %s" % instance)
 
         self.invalidate(instance, is_new_instance=kwargs['created'],
                         model_cls=kwargs['sender'])
 
     def post_delete(self, instance, **kwargs):
 
-        _l.info("post_delete %s" % instance)
+        # _l.info("post_delete %s" % instance)
 
         self.invalidate(instance)
 
@@ -102,10 +102,10 @@ class CachingModelIterable(ModelIterable):
 
     def cache_objects(self, objects, query_key):
         """Cache query_key => objects, then update the flush lists."""
-        _l.debug('query_key: %s' % query_key)
+        # _l.debug('query_key: %s' % query_key)
         query_flush = flush_key(self.queryset.query_key())
-        _l.debug('query_flush: %s' % query_flush)
-        _l.debug('query_model %s' % self.queryset.model)
+        # _l.debug('query_flush: %s' % query_flush)
+        # _l.debug('query_model %s' % self.queryset.model)
         cache.add(query_key, objects, timeout=None)
         invalidator.cache_objects(self.queryset.model, objects, query_key, query_flush)
 
@@ -132,7 +132,7 @@ class CachingModelIterable(ModelIterable):
 
         cached = cache.get(query_key)
         if cached is not None:
-            # _l.debug('cache hit: %s' % query_key)
+#             # _l.debug('cache hit: %s' % query_key)
             for obj in cached:
                 obj.from_cache = True
                 yield obj
@@ -351,11 +351,11 @@ def cached(function, key_, duration=DEFAULT_TIMEOUT):
     key = _function_cache_key(key_)
     val = cache.get(key)
     if val is None:
-        _l.debug('cache miss for %s' % key)
+        # _l.debug('cache miss for %s' % key)
         val = function()
         cache.set(key, val, duration)
-    else:
-        _l.debug('cache hit for %s' % key)
+    # else:
+        # _l.debug('cache hit for %s' % key)
     return val
 
 
@@ -366,7 +366,7 @@ def cached_with(obj, f, f_key, timeout=DEFAULT_TIMEOUT):
         obj_key = (obj.query_key() if hasattr(obj, 'query_key')
                    else obj.cache_key)
     except (AttributeError, EmptyResultSet):
-        _l.warning('%r cannot be cached.' % encoding.smart_text(obj))
+        # _l.warning('%r cannot be cached.' % encoding.smart_text(obj))
         return f()
 
     key = '%s:%s' % tuple(map(encoding.smart_text, (f_key, obj_key)))

@@ -81,12 +81,12 @@ class TransactionTypeProcess(object):
         if self.process_mode is None:
             self.process_mode = TransactionTypeProcess.MODE_BOOK
 
-        print('self.process_mode %s' % self.process_mode)
+        _l.debug('self.process_mode %s' % self.process_mode)
 
         self.default_values = default_values or {}
         self.context_values = context_values or {}
 
-        print('TransactionTypeProcess.context_values %s' % context_values)
+        _l.debug('TransactionTypeProcess.context_values %s' % context_values)
 
         # self.expressions = expressions or {}
         # self.expressions_error = None
@@ -152,8 +152,8 @@ class TransactionTypeProcess(object):
 
     def execute_action_condition(self, action):
 
-        print('action.condition_expr')
-        print(action.condition_expr)
+        _l.debug('action.condition_expr')
+        _l.debug(action.condition_expr)
 
         if action is None:
             return False
@@ -165,8 +165,8 @@ class TransactionTypeProcess(object):
             result = formula.safe_eval(action.condition_expr, names=self.values,
                                        context=self._context)
 
-            print('Action is executed')
-            print(result)
+            _l.debug('Action is executed')
+            _l.debug(result)
 
             if result == "False" or result == False:
                 return False
@@ -175,7 +175,7 @@ class TransactionTypeProcess(object):
 
         except formula.InvalidExpression as e:
 
-            print('Action is skipped')
+            _l.debug('Action is skipped')
 
             return False
 
@@ -222,6 +222,7 @@ class TransactionTypeProcess(object):
         self.values = {}
         self.values.update(self.default_values)
 
+        # if complex transaction already exists
         if self.complex_transaction and self.complex_transaction.id is not None and self.complex_transaction.id > 0:
             # load previous values if need
             ci_qs = self.complex_transaction.inputs.all().select_related(
@@ -241,7 +242,7 @@ class TransactionTypeProcess(object):
                 if value is not None:
                     self.values[i.name] = value
 
-        # print('self.inputs %s' % self.inputs)
+        # _l.debug('self.inputs %s' % self.inputs)
 
         for i in self.inputs:
 
@@ -253,46 +254,45 @@ class TransactionTypeProcess(object):
             if i.is_fill_from_context:
 
                 try:
+
                     value = self.context_values[i.context_property]
+
+                    _l.info("Set from context. input %s value %s" % (i.name, value))
+
                 except KeyError:
-                    print("Can't find context variable %s" % i.context_property)
+                    _l.info("Can't find context variable %s" % i.context_property)
 
-                if value:
-                    self.default_values[i.name] = value
+            if value is None:
 
-            if i.value_type == TransactionTypeInput.RELATION:
+                if i.value_type == TransactionTypeInput.RELATION:
 
-                model_class = i.content_type.model_class()
+                    model_class = i.content_type.model_class()
 
-                if i.is_fill_from_context:
+                    value = _get_val_by_model_cls(i, model_class)
 
-                    for k, v in self.default_values.items():
-                        if isinstance(v, model_class):
-                            value = v
-                            break
+                    _l.info("Set from default. input %s value %s" % (i.name, value))
+
                 else:
-
-                    if value is None:
-                        value = _get_val_by_model_cls(i, model_class)
-
-            else:
-
-                if i.name in self.default_values:
-                    value = self.default_values[i.name]
-                if value is None:
 
                     if i.value:
                         errors = {}
                         try:
                             value = formula.safe_eval(i.value, names=self.values, now=self._now, context=self._context)
+
+                            _l.info("Set from default. input %s value %s" % (i.name, i.context_property))
+
                         except formula.InvalidExpression as e:
                             self._set_eval_error(errors, i.name, i.value, e)
                             self.value_errors.append(errors)
+                            _l.info("ERROR Set from default. input %s value %s" % (i.name, i.context_property))
                             value = None
 
-            self.values[i.name] = value
+                if value:
+                    self.values[i.name] = value
+                else:
+                    _l.info("Value is not set. No Context. No Default. input %s " % i.name)
 
-        # print('setvalues %s' % self.values)
+        # _l.debug('setvalues %s' % self.values)
 
     def book_create_instruments(self, actions, master_user, instrument_map):
 
@@ -307,11 +307,11 @@ class TransactionTypeProcess(object):
 
             if action_instrument and self.execute_action_condition(action_instrument):
 
-                print('action_instrument %s' % action_instrument)
-                print('self.process_mode == self.MODE_REBOOK')
-                print('self.process_mode %s ' % self.process_mode)
-                print(self.process_mode == self.MODE_REBOOK)
-                print('action_instrument.rebook_reaction %s' % action_instrument.rebook_reaction)
+                _l.debug('action_instrument %s' % action_instrument)
+                _l.debug('self.process_mode == self.MODE_REBOOK')
+                _l.debug('self.process_mode %s ' % self.process_mode)
+                _l.debug(self.process_mode == self.MODE_REBOOK)
+                _l.debug('action_instrument.rebook_reaction %s' % action_instrument.rebook_reaction)
 
                 _l.debug('process instrument: %s', action_instrument)
                 errors = {}
@@ -334,30 +334,30 @@ class TransactionTypeProcess(object):
                                                             is_deleted=False)
                         instrument_exists = True
 
-                        print('Instrument found by user code')
+                        _l.debug('Instrument found by user code')
 
                     except Instrument.DoesNotExist:
 
-                        print("Instrument DoesNotExist exception")
-                        print("action_instrument.rebook_reaction %s " % action_instrument.rebook_reaction)
-                        print("RebookReactionChoice.FIND_OR_CREATE %s" % RebookReactionChoice.FIND_OR_CREATE)
-                        print("self.process_mode %s" % self.process_mode)
-                        print("self.MODE_REBOOK %s" % self.MODE_REBOOK)
+                        _l.debug("Instrument DoesNotExist exception")
+                        _l.debug("action_instrument.rebook_reaction %s " % action_instrument.rebook_reaction)
+                        _l.debug("RebookReactionChoice.FIND_OR_CREATE %s" % RebookReactionChoice.FIND_OR_CREATE)
+                        _l.debug("self.process_mode %s" % self.process_mode)
+                        _l.debug("self.MODE_REBOOK %s" % self.MODE_REBOOK)
 
                         if action_instrument.rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and \
                                 self.process_mode == self.MODE_REBOOK:
                             instrument = ecosystem_default.instrument
                             instrument_exists = True
 
-                            print('Rebook: Instrument is not exists, return Default %s' % instrument.user_code)
+                            _l.debug('Rebook: Instrument is not exists, return Default %s' % instrument.user_code)
 
                 if instrument is None:
                     instrument = Instrument(master_user=master_user, user_code=user_code)
-                    print("Instrument is not exists. Create new.")
+                    _l.debug("Instrument is not exists. Create new.")
 
                 # instrument.user_code = user_code
 
-                print('instrument.user_code %s ' % instrument.user_code)
+                _l.debug('instrument.user_code %s ' % instrument.user_code)
 
                 if instrument.user_code != '-' and instrument.user_code != ecosystem_default.instrument.user_code:
 
@@ -431,40 +431,40 @@ class TransactionTypeProcess(object):
 
                     rebook_reaction = action_instrument.rebook_reaction
 
-                    print('rebook_reaction %s' % rebook_reaction)
-                    print('instrument_exists %s' % instrument_exists)
+                    _l.debug('rebook_reaction %s' % rebook_reaction)
+                    _l.debug('instrument_exists %s' % instrument_exists)
 
                     if self.process_mode == self.MODE_REBOOK:
 
                         if rebook_reaction == RebookReactionChoice.OVERWRITE:
-                            print('Rebook  OVERWRITE')
+                            _l.debug('Rebook  OVERWRITE')
 
                             instrument.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE and not instrument_exists:
-                            print('Rebook CREATE')
+                            _l.debug('Rebook CREATE')
 
                             instrument.save()
 
                         if rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and not instrument_exists:
-                            print('Rebook FIND_OR_CREATE')
+                            _l.debug('Rebook FIND_OR_CREATE')
 
                             instrument.save()
 
                     else:
 
                         if rebook_reaction == RebookReactionChoice.OVERWRITE:
-                            print('Book  OVERWRITE')
+                            _l.debug('Book  OVERWRITE')
 
                             instrument.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE and not instrument_exists:
-                            print('Book  CREATE')
+                            _l.debug('Book  CREATE')
 
                             instrument.save()
 
                         if rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and not instrument_exists:
-                            print('Book  FIND_OR_CREATE')
+                            _l.debug('Book  FIND_OR_CREATE')
 
                             instrument.save()
 
@@ -531,7 +531,7 @@ class TransactionTypeProcess(object):
                             factor.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
-                            print('Skip')
+                            _l.debug('Skip')
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
                             InstrumentFactorSchedule.objects.filter(instrument=factor.instrument).delete()
@@ -539,7 +539,7 @@ class TransactionTypeProcess(object):
                             factor.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
-                            print('Skip')
+                            _l.debug('Skip')
 
                         if rebook_reaction == RebookReactionChoice.CLEAR:
                             InstrumentFactorSchedule.objects.filter(instrument=factor.instrument).delete()
@@ -628,7 +628,7 @@ class TransactionTypeProcess(object):
                             manual_pricing_formula.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
-                            print('Skip')
+                            _l.debug('Skip')
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
                             ManualPricingFormula.objects.filter(instrument=manual_pricing_formula.instrument).delete()
@@ -636,7 +636,7 @@ class TransactionTypeProcess(object):
                             manual_pricing_formula.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
-                            print('Skip')
+                            _l.debug('Skip')
 
                         if rebook_reaction == RebookReactionChoice.CLEAR:
                             ManualPricingFormula.objects.filter(instrument=manual_pricing_formula.instrument).delete()
@@ -745,7 +745,7 @@ class TransactionTypeProcess(object):
                             accrual_calculation_schedule.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
-                            print('Skip')
+                            _l.debug('Skip')
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
                             AccrualCalculationSchedule.objects.filter(
@@ -754,7 +754,7 @@ class TransactionTypeProcess(object):
                             accrual_calculation_schedule.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
-                            print('Skip')
+                            _l.debug('Skip')
 
                         if rebook_reaction == RebookReactionChoice.CLEAR:
                             AccrualCalculationSchedule.objects.filter(
@@ -875,7 +875,7 @@ class TransactionTypeProcess(object):
                             event_schedule.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
-                            print('Skip')
+                            _l.debug('Skip')
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
                             EventSchedule.objects.filter(instrument=event_schedule.instrument).delete()
@@ -883,7 +883,7 @@ class TransactionTypeProcess(object):
                             event_schedule.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
-                            print('Skip')
+                            _l.debug('Skip')
 
                         if rebook_reaction == RebookReactionChoice.CLEAR:
                             EventSchedule.objects.filter(instrument=event_schedule.instrument).delete()
@@ -951,7 +951,7 @@ class TransactionTypeProcess(object):
                     event_schedule = event_schedules_map[
                         action_instrument_event_schedule_action.event_schedule_phantom_id]
 
-                    print('book_create_event_actions: event_schedule %s' % event_schedule)
+                    _l.debug('book_create_event_actions: event_schedule %s' % event_schedule)
 
                     event_schedule_action.event_schedule = event_schedule
 
@@ -988,7 +988,7 @@ class TransactionTypeProcess(object):
                             event_schedule_action.save()
 
                         if rebook_reaction == RebookReactionChoice.CREATE_IF_NOT_EXIST:
-                            print('Skip')
+                            _l.debug('Skip')
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE:
                             EventScheduleAction.objects.filter(
@@ -997,7 +997,7 @@ class TransactionTypeProcess(object):
                             event_schedule_action.save()
 
                         if rebook_reaction == RebookReactionChoice.CLEAR_AND_WRITE_OR_SKIP:
-                            print('Skip')
+                            _l.debug('Skip')
 
                         if rebook_reaction == RebookReactionChoice.CLEAR:
                             EventScheduleAction.objects.filter(
@@ -1047,7 +1047,7 @@ class TransactionTypeProcess(object):
 
     def book_execute_commands(self, actions):
 
-        print('book_execute_commands %s' % actions)
+        _l.debug('book_execute_commands %s' % actions)
 
         for order, action in enumerate(actions):
             try:
@@ -1057,8 +1057,8 @@ class TransactionTypeProcess(object):
 
             if execute_command and self.execute_action_condition(execute_command):
 
-                # print('process execute command: %s', execute_command)
-                # print('process execute command expr: %s', execute_command.expr)
+                # _l.debug('process execute command: %s', execute_command)
+                # _l.debug('process execute command expr: %s', execute_command.expr)
 
                 errors = {}
 
@@ -1073,7 +1073,7 @@ class TransactionTypeProcess(object):
                     result = formula.safe_eval(execute_command.expr, names=names,
                                                context=self._context)
 
-                    # print('result %s', result)
+                    # _l.debug('result %s', result)
 
                 except (ValueError, TypeError, IntegrityError, formula.InvalidExpression):
 
@@ -1116,7 +1116,7 @@ class TransactionTypeProcess(object):
 
     def get_access_to_inputs(self, group):
 
-        print('get_access_to_inputs: group %s' % group)
+        _l.debug('get_access_to_inputs: group %s' % group)
 
         result = None
 
@@ -1131,8 +1131,8 @@ class TransactionTypeProcess(object):
             if input.account_id:
                 accounts.append(input.account_id)
 
-        print('get_access_to_inputs: accounts %s' % accounts)
-        print('get_access_to_inputs: portfolios %s' % portfolios)
+        _l.debug('get_access_to_inputs: accounts %s' % accounts)
+        _l.debug('get_access_to_inputs: portfolios %s' % portfolios)
 
         count = 0
 
@@ -1160,8 +1160,8 @@ class TransactionTypeProcess(object):
             except GenericObjectPermission.DoesNotExist:
                 pass
 
-        print('get_access_to_inputs: count %s' % count)
-        print('get_access_to_inputs: len portfolio/accounts %s' % str(len(accounts) + len(portfolios)))
+        _l.debug('get_access_to_inputs: count %s' % count)
+        _l.debug('get_access_to_inputs: len portfolio/accounts %s' % str(len(accounts) + len(portfolios)))
 
         if count == 0:
             result = 'no_view'
@@ -1196,13 +1196,13 @@ class TransactionTypeProcess(object):
             if has_access:
                 perms.append({'group': group, 'permission': 'view_transaction'})
 
-        print("perms %s" % perms)
+        _l.debug("perms %s" % perms)
 
         assign_perms3(transaction, perms)
 
     def assign_permissions_to_complex_transaction(self):
 
-        print("assign_permissions_to_complex_transaction: mode %s" % self.process_mode)
+        _l.debug("assign_permissions_to_complex_transaction: mode %s" % self.process_mode)
 
         groups = Group.objects.filter(master_user=self.transaction_type.master_user)
 
@@ -1256,8 +1256,8 @@ class TransactionTypeProcess(object):
             if not ttype_access and codename is not None:
                 codename = 'view_complextransaction_hide_parameters'
 
-            print('assign_permissions_to_complex_transaction: inputs_access %s' % inputs_access)
-            print('assign_permissions_to_complex_transaction: ttype_access %s' % ttype_access)
+            _l.debug('assign_permissions_to_complex_transaction: inputs_access %s' % inputs_access)
+            _l.debug('assign_permissions_to_complex_transaction: ttype_access %s' % ttype_access)
 
             if inputs_access == 'partial_view' and permissions_count != 0:
 
@@ -1444,9 +1444,9 @@ class TransactionTypeProcess(object):
 
                 transaction.cash_consideration = format_float_to_2(transaction.cash_consideration)
 
-                print('action_transaction.notes')
-                print(action_transaction.notes)
-                print(self.values)
+                _l.debug('action_transaction.notes')
+                _l.debug(action_transaction.notes)
+                _l.debug(self.values)
 
                 if action_transaction.notes is not None:
                     self._set_val(errors=errors, values=self.values, default_value='',
@@ -1564,7 +1564,7 @@ class TransactionTypeProcess(object):
 
     def execute_user_fields_expressions(self):
 
-        print('execute_user_fields_expressions')
+        _l.debug('execute_user_fields_expressions')
 
         ctrn = formula.value_prepare(self.complex_transaction)
         trns = self.complex_transaction.transactions.all()
@@ -1595,13 +1595,13 @@ class TransactionTypeProcess(object):
 
         for field_key in fields:
 
-            # print('field_key')
+            # _l.debug('field_key')
 
             if getattr(self.complex_transaction.transaction_type, field_key):
 
                 try:
 
-                    # print('epxr %s' % getattr(self.complex_transaction.transaction_type, field_key))
+                    # _l.debug('epxr %s' % getattr(self.complex_transaction.transaction_type, field_key))
 
                     val = formula.safe_eval(
                         getattr(self.complex_transaction.transaction_type, field_key), names=names,
@@ -1673,7 +1673,7 @@ class TransactionTypeProcess(object):
 
     def execute_complex_transaction_text_and_date(self):
 
-        print('execute_complex_transaction_text_and_date')
+        _l.debug('execute_complex_transaction_text_and_date')
 
         if self.complex_transaction.transaction_type.display_expr:
 
@@ -1726,7 +1726,7 @@ class TransactionTypeProcess(object):
 
     def process_as_pending(self):
 
-        print("Process as pending")
+        _l.debug("Process as pending")
 
         complex_transaction_errors = {}
         if self.complex_transaction.date is None:
@@ -1764,7 +1764,7 @@ class TransactionTypeProcess(object):
 
         _l.debug('process: %s, values=%s', self.transaction_type, self.values)
 
-        print('process self.process_mode %s' % self.process_mode)
+        _l.debug('process self.process_mode %s' % self.process_mode)
 
         master_user = self.transaction_type.master_user
 
@@ -1774,7 +1774,7 @@ class TransactionTypeProcess(object):
 
         instrument_map = self.book_create_instruments(actions, master_user, instrument_map)
 
-        print('instrument_map process %s ' % instrument_map)
+        _l.debug('instrument_map process %s ' % instrument_map)
 
         self.book_create_factor_schedules(actions, instrument_map)
         self.book_create_manual_pricing_formulas(actions, instrument_map)
@@ -1798,13 +1798,13 @@ class TransactionTypeProcess(object):
         if bool(complex_transaction_errors):
             self.complex_transaction_errors.append(complex_transaction_errors)
 
-        print("complex_transaction.date %s" % self.complex_transaction.date)
+        _l.debug("complex_transaction.date %s" % self.complex_transaction.date)
 
         self.complex_transaction.save()
 
         self._save_inputs()
 
-        # print(self.complex_transaction.transactions.all())
+        # _l.debug(self.complex_transaction.transactions.all())
 
         self.complex_transaction.transactions.all().delete()
 
@@ -1836,7 +1836,7 @@ class TransactionTypeProcess(object):
 
         inputs = {i.name: i for i in self.inputs}
 
-        print('self.recalculate_inputs %s' % self.recalculate_inputs)
+        _l.debug('self.recalculate_inputs %s' % self.recalculate_inputs)
 
         for name in self.recalculate_inputs:
             inp = inputs[name]
@@ -1868,8 +1868,8 @@ class TransactionTypeProcess(object):
 
                         ecosystem_default = EcosystemDefault.objects.get(master_user=self.transaction_type.master_user)
 
-                        print('error')
-                        print(inp.content_type)
+                        _l.debug('error')
+                        _l.debug(inp.content_type)
 
                         entity_map = {
                             'instrument': 'instrument',
@@ -1903,8 +1903,8 @@ class TransactionTypeProcess(object):
 
                 else:
 
-                    print('inp %s' % inp)
-                    print('inp %s' % inp.value_expr)
+                    _l.debug('inp %s' % inp)
+                    _l.debug('inp %s' % inp.value_expr)
 
                     errors = {}
                     try:
