@@ -407,6 +407,7 @@ router.register(r'schedules/pricing', schedules.PricingScheduleViewSet) # DEPREC
 router.register(r'schedules/schedule', schedules.PricingScheduleViewSet)
 router.register(r'procedures/procedure', procedures.RequestDataFileProcedureViewSet)
 router.register(r'credentials/credentials', credentials.CredentialsViewSet)
+router.register(r'integrations/data-provider', integrations.DataProviderViewSet)
 
 router.register(r'recovery/generate-layout-archetype', layout_recovery.GenerateLayoutArchetypeViewSet, 'recovery_generate_layout_archetype')
 router.register(r'recovery/layout', layout_recovery.FixLayoutViewSet, 'recovery_layout')

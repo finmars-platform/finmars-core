@@ -39,7 +39,7 @@ from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDo
     InstrumentClassifierMapping, AccountTypeMapping, ComplexTransactionImportSchemeSelectorValue, \
     ComplexTransactionImportSchemeReconField, ComplexTransactionImportSchemeReconScenario, \
     ComplexTransactionImportSchemeRuleScenario, ComplexTransactionImportSchemeCalculatedInput, \
-    BloombergDataProviderCredential, PricingConditionMapping, TransactionFileResult
+    BloombergDataProviderCredential, PricingConditionMapping, TransactionFileResult, DataProvider
 from poms.integrations.providers.base import get_provider, ProviderException
 from poms.integrations.storage import import_file_storage
 from poms.integrations.tasks import download_pricing, download_instrument, test_certificate
@@ -1885,4 +1885,13 @@ class TransactionFileResultSerializer(ModelWithTimeStampSerializer):
         model = TransactionFileResult
         fields = [
             'id', 'master_user', 'provider', 'scheme_name', 'file'
+        ]
+
+
+class DataProviderSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = DataProvider
+        fields = [
+            'id', 'name', 'user_code', 'notes'
         ]

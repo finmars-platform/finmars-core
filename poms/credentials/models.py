@@ -10,7 +10,7 @@ class Credentials(NamedModel, DataTimeStampedModel):
 
     USERNAME_WITH_PASSWORD = 1
     SSH_USERNAME_WITH_PRIVATE_KEY = 2
-    USERNAME_WITH_PASSWORD_AND_PRIVATE_KEY = 2
+    USERNAME_WITH_PASSWORD_AND_PRIVATE_KEY = 3
 
     TYPE_CHOICES = (
         (USERNAME_WITH_PASSWORD, ugettext_lazy('Username with password')),

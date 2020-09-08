@@ -37,7 +37,7 @@ from poms.integrations.models import ImportConfig, Task, InstrumentDownloadSchem
     PaymentSizeDetailMapping, PriceDownloadSchemeMapping, ComplexTransactionImportScheme, PortfolioClassifierMapping, \
     AccountClassifierMapping, CounterpartyClassifierMapping, ResponsibleClassifierMapping, PricingPolicyMapping, \
     InstrumentClassifierMapping, AccountTypeMapping, BloombergDataProviderCredential, PricingConditionMapping, \
-    TransactionFileResult
+    TransactionFileResult, DataProvider
 from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer, ImportInstrumentSerializer, \
     ImportPricingSerializer, InstrumentDownloadSchemeSerializer, ProviderClassSerializer, \
     FactorScheduleDownloadMethodSerializer, AccrualScheduleDownloadMethodSerializer, PriceDownloadSchemeSerializer, \
@@ -52,7 +52,7 @@ from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer
     CounterpartyClassifierMappingSerializer, ResponsibleClassifierMappingSerializer, PricingPolicyMappingSerializer, \
     InstrumentClassifierMappingSerializer, AccountTypeMappingSerializer, TestCertificateSerializer, \
     ComplexTransactionImportSchemeLightSerializer, BloombergDataProviderCredentialSerializer, \
-    PricingConditionMappingSerializer, TransactionFileResultSerializer
+    PricingConditionMappingSerializer, TransactionFileResultSerializer, DataProviderSerializer
 from poms.integrations.tasks import complex_transaction_csv_file_import, complex_transaction_csv_file_import_validate
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
@@ -1196,3 +1196,12 @@ class TransactionFileResultUploadHandler(APIView):
         except TransactionFileResult.DoesNotExist:
 
             return Response({'status': 'error'})
+
+
+class DataProviderViewSet(AbstractReadOnlyModelViewSet):
+    ordering_fields = ['name']
+    filter_fields = ['user_code', 'name']
+    pagination_class = None
+    queryset = DataProvider.objects
+    serializer_class = DataProviderSerializer
+
