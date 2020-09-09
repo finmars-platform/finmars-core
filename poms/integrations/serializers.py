@@ -905,7 +905,7 @@ class PricingAutomatedScheduleSerializer(serializers.ModelSerializer):
 
 
 class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObjectPermissionSerializer,
-                                     ModelWithUserCodeSerializer, ModelWithTagSerializer):
+                                     ModelWithUserCodeSerializer):
     instrument_type = InstrumentTypeField(default=InstrumentTypeDefault())
     instrument_type_object = serializers.PrimaryKeyRelatedField(source='instrument_type', read_only=True)
     pricing_currency = CurrencyField(default=CurrencyDefault())
@@ -969,8 +969,8 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObj
         # self.fields.pop('accrual_calculation_schedules')
         # self.fields.pop('factor_schedules')
         self.fields.pop('event_schedules')
-        self.fields.pop('tags')
-        self.fields.pop('tags_object')
+        # self.fields.pop('tags')
+        # self.fields.pop('tags_object')
         # self.fields.pop('attributes')
 
     def get_accrual_calculation_schedules(self, obj):
