@@ -648,7 +648,7 @@ print("SFTP HOST %s" % SFTP_HOST)
 
 # SFTP_STORAGE_HOST = os.environ.get('SFTP_HOST', None)
 SFTP_STORAGE_HOST = SFTP_HOST
-SFTP_STORAGE_ROOT = '/finmars/'
+SFTP_STORAGE_ROOT = os.environ.get('SFTP_ROOT', '/finmars/')
 
 print('SFTP_STORAGE_ROOT %s' % SFTP_STORAGE_ROOT)
 
