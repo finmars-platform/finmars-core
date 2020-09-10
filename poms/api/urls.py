@@ -408,7 +408,7 @@ router.register(r'pricing/currency-history-error', pricing.CurrencyHistoryErrorV
 router.register(r'schedules/pricing', schedules.PricingScheduleViewSet) # DEPRECATED SINCE 26.08.2020 DELETE SOON
 
 router.register(r'schedules/schedule', schedules.PricingScheduleViewSet)
-router.register(r'procedures/procedure', procedures.RequestDataFileProcedureViewSet)
+router.register(r'procedures/request-data-procedure', procedures.RequestDataFileProcedureViewSet)
 router.register(r'credentials/credentials', credentials.CredentialsViewSet)
 router.register(r'integrations/data-provider', integrations.DataProviderViewSet)
 
