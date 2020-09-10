@@ -1853,12 +1853,14 @@ class TransactionTypeProcess(object):
 
                         try:
 
+                            # pricedownloadscheme
                             if inp.content_type.model == 'pricedownloadscheme':
                                 self.values[name] = Model.objects.get(
                                     master_user=self.transaction_type.master_user,
                                     scheme_name='-')
-                            elif inp.content_type.model == 'dailypricingmodel' or inp.content_type.model == 'paymentsizedetail':
-                                self.values[name] = Model.objects.get(system_code='-')
+                            elif inp.content_type.model == 'dailypricingmodel' or inp.content_type.model == 'paymentsizedetail' or inp.content_type.model == 'accrualcalculationmodel':
+                                # self.values[name] = Model.objects.get(system_code='-')
+                                self.values[name] = Model.objects.get(system_code=res)
                             else:
                                 self.values[name] = Model.objects.get(master_user=self.transaction_type.master_user,
                                                                       user_code=res)
