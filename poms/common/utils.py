@@ -211,7 +211,8 @@ def format_float(val):
     except ValueError:
         return val
 
-    return float(format(round(val, 10), '.10f').rstrip("0").rstrip('.'))
+    # return float(format(round(val, 10), '.10f').rstrip("0").rstrip('.'))
+    return round(val, 10)
 
 
 def format_float_to_2(val):

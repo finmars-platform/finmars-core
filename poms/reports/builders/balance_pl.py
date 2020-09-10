@@ -32,7 +32,7 @@ class ReportBuilder(BaseReportBuilder):
     def __init__(self, instance=None, queryset=None, transactions=None, pricing_provider=None, fx_rate_provider=None):
         super(ReportBuilder, self).__init__(instance, queryset=queryset)
 
-        _l.info('ReportBuilder init')
+        _l.debug('ReportBuilder init')
 
         # self._queryset = queryset
         self._transactions = transactions
@@ -50,14 +50,14 @@ class ReportBuilder(BaseReportBuilder):
 
     def build_balance(self, full=True):
         st = time.perf_counter()
-        _l.info('build balance report: %s', self.instance)
+        _l.debug('build balance report: %s', self.instance)
 
         self.instance.report_type = Report.TYPE_BALANCE
         self.instance.pl_first_date = None
 
         build_st = time.perf_counter()
         self.build(full=full)
-        _l.info('build_st done: %s', "{:3.3f}".format(time.perf_counter() - build_st))
+        _l.debug('build_st done: %s', "{:3.3f}".format(time.perf_counter() - build_st))
 
         def _accepted(item):
             return item.type in [ReportItem.TYPE_INSTRUMENT, ReportItem.TYPE_CURRENCY] and \
@@ -67,24 +67,24 @@ class ReportBuilder(BaseReportBuilder):
 
         self._alloc_aggregation()
 
-        _l.info('build_balance done: %s', "{:3.3f}".format(time.perf_counter() - st))
+        _l.debug('build_balance done: %s', "{:3.3f}".format(time.perf_counter() - st))
         return self.instance
 
     def build_balance_for_tests(self, full=True):
         st = time.perf_counter()
-        _l.info('build balance report: %s', self.instance)
+        _l.debug('build balance report: %s', self.instance)
 
         self.instance.report_type = Report.TYPE_BALANCE
         self.instance.pl_first_date = None
         self.build(full=full)
 
-        _l.info('done: %s', (time.perf_counter() - st))
+        _l.debug('done: %s', (time.perf_counter() - st))
         return self.instance
 
     def build_pl(self, full=True):
         st = time.perf_counter()
-        _l.info('build pl report: %s', self.instance)
-        _l.info('build pl report pl_first_date: %s', self.instance.pl_first_date)
+        _l.debug('build pl report: %s', self.instance)
+        _l.debug('build pl report pl_first_date: %s', self.instance.pl_first_date)
 
         self.instance.report_type = Report.TYPE_PL
         self.build(full=full)
@@ -98,12 +98,12 @@ class ReportBuilder(BaseReportBuilder):
 
         self._pl_regrouping()
 
-        _l.info('done: %s', (time.perf_counter() - st))
+        _l.debug('done: %s', (time.perf_counter() - st))
         return self.instance
 
     def build(self, full=True):
         st = time.perf_counter()
-        _l.info('build report: %s', self.instance)
+        _l.debug('build report: %s', self.instance)
 
         _calculations_st = time.perf_counter()
 
@@ -113,25 +113,25 @@ class ReportBuilder(BaseReportBuilder):
 
         self._transaction_pricing()
 
-        _l.info('build transactions_pricing_st done: %s', "{:3.3f}".format(time.perf_counter() - transactions_pricing_st))
+        _l.debug('build transactions_pricing_st done: %s', "{:3.3f}".format(time.perf_counter() - transactions_pricing_st))
 
         transactions_multipliers_st = time.perf_counter()
 
         self._transaction_multipliers()
 
-        _l.info('build transactions_multipliers_st done: %s', "{:3.3f}".format(time.perf_counter() - transactions_multipliers_st))
+        _l.debug('build transactions_multipliers_st done: %s', "{:3.3f}".format(time.perf_counter() - transactions_multipliers_st))
 
         clone_transactions_if_need_st = time.perf_counter()
 
         self._clone_transactions_if_need()
 
-        _l.info('build clone_transactions_if_need_st done: %s', "{:3.3f}".format(time.perf_counter() - clone_transactions_if_need_st))
+        _l.debug('build clone_transactions_if_need_st done: %s', "{:3.3f}".format(time.perf_counter() - clone_transactions_if_need_st))
 
         transaction_calc_st = time.perf_counter()
 
         self._transaction_calc()
 
-        _l.info('build transaction_calc_st done: %s', "{:3.3f}".format(time.perf_counter() - transaction_calc_st))
+        _l.debug('build transaction_calc_st done: %s', "{:3.3f}".format(time.perf_counter() - transaction_calc_st))
 
         # self.instance.transactions = self._transactions
 
@@ -139,13 +139,13 @@ class ReportBuilder(BaseReportBuilder):
 
         self._generate_items()
 
-        _l.info('build _generate_items_st done: %s', "{:3.3f}".format(time.perf_counter() - _generate_items_st))
+        _l.debug('build _generate_items_st done: %s', "{:3.3f}".format(time.perf_counter() - _generate_items_st))
 
         _aggregate_items = time.perf_counter()
 
         self._aggregate_items()
 
-        _l.info('build _aggregate_items done: %s', "{:3.3f}".format(time.perf_counter() - _aggregate_items))
+        _l.debug('build _aggregate_items done: %s', "{:3.3f}".format(time.perf_counter() - _aggregate_items))
 
         # self._calc_pass2()
 
@@ -153,43 +153,43 @@ class ReportBuilder(BaseReportBuilder):
 
         self._aggregate_summary()
 
-        _l.info('build _aggregate_summary done: %s', "{:3.3f}".format(time.perf_counter() - _aggregate_summary))
+        _l.debug('build _aggregate_summary done: %s', "{:3.3f}".format(time.perf_counter() - _aggregate_summary))
 
         _detect_mismatches = time.perf_counter()
 
         self._detect_mismatches()
 
-        _l.info('build _detect_mismatches done: %s', "{:3.3f}".format(time.perf_counter() - _detect_mismatches))
+        _l.debug('build _detect_mismatches done: %s', "{:3.3f}".format(time.perf_counter() - _detect_mismatches))
 
         _concat_st = time.perf_counter()
 
         self.instance.items = self._items + self._mismatch_items + self._summaries
 
-        _l.info('build _concat_st done: %s', "{:3.3f}".format(time.perf_counter() - _concat_st))
+        _l.debug('build _concat_st done: %s', "{:3.3f}".format(time.perf_counter() - _concat_st))
 
         if self.instance.pl_first_date and self.instance.pl_first_date != date.min:
             self._build_on_pl_first_date()
 
-        _l.info('build calculations done: %s', "{:3.3f}".format(time.perf_counter() - _calculations_st))
+        _l.debug('build calculations done: %s', "{:3.3f}".format(time.perf_counter() - _calculations_st))
 
         if full:
             _refresh_st = time.perf_counter()
             self._refresh_with_perms_optimized()
             # self._refresh_with_perms()
-            _l.info('build _refresh_st done: %s', "{:3.3f}".format(time.perf_counter() - _refresh_st))
+            _l.debug('build _refresh_st done: %s', "{:3.3f}".format(time.perf_counter() - _refresh_st))
 
         self.instance.custom_fields = BalanceReportCustomField.objects.filter(master_user=self.instance.master_user)
 
         self.instance.close()
 
-        _l.info('build done: %s', "{:3.3f}".format(time.perf_counter() - st))
+        _l.debug('build done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
         return self.instance
 
     def build_position_only(self):
         st = time.perf_counter()
 
-        _l.info('build position only report: %s', self.instance)
+        _l.debug('build position only report: %s', self.instance)
 
         self.instance.report_type = Report.TYPE_BALANCE
         self.instance.pl_first_date = None
@@ -198,13 +198,13 @@ class ReportBuilder(BaseReportBuilder):
 
         self._load_transactions()
 
-        _l.info('build_position_only load_transactions_st done: %s', "{:3.3f}".format(time.perf_counter() - load_transactions_st))
+        _l.debug('build_position_only load_transactions_st done: %s', "{:3.3f}".format(time.perf_counter() - load_transactions_st))
 
         clone_transactions_st = time.perf_counter()
 
         self._clone_transactions_if_need()
 
-        _l.info('build_position_only clone_transactions_st done: %s', "{:3.3f}".format(time.perf_counter() - clone_transactions_st))
+        _l.debug('build_position_only clone_transactions_st done: %s', "{:3.3f}".format(time.perf_counter() - clone_transactions_st))
 
         # self.instance.transactions = self._transactions
         if not self._transactions:
@@ -214,15 +214,15 @@ class ReportBuilder(BaseReportBuilder):
 
         self._generate_items()
 
-        _l.info('build_position_only generate_items_st done: %s', "{:3.3f}".format(time.perf_counter() - generate_items_st))
+        _l.debug('build_position_only generate_items_st done: %s', "{:3.3f}".format(time.perf_counter() - generate_items_st))
 
         sorted_items_st = time.perf_counter()
 
         sorted_items = sorted(self._items, key=lambda item: self._item_group_key(item))
 
-        _l.info('build_position_only sorted_items_st done: %s', "{:3.3f}".format(time.perf_counter() - sorted_items_st))
+        _l.debug('build_position_only sorted_items_st done: %s', "{:3.3f}".format(time.perf_counter() - sorted_items_st))
 
-        _l.info('build_position_only aggregate items')
+        _l.debug('build_position_only aggregate items')
 
         last_action_st = time.perf_counter()
 
@@ -242,9 +242,9 @@ class ReportBuilder(BaseReportBuilder):
 
         self.instance.items = res_items
 
-        _l.info('build_position_only last_action_st done: %s', "{:3.3f}".format(time.perf_counter() - last_action_st))
+        _l.debug('build_position_only last_action_st done: %s', "{:3.3f}".format(time.perf_counter() - last_action_st))
 
-        _l.info('build_position_only done: %s', "{:3.3f}".format(time.perf_counter() - st))
+        _l.debug('build_position_only done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
         return self.instance
 
@@ -398,7 +398,7 @@ class ReportBuilder(BaseReportBuilder):
 
         instruments_dict = self.list_as_dict(instruments_list)
 
-        _l.info('_inject_relations load instruments done: %s', "{:3.3f}".format(time.perf_counter() - instrument_st))
+        _l.debug('_inject_relations load instruments done: %s', "{:3.3f}".format(time.perf_counter() - instrument_st))
 
         currency_st = time.perf_counter()
 
@@ -407,7 +407,7 @@ class ReportBuilder(BaseReportBuilder):
 
         currencies_dict = self.list_as_dict(currencies_list)
 
-        _l.info('_inject_relations load currency done: %s', "{:3.3f}".format(time.perf_counter() - currency_st))
+        _l.debug('_inject_relations load currency done: %s', "{:3.3f}".format(time.perf_counter() - currency_st))
 
         portfolio_st = time.perf_counter()
 
@@ -420,7 +420,7 @@ class ReportBuilder(BaseReportBuilder):
 
         portfolios_dict = self.list_as_dict(portfolios_list)
 
-        _l.info('_inject_relations load portfolio done: %s', "{:3.3f}".format(time.perf_counter() - portfolio_st))
+        _l.debug('_inject_relations load portfolio done: %s', "{:3.3f}".format(time.perf_counter() - portfolio_st))
 
         account_st = time.perf_counter()
 
@@ -437,7 +437,7 @@ class ReportBuilder(BaseReportBuilder):
 
         accounts_dict = self.list_as_dict(accounts_list)
 
-        _l.info('_inject_relations load account done: %s', "{:3.3f}".format(time.perf_counter() - account_st))
+        _l.debug('_inject_relations load account done: %s', "{:3.3f}".format(time.perf_counter() - account_st))
 
         strategy_st = time.perf_counter()
 
@@ -462,7 +462,7 @@ class ReportBuilder(BaseReportBuilder):
 
         strategies3_dict = self.list_as_dict(strategies3_list)
 
-        _l.info('_inject_relations load strategy 1-3 done: %s', "{:3.3f}".format(time.perf_counter() - strategy_st))
+        _l.debug('_inject_relations load strategy 1-3 done: %s', "{:3.3f}".format(time.perf_counter() - strategy_st))
 
         values_list = self.get_trn_values_list()
         o = self.get_trn_values_list_keys_as_obj(values_list)
@@ -474,7 +474,7 @@ class ReportBuilder(BaseReportBuilder):
 
         for tuple_trn in trn_qs:
 
-            # _l.info(tuple_trn)
+            # _l.debug(tuple_trn)
 
             t = Trn()
 
@@ -568,9 +568,9 @@ class ReportBuilder(BaseReportBuilder):
 
             result.append(t)
 
-        _l.info('_inject_relations create transactions done: %s', "{:3.3f}".format(time.perf_counter() - iteration_st))
+        _l.debug('_inject_relations create transactions done: %s', "{:3.3f}".format(time.perf_counter() - iteration_st))
 
-        _l.info('_inject_relations done: %s', "{:3.3f}".format(time.perf_counter() - st))
+        _l.debug('_inject_relations done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
         return result
 
@@ -614,7 +614,7 @@ class ReportBuilder(BaseReportBuilder):
 
         instruments_dict = self.list_as_dict(instruments_list)
 
-        _l.info('_inject_relations_ids_only load instruments done: %s', "{:3.3f}".format(time.perf_counter() - instrument_st))
+        _l.debug('_inject_relations_ids_only load instruments done: %s', "{:3.3f}".format(time.perf_counter() - instrument_st))
 
         class Trn:
             pass
@@ -714,9 +714,9 @@ class ReportBuilder(BaseReportBuilder):
 
             result.append(t)
 
-        _l.info('_inject_relations_ids_only create transactions done: %s', "{:3.3f}".format(time.perf_counter() - iteration_st))
+        _l.debug('_inject_relations_ids_only create transactions done: %s', "{:3.3f}".format(time.perf_counter() - iteration_st))
 
-        _l.info('_inject_relations_ids_only done: %s', "{:3.3f}".format(time.perf_counter() - st))
+        _l.debug('_inject_relations_ids_only done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
         return result
 
@@ -779,7 +779,7 @@ class ReportBuilder(BaseReportBuilder):
         return result
 
     def _load_transactions(self):
-        _l.info('transactions - load')
+        _l.debug('transactions - load')
 
         _load_transactions_st = time.perf_counter()
 
@@ -795,7 +795,7 @@ class ReportBuilder(BaseReportBuilder):
         trn_qs = self._trn_qs_permission_filter(trn_qs)
         trn_qs = self._trn_qs_filter(trn_qs)
 
-        _l.info('_load_transactions trn_qs_st done: %s', "{:3.3f}".format(time.perf_counter() - trn_qs_st))
+        _l.debug('_load_transactions trn_qs_st done: %s', "{:3.3f}".format(time.perf_counter() - trn_qs_st))
 
         if trn_qs.count() == 0:
             return
@@ -862,20 +862,20 @@ class ReportBuilder(BaseReportBuilder):
 
             self._original_transactions.append(otrn)
 
-        _l.info('_load_transactions iteration done: %s', "{:3.3f}".format(time.perf_counter() - _iteration_st))
+        _l.debug('_load_transactions iteration done: %s', "{:3.3f}".format(time.perf_counter() - _iteration_st))
 
-        _l.info('_load_transactions len %s' % len(self._transactions))
+        _l.debug('_load_transactions len %s' % len(self._transactions))
 
-        _l.info('_load_transactions done: %s', "{:3.3f}".format(time.perf_counter() - _load_transactions_st))
+        _l.debug('_load_transactions done: %s', "{:3.3f}".format(time.perf_counter() - _load_transactions_st))
 
     def _transaction_pricing(self):
-        # _l.info('transactions - add pricing')
+        # _l.debug('transactions - add pricing')
 
         for trn in self._transactions:
             trn.pricing()
 
     def _transaction_calc(self):
-        # _l.info('transactions - calculate')
+        # _l.debug('transactions - calculate')
 
         st_slowest = None
         trn_slowest = None
@@ -906,15 +906,15 @@ class ReportBuilder(BaseReportBuilder):
             st_data.append(duration_st)
 
 
-        _l.info('build clone_transactions_if_need total slowest %s (threshold %s)' % (slowest_count, threshold))
-        _l.info('build transaction_calc slowest %s' % "{:3.3f}".format(st_slowest))
-        _l.info('build transaction_calc trn slowest %s' % trn_slowest)
-        _l.info('build transaction_calc fastest %s' % "{:3.6f}".format(st_fastest))
-        _l.info('build transaction_calc median %s' % "{:3.6f}".format(statistics.median(st_data)))
+        _l.debug('build clone_transactions_if_need total slowest %s (threshold %s)' % (slowest_count, threshold))
+        _l.debug('build transaction_calc slowest %s' % "{:3.3f}".format(st_slowest))
+        _l.debug('build transaction_calc trn slowest %s' % trn_slowest)
+        _l.debug('build transaction_calc fastest %s' % "{:3.6f}".format(st_fastest))
+        _l.debug('build transaction_calc median %s' % "{:3.6f}".format(statistics.median(st_data)))
 
 
     def _clone_transactions_if_need(self):
-        # _l.info('transactions - clone if need')
+        # _l.debug('transactions - clone if need')
 
         st_slowest = None
         st_fastest = None
@@ -989,16 +989,16 @@ class ReportBuilder(BaseReportBuilder):
 
         self._transactions = res
 
-        _l.info('build clone_transactions_if_need total slowest %s (threshold %s)' % (slowest_count, threshold))
-        _l.info('build clone_transactions_if_need slowest %s' % "{:3.3f}".format(st_slowest))
-        _l.info('build clone_transactions_if_need transaction slowest %s' % trn_slowest)
-        _l.info('build clone_transactions_if_need fastest %s' % "{:3.6f}".format(st_fastest))
-        _l.info('build clone_transactions_if_need median %s' % "{:3.6f}".format(statistics.median(st_data)))
+        _l.debug('build clone_transactions_if_need total slowest %s (threshold %s)' % (slowest_count, threshold))
+        _l.debug('build clone_transactions_if_need slowest %s' % "{:3.3f}".format(st_slowest))
+        _l.debug('build clone_transactions_if_need transaction slowest %s' % trn_slowest)
+        _l.debug('build clone_transactions_if_need fastest %s' % "{:3.6f}".format(st_fastest))
+        _l.debug('build clone_transactions_if_need median %s' % "{:3.6f}".format(statistics.median(st_data)))
 
-        # _l.info('transactions - len=%s', len(self._transactions))
+        # _l.debug('transactions - len=%s', len(self._transactions))
 
     def _transaction_multipliers(self):
-        # _l.info('transactions - calculate multipliers')
+        # _l.debug('transactions - calculate multipliers')
 
         self._calc_avco_multipliers()
         self._calc_fifo_multipliers()
@@ -1090,7 +1090,7 @@ class ReportBuilder(BaseReportBuilder):
         pass
 
     def _calc_avco_multipliers(self):
-        # _l.info('transactions - calculate multipliers - avco')
+        # _l.debug('transactions - calculate multipliers - avco')
 
         items = defaultdict(list)
 
@@ -1159,7 +1159,7 @@ class ReportBuilder(BaseReportBuilder):
             t.avco_rolling_pos_size = rolling_pos
 
     def _calc_fifo_multipliers(self):
-        # _l.info('transactions - calculate multipliers - fifo')
+        # _l.debug('transactions - calculate multipliers - fifo')
 
         items = defaultdict(list)
 
@@ -1297,7 +1297,7 @@ class ReportBuilder(BaseReportBuilder):
         )
 
     def _generate_items(self):
-        _l.info('items - generate')
+        _l.debug('items - generate')
         for trn in self._transactions:
             if trn.is_hidden:
                 continue
@@ -1359,23 +1359,23 @@ class ReportBuilder(BaseReportBuilder):
             else:
                 raise RuntimeError('Invalid transaction class: %s' % trn.trn_cls.id)
 
-        # _l.info('items - raw.len=%s', len(self._items))
+        # _l.debug('items - raw.len=%s', len(self._items))
 
     def _aggregate_items(self):
 
-        _l.info('items - aggregate')
+        _l.debug('items - aggregate')
 
         aggr_items = []
 
         sorted_items = sorted(self._items, key=lambda x: self._item_group_key(x))
 
-        # _l.info('_aggregate_items sorted_items[0] %s ' % sorted_items[0])
-        # _l.info('_aggregate_items sorted_items len %s ' % len(sorted_items))
+        # _l.debug('_aggregate_items sorted_items[0] %s ' % sorted_items[0])
+        # _l.debug('_aggregate_items sorted_items len %s ' % len(sorted_items))
         #
-        # _l.info('_aggregate_items self._items before len %s ' % len(self._items))
+        # _l.debug('_aggregate_items self._items before len %s ' % len(self._items))
 
         for k, g in groupby(sorted_items, key=lambda x: self._item_group_key(x)):
-            # _l.info('items - aggregate - group=%s', k)
+            # _l.debug('items - aggregate - group=%s', k)
             res_item = None
 
             for item in g:
@@ -1387,18 +1387,18 @@ class ReportBuilder(BaseReportBuilder):
                     res_item.add(item)
 
             if res_item:
-                # _l.info('items - aggregate - add item=%s, instr=%s', res_item, getattr(res_item.instr, 'id', None))
-                # _l.info('pricing')
+                # _l.debug('items - aggregate - add item=%s, instr=%s', res_item, getattr(res_item.instr, 'id', None))
+                # _l.debug('pricing')
                 res_item.pricing()
-                # _l.info('close')
+                # _l.debug('close')
                 res_item.close()
                 aggr_items.append(res_item)
 
         self._items = aggr_items
 
-        # _l.info('_aggregate_items self._items after len %s ' % len(self._items))
+        # _l.debug('_aggregate_items self._items after len %s ' % len(self._items))
 
-        # _l.info('items - len=%s', len(self._items))
+        # _l.debug('items - len=%s', len(self._items))
 
     def _item_group_key(self, item):
         return (
@@ -1553,7 +1553,7 @@ class ReportBuilder(BaseReportBuilder):
         return report_on_pl_first_date
 
     # def _calc_pass2(self):
-    #     _l.info('transactions - pass 2')
+    #     _l.debug('transactions - pass 2')
     #
     #     items_map = {}
     #     for item in self._items:
@@ -1571,7 +1571,7 @@ class ReportBuilder(BaseReportBuilder):
     #             else:
     #                 raise RuntimeError('Oh error')
     #
-    #     _l.info('items - pass 2')
+    #     _l.debug('items - pass 2')
     #     for item in self._items:
     #         item.close_pass2()
 
@@ -1584,13 +1584,13 @@ class ReportBuilder(BaseReportBuilder):
         # if not settings.DEBUG:
         #     return
 
-        # _l.info('aggregate summary')
+        # _l.debug('aggregate summary')
         # # total = ReportItem(self.instance, self.pricing_provider, self.fx_rate_provider, ReportItem.TYPE_SUMMARY)
         # total = ReportItem.from_trn(self.instance, self.pricing_provider, self.fx_rate_provider,
         #                             ReportItem.TYPE_SUMMARY, trn)
         #
-        # _l.info('items len %s' % len(self._items))
-        # _l.info(repr(self._items[0]))
+        # _l.debug('items len %s' % len(self._items))
+        # _l.debug(repr(self._items[0]))
         #
         # for item in self._items:
         #     if item.type in [ReportItem.TYPE_INSTRUMENT, ReportItem.TYPE_CURRENCY, ReportItem.TYPE_TRANSACTION_PL,
@@ -1601,7 +1601,7 @@ class ReportBuilder(BaseReportBuilder):
         # self._summaries.append(total)
 
     def _detect_mismatches(self):
-        _l.info('mismatches - detect')
+        _l.debug('mismatches - detect')
 
         l = []
         for trn in self._transactions:
@@ -1610,12 +1610,12 @@ class ReportBuilder(BaseReportBuilder):
                                            ReportItem.TYPE_MISMATCH, trn)
                 l.append(item)
 
-        # _l.info('mismatches - raw.len=%s', len(l))
+        # _l.debug('mismatches - raw.len=%s', len(l))
 
         if not l:
             return
 
-        _l.info('mismatches - aggregate')
+        _l.debug('mismatches - aggregate')
         l = sorted(l, key=lambda x: self._item_mismatch_group_key(x))
         for k, g in groupby(l, key=lambda x: self._item_mismatch_group_key(x)):
 
@@ -1630,7 +1630,7 @@ class ReportBuilder(BaseReportBuilder):
                 mismatch_item.close()
                 self._mismatch_items.append(mismatch_item)
 
-        # _l.info('mismatches - len=%s', len(self._mismatch_items))
+        # _l.debug('mismatches - len=%s', len(self._mismatch_items))
 
     def _add_instr(self, trn, val=None):
         if trn.case == 0:
@@ -1753,12 +1753,12 @@ class ReportBuilder(BaseReportBuilder):
 
         # TODO END HERE
 
-        _l.info('_refresh_with_perms_optimized instance relations done: %s',
+        _l.debug('_refresh_with_perms_optimized instance relations done: %s',
                 "{:3.3f}".format(time.perf_counter() - instance_relations_st))
 
         permissions_st = time.perf_counter()
 
-        _l.info('_refresh_with_perms_optimized permissions done: %s', "{:3.3f}".format(time.perf_counter() - permissions_st))
+        _l.debug('_refresh_with_perms_optimized permissions done: %s', "{:3.3f}".format(time.perf_counter() - permissions_st))
 
         item_relations_st = time.perf_counter()
 
@@ -1772,10 +1772,10 @@ class ReportBuilder(BaseReportBuilder):
         self._refresh_item_strategies2()
         self._refresh_item_strategies3()
 
-        # _l.info('_refresh_with_perms_optimized item_accounts len %s' % len(self.instance.item_accounts))
-        # _l.info('_refresh_with_perms_optimized item_currencies len %s' % len(self.instance.item_currencies))
-        # _l.info('_refresh_with_perms_optimized item_portfolios len %s' % len(self.instance.item_portfolios))
-        # _l.info('_refresh_with_perms_optimized item_instruments len %s' % len(self.instance.item_instruments))
+        # _l.debug('_refresh_with_perms_optimized item_accounts len %s' % len(self.instance.item_accounts))
+        # _l.debug('_refresh_with_perms_optimized item_currencies len %s' % len(self.instance.item_currencies))
+        # _l.debug('_refresh_with_perms_optimized item_portfolios len %s' % len(self.instance.item_portfolios))
+        # _l.debug('_refresh_with_perms_optimized item_instruments len %s' % len(self.instance.item_instruments))
 
         attribute_types_st = time.perf_counter()
 
@@ -1790,10 +1790,10 @@ class ReportBuilder(BaseReportBuilder):
         self.instance.item_instruments = self._set_attribute_types_in_relations(self.instance.item_instruments,
                                                                                 attribute_types)
 
-        _l.info('_refresh_with_perms_optimized set attribute types done: %s',
+        _l.debug('_refresh_with_perms_optimized set attribute types done: %s',
                 "{:3.3f}".format(time.perf_counter() - attribute_types_st))
 
-        _l.info('_refresh_with_perms_optimized item relations done: %s', "{:3.3f}".format(time.perf_counter() - item_relations_st))
+        _l.debug('_refresh_with_perms_optimized item relations done: %s', "{:3.3f}".format(time.perf_counter() - item_relations_st))
 
         pass
 
@@ -1821,7 +1821,7 @@ class ReportBuilder(BaseReportBuilder):
 
             self.instance.item_accounts = self._get_accounts_by_ids(ids=accounts_ids)
 
-        _l.info('_refresh_with_perms_optimized item_accounts done: %s', "{:3.3f}".format(time.perf_counter() - item_accounts_st))
+        _l.debug('_refresh_with_perms_optimized item_accounts done: %s', "{:3.3f}".format(time.perf_counter() - item_accounts_st))
 
         # Handle item_accounts END
 
@@ -1851,7 +1851,7 @@ class ReportBuilder(BaseReportBuilder):
 
             self.instance.item_account_types = self._get_account_types_by_ids(ids=account_types_ids)
 
-        _l.info('_refresh_with_perms_optimized item_account_types done: %s',
+        _l.debug('_refresh_with_perms_optimized item_account_types done: %s',
                 "{:3.3f}".format(time.perf_counter() - item_account_types_st))
 
         # Handle item_account_types END
@@ -1880,7 +1880,7 @@ class ReportBuilder(BaseReportBuilder):
 
             self.instance.item_currencies = self._get_currencies_by_ids(ids=currencies_ids)
 
-        _l.info('_refresh_with_perms_optimized item_currencies done: %s', "{:3.3f}".format(time.perf_counter() - item_currencies_st))
+        _l.debug('_refresh_with_perms_optimized item_currencies done: %s', "{:3.3f}".format(time.perf_counter() - item_currencies_st))
 
         # Handle item_currencies END
 
@@ -1906,7 +1906,7 @@ class ReportBuilder(BaseReportBuilder):
 
             self.instance.item_portfolios = self._get_portfolios_by_ids(ids=portfolios_ids)
 
-        _l.info('_refresh_with_perms_optimized item_portfolios done: %s', "{:3.3f}".format(time.perf_counter() - item_portfolios_st))
+        _l.debug('_refresh_with_perms_optimized item_portfolios done: %s', "{:3.3f}".format(time.perf_counter() - item_portfolios_st))
 
         # Handle item_portfolios END
 
@@ -1931,7 +1931,7 @@ class ReportBuilder(BaseReportBuilder):
 
             self.instance.item_instruments = self._get_instruments_by_ids(ids=instruments_ids)
 
-        _l.info('_refresh_with_perms_optimized item_instruments done: %s', "{:3.3f}".format(time.perf_counter() - item_instruments_st))
+        _l.debug('_refresh_with_perms_optimized item_instruments done: %s', "{:3.3f}".format(time.perf_counter() - item_instruments_st))
 
         # Handle item_instruments END
 
@@ -1959,7 +1959,7 @@ class ReportBuilder(BaseReportBuilder):
 
             self.instance.item_instrument_types = self._get_instrument_types_by_ids(ids=instrument_types_ids)
 
-        _l.info('_refresh_with_perms_optimized item_instrument_types done: %s',
+        _l.debug('_refresh_with_perms_optimized item_instrument_types done: %s',
                 "{:3.3f}".format(time.perf_counter() - item_instrument_types_st))
 
         # Handle item_instrument_types END
@@ -1987,7 +1987,7 @@ class ReportBuilder(BaseReportBuilder):
 
             self.instance.item_strategies1 = self._get_strategies1_by_ids(ids=strategy1_ids)
 
-        _l.info('_refresh_with_perms_optimized item_strategies1 done: %s', "{:3.3f}".format(time.perf_counter() - item_strategies1_st))
+        _l.debug('_refresh_with_perms_optimized item_strategies1 done: %s', "{:3.3f}".format(time.perf_counter() - item_strategies1_st))
 
         # Handle item_strategies1 END
 
@@ -2014,7 +2014,7 @@ class ReportBuilder(BaseReportBuilder):
 
             self.instance.item_strategies2 = self._get_strategies2_by_ids(ids=strategy2_ids)
 
-        _l.info('_refresh_with_perms_optimized item_strategies2 done: %s', "{:3.3f}".format(time.perf_counter() - item_strategies2_st))
+        _l.debug('_refresh_with_perms_optimized item_strategies2 done: %s', "{:3.3f}".format(time.perf_counter() - item_strategies2_st))
 
         # Handle item_strategies2 END
 
@@ -2041,12 +2041,12 @@ class ReportBuilder(BaseReportBuilder):
 
             self.instance.item_strategies3 = self._get_strategies3_by_ids(ids=strategy3_ids)
 
-        _l.info('_refresh_with_perms_optimized item_strategies3 done: %s', "{:3.3f}".format(time.perf_counter() - item_strategies3_st))
+        _l.debug('_refresh_with_perms_optimized item_strategies3 done: %s', "{:3.3f}".format(time.perf_counter() - item_strategies3_st))
 
         # Handle item_strategies2 END
 
     def _refresh_with_perms(self):
-        # _l.info('items - refresh all objects with permissions')
+        # _l.debug('items - refresh all objects with permissions')
 
         # member_permissions = self._get_member_permissions()
 
@@ -2223,7 +2223,7 @@ class ReportBuilder(BaseReportBuilder):
         #         ('instrument_type', InstrumentType),
         #     )
         # ).in_bulk(instrs)
-        # _l.info('instrs: %s', sorted(instrs.keys()))
+        # _l.debug('instrs: %s', sorted(instrs.keys()))
         #
         # ccys = Currency.objects.filter(master_user=self.instance.master_user).prefetch_related(
         #     'master_user',
@@ -2233,7 +2233,7 @@ class ReportBuilder(BaseReportBuilder):
         #     get_attributes_prefetch(),
         #     get_tag_prefetch()
         # ).in_bulk(ccys)
-        # _l.info('ccys: %s', sorted(ccys.keys()))
+        # _l.debug('ccys: %s', sorted(ccys.keys()))
         #
         # prtfls = Portfolio.objects.filter(master_user=self.instance.master_user).prefetch_related(
         #     'master_user',
@@ -2243,7 +2243,7 @@ class ReportBuilder(BaseReportBuilder):
         #         (None, Portfolio),
         #     )
         # ).in_bulk(prtfls)
-        # _l.info('prtfls: %s', sorted(prtfls.keys()))
+        # _l.debug('prtfls: %s', sorted(prtfls.keys()))
         #
         # accs = Account.objects.filter(master_user=self.instance.master_user).prefetch_related(
         #     'master_user',
@@ -2255,7 +2255,7 @@ class ReportBuilder(BaseReportBuilder):
         #         ('type', AccountType),
         #     )
         # ).in_bulk(accs)
-        # _l.info('accs: %s', sorted(accs.keys()))
+        # _l.debug('accs: %s', sorted(accs.keys()))
         #
         # strs1 = Strategy1.objects.filter(master_user=self.instance.master_user).prefetch_related(
         #     'master_user',
@@ -2268,7 +2268,7 @@ class ReportBuilder(BaseReportBuilder):
         #         ('subgroup__group', Strategy1Group),
         #     )
         # ).in_bulk(strs1)
-        # _l.info('strs1: %s', sorted(strs1.keys()))
+        # _l.debug('strs1: %s', sorted(strs1.keys()))
         #
         # strs2 = Strategy2.objects.filter(master_user=self.instance.master_user).prefetch_related(
         #     'master_user',
@@ -2281,7 +2281,7 @@ class ReportBuilder(BaseReportBuilder):
         #         ('subgroup__group', Strategy2Group),
         #     )
         # ).in_bulk(strs2)
-        # _l.info('strs2: %s', sorted(strs2.keys()))
+        # _l.debug('strs2: %s', sorted(strs2.keys()))
         #
         # strs3 = Strategy3.objects.filter(master_user=self.instance.master_user).prefetch_related(
         #     'master_user',
@@ -2294,7 +2294,7 @@ class ReportBuilder(BaseReportBuilder):
         #         ('subgroup__group', Strategy3Group),
         #     )
         # ).in_bulk(strs3)
-        # _l.info('strs3: %s', sorted(strs3.keys()))
+        # _l.debug('strs3: %s', sorted(strs3.keys()))
         #
         # for i in self.instance.items:
         #     if i.instr:
@@ -2352,7 +2352,7 @@ class ReportBuilder(BaseReportBuilder):
         pass
 
     def _alloc_aggregation(self):
-        _l.info('aggregate by allocation: %s', self.instance.allocation_detailing)
+        _l.debug('aggregate by allocation: %s', self.instance.allocation_detailing)
 
         if self.instance.allocation_detailing:
             return
@@ -2388,7 +2388,7 @@ class ReportBuilder(BaseReportBuilder):
         self.instance.items = res_items
 
     def _pl_regrouping(self):
-        _l.info('p&l regrouping')
+        _l.debug('p&l regrouping')
 
         res_items = []
         for item in self.instance.items:
