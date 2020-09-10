@@ -1619,7 +1619,6 @@ class TransactionTypeProcess(object):
                     except Exception as e:
                         setattr(self.complex_transaction, field_key, None)
 
-
     def execute_recon_fields_expressions(self):
 
         from poms.reconciliation.models import ReconciliationComplexTransactionField
@@ -1650,27 +1649,26 @@ class TransactionTypeProcess(object):
             if ttype_field.value_string:
                 try:
                     field.value_string = formula.safe_eval(ttype_field.value_string, names=names,
-                        context=self._context)
+                                                           context=self._context)
                 except formula.InvalidExpression:
                     field.value_string = '<InvalidExpression>'
             if ttype_field.value_float:
                 try:
                     field.value_float = formula.safe_eval(ttype_field.value_float, names=names,
-                                                           context=self._context)
+                                                          context=self._context)
                 except formula.InvalidExpression:
                     pass
 
             if ttype_field.value_date:
                 try:
                     field.value_date = formula.safe_eval(ttype_field.value_date, names=names,
-                                                           context=self._context)
+                                                         context=self._context)
                 except formula.InvalidExpression:
                     pass
 
             field.reference_name = ttype_field.reference_name
             field.description = ttype_field.description
             field.save()
-
 
     def execute_complex_transaction_text_and_date(self):
 
@@ -1741,8 +1739,6 @@ class TransactionTypeProcess(object):
         if bool(complex_transaction_errors):
             self.complex_transaction_errors.append(complex_transaction_errors)
 
-
-
         self.complex_transaction.status = ComplexTransaction.PENDING
 
         self.complex_transaction.save()
@@ -1760,7 +1756,6 @@ class TransactionTypeProcess(object):
     def process(self):
 
         if self.process_mode == self.MODE_RECALCULATE:
-
             return self.process_recalculate()
 
         _l.debug('process: %s, values=%s', self.transaction_type, self.values)
@@ -1858,7 +1853,7 @@ class TransactionTypeProcess(object):
                                 self.values[name] = Model.objects.get(
                                     master_user=self.transaction_type.master_user,
                                     scheme_name='-')
-                            elif inp.content_type.model == 'dailypricingmodel' or inp.content_type.model == 'paymentsizedetail' or inp.content_type.model == 'accrualcalculationmodel':
+                            elif inp.content_type.model == 'dailypricingmodel' or inp.content_type.model == 'paymentsizedetail' or inp.content_type.model == 'accrualcalculationmodel' or inp.content_type.model == 'periodicity':
                                 # self.values[name] = Model.objects.get(system_code='-')
                                 self.values[name] = Model.objects.get(system_code=res)
                             else:
