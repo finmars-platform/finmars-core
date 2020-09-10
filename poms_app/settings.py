@@ -165,10 +165,13 @@ MIDDLEWARE = [
     # 'poms.notifications.middleware.NotificationMiddleware',
     # 'django.middleware.cache.FetchFromCacheMiddleware',
     # 'debug_toolbar.middleware.DebugToolbarMiddleware',
+
+    # 'django_cprofile_middleware.middleware.ProfilerMiddleware'
 ]
 
 if LOCAL:
     MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
+    DJANGO_CPROFILE_MIDDLEWARE_REQUIRE_STAFF = False
 
 ROOT_URLCONF = 'poms_app.urls'
 

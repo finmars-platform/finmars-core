@@ -17,8 +17,11 @@ from poms.reports.builders.pricing import FakeInstrumentPricingProvider, FakeCur
 from poms.reports.builders.pricing import InstrumentPricingProvider
 from poms.reports.models import BalanceReportCustomField
 from poms.transactions.models import TransactionClass, Transaction
+import statistics
+
 
 _l = logging.getLogger('poms.reports')
+
 
 
 class ReportBuilder(BaseReportBuilder):
@@ -28,6 +31,8 @@ class ReportBuilder(BaseReportBuilder):
 
     def __init__(self, instance=None, queryset=None, transactions=None, pricing_provider=None, fx_rate_provider=None):
         super(ReportBuilder, self).__init__(instance, queryset=queryset)
+
+        _l.info('ReportBuilder init')
 
         # self._queryset = queryset
         self._transactions = transactions
@@ -872,14 +877,58 @@ class ReportBuilder(BaseReportBuilder):
     def _transaction_calc(self):
         # _l.info('transactions - calculate')
 
+        st_slowest = None
+        trn_slowest = None
+        st_fastest = None
+        st_data = []
+
+        slowest_count = 0
+        threshold = 0.03
+
         for trn in self._transactions:
+
+            trn_st = time.perf_counter()
+
             trn.calc()
+
+            duration_st = time.perf_counter() - trn_st
+
+            if duration_st > threshold:
+                slowest_count = slowest_count + 1
+
+            if st_slowest is None or st_slowest < duration_st:
+                st_slowest = duration_st
+                trn_slowest = trn
+
+            if st_fastest is None or st_fastest > duration_st:
+                st_fastest = duration_st
+
+            st_data.append(duration_st)
+
+
+        _l.info('build clone_transactions_if_need total slowest %s (threshold %s)' % (slowest_count, threshold))
+        _l.info('build transaction_calc slowest %s' % "{:3.3f}".format(st_slowest))
+        _l.info('build transaction_calc trn slowest %s' % trn_slowest)
+        _l.info('build transaction_calc fastest %s' % "{:3.6f}".format(st_fastest))
+        _l.info('build transaction_calc median %s' % "{:3.6f}".format(statistics.median(st_data)))
+
 
     def _clone_transactions_if_need(self):
         # _l.info('transactions - clone if need')
 
+        st_slowest = None
+        st_fastest = None
+        trn_slowest = None
+        st_data = []
+
+        slowest_count = 0
+        threshold = 0.3
+
         res = []
         for trn in self._transactions:
+
+            trn_st = time.perf_counter()
+
             res.append(trn)
 
             if trn.trn_cls.id in [TransactionClass.BUY, TransactionClass.SELL]:
@@ -924,7 +973,28 @@ class ReportBuilder(BaseReportBuilder):
                 # res.append(trn21)
                 # res.append(trn22)
 
+            duration_st = time.perf_counter() - trn_st
+
+            if duration_st > threshold:
+                slowest_count = slowest_count + 1
+
+            if st_slowest is None or st_slowest < duration_st:
+                st_slowest = duration_st
+                trn_slowest = trn
+
+            if st_fastest is None or st_fastest > duration_st:
+                st_fastest = duration_st
+
+            st_data.append(duration_st)
+
         self._transactions = res
+
+        _l.info('build clone_transactions_if_need total slowest %s (threshold %s)' % (slowest_count, threshold))
+        _l.info('build clone_transactions_if_need slowest %s' % "{:3.3f}".format(st_slowest))
+        _l.info('build clone_transactions_if_need transaction slowest %s' % trn_slowest)
+        _l.info('build clone_transactions_if_need fastest %s' % "{:3.6f}".format(st_fastest))
+        _l.info('build clone_transactions_if_need median %s' % "{:3.6f}".format(statistics.median(st_data)))
+
         # _l.info('transactions - len=%s', len(self._transactions))
 
     def _transaction_multipliers(self):

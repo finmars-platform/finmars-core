@@ -109,6 +109,7 @@ def obj_perms_filter_objects(member, perms, queryset, model_cls=None, prefetch=T
 
 
 def obj_perms_filter_objects_for_view(member, queryset, model=None, prefetch=True):
+    print('queryset %s' % queryset)
     model = model or queryset.model
     perms = get_view_perms(model)
     return obj_perms_filter_objects(member, perms, queryset, prefetch=prefetch)

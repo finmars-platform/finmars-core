@@ -277,12 +277,15 @@ router.register(r'ui/color-palette', ui.ColorPaletteViewSet)
 
 router.register(r'reports/report', reports.BalanceReportViewSet, "report")
 router.register(r'reports/balance-report', reports.BalanceReportViewSet, "balance-report")
+router.register(r'reports/balance-report-sync', reports.BalanceReportSyncViewSet, "balance-report-sync")
 router.register(r'reports/balance-report/custom-field', reports.BalanceReportCustomFieldViewSet,
                 'balance-report-custom-field')
 # router.register(r'reports/balance-report', reports.BalanceReportSyncViewSet, "balance-report-sync")
 router.register(r'reports/pl-report', reports.PLReportViewSet, "pl-report")
+router.register(r'reports/pl-report-sync', reports.PLReportSyncViewSet, "pl-report-sync")
 router.register(r'reports/pl-report/custom-field', reports.PLReportCustomFieldViewSet, 'pl-report-custom-field')
 router.register(r'reports/transaction-report', reports.TransactionReportViewSet, "transaction-report")
+router.register(r'reports/transaction-report-sync', reports.TransactionReportSyncViewSet, "transaction-report-sync")
 router.register(r'reports/transaction-report/custom-field', reports.TransactionReportCustomFieldViewSet,
                 'transaction-report-custom-field')
 router.register(r'reports/cash-flow-projection-report', reports.CashFlowProjectionReportViewSet,

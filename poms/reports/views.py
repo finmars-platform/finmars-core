@@ -96,12 +96,12 @@ class TransactionReportCustomFieldViewSet(AbstractModelViewSet):
         'name',
     ]
 
-# class BalanceReportViewSet(AbstractAsyncViewSet):
-#     serializer_class = BalanceReportSerializer
-#     celery_task = balance_report
+class BalanceReportViewSet(AbstractAsyncViewSet):
+    serializer_class = BalanceReportSerializer
+    celery_task = balance_report
 
 
-class BalanceReportViewSet(AbstractViewSet):
+class BalanceReportSyncViewSet(AbstractViewSet):
     serializer_class = BalanceReportSerializer
 
 
@@ -132,7 +132,7 @@ class PLReportViewSet(AbstractAsyncViewSet):
     celery_task = pl_report
 
 
-class PLReportViewSet(AbstractViewSet):
+class PLReportSyncViewSet(AbstractViewSet):
     serializer_class = PLReportSerializer
 
     def create(self, request, *args, **kwargs):
@@ -158,18 +158,18 @@ class PLReportViewSet(AbstractViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-# class TransactionReportViewSet(AbstractAsyncViewSet):
-#     serializer_class = TransactionReportSerializer
-#     celery_task = transaction_report
-#
-#     def get_serializer_context(self):
-#         context = super(TransactionReportViewSet, self).get_serializer_context()
-#         context['attributes_hide_objects'] = True
-#         context['custom_fields_hide_objects'] = True
-#         return context
+class TransactionReportViewSet(AbstractAsyncViewSet):
+    serializer_class = TransactionReportSerializer
+    celery_task = transaction_report
 
-#
-class TransactionReportViewSet(AbstractViewSet):
+    def get_serializer_context(self):
+        context = super(TransactionReportViewSet, self).get_serializer_context()
+        context['attributes_hide_objects'] = True
+        context['custom_fields_hide_objects'] = True
+        return context
+
+
+class TransactionReportSyncViewSet(AbstractViewSet):
     serializer_class = TransactionReportSerializer
 
     def get_serializer_context(self):
