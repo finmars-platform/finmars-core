@@ -173,7 +173,7 @@ class TransactionReportSyncViewSet(AbstractViewSet):
     serializer_class = TransactionReportSerializer
 
     def get_serializer_context(self):
-        context = super(TransactionReportViewSet, self).get_serializer_context()
+        context = super(TransactionReportSyncViewSet, self).get_serializer_context()
         context['attributes_hide_objects'] = True
         context['custom_fields_hide_objects'] = True
         return context
