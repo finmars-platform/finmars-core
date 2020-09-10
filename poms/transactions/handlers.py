@@ -288,10 +288,10 @@ class TransactionTypeProcess(object):
                             _l.info("ERROR Set from default. input %s" % i.name)
                             value = None
 
-                if value:
-                    self.values[i.name] = value
-                else:
-                    _l.info("Value is not set. No Context. No Default. input %s " % i.name)
+            if value:
+                self.values[i.name] = value
+            else:
+                _l.info("Value is not set. No Context. No Default. input %s " % i.name)
 
         # _l.debug('setvalues %s' % self.values)
 
