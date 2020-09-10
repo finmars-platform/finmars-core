@@ -906,11 +906,14 @@ class ReportBuilder(BaseReportBuilder):
             st_data.append(duration_st)
 
 
-        _l.debug('build clone_transactions_if_need total slowest %s (threshold %s)' % (slowest_count, threshold))
-        _l.debug('build transaction_calc slowest %s' % "{:3.3f}".format(st_slowest))
-        _l.debug('build transaction_calc trn slowest %s' % trn_slowest)
-        _l.debug('build transaction_calc fastest %s' % "{:3.6f}".format(st_fastest))
-        _l.debug('build transaction_calc median %s' % "{:3.6f}".format(statistics.median(st_data)))
+        _l.debug('build transaction_calc total slowest %s (threshold %s)' % (slowest_count, threshold))
+        if st_slowest:
+            _l.debug('build transaction_calc slowest %s' % "{:3.3f}".format(st_slowest))
+        _l.debug('build transaction_calc transaction slowest %s' % trn_slowest)
+        if st_fastest:
+            _l.debug('build transaction_calc fastest %s' % "{:3.6f}".format(st_fastest))
+        if len(st_data):
+            _l.debug('build transaction_calc median %s' % "{:3.6f}".format(statistics.median(st_data)))
 
 
     def _clone_transactions_if_need(self):
@@ -990,10 +993,13 @@ class ReportBuilder(BaseReportBuilder):
         self._transactions = res
 
         _l.debug('build clone_transactions_if_need total slowest %s (threshold %s)' % (slowest_count, threshold))
-        _l.debug('build clone_transactions_if_need slowest %s' % "{:3.3f}".format(st_slowest))
+        if st_slowest:
+            _l.debug('build clone_transactions_if_need slowest %s' % "{:3.3f}".format(st_slowest))
         _l.debug('build clone_transactions_if_need transaction slowest %s' % trn_slowest)
-        _l.debug('build clone_transactions_if_need fastest %s' % "{:3.6f}".format(st_fastest))
-        _l.debug('build clone_transactions_if_need median %s' % "{:3.6f}".format(statistics.median(st_data)))
+        if st_fastest:
+            _l.debug('build clone_transactions_if_need fastest %s' % "{:3.6f}".format(st_fastest))
+        if len(st_data):
+            _l.debug('build clone_transactions_if_need median %s' % "{:3.6f}".format(statistics.median(st_data)))
 
         # _l.debug('transactions - len=%s', len(self._transactions))
 
