@@ -1841,6 +1841,7 @@ class TransactionTypeProcess(object):
                 if inp.value_type in [TransactionTypeInput.RELATION]:
 
                     errors = {}
+
                     try:
                         res = formula.safe_eval(inp.value_expr, names=self.values, now=self._now, context=self._context)
 

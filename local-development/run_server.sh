@@ -9,6 +9,7 @@ DB_HOST=localhost \
 DB_PORT=5434 \
 DEBUG=True \
 LOCAL=True \
+PROFILER=True \
 ENV_CSRF_TRUSTED_ORIGINS=0.0.0.0:8080 \
 SFTP_HOST=sftp.finmars.com \
 SFTP_USERNAME=finmars \

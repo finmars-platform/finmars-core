@@ -171,8 +171,16 @@ MIDDLEWARE = [
 
 if LOCAL:
     MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
+
+
+PROFILER = False
+if os.environ.get('PROFILER') == 'True':
+    PROFILER = True
+
+if PROFILER:
     MIDDLEWARE.append('django_cprofile_middleware.middleware.ProfilerMiddleware')
     DJANGO_CPROFILE_MIDDLEWARE_REQUIRE_STAFF = False
+
 
 ROOT_URLCONF = 'poms_app.urls'
 
