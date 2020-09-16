@@ -10,7 +10,7 @@ import logging
 
 from poms.procedures.models import RequestDataFileProcedureInstance
 
-_l = logging.getLogger('poms.shedules')
+_l = logging.getLogger('poms.procedures')
 
 
 class RequestDataFileProcedureProcess(object):
@@ -43,9 +43,9 @@ class RequestDataFileProcedureProcess(object):
         if settings.DATA_FILE_SERVICE_URL:
 
             procedure_instance = RequestDataFileProcedureInstance(procedure=self.procedure,
-                                                          master_user=self.master_user,
-                                                          status=RequestDataFileProcedureInstance.STATUS_PENDING
-                                                          )
+                                                                  master_user=self.master_user,
+                                                                  status=RequestDataFileProcedureInstance.STATUS_PENDING
+                                                                  )
 
             _l.info("RequestDataFileProcedureProcess: Subprocess process_request_transaction_file_async. Master User: %s. Provider: %s, Scheme name: %s" % (master_user, provider, scheme_name) )
 
@@ -61,13 +61,14 @@ class RequestDataFileProcedureProcess(object):
                     "token": self.master_user.token,
                     "credentials": {}
                 },
-                "date_from": self.procedure.date_from,
-                "date_to": self.procedure.date_to,
+                # "date_from": self.procedure.date_from,
+                # "date_to": self.procedure.date_to,
                 "provider": self.procedure.provider.user_code,
                 "scheme_name": self.procedure.scheme_name,
-                "files": [
-                    {"host": "sftp", "path": "SNAP"}
-                ]
+                "files": [],
+                "params": {},
+                "error_status": 0,
+                "error_message": ""
             }
 
             headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
@@ -76,7 +77,11 @@ class RequestDataFileProcedureProcess(object):
 
             try:
 
-                response = requests.post(url=settings.DATA_FILE_SERVICE_URL, data=json.dumps(data), headers=headers)
+                url = settings.DATA_FILE_SERVICE_URL + '/' + self.procedure.provider.user_code + '/getfile'
+
+                _l.info('url', url)
+
+                response = requests.post(url=url, data=json.dumps(data), headers=headers)
 
                 procedure_instance.save()
 

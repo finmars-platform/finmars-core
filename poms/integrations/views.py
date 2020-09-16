@@ -1187,13 +1187,19 @@ class TransactionFileResultUploadHandler(APIView):
                                                      provider=request.data['provider'],
                                                      scheme_name=request.data['scheme_name'])
 
-            item.file = request.data['file']
+            _l.info('request.data %s' % request.data)
+
+            item.file = request.data['files'][0].path
 
             item.save()
+
+            _l.info("Transaction File saved successfuly")
 
             return Response({'status': 'ok'})
 
         except TransactionFileResult.DoesNotExist:
+
+            _l.info("Transaction File error happened")
 
             return Response({'status': 'error'})
 

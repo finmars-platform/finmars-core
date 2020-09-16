@@ -7,8 +7,8 @@ import logging
 
 from poms.pricing.handlers import PricingProcedureProcess
 from poms.pricing.models import PricingProcedure
+from poms.procedures.handlers import RequestDataFileProcedureProcess
 from poms.procedures.models import RequestDataFileProcedure
-from poms.schedules.handlers import RequestDataFileProcedureProcess
 from poms.schedules.models import PricingSchedule, Schedule
 
 

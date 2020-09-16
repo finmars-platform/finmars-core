@@ -594,7 +594,7 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
         elif self.trn_cls.id in [TransactionClass.FX_TRADE, TransactionClass.TRANSACTION_PL,
                                  TransactionClass.CASH_INFLOW, TransactionClass.CASH_INFLOW]:
             self.pricing_ccy = self.report.report_currency
-        else:
+        else: # WHAT?
             self.pricing_ccy = self.report.report_currency
 
         if self.pricing_ccy.id == self.report.report_currency.id:
@@ -1144,8 +1144,8 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
         else:
             self.mismatch = self.cash - self.total
 
-        # TODO Temporary disabled
-        # self.round_after_calc()
+
+        # self.round_after_calc() # TODO Temporary disabled
 
         # def calc_pass2(self, balance_pos_size):
         #     # called after "balance"
