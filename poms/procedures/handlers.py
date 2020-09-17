@@ -59,14 +59,14 @@ class RequestDataFileProcedureProcess(object):
                 "id": item.id,
                 "user": {
                     "token": self.master_user.token,
-                    "credentials": {}
+                    "credentials": {},
+                    "params": {},
                 },
                 # "date_from": self.procedure.date_from,
                 # "date_to": self.procedure.date_to,
                 "provider": self.procedure.provider.user_code,
                 "scheme_name": self.procedure.scheme_name,
                 "files": [],
-                "params": {},
                 "error_status": 0,
                 "error_message": ""
             }
