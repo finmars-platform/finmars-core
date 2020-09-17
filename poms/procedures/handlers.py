@@ -47,7 +47,7 @@ class RequestDataFileProcedureProcess(object):
                                                                   status=RequestDataFileProcedureInstance.STATUS_PENDING
                                                                   )
 
-            _l.info("RequestDataFileProcedureProcess: Subprocess process_request_transaction_file_async. Master User: %s. Provider: %s, Scheme name: %s" % (master_user, provider, scheme_name) )
+            _l.info("RequestDataFileProcedureProcess: Subprocess process_request_transaction_file_async. Master User: %s. Provider: %s, Scheme name: %s" % (self.master_user, self.procedure.provider, self.procedure.scheme_name) )
 
             item = TransactionFileResult.objects.create(
                 master_user=self.master_user,
