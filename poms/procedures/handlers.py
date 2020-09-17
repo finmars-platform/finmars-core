@@ -47,7 +47,7 @@ class RequestDataFileProcedureProcess(object):
                                                                   status=RequestDataFileProcedureInstance.STATUS_PENDING
                                                                   )
 
-            _l.info("RequestDataFileProcedureProcess: Subprocess process_request_transaction_file_async. Master User: %s. Provider: %s, Scheme name: %s" % (self.master_user, self.procedure.provider, self.procedure.scheme_name) )
+            _l.info("RequestDataFileProcedureProcess: Request_transaction_file. Master User: %s. Provider: %s, Scheme name: %s" % (self.master_user, self.procedure.provider, self.procedure.scheme_name) )
 
             item = TransactionFileResult.objects.create(
                 master_user=self.master_user,
@@ -75,15 +75,21 @@ class RequestDataFileProcedureProcess(object):
 
             response = None
 
+            _l.info('data %s' % data )
+
             try:
 
                 url = settings.DATA_FILE_SERVICE_URL + '/' + self.procedure.provider.user_code + '/getfile'
 
-                _l.info('url', url)
+                _l.info('url %s' % url)
 
                 response = requests.post(url=url, data=json.dumps(data), headers=headers)
 
+                _l.info('response %s' % response)
+
                 procedure_instance.save()
+
+                _l.info("procedure instance saved %s" % procedure_instance)
 
             except Exception:
                 _l.info("Can't send request to Data File Service. Is Transaction File Service offline?")
