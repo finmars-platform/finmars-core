@@ -19,10 +19,10 @@ class RequestDataFileProcedureProcess(object):
 
         _l.info('RequestDataFileProcedureProcess. Master user: %s. Procedure: %s' % (master_user, procedure))
 
-        self.execute_procedure_date_expressions()
-
         self.master_user = master_user
         self.procedure = procedure
+
+        self.execute_procedure_date_expressions()
 
     def execute_procedure_date_expressions(self):
 
