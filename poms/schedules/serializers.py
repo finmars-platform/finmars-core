@@ -8,6 +8,15 @@ from poms.users.fields import MasterUserField
 from rest_framework.fields import empty
 
 
+class ScheduleProcedureSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ScheduleProcedure
+        fields = [
+            'id', 'type', 'user_code', 'order'
+        ]
+
+
 class PricingScheduleSerializer(ModelWithTimeStampSerializer):
 
     master_user = MasterUserField()
@@ -39,6 +48,8 @@ class ScheduleSerializer(ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     last_run_at = DateTimeTzAwareField(read_only=True)
     next_run_at = DateTimeTzAwareField(read_only=True)
+
+    procedures =  ScheduleProcedureSerializer(required=False, many=True)
 
     class Meta:
         model = PricingSchedule
@@ -86,7 +97,7 @@ class ScheduleSerializer(ModelWithTimeStampSerializer):
 
             if procedure is None:
                 try:
-                    procedure = ScheduleProcedure.objects.get(schedule=instance, user_code=procedure_data['user_code'])
+                    procedure = ScheduleProcedure.objects.get(schedule=instance, user_code=procedure_data['user_code'], order=procedure_data['order'])
                 except ScheduleProcedure.DoesNotExist:
                     procedure = ScheduleProcedure(schedule=instance)
 

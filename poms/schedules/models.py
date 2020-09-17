@@ -136,3 +136,9 @@ class ScheduleProcedure(models.Model):
     schedule = models.ForeignKey(Schedule,  verbose_name=ugettext_lazy('schedule'), related_name="procedures", on_delete=models.CASCADE)
     type = models.CharField(max_length=25, null=True, blank=True, verbose_name=ugettext_lazy('type'))
     user_code = models.CharField(max_length=25, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
+    order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
+
+    class Meta:
+        unique_together = [
+            ['user_code', 'order', 'type'],
+        ]
