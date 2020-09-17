@@ -86,6 +86,7 @@ class RequestDataFileProcedureProcess(object):
                 response = requests.post(url=url, data=json.dumps(data), headers=headers)
 
                 _l.info('response %s' % response)
+                _l.info('response text %s' % response.text)
 
                 procedure_instance.save()
 
