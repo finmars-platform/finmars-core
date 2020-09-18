@@ -1741,7 +1741,33 @@ class TransactionTypeProcess(object):
 
         if self.uniqueness_reaction:
 
-            if self.uniqueness_reaction == 1:
+            ctrn = formula.value_prepare(self.complex_transaction)
+            trns = self.complex_transaction.transactions.all()
+
+            names = {
+                'complex_transaction': ctrn,
+                'transactions': trns,
+            }
+
+            try:
+
+                self.complex_transaction.transaction_unique_code = formula.safe_eval(
+                self.complex_transaction.transaction_type.transaction_unique_code_expr, names=names,
+                context=self._context)
+
+            except Exception as e:
+
+                self.complex_transaction.transaction_unique_code = None
+
+            exist = None
+
+            try:
+                exist = ComplexTransaction.objects.get(master_user=self.transaction_type.master_user,
+                                                   transaction_unique_code=self.complex_transaction.transaction_unique_code)
+            except ComplexTransaction.DoesNotExist:
+                exist = None
+
+            if self.uniqueness_reaction == 1 and exist and self.complex_transaction.transaction_unique_code:
 
                 self.complex_transaction.delete()
 
@@ -1750,32 +1776,17 @@ class TransactionTypeProcess(object):
                     "message": "Skipped book. Transaction Unique code error"
                 })
 
-            elif self.uniqueness_reaction == 2:
+            elif self.uniqueness_reaction == 2 and exist and self.complex_transaction.transaction_unique_code:
 
                 self.complex_transaction.transaction_unique_code = None
 
-            elif self.uniqueness_reaction == 3:
-
-                ctrn = formula.value_prepare(self.complex_transaction)
-                trns = self.complex_transaction.transactions.all()
-
-                names = {
-                    'complex_transaction': ctrn,
-                    'transactions': trns,
-                }
-
-                self.complex_transaction.transaction_unique_code = formula.safe_eval(
-                    self.complex_transaction.transaction_type.transaction_unique_code_expr, names=names,
-                    context=self._context)
-
-                exist = ComplexTransaction.objects.get(master_user=self.transaction_type.master_user,
-                                                       transaction_unique_code=self.complex_transaction.transaction_unique_code)
+            elif self.uniqueness_reaction == 3 and exist and self.complex_transaction.transaction_unique_code:
 
                 self.complex_transaction.code = exist.code
 
                 exist.delete()
 
-            elif self.uniqueness_reaction == 4:
+            elif self.uniqueness_reaction == 4 and exist and self.complex_transaction.transaction_unique_code:
                 # TODO ask if behavior same as skip
 
                 self.complex_transaction.delete()
