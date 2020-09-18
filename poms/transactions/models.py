@@ -303,6 +303,14 @@ class TransactionType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         (TYPE_PROCEDURE, ugettext_lazy('Procedure')),
     )
 
+    BOOK_WITHOUT_UNIQUE_CODE = 1
+    SKIP_BOOK_WITH_UNIQUE_CODE = 2
+
+    BOOK_WITH_UNIQUE_CODE_CHOICES = (
+        (BOOK_WITHOUT_UNIQUE_CODE, ugettext_lazy('Book without unique code')),
+        (SKIP_BOOK_WITH_UNIQUE_CODE, ugettext_lazy('Skip')),
+    )
+
     master_user = models.ForeignKey(MasterUser, related_name='transaction_types',
                                     verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     group = models.ForeignKey(TransactionTypeGroup, null=True, blank=True, on_delete=models.PROTECT,
@@ -311,6 +319,14 @@ class TransactionType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
                                  verbose_name=ugettext_lazy('date expr'))
     display_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                     verbose_name=ugettext_lazy('display expr'))
+
+    transaction_unique_code_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                    verbose_name=ugettext_lazy('transaction unique code expr'))
+
+
+    transaction_unique_code_options = models.PositiveSmallIntegerField(default=BOOK_WITHOUT_UNIQUE_CODE, choices=BOOK_WITH_UNIQUE_CODE_CHOICES,
+                                                         verbose_name=ugettext_lazy('transaction unique code options'))
+
     instrument_types = models.ManyToManyField('instruments.InstrumentType', related_name='transaction_types',
                                               blank=True, verbose_name=ugettext_lazy('instrument types'))
     is_valid_for_all_portfolios = models.BooleanField(default=True,
@@ -1214,6 +1230,8 @@ class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
 
     code = models.IntegerField(default=0, verbose_name=ugettext_lazy('code'))
 
+    transaction_unique_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('transaction unique code'))
+
     text = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('text'))
 
     user_text_1 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 1'))
@@ -1329,6 +1347,7 @@ class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
     def save(self, *args, **kwargs):
         print("Complex Transaction Save text %s" % self.text)
         print("Complex Transaction Save date %s" % self.date)
+        print("Complex Transaction Save transaction_unique_code %s" % self.transaction_unique_code)
 
         if self.code is None or self.code == 0:
             self.code = FakeSequence.next_value(self.transaction_type.master_user, 'complex_transaction', d=100)

@@ -936,6 +936,9 @@ class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelW
     display_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                    allow_null=True, default='')
 
+    transaction_unique_code_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                                   allow_null=True, default='')
+
     user_text_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                   allow_null=True, default='')
     user_text_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
@@ -1052,6 +1055,8 @@ class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelW
             'id', 'master_user', 'group',
             'user_code', 'name', 'short_name', 'public_name', 'notes',
             'date_expr', 'display_expr',
+            'transaction_unique_code_expr',
+            'transaction_unique_code_options',
 
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
@@ -1114,6 +1119,10 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
     date_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                 allow_null=True, default='now()')
     display_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+
+
+    transaction_unique_code_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                    allow_null=True, default='')
 
     user_text_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
@@ -1248,6 +1257,8 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             'id', 'master_user', 'group',
             'user_code', 'name', 'short_name', 'public_name', 'notes',
             'date_expr', 'display_expr', 'visibility_status', 'type',
+            'transaction_unique_code_expr',
+            'transaction_unique_code_options',
 
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
@@ -1784,6 +1795,8 @@ class TransactionTypeViewSerializer(ModelWithObjectPermissionSerializer):
             'id', 'group', 'user_code', 'name', 'short_name', 'public_name', 'notes',
             'is_valid_for_all_portfolios', 'is_valid_for_all_instruments', 'is_deleted',
             'group_object',
+            'transaction_unique_code_expr',
+            'transaction_unique_code_options',
 
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
@@ -2058,6 +2071,8 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
         fields = [
             'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'transactions', 'master_user',
 
+            'transaction_unique_code',
+
             'is_locked', 'is_canceled', 'error_code',
 
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
@@ -2323,7 +2338,7 @@ class ComplexTransactionLightSerializer(ModelWithObjectPermissionSerializer, Mod
         fields = [
             'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'master_user',
 
-            'visibility_status', 'is_locked', 'is_canceled',
+            'visibility_status', 'is_locked', 'is_canceled', 'transaction_unique_code',
 
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',

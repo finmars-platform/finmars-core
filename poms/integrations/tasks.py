@@ -1676,7 +1676,8 @@ def complex_transaction_csv_file_import(self, instance):
                                 context={
                                     'master_user': instance.master_user,
                                     'member': instance.member,
-                                }
+                                },
+                                uniqueness_reaction=instance.scheme.book_uniqueness_settings
                             )
                             tt_process.process()
 

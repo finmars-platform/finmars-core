@@ -975,6 +975,22 @@ class PricingAutomatedSchedule(models.Model):
 
 
 class ComplexTransactionImportScheme(DataTimeStampedModel):
+
+    SKIP = 1
+    BOOK_WITHOUT_UNIQUE_CODE = 2
+    OVERWRITE = 3
+    TREAT_AS_ERROR = 3
+
+    BOOK_UNIQUENESS_CHOICES = (
+        (SKIP, ugettext_lazy('Skip')),
+        (BOOK_WITHOUT_UNIQUE_CODE, ugettext_lazy('Book without Unique Code ')),
+        (OVERWRITE, ugettext_lazy('Overwrite')),
+        (TREAT_AS_ERROR, ugettext_lazy('Treat as error')),
+    )
+
+    book_uniqueness_settings = models.PositiveSmallIntegerField(default=SKIP, choices=BOOK_UNIQUENESS_CHOICES,
+                                                         verbose_name=ugettext_lazy('book uniqueness settings'))
+
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     scheme_name = models.CharField(max_length=255, verbose_name=ugettext_lazy('scheme name'))
     rule_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('rule expressions'))

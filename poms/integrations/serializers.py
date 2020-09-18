@@ -1528,7 +1528,10 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
 
     class Meta:
         model = ComplexTransactionImportScheme
-        fields = ['id', 'master_user', 'scheme_name', 'rule_expr', 'inputs', 'calculated_inputs', 'rule_scenarios', 'selector_values',
+        fields = ['id', 'master_user', 'scheme_name', 'rule_expr',
+                  'book_uniqueness_settings',
+
+                  'inputs', 'calculated_inputs', 'rule_scenarios', 'selector_values',
                   'recon_scenarios', 'recon_layout']
 
     def __init__(self, *args, **kwargs):
