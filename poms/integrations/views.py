@@ -1183,6 +1183,8 @@ class TransactionFileResultUploadHandler(APIView):
 
         master_user = MasterUser.objects.get(token=request.data['user']['token'])
 
+        _l.info('master_user %s' % master_user)
+
         try:
 
             item = TransactionFileResult.objects.get(master_user=master_user,
@@ -1201,9 +1203,9 @@ class TransactionFileResultUploadHandler(APIView):
 
             return Response({'status': 'ok'})
 
-        except TransactionFileResult.DoesNotExist:
+        except Exception as e:
 
-            _l.info("Transaction File error happened")
+            _l.info("Transaction File error happened %s " % e)
 
             return Response({'status': 'error'})
 
