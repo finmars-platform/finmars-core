@@ -1189,11 +1189,15 @@ class TransactionFileResultUploadHandler(APIView):
                                                      provider__user_code=request.data['provider'],
                                                      scheme_name=request.data['scheme_name'])
 
-            item.file = request.data['files'][0].path
+            if (request.data['files'] and len(request.data['files'])):
+                item.file = request.data['files'][0]["path"]
 
-            item.save()
+                item.save()
 
-            _l.info("Transaction File saved successfuly")
+                _l.info("Transaction File saved successfuly")
+
+            else:
+                _l.info("No files found")
 
             return Response({'status': 'ok'})
 

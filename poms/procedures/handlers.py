@@ -94,17 +94,20 @@ class RequestDataFileProcedureProcess(object):
 
                     data = response.json()
 
-                    item.file = data['files'][0].path
+                    if data['files'] and len(data['files']):
+                        item.file = data['files'][0]["path"]
 
-                    item.save()
+                        item.save()
+
                 else:
                     procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
                     procedure_instance.save()
 
                 _l.info("procedure instance saved %s" % procedure_instance)
 
-            except Exception:
+            except Exception as e:
                 _l.info("Can't send request to Data File Service. Is Transaction File Service offline?")
+                _l.info("Error %s" % e)
 
                 procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
                 procedure_instance.save()
