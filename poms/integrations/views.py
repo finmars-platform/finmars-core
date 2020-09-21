@@ -1179,15 +1179,15 @@ class TransactionFileResultUploadHandler(APIView):
 
         # _l.info('request.data %s' % request.data)
 
+        _l.info('request.data %s' % request.data)
+
         master_user = MasterUser.objects.get(token=request.data['user']['token'])
 
         try:
 
             item = TransactionFileResult.objects.get(master_user=master_user,
-                                                     provider=request.data['provider'],
+                                                     provider__user_code=request.data['provider'],
                                                      scheme_name=request.data['scheme_name'])
-
-            _l.info('request.data %s' % request.data)
 
             item.file = request.data['files'][0].path
 

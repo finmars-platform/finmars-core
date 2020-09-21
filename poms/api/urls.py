@@ -278,6 +278,7 @@ router.register(r'ui/color-palette', ui.ColorPaletteViewSet)
 router.register(r'reports/report', reports.BalanceReportViewSet, "report")
 # router.register(r'reports/balance-report', reports.BalanceReportViewSet, "balance-report")
 router.register(r'reports/balance-report', reports.BalanceReportSyncViewSet, "balance-report-sync")
+router.register(r'reports/balance-report-sql', reports.BalanceReportSqlSyncViewSet, "balance-report-sync-sql")
 router.register(r'reports/balance-report/custom-field', reports.BalanceReportCustomFieldViewSet,
                 'balance-report-custom-field')
 # router.register(r'reports/balance-report', reports.BalanceReportSyncViewSet, "balance-report-sync")
