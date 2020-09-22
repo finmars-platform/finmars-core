@@ -61,6 +61,7 @@ class RequestDataFileProcedureProcess(object):
             _l.info("RequestDataFileProcedureProcess: Request_transaction_file. Master User: %s. Provider: %s, Scheme name: %s" % (self.master_user, self.procedure.provider, self.procedure.scheme_name) )
 
             item = TransactionFileResult.objects.create(
+                procedure_instance=procedure_instance,
                 master_user=self.master_user,
                 provider=self.procedure.provider,
                 scheme_name=self.procedure.scheme_name,

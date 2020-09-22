@@ -1196,7 +1196,7 @@ class TransactionFileResultUploadHandler(APIView):
 
                 item = TransactionFileResult.objects.get(master_user=master_user,
                                                          provider__user_code=request.data['provider'],
-                                                         scheme_name=request.data['scheme_name'])
+                                                         procedure_instance=procedure)
 
                 if (request.data['files'] and len(request.data['files'])):
                     item.file = request.data['files'][0]["path"]

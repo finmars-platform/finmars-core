@@ -7,15 +7,13 @@ from logging import getLogger
 
 from croniter import croniter
 from django.conf import settings
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import ugettext, ugettext_lazy
 
-from poms.common.models import TimeStampedModel, AbstractClassModel, EXPRESSION_FIELD_LENGTH, DataTimeStampedModel, \
-    NamedModel
+from poms.common.models import TimeStampedModel, AbstractClassModel, EXPRESSION_FIELD_LENGTH, DataTimeStampedModel
 from poms.integrations.storage import import_config_storage
 from poms.obj_attrs.models import GenericClassifier, GenericAttributeType
 
@@ -1162,6 +1160,9 @@ class DataProvider(models.Model):
 
 
 class TransactionFileResult(DataTimeStampedModel):
+
+    procedure_instance = models.ForeignKey('procedures.RequestDataFileProcedureInstance', on_delete=models.CASCADE,
+                                                       verbose_name=ugettext_lazy('procedure'))
 
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 

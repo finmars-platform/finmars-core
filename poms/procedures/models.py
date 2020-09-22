@@ -3,8 +3,8 @@ from django.utils.translation import ugettext_lazy
 
 from poms.common.models import NamedModel, DataTimeStampedModel
 from poms.integrations.models import DataProvider
-from poms.schedules.models import Schedule, ScheduleInstance
-from poms.users.models import MasterUser, Member
+from poms.schedules.models import ScheduleInstance
+from poms.users.models import Member
 
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 
