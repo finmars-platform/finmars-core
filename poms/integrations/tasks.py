@@ -382,6 +382,7 @@ def test_certificate_async(self, task_id):
     return task_id
 
 
+# DEPRECATED SINCE 22.09.2020 DELETE SOON
 @shared_task(name='integrations.download_currency_pricing_async', bind=True, ignore_result=False)
 def download_currency_pricing_async(self, task_id):
     task = Task.objects.get(pk=task_id)
@@ -442,6 +443,7 @@ def download_currency_pricing_async(self, task_id):
     return task_id
 
 
+# DEPRECATED SINCE 22.09.2020 DELETE SOON
 @shared_task(name='integrations.download_pricing_async', bind=True, ignore_result=False)
 def download_pricing_async(self, task_id):
     celery_logger.info('download pricing async')
@@ -685,6 +687,7 @@ def download_pricing_async(self, task_id):
     return task_id
 
 
+# DEPRECATED SINCE 22.09.2020 DELETE SOON
 @shared_task(name='integrations.download_pricing_wait', bind=True, ignore_result=False)
 def download_pricing_wait(self, sub_tasks_id, task_id):
     celery_logger.info('download pricing wait')
@@ -911,7 +914,7 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
 
     return task_id
 
-
+# DEPRECATED SINCE 22.09.2020 DELETE SOON
 def _create_currency_default_prices(options, currencies, pricing_policies):
     _l.info('create_currency_default_prices: currencies=%s', currencies)
 
@@ -939,7 +942,7 @@ def _create_currency_default_prices(options, currencies, pricing_policies):
 
     return prices, errors
 
-
+# DEPRECATED SINCE 22.09.2020 DELETE SOON
 def _create_instrument_default_prices(options, instruments, pricing_policies):
     _l.info('create_instrument_default_prices: instruments=%s', instruments)
 
@@ -968,7 +971,7 @@ def _create_instrument_default_prices(options, instruments, pricing_policies):
 
     return prices, errors
 
-
+# DEPRECATED SINCE 22.09.2020 DELETE SOON
 def _create_instrument_manual_prices(options, instruments):
     _l.info('create_instrument_manual_prices: instruments=%s', instruments)
 
@@ -1059,7 +1062,7 @@ def test_certificate(master_user=None, member=None, task=None):
             return task, True
         return task, False
 
-
+# DEPRECATED SINCE 22.09.2020 DELETE SOON
 def download_pricing(master_user=None, member=None, date_from=None, date_to=None, is_yesterday=None, balance_date=None,
                      fill_days=None, override_existed=None, task=None):
     celery_logger.info('download pricing')

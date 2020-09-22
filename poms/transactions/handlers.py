@@ -1762,7 +1762,7 @@ class TransactionTypeProcess(object):
             exist = None
 
             try:
-                exist = ComplexTransaction.objects.get(master_user=self.transaction_type.master_user,
+                exist = ComplexTransaction.objects.exclude(transaction_unique_code=None).get(master_user=self.transaction_type.master_user,
                                                    transaction_unique_code=self.complex_transaction.transaction_unique_code)
             except ComplexTransaction.DoesNotExist:
                 exist = None
@@ -1831,7 +1831,7 @@ class TransactionTypeProcess(object):
 
                     try:
 
-                        exist = ComplexTransaction.objects.get(master_user=self.transaction_type.master_user,
+                        exist = ComplexTransaction.objects.exclude(transaction_unique_code=None).get(master_user=self.transaction_type.master_user,
                                                                transaction_unique_code=self.complex_transaction.transaction_unique_code)
 
                         if self.complex_transaction.transaction_type.transaction_unique_code_options == TransactionType.BOOK_WITHOUT_UNIQUE_CODE:
