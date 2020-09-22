@@ -1211,7 +1211,7 @@ class TransactionFileResultUploadHandler(APIView):
                     if procedure.schedule_instance:
                         procedure.schedule_instance.run_next_procedure()
 
-                    complex_transaction_csv_file_import_from_transaction_file.apply_async(kwargs={'transaction_file': item})
+                    complex_transaction_csv_file_import_from_transaction_file.apply_async(kwargs={'transaction_file': item, 'master_user': master_user})
 
                 else:
                     _l.info("No files found")
