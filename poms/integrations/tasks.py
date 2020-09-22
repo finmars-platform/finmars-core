@@ -1295,7 +1295,6 @@ def generate_file_report(instance, master_user, type, name):
     return file_report.pk
 
 
-
 @shared_task(name='integrations.complex_transaction_csv_file_import', bind=True)
 def complex_transaction_csv_file_import(self, instance):
     from poms.transactions.models import TransactionTypeInput
@@ -1311,9 +1310,6 @@ def complex_transaction_csv_file_import(self, instance):
     master_user = instance.master_user
 
     rule_scenarios = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()
-
-    # scheme_rules = {r.value: r for r in
-    #                 scheme.rules.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()}
 
     _l.info('scheme %s - inputs=%s, rules=%s', scheme,
             [(i.name, i.column) for i in scheme_inputs],
@@ -2273,3 +2269,10 @@ def complex_transaction_csv_file_import_validate(self, instance):
                             'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
 
     return instance
+
+
+@shared_task(name='integrations.complex_transaction_csv_file_import_from_transaction_file', bind=True)
+def complex_transaction_csv_file_import_from_transaction_file(self, transaction_file):
+
+    _l.info('complex_transaction_csv_file_import_from_transaction_file: %s', transaction_file)
+

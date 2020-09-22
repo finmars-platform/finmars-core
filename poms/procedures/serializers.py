@@ -68,14 +68,14 @@ class PricingProcedureSerializer(serializers.ModelSerializer):
 
 class PricingProcedureInstanceSerializer(serializers.ModelSerializer):
 
-    pricing_procedure_object = PricingProcedureSerializer(source='pricing_procedure', read_only=True)
+    procedure_object = PricingProcedureSerializer(source='procedure', read_only=True)
 
     class Meta:
         model = PricingProcedureInstance
         fields = ('master_user', 'id', 'parent_procedure_instance',
                   'created', 'modified',
                   'status',
-                  'pricing_procedure', 'pricing_procedure_object',
+                  'procedure', 'procedure_object',
                   'provider_verbose', 'action_verbose',
 
                   'successful_prices_count', 'error_prices_count',
@@ -87,13 +87,13 @@ class PricingProcedureInstanceSerializer(serializers.ModelSerializer):
 
 class PricingParentProcedureInstanceSerializer(serializers.ModelSerializer):
 
-    pricing_procedure_object = PricingProcedureSerializer(source='pricing_procedure', read_only=True)
+    procedure_object = PricingProcedureSerializer(source='procedure', read_only=True)
 
     procedures = PricingProcedureInstanceSerializer(many=True, read_only=True)
 
     class Meta:
         model = PricingParentProcedureInstance
-        fields = ('master_user', 'id', 'created', 'modified', 'pricing_procedure', 'pricing_procedure_object', 'procedures')
+        fields = ('master_user', 'id', 'created', 'modified', 'procedure', 'procedure_object', 'procedures')
 
 
 class RunProcedureSerializer(serializers.Serializer):
