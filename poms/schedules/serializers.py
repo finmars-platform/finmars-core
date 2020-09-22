@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from poms.common.fields import DateTimeTzAwareField
 from poms.common.serializers import ModelWithTimeStampSerializer
-from poms.schedules.models import PricingSchedule, ScheduleProcedure
+from poms.schedules.models import ScheduleProcedure, Schedule
 from poms.users.fields import MasterUserField
 from rest_framework.fields import empty
 
@@ -15,22 +15,6 @@ class ScheduleProcedureSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'type', 'user_code', 'order'
         ]
-
-
-class PricingScheduleSerializer(ModelWithTimeStampSerializer):
-
-    master_user = MasterUserField()
-    last_run_at = DateTimeTzAwareField(read_only=True)
-    next_run_at = DateTimeTzAwareField(read_only=True)
-
-    class Meta:
-        model = PricingSchedule
-        fields = [
-            'id', 'master_user', 'name', 'user_code', 'notes',
-            'is_enabled', 'cron_expr', 'pricing_procedures',
-            'last_run_at', 'next_run_at',
-        ]
-        read_only_fields = ['last_run_at', 'next_run_at']
 
 
 class RunScheduleSerializer(serializers.Serializer):
@@ -52,11 +36,11 @@ class ScheduleSerializer(ModelWithTimeStampSerializer):
     procedures =  ScheduleProcedureSerializer(required=False, many=True)
 
     class Meta:
-        model = PricingSchedule
+        model = Schedule
         fields = [
             'id', 'master_user', 'name', 'user_code', 'notes',
             'is_enabled', 'cron_expr', 'procedures',
-            'last_run_at', 'next_run_at',
+            'last_run_at', 'next_run_at', 'error_handler'
         ]
         read_only_fields = ['last_run_at', 'next_run_at']
 

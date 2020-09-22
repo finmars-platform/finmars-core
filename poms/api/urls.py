@@ -398,17 +398,18 @@ router.register(r'pricing/instrument-pricing-scheme', pricing.InstrumentPricingS
 router.register(r'pricing/instrument-pricing-scheme-type', pricing.InstrumentPricingSchemeTypeViewSet, 'pricing_instrument_pricing_scheme type')
 router.register(r'pricing/currency-pricing-scheme', pricing.CurrencyPricingSchemeViewSet, 'pricing_currency_pricing_scheme')
 router.register(r'pricing/currency-pricing-scheme-type', pricing.CurrencyPricingSchemeTypeViewSet, 'pricing_currency_pricing_scheme_type')
-router.register(r'pricing/procedure', pricing.PricingProcedureViewSet, 'pricing_procedure')
-router.register(r'pricing/parent-procedure-instance', pricing.PricingParentProcedureInstanceViewSet, 'pricing_parent_procedure_instance')
+
 
 router.register(r'pricing/price-history-error-ev-group', pricing.PriceHistoryErrorEvGroupViewSet, 'pricehistoryerrorevgroup')
 router.register(r'pricing/price-history-error', pricing.PriceHistoryErrorViewSet)
 router.register(r'pricing/currency-history-error-ev-group', pricing.CurrencyHistoryErrorEvGroupViewSet, 'currencyhistoryerrorevgroup')
 router.register(r'pricing/currency-history-error', pricing.CurrencyHistoryErrorViewSet)
 
-router.register(r'schedules/pricing', schedules.PricingScheduleViewSet) # DEPRECATED SINCE 26.08.2020 DELETE SOON
 
-router.register(r'schedules/schedule', schedules.PricingScheduleViewSet)
+router.register(r'schedules/schedule', schedules.ScheduleViewSet)
+
+router.register(r'procedures/pricing-procedure', procedures.PricingProcedureViewSet, 'pricing_procedure')
+router.register(r'procedures/pricing-parent-procedure-instance', procedures.PricingParentProcedureInstanceViewSet, 'pricing_parent_procedure_instance')
 router.register(r'procedures/request-data-procedure', procedures.RequestDataFileProcedureViewSet)
 router.register(r'credentials/credentials', credentials.CredentialsViewSet)
 router.register(r'integrations/data-provider', integrations.DataProviderViewSet)

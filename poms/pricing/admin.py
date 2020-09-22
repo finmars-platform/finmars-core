@@ -4,11 +4,11 @@ from django.contrib import admin
 from django.contrib import admin
 
 from poms.pricing.models import InstrumentPricingSchemeType, CurrencyPricingSchemeType, InstrumentPricingScheme, \
-    CurrencyPricingScheme, PricingProcedure, InstrumentPricingPolicy, \
-    InstrumentTypePricingPolicy, CurrencyPricingPolicy, PricingProcedureInstance, \
+    CurrencyPricingScheme, InstrumentPricingPolicy, \
+    InstrumentTypePricingPolicy, CurrencyPricingPolicy, \
     PricingProcedureBloombergInstrumentResult, PricingProcedureBloombergCurrencyResult, \
     PricingProcedureWtradeInstrumentResult, PriceHistoryError, \
-    CurrencyHistoryError, PricingParentProcedureInstance, PricingProcedureBloombergForwardInstrumentResult
+    CurrencyHistoryError, PricingProcedureBloombergForwardInstrumentResult
 
 
 class InstrumentPricingSchemeTypeAdmin(admin.ModelAdmin):
@@ -79,23 +79,6 @@ class PricingProcedureWtradeInstrumentResultAdmin(admin.ModelAdmin):
 admin.site.register(PricingProcedureWtradeInstrumentResult, PricingProcedureWtradeInstrumentResultAdmin)
 
 
-class PricingProcedureAdmin(admin.ModelAdmin):
-    model = PricingProcedure
-    list_display = ['id', 'name', 'master_user', 'type', 'notes', 'notes_for_users', 'price_date_from', 'price_date_to']
-
-
-admin.site.register(PricingProcedure, PricingProcedureAdmin)
-
-
-class PricingParentProcedureInstanceAdmin(admin.ModelAdmin):
-    model = PricingParentProcedureInstance
-    list_display = ['id', 'master_user', 'pricing_procedure', 'created', 'modified']
-    raw_id_fields = ['master_user', 'pricing_procedure']
-
-
-admin.site.register(PricingParentProcedureInstance, PricingParentProcedureInstanceAdmin)
-
-
 class InstrumentPricingPolicyAdmin(admin.ModelAdmin):
     model = InstrumentPricingPolicy
     list_display = ['id', 'instrument', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key']
@@ -121,15 +104,6 @@ class CurrencyPricingPolicyAdmin(admin.ModelAdmin):
 
 
 admin.site.register(CurrencyPricingPolicy, CurrencyPricingPolicyAdmin)
-
-
-class PricingProcedureInstanceAdmin(admin.ModelAdmin):
-    model = PricingProcedureInstance
-    list_display = ['id', 'pricing_procedure', 'master_user', 'status']
-    raw_id_fields = ['pricing_procedure', 'master_user']
-
-
-admin.site.register(PricingProcedureInstance, PricingProcedureInstanceAdmin)
 
 
 class PriceHistoryErrorAdmin(admin.ModelAdmin):

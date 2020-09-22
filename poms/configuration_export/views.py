@@ -37,15 +37,16 @@ from poms.obj_attrs.serializers import GenericClassifierViewSerializer, GenericC
     GenericAttributeTypeSerializer
 from poms.obj_perms.utils import obj_perms_filter_objects
 from poms.portfolios.models import Portfolio
-from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, PricingProcedure, CurrencyPricingPolicy, \
+from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme,  CurrencyPricingPolicy, \
     InstrumentTypePricingPolicy
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
     CurrencyPricingPolicySerializer, InstrumentTypePricingPolicySerializer
+from poms.procedures.models import PricingProcedure
 from poms.reconciliation.models import TransactionTypeReconField
 from poms.reference_tables.models import ReferenceTable, ReferenceTableRow
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
-from poms.schedules.models import PricingSchedule
-from poms.schedules.serializers import PricingScheduleSerializer
+from poms.schedules.models import Schedule
+from poms.schedules.serializers import ScheduleSerializer
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.tags.utils import get_tag_prefetch
 from poms.transactions.models import TransactionType, TransactionTypeInput, TransactionTypeAction, \
@@ -281,7 +282,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         instrument_pricing_schemes = self.get_instrument_pricing_schemes()
         currency_pricing_schemes = self.get_currency_pricing_schemes()
         pricing_procedures = self.get_pricing_procedures()
-        pricing_schedules = self.get_pricing_schedules()
+        schedules = self.get_schedules()
 
 
         if can_export:
@@ -355,7 +356,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             configuration["body"].append(instrument_pricing_schemes)
             configuration["body"].append(currency_pricing_schemes)
             configuration["body"].append(pricing_procedures)
-            configuration["body"].append(pricing_schedules)
+
+            configuration["body"].append(schedules)
 
 
         else:
@@ -2072,25 +2074,25 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
-    def get_pricing_schedules(self):
+    def get_schedules(self):
 
-        schedules = PricingSchedule.objects.filter(master_user=self._master_user)
+        schedules = Schedule.objects.filter(master_user=self._master_user)
         results = []
 
         for schedule in schedules:
 
-            result_item = PricingScheduleSerializer(instance=schedule).data
+            result_item = ScheduleSerializer(instance=schedule).data
 
             result_item.pop("id", None)
             result_item.pop("master_user", None)
 
-            procedures_user_codes = []
-
-            for procedure in schedule.pricing_procedures.all():
-                procedures_user_codes.append(procedure.user_code)
-
-            result_item['pricing_procedures__user_codes'] = procedures_user_codes
-            result_item["pricing_procedures"] = []
+            # procedures_user_codes = []
+            #
+            # for procedure in schedule.pricing_procedures.all():
+            #     procedures_user_codes.append(procedure.user_code)
+            #
+            # result_item['pricing_procedures__user_codes'] = procedures_user_codes
+            # result_item["pricing_procedures"] = []
 
             results.append(result_item)
 

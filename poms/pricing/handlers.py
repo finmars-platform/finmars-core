@@ -11,13 +11,14 @@ from poms.pricing.currency_handler import PricingCurrencyHandler
 from poms.pricing.instrument_handler import PricingInstrumentHandler
 from poms.pricing.models import PricingProcedureBloombergInstrumentResult, PricingProcedureBloombergCurrencyResult, \
     PricingProcedureWtradeInstrumentResult, PriceHistoryError, \
-    CurrencyHistoryError, PricingProcedureFixerCurrencyResult, PricingParentProcedureInstance, PricingProcedureInstance, \
+    CurrencyHistoryError, PricingProcedureFixerCurrencyResult, \
     PricingProcedureAlphavInstrumentResult, PricingProcedureBloombergForwardInstrumentResult
 
 import logging
 
 from poms.pricing.utils import roll_price_history_for_n_day_forward, roll_currency_history_for_n_day_forward, \
     convert_results_for_calc_avg_price
+from poms.procedures.models import PricingProcedureInstance, PricingParentProcedureInstance, BaseProcedureInstance
 from poms.reports.builders.balance_item import Report
 from poms.reports.builders.balance_pl import ReportBuilder
 from poms.transactions.models import Transaction
@@ -27,12 +28,15 @@ _l = logging.getLogger('poms.pricing')
 
 class PricingProcedureProcess(object):
 
-    def __init__(self, procedure=None, master_user=None, date_from=None, date_to=None):
+    def __init__(self, procedure=None, master_user=None, date_from=None, date_to=None, member=None, schedule_instance=None):
 
         _l.info('PricingProcedureProcess. Master user: %s. Procedure: %s' % (master_user, procedure))
 
         self.master_user = master_user
         self.procedure = procedure
+
+        self.member = member
+        self.schedule_instance = schedule_instance
 
         self.execute_procedure_date_expressions()
 
@@ -45,11 +49,19 @@ class PricingProcedureProcess(object):
         _l.info('price_date_from %s' % self.procedure.price_date_from)
         _l.info('price_date_to %s' % self.procedure.price_date_to)
 
-        self.parent_procedure = PricingParentProcedureInstance(pricing_procedure=procedure, master_user=master_user)
+        self.parent_procedure = PricingParentProcedureInstance(procedure=procedure, master_user=master_user)
         self.parent_procedure.save()
 
-        self.pricing_instrument_handler = PricingInstrumentHandler(procedure=procedure, parent_procedure=self.parent_procedure, master_user=master_user)
-        self.pricing_currency_handler = PricingCurrencyHandler(procedure=procedure, parent_procedure=self.parent_procedure, master_user=master_user)
+        self.pricing_instrument_handler = PricingInstrumentHandler(procedure=procedure,
+                                                                   parent_procedure=self.parent_procedure,
+                                                                   master_user=master_user,
+                                                                   member=self.member,
+                                                                   schedule_instance=self.schedule_instance)
+        self.pricing_currency_handler = PricingCurrencyHandler(procedure=procedure,
+                                                               parent_procedure=self.parent_procedure,
+                                                               master_user=master_user,
+                                                               member=self.member,
+                                                               schedule_instance=self.schedule_instance)
 
         _l.info("Procedure settings - Get Principal Prices: %s" % self.procedure.price_get_principal_prices)
         _l.info("Procedure settings - Get Accrued Prices: %s" % self.procedure.price_get_accrued_prices)
@@ -124,7 +136,9 @@ class FillPricesBrokerBloombergProcess(object):
         self.master_user = master_user
 
         self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
-        self.procedure = self.procedure_instance.pricing_procedure
+        self.procedure = self.procedure_instance.procedure
+
+
 
         _l.info("Broker Bloomberg - Get Principal Prices: %s" % self.procedure.price_get_principal_prices)
         _l.info("Broker Bloomberg - Get Accrued Prices: %s" % self.procedure.price_get_accrued_prices)
@@ -458,6 +472,9 @@ class FillPricesBrokerBloombergProcess(object):
         _l.info('bloomberg price self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
         _l.info('bloomberg price self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
 
+        if self.procedure_instance.schedule_instance:
+            self.procedure_instance.schedule_instance.run_next_procedure()
+
     def create_currency_history(self):
 
         _l.info("Creating currency history")
@@ -596,6 +613,9 @@ class FillPricesBrokerBloombergProcess(object):
 
         self.procedure_instance.save()
 
+        if self.procedure_instance.schedule_instance:
+            self.procedure_instance.schedule_instance.run_next_procedure()
+
 
 class FillPricesBrokerBloombergForwardsProcess(object):
 
@@ -605,7 +625,7 @@ class FillPricesBrokerBloombergForwardsProcess(object):
         self.master_user = master_user
 
         self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
-        self.procedure = self.procedure_instance.pricing_procedure
+        self.procedure = self.procedure_instance.procedure
 
         _l.info("Broker Bloomberg Forwards - Get Principal Prices: %s" % self.procedure.price_get_principal_prices)
         _l.info("Broker Bloomberg Forwards - Get Accrued Prices: %s" % self.procedure.price_get_accrued_prices)
@@ -864,6 +884,9 @@ class FillPricesBrokerBloombergForwardsProcess(object):
 
         self.procedure_instance.save()
 
+        if self.procedure_instance.schedule_instance:
+            self.procedure_instance.schedule_instance.run_next_procedure()
+
         _l.info('bloomberg forwards price self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
         _l.info('bloomberg forwards price self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
 
@@ -876,7 +899,7 @@ class FillPricesBrokerWtradeProcess(object):
         self.master_user = master_user
 
         self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
-        self.procedure = self.procedure_instance.pricing_procedure
+        self.procedure = self.procedure_instance.procedure
 
         _l.info('Broker Wtrade - Roll Days N Forward: %s' % self.procedure.price_fill_days)
 
@@ -1157,6 +1180,9 @@ class FillPricesBrokerWtradeProcess(object):
 
         self.procedure_instance.save()
 
+        if self.procedure_instance.schedule_instance:
+            self.procedure_instance.schedule_instance.run_next_procedure()
+
 
 class FillPricesBrokerFixerProcess(object):
 
@@ -1166,7 +1192,7 @@ class FillPricesBrokerFixerProcess(object):
         self.master_user = master_user
 
         self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
-        self.procedure = self.procedure_instance.pricing_procedure
+        self.procedure = self.procedure_instance.procedure
 
         _l.info("Broker Fixer - Get FX Rates: %s" % self.procedure.price_get_fx_rates)
         _l.info("Broker Fixer - Overwrite FX Rates: %s" % self.procedure.price_overwrite_fx_rates)
@@ -1367,6 +1393,9 @@ class FillPricesBrokerFixerProcess(object):
         _l.info('fixer self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
         _l.info('fixer self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
 
+        if self.procedure_instance.schedule_instance:
+            self.procedure_instance.schedule_instance.run_next_procedure()
+
 
 class FillPricesBrokerAlphavProcess(object):
 
@@ -1376,7 +1405,7 @@ class FillPricesBrokerAlphavProcess(object):
         self.master_user = master_user
 
         self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
-        self.procedure = self.procedure_instance.pricing_procedure
+        self.procedure = self.procedure_instance.procedure
 
         _l.info('Broker Alphav - Roll Days N Forward: %s' % self.procedure.price_fill_days)
 
@@ -1624,4 +1653,7 @@ class FillPricesBrokerAlphavProcess(object):
         self.procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
         self.procedure_instance.save()
+
+        if self.procedure_instance.schedule_instance:
+            self.procedure_instance.schedule_instance.run_next_procedure()
 

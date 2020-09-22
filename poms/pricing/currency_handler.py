@@ -12,13 +12,14 @@ from poms.integrations.models import ProviderClass, BloombergDataProviderCredent
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
 from poms.pricing.models import PricingProcedureInstance, PricingProcedureBloombergCurrencyResult, \
-    CurrencyPricingSchemeType, CurrencyHistoryError, PricingProcedureFixerCurrencyResult, PricingProcedure
+    CurrencyPricingSchemeType, CurrencyHistoryError, PricingProcedureFixerCurrencyResult
 from poms.pricing.transport.transport import PricingTransport
 from poms.pricing.utils import get_unique_pricing_schemes, group_items_by_provider, get_list_of_dates_between_two_dates, \
     get_is_yesterday, optimize_items, roll_currency_history_for_n_day_forward, get_empty_values_for_dates
 
 import logging
 
+from poms.procedures.models import PricingProcedure, BaseProcedureInstance
 from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
 from poms.transactions.models import Transaction
@@ -104,11 +105,14 @@ class CurrencyItem(object):
 
 class PricingCurrencyHandler(object):
 
-    def __init__(self, procedure=None, parent_procedure=None, master_user=None):
+    def __init__(self, procedure=None, parent_procedure=None, master_user=None, member=None, schedule_instance=None):
 
         self.master_user = master_user
         self.procedure = procedure
         self.parent_procedure = parent_procedure
+
+        self.member = member
+        self.schedule_instance = schedule_instance
 
         self.currencies = []
 
@@ -280,7 +284,7 @@ class PricingCurrencyHandler(object):
         successful_prices_count = 0
         error_prices_count = 0
 
-        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+        procedure_instance = PricingProcedureInstance(procedure=self.procedure,
                                                       parent_procedure_instance=self.parent_procedure,
                                                       master_user=self.master_user,
                                                       status=PricingProcedureInstance.STATUS_PENDING,
@@ -291,6 +295,14 @@ class PricingCurrencyHandler(object):
                                                       provider_verbose='Finmars'
 
                                                       )
+        if self.member:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
+            procedure_instance.member = self.member
+
+        if self.schedule_instance:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_SCHEDULE
+            procedure_instance.schedule_instance = self.schedule_instance
+
         procedure_instance.save()
 
         _l.info('process_to_single_parameter_formula dates %s' % dates)
@@ -465,6 +477,9 @@ class PricingCurrencyHandler(object):
 
         procedure_instance.save()
 
+        if procedure_instance.schedule_instance:
+            procedure_instance.schedule_instance.run_next_procedure()
+
     def process_to_multiple_parameter_formula(self, items):
 
         _l.info("Pricing Currency Handler - Multiple Parameter Formula: len %s" % len(items))
@@ -475,7 +490,7 @@ class PricingCurrencyHandler(object):
         successful_prices_count = 0
         error_prices_count = 0
 
-        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+        procedure_instance = PricingProcedureInstance(procedure=self.procedure,
                                                       parent_procedure_instance=self.parent_procedure,
                                                       master_user=self.master_user,
                                                       status=PricingProcedureInstance.STATUS_PENDING,
@@ -485,6 +500,15 @@ class PricingCurrencyHandler(object):
                                                       action_verbose='Get FX Rates from Multiple Parameter Formula',
                                                       provider_verbose='Finmars'
                                                       )
+
+        if self.member:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
+            procedure_instance.member = self.member
+
+        if self.schedule_instance:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_SCHEDULE
+            procedure_instance.schedule_instance = self.schedule_instance
+
         procedure_instance.save()
 
         for item in items:
@@ -711,12 +735,15 @@ class PricingCurrencyHandler(object):
 
         procedure_instance.save()
 
+        if procedure_instance.schedule_instance:
+            procedure_instance.schedule_instance.run_next_procedure()
+
     def process_to_bloomberg_provider(self, items):
 
         _l.info("Pricing Currency Handler - Bloomberg Provider: len %s" % len(items))
 
 
-        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+        procedure_instance = PricingProcedureInstance(procedure=self.procedure,
                                                       parent_procedure_instance=self.parent_procedure,
                                                       master_user=self.master_user,
                                                       status=PricingProcedureInstance.STATUS_PENDING,
@@ -727,6 +754,15 @@ class PricingCurrencyHandler(object):
                                                       provider_verbose='Bloomberg'
 
                                                       )
+
+        if self.member:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
+            procedure_instance.member = self.member
+
+        if self.schedule_instance:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_SCHEDULE
+            procedure_instance.schedule_instance = self.schedule_instance
+
         procedure_instance.save()
 
         body = {}
@@ -857,7 +893,7 @@ class PricingCurrencyHandler(object):
 
         with transaction.atomic():
 
-            procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+            procedure_instance = PricingProcedureInstance(procedure=self.procedure,
                                                           parent_procedure_instance=self.parent_procedure,
                                                           master_user=self.master_user,
                                                           status=PricingProcedureInstance.STATUS_PENDING,
@@ -868,6 +904,15 @@ class PricingCurrencyHandler(object):
                                                           provider_verbose='Fixer'
 
                                                           )
+
+            if self.member:
+                procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
+                procedure_instance.member = self.member
+
+            if self.schedule_instance:
+                procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_SCHEDULE
+                procedure_instance.schedule_instance = self.schedule_instance
+
             procedure_instance.save()
 
         body = {}

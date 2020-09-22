@@ -11,13 +11,14 @@ from poms.instruments.models import Instrument, DailyPricingModel, PriceHistory,
 from poms.integrations.models import ProviderClass, BloombergDataProviderCredential
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
-from poms.pricing.models import InstrumentPricingSchemeType, PricingProcedureInstance, \
+from poms.pricing.models import InstrumentPricingSchemeType, \
     PricingProcedureBloombergInstrumentResult, PricingProcedureWtradeInstrumentResult, PriceHistoryError, \
-    PricingProcedure, PricingProcedureAlphavInstrumentResult, PricingProcedureBloombergForwardInstrumentResult
+    PricingProcedureAlphavInstrumentResult, PricingProcedureBloombergForwardInstrumentResult
 from poms.pricing.transport.transport import PricingTransport
 from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_between_two_dates, group_items_by_provider, \
     get_is_yesterday, optimize_items, roll_price_history_for_n_day_forward, get_empty_values_for_dates, \
     get_closest_tenors
+from poms.procedures.models import PricingProcedure, PricingProcedureInstance, BaseProcedureInstance
 from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
 
@@ -133,11 +134,14 @@ class InstrumentItem(object):
 
 class PricingInstrumentHandler(object):
 
-    def __init__(self, procedure=None, parent_procedure=None, master_user=None):
+    def __init__(self, procedure=None, parent_procedure=None, master_user=None, member=None, schedule_instance=None):
 
         self.master_user = master_user
         self.procedure = procedure
         self.parent_procedure = parent_procedure
+
+        self.member = member
+        self.schedule_instance = schedule_instance
 
         self.instruments = []
 
@@ -373,7 +377,7 @@ class PricingInstrumentHandler(object):
         successful_prices_count = 0
         error_prices_count = 0
 
-        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+        procedure_instance = PricingProcedureInstance(procedure=self.procedure,
                                                       parent_procedure_instance=self.parent_procedure,
                                                       master_user=self.master_user,
                                                       status=PricingProcedureInstance.STATUS_PENDING,
@@ -384,6 +388,15 @@ class PricingInstrumentHandler(object):
                                                       provider_verbose='Finmars'
 
                                                       )
+
+        if self.member:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
+            procedure_instance.member = self.member
+
+        if self.schedule_instance:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_SCHEDULE
+            procedure_instance.schedule_instance = self.schedule_instance
+
         procedure_instance.save()
 
         for item in items:
@@ -612,6 +625,9 @@ class PricingInstrumentHandler(object):
 
         procedure_instance.save()
 
+        if procedure_instance.schedule_instance:
+            procedure_instance.schedule_instance.run_next_procedure()
+
     def process_to_multiple_parameter_formula(self, items):
 
         _l.info("Pricing Instrument Handler - Multiple parameters Formula: len %s" % len(items))
@@ -622,7 +638,7 @@ class PricingInstrumentHandler(object):
         successful_prices_count = 0
         error_prices_count = 0
 
-        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+        procedure_instance = PricingProcedureInstance(procedure=self.procedure,
                                                       parent_procedure_instance=self.parent_procedure,
                                                       master_user=self.master_user,
                                                       status=PricingProcedureInstance.STATUS_PENDING,
@@ -633,6 +649,15 @@ class PricingInstrumentHandler(object):
                                                       provider_verbose='Finmars'
 
                                                       )
+
+        if self.member:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
+            procedure_instance.member = self.member
+
+        if self.schedule_instance:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_SCHEDULE
+            procedure_instance.schedule_instance = self.schedule_instance
+
         procedure_instance.save()
 
         for item in items:
@@ -906,6 +931,9 @@ class PricingInstrumentHandler(object):
 
         procedure_instance.save()
 
+        if procedure_instance.schedule_instance:
+            procedure_instance.schedule_instance.run_next_procedure()
+
     def is_valid_parameter_for_bloomberg(self, parameters):
 
         reference = parameters[0]
@@ -923,7 +951,7 @@ class PricingInstrumentHandler(object):
 
 
 
-        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+        procedure_instance = PricingProcedureInstance(procedure=self.procedure,
                                                       parent_procedure_instance=self.parent_procedure,
                                                       master_user=self.master_user,
                                                       status=PricingProcedureInstance.STATUS_PENDING,
@@ -934,6 +962,15 @@ class PricingInstrumentHandler(object):
                                                       provider_verbose='Bloomberg'
 
                                                       )
+
+        if self.member:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
+            procedure_instance.member = self.member
+
+        if self.schedule_instance:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_SCHEDULE
+            procedure_instance.schedule_instance = self.schedule_instance
+
         procedure_instance.save()
 
         body = {}
@@ -1173,7 +1210,7 @@ class PricingInstrumentHandler(object):
 
         _l.info("Pricing Instrument Handler - Bloomberg Forwards Provider: len %s" % len(items))
 
-        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+        procedure_instance = PricingProcedureInstance(procedure=self.procedure,
                                                       parent_procedure_instance=self.parent_procedure,
                                                       master_user=self.master_user,
                                                       status=PricingProcedureInstance.STATUS_PENDING,
@@ -1184,6 +1221,14 @@ class PricingInstrumentHandler(object):
                                                       provider_verbose='Bloomberg Forwards'
 
                                                       )
+        if self.member:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
+            procedure_instance.member = self.member
+
+        if self.schedule_instance:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_SCHEDULE
+            procedure_instance.schedule_instance = self.schedule_instance
+
         procedure_instance.save()
 
         body = {}
@@ -1329,7 +1374,7 @@ class PricingInstrumentHandler(object):
 
         _l.info("Pricing Instrument Handler - Wtrade Provider: len %s" % len(items))
 
-        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+        procedure_instance = PricingProcedureInstance(procedure=self.procedure,
                                                       parent_procedure_instance=self.parent_procedure,
                                                       master_user=self.master_user,
                                                       status=PricingProcedureInstance.STATUS_PENDING,
@@ -1340,6 +1385,15 @@ class PricingInstrumentHandler(object):
                                                       provider_verbose='World Trade Data'
 
                                                       )
+
+        if self.member:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
+            procedure_instance.member = self.member
+
+        if self.schedule_instance:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_SCHEDULE
+            procedure_instance.schedule_instance = self.schedule_instance
+
         procedure_instance.save()
 
         body = {}
@@ -1470,7 +1524,7 @@ class PricingInstrumentHandler(object):
 
         _l.info("Pricing Instrument Handler - Alphav Provider: len %s" % len(items))
 
-        procedure_instance = PricingProcedureInstance(pricing_procedure=self.procedure,
+        procedure_instance = PricingProcedureInstance(procedure=self.procedure,
                                                       parent_procedure_instance=self.parent_procedure,
                                                       master_user=self.master_user,
                                                       status=PricingProcedureInstance.STATUS_PENDING,
@@ -1481,6 +1535,15 @@ class PricingInstrumentHandler(object):
                                                       provider_verbose='Alpha Vantage'
 
                                                       )
+
+        if self.member:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
+            procedure_instance.member = self.member
+
+        if self.schedule_instance:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_SCHEDULE
+            procedure_instance.schedule_instance = self.schedule_instance
+
         procedure_instance.save()
 
         body = {}

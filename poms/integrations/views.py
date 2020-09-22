@@ -58,6 +58,7 @@ from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.portfolios.models import Portfolio
+from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.models import Member, MasterUser
@@ -1181,33 +1182,51 @@ class TransactionFileResultUploadHandler(APIView):
 
         _l.info('request.data %s' % request.data)
 
+        procedure_id = request.data['procedure']
+
         master_user = MasterUser.objects.get(token=request.data['user']['token'])
 
         _l.info('master_user %s' % master_user)
 
         try:
 
-            item = TransactionFileResult.objects.get(master_user=master_user,
-                                                     provider__user_code=request.data['provider'],
-                                                     scheme_name=request.data['scheme_name'])
+            procedure = RequestDataFileProcedureInstance.objects.get(pk=procedure_id)
 
-            if (request.data['files'] and len(request.data['files'])):
-                item.file = request.data['files'][0]["path"]
+            try:
 
-                item.save()
+                item = TransactionFileResult.objects.get(master_user=master_user,
+                                                         provider__user_code=request.data['provider'],
+                                                         scheme_name=request.data['scheme_name'])
 
-                _l.info("Transaction File saved successfuly")
+                if (request.data['files'] and len(request.data['files'])):
+                    item.file = request.data['files'][0]["path"]
 
-            else:
-                _l.info("No files found")
+                    item.save()
 
-            return Response({'status': 'ok'})
+                    _l.info("Transaction File saved successfuly")
 
-        except Exception as e:
+                    procedure.status = RequestDataFileProcedureInstance.STATUS_DONE
+                    procedure.save()
 
-            _l.info("Transaction File error happened %s " % e)
+                    if procedure.schedule_instance:
+                        procedure.schedule_instance.run_next_procedure()
 
-            return Response({'status': 'error'})
+                else:
+                    _l.info("No files found")
+
+                return Response({'status': 'ok'})
+
+            except Exception as e:
+
+                _l.info("Transaction File error happened %s " % e)
+
+                return Response({'status': 'error'})
+
+        except RequestDataFileProcedureInstance.DoesNotExist:
+
+            _l.info("Does not exist? Procedure %s" % procedure_id)
+
+            return Response({'status': '404'})  # TODO handle 404 properly
 
 
 class DataProviderViewSet(AbstractReadOnlyModelViewSet):

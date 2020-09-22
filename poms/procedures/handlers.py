@@ -15,12 +15,15 @@ _l = logging.getLogger('poms.procedures')
 
 class RequestDataFileProcedureProcess(object):
 
-    def __init__(self, procedure=None, master_user=None):
+    def __init__(self, procedure=None, master_user=None, member=None, schedule_instance=None):
 
         _l.info('RequestDataFileProcedureProcess. Master user: %s. Procedure: %s' % (master_user, procedure))
 
         self.master_user = master_user
         self.procedure = procedure
+
+        self.member = member
+        self.schedule_instance = schedule_instance
 
         self.execute_procedure_date_expressions()
 
@@ -46,6 +49,14 @@ class RequestDataFileProcedureProcess(object):
                                                                   master_user=self.master_user,
                                                                   status=RequestDataFileProcedureInstance.STATUS_PENDING
                                                                   )
+
+            if self.member:
+                procedure_instance.started_by = RequestDataFileProcedureInstance.STARTED_BY_MEMBER
+                procedure_instance.member = self.member
+
+            if self.schedule_instance:
+                procedure_instance.started_by = RequestDataFileProcedureInstance.STARTED_BY_SCHEDULE
+                procedure_instance.schedule_instance = self.schedule_instance
 
             _l.info("RequestDataFileProcedureProcess: Request_transaction_file. Master User: %s. Provider: %s, Scheme name: %s" % (self.master_user, self.procedure.provider, self.procedure.scheme_name) )
 
