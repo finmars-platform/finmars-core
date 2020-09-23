@@ -7,13 +7,17 @@ from poms.schedules.models import ScheduleProcedure, Schedule
 from poms.users.fields import MasterUserField
 from rest_framework.fields import empty
 
+import logging
+
+_l = logging.getLogger('poms.schedules')
+
 
 class ScheduleProcedureSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ScheduleProcedure
         fields = [
-            'id', 'type', 'user_code', 'order'
+            'type', 'user_code', 'order'
         ]
 
 
@@ -27,13 +31,13 @@ class RunScheduleSerializer(serializers.Serializer):
         context['instance'] = self.instance
 
 
-class ScheduleSerializer(ModelWithTimeStampSerializer):
+class ScheduleSerializer(serializers.ModelSerializer):
 
     master_user = MasterUserField()
     last_run_at = DateTimeTzAwareField(read_only=True)
     next_run_at = DateTimeTzAwareField(read_only=True)
 
-    procedures =  ScheduleProcedureSerializer(required=False, many=True)
+    procedures = ScheduleProcedureSerializer(required=False, many=True)
 
     class Meta:
         model = Schedule
@@ -46,15 +50,22 @@ class ScheduleSerializer(ModelWithTimeStampSerializer):
 
     def create(self, validated_data):
 
+        _l.info("create validated_data %s" % validated_data)
+
         procedures = validated_data.pop('procedures', empty)
 
         instance = super(ScheduleSerializer, self).create(validated_data)
+
         if procedures is not empty:
             procedures = self.save_procedures(instance, procedures)
 
         return instance
 
     def update(self, instance, validated_data):
+
+        _l.info("update instance %s" % instance)
+        _l.info("update validated_data %s" % validated_data)
+
         procedures = validated_data.pop('procedures', empty)
 
         instance = super(ScheduleSerializer, self).update(instance, validated_data)
@@ -74,14 +85,18 @@ class ScheduleSerializer(ModelWithTimeStampSerializer):
         current_procedures = {i.id: i for i in instance.procedures.all()}
         new_procedures = []
 
+        _l.info('procedures_data %s' % procedures_data)
+
         for order, procedure_data in enumerate(procedures_data):
 
             pk = procedure_data.pop('id', None)
             procedure = current_procedures.pop(pk, None)
 
+            _l.info('procedure %s' % procedure)
+
             if procedure is None:
                 try:
-                    procedure = ScheduleProcedure.objects.get(schedule=instance, user_code=procedure_data['user_code'], order=procedure_data['order'])
+                    procedure = ScheduleProcedure.objects.get(schedule=instance, order=procedure_data['order'])
                 except ScheduleProcedure.DoesNotExist:
                     procedure = ScheduleProcedure(schedule=instance)
 

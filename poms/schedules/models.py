@@ -13,9 +13,6 @@ from datetime import date, datetime, timedelta
 from django.conf import settings
 
 
-
-
-
 import logging
 
 _l = logging.getLogger('poms.schedules')
@@ -95,7 +92,7 @@ class ScheduleProcedure(models.Model):
 
     class Meta:
         unique_together = [
-            ['user_code', 'order', 'type'],
+            ['schedule', 'order'],
         ]
 
 
