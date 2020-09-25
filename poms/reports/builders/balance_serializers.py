@@ -27,7 +27,7 @@ from poms.reports.builders.base_serializers import ReportPortfolioSerializer, \
     ReportAccountSerializer, ReportStrategy1Serializer, ReportStrategy2Serializer, ReportStrategy3Serializer, \
     ReportInstrumentSerializer, ReportCurrencySerializer, ReportCurrencyHistorySerializer, ReportPriceHistorySerializer, \
     ReportAccrualCalculationScheduleSerializer, ReportItemBalanceReportCustomFieldSerializer, \
-    ReportInstrumentTypeSerializer, ReportAccountTypeSerializer
+    ReportInstrumentTypeSerializer, ReportAccountTypeSerializer, ReportGenericAttributeSerializer
 # from poms.reports.fields import CustomFieldField
 from poms.reports.fields import BalanceReportCustomFieldField
 from poms.reports.serializers import BalanceReportCustomFieldSerializer
@@ -38,6 +38,7 @@ from poms.transactions.serializers import TransactionClassSerializer
 from poms.users.fields import MasterUserField, HiddenMemberField
 
 import logging
+
 _l = logging.getLogger('poms.reports')
 
 
@@ -387,7 +388,6 @@ class ReportSerializerWithLogs(serializers.Serializer):
 
             if 'item_' in field.field_name:
                 if hasattr(instance, 'is_report'):
-
                     result_time = "{:3.3f}".format(time.perf_counter() - field_st)
 
                     _l.info('field %s to representation done %s' % (field.field_name, result_time))
@@ -396,6 +396,7 @@ class ReportSerializerWithLogs(serializers.Serializer):
             _l.info('report to representation done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
         return ret
+
 
 # class ReportSerializer(serializers.Serializer):
 class ReportSerializer(ReportSerializerWithLogs):
@@ -554,7 +555,8 @@ class ReportSerializer(ReportSerializerWithLogs):
 
         data = super(ReportSerializer, self).to_representation(instance)
 
-        _l.info('ReportSerializer to_representation_st done: %s' % "{:3.3f}".format(time.perf_counter() - to_representation_st))
+        _l.info('ReportSerializer to_representation_st done: %s' % "{:3.3f}".format(
+            time.perf_counter() - to_representation_st))
 
         st = time.perf_counter()
 
@@ -608,7 +610,6 @@ class ReportSerializer(ReportSerializerWithLogs):
                 _set_object(names, 'mismatch_account', item_accounts)
                 _set_object(names, 'report_currency_history', item_currency_fx_rates)
 
-
                 _set_object(names, 'instrument_price_history', item_instrument_pricings)
                 _set_object(names, 'instrument_pricing_currency_history', item_currency_fx_rates)
                 _set_object(names, 'instrument_accrued_currency_history', item_currency_fx_rates)
@@ -625,7 +626,6 @@ class ReportSerializer(ReportSerializerWithLogs):
 
                 custom_fields_names = {}
 
-
                 for i in range(5):
 
                     for cf in custom_fields:
@@ -635,7 +635,7 @@ class ReportSerializer(ReportSerializerWithLogs):
 
                             try:
                                 value = formula.safe_eval(expr, names=names, context=self.context)
-                            except formula.InvalidExpression as e :
+                            except formula.InvalidExpression as e:
                                 # _l.info('error %s' % e)
                                 value = ugettext('Invalid expression')
                         else:
@@ -712,7 +712,6 @@ class PLReportSerializer(ReportSerializer):
 
 
 def serialize_report_item(item):
-
     result = {
         # "id": ','.join(str(x) for x in item['pk']),
         "id": '-',
@@ -728,7 +727,7 @@ def serialize_report_item(item):
         "modified_duration": None
     }
 
-    if item["item_type"] == 1: # instrument
+    if item["item_type"] == 1:  # instrument
         result["instrument"] = item["instrument_id"]
         result["account"] = item["account_position_id"]
 
@@ -742,7 +741,7 @@ def serialize_report_item(item):
         # result["carry"] =  item["carry"]
         # result["principal"] =  item["principal"]
 
-    if item["item_type"] == 2: # currency
+    if item["item_type"] == 2:  # currency
 
         result["currency"] = item["currency_id"]
         result["account"] = item["account_cash_id"]
@@ -754,10 +753,69 @@ def serialize_report_item(item):
         result["pricing_currency"] = None
         result["instrument"] = None
 
+    return result
 
 
+def serialize_report_item_instrument(item):
+    # id', 'instrument_type',  'user_code', 'name', 'short_name',
+    # 'public_name', 'notes',
+    # 'pricing_currency', 'price_multiplier',
+    # 'accrued_currency',  'accrued_multiplier',
+    # 'default_price', 'default_accrued',
+    # 'user_text_1', 'user_text_2', 'user_text_3',
+    # 'reference_for_pricing',
+    # 'payment_size_detail',
+    # 'daily_pricing_model',
+    # 'maturity_date', 'maturity_price'
 
+    attributes = []
 
+    for attribute in item.attributes.all():
+
+        attr_result = {
+            "id": attribute.id,
+            "attribute_type": attribute.attribute_type_id,
+            "attribute_type_object": {
+                "id": attribute.attribute_type.id,
+                "user_code": attribute.attribute_type.user_code,
+                "name": attribute.attribute_type.name,
+                "short_name": attribute.attribute_type.short_name,
+                "value_type": attribute.attribute_type.value_type
+            },
+            "value_string": attribute.value_string,
+            "value_float": attribute.value_float,
+            "value_date": attribute.value_date,
+            "classifier": attribute.classifier
+        }
+
+        if attribute.classifier:
+            attr_result["classifier_object"] = {
+                "id": attribute.classifier.id,
+                "name": attribute.classifier.name
+            }
+
+        attributes.append(attr_result)
+
+    result = {
+        "id": item.id,
+        "name": item.name,
+        "short_name": item.short_name,
+        "user_code": item.user_code,
+        "public_name": item.public_name,
+        "pricing_currency": item.pricing_currency_id,
+        "price_multiplier": item.price_multiplier,
+        "accrued_currency": item.accrued_currency_id,
+        "accrued_multiplier": item.accrued_multiplier,
+        "default_accrued": item.default_accrued,
+        "default_price": item.price_multiplier,
+        "user_text_1": item.user_text_1,
+        "user_text_2": item.user_text_2,
+        "user_text_3": item.user_text_3,
+        "reference_for_pricing": item.reference_for_pricing,
+        "payment_size_detail": item.payment_size_detail_id,
+        "maturity_date": item.maturity_date,
+        "attributes": attributes
+    }
 
     return result
 
@@ -765,11 +823,22 @@ def serialize_report_item(item):
 class BalanceReportSqlSerializer(ReportSerializer):
     items = serializers.SerializerMethodField()
 
+    item_instruments = serializers.SerializerMethodField()
+
     def get_items(self, obj):
 
         result = []
 
         for item in obj.items:
             result.append(serialize_report_item(item))
+
+        return result
+
+    def get_item_instruments(self, obj):
+
+        result = []
+
+        for item in obj.item_instruments:
+            result.append(serialize_report_item_instrument(item))
 
         return result

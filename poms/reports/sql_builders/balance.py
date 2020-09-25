@@ -297,26 +297,30 @@ class ReportBuilderSql:
             'price_download_scheme__provider',
         ).prefetch_related(
             'attributes',
-        ).filter(id__in=ids)
+            'attributes__attribute_type',
+        ).filter(master_user=self.instance.master_user) \
+            .filter(id__in=ids)
 
     def add_data_items_portfolios(self, ids):
 
         self.instance.item_portfolios = Portfolio.objects.prefetch_related(
             'attributes'
-        ).defer('object_permissions', 'responsibles', 'counterparties', 'transaction_types', 'accounts', 'tags').filter(
+        ).defer('object_permissions', 'responsibles', 'counterparties', 'transaction_types', 'accounts', 'tags') \
+            .filter(master_user=self.instance.master_user)\
+            .filter(
             id__in=ids)
 
     def add_data_items_accounts(self, ids):
 
         self.instance.item_accounts = Account.objects.select_related('type').prefetch_related(
             'attributes',
-        ).defer('object_permissions').filter(id__in=ids)
+        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_currencies(self, ids):
 
         self.instance.item_currencies = Currency.objects.prefetch_related(
             'attributes',
-        ).filter(id__in=ids)
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items(self):
 
