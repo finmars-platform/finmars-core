@@ -595,8 +595,6 @@ class ReportSerializer(ReportSerializerWithLogs):
                 for key, value in item.items():
                     names[key] = value
 
-                _l.info('names %s' % names)
-
                 _set_object(names, 'portfolio', item_portfolios)
                 _set_object(names, 'account', item_accounts)
                 _set_object(names, 'strategy1', item_strategies1)
