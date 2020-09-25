@@ -136,9 +136,10 @@ class ReportBuilderSql:
                 ON t.instrument_id = iph.instrument_id
                 LEFT JOIN currencies_currencyhistory as cch
                 ON i.pricing_currency_id = cch.currency_id
+                WHERE cch.date = %s AND iph.date = %s AND cch.pricing_policy_id = %s;
             """
 
-            cursor.execute(query)
+            cursor.execute(query, [self.instance.report_date, self.instance.report_date, self.instance.pricing_policy.id])
 
             _l.info("fetch position data")
 
