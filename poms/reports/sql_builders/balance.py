@@ -109,6 +109,8 @@ class ReportBuilderSql:
 
             cursor.execute(query, [self.instance.report_date, self.instance.master_user.id])
 
+            _l.info("create or replace balance_position_consolidation_matrix")
+
             query = """
                 SELECT 
                     t.*, 
@@ -137,6 +139,8 @@ class ReportBuilderSql:
             """
 
             cursor.execute(query)
+
+            _l.info("fetch position data")
 
             result = dictfetchall(cursor)
 
