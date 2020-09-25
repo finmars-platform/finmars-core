@@ -8,7 +8,8 @@ from poms.common.filters import NoOpFilter, CharFilter
 from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet, AbstractReadOnlyModelViewSet, \
     AbstractSyncViewSet, AbstractViewSet
 from poms.reports.builders.balance_pl import ReportBuilder
-from poms.reports.builders.balance_serializers import BalanceReportSerializer, PLReportSerializer
+from poms.reports.builders.balance_serializers import BalanceReportSerializer, PLReportSerializer, \
+    BalanceReportSqlSerializer
 from poms.reports.builders.cash_flow_projection_serializers import CashFlowProjectionReportSerializer
 from poms.reports.builders.performance_serializers import PerformanceReportSerializer
 from poms.reports.builders.transaction import TransactionReportBuilder
@@ -129,7 +130,7 @@ class BalanceReportSyncViewSet(AbstractViewSet):
 
 
 class BalanceReportSqlSyncViewSet(AbstractViewSet):
-    serializer_class = BalanceReportSerializer
+    serializer_class = BalanceReportSqlSerializer
 
 
     def create(self, request, *args, **kwargs):

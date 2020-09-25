@@ -33,6 +33,7 @@ from poms.portfolios.models import Portfolio
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer
 from poms.procedures.models import PricingProcedure
+from poms.procedures.serializers import PricingProcedureSerializer
 from poms.reference_tables.models import ReferenceTable
 from poms.reference_tables.serializers import ReferenceTableSerializer
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField

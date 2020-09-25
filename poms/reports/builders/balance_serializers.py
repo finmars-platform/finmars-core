@@ -575,16 +575,18 @@ class ReportSerializer(ReportSerializerWithLogs):
             item_instrument_accruals = {o['id']: o for o in data['item_instrument_accruals']}
 
             def _set_object(names, pk_attr, objs):
-                pk = names[pk_attr]
-                if pk is not None:
 
-                    try:
-                        names['%s_object' % pk_attr] = objs[pk]
-                    except KeyError:
-                        pass
-                        # _l.info('pk %s' % pk)
-                        # _l.info('pk_attr %s' % pk_attr)
-                    # names[pk_attr] = objs[pk]
+                if pk_attr in names:
+                    pk = names[pk_attr]
+                    if pk is not None:
+
+                        try:
+                            names['%s_object' % pk_attr] = objs[pk]
+                        except KeyError:
+                            pass
+                            # _l.info('pk %s' % pk)
+                            # _l.info('pk_attr %s' % pk_attr)
+                        # names[pk_attr] = objs[pk]
 
             for item in items:
 
@@ -592,6 +594,8 @@ class ReportSerializer(ReportSerializerWithLogs):
 
                 for key, value in item.items():
                     names[key] = value
+
+                _l.info('names %s' % names)
 
                 _set_object(names, 'portfolio', item_portfolios)
                 _set_object(names, 'account', item_accounts)
@@ -623,15 +627,18 @@ class ReportSerializer(ReportSerializerWithLogs):
 
                 custom_fields_names = {}
 
+
                 for i in range(5):
 
                     for cf in custom_fields:
                         expr = cf['expr']
 
                         if expr:
+
                             try:
                                 value = formula.safe_eval(expr, names=names, context=self.context)
-                            except formula.InvalidExpression:
+                            except formula.InvalidExpression as e :
+                                _l.info('error %s' % e)
                                 value = ugettext('Invalid expression')
                         else:
                             value = None
@@ -704,3 +711,67 @@ class BalanceReportSerializer(ReportSerializer):
 
 class PLReportSerializer(ReportSerializer):
     pass
+
+
+def serialize_report_item(item):
+
+    result = {
+        # "id": ','.join(str(x) for x in item['pk']),
+        "id": '-',
+        "name": item["name"],
+        "short_name": item["short_name"],
+        "user_code": item["user_code"],
+        "portfolio": item["portfolio_id"],
+        "item_type": item["item_type"],
+        "item_type_code": item["item_type_code"],
+        "item_type_name": item["item_type_name"],
+        "position_size": item["position_size"],
+        "market_value": item["market_value"],
+        "modified_duration": None
+    }
+
+    if item["item_type"] == 1: # instrument
+        result["instrument"] = item["instrument_id"]
+        result["account"] = item["account_position_id"]
+
+        result["strategy1"] = item["strategy1_position_id"]
+        result["strategy2"] = item["strategy2_position_id"]
+        result["strategy3"] = item["strategy3_position_id"]
+
+        result["pricing_currency"] = item["pricing_currency_id"]
+        result["currency"] = None
+        # result["overheads"] = item["overheads"]
+        # result["carry"] =  item["carry"]
+        # result["principal"] =  item["principal"]
+
+    if item["item_type"] == 2: # currency
+
+        result["currency"] = item["currency_id"]
+        result["account"] = item["account_cash_id"]
+
+        result["strategy1"] = item["strategy1_cash_id"]
+        result["strategy2"] = item["strategy2_cash_id"]
+        result["strategy3"] = item["strategy3_cash_id"]
+
+        result["pricing_currency"] = None
+        result["instrument"] = None
+
+
+
+
+
+
+    return result
+
+
+class BalanceReportSqlSerializer(ReportSerializer):
+    items = serializers.SerializerMethodField()
+
+    def get_items(self, obj):
+
+        result = []
+
+        for item in obj.items:
+            result.append(serialize_report_item(item))
+
+        return result
