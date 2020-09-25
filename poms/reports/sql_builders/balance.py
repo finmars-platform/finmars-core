@@ -47,7 +47,7 @@ class ReportBuilderSql:
 
         _l.info('items total %s' % len(self.instance.items))
 
-        _l.debug('build_st done: %s', "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('build_st done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
         self.add_data_items()
 
