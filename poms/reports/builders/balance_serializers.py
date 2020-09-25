@@ -785,7 +785,7 @@ def serialize_report_item_instrument(item):
             "value_string": attribute.value_string,
             "value_float": attribute.value_float,
             "value_date": attribute.value_date,
-            "classifier": attribute.classifier
+            "classifier": attribute.classifier_id
         }
 
         if attribute.classifier:
