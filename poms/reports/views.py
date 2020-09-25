@@ -110,6 +110,8 @@ class BalanceReportSyncViewSet(AbstractViewSet):
     def create(self, request, *args, **kwargs):
         print('AbstractSyncViewSet create')
 
+        st = time.perf_counter()
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
@@ -120,11 +122,9 @@ class BalanceReportSyncViewSet(AbstractViewSet):
         instance.task_id = 1
         instance.task_status = "SUCCESS"
 
-        serialize_report_st = time.perf_counter()
-
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.info('serialize report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+        _l.info('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
