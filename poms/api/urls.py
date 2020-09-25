@@ -287,6 +287,8 @@ router.register(r'reports/pl-report', reports.PLReportSyncViewSet, "pl-report-sy
 router.register(r'reports/pl-report/custom-field', reports.PLReportCustomFieldViewSet, 'pl-report-custom-field')
 # router.register(r'reports/transaction-report', reports.TransactionReportViewSet, "transaction-report")
 router.register(r'reports/transaction-report', reports.TransactionReportSyncViewSet, "transaction-report-sync")
+router.register(r'reports/transaction-report-sql', reports.TransactionReportSqlSyncViewSet, "transaction-report-sync-sql")
+
 router.register(r'reports/transaction-report/custom-field', reports.TransactionReportCustomFieldViewSet,
                 'transaction-report-custom-field')
 router.register(r'reports/cash-flow-projection-report', reports.CashFlowProjectionReportViewSet,

@@ -34,6 +34,14 @@ from poms.transactions.models import ComplexTransaction
 from poms.transactions.serializers import ComplexTransactionSerializer, TransactionTypeViewSerializer
 from poms.users.fields import MasterUserField
 
+from rest_framework.fields import SkipField
+from rest_framework.relations import PKOnlyObject
+from simplejson import OrderedDict
+
+import logging
+
+_l = logging.getLogger('poms.reports')
+
 
 # class CustomFieldViewSerializer(serializers.ModelSerializer):
 #     master_user = MasterUserField()
@@ -121,8 +129,7 @@ class ReportCurrencySerializer(ModelWithUserCodeSerializer, ModelWithAttributesS
         model = Currency
         fields = [
             'id', 'user_code', 'name', 'short_name', 'notes',
-            'reference_for_pricing', 'daily_pricing_model',
-            'price_download_scheme', 'default_fx_rate',
+            'reference_for_pricing', 'default_fx_rate',
         ]
         read_only_fields = fields
 
@@ -444,3 +451,43 @@ class ReportItemTransactionReportCustomFieldSerializer(serializers.Serializer):
                     not custom_fields_hide_objects or field.field_name not in ('custom_field_object',))
         ]
 
+class ReportSerializerWithLogs(serializers.Serializer):
+
+    def to_representation(self, instance):
+        """
+        Object instance -> Dict of primitive datatypes.
+        """
+        ret = OrderedDict()
+        fields = self._readable_fields
+
+        st = time.perf_counter()
+
+        for field in fields:
+            try:
+                attribute = field.get_attribute(instance)
+            except SkipField:
+                continue
+
+            field_st = time.perf_counter()
+
+            # We skip `to_representation` for `None` values so that fields do
+            # not have to explicitly deal with that case.
+            #
+            # For related fields with `use_pk_only_optimization` we need to
+            # resolve the pk value.
+            check_for_none = attribute.pk if isinstance(attribute, PKOnlyObject) else attribute
+            if check_for_none is None:
+                ret[field.field_name] = None
+            else:
+                ret[field.field_name] = field.to_representation(attribute)
+
+            if 'item_' in field.field_name:
+                if hasattr(instance, 'is_report'):
+                    result_time = "{:3.3f}".format(time.perf_counter() - field_st)
+
+                    _l.info('field %s to representation done %s' % (field.field_name, result_time))
+
+        if hasattr(instance, 'is_report'):
+            _l.info('report to representation done %s' % "{:3.3f}".format(time.perf_counter() - st))
+
+        return ret

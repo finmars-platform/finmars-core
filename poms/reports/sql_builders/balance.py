@@ -22,7 +22,7 @@ def dictfetchall(cursor):
         for row in cursor.fetchall()
     ]
 
-class ReportBuilderSql:
+class BalanceReportBuilderSql:
 
     def __init__(self, instance=None):
 
@@ -34,7 +34,6 @@ class ReportBuilderSql:
 
         _l.info('self.instance master_user %s' % self.instance.master_user)
         _l.info('self.instance report_date %s' % self.instance.report_date)
-
 
 
     def build_balance(self):

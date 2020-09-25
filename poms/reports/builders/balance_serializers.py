@@ -7,9 +7,6 @@ from django.conf import settings
 from django.utils.translation import ugettext_lazy, ugettext
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import SkipField
-from rest_framework.relations import PKOnlyObject
-from simplejson import OrderedDict
 
 from poms.accounts.fields import AccountField
 from poms.accounts.serializers import AccountViewSerializer
@@ -27,7 +24,8 @@ from poms.reports.builders.base_serializers import ReportPortfolioSerializer, \
     ReportAccountSerializer, ReportStrategy1Serializer, ReportStrategy2Serializer, ReportStrategy3Serializer, \
     ReportInstrumentSerializer, ReportCurrencySerializer, ReportCurrencyHistorySerializer, ReportPriceHistorySerializer, \
     ReportAccrualCalculationScheduleSerializer, ReportItemBalanceReportCustomFieldSerializer, \
-    ReportInstrumentTypeSerializer, ReportAccountTypeSerializer, ReportGenericAttributeSerializer
+    ReportInstrumentTypeSerializer, ReportAccountTypeSerializer, ReportGenericAttributeSerializer, \
+    ReportSerializerWithLogs
 # from poms.reports.fields import CustomFieldField
 from poms.reports.fields import BalanceReportCustomFieldField
 from poms.reports.serializers import BalanceReportCustomFieldSerializer
@@ -356,46 +354,6 @@ class ReportItemEvalSerializer(ReportItemSerializer):
         self.fields.pop('detail')
 
 
-class ReportSerializerWithLogs(serializers.Serializer):
-
-    def to_representation(self, instance):
-        """
-        Object instance -> Dict of primitive datatypes.
-        """
-        ret = OrderedDict()
-        fields = self._readable_fields
-
-        st = time.perf_counter()
-
-        for field in fields:
-            try:
-                attribute = field.get_attribute(instance)
-            except SkipField:
-                continue
-
-            field_st = time.perf_counter()
-
-            # We skip `to_representation` for `None` values so that fields do
-            # not have to explicitly deal with that case.
-            #
-            # For related fields with `use_pk_only_optimization` we need to
-            # resolve the pk value.
-            check_for_none = attribute.pk if isinstance(attribute, PKOnlyObject) else attribute
-            if check_for_none is None:
-                ret[field.field_name] = None
-            else:
-                ret[field.field_name] = field.to_representation(attribute)
-
-            if 'item_' in field.field_name:
-                if hasattr(instance, 'is_report'):
-                    result_time = "{:3.3f}".format(time.perf_counter() - field_st)
-
-                    _l.info('field %s to representation done %s' % (field.field_name, result_time))
-
-        if hasattr(instance, 'is_report'):
-            _l.info('report to representation done %s' % "{:3.3f}".format(time.perf_counter() - st))
-
-        return ret
 
 
 # class ReportSerializer(serializers.Serializer):

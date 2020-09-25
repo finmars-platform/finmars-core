@@ -13,11 +13,12 @@ from poms.reports.builders.balance_serializers import BalanceReportSerializer, P
 from poms.reports.builders.cash_flow_projection_serializers import CashFlowProjectionReportSerializer
 from poms.reports.builders.performance_serializers import PerformanceReportSerializer
 from poms.reports.builders.transaction import TransactionReportBuilder
-from poms.reports.builders.transaction_serializers import TransactionReportSerializer
+from poms.reports.builders.transaction_serializers import TransactionReportSerializer, TransactionReportSqlSerializer
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
 from poms.reports.serializers import BalanceReportCustomFieldSerializer, PLReportCustomFieldSerializer, \
     TransactionReportCustomFieldSerializer
-from poms.reports.sql_builders.balance import ReportBuilderSql
+from poms.reports.sql_builders.balance import  BalanceReportBuilderSql
+from poms.reports.sql_builders.transaction import TransactionReportBuilderSql
 
 from poms.reports.tasks import balance_report, pl_report, transaction_report, cash_flow_projection_report, \
     performance_report
@@ -142,7 +143,7 @@ class BalanceReportSqlSyncViewSet(AbstractViewSet):
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
-        builder = ReportBuilderSql(instance=instance)
+        builder = BalanceReportBuilderSql(instance=instance)
         instance = builder.build_balance()
 
         instance.task_id = 1
@@ -227,6 +228,30 @@ class TransactionReportSyncViewSet(AbstractViewSet):
         serializer = self.get_serializer(instance=instance, many=False)
 
         _l.info('serialize report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class TransactionReportSqlSyncViewSet(AbstractViewSet):
+    serializer_class = TransactionReportSqlSerializer
+
+    def create(self, request, *args, **kwargs):
+
+        serialize_report_st = time.perf_counter()
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        builder = TransactionReportBuilderSql(instance=instance)
+        instance = builder.build_transaction()
+
+        instance.task_id = 1
+        instance.task_status = "SUCCESS"
+
+        serializer = self.get_serializer(instance=instance, many=False)
+
+        _l.info('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
