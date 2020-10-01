@@ -93,7 +93,11 @@ class PricingParentProcedureInstanceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PricingParentProcedureInstance
-        fields = ('master_user', 'id', 'created', 'modified', 'procedure', 'procedure_object', 'procedures')
+        fields = ('master_user', 'id',
+                  'created', 'modified',
+                  'provider_verbose', 'action_verbose',
+                  'procedure', 'procedure_object',
+                  'procedures')
 
 
 class RunProcedureSerializer(serializers.Serializer):
@@ -109,11 +113,18 @@ class RequestDataFileProcedureSerializer(ModelWithTimeStampSerializer):
 
     master_user = MasterUserField()
 
+    def __init__(self, *args, **kwargs):
+        super(RequestDataFileProcedureSerializer, self).__init__(*args, **kwargs)
+
+        from poms.integrations.serializers import DataProviderSerializer
+
+        self.fields['provider_object'] = DataProviderSerializer(source='provider',  read_only=True)
+
     class Meta:
         model = RequestDataFileProcedure
         fields = [
             'id', 'master_user', 'name', 'user_code', 'notes',
-            'provider', 'scheme_name'
+            'provider',  'scheme_name'
         ]
 
 

@@ -9,7 +9,7 @@ from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet, Abstra
     AbstractSyncViewSet, AbstractViewSet
 from poms.reports.builders.balance_pl import ReportBuilder
 from poms.reports.builders.balance_serializers import BalanceReportSerializer, PLReportSerializer, \
-    BalanceReportSqlSerializer
+    BalanceReportSqlSerializer, PLReportSqlSerializer
 from poms.reports.builders.cash_flow_projection_serializers import CashFlowProjectionReportSerializer
 from poms.reports.builders.performance_serializers import PerformanceReportSerializer
 from poms.reports.builders.transaction import TransactionReportBuilder
@@ -18,6 +18,7 @@ from poms.reports.models import BalanceReportCustomField, PLReportCustomField, T
 from poms.reports.serializers import BalanceReportCustomFieldSerializer, PLReportCustomFieldSerializer, \
     TransactionReportCustomFieldSerializer
 from poms.reports.sql_builders.balance import  BalanceReportBuilderSql
+from poms.reports.sql_builders.pl import PLReportBuilderSql
 from poms.reports.sql_builders.transaction import TransactionReportBuilderSql
 
 from poms.reports.tasks import balance_report, pl_report, transaction_report, cash_flow_projection_report, \
@@ -184,6 +185,30 @@ class PLReportSyncViewSet(AbstractViewSet):
         serializer = self.get_serializer(instance=instance, many=False)
 
         _l.info('serialize report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class PLReportSqlSyncViewSet(AbstractViewSet):
+    serializer_class = PLReportSqlSerializer
+
+    def create(self, request, *args, **kwargs):
+
+        serialize_report_st = time.perf_counter()
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        builder = PLReportBuilderSql(instance=instance)
+        instance = builder.build_balance()
+
+        instance.task_id = 1
+        instance.task_status = "SUCCESS"
+
+        serializer = self.get_serializer(instance=instance, many=False)
+
+        _l.info('PL Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 

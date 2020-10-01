@@ -47,7 +47,14 @@ class RequestDataFileProcedureProcess(object):
 
             procedure_instance = RequestDataFileProcedureInstance(procedure=self.procedure,
                                                                   master_user=self.master_user,
-                                                                  status=RequestDataFileProcedureInstance.STATUS_PENDING
+                                                                  status=RequestDataFileProcedureInstance.STATUS_PENDING,
+
+                                                                  action='request_transaction_file',
+                                                                  provider='finmars',
+
+                                                                  action_verbose='Request file with Transactions',
+                                                                  provider_verbose='Finmars'
+
                                                                   )
 
             if self.member:

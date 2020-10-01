@@ -87,8 +87,8 @@ class BalanceReportBuilderSql:
             consolidated_select_columns = self.get_position_consolidation_for_select()
 
             query = """
-                CREATE or REPLACE VIEW balance_position_consolidation_matrix AS
-                SELECT
+                with balance_position_consolidation_matrix as 
+                    (SELECT
                   portfolio_id,
                   account_position_id,
                   strategy1_position_id,
@@ -96,21 +96,16 @@ class BalanceReportBuilderSql:
                   strategy3_position_id,
                   instrument_id,
                   SUM(position_size_with_sign) as position_size
-                FROM transactions_transaction WHERE transaction_date <= %s AND master_user_id = %s
+                FROM pl_transactions_with_ttype WHERE transaction_date <= %s AND master_user_id = %s
                 GROUP BY
                   portfolio_id,
                   account_position_id,
                   strategy1_position_id,
                   strategy2_position_id,
                   strategy3_position_id,
-                  instrument_id;
-            """
-
-            cursor.execute(query, [self.instance.report_date, self.instance.master_user.id])
-
-            _l.info("create or replace balance_position_consolidation_matrix")
-
-            query = """
+                  instrument_id)
+                
+            
                 SELECT 
                     t.*, 
                     
@@ -138,7 +133,9 @@ class BalanceReportBuilderSql:
                 WHERE cch.date = %s AND iph.date = %s AND cch.pricing_policy_id = %s;
             """
 
-            cursor.execute(query, [self.instance.report_date, self.instance.report_date, self.instance.pricing_policy.id])
+            cursor.execute(query, [
+                    self.instance.report_date, self.instance.master_user.id,
+                    self.instance.report_date, self.instance.report_date, self.instance.pricing_policy.id])
 
             _l.info("fetch position data")
 

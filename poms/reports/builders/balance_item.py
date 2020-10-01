@@ -1166,6 +1166,8 @@ class ReportItem(YTMMixin, BaseReportItem):
             except ArithmeticError:
                 self.pos_return_res = 0
 
+
+
             try:
                 self.pos_return_loc = (self.principal_opened_loc + self.carry_opened_loc) \
                                       / -self.principal_invested_loc

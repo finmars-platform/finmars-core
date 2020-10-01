@@ -148,3 +148,9 @@ def to_representation(self, instance):
 
 ```
 
+### IDEA settings
+
+#### SQL proper formatting in python string
+
+Settings -> Tools -> Database -> User Parameters -> Enable in string literals with SQL injection  
+`\{(\w+)\}` for Python

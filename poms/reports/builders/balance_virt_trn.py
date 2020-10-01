@@ -1072,6 +1072,7 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
 
                     # principal_invested
 
+
                     try:
                         self.principal_invested_res = self.principal * self.ref_fx * \
                                                       (
@@ -1079,6 +1080,7 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
                                                       (1.0 - self.multiplier)
                     except ArithmeticError:
                         self.principal_invested_res = 0.0
+
 
                     try:
                         self.principal_invested_loc = self.principal * self.ref_fx * \

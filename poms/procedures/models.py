@@ -67,6 +67,13 @@ class BaseProcedureInstance(DataTimeStampedModel):
     error_code = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=ugettext_lazy('error code'))
     error_message = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('error message'))
 
+    action = models.CharField(max_length=255, null=True, blank=True)
+    provider = models.CharField(max_length=255, null=True, blank=True)
+
+    action_verbose = models.CharField(max_length=255, null=True, blank=True)
+    provider_verbose = models.CharField(max_length=255, null=True, blank=True)
+
+
     class Meta:
         abstract = True
 
@@ -231,6 +238,7 @@ class PricingParentProcedureInstance(models.Model):
                                    verbose_name='created')
     modified = models.DateTimeField(auto_now=True, editable=False, db_index=True)
 
+
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
@@ -249,12 +257,6 @@ class PricingProcedureInstance(BaseProcedureInstance):
     parent_procedure_instance = models.ForeignKey(PricingParentProcedureInstance, on_delete=models.CASCADE,
                                                   related_name='procedures',
                                                   verbose_name=ugettext_lazy('parent pricing procedure'), null=True, blank=True)
-
-    action = models.CharField(max_length=255, null=True, blank=True)
-    provider = models.CharField(max_length=255, null=True, blank=True)
-
-    action_verbose = models.CharField(max_length=255, null=True, blank=True)
-    provider_verbose = models.CharField(max_length=255, null=True, blank=True)
 
     successful_prices_count = models.IntegerField(default=0, verbose_name=ugettext_lazy('successful prices count'))
     error_prices_count = models.IntegerField(default=0, verbose_name=ugettext_lazy('error prices count'))

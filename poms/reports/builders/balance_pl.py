@@ -1098,7 +1098,12 @@ class ReportBuilder(BaseReportBuilder):
     def _calc_avco_multipliers(self):
         # _l.debug('transactions - calculate multipliers - avco')
 
-        items = defaultdict(list)
+        items = defaultdict(list) # храним только еще не закрытые позиции
+
+        # {"portfolio.id,instrument.id": [
+        # trn1
+        # ]
+        #
 
         def _set_mul(t0, avco_multiplier):
             delta = avco_multiplier - t0.avco_multiplier
@@ -1107,15 +1112,34 @@ class ReportBuilder(BaseReportBuilder):
 
         def _close_by(closed, cur, delta):
             # closed.avco_closed_by.append(VirtualTransactionClosedByData(cur, delta))
-            closed.avco_closed_by.append((cur, delta))
+            closed.avco_closed_by.append((cur, delta)) # возможно избыточно
+
+
+        # {
+        # portfolio.id = 1,
+        # instrument.id = 10
+        # account_pos = 5
+
+        #    t_key = "1,10,5"
+
+        #   "portfolio.id,instrument.id": [
+        #       trn1, rolling_pos = 0, rolling_pos + 10
+        #       trn2, rolling_pos = 10,
+        #       trn3
+        #   ]
+        #
+        # }
+
 
         for t in self._transactions:
-            t_key = self._get_trn_group_key(t)
+
+            t_key = self._get_trn_group_key(t) # вычленяем key из транзакции
 
             if t.trn_cls.id == TransactionClass.INSTRUMENT_PL:
                 t.avco_rolling_pos_size = self.avco_rolling_positions[t_key]
                 continue
 
+            # Считаем только для покупки/продажи
             if t.trn_cls.id not in [TransactionClass.BUY, TransactionClass.SELL]:
                 continue
 
@@ -1123,46 +1147,61 @@ class ReportBuilder(BaseReportBuilder):
             t.avco_closed_by = []
             t.avco_rolling_pos_size = 0.0
 
-            rolling_pos = self.avco_rolling_positions[t_key]
+            rolling_pos = self.avco_rolling_positions[t_key]  # берем текущий rolling position у этой позиции
 
-            if isclose(rolling_pos, 0.0):
+            if isclose(rolling_pos, 0.0):  # если транзакция первая или все закрылось то ставим -1
                 k = -1
             else:
                 k = - t.pos_size / rolling_pos
 
-            if k > 1.0:
+            if k > 1.0:  # border case
+                # Закрыли предыдущие и открыли новые позиций если k > 1
                 if t_key in items:
                     for t0 in items[t_key]:
-                        delta = _set_mul(t0, 1.0)
+                        delta = _set_mul(t0, 1.0)  # во всех предыдущих поставить 1
                         _close_by(t0, t, delta)
-                    del items[t_key]
+                    del items[t_key] # закрыли и удалили
                 items[t_key].append(t)
-                _set_mul(t, 1.0 / k)
-                rolling_pos = t.pos_size * (1.0 - t.avco_multiplier)
+                _set_mul(t, 1.0 / k) # часть закрыли, а часть осталась
+                rolling_pos = t.pos_size * (1.0 - t.avco_multiplier)  # добавляем только незакрытую часть транзакции
 
             elif isclose(k, 1.0):
+                # Закрыли все позиции (возможно есть нюанс)
                 if t_key in items:
                     for t0 in items[t_key]:
-                        delta = _set_mul(t0, 1.0)
+                        delta = _set_mul(t0, 1.0) # вместо формулы ставим 1, так как знает что эта транзакция все закрывает
+                                                  # та формула - t0.avco_multiplier + k * (1.0 - t0.avco_multiplier
                         _close_by(t0, t, delta)
-                    del items[t_key]
+                    del items[t_key] # закрыли и удалили
                 _set_mul(t, 1.0)
                 rolling_pos = 0.0
 
             elif k > 0.0:
+                # Обычный случай, закрыли часть открытых позиций
                 if t_key in items:
+
+                    # Идем по предыдущим транзакциям (ранее сохраненным в items)
+                    # и обновляем и мультипликаторы
+                    # t0.avco_multiplier + k * (1.0 - t0.avco_multiplier - здесь нюанс AVCO
+                    # равномерное распределение по оставшимся открым позициям
+
                     for t0 in items[t_key]:
-                        delta = _set_mul(t0, t0.avco_multiplier + k * (1.0 - t0.avco_multiplier))
-                        _close_by(t0, t, delta)
-                _set_mul(t, 1.0)
+
+                        delta = _set_mul(t0, t0.avco_multiplier + k * (1.0 - t0.avco_multiplier)) # amendment avco multiplicators
+                        _close_by(t0, t, delta) # здесь записали кем была закрыта базовая транзакция
+
+                _set_mul(t, 1.0) # из-за того что rolling был больше чем position_with_sign текущей транзакции
                 rolling_pos += t.pos_size
 
             else:
-                items[t_key].append(t)
-                rolling_pos += t.pos_size
+                # K < 0, либо дооткрыли либо допродали
+                # если K равно -1 - это значит, что транзакций, либо не было, либо они были все закрыты
 
-            self.avco_rolling_positions[t_key] = rolling_pos
-            t.avco_rolling_pos_size = rolling_pos
+                items[t_key].append(t) # добавили в items[t_key] для повторного возвращения
+                rolling_pos += t.pos_size  # увеличили
+
+            self.avco_rolling_positions[t_key] = rolling_pos  # обновили rolling pos у самой позиции
+            t.avco_rolling_pos_size = rolling_pos  # у самой базовой транзакции поставили avco_rolling_pos_size
 
     def _calc_fifo_multipliers(self):
         # _l.debug('transactions - calculate multipliers - fifo')
@@ -1192,29 +1231,35 @@ class ReportBuilder(BaseReportBuilder):
             t.fifo_closed_by = []
             t.fifo_rolling_pos_size = 0.0
 
-            rolling_pos = self.fifo_rolling_positions[t_key]
+            rolling_pos = self.fifo_rolling_positions[t_key]  # Cumulative exclude current
 
-            if isclose(rolling_pos, 0.0):
+            # _l.info('self.fifo_rolling_positions[t_key] %s ' % self.fifo_rolling_positions[t_key])
+
+            if isclose(rolling_pos, 0.0): # isclose - is first parameter equal to second parameter
                 k = -1
             else:
                 k = - t.pos_size / rolling_pos
 
             if k > 1.0:
+
                 if t_key in items:
                     for t0 in items[t_key]:
                         delta = _set_mul(t0, 1.0)
                         _close_by(t0, t, delta)
                     items[t_key].clear()
+
                 items[t_key].append(t)
                 _set_mul(t, 1.0 / k)
                 rolling_pos = t.pos_size * (1.0 - t.fifo_multiplier)
 
             elif isclose(k, 1.0):
+
                 if t_key in items:
                     for t0 in items[t_key]:
                         delta = _set_mul(t0, 1.0)
                         _close_by(t0, t, delta)
                     del items[t_key]
+
                 _set_mul(t, 1.0)
                 rolling_pos = 0.0
 
@@ -1223,7 +1268,7 @@ class ReportBuilder(BaseReportBuilder):
                 if t_key in items:
                     t_items = items[t_key]
                     for t0 in t_items:
-                        remaining = t0.pos_size * (1.0 - t0.fifo_multiplier)
+                        remaining = t0.pos_size * (1.0 - t0.fifo_multiplier) # remaining - в каждой транзакции ищем остатки позиции
                         k0 = - position / remaining
                         if k0 > 1.0:
                             delta = _set_mul(t0, 1.0)
@@ -1239,7 +1284,7 @@ class ReportBuilder(BaseReportBuilder):
                             _close_by(t0, t, delta)
                         # else:
                         #     break
-                        if isclose(position, 0.0):
+                        if isclose(position, 0.0): # возможно unreachable
                             break
                     t_items = [t0 for t0 in t_items if not isclose(t0.fifo_multiplier, 1.0)]
                     if t_items:
@@ -1247,7 +1292,7 @@ class ReportBuilder(BaseReportBuilder):
                     else:
                         del items[t_key]
 
-                _set_mul(t, abs((t.pos_size - position) / t.pos_size))
+                _set_mul(t, abs((t.pos_size - position) / t.pos_size)) # здесь возможно position всегда равен 0
                 rolling_pos += t.pos_size * t.fifo_multiplier
 
             else:
@@ -1256,6 +1301,8 @@ class ReportBuilder(BaseReportBuilder):
 
             self.fifo_rolling_positions[t_key] = rolling_pos
             t.fifo_rolling_pos_size = rolling_pos
+
+        # _l.info('self.fifo_rolling_positions[t_key] %s ' % self.fifo_rolling_positions)
 
     def _get_trn_group_key(self, t, walloc=False):
         if self.instance.portfolio_mode == Report.MODE_INDEPENDENT:

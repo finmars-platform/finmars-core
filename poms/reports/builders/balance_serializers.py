@@ -669,7 +669,7 @@ class PLReportSerializer(ReportSerializer):
     pass
 
 
-def serialize_report_item(item):
+def serialize_balance_report_item(item):
     result = {
         # "id": ','.join(str(x) for x in item['pk']),
         "id": '-',
@@ -695,9 +695,77 @@ def serialize_report_item(item):
 
         result["pricing_currency"] = item["pricing_currency_id"]
         result["currency"] = None
+
+        # result["total_opened"] = item["total"]
+        # result["principal_opened"] = item["principal"]
+        # result["carry_opened"] = item["carry"]
+        # result["overheads_opened"] = item["overheads"]
+
         # result["overheads"] = item["overheads"]
         # result["carry"] =  item["carry"]
         # result["principal"] =  item["principal"]
+
+    if item["item_type"] == 2:  # currency
+
+        result["currency"] = item["currency_id"]
+        result["account"] = item["account_cash_id"]
+
+        result["strategy1"] = item["strategy1_cash_id"]
+        result["strategy2"] = item["strategy2_cash_id"]
+        result["strategy3"] = item["strategy3_cash_id"]
+
+        result["pricing_currency"] = None
+        result["instrument"] = None
+
+    return result
+
+
+def serialize_pl_report_item(item):
+    result = {
+        # "id": ','.join(str(x) for x in item['pk']),
+        "id": '-',
+        "name": item["name"],
+        "short_name": item["short_name"],
+        "user_code": item["user_code"],
+        "portfolio": item["portfolio_id"],
+        "item_type": item["item_type"],
+        "item_type_code": item["item_type_code"],
+        "item_type_name": item["item_type_name"],
+
+        "item_group": item["item_group"],
+        "item_group_code": item["item_group_code"],
+        "item_group_name": item["item_group_name"]
+    }
+
+    if item["item_type"] == 1:  # instrument
+        result["instrument"] = item["instrument_id"]
+        result["account"] = item["account_position_id"]
+
+        result["strategy1"] = item["strategy1_position_id"]
+        result["strategy2"] = item["strategy2_position_id"]
+        result["strategy3"] = item["strategy3_position_id"]
+
+        result["pricing_currency"] = item["pricing_currency_id"]
+        result["currency"] = None
+
+
+        result["position_size"] = item["position_size"]
+        result["time_invested"] = item["time_invested"]
+        result["position_return"] = item["position_return"]
+        result["net_position_return"] = item["net_position_return"]
+        result["ytm"] = item["ytm"]
+
+        result["total"] = item["total"]
+        result["principal"] = item["principal"]
+        result["carry"] = item["carry"]
+        result["overheads"] = item["overheads"]
+
+        result["total_loc"] = item["total_loc"]
+        result["principal_loc"] = item["principal_loc"]
+        result["carry_loc"] = item["carry_loc"]
+        result["overheads_loc"] = item["overheads_loc"]
+
+
 
     if item["item_type"] == 2:  # currency
 
@@ -788,11 +856,37 @@ class BalanceReportSqlSerializer(ReportSerializer):
         result = []
 
         for item in obj.items:
-            result.append(serialize_report_item(item))
+            result.append(serialize_balance_report_item(item))
 
         return result
 
     def get_item_instruments(self, obj):
+
+        result = []
+
+        for item in obj.item_instruments:
+            result.append(serialize_report_item_instrument(item))
+
+        return result
+
+
+class PLReportSqlSerializer(ReportSerializer):
+    items = serializers.SerializerMethodField()
+
+    item_instruments = serializers.SerializerMethodField()
+
+    def get_items(self, obj):
+
+        result = []
+
+        for item in obj.items:
+            result.append(serialize_pl_report_item(item))
+
+        return result
+
+    def get_item_instruments(self, obj):
+
+        _l.info('get item instruments here')
 
         result = []
 

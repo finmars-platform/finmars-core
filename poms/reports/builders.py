@@ -601,6 +601,7 @@ class VirtualTransaction(_Base):
             self.total_fixed_opened_res = self.total_fixed_res * (1.0 - self.multiplier)
 
             # ----------------------------------------------------
+
             if not self.is_cloned:
                 try:
                     self.gross_cost_res = self.principal_res * self.ref_fx * \
@@ -615,6 +616,10 @@ class VirtualTransaction(_Base):
                                         (1.0 - self.multiplier) / self.pos_size / self.instr.price_multiplier
                 except ArithmeticError:
                     self.net_cost_res = 0.0
+
+
+
+
 
                 try:
                     self.principal_invested_res = self.principal_res * self.ref_fx * \
