@@ -14,6 +14,7 @@ from poms.users.models import EcosystemDefault
 
 _l = logging.getLogger('poms.reports')
 
+
 def dictfetchall(cursor):
     "Return all rows from a cursor as a dict"
     columns = [col[0] for col in cursor.description]
@@ -21,6 +22,7 @@ def dictfetchall(cursor):
         dict(zip(columns, row))
         for row in cursor.fetchall()
     ]
+
 
 class PLReportBuilderSql:
 
@@ -34,7 +36,6 @@ class PLReportBuilderSql:
 
         _l.info('self.instance master_user %s' % self.instance.master_user)
         _l.info('self.instance report_date %s' % self.instance.report_date)
-
 
     def build_balance(self):
         st = time.perf_counter()
@@ -59,7 +60,7 @@ class PLReportBuilderSql:
 
         return self.instance
 
-    def get_position_consolidation_for_select(self,prefix=''):
+    def get_position_consolidation_for_select(self, prefix=''):
 
         result = []
 
@@ -88,7 +89,6 @@ class PLReportBuilderSql:
     def create_view_for_transactions(self):
 
         with connection.cursor() as cursor:
-
             query = """
                 CREATE or REPLACE VIEW pl_transactions_with_ttype AS
                     SELECT
@@ -204,7 +204,7 @@ class PLReportBuilderSql:
                     WHERE transaction_class_id in (6);            
             """
 
-            cursor.execute(query, [self.instance.report_date,  self.instance.master_user.id])
+            cursor.execute(query, [self.instance.report_date, self.instance.master_user.id])
 
     def get_transaction_filter_sql_string(self):
 
@@ -230,13 +230,11 @@ class PLReportBuilderSql:
 
             filter_sql_list.append('account_position_id in (' + ', '.join(accounts_ids) + ')')
 
-
         if len(self.instance.strategies1):
             for strategy in self.instance.strategies1:
                 strategies1_ids.append(str(strategy.id))
 
             filter_sql_list.append('strategy1_position_id in (' + ', '.join(strategies1_ids) + ')')
-
 
         if len(self.instance.strategies2):
             for strategy in self.instance.strategies2:
@@ -244,17 +242,13 @@ class PLReportBuilderSql:
 
             filter_sql_list.append('strategy2_position_id in (' + ', '.join(strategies2_ids) + ')')
 
-
         if len(self.instance.strategies3):
             for strategy in self.instance.strategies3:
                 strategies3_ids.append(str(strategy.id))
 
             filter_sql_list.append('strategy2_position_id in (' + ', '.join(strategies2_ids) + ')')
 
-
-
         if len(filter_sql_list):
-
             result_string = result_string + 'where '
             result_string = result_string + ' and '.join(filter_sql_list)
 
@@ -269,7 +263,8 @@ class PLReportBuilderSql:
         report_fx_rate = 1
 
         try:
-            item = CurrencyHistory.objects.get(currency_id=self.instance.report_currency.id, date=self.instance.report_date)
+            item = CurrencyHistory.objects.get(currency_id=self.instance.report_currency.id,
+                                               date=self.instance.report_date)
             report_fx_rate = item.fx_rate
         except CurrencyHistory.DoesNotExist:
             report_fx_rate = 1
@@ -438,24 +433,34 @@ class PLReportBuilderSql:
         --- main query
         select 
             *,
+            
+            -- loc
+            
             (total * cross_rate)                as total_loc,
             (principal * cross_rate)            as principal_loc,
             (carry * cross_rate)                as carry_loc,
             (overheads  * cross_rate)           as overheads_loc,
             
-            
             (total_closed * cross_rate)         as total_closed_loc,
-            (total_opened * cross_rate)         as total_opened_loc
-         
+            (total_opened * cross_rate)         as total_opened_loc,
+            
+            -- fx
+            
+            (total * cross_rate)                as total_fx,
+            (principal * cross_rate)            as principal_fx,
+            (carry * cross_rate)                as carry_fx,
+            (overheads  * cross_rate)           as overheads_fx
+            
+            
         from ( 
             select 
                 *,
-                (principal_opened + carry_opened + overheads_opened) as total_opened,
+                (principal_opened + carry_opened + overheads_opened)                as total_opened,
                 
                 (principal_opened + carry_opened + overheads_opened + principal_closed + carry_closed + overheads_closed) as total,
-                (principal_opened + principal_closed)               as principal,
-                (carry_opened + carry_closed)                       as carry,
-                (overheads_opened + overheads_closed)               as overheads,
+                (principal_opened + principal_closed)                               as principal,
+                (carry_opened + carry_closed)                                       as carry,
+                (overheads_opened + overheads_closed)                               as overheads,
                 
                 
                 -- self.exposure_res = self.instr_principal_res + self.instr_accrued_res
@@ -464,22 +469,22 @@ class PLReportBuilderSql:
                 --self.market_value_res = self.instr_principal_res + self.instr_accrued_res
                 --self.market_value_loc = self.market_value_res * res_to_loc_fx
                 
-                (instr_principal_res + instr_accrued_res)           as market_value,
-                (instr_principal_res + instr_accrued_res)           as exposure,
+                (instr_principal_res + instr_accrued_res)                           as market_value,
+                (instr_principal_res + instr_accrued_res)                           as exposure,
             
                 -- loc start --
                 
-                ((instr_principal_res + instr_accrued_res) * cross_rate)           as market_value_loc,
-                ((instr_principal_res + instr_accrued_res) * cross_rate)          as exposure_loc,
+                ((instr_principal_res + instr_accrued_res) * cross_rate)            as market_value_loc,
+                ((instr_principal_res + instr_accrued_res) * cross_rate)            as exposure_loc,
             
             
-                (principal_closed  * cross_rate)                    as principal_closed_loc,
-                (carry_closed  * cross_rate)                        as carry_closed_loc,
-                (overheads_closed  * cross_rate)                    as overheads_closed_loc,
+                (principal_closed  * cross_rate)                                    as principal_closed_loc,
+                (carry_closed  * cross_rate)                                        as carry_closed_loc,
+                (overheads_closed  * cross_rate)                                    as overheads_closed_loc,
                 
-                (principal_opened  * cross_rate)                    as principal_opened_loc,
-                (carry_opened  * cross_rate)                        as carry_opened_loc,
-                (overheads_opened  * cross_rate)                    as overheads_opened_loc,
+                (principal_opened  * cross_rate)                                    as principal_opened_loc,
+                (carry_opened  * cross_rate)                                        as carry_opened_loc,
+                (overheads_opened  * cross_rate)                                    as overheads_opened_loc,
                 
                 -- loc end -- 
 
@@ -566,20 +571,19 @@ class PLReportBuilderSql:
                         instrument_id,
         
                         SUM(position_size)                                                      as position_size,
-                        SUM(position_size_opened)                                               as  position_size_opened,
+                        SUM(position_size_opened)                                               as position_size_opened,
                         
-                        SUM(principal * stlch.fx_rate / {report_fx_rate})                  as principal,
-                        SUM(carry_closed * stlch.fx_rate / {report_fx_rate})               as carry,
-                        SUM(overheads * stlch.fx_rate / {report_fx_rate})                  as overheads,
+                        SUM(principal * stlch.fx_rate / {report_fx_rate})                       as principal,
+                        SUM(carry_closed * stlch.fx_rate / {report_fx_rate})                    as carry,
+                        SUM(overheads * stlch.fx_rate / {report_fx_rate})                       as overheads,
+
+                        SUM(principal_closed * stlch.fx_rate / {report_fx_rate})                as principal_closed,
+                        SUM(carry_closed * stlch.fx_rate / {report_fx_rate})                    as carry_closed,
+                        SUM(overheads_closed * stlch.fx_rate / {report_fx_rate})                as overheads_closed,
                            
-                        
-                        SUM(principal_closed * stlch.fx_rate / {report_fx_rate})           as principal_closed,
-                        SUM(carry_closed * stlch.fx_rate / {report_fx_rate})               as carry_closed,
-                        SUM(overheads_closed * stlch.fx_rate / {report_fx_rate})           as overheads_closed,
-                           
-                        SUM(principal_opened * stlch.fx_rate / {report_fx_rate})           as principal_opened,
-                        SUM(carry_opened * stlch.fx_rate / {report_fx_rate})               as carry_opened,
-                        SUM(overheads_opened * stlch.fx_rate / {report_fx_rate})           as overheads_opened,
+                        SUM(principal_opened * stlch.fx_rate / {report_fx_rate})                as principal_opened,
+                        SUM(carry_opened * stlch.fx_rate / {report_fx_rate})                    as carry_opened,
+                        SUM(overheads_opened * stlch.fx_rate / {report_fx_rate})                as overheads_opened,
                         
                         SUM(time_invested)                                                      as time_invested_sum,
                         
@@ -719,8 +723,6 @@ class PLReportBuilderSql:
                                  tt_consolidation_columns=self.get_position_consolidation_for_select(prefix="tt.")
                                  )
 
-
-
             cursor.execute(query)
 
             query_str = str(cursor.query, 'utf-8')
@@ -771,8 +773,6 @@ class PLReportBuilderSql:
                 result_item_opened["carry_loc"] = item["carry_opened_loc"]
                 result_item_opened["overheads_loc"] = item["overheads_opened_loc"]
 
-
-
                 result.append(result_item_opened)
 
                 #  CLOSED POSITIONS BELOW
@@ -815,8 +815,6 @@ class PLReportBuilderSql:
                 result_item_closed["overheads_loc"] = item["overheads_closed_loc"]
 
                 result.append(result_item_closed)
-
-
 
             _l.info('build position result %s ' % len(result))
 
@@ -1123,7 +1121,8 @@ class PLReportBuilderSql:
 
         permissions_st = time.perf_counter()
 
-        _l.debug('_refresh_with_perms_optimized permissions done: %s', "{:3.3f}".format(time.perf_counter() - permissions_st))
+        _l.debug('_refresh_with_perms_optimized permissions done: %s',
+                 "{:3.3f}".format(time.perf_counter() - permissions_st))
 
         item_relations_st = time.perf_counter()
 
@@ -1159,4 +1158,5 @@ class PLReportBuilderSql:
 
         self.instance.custom_fields = BalanceReportCustomField.objects.filter(master_user=self.instance.master_user)
 
-        _l.debug('_refresh_with_perms_optimized item relations done: %s', "{:3.3f}".format(time.perf_counter() - item_relations_st))
+        _l.debug('_refresh_with_perms_optimized item relations done: %s',
+                 "{:3.3f}".format(time.perf_counter() - item_relations_st))

@@ -928,6 +928,7 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
             self.total_opened_res = self.total_res * (1.0 - self.multiplier)
 
             # fx
+            # self.principal_fx_res = self.principal * self.stl_ccy_cur_fx - self.ref_fx * self.trn_ccy_acc_hist_fx
             self.principal_fx_res = self.principal * self.pl_fx_mul
             self.carry_fx_res = self.carry * self.pl_fx_mul
             self.overheads_fx_res = self.overheads * self.pl_fx_mul

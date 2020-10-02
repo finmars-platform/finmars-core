@@ -65,6 +65,8 @@ class RequestDataFileProcedureProcess(object):
                 procedure_instance.started_by = RequestDataFileProcedureInstance.STARTED_BY_SCHEDULE
                 procedure_instance.schedule_instance = self.schedule_instance
 
+            procedure_instance.save()
+
             _l.info("RequestDataFileProcedureProcess: Request_transaction_file. Master User: %s. Provider: %s, Scheme name: %s" % (self.master_user, self.procedure.provider, self.procedure.scheme_name) )
 
             item = TransactionFileResult.objects.create(
