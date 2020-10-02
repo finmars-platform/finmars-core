@@ -727,7 +727,7 @@ class PLReportBuilderSql:
 
             query_str = str(cursor.query, 'utf-8')
 
-            # _l.info(query_str)
+            _l.info(query_str)
 
             result_tmp = dictfetchall(cursor)
             result = []
