@@ -68,7 +68,7 @@ def process(self):
             _l.info('Schedule: master_user=%s, next_run_at=%s. STARTED',
                     master_user.id, s.next_run_at)
 
-            _l.info('Schedule: count %s' % len(s.pricing_procedures.all()))
+            _l.info('Schedule: count %s' % len(s.procedures.all()))
 
             schedule_instance = ScheduleInstance(schedule=s, master_user=master_user)
             schedule_instance.save()
