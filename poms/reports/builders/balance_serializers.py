@@ -748,23 +748,32 @@ def serialize_pl_report_item(item):
         result["pricing_currency"] = item["pricing_currency_id"]
         result["currency"] = None
 
-
         result["position_size"] = item["position_size"]
         result["time_invested"] = item["time_invested"]
         result["position_return"] = item["position_return"]
         result["net_position_return"] = item["net_position_return"]
         result["ytm"] = item["ytm"]
 
+        result["market_value"] = item["market_value"]
+        result["exposure"] = item["exposure"]
+
         result["total"] = item["total"]
         result["principal"] = item["principal"]
         result["carry"] = item["carry"]
         result["overheads"] = item["overheads"]
+
+        # loc started
 
         result["total_loc"] = item["total_loc"]
         result["principal_loc"] = item["principal_loc"]
         result["carry_loc"] = item["carry_loc"]
         result["overheads_loc"] = item["overheads_loc"]
 
+        result["market_value_loc"] = item["market_value_loc"]
+        result["exposure_loc"] = item["exposure_loc"]
+
+
+        # loc ended
 
 
     if item["item_type"] == 2:  # currency
