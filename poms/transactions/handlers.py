@@ -129,6 +129,8 @@ class TransactionTypeProcess(object):
 
         self.uniqueness_reaction = uniqueness_reaction
 
+        self.uniqueness_status = None
+
         if values is None:
             self._set_values()
         else:
@@ -1771,6 +1773,8 @@ class TransactionTypeProcess(object):
 
                 self.complex_transaction.delete()
 
+                self.uniqueness_status = 'skip'
+
                 raise ValidationError({
                     "reason": 410,
                     "message": "Skipped book. Transaction Unique code error"
@@ -1778,9 +1782,13 @@ class TransactionTypeProcess(object):
 
             elif self.uniqueness_reaction == 2 and exist and self.complex_transaction.transaction_unique_code:
 
+                self.uniqueness_status = 'booked_without_unique_code'
+
                 self.complex_transaction.transaction_unique_code = None
 
             elif self.uniqueness_reaction == 3 and exist and self.complex_transaction.transaction_unique_code:
+
+                self.uniqueness_status = 'overwrite'
 
                 self.complex_transaction.code = exist.code
 
@@ -1788,6 +1796,7 @@ class TransactionTypeProcess(object):
 
             elif self.uniqueness_reaction == 4 and exist and self.complex_transaction.transaction_unique_code:
                 # TODO ask if behavior same as skip
+                self.uniqueness_status = 'error'
 
                 self.complex_transaction.delete()
 

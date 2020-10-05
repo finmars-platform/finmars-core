@@ -1681,6 +1681,17 @@ def complex_transaction_csv_file_import(self, instance):
                             )
                             tt_process.process()
 
+                            _l.info('tt_process %s' % tt_process    )
+
+                            if tt_process.uniqueness_status == 'skip':
+                                error_rows['level'] = 'skip'
+                                error_rows['error_message'] = error_rows['error_message'] + str(ugettext('Unique code already exist. Skip'))
+
+                            if tt_process.uniqueness_status == 'error':
+                                error_rows['level'] = 'error'
+                                error_rows['error_message'] = error_rows['error_message'] + str(ugettext('Unique code already exist. Error'))
+
+
                             instance.processed_rows = instance.processed_rows + 1
                             # instance.save()
                             self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
