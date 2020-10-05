@@ -49,7 +49,7 @@ admin.site.register(TransactionTypeGroup, TransactionTypeGroupAdmin)
 class TransactionTypeInputAdmin(AbstractModelAdmin):
     model = TransactionTypeInput
     master_user_path = 'transaction_type__master_user'
-    list_display = ['id', 'master_user', 'transaction_type', 'order', 'name', 'value_type', 'content_type']
+    list_display = ['id', 'master_user', 'transaction_type', 'order', 'name', 'value_type', 'content_type',]
     list_select_related = ['transaction_type', 'transaction_type__master_user']
     search_fields = ['id', 'name']
     raw_id_fields = ['transaction_type']
@@ -207,7 +207,7 @@ class TransactionTypeInputInline(admin.TabularInline):
     #     }),
     # )
     raw_id_fields = ('account', 'instrument_type', 'instrument', 'currency', 'counterparty',
-                     'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3', 'price_download_scheme')
+                     'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3', 'price_download_scheme', 'settings')
     readonly_fields = ('id',)
 
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):

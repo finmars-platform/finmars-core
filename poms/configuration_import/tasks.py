@@ -848,12 +848,16 @@ class ImportManager(object):
                             'status': 'info'
                         }
 
+                        _l.info('content_object input  %s' % content_object['inputs'][0])
+
                         try:
                             serializer.is_valid(raise_exception=True)
                             serializer.save()
                         except Exception as error:
 
                             if self.instance.mode == 'overwrite':
+
+                                _l.info("Overwrite transaction type")
 
                                 instance = TransactionType.objects.get(master_user=self.master_user,
                                                                        user_code=content_object['user_code'])

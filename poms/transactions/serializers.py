@@ -115,7 +115,6 @@ class TransactionTypeActionInstrumentEventSchedulePhantomField(serializers.Integ
 
 class TransactionTypeInputSettingsSerializer(serializers.ModelSerializer):
 
-    id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
     linked_inputs_names = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
     def __init__(self, **kwargs):
@@ -124,41 +123,9 @@ class TransactionTypeInputSettingsSerializer(serializers.ModelSerializer):
         # kwargs['allow_null'] = True
         super(TransactionTypeInputSettingsSerializer, self).__init__(**kwargs)
 
-    def get_attribute(self, obj):
-        return obj
-
-
     class Meta:
         model = TransactionTypeInputSettings
-        fields = ['id',  'linked_inputs_names']
-
-    def to_representation(self, value):
-
-        # print('value %s' % value    )
-
-        result = None
-
-        for item in value.settings.all():
-
-            if not result:
-                result = item
-
-        return super(TransactionTypeInputSettingsSerializer, self).to_representation(result)
-
-        # some "optimization" to use preloaded data through prefetch_related
-        # member = get_member_from_context(self.context)
-        # for o in value.options.all():
-        #     if o.member_id == member.id:
-        #         return o.is_hidden
-        # return False
-
-
-    # def to_representation(self, instance):
-    #
-    #     data = super(TransactionTypeInputSettingsSerializer, self).to_representation(instance)
-    #     print("SERIALIZE TO REPRESENTATION %s" % data)
-    #
-    #     return data
+        fields = ['linked_inputs_names']
 
 
 class TransactionTypeInputSerializer(serializers.ModelSerializer):
@@ -220,7 +187,8 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
             'counterparty',
             'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3', 'daily_pricing_model',
             'payment_size_detail', 'price_download_scheme', 'pricing_policy', 'periodicity', 'accrual_calculation_model',
-            'settings'
+            'settings',
+            # 'settings_old'
             # 'account_object',
             # 'instrument_type_object',
             # 'instrument_object',
@@ -338,24 +306,13 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
 
-        settings = validated_data.pop('settings', empty)
         instance = super(TransactionTypeInputSerializer, self).create(validated_data)
-
-        instance.settings.create(**settings)
 
         return instance
 
     def update(self, instance, validated_data):
 
-
-
-        settings = validated_data.pop('settings', empty)
         instance = super(TransactionTypeInputSerializer, self).update(instance, validated_data)
-
-        print("Update Input settings %s" % settings)
-
-        if settings is not empty:
-            instance.settings.update_or_create(**settings)
 
         return instance
 
@@ -1334,6 +1291,8 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
         cur_inputs = {i.id: i for i in instance.inputs.all()}
         new_inputs = []
 
+        print('save_inputs ')
+
         # print('instance %s' % instance)
 
         for order, inp_data in enumerate(inputs_data):
@@ -1356,16 +1315,19 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
 
             if settings_data:
 
-                try:
-                    settings = inp.settings.all().first()
+                print('inp.settings %s' % inp.settings)
 
-                    # print('settings %s' % settings  )
+                if inp.settings:
 
-                    settings.linked_inputs_names = settings_data['linked_inputs_names']
-                    settings.save()
+                    inp.settings.linked_inputs_names = settings_data['linked_inputs_names']
+                    inp.settings.save()
 
-                except Exception as e:
-                    inp.settings.create(transaction_type_input=inp, linked_inputs_names=settings_data['linked_inputs_names'])
+                else:
+
+                    item = TransactionTypeInputSettings.objects.create(transaction_type_input=inp, linked_inputs_names=settings_data['linked_inputs_names'])
+                    inp.settings = item
+
+            inp.save()
 
             new_inputs.append(inp)
         return new_inputs

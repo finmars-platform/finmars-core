@@ -70,6 +70,10 @@ from django.forms.models import model_to_dict
 from poms.ui.serializers import BookmarkSerializer
 from poms_app import settings
 
+from logging import getLogger
+
+_l = getLogger('poms.configuration_export')
+
 
 def to_json_objects(items):
     return json.loads(serializers.serialize("json", items))
@@ -124,7 +128,7 @@ def get_current_version():
                 version = f.read()
 
             except Exception as e:
-                print("Can't get Version")
+                _l.info("Can't get Version")
 
     return version
 
@@ -132,8 +136,6 @@ def get_current_version():
 def check_configuration_section(access_table):
 
     result = True
-
-    print('access_table %s  ' % access_table)
 
     for key, value in access_table.items():
 
@@ -209,7 +211,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         self.access_table = get_access_table(self._member)
 
-        print(self.access_table)
 
         response = HttpResponse(content_type='application/json')
         # response['Content-Disposition'] = 'attachment; filename="data-%s.json"' % str(datetime.now().date())
@@ -468,50 +469,49 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
     def get_transaction_type_inputs(self, transaction_type):
 
-        inputs = to_json_objects(
+        inputs_json = to_json_objects(
             TransactionTypeInput.objects.select_related('settings').filter(transaction_type__id=transaction_type["pk"]))
 
         for input_model in TransactionTypeInput.objects.select_related('settings').filter(transaction_type__id=transaction_type["pk"]):
 
-            if input_model.content_type:
-                for input_json in inputs:
+                for input_json in inputs_json:
 
                     if input_model.pk == input_json['pk']:
 
-                        input_json["fields"]["content_type"] = '%s.%s' % (
-                            input_model.content_type.app_label, input_model.content_type.model)
+                        if input_model.content_type:
 
-                        if input_model.value_type == 100:
+                            input_json["fields"]["content_type"] = '%s.%s' % (
+                                input_model.content_type.app_label, input_model.content_type.model)
 
-                            input_prop = self.get_input_prop_by_content_type(input_model)
+                            if input_model.value_type == 100:
 
-                            if input_json["fields"][input_prop['prop']]:
-                                model = apps.get_model(app_label=input_model.content_type.app_label,
-                                                       model_name=input_model.content_type.model)
+                                input_prop = self.get_input_prop_by_content_type(input_model)
 
-                                key = '___{}__{}'
-                                key = key.format(input_prop['prop'], input_prop['code'])
+                                if input_json["fields"][input_prop['prop']]:
+                                    model = apps.get_model(app_label=input_model.content_type.app_label,
+                                                           model_name=input_model.content_type.model)
 
-                                try:
+                                    key = '___{}__{}'
+                                    key = key.format(input_prop['prop'], input_prop['code'])
 
-                                    obj = model.objects.get(
-                                        pk=getattr(input_model, input_model.content_type.model).pk)
+                                    try:
 
-                                    input_json["fields"][key] = getattr(obj, input_prop['code'])
+                                        obj = model.objects.get(
+                                            pk=getattr(input_model, input_model.content_type.model).pk)
 
-                                except AttributeError:
-                                    input_json["fields"][key] = None
+                                        input_json["fields"][key] = getattr(obj, input_prop['code'])
 
-                        settings = input_model.settings.all()
+                                    except AttributeError:
+                                        input_json["fields"][key] = None
 
-                        if len(settings):
+                        if input_model.settings:
+
                             input_json["fields"]["settings"] = {
-                                "linked_inputs_names": settings[0].linked_inputs_names
-                            }
+                                "linked_inputs_names": input_model.settings.linked_inputs_names
+                        }
 
 
-
-        results = unwrap_items(inputs)
+        results = unwrap_items(inputs_json)
 
         delete_prop(results, 'transaction_type')
 
@@ -680,12 +680,12 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         }
 
-        # print('relation_keys %s' % relation_keys)
+        # _l.info('relation_keys %s' % relation_keys)
 
         if transaction_type_action_key not in relation_keys:
             return
 
-        # print('transaction_type_action_key %s' % transaction_type_action_key)
+        # _l.info('transaction_type_action_key %s' % transaction_type_action_key)
 
         for attr in relation_keys[transaction_type_action_key]:
 
@@ -983,13 +983,13 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 result_item["__default_instrument_pricing_scheme__user_code"] = InstrumentPricingScheme.objects.get(
                     pk=result_item["default_instrument_pricing_scheme"]).user_code
             except Exception:
-                print("Cant find default instrument pricing scheme")
+                _l.info("Cant find default instrument pricing scheme")
 
             try:
                 result_item["__default_currency_pricing_scheme__user_code"] = CurrencyPricingScheme.objects.get(
                     pk=result_item["default_currency_pricing_scheme"]).user_code
             except Exception:
-                print("Cant find default currency pricing scheme")
+                _l.info("Cant find default currency pricing scheme")
 
             result_item.pop("master_user", None)
             result_item.pop("default_currency_pricing_scheme", None)
@@ -1583,8 +1583,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         schemes = to_json_objects(CsvImportScheme.objects.filter(master_user=self._master_user))
         results = []
 
-        # print('schemes %s' % len(schemes))
-        # print('self._master_user %s' % self._master_user)
+        # _l.info('schemes %s' % len(schemes))
+        # _l.info('self._master_user %s' % self._master_user)
 
         for scheme in schemes:
             result_item = scheme["fields"]
@@ -1691,8 +1691,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         schemes = to_json_objects(ComplexImportScheme.objects.filter(master_user=self._master_user))
         results = []
 
-        print('schemes %s' % len(schemes))
-        print('self._master_user %s' % self._master_user)
 
         for scheme in schemes:
             result_item = scheme["fields"]
@@ -2130,7 +2128,6 @@ class MappingExportViewSet(AbstractModelViewSet):
 
         can_export = check_configuration_section(self.access_table)
 
-        print('can_export %s' % can_export)
 
         if can_export:
 
@@ -2754,7 +2751,6 @@ class ConfigurationDuplicateCheckViewSet(AbstractModelViewSet):
 
         results = []
 
-        print(head['date'])
 
         configuration_section = None
 
@@ -2812,7 +2808,7 @@ class ConfigurationDuplicateCheckViewSet(AbstractModelViewSet):
 
                     else:
 
-                        # print('item %s' % item)
+                        # _l.info('item %s' % item)
 
                         if 'scheme_name' in item:
 

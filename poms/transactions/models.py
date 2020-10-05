@@ -641,6 +641,10 @@ class TransactionTypeInput(models.Model):
                                            on_delete=models.PROTECT, related_name='+',
                                            verbose_name=ugettext_lazy('notification class'))
 
+    settings = models.ForeignKey('transactions.TransactionTypeInputSettings', null=True, blank=True,
+                                 on_delete=models.SET_NULL,
+                                 verbose_name=ugettext_lazy('settings'))
+
     class Meta:
         verbose_name = ugettext_lazy('transaction type input')
         verbose_name_plural = ugettext_lazy('transaction type inputs')
@@ -674,9 +678,7 @@ class TransactionTypeInput(models.Model):
 
 class TransactionTypeInputSettings(models.Model):
 
-    transaction_type_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True,
-                                               unique=True,
-                                               on_delete=models.CASCADE, related_name='settings',
+    transaction_type_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.CASCADE, related_name='settings_old',
                                                verbose_name=ugettext_lazy('transaction type input'))
 
     linked_inputs_names = models.TextField(blank=True, default='', null=True, verbose_name=ugettext_lazy('linked_input_names'))
