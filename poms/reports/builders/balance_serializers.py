@@ -729,7 +729,6 @@ def serialize_pl_report_item(item):
         "user_code": item["user_code"],
         "portfolio": item["portfolio_id"],
         "item_type": item["item_type"],
-        "item_type_code": item["item_type_code"],
         "item_type_name": item["item_type_name"],
 
         "item_group": item["item_group"],
@@ -737,56 +736,84 @@ def serialize_pl_report_item(item):
         "item_group_name": item["item_group_name"]
     }
 
-    if item["item_type"] == 1:  # instrument
-        result["instrument"] = item["instrument_id"]
-        result["account"] = item["account_position_id"]
-
-        result["strategy1"] = item["strategy1_position_id"]
-        result["strategy2"] = item["strategy2_position_id"]
-        result["strategy3"] = item["strategy3_position_id"]
-
-        result["pricing_currency"] = item["pricing_currency_id"]
-        result["currency"] = None
-
-        result["position_size"] = item["position_size"]
-        result["time_invested"] = item["time_invested"]
-        result["position_return"] = item["position_return"]
-        result["net_position_return"] = item["net_position_return"]
-        result["ytm"] = item["ytm"]
-
-        result["market_value"] = item["market_value"]
-        result["exposure"] = item["exposure"]
-
-        result["total"] = item["total"]
-        result["principal"] = item["principal"]
-        result["carry"] = item["carry"]
-        result["overheads"] = item["overheads"]
-
-        # loc started
-
-        result["total_loc"] = item["total_loc"]
-        result["principal_loc"] = item["principal_loc"]
-        result["carry_loc"] = item["carry_loc"]
-        result["overheads_loc"] = item["overheads_loc"]
-
-        result["market_value_loc"] = item["market_value_loc"]
-        result["exposure_loc"] = item["exposure_loc"]
-
-
-        # loc ended
-
-
-    if item["item_type"] == 2:  # currency
-
-        result["currency"] = item["currency_id"]
-        result["account"] = item["account_cash_id"]
-
-        result["strategy1"] = item["strategy1_cash_id"]
-        result["strategy2"] = item["strategy2_cash_id"]
-        result["strategy3"] = item["strategy3_cash_id"]
-
-        result["pricing_currency"] = None
+    # if item["item_type"] == 1:  # instrument
+    if item["instrument_id"] == -1:
         result["instrument"] = None
+    else:
+        result["instrument"] = item["instrument_id"]
+    # result["account"] = item["account_position_id"]
+    #
+    # result["strategy1"] = item["strategy1_position_id"]
+    # result["strategy2"] = item["strategy2_position_id"]
+    # result["strategy3"] = item["strategy3_position_id"]
+    #
+    # result["pricing_currency"] = item["pricing_currency_id"]
+    # result["currency"] = None
+    #
+    result["position_size"] = item["position_size"]
+
+    result["position_return"] = item["position_return"]
+    result["net_position_return"] = item["net_position_return"]
+
+    result["net_cost_price"] = item["net_cost_price"]
+    result["net_cost_price_loc"] = item["net_cost_price_loc"]
+
+    result["time_invested"] = item["time_invested"]
+
+    # result["ytm"] = item["ytm"]
+    #
+    # result["market_value"] = item["market_value"]
+    # result["exposure"] = item["exposure"]
+
+
+    result["principal"] = item["principal"]
+    result["carry"] = item["carry"]
+    result["overheads"] = item["overheads"]
+    result["total"] = item["total"]
+
+    result["principal_fx"] = item["principal_fx"]
+    result["carry_fx"] = item["carry_fx"]
+    result["overheads_fx"] = item["overheads_fx"]
+    result["total_fx"] = item["total_fx"]
+
+    result["principal_fixed"] = item["principal_fixed"]
+    result["carry_fixed"] = item["carry_fixed"]
+    result["overheads_fixed"] = item["overheads_fixed"]
+    result["total_fixed"] = item["total_fixed"]
+
+    # loc started
+
+    result["principal_loc"] = item["principal_loc"]
+    result["carry_loc"] = item["carry_loc"]
+    result["overheads_loc"] = item["overheads_loc"]
+    result["total_loc"] = item["total_loc"]
+
+    result["principal_fx_loc"] = item["principal_fx_loc"]
+    result["carry_fx_loc"] = item["carry_fx_loc"]
+    result["overheads_fx_loc"] = item["overheads_fx_loc"]
+    result["total_fx_loc"] = item["total_fx_loc"]
+
+    result["principal_fixed_loc"] = item["principal_fixed_loc"]
+    result["carry_fixed_loc"] = item["carry_fixed_loc"]
+    result["overheads_fixed_loc"] = item["overheads_fixed_loc"]
+    result["total_fixed_loc"] = item["total_fixed_loc"]
+
+    # result["market_value_loc"] = item["market_value_loc"]
+    # result["exposure_loc"] = item["exposure_loc"]
+
+
+
+    # if item["item_type"] == 2:  # currency
+    #
+    #     result["currency"] = item["currency_id"]
+    #     result["account"] = item["account_cash_id"]
+    #
+    #     result["strategy1"] = item["strategy1_cash_id"]
+    #     result["strategy2"] = item["strategy2_cash_id"]
+    #     result["strategy3"] = item["strategy3_cash_id"]
+    #
+    #     result["pricing_currency"] = None
+    #     result["instrument"] = None
 
     return result
 

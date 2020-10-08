@@ -315,6 +315,7 @@ router.register(r'import/factor-schedule-download-method', integrations.FactorSc
 router.register(r'import/accrual-schedule-download-method', integrations.AccrualScheduleDownloadMethodViewSet)
 
 router.register(r'import/instrument-scheme', integrations.InstrumentDownloadSchemeViewSet)
+router.register(r'import/instrument-scheme-light', integrations.InstrumentDownloadSchemeLightViewSet)
 router.register(r'import/price-download-scheme', integrations.PriceDownloadSchemeViewSet)
 
 router.register(r'import/currency-mapping', integrations.CurrencyMappingViewSet)

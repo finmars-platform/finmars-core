@@ -259,6 +259,19 @@ class InstrumentDownloadSchemeSerializer(serializers.ModelSerializer):
         instance.attributes.exclude(pk__in=pk_set).delete()
 
 
+class InstrumentDownloadSchemeLightSerializer(serializers.ModelSerializer):
+    master_user = MasterUserField()
+    provider_object = ProviderClassSerializer(source='provider', read_only=True)
+
+    class Meta:
+        model = InstrumentDownloadScheme
+        fields = [
+            'id',
+            'master_user',
+            'scheme_name', 'provider',
+            'provider_object',
+        ]
+
 class PriceDownloadSchemeSerializer(serializers.ModelSerializer):
     master_user = MasterUserField()
     provider_object = ProviderClassSerializer(source='provider', read_only=True)

@@ -52,7 +52,8 @@ from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer
     CounterpartyClassifierMappingSerializer, ResponsibleClassifierMappingSerializer, PricingPolicyMappingSerializer, \
     InstrumentClassifierMappingSerializer, AccountTypeMappingSerializer, TestCertificateSerializer, \
     ComplexTransactionImportSchemeLightSerializer, BloombergDataProviderCredentialSerializer, \
-    PricingConditionMappingSerializer, TransactionFileResultSerializer, DataProviderSerializer
+    PricingConditionMappingSerializer, TransactionFileResultSerializer, DataProviderSerializer, \
+    InstrumentDownloadSchemeLightSerializer
 from poms.integrations.tasks import complex_transaction_csv_file_import, complex_transaction_csv_file_import_validate, complex_transaction_csv_file_import_from_transaction_file
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
@@ -157,6 +158,25 @@ class InstrumentDownloadSchemeViewSet(AbstractModelViewSet):
         'scheme_name',
         'provider', 'provider__name',
     ]
+
+
+class InstrumentDownloadSchemeLightViewSet(AbstractModelViewSet):
+    queryset = InstrumentDownloadScheme.objects.select_related(
+        'provider',
+    )
+    serializer_class = InstrumentDownloadSchemeLightSerializer
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        PomsConfigurationPermission
+    ]
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = InstrumentDownloadSchemeFilterSet
+    ordering_fields = [
+        'scheme_name',
+        'provider', 'provider__name',
+    ]
+
 
 
 class PriceDownloadSchemeFilterSet(FilterSet):
