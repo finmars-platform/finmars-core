@@ -1768,6 +1768,8 @@ class PLReportBuilderSql:
             query_1 = self.get_query_for_first_date()
             query_2 = self.get_query_for_second_date()
 
+            st = time.perf_counter()
+
             # q1 - pl first date
             # q2 - report date
             # language=PostgreSQL
@@ -1867,6 +1869,8 @@ class PLReportBuilderSql:
                                  final_consolidation_columns=self.get_final_consolidation_columns())
 
             cursor.execute(query)
+
+            _l.info('PL report query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
             query_str = str(cursor.query, 'utf-8')
 

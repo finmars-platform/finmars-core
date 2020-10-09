@@ -89,6 +89,7 @@ class BalanceReportBuilderSql:
             consolidated_select_columns = self.get_cash_consolidation_for_select()
             transaction_filter_sql_string = self.get_transaction_filter_sql_string()
 
+            st = time.perf_counter()
             # language=PostgreSQL
             query = """
                 
@@ -475,6 +476,8 @@ class BalanceReportBuilderSql:
                                  )
 
             cursor.execute(query)
+
+            _l.info('PL report query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
             query_str = str(cursor.query, 'utf-8')
             _l.info(query_str)
