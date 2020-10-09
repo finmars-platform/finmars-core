@@ -477,7 +477,7 @@ class BalanceReportBuilderSql:
 
             cursor.execute(query)
 
-            _l.info('PL report query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
+            _l.info('Balance report query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
             query_str = str(cursor.query, 'utf-8')
             _l.info(query_str)

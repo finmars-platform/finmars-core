@@ -1957,14 +1957,44 @@ class PLReportBuilderSql:
                 result_item_opened["overheads_fixed_loc"] = item["overheads_fixed_opened_loc"]
                 result_item_opened["total_fixed_loc"] = item["total_fixed_opened_loc"]
 
-                result.append(result_item_opened)
+
 
                 #  CLOSED POSITIONS BELOW
 
                 # TODO make it more readable
-                if (int(item["principal_closed"] or 0) != 0 or
-                        int(item["carry_closed"] or 0) != 0 or
-                        int(item["overheads_closed"] or 0) != 0):
+
+                has_opened_value = False
+
+                if item["principal_opened"] is not None and item["principal_opened"] != 0:
+                    has_opened_value = True
+
+                if item["carry_opened"] is not None and item["carry_opened"] != 0:
+                    has_opened_value = True
+
+                if item["overheads_opened"] is not None and item["overheads_opened"] != 0:
+                    has_opened_value = True
+
+                has_closed_value = False
+
+                if item["principal_closed"] is not None and item["principal_closed"] != 0:
+                    has_closed_value = True
+
+                if item["carry_closed"] is not None and item["carry_closed"] != 0:
+                    has_closed_value = True
+
+                if item["overheads_closed"] is not None and item["overheads_closed"] != 0:
+                    has_closed_value = True
+
+                if result_item_opened['item_type'] == ITEM_TYPE_FX_VARIATIONS and has_opened_value:
+                    result.append(result_item_opened)
+
+                if result_item_opened['item_type'] == ITEM_TYPE_FX_TRADES and has_opened_value:
+                    result.append(result_item_opened)
+
+                if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT:
+                    result.append(result_item_opened)
+
+                if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and has_closed_value:
 
                     result_item_closed = item.copy()
 
