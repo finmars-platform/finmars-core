@@ -451,6 +451,7 @@ class BalanceReportBuilderSql:
                               instrument_id,
                               SUM(position_size_with_sign) as position_size
                             from filtered_transactions
+                            where master_user_id = {master_user_id}
                             group by
                               {consolidated_select_columns}
                               instrument_id) as t
