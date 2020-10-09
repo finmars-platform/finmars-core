@@ -86,6 +86,35 @@ class PLReportBuilderSql:
 
         return resultString
 
+    def get_final_consolidation_columns(self):
+
+        result = []
+
+        #(q2.instrument_id) as instrument_id,
+
+        if self.instance.portfolio_mode == Report.MODE_INDEPENDENT:
+            result.append("(q2.portfolio_id) as portfolio_id")
+
+        if self.instance.account_mode == Report.MODE_INDEPENDENT:
+            result.append("(q2.account_position_id) as account_position_id")
+
+        if self.instance.strategy1_mode == Report.MODE_INDEPENDENT:
+            result.append("(q2.strategy1_position_id) as strategy1_position_id")
+
+        if self.instance.strategy2_mode == Report.MODE_INDEPENDENT:
+            result.append("(q2.strategy2_position_id) as strategy2_position_id")
+
+        if self.instance.strategy3_mode == Report.MODE_INDEPENDENT:
+            result.append("(q2.strategy3_position_id) as strategy3_position_id")
+
+        resultString = ''
+
+        if len(result):
+            resultString = ", ".join(result) + ', '
+
+        return resultString
+
+
     def get_where_expression_for_position_consolidation(self, prefix, prefix_second):
 
         result = []
@@ -1726,8 +1755,7 @@ class PLReportBuilderSql:
                              consolidation_columns=self.get_position_consolidation_for_select(),
                              tt_consolidation_columns=self.get_position_consolidation_for_select(prefix="tt."),
                              transactions_all_with_multipliers_where_expression=self.get_where_expression_for_position_consolidation(
-                                 prefix="tt_w_m.", prefix_second="t_o.")
-                             )
+                                 prefix="tt_w_m.", prefix_second="t_o."))
 
         return query
 
@@ -1752,6 +1780,9 @@ class PLReportBuilderSql:
                             -- add optional account_position, strategy1 position etc
                             
                             (q2.instrument_id) as instrument_id,
+                            
+                            {final_consolidation_columns}
+                            
                             (q2.position_size) as position_size, -- ?
                             
                             (q2.position_return) as position_return,
@@ -1832,7 +1863,8 @@ class PLReportBuilderSql:
             # left join ({query_first_date}) as q2 on q1.instrument_id = q2.instrument_id"""
 
             query = query.format(query_first_date=query_1,
-                                 query_report_date=query_2)
+                                 query_report_date=query_2,
+                                 final_consolidation_columns=self.get_final_consolidation_columns())
 
             cursor.execute(query)
 
