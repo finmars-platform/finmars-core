@@ -526,8 +526,9 @@ class PLReportBuilderSql:
                        else
                            (select fx_rate
                             from currencies_currencyhistory c_ch
-                            where c_ch.date = accounting_date
-                              and c_ch.currency_id = transaction_currency_id
+                            where c_ch.date = accounting_date and
+                               c_ch.currency_id = transaction_currency_id and
+                               c_ch.pricing_policy_id = {pricing_policy_id}
                             limit 1)
                    end as trn_hist_fx,
 
@@ -537,8 +538,9 @@ class PLReportBuilderSql:
                        else
                            (select fx_rate
                             from currencies_currencyhistory c_ch
-                            where c_ch.date = accounting_date
-                              and c_ch.currency_id = 1/*'REPORTING CCY'*/
+                            where c_ch.date = accounting_date and 
+                                c_ch.currency_id = {report_currency_id} and
+                                c_ch.pricing_policy_id = {pricing_policy_id}
                             limit 1)
                   end as rep_hist_fx,
                    
@@ -974,6 +976,7 @@ class PLReportBuilderSql:
                                         from currencies_currencyhistory c_ch
                                         where date = '{report_date}'
                                           and c_ch.currency_id = {report_currency_id}
+                                          and c_ch.pricing_policy_id = {pricing_policy_id}
                                         limit 1)
                             end as rep_cur_fx,
             
@@ -1020,6 +1023,7 @@ class PLReportBuilderSql:
                                         from currencies_currencyhistory c_ch
                                         where date = '{report_date}'
                                           and c_ch.currency_id = tut.settlement_currency_id
+                                          and c_ch.pricing_policy_id = {pricing_policy_id}
                                         limit 1)
                                 end as stl_cur_fx,
                                 
@@ -1030,7 +1034,8 @@ class PLReportBuilderSql:
                                        (select fx_rate
                                         from currencies_currencyhistory c_ch
                                         where date = '{report_date}'
-                                          and c_ch.currency_id = 1/*'REPORTING CCY'*/
+                                          and c_ch.currency_id = {report_currency_id}
+                                          and c_ch.pricing_policy_id = {pricing_policy_id}
                                         limit 1)
                                 end as rep_cur_fx,
                        
@@ -1082,9 +1087,11 @@ class PLReportBuilderSql:
                                     else fx_rate
                                 end as fx_rate
                             from 
-                                currencies_currencyhistory 
+                                currencies_currencyhistory as c_ch
                             where 
-                                date = '{report_date}'
+                                
+                                date = '{report_date}' and 
+                                c_ch.pricing_policy_id = {pricing_policy_id}
                         ) as trnch
                         on 
                             transaction_currency_id = trnch.currency_id
@@ -1130,6 +1137,7 @@ class PLReportBuilderSql:
                                     from currencies_currencyhistory c_ch
                                     where date = '{report_date}'
                                       and c_ch.currency_id = pricing_currency_id
+                                      and c_ch.pricing_policy_id = {pricing_policy_id}
                                     limit 1)
                             end as prc_cur_fx,
     
@@ -1143,6 +1151,7 @@ class PLReportBuilderSql:
                                     from currencies_currencyhistory c_ch
                                     where date = '{report_date}'
                                       and c_ch.currency_id = accrued_currency_id
+                                      and c_ch.pricing_policy_id = {pricing_policy_id}
                                     limit 1)
                             end as accr_cur_fx,
     
@@ -1404,6 +1413,7 @@ class PLReportBuilderSql:
                                         from currencies_currencyhistory c_ch
                                         where date = '{report_date}'
                                           and c_ch.currency_id = svfx.settlement_currency_id
+                                          and c_ch.pricing_policy_id = {pricing_policy_id}
                                         limit 1)
                                 end as stl_cur_fx,
                 
@@ -1416,6 +1426,7 @@ class PLReportBuilderSql:
                                         from currencies_currencyhistory c_ch
                                         where c_ch.date = svfx.accounting_date
                                           and c_ch.currency_id = svfx.transaction_currency_id
+                                          and c_ch.pricing_policy_id = {pricing_policy_id}
                                         limit 1)
                                 end as trn_hist_fx,
                 
@@ -1427,6 +1438,7 @@ class PLReportBuilderSql:
                                         from currencies_currencyhistory c_ch
                                         where c_ch.date = svfx.accounting_date
                                           and c_ch.currency_id = {report_currency_id} 
+                                          and c_ch.pricing_policy_id = {pricing_policy_id}
                                         limit 1)
                                 end as rep_hist_fx,
                 
@@ -1438,6 +1450,7 @@ class PLReportBuilderSql:
                                         from currencies_currencyhistory c_ch
                                         where date = '{report_date}'
                                           and c_ch.currency_id = {report_currency_id} 
+                                          and c_ch.pricing_policy_id = {pricing_policy_id}
                                         limit 1)
                                 end as rep_cur_fx
                             from pl_cash_fx_variations_transactions_with_ttype svfx
@@ -1663,7 +1676,9 @@ class PLReportBuilderSql:
                            (select  fx_rate
                         from currencies_currencyhistory c_ch
                         where date = '{report_date}'
-                          and c_ch.currency_id = sft.settlement_currency_id limit 1)
+                          and c_ch.currency_id = sft.settlement_currency_id 
+                          and c_ch.pricing_policy_id = {pricing_policy_id}
+                          limit 1)
                         end as stl_cur_fx,
                         case
                            when /* reporting ccy = system ccy*/ {report_currency_id} = {default_currency_id}
@@ -1671,7 +1686,10 @@ class PLReportBuilderSql:
                            else
                                (select  fx_rate
                                 from currencies_currencyhistory c_ch
-                                where date = '{report_date}' and c_ch.currency_id = {report_currency_id}/*'REPORTING CCY'*/ limit 1)
+                                where date = '{report_date}' and 
+                                 c_ch.currency_id = {report_currency_id} and
+                                 c_ch.pricing_policy_id = {pricing_policy_id}
+                                 limit 1)
                         end as rep_cur_fx
                     from pl_cash_fx_trades_transactions_with_ttype sft where 
                               transaction_class_id in (1001,1002)
@@ -1714,6 +1732,7 @@ class PLReportBuilderSql:
                              master_user_id=self.instance.master_user.id,
                              default_currency_id=self.ecosystem_defaults.currency_id,
                              report_currency_id=self.instance.report_currency.id,
+                             pricing_policy_id=self.instance.pricing_policy.id,
                              report_fx_rate=report_fx_rate,
                              transaction_filter_sql_string=transaction_filter_sql_string,
                              fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
@@ -1749,6 +1768,7 @@ class PLReportBuilderSql:
                              master_user_id=self.instance.master_user.id,
                              default_currency_id=self.ecosystem_defaults.currency_id,
                              report_currency_id=self.instance.report_currency.id,
+                             pricing_policy_id=self.instance.pricing_policy.id,
                              report_fx_rate=report_fx_rate,
                              transaction_filter_sql_string=transaction_filter_sql_string,
                              fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
@@ -2220,93 +2240,6 @@ class PLReportBuilderSql:
             resultString = ", ".join(result) + ', '
 
         return resultString
-
-    def build_cash(self):
-
-        _l.info("build cash")
-
-        with connection.cursor() as cursor:
-
-            consolidated_select_columns = self.get_cash_consolidation_for_select()
-
-            query = """
-                CREATE or REPLACE VIEW balance_cash_consolidation_matrix AS
-                SELECT
-                  portfolio_id,
-                  account_cash_id,
-                  strategy1_cash_id,
-                  strategy2_cash_id,
-                  strategy3_cash_id,
-                  settlement_currency_id,
-                  SUM(cash_consideration) as position_size
-                FROM transactions_transaction
-                WHERE transaction_date <= %s AND master_user_id = %s
-                GROUP BY
-                  portfolio_id,
-                  account_cash_id,
-                  strategy1_cash_id,
-                  strategy2_cash_id,
-                  strategy3_cash_id,
-                  settlement_currency_id;
-            """
-
-            cursor.execute(query, [self.instance.report_date, self.instance.master_user.id])
-
-            query = """
-                SELECT 
-                    t.*, 
-                    c.name,
-                    c.short_name,
-                    c.user_code,
-                    
-                    (t.position_size * cch.fx_rate) as market_value
-                FROM 
-                    (SELECT
-                      """ + consolidated_select_columns + """
-                      settlement_currency_id,
-                      SUM(position_size) as position_size
-                    FROM balance_cash_consolidation_matrix
-                    GROUP BY
-                      """ + consolidated_select_columns + """
-                      settlement_currency_id) AS t
-                LEFT JOIN currencies_currency as c
-                ON t.settlement_currency_id = c.id
-                LEFT JOIN currencies_currencyhistory as cch
-                ON t.settlement_currency_id = cch.currency_id
-                WHERE cch.date = %s AND cch.pricing_policy_id = %s;
-            """
-
-            cursor.execute(query, [self.instance.report_date, self.instance.pricing_policy.id])
-
-            result = dictfetchall(cursor)
-
-            ITEM_CURRENCY = 2
-
-            for item in result:
-                item["item_type"] = ITEM_CURRENCY
-                item["item_type_code"] = "CCY"
-                item["item_type_name"] = "Currency"
-
-                item["currency_id"] = item["settlement_currency_id"]
-
-                if "portfolio_id" not in item:
-                    item["portfolio_id"] = self.ecosystem_defaults.portfolio_id
-
-                if "account_cash_id" not in item:
-                    item["account_cash_id"] = self.ecosystem_defaults.account_id
-
-                if "strategy1_cash_id" not in item:
-                    item["strategy1_cash_id"] = self.ecosystem_defaults.strategy1_id
-
-                if "strategy2_cash_id" not in item:
-                    item["strategy2_cash_id"] = self.ecosystem_defaults.strategy2_id
-
-                if "strategy3_cash_id" not in item:
-                    item["strategy3_cash_id"] = self.ecosystem_defaults.strategy3_id
-
-            _l.info('build cash result %s ' % len(result))
-
-            self.instance.items = self.instance.items + result
 
     def add_data_items_instruments(self, ids):
 
