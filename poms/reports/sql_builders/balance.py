@@ -362,6 +362,7 @@ class BalanceReportBuilderSql:
                         ) as t_with_report_fx_rate
                     left join currencies_currency as c
                     ON t_with_report_fx_rate.settlement_currency_id = c.id
+                    where position_size != 0
                 ) as pre_final_union_cash_calculations_level_0
                 
                 union all
