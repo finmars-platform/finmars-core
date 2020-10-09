@@ -12,6 +12,8 @@ from poms.reports.builders.base_builder import BaseReportBuilder
 from poms.reports.models import BalanceReportCustomField
 from poms.users.models import EcosystemDefault
 
+from django.conf import settings
+
 _l = logging.getLogger('poms.reports')
 
 
@@ -1836,8 +1838,9 @@ class PLReportBuilderSql:
 
             query_str = str(cursor.query, 'utf-8')
 
-            with open('/tmp/query_result.txt', 'w') as the_file:
-                the_file.write(query_str)
+            if settings.LOCAL:
+                with open('/tmp/query_result.txt', 'w') as the_file:
+                    the_file.write(query_str)
 
             # _l.info(query_str)
 
