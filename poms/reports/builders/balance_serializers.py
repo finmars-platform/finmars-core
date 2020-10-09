@@ -670,6 +670,7 @@ class PLReportSerializer(ReportSerializer):
 
 
 def serialize_balance_report_item(item):
+
     result = {
         # "id": ','.join(str(x) for x in item['pk']),
         "id": '-',
@@ -678,44 +679,65 @@ def serialize_balance_report_item(item):
         "user_code": item["user_code"],
         "portfolio": item["portfolio_id"],
         "item_type": item["item_type"],
-        "item_type_code": item["item_type_code"],
         "item_type_name": item["item_type_name"],
         "position_size": item["position_size"],
         "market_value": item["market_value"],
         "modified_duration": None
     }
 
-    if item["item_type"] == 1:  # instrument
-        result["instrument"] = item["instrument_id"]
-        result["account"] = item["account_position_id"]
-
-        result["strategy1"] = item["strategy1_position_id"]
-        result["strategy2"] = item["strategy2_position_id"]
-        result["strategy3"] = item["strategy3_position_id"]
-
-        result["pricing_currency"] = item["pricing_currency_id"]
-        result["currency"] = None
-
-        # result["total_opened"] = item["total"]
-        # result["principal_opened"] = item["principal"]
-        # result["carry_opened"] = item["carry"]
-        # result["overheads_opened"] = item["overheads"]
-
-        # result["overheads"] = item["overheads"]
-        # result["carry"] =  item["carry"]
-        # result["principal"] =  item["principal"]
-
-    if item["item_type"] == 2:  # currency
-
-        result["currency"] = item["currency_id"]
-        result["account"] = item["account_cash_id"]
-
-        result["strategy1"] = item["strategy1_cash_id"]
-        result["strategy2"] = item["strategy2_cash_id"]
-        result["strategy3"] = item["strategy3_cash_id"]
-
-        result["pricing_currency"] = None
+    if item["instrument_id"] == -1:
         result["instrument"] = None
+    else:
+        result["instrument"] = item["instrument_id"]
+    result["account"] = item["account_position_id"]
+
+    result["strategy1"] = item["strategy1_position_id"]
+    result["strategy2"] = item["strategy2_position_id"]
+    result["strategy3"] = item["strategy3_position_id"]
+
+    # result["pricing_currency"] = item["pricing_currency_id"]
+    result["currency"] = None
+
+    # result["total_opened"] = item["total"]
+    # result["principal_opened"] = item["principal"]
+    # result["carry_opened"] = item["carry"]
+    # result["overheads_opened"] = item["overheads"]
+    #
+    # result["overheads"] = item["overheads"]
+    # result["carry"] =  item["carry"]
+    # result["principal"] =  item["principal"]
+
+    # if item["item_type"] == 1:  # instrument
+    #     result["instrument"] = item["instrument_id"]
+    #     result["account"] = item["account_position_id"]
+    #
+    #     result["strategy1"] = item["strategy1_position_id"]
+    #     result["strategy2"] = item["strategy2_position_id"]
+    #     result["strategy3"] = item["strategy3_position_id"]
+    #
+    #     result["pricing_currency"] = item["pricing_currency_id"]
+    #     result["currency"] = None
+    #
+    #     result["total_opened"] = item["total"]
+    #     result["principal_opened"] = item["principal"]
+    #     result["carry_opened"] = item["carry"]
+    #     result["overheads_opened"] = item["overheads"]
+    #
+    #     result["overheads"] = item["overheads"]
+    #     result["carry"] =  item["carry"]
+    #     result["principal"] =  item["principal"]
+    #
+    # if item["item_type"] == 2:  # currency
+    #
+    #     result["currency"] = item["currency_id"]
+    #     result["account"] = item["account_cash_id"]
+    #
+    #     result["strategy1"] = item["strategy1_cash_id"]
+    #     result["strategy2"] = item["strategy2_cash_id"]
+    #     result["strategy3"] = item["strategy3_cash_id"]
+    #
+    #     result["pricing_currency"] = None
+    #     result["instrument"] = None
 
     return result
 

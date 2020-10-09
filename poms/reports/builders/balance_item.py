@@ -1175,8 +1175,7 @@ class ReportItem(YTMMixin, BaseReportItem):
                 self.pos_return_loc = 0
 
             try:
-                self.net_pos_return_res = (
-                                                  self.principal_opened_res + self.carry_opened_res + self.overheads_opened_res) \
+                self.net_pos_return_res = (self.principal_opened_res + self.carry_opened_res + self.overheads_opened_res) \
                                           / -self.principal_invested_res
             except ArithmeticError:
                 self.net_pos_return_res = 0.0
