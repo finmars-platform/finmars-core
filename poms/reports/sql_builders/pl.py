@@ -137,7 +137,7 @@ class PLReportBuilderSql:
 
         if len(result):
             resultString = resultString + 'and '
-            resultString = resultString + "and ".join(result)
+            resultString = resultString + " and ".join(result)
 
         return resultString
 
