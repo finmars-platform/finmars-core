@@ -1674,17 +1674,29 @@ class ImportManager(object):
 
         st = time.perf_counter()
 
+
         for item in configuration_section['items']:
 
             if 'integrations.complextransactionimportscheme' in item['entity']:
 
                 self.instance.stats['configuration'][item['entity']] = []
 
+                _l.info('Importing Transaction import Schemes %s' % len(item['content']))
+
                 if 'content' in item:
 
                     for content_object in item['content']:
 
-                        _l.info('content_object %s '  % content_object )
+                        stats = {
+                            'content_type': item['entity'],
+                            'mode': self.instance.mode,
+                            'item': content_object,
+                            'error': {
+                                'message': None
+                            },
+                            'status': 'info'
+                        }
+
 
                         if 'rule_scenarios' in content_object:
 
@@ -1695,7 +1707,10 @@ class ImportManager(object):
                                                                                            user_code=rule[
                                                                                                '___transaction_type__user_code']).pk
                                 except TransactionType.DoesNotExist:
-                                    _l.info('Cant find Transaction Type form %s' % content_object['scheme_name'])
+                                    _l.info('Cant find Transaction Type form %s for %s' % (rule['___transaction_type__user_code'], content_object['scheme_name']))
+                                    stats['status'] = 'error'
+                                    stats['error']['message'] = 'Error. Can\'t Import Transaction Import Scheme for %s' % content_object['scheme_name']
+                                    continue
 
                                 if rule['transaction_type']:
 
@@ -1707,18 +1722,18 @@ class ImportManager(object):
                                                 name=field['___input__name']).pk
                                         except TransactionTypeInput.DoesNotExist:
                                             _l.info('Cant find Input %s' % field['___input__name'])
+                                            stats['status'] = 'error'
+                                            stats['error'][
+                                                'message'] = 'Error. Can\'t Import Transaction Import Scheme for %s' % content_object['scheme_name']
+                                            continue
+
+                        if stats['status'] == 'error':
+                            self.instance.stats['configuration'][item['entity']].append(stats)
+                            self.update_progress()
+                            continue
 
                         serializer = ComplexTransactionImportSchemeSerializer(data=content_object,
                                                                               context=self.get_serializer_context())
-                        stats = {
-                            'content_type': item['entity'],
-                            'mode': self.instance.mode,
-                            'item': content_object,
-                            'error': {
-                                'message': None
-                            },
-                            'status': 'info'
-                        }
 
                         try:
                             serializer.is_valid(raise_exception=True)

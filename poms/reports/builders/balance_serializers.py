@@ -709,46 +709,17 @@ def serialize_balance_report_item(item):
     # result["pricing_currency"] = item["pricing_currency_id"]
     result["currency"] = None
 
-    # result["total_opened"] = item["total"]
-    # result["principal_opened"] = item["principal"]
-    # result["carry_opened"] = item["carry"]
-    # result["overheads_opened"] = item["overheads"]
-    #
-    # result["overheads"] = item["overheads"]
-    # result["carry"] =  item["carry"]
-    # result["principal"] =  item["principal"]
+    result["ytm"] = item["ytm"]
+    result["ytm_at_cost"] = item["ytm_at_cost"]
 
-    # if item["item_type"] == 1:  # instrument
-    #     result["instrument"] = item["instrument_id"]
-    #     result["account"] = item["account_position_id"]
-    #
-    #     result["strategy1"] = item["strategy1_position_id"]
-    #     result["strategy2"] = item["strategy2_position_id"]
-    #     result["strategy3"] = item["strategy3_position_id"]
-    #
-    #     result["pricing_currency"] = item["pricing_currency_id"]
-    #     result["currency"] = None
-    #
-    #     result["total_opened"] = item["total"]
-    #     result["principal_opened"] = item["principal"]
-    #     result["carry_opened"] = item["carry"]
-    #     result["overheads_opened"] = item["overheads"]
-    #
-    #     result["overheads"] = item["overheads"]
-    #     result["carry"] =  item["carry"]
-    #     result["principal"] =  item["principal"]
-    #
-    # if item["item_type"] == 2:  # currency
-    #
-    #     result["currency"] = item["currency_id"]
-    #     result["account"] = item["account_cash_id"]
-    #
-    #     result["strategy1"] = item["strategy1_cash_id"]
-    #     result["strategy2"] = item["strategy2_cash_id"]
-    #     result["strategy3"] = item["strategy3_cash_id"]
-    #
-    #     result["pricing_currency"] = None
-    #     result["instrument"] = None
+    result["position_return"] = item["position_return"]
+    result["net_position_return"] = item["net_position_return"]
+
+    result["net_cost_price"] = item["net_cost_price"]
+    result["net_cost_price_loc"] = item["net_cost_price_loc"]
+
+    result["time_invested"] = item["time_invested"]
+    result["return_annauly"] = item["return_annauly"]
 
     return result
 

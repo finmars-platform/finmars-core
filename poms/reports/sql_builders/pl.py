@@ -10,6 +10,9 @@ from poms.portfolios.models import Portfolio
 from poms.reports.builders.balance_item import Report
 from poms.reports.builders.base_builder import BaseReportBuilder
 from poms.reports.models import BalanceReportCustomField
+from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, get_report_fx_rate, \
+    get_fx_trades_and_fx_variations_transaction_filter_sql_string, get_where_expression_for_position_consolidation, \
+    get_position_consolidation_for_select
 from poms.users.models import EcosystemDefault
 
 from django.conf import settings
@@ -60,37 +63,11 @@ class PLReportBuilderSql:
 
         return self.instance
 
-    def get_position_consolidation_for_select(self, prefix=''):
-
-        result = []
-
-        if self.instance.portfolio_mode == Report.MODE_INDEPENDENT:
-            result.append(prefix + "portfolio_id")
-
-        if self.instance.account_mode == Report.MODE_INDEPENDENT:
-            result.append(prefix + "account_position_id")
-
-        if self.instance.strategy1_mode == Report.MODE_INDEPENDENT:
-            result.append(prefix + "strategy1_position_id")
-
-        if self.instance.strategy2_mode == Report.MODE_INDEPENDENT:
-            result.append(prefix + "strategy2_position_id")
-
-        if self.instance.strategy3_mode == Report.MODE_INDEPENDENT:
-            result.append(prefix + "strategy3_position_id")
-
-        resultString = ''
-
-        if len(result):
-            resultString = ", ".join(result) + ', '
-
-        return resultString
-
     def get_final_consolidation_columns(self):
 
         result = []
 
-        #(q2.instrument_id) as instrument_id,
+        # (q2.instrument_id) as instrument_id,
 
         if self.instance.portfolio_mode == Report.MODE_INDEPENDENT:
             result.append("(q2.portfolio_id) as portfolio_id")
@@ -141,134 +118,8 @@ class PLReportBuilderSql:
 
         return resultString
 
-    def get_where_expression_for_position_consolidation(self, prefix, prefix_second):
-
-        result = []
-
-        if self.instance.portfolio_mode == Report.MODE_INDEPENDENT:
-            result.append(prefix + "portfolio_id = " + prefix_second + "portfolio_id")
-
-        if self.instance.account_mode == Report.MODE_INDEPENDENT:
-            result.append(prefix + "account_position_id = " + prefix_second + "account_position_id")
-
-        if self.instance.strategy1_mode == Report.MODE_INDEPENDENT:
-            result.append(prefix + "strategy1_position_id = " + prefix_second + "strategy1_position_id")
-
-        if self.instance.strategy2_mode == Report.MODE_INDEPENDENT:
-            result.append(prefix + "strategy2_position_id = " + prefix_second + "strategy2_position_id")
-
-        if self.instance.strategy3_mode == Report.MODE_INDEPENDENT:
-            result.append(prefix + "strategy3_position_id = " + prefix_second + "strategy3_position_id")
-
-        resultString = ''
-
-        if len(result):
-            resultString = " and ".join(result) + ' and '
-
-        return resultString
-
-
-    def get_transaction_filter_sql_string(self):
-
-        result_string = ''
-
-        filter_sql_list = []
-
-        portfolios_ids = []
-        accounts_ids = []
-        strategies1_ids = []
-        strategies2_ids = []
-        strategies3_ids = []
-
-        if len(self.instance.portfolios):
-            for portfolio in self.instance.portfolios:
-                portfolios_ids.append(str(portfolio.id))
-
-            filter_sql_list.append('portfolio_id in (' + ', '.join(portfolios_ids) + ')')
-
-        if len(self.instance.accounts):
-            for account in self.instance.accounts:
-                accounts_ids.append(str(account.id))
-
-            filter_sql_list.append('account_position_id in (' + ', '.join(accounts_ids) + ')')
-
-        if len(self.instance.strategies1):
-            for strategy in self.instance.strategies1:
-                strategies1_ids.append(str(strategy.id))
-
-            filter_sql_list.append('strategy1_position_id in (' + ', '.join(strategies1_ids) + ')')
-
-        if len(self.instance.strategies2):
-            for strategy in self.instance.strategies2:
-                strategies2_ids.append(str(strategy.id))
-
-            filter_sql_list.append('strategy2_position_id in (' + ', '.join(strategies2_ids) + ')')
-
-        if len(self.instance.strategies3):
-            for strategy in self.instance.strategies3:
-                strategies3_ids.append(str(strategy.id))
-
-            filter_sql_list.append('strategy2_position_id in (' + ', '.join(strategies2_ids) + ')')
-
-        if len(filter_sql_list):
-            result_string = result_string + 'where '
-            result_string = result_string + ' and '.join(filter_sql_list)
-
-        _l.info('get_transaction_filter_sql_string %s' % result_string)
-
-        return result_string
-
-    def get_fx_trades_and_fx_variations_transaction_filter_sql_string(self):
-
-        result_string = ''
-
-        filter_sql_list = []
-
-        portfolios_ids = []
-        accounts_ids = []
-        strategies1_ids = []
-        strategies2_ids = []
-        strategies3_ids = []
-
-        if len(self.instance.portfolios):
-            for portfolio in self.instance.portfolios:
-                portfolios_ids.append(str(portfolio.id))
-
-            filter_sql_list.append('portfolio_id in (' + ', '.join(portfolios_ids) + ')')
-
-        if len(self.instance.accounts):
-            for account in self.instance.accounts:
-                accounts_ids.append(str(account.id))
-
-            filter_sql_list.append('account_position_id in (' + ', '.join(accounts_ids) + ')')
-
-        if len(self.instance.strategies1):
-            for strategy in self.instance.strategies1:
-                strategies1_ids.append(str(strategy.id))
-
-            filter_sql_list.append('strategy1_position_id in (' + ', '.join(strategies1_ids) + ')')
-
-        if len(self.instance.strategies2):
-            for strategy in self.instance.strategies2:
-                strategies2_ids.append(str(strategy.id))
-
-            filter_sql_list.append('strategy2_position_id in (' + ', '.join(strategies2_ids) + ')')
-
-        if len(self.instance.strategies3):
-            for strategy in self.instance.strategies3:
-                strategies3_ids.append(str(strategy.id))
-
-            filter_sql_list.append('strategy2_position_id in (' + ', '.join(strategies2_ids) + ')')
-
-        if len(filter_sql_list):
-            result_string = result_string + ' and '
-            result_string = result_string + ' and '.join(filter_sql_list)
-
-        _l.info('get_transaction_filter_sql_string %s' % result_string)
-
-        return result_string
-
-    def get_source_query(self):
+    @staticmethod
+    def get_source_query():
 
         # language=PostgreSQL
         query = """
@@ -545,6 +396,12 @@ class PLReportBuilderSql:
                    
                    reference_fx_rate,
                    
+                   
+                   /*
+                     make trn_hist_fx rep_hist_fx calculations optional
+                     add flag to report settings (calculate_fixed_columns)
+                     
+                   */
                    case
                        when
                            transaction_currency_id = {default_currency_id}
@@ -583,6 +440,7 @@ class PLReportBuilderSql:
                    multiplier
                 
                 from transactions_all_with_multipliers
+                {filter_query_for_balance_in_multipliers_table}
             
             )
     
@@ -608,6 +466,10 @@ class PLReportBuilderSql:
             net_cost_price_loc,
                 
             time_invested,
+            
+            ytm,
+            ytm_at_cost,
+            return_annauly,
 
             principal_opened,
             carry_opened,
@@ -692,6 +554,10 @@ class PLReportBuilderSql:
             net_cost_price_loc,
                 
             time_invested,
+            
+            ytm,
+            ytm_at_cost,
+            return_annauly,
 
             principal_opened,
             carry_opened,
@@ -776,6 +642,10 @@ class PLReportBuilderSql:
                     net_cost_price_loc,
                         
                     time_invested,
+                    
+                    (0) as ytm,
+                    (0) as ytm_at_cost,
+                    (0) as return_annauly,
                     
                     principal_opened,
                     carry_opened,
@@ -1237,6 +1107,10 @@ class PLReportBuilderSql:
             net_cost_price_loc,
                 
             time_invested,
+            
+            ytm,
+            ytm_at_cost,
+            return_annauly,
    
             principal_opened,
             carry_opened,
@@ -1322,6 +1196,10 @@ class PLReportBuilderSql:
                 (0) as net_cost_price_loc,
                     
                 (0) as time_invested,
+                
+                (0) as ytm,
+                (0) as ytm_at_cost,
+                (0) as return_annauly,
                 
                 principal_opened,
                 carry_opened,
@@ -1516,6 +1394,10 @@ class PLReportBuilderSql:
                 
             time_invested,
             
+            ytm,
+            ytm_at_cost,
+            return_annauly,
+            
             principal_opened,
             carry_opened,
             overheads_opened,
@@ -1601,6 +1483,10 @@ class PLReportBuilderSql:
                 (0) as net_cost_price_loc,
                     
                 (0) as time_invested,
+                
+                (0) as ytm,
+                (0) as ytm_at_cost,
+                (0) as return_annauly,
                 
                 principal_opened,
                 carry_opened,
@@ -1736,21 +1622,18 @@ class PLReportBuilderSql:
 
     def get_query_for_first_date(self):
 
-        report_fx_rate = 1
-
-        try:
-            item = CurrencyHistory.objects.get(currency_id=self.instance.report_currency.id,
-                                               date=self.instance.report_date)
-            report_fx_rate = item.fx_rate
-        except CurrencyHistory.DoesNotExist:
-            report_fx_rate = 1
-
-        report_fx_rate = str(report_fx_rate)
+        report_fx_rate = get_report_fx_rate(self.instance, self.instance.pl_first_date)
 
         _l.info('report_fx_rate %s' % report_fx_rate)
 
-        transaction_filter_sql_string = self.get_transaction_filter_sql_string()
-        fx_trades_and_fx_variations_filter_sql_string = self.get_fx_trades_and_fx_variations_transaction_filter_sql_string()
+        transaction_filter_sql_string = get_transaction_filter_sql_string(self.instance)
+        fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
+            self.instance)
+        transactions_all_with_multipliers_where_expression = get_where_expression_for_position_consolidation(
+            self.instance,
+            prefix="tt_w_m.", prefix_second="t_o.")
+        consolidation_columns = get_position_consolidation_for_select(self.instance)
+        tt_consolidation_columns = get_position_consolidation_for_select(self.instance, prefix="tt.")
 
         query = self.get_source_query()
 
@@ -1762,31 +1645,29 @@ class PLReportBuilderSql:
                              report_fx_rate=report_fx_rate,
                              transaction_filter_sql_string=transaction_filter_sql_string,
                              fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
-                             consolidation_columns=self.get_position_consolidation_for_select(),
-                             tt_consolidation_columns=self.get_position_consolidation_for_select(prefix="tt."),
-                             transactions_all_with_multipliers_where_expression=self.get_where_expression_for_position_consolidation(
-                                 prefix="tt_w_m.", prefix_second="t_o.")
+                             consolidation_columns=consolidation_columns,
+                             tt_consolidation_columns=tt_consolidation_columns,
+                             transactions_all_with_multipliers_where_expression=transactions_all_with_multipliers_where_expression,
+                             filter_query_for_balance_in_multipliers_table=''
                              )
 
         return query
 
     def get_query_for_second_date(self):
 
-        report_fx_rate = 1
-
-        try:
-            item = CurrencyHistory.objects.get(currency_id=self.instance.report_currency.id,
-                                               date=self.instance.report_date)
-            report_fx_rate = item.fx_rate
-        except CurrencyHistory.DoesNotExist:
-            report_fx_rate = 1
-
-        report_fx_rate = str(report_fx_rate)
+        report_fx_rate = get_report_fx_rate(self.instance, self.instance.report_date)
 
         _l.info('report_fx_rate %s' % report_fx_rate)
 
-        transaction_filter_sql_string = self.get_transaction_filter_sql_string()
-        fx_trades_and_fx_variations_filter_sql_string = self.get_fx_trades_and_fx_variations_transaction_filter_sql_string()
+        transaction_filter_sql_string = get_transaction_filter_sql_string(self.instance)
+        fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
+            self.instance)
+        transactions_all_with_multipliers_where_expression = get_where_expression_for_position_consolidation(
+            self.instance,
+            prefix="tt_w_m.", prefix_second="t_o.")
+        consolidation_columns = get_position_consolidation_for_select(self.instance)
+        tt_consolidation_columns = get_position_consolidation_for_select(self.instance,
+                                                                         prefix="tt.")
 
         query = self.get_source_query()
 
@@ -1798,10 +1679,11 @@ class PLReportBuilderSql:
                              report_fx_rate=report_fx_rate,
                              transaction_filter_sql_string=transaction_filter_sql_string,
                              fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
-                             consolidation_columns=self.get_position_consolidation_for_select(),
-                             tt_consolidation_columns=self.get_position_consolidation_for_select(prefix="tt."),
-                             transactions_all_with_multipliers_where_expression=self.get_where_expression_for_position_consolidation(
-                                 prefix="tt_w_m.", prefix_second="t_o."))
+                             consolidation_columns=consolidation_columns,
+                             tt_consolidation_columns=tt_consolidation_columns,
+                             transactions_all_with_multipliers_where_expression=transactions_all_with_multipliers_where_expression,
+                             filter_query_for_balance_in_multipliers_table=''
+                             )
 
         return query
 
@@ -2003,8 +1885,6 @@ class PLReportBuilderSql:
                 result_item_opened["carry_fixed_loc"] = item["carry_fixed_opened_loc"]
                 result_item_opened["overheads_fixed_loc"] = item["overheads_fixed_opened_loc"]
                 result_item_opened["total_fixed_loc"] = item["total_fixed_opened_loc"]
-
-
 
                 #  CLOSED POSITIONS BELOW
 
