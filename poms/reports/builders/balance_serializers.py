@@ -689,11 +689,22 @@ def serialize_balance_report_item(item):
         result["instrument"] = None
     else:
         result["instrument"] = item["instrument_id"]
+
     result["account"] = item["account_position_id"]
 
     result["strategy1"] = item["strategy1_position_id"]
     result["strategy2"] = item["strategy2_position_id"]
     result["strategy3"] = item["strategy3_position_id"]
+
+    ids = []
+    ids.append(str(result["item_type"]))
+    ids.append(str(result["instrument"]))
+    ids.append(str(result["account"]))
+    ids.append(str(result["strategy1"]))
+    ids.append(str(result["strategy2"]))
+    ids.append(str(result["strategy3"]))
+
+    result['id'] = ','.join(ids)
 
     # result["pricing_currency"] = item["pricing_currency_id"]
     result["currency"] = None
@@ -763,14 +774,27 @@ def serialize_pl_report_item(item):
         result["instrument"] = None
     else:
         result["instrument"] = item["instrument_id"]
-    # result["account"] = item["account_position_id"]
-    #
-    # result["strategy1"] = item["strategy1_position_id"]
-    # result["strategy2"] = item["strategy2_position_id"]
-    # result["strategy3"] = item["strategy3_position_id"]
-    #
+
+    result["account"] = item["account_position_id"]
+
+    result["strategy1"] = item["strategy1_position_id"]
+    result["strategy2"] = item["strategy2_position_id"]
+    result["strategy3"] = item["strategy3_position_id"]
+
     # result["pricing_currency"] = item["pricing_currency_id"]
     # result["currency"] = None
+
+    ids = []
+    ids.append(str(result["item_type"]))
+    ids.append(str(result["item_group"]))
+    ids.append(str(result["instrument"]))
+    ids.append(str(result["account"]))
+    ids.append(str(result["strategy1"]))
+    ids.append(str(result["strategy2"]))
+    ids.append(str(result["strategy3"]))
+
+    result['id'] = ','.join(ids)
+
     #
     result["position_size"] = item["position_size"]
 

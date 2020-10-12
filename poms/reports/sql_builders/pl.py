@@ -114,6 +114,32 @@ class PLReportBuilderSql:
 
         return resultString
 
+    def get_final_consolidation_where_filters_columns(self):
+
+        result = []
+
+        if self.instance.portfolio_mode == Report.MODE_INDEPENDENT:
+            result.append("q2.portfolio_id = q1.portfolio_id")
+
+        if self.instance.account_mode == Report.MODE_INDEPENDENT:
+            result.append("q2.account_position_id = q1.account_position_id")
+
+        if self.instance.strategy1_mode == Report.MODE_INDEPENDENT:
+            result.append("q2.strategy1_position_id = q1.strategy1_position_id")
+
+        if self.instance.strategy2_mode == Report.MODE_INDEPENDENT:
+            result.append("q2.strategy2_position_id = q1.strategy2_position_id")
+
+        if self.instance.strategy3_mode == Report.MODE_INDEPENDENT:
+            result.append("q2.strategy3_position_id = q1.strategy3_position_id")
+
+        resultString = ''
+
+        if len(result):
+            resultString = resultString + 'and '
+            resultString = resultString + "and ".join(result)
+
+        return resultString
 
     def get_where_expression_for_position_consolidation(self, prefix, prefix_second):
 
@@ -1881,12 +1907,13 @@ class PLReportBuilderSql:
                             (q2.total_fixed_closed_loc - coalesce(q1.total_fixed_closed_loc, 0)) as total_fixed_closed_loc
                                 
                        from ({query_report_date}) as q2 
-                       left join ({query_first_date}) as q1 on q1.name = q2.name"""
-            # left join ({query_first_date}) as q2 on q1.instrument_id = q2.instrument_id"""
+                       left join ({query_first_date}) as q1 on q1.name = q2.name and q1.instrument_id = q2.instrument_id {final_consolidation_where_filters}"""
 
             query = query.format(query_first_date=query_1,
                                  query_report_date=query_2,
-                                 final_consolidation_columns=self.get_final_consolidation_columns())
+                                 final_consolidation_columns=self.get_final_consolidation_columns(),
+                                 final_consolidation_where_filters=self.get_final_consolidation_where_filters_columns()
+                                 )
 
             cursor.execute(query)
 
