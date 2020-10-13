@@ -1140,6 +1140,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         delete_prop(results, 'json_data')
         delete_prop(results, 'member')
 
+        for item in results:
+            clear_system_date_attrs(item)
+
         result = {
             "entity": "ui.editlayout",
             "count": len(results),
@@ -1160,6 +1163,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         delete_prop(results, 'json_data')
 
         delete_prop(results, 'member')
+
+        for item in results:
+            clear_system_date_attrs(item)
 
         result = {
             "entity": "ui.dashboardlayout",
@@ -1203,6 +1209,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         delete_prop(results, 'member')
 
+        for item in results:
+            clear_system_date_attrs(item)
+
         result = {
             "entity": "ui.contextmenulayout",
             "count": len(results),
@@ -1234,6 +1243,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         delete_prop(results, 'json_data')
 
         delete_prop(results, 'member')
+
+        for item in results:
+            clear_system_date_attrs(item)
 
         result = {
             "entity": "ui.listlayout",
