@@ -5,6 +5,7 @@ from django.db import IntegrityError
 from mptt.utils import get_cached_trees
 from rest_framework import serializers
 
+from poms.common.serializers import ModelWithTimeStampSerializer
 from poms.layout_recovery.models import LayoutArchetype
 from poms.layout_recovery.utils import recursive_dict_fix
 from poms.ui.fields import LayoutContentTypeField, ListLayoutField
@@ -116,7 +117,7 @@ class TemplateLayoutSerializer(serializers.ModelSerializer):
         fields = ['id', 'member', 'type', 'name', 'user_code', 'is_default', 'data']
 
 
-class ContextMenuLayoutSerializer(serializers.ModelSerializer):
+class ContextMenuLayoutSerializer(ModelWithTimeStampSerializer):
     member = HiddenMemberField()
     data = serializers.JSONField(allow_null=False)
 
@@ -125,7 +126,7 @@ class ContextMenuLayoutSerializer(serializers.ModelSerializer):
         fields = ['id', 'member', 'type', 'name',  'user_code', 'data', 'origin_for_global_layout', 'sourced_from_global_layout']
 
 
-class ListLayoutSerializer(serializers.ModelSerializer):
+class ListLayoutSerializer(ModelWithTimeStampSerializer):
     member = HiddenMemberField()
     content_type = LayoutContentTypeField()
     data = serializers.JSONField(allow_null=False)
@@ -163,7 +164,17 @@ class ListLayoutSerializer(serializers.ModelSerializer):
 
             return res
 
-class DashboardLayoutSerializer(serializers.ModelSerializer):
+
+class ListLayoutLightSerializer(ModelWithTimeStampSerializer):
+    member = HiddenMemberField()
+    content_type = LayoutContentTypeField()
+
+    class Meta:
+        model = ListLayout
+        fields = ['id', 'member', 'content_type', 'name', 'user_code', 'is_default', 'is_active',  'origin_for_global_layout', 'sourced_from_global_layout']
+
+
+class DashboardLayoutSerializer(ModelWithTimeStampSerializer):
     member = HiddenMemberField()
     data = serializers.JSONField(allow_null=False)
 
@@ -172,7 +183,15 @@ class DashboardLayoutSerializer(serializers.ModelSerializer):
         fields = ['id', 'member', 'name', 'user_code', 'is_default', 'is_active', 'data', 'origin_for_global_layout', 'sourced_from_global_layout']
 
 
-class ConfigurationExportLayoutSerializer(serializers.ModelSerializer):
+class DashboardLayoutLightSerializer(ModelWithTimeStampSerializer):
+    member = HiddenMemberField()
+
+    class Meta:
+        model = DashboardLayout
+        fields = ['id', 'member', 'name', 'user_code', 'is_default', 'is_active', 'origin_for_global_layout', 'sourced_from_global_layout']
+
+
+class ConfigurationExportLayoutSerializer(ModelWithTimeStampSerializer):
     member = HiddenMemberField()
     data = serializers.JSONField(allow_null=False)
 
@@ -181,7 +200,7 @@ class ConfigurationExportLayoutSerializer(serializers.ModelSerializer):
         fields = ['id', 'member', 'name', 'is_default', 'data']
 
 
-class EditLayoutSerializer(serializers.ModelSerializer):
+class EditLayoutSerializer(ModelWithTimeStampSerializer):
     member = HiddenMemberField()
     content_type = LayoutContentTypeField()
     data = serializers.JSONField(allow_null=False)

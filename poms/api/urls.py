@@ -263,6 +263,7 @@ router.register(r'transactions/bank-file', integrations.TransactionFileResultVie
 
 router.register(r'ui/portal-interface-access', ui.PortalInterfaceAccessViewSet)
 router.register(r'ui/list-layout', ui.ListLayoutViewSet)
+router.register(r'ui/list-layout-light', ui.ListLayoutLightViewSet)
 router.register(r'ui/template-layout', ui.TemplateLayoutViewSet)
 router.register(r'ui/dashboard-layout', ui.DashboardLayoutViewSet)
 router.register(r'ui/edit-layout', ui.EditLayoutViewSet)

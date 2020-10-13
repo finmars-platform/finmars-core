@@ -11,9 +11,11 @@ from poms.ui.serializers import ListLayoutSerializer, \
     EditLayoutSerializer, BookmarkSerializer, ConfigurationSerializer, ConfigurationExportLayoutSerializer, \
     TransactionUserFieldSerializer, InstrumentUserFieldSerializer, PortalInterfaceAccessModelSerializer, \
     DashboardLayoutSerializer, TemplateLayoutSerializer, ContextMenuLayoutSerializer, EntityTooltipSerializer, \
-    ColorPaletteSerializer
+    ColorPaletteSerializer, ListLayoutLightSerializer, DashboardLayoutLightSerializer
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 from poms.users.permissions import SuperUserOnly
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 class LayoutContentTypeFilter(django_filters.CharFilter):
     def filter(self, qs, value):
@@ -161,6 +163,16 @@ class ContextMenuLayoutViewSet(AbstractModelViewSet):
     ]
     filter_class = ContextMenuLayoutFilterSet
 
+    @action(detail=True, methods=['get'], url_path='ping')
+    def ping(self, request, pk=None):
+
+        layout = self.get_object()
+
+        return Response({
+            "id": layout.id,
+            "modified": layout.modified
+        })
+
 
 class ListLayoutFilterSet(FilterSet):
     id = NoOpFilter()
@@ -189,6 +201,30 @@ class ListLayoutViewSet(AbstractModelViewSet):
         'content_type', 'name', 'is_default'
     ]
 
+    @action(detail=True, methods=['get'], url_path='ping')
+    def ping(self, request, pk=None):
+
+        layout = self.get_object()
+
+        return Response({
+            "id": layout.id,
+            "modified": layout.modified
+        })
+
+
+class ListLayoutLightViewSet(AbstractModelViewSet):
+    queryset = ListLayout.objects.select_related(
+        'member',
+        'content_type'
+    )
+    serializer_class = ListLayoutLightSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMemberFilter,
+    ]
+    filter_class = ListLayoutFilterSet
+    ordering_fields = [
+        'content_type', 'name', 'is_default'
+    ]
 
 class DashboardLayoutFilterSet(FilterSet):
     id = NoOpFilter()
@@ -213,6 +249,28 @@ class DashboardLayoutViewSet(AbstractModelViewSet):
     ordering_fields = ['name', 'is_default'
     ]
 
+    @action(detail=True, methods=['get'], url_path='ping')
+    def ping(self, request, pk=None):
+
+        layout = self.get_object()
+
+        return Response({
+            "id": layout.id,
+            "modified": layout.modified
+        })
+
+
+class DashboardLayoutLightViewSet(AbstractModelViewSet):
+    queryset = DashboardLayout.objects.select_related(
+        'member'
+    )
+    serializer_class = DashboardLayoutLightSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMemberFilter,
+    ]
+    filter_class = DashboardLayoutFilterSet
+    ordering_fields = ['name', 'is_default'
+                       ]
 
 class ConfigurationExportLayoutFilterSet(FilterSet):
     id = NoOpFilter()
@@ -237,6 +295,16 @@ class ConfigurationExportLayoutViewSet(AbstractModelViewSet):
         'name', 'is_default'
     ]
 
+    @action(detail=True, methods=['get'], url_path='ping')
+    def ping(self, request, pk=None):
+
+        layout = self.get_object()
+
+        return Response({
+            "id": layout.id,
+            "modified": layout.modified
+        })
+
 
 class EditLayoutFilterSet(FilterSet):
     id = NoOpFilter()
@@ -260,6 +328,16 @@ class EditLayoutViewSet(AbstractModelViewSet):
     ordering_fields = [
         'content_type',
     ]
+
+    @action(detail=True, methods=['get'], url_path='ping')
+    def ping(self, request, pk=None):
+
+        layout = self.get_object()
+
+        return Response({
+            "id": layout.id,
+            "modified": layout.modified
+        })
 
 
 class BookmarkFilterSet(FilterSet):

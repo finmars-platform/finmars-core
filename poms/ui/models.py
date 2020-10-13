@@ -8,7 +8,7 @@ from django.utils.translation import ugettext_lazy
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
-from poms.common.models import AbstractClassModel, NamedModel
+from poms.common.models import AbstractClassModel, NamedModel, TimeStampedModel
 from poms.configuration_sharing.models import SharedConfigurationFile
 from poms.users.models import MasterUser, Member, Group
 
@@ -296,7 +296,7 @@ class TemplateLayout(BaseUIModel):
         return super(TemplateLayout, self).save(*args, **kwargs)
 
 
-class ContextMenuLayout(BaseUIModel):
+class ContextMenuLayout(BaseUIModel, TimeStampedModel):
     member = models.ForeignKey(Member, related_name='context_menu_layouts', verbose_name=ugettext_lazy('member'),
                                on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
@@ -323,7 +323,7 @@ class BaseLayout(BaseUIModel):
         abstract = True
 
 
-class ListLayout(BaseLayout):
+class ListLayout(BaseLayout, TimeStampedModel):
     member = models.ForeignKey(Member, related_name='template_list_layouts', verbose_name=ugettext_lazy('member'),
                                on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
@@ -363,7 +363,7 @@ class ListLayout(BaseLayout):
         return self.name
 
 
-class DashboardLayout(BaseUIModel):
+class DashboardLayout(BaseUIModel, TimeStampedModel):
     member = models.ForeignKey(Member, related_name='dashboard_layouts', verbose_name=ugettext_lazy('member'),
                                on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
@@ -399,7 +399,7 @@ class DashboardLayout(BaseUIModel):
         return self.name
 
 
-class ConfigurationExportLayout(BaseUIModel):
+class ConfigurationExportLayout(BaseUIModel, TimeStampedModel):
     member = models.ForeignKey(Member, related_name='configuration_export_layouts',
                                verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
@@ -423,7 +423,7 @@ class ConfigurationExportLayout(BaseUIModel):
         return self.name
 
 
-class EditLayout(BaseLayout):
+class EditLayout(BaseLayout, TimeStampedModel):
     member = models.ForeignKey(Member, related_name='edit_layouts', verbose_name=ugettext_lazy('member'),
                                on_delete=models.CASCADE)
 
