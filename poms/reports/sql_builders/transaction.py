@@ -10,17 +10,10 @@ from poms.portfolios.models import Portfolio
 from poms.reports.builders.balance_item import Report
 from poms.reports.builders.base_builder import BaseReportBuilder
 from poms.reports.models import BalanceReportCustomField
+from poms.reports.sql_builders.helpers import dictfetchall
 from poms.users.models import EcosystemDefault
 
 _l = logging.getLogger('poms.reports')
-
-def dictfetchall(cursor):
-    "Return all rows from a cursor as a dict"
-    columns = [col[0] for col in cursor.description]
-    return [
-        dict(zip(columns, row))
-        for row in cursor.fetchall()
-    ]
 
 
 class TransactionReportBuilderSql:

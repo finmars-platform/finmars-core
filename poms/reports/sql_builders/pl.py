@@ -12,21 +12,12 @@ from poms.reports.builders.base_builder import BaseReportBuilder
 from poms.reports.models import BalanceReportCustomField
 from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, get_report_fx_rate, \
     get_fx_trades_and_fx_variations_transaction_filter_sql_string, get_where_expression_for_position_consolidation, \
-    get_position_consolidation_for_select
+    get_position_consolidation_for_select, dictfetchall
 from poms.users.models import EcosystemDefault
 
 from django.conf import settings
 
 _l = logging.getLogger('poms.reports')
-
-
-def dictfetchall(cursor):
-    "Return all rows from a cursor as a dict"
-    columns = [col[0] for col in cursor.description]
-    return [
-        dict(zip(columns, row))
-        for row in cursor.fetchall()
-    ]
 
 
 class PLReportBuilderSql:
@@ -47,13 +38,7 @@ class PLReportBuilderSql:
 
         self.instance.items = []
 
-        if self.instance.cost_method.id == CostMethod.FIFO:
-            self.build_positions_fifo()
-
-        if self.instance.cost_method.id == CostMethod.AVCO:
-            self.build_positions_avco()
-
-        # self.build_cash()
+        self.build_positions()
 
         _l.info('items total %s' % len(self.instance.items))
 
@@ -119,89 +104,12 @@ class PLReportBuilderSql:
         return resultString
 
     @staticmethod
-    def get_source_query():
+    def inject_fifo_with():
+
+        _l.info("Injecting fifo calculation algorithm")
 
         # language=PostgreSQL
         query = """
-        with 
-            pl_transactions_with_ttype_filtered as (
-                select * from pl_transactions_with_ttype
-                {transaction_filter_sql_string}
-            ),
-        
-            transactions_ordered as (
-                select 
-                   row_number() 
-                   over (partition by {tt_consolidation_columns} tt.instrument_id order by ttype,tt.accounting_date) as rn,
-                   row_number()
-                   over (partition by  tt.instrument_id order by tt.accounting_date) as rn_total,
-                   tt.accounting_date,
-                   tt.ttype,
-                   tt.transaction_class_id,
-                   tt.position_size_with_sign,
-                   tt.principal_with_sign,
-                   tt.carry_with_sign,
-                   tt.overheads_with_sign,
-                   {tt_consolidation_columns}
-                   tt.instrument_id,
-                   tt.transaction_currency_id,
-                   tt.settlement_currency_id,
-                   
-                   tt.reference_fx_rate,
-                   
-                   buy_tr.buy_positions_total_size,
-                   sell_tr.sell_positions_total_size
-                                       
-                from (select 
-                         accounting_date,
-                         transaction_class_id,
-                         position_size_with_sign,
-                         principal_with_sign,
-                         carry_with_sign,
-                         overheads_with_sign,
-                         {consolidation_columns}
-                         instrument_id,
-                         
-                         transaction_currency_id,
-                         settlement_currency_id,
-                         
-                         reference_fx_rate,
-                         
-                         ttype
-                         from pl_transactions_with_ttype_filtered 
-                         where 
-                            master_user_id='{master_user_id}'::int and 
-                            accounting_date <= '{report_date}') as tt
-                             left join
-                           (select 
-                                    instrument_id, 
-                                    {consolidation_columns} 
-                                    coalesce(abs(sum(position_size_with_sign)), 0) as sell_positions_total_size
-                            from pl_transactions_with_ttype_filtered 
-                            where 
-                                master_user_id = '{master_user_id}' and 
-                                accounting_date <= '{report_date}' and 
-                                position_size_with_sign < 0
-                            group by 
-                                {consolidation_columns} 
-                                instrument_id) as sell_tr 
-                            using ({consolidation_columns} instrument_id)
-                             left join
-                           (select 
-                                instrument_id, 
-                                {consolidation_columns} 
-                                coalesce(abs(sum(position_size_with_sign)), 0) as buy_positions_total_size
-                            from pl_transactions_with_ttype_filtered 
-                            where 
-                                master_user_id= '{master_user_id}' and 
-                                accounting_date <= '{report_date}' and 
-                                position_size_with_sign > 0
-                            group by 
-                                {consolidation_columns} 
-                                instrument_id) as buy_tr 
-                            using ({consolidation_columns} instrument_id)
-                     ),
-        
             transactions_with_multipliers as (
                select 
                    rn,
@@ -274,6 +182,255 @@ class PLReportBuilderSql:
                       from transactions_ordered where transaction_class_id in (1,2)
                     ) as tt_fin
           ),
+        """
+
+        return query
+
+    @staticmethod
+    def inject_avco_with():
+
+        _l.info("Injecting avco calculation algorithm")
+
+        # language=PostgreSQL
+        query = """
+        
+        avco_rolling as (
+            select 
+               rn,
+               rn_total,
+               accounting_date,
+               transaction_class_id,
+               
+               {consolidation_columns}
+               instrument_id,
+               position_size_with_sign,
+               principal_with_sign,
+               carry_with_sign,
+               overheads_with_sign,
+               
+               transaction_currency_id,
+               settlement_currency_id,
+               
+               reference_fx_rate,
+              
+               sum(position_size_with_sign) over (partition by {consolidation_columns} instrument_id  order by rn_total) as rolling_position_size,
+               sum(position_size_with_sign) over (partition by {consolidation_columns} instrument_id  order by rn_total)-position_size_with_sign as rolling_position_size_prev
+         
+           from transactions_ordered where transaction_class_id in (1,2)
+        ),
+        
+        transactions_with_multipliers as (
+          select 
+           rn,
+           rn_total,
+           accounting_date,
+           transaction_class_id,
+           
+           {consolidation_columns}
+           instrument_id,
+           position_size_with_sign,
+           principal_with_sign,
+           carry_with_sign,
+           overheads_with_sign,
+           
+           rolling_position_size,
+  
+           transaction_currency_id,
+           settlement_currency_id,
+           
+           reference_fx_rate,
+           
+           ('{report_date}'::date - accounting_date::date) as day_delta,
+  
+           mult_coef_ln,
+           
+          case
+              -- считаем прямые коэффициенты мультиплицирования по AVCO. Обрабатываем краевые условия
+              when rn_total = group_border and rolling_position_size = 0
+                  then 1
+              else
+                  case
+                  when  NOT (position_size_with_sign*rolling_position_size_prev<0) or rn_total=group_border
+                      then 1-exp(mult_coef_ln)
+              else
+                  1
+              end
+          end as multiplier
+        
+         from (
+              -- считаем инвертированный логарифмированный коэффициент по алгоритму Александра
+                  select *, sum(mult_ln) over (partition by {consolidation_columns} instrument_id  order by rn_total desc) as mult_coef_ln
+
+                  from (select *,
+                   -- подсчет первоначальной таблицы коэффициентов для перемножения
+                               case
+                                   when rn_total=group_border
+                                   then
+                                       case
+                                           when NOT rolling_position_size_prev*position_size_with_sign = 0 and not rolling_position_size_prev+position_size_with_sign = 0
+                                              then
+                                                  ln(1+(rolling_position_size_prev/position_size_with_sign))
+                                              else
+                                                  0
+                                           end
+                                  else
+                                      case
+                                        when rolling_position_size_prev*position_size_with_sign < 0
+                                          then
+                                                  ln(1+(position_size_with_sign/rolling_position_size_prev))
+                                          else
+                                          0
+                                      end
+                                   end as mult_ln
+                        from avco_rolling
+                                 left join
+                            -- вычисляем границы групп (где меняется знак кумулятивный, либо 0)
+                             (select tt_in1.instrument_id, max(tt_in1.rn_total) as group_border
+                              from avco_rolling tt_in1
+                              where (tt_in1.rolling_position_size = 0 or tt_in1.rolling_position_size * tt_in1.rolling_position_size_prev < 0)
+                              group by tt_in1.instrument_id) as tt1 using (instrument_id)
+                        where rn_total > group_border
+                           or rn_total = group_border
+                        ) as tt_mult_coef
+          ) as tt_mult
+        
+          union
+        
+          select  
+          
+           rn,
+           rn_total,
+           accounting_date,
+           transaction_class_id,
+           
+           {consolidation_columns}
+           instrument_id,
+           position_size_with_sign,
+           principal_with_sign,
+           carry_with_sign,
+           overheads_with_sign,
+           
+           rolling_position_size,
+  
+           transaction_currency_id,
+           settlement_currency_id,
+           
+           reference_fx_rate,
+           
+           ('{report_date}'::date - accounting_date::date) as day_delta, 
+
+           0 as mult_coef, 
+           1 as multiplier
+              
+          from avco_rolling
+          left join
+              (select 
+                    tt_in1.instrument_id, 
+                    max(tt_in1.rn_total) as group_border
+                      from avco_rolling tt_in1
+                      where (tt_in1.rolling_position_size = 0 or tt_in1.rolling_position_size * tt_in1.rolling_position_size_prev < 0)
+                      group by tt_in1.instrument_id) as tt1 using (instrument_id)
+          where rn_total < group_border
+          order by instrument_id asc,rn_total desc
+        ),
+        """
+
+        return query
+
+    # Used in Balance Report (balance.py)
+    @staticmethod
+    def get_source_query(cost_method):
+
+        cost_method_with = ''
+
+        if cost_method == CostMethod.AVCO:
+            cost_method_with = PLReportBuilderSql.inject_avco_with()
+
+        if cost_method == CostMethod.FIFO:
+            cost_method_with = PLReportBuilderSql.inject_fifo_with()
+
+        # language=PostgreSQL
+        query = """
+        with 
+            pl_transactions_with_ttype_filtered as (
+                select * from pl_transactions_with_ttype
+                {transaction_filter_sql_string}
+            ),
+        
+            transactions_ordered as (
+                select 
+                   row_number() 
+                   over (partition by {tt_consolidation_columns} tt.instrument_id order by ttype,tt.accounting_date) as rn,
+                   row_number()
+                   over (partition by  tt.instrument_id order by tt.accounting_date) as rn_total, -- used for core avco calc
+                   tt.accounting_date,
+                   tt.ttype,
+                   tt.transaction_class_id,
+                   tt.position_size_with_sign,
+                   tt.principal_with_sign,
+                   tt.carry_with_sign,
+                   tt.overheads_with_sign,
+                   {tt_consolidation_columns}
+                   tt.instrument_id,
+                   tt.transaction_currency_id,
+                   tt.settlement_currency_id,
+                   
+                   tt.reference_fx_rate,
+                   
+                   buy_tr.buy_positions_total_size,
+                   sell_tr.sell_positions_total_size
+                                       
+                from (select 
+                         accounting_date,
+                         transaction_class_id,
+                         position_size_with_sign,
+                         principal_with_sign,
+                         carry_with_sign,
+                         overheads_with_sign,
+                         {consolidation_columns}
+                         instrument_id,
+                         
+                         transaction_currency_id,
+                         settlement_currency_id,
+                         
+                         reference_fx_rate,
+                         
+                         ttype
+                         from pl_transactions_with_ttype_filtered 
+                         where 
+                            master_user_id='{master_user_id}'::int and 
+                            accounting_date <= '{report_date}') as tt
+                             left join
+                           (select 
+                                    instrument_id, 
+                                    {consolidation_columns} 
+                                    coalesce(abs(sum(position_size_with_sign)), 0) as sell_positions_total_size
+                            from pl_transactions_with_ttype_filtered 
+                            where 
+                                master_user_id = '{master_user_id}' and 
+                                accounting_date <= '{report_date}' and 
+                                position_size_with_sign < 0
+                            group by 
+                                {consolidation_columns} 
+                                instrument_id) as sell_tr 
+                            using ({consolidation_columns} instrument_id)
+                             left join
+                           (select 
+                                instrument_id, 
+                                {consolidation_columns} 
+                                coalesce(abs(sum(position_size_with_sign)), 0) as buy_positions_total_size
+                            from pl_transactions_with_ttype_filtered 
+                            where 
+                                master_user_id= '{master_user_id}' and 
+                                accounting_date <= '{report_date}' and 
+                                position_size_with_sign > 0
+                            group by 
+                                {consolidation_columns} 
+                                instrument_id) as buy_tr 
+                            using ({consolidation_columns} instrument_id)
+                     ),
+        
+            """ + cost_method_with + """
     
             transactions_all_with_multipliers as ( 
                 (
@@ -293,9 +450,7 @@ class PLReportBuilderSql:
                         overheads_with_sign,
                         
                         rolling_position_size,
-                        sell_positions_total_size,
-                        buy_positions_total_size,
-                        
+  
                         transaction_currency_id,
                         settlement_currency_id,
                         
@@ -358,8 +513,6 @@ class PLReportBuilderSql:
                        overheads_with_sign,
     
                        rolling_position_size,
-                       sell_positions_total_size,
-                       buy_positions_total_size,
                        
                        transaction_currency_id,
                        settlement_currency_id,
@@ -388,8 +541,7 @@ class PLReportBuilderSql:
                    
                    
                    rolling_position_size,
-                   sell_positions_total_size,
-                   buy_positions_total_size,
+
                    
                    transaction_currency_id,
                    settlement_currency_id,
@@ -1635,7 +1787,7 @@ class PLReportBuilderSql:
         consolidation_columns = get_position_consolidation_for_select(self.instance)
         tt_consolidation_columns = get_position_consolidation_for_select(self.instance, prefix="tt.")
 
-        query = self.get_source_query()
+        query = self.get_source_query(cost_method=self.instance.cost_method.id)
 
         query = query.format(report_date=self.instance.pl_first_date,
                              master_user_id=self.instance.master_user.id,
@@ -1669,7 +1821,7 @@ class PLReportBuilderSql:
         tt_consolidation_columns = get_position_consolidation_for_select(self.instance,
                                                                          prefix="tt.")
 
-        query = self.get_source_query()
+        query = self.get_source_query(cost_method=self.instance.cost_method.id)
 
         query = query.format(report_date=self.instance.report_date,
                              master_user_id=self.instance.master_user.id,
@@ -1687,9 +1839,9 @@ class PLReportBuilderSql:
 
         return query
 
-    def build_positions_fifo(self):
+    def build_positions(self):
 
-        _l.info("build positions fifo ")
+        _l.info("build positions ")
 
         with connection.cursor() as cursor:
 
@@ -1807,8 +1959,6 @@ class PLReportBuilderSql:
                 with open('/tmp/query_result.txt', 'w') as the_file:
                     the_file.write(query_str)
 
-            # _l.info(query_str)
-
             result_tmp = dictfetchall(cursor)
             result = []
 
@@ -1819,10 +1969,6 @@ class PLReportBuilderSql:
             for item in result_tmp:
 
                 result_item_opened = item.copy()
-
-                # result_item_opened['item_type'] = ITEM_INSTRUMENT
-                # result_item_opened['item_type_code'] = "INSTR"
-                # result_item_opened['item_type_name'] = "Instrument"
 
                 if "portfolio_id" not in item:
                     result_item_opened['portfolio_id'] = self.ecosystem_defaults.portfolio_id
@@ -1983,140 +2129,6 @@ class PLReportBuilderSql:
                     result_item_closed["total_fixed_loc"] = item["total_fixed_opened_loc"]
 
                     result.append(result_item_closed)
-
-            _l.info('build position result %s ' % len(result))
-
-            self.instance.items = self.instance.items + result
-
-    def build_positions_avco(self):
-
-        _l.info("build positions avco")
-
-        with connection.cursor() as cursor:
-
-            query = """
-                     with tt_cumul as (select rn,
-                         ttype,
-                         tt_ord.transaction_date,
-                         tt_ord.transaction_class_id,
-                         tt_ord.position_size_with_sign,
-                         tt_ord.principal_with_sign,
-                         tt_ord.instrument_id,
-                         -- считаем накопительную сумму по инструменту
-                         sum(tt_ord.position_size_with_sign) over (partition by tt_ord.instrument_id order by tt_ord.rn) as cumul,
-                         sum(tt_ord.position_size_with_sign) over (partition by tt_ord.instrument_id order by tt_ord.rn)-position_size_with_sign as cumul_prev
-
-                         -- нумеруем все транзакции по порядку по  дате.
-                          from (select row_number() over (partition by tt.instrument_id order by tt.transaction_date) as rn,
-                                       tt.transaction_date,
-                                       tt.ttype,
-                                       tt.transaction_class_id,
-                                       tt.position_size_with_sign,
-                                       tt.principal_with_sign,
-                                       tt.instrument_id
-                                       -- берем все транзакции и проставляем им тип исходя из знака position_size_with_sign
-                                from pl_transactions_with_ttype  WHERE master_user_id = %s AND transaction_date <= %s as tt 
-                               ) as tt_ord
-                     )
-                    -- основной запрос
-        
-                    select *, case
-                      -- считаем прямые коэффициенты мультиплицирования по AVCO. Обрабатываем краевые условия
-                                when rn = group_border and cumul = 0
-                                  then 1
-                                else
-                                  case
-                                    when  NOT (position_size_with_sign*cumul_prev<0) or rn=group_border
-                                      then 1-exp(mult_coef_ln)
-                                    else
-                                      1
-                                    end
-                      end as mult
-                    
-                    from (
-                           -- считаем инвертированный логарифмированный коэффициент по алгоритму Александра
-                           select *, sum(mult_ln) over (partition by instrument_id order by rn desc) as mult_coef_ln
-                    
-                           from (select *,
-                                        -- подсчет первоначальной таблицы коэффициентов для перемножения
-                                        case
-                                          when rn=group_border
-                                            then
-                                            case
-                                              when NOT cumul_prev*position_size_with_sign = 0 and not cumul_prev+position_size_with_sign = 0
-                                                then
-                                                ln(1+(cumul_prev/position_size_with_sign))
-                                              else
-                                                0
-                                              end
-                                          else
-                                            case
-                                              when cumul_prev*position_size_with_sign < 0
-                                                then
-                                                ln(1+(position_size_with_sign/cumul_prev))
-                                              else
-                                                0
-                                              end
-                                          end as mult_ln
-                                 from tt_cumul
-                                        left join
-                                      -- вычисляем границы групп (где меняется знак кумулятивный, либо 0)
-                                        (select tt_in1.instrument_id, max(tt_in1.rn) as group_border
-                                         from tt_cumul tt_in1
-                                         where (tt_in1.cumul = 0 or tt_in1.cumul * tt_in1.cumul_prev < 0)
-                                         group by tt_in1.instrument_id) as tt1 using (instrument_id)
-                                 where rn > group_border
-                                    or rn = group_border
-                                ) as tt_mult_coef
-                         ) as tt_mult
-                  
-                    union all
-                    
-                    select  *, 0 as mult_ln,0 as  mult_coef, 1 as mult
-                    from tt_cumul
-                           left join
-                         (select tt_in1.instrument_id, max(tt_in1.rn) as group_border
-                          from tt_cumul tt_in1
-                          where (tt_in1.cumul = 0 or tt_in1.cumul * tt_in1.cumul_prev < 0)
-                          group by tt_in1.instrument_id) as tt1 using (instrument_id)
-                    where rn < group_border
-                    order by instrument_id asc,rn desc;
-            """
-
-            cursor.execute(query, [self.instance.master_user.id, self.instance.report_date])
-
-            _l.info("fetch position data")
-
-            result = dictfetchall(cursor)
-
-            _l.info('result %s' % result)
-
-            ITEM_INSTRUMENT = 1
-
-            # SOURCE_ITEMS - то что пришлет бэк
-
-            # IF position * multiplier != 0 то добавляем строку как CLOSED из SOURCE ITEMS
-            # IF position * (1 - multiplier) != 0 то добавляем строку как OPENED из SOURCE ITEMS
-
-            for item in result:
-                item['item_type'] = ITEM_INSTRUMENT
-                item['item_type_code'] = "INSTR"
-                item['item_type_name'] = "Instrument"
-
-                if "portfolio_id" not in item:
-                    item['portfolio_id'] = self.ecosystem_defaults.portfolio_id
-
-                if "account_position__id" not in item:
-                    item['account_position_id'] = self.ecosystem_defaults.account_id
-
-                if "strategy1_position_id" not in item:
-                    item['strategy1_position_id'] = self.ecosystem_defaults.strategy1_id
-
-                if "strategy2_position_id" not in item:
-                    item['strategy2_position_id'] = self.ecosystem_defaults.strategy2_id
-
-                if "strategy3_position_id" not in item:
-                    item['strategy3_position_id'] = self.ecosystem_defaults.strategy3_id
 
             _l.info('build position result %s ' % len(result))
 

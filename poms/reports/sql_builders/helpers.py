@@ -2,6 +2,15 @@ from poms.currencies.models import CurrencyHistory
 from poms.reports.builders.balance_item import Report
 
 
+def dictfetchall(cursor):
+    "Return all rows from a cursor as a dict"
+    columns = [col[0] for col in cursor.description]
+    return [
+        dict(zip(columns, row))
+        for row in cursor.fetchall()
+    ]
+
+
 def get_transaction_filter_sql_string(instance):
 
     result_string = ''

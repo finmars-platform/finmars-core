@@ -12,20 +12,13 @@ from poms.reports.builders.base_builder import BaseReportBuilder
 from poms.reports.models import BalanceReportCustomField
 from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, get_report_fx_rate, \
     get_fx_trades_and_fx_variations_transaction_filter_sql_string, get_where_expression_for_position_consolidation, \
-    get_position_consolidation_for_select, get_pl_left_join_consolidation
+    get_position_consolidation_for_select, get_pl_left_join_consolidation, dictfetchall
 from poms.reports.sql_builders.pl import PLReportBuilderSql
 from poms.users.models import EcosystemDefault
 from django.conf import settings
 
 _l = logging.getLogger('poms.reports')
 
-def dictfetchall(cursor):
-    "Return all rows from a cursor as a dict"
-    columns = [col[0] for col in cursor.description]
-    return [
-        dict(zip(columns, row))
-        for row in cursor.fetchall()
-    ]
 
 class BalanceReportBuilderSql:
 
@@ -532,7 +525,7 @@ class BalanceReportBuilderSql:
             balance_q_consolidated_select_columns = get_position_consolidation_for_select(self.instance, prefix="balance_q.")
             pl_left_join_consolidation = get_pl_left_join_consolidation(self.instance)
 
-            pl_query = PLReportBuilderSql.get_source_query()
+            pl_query = PLReportBuilderSql.get_source_query(cost_method=self.instance.cost_method.id)
 
             _l.info('transaction_filter_sql_string: "%s"' % transaction_filter_sql_string)
 
