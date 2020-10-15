@@ -1122,6 +1122,7 @@ class PLReportBuilderSql:
                                 SUM(day_delta * position_size_with_sign * (1-multiplier))   as time_invested 
                             from 
                                 transactions_unioned_table tut
+                            where accounting_date <= '{report_date}'
                             group by 
                                 {consolidation_columns} instrument_id, transaction_currency_id, settlement_currency_id
                         ) as tt_without_fx_rates
@@ -2064,7 +2065,7 @@ class PLReportBuilderSql:
                 if result_item_opened['item_type'] == ITEM_TYPE_FX_TRADES and has_opened_value:
                     result.append(result_item_opened)
 
-                if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT:
+                if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and item["position_size"] != 0:
                     result.append(result_item_opened)
 
                 if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and has_closed_value:
