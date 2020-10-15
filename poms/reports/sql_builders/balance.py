@@ -513,6 +513,128 @@ class BalanceReportBuilderSql:
                 
                 ) as joined_positions
                  
+                 
+                -- union with Transaction PL 
+                union all
+                
+                select 
+        
+                    instrument_id,
+                    {consolidated_select_columns}
+                
+                    name,
+                    short_name,
+                    user_code,
+                    
+                    item_type,
+                    item_type_name,
+                    
+                    position_size,
+                    market_value,
+                    
+                    net_cost_price,
+                    net_cost_price_loc,
+                    
+                    ytm,
+                    ytm_at_cost, 
+                    
+                    position_return,
+                    net_position_return,
+                    
+                    time_invested,
+                    return_annauly
+            
+                from (
+                select 
+                
+                    instrument_id,
+                    {consolidated_select_columns}
+                    
+                    item_type,
+                    item_type_name,
+                    
+                    position_size,
+                     
+                    
+                    name,
+                    short_name,
+                    user_code,
+                    
+                    (0) as market_value,
+                
+                    (0) as net_cost_price,
+                    (0) as net_cost_price_loc,
+                    
+                    (0) as ytm,
+                    (0) as ytm_at_cost, 
+                    
+                    (0) as position_return,
+                    (0) as net_position_return,
+                    
+                    (0) as time_invested,
+                    (0) as return_annauly
+                
+                from (
+                    select 
+                        (notes) as name, 
+                        (notes) as short_name,
+                        (notes) as user_code,
+                        
+                        (5) as item_type,
+                        ('Other') as item_type_name,
+                        
+                        (-1) as instrument_id,
+                        {consolidated_select_columns}
+                        
+    
+                        sum(cash_consideration * stl_cur_fx/rep_cur_fx) as position_size,
+                        
+                        sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_opened,
+                        sum(carry_with_sign * stl_cur_fx/rep_cur_fx)     as carry_opened,
+                        sum(overheads_with_sign * stl_cur_fx/rep_cur_fx) as overheads_opened,
+    
+                        sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_fx_opened,
+                        sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as carry_fx_opened,
+                        sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as overheads_fx_opened,
+                         
+                        (0) as principal_fixed_opened,
+                        (0) as carry_fixed_opened,
+                        (0) as overheads_fixed_opened
+                    
+                    from (select 
+                            *,
+                            case when
+                            sft.settlement_currency_id={default_currency_id}
+                            then 1
+                            else
+                               (select  fx_rate
+                            from currencies_currencyhistory c_ch
+                            where date = '{report_date}'
+                              and c_ch.currency_id = sft.settlement_currency_id 
+                              and c_ch.pricing_policy_id = {pricing_policy_id}
+                              limit 1)
+                            end as stl_cur_fx,
+                            case
+                               when /* reporting ccy = system ccy*/ {report_currency_id} = {default_currency_id}
+                                   then 1
+                               else
+                                   (select  fx_rate
+                                    from currencies_currencyhistory c_ch
+                                    where date = '{report_date}' and 
+                                     c_ch.currency_id = {report_currency_id} and
+                                     c_ch.pricing_policy_id = {pricing_policy_id}
+                                     limit 1)
+                            end as rep_cur_fx
+                        from pl_cash_transaction_pl_transactions_with_ttype sft where 
+                                  transaction_class_id in (5)
+                                  and accounting_date <= '{report_date}'
+                                  and master_user_id = {master_user_id}
+                                  {fx_trades_and_fx_variations_filter_sql_string}
+                            ) as transaction_pl_w_fxrate
+                    group by 
+                        name, {consolidated_select_columns} instrument_id order by name
+                    ) as grouped_transaction_pl
+                ) as pre_final_union_transaction_pl_calculations_level_0
             """
 
             transaction_filter_sql_string = get_transaction_filter_sql_string(self.instance)
@@ -524,6 +646,8 @@ class BalanceReportBuilderSql:
             tt_consolidation_columns = get_position_consolidation_for_select(self.instance, prefix="tt.")
             balance_q_consolidated_select_columns = get_position_consolidation_for_select(self.instance, prefix="balance_q.")
             pl_left_join_consolidation = get_pl_left_join_consolidation(self.instance)
+            fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
+                self.instance)
 
             pl_query = PLReportBuilderSql.get_source_query(cost_method=self.instance.cost_method.id)
 
@@ -553,7 +677,8 @@ class BalanceReportBuilderSql:
                                  balance_q_consolidated_select_columns=balance_q_consolidated_select_columns,
                                  transaction_filter_sql_string=transaction_filter_sql_string,
                                  pl_query=pl_query,
-                                 pl_left_join_consolidation=pl_left_join_consolidation
+                                 pl_left_join_consolidation=pl_left_join_consolidation,
+                                 fx_trades_and_fx_variations_filter_sql_string= fx_trades_and_fx_variations_filter_sql_string
                                  )
 
             cursor.execute(query)

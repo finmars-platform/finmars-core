@@ -1768,6 +1768,247 @@ class PLReportBuilderSql:
             ) as fx_variatons_grouped
         ) as pre_final_union_fx_trades_calculations_level_0
             
+         -- union with Transaction PL 
+        union all
+        
+        select 
+        
+            name,
+            short_name,
+            user_code,
+            
+            item_type,
+            item_type_name,
+      
+            instrument_id,
+            {consolidation_columns}
+          
+            position_size,
+            
+            position_return,
+            net_position_return,
+            
+            net_cost_price,
+            net_cost_price_loc,
+                
+            time_invested,
+            
+            ytm,
+            ytm_at_cost,
+            return_annauly,
+   
+            principal_opened,
+            carry_opened,
+            overheads_opened,
+            total_opened,
+            
+            principal_closed,
+            carry_closed,
+            overheads_closed,
+            total_closed,
+            
+            principal_fx_opened,
+            carry_fx_opened,
+            overheads_fx_opened,
+            total_fx_opened,
+            
+            principal_fx_closed,
+            carry_fx_closed,
+            overheads_fx_closed,
+            total_fx_closed,
+            
+            principal_fixed_opened,
+            carry_fixed_opened,
+            overheads_fixed_opened,
+            total_fixed_opened,
+            
+            principal_fixed_closed,
+            carry_fixed_closed,
+            overheads_fixed_closed,
+            total_fixed_closed,
+            
+            -- loc
+  
+            principal_opened_loc,
+            carry_opened_loc,
+            overheads_opened_loc,
+            total_opened_loc,
+            
+            principal_closed_loc,
+            carry_closed_loc,
+            overheads_closed_loc,
+            total_closed_loc,
+            
+            principal_fx_opened_loc,
+            carry_fx_opened_loc,
+            overheads_fx_opened_loc,
+            total_fx_opened_loc,
+            
+            principal_fx_closed_loc,
+            carry_fx_closed_loc,
+            overheads_fx_closed_loc,
+            total_fx_closed_loc,
+            
+            principal_fixed_opened_loc,
+            carry_fixed_opened_loc,
+            overheads_fixed_opened_loc,
+            total_fixed_opened_loc,
+            
+            principal_fixed_closed_loc,
+            carry_fixed_closed_loc,
+            overheads_fixed_closed_loc,
+            total_fixed_closed_loc
+            
+        from (
+            select 
+            
+                name,
+                short_name,
+                user_code,
+                
+                item_type,
+                item_type_name,
+          
+                instrument_id,
+                {consolidation_columns}
+              
+                position_size,
+                
+                (0) as position_return,
+                (0) as net_position_return,
+                
+                (0) as net_cost_price,
+                (0) as net_cost_price_loc,
+                    
+                (0) as time_invested,
+                
+                (0) as ytm,
+                (0) as ytm_at_cost,
+                (0) as return_annauly,
+                
+                principal_opened,
+                carry_opened,
+                overheads_opened,
+                (principal_opened + carry_opened + overheads_opened) as total_opened,
+                
+                (0) as principal_closed,
+                (0) as carry_closed,
+                (0) as overheads_closed,
+                (0) as total_closed,
+                
+                principal_fx_opened,
+                carry_fx_opened,
+                overheads_fx_opened,
+                (principal_fx_opened + carry_fx_opened + overheads_fx_opened) as total_fx_opened,
+                
+                (0) as principal_fx_closed,
+                (0) as carry_fx_closed,
+                (0) as overheads_fx_closed,
+                (0) as total_fx_closed,
+                
+                principal_fixed_opened,
+                carry_fixed_opened,
+                overheads_fixed_opened,
+                (principal_fixed_opened + carry_fixed_opened + overheads_fixed_opened) as total_fixed_opened,
+                
+                (0) as principal_fixed_closed,
+                (0) as carry_fixed_closed,
+                (0) as overheads_fixed_closed,
+                (0) as total_fixed_closed,
+                
+                -- loc
+                
+                (0) as principal_opened_loc,
+                (0) as carry_opened_loc,
+                (0) as overheads_opened_loc,
+                (0) as total_opened_loc,
+                
+                (0) as principal_closed_loc,
+                (0) as carry_closed_loc,
+                (0) as overheads_closed_loc,
+                (0) as total_closed_loc,
+                
+                (0) as principal_fx_opened_loc,
+                (0) as carry_fx_opened_loc,
+                (0) as overheads_fx_opened_loc,
+                (0) as total_fx_opened_loc,
+                
+                (0) as principal_fx_closed_loc,
+                (0) as carry_fx_closed_loc,
+                (0) as overheads_fx_closed_loc,
+                (0) as total_fx_closed_loc,
+                
+                (0) as principal_fixed_opened_loc,
+                (0) as carry_fixed_opened_loc,
+                (0) as overheads_fixed_opened_loc,
+                (0) as total_fixed_opened_loc,
+                
+                (0) as principal_fixed_closed_loc,
+                (0) as carry_fixed_closed_loc,
+                (0) as overheads_fixed_closed_loc,
+                (0) as total_fixed_closed_loc
+            
+            from (
+                select 
+                    (notes) as name, 
+                    (notes) as short_name,
+                    (notes) as user_code,
+                    
+                    (5) as item_type,
+                    ('Other') as item_type_name,
+                    
+                    (-1) as instrument_id,
+                    {consolidation_columns}
+                    
+        
+                    (0) as position_size,
+                    
+                    sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_opened,
+                    sum(carry_with_sign * stl_cur_fx/rep_cur_fx)     as carry_opened,
+                    sum(overheads_with_sign * stl_cur_fx/rep_cur_fx) as overheads_opened,
+
+                    sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_fx_opened,
+                    sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as carry_fx_opened,
+                    sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as overheads_fx_opened,
+                     
+                    (0) as principal_fixed_opened,
+                    (0) as carry_fixed_opened,
+                    (0) as overheads_fixed_opened
+                
+                from (select 
+                        *,
+                        case when
+                        sft.settlement_currency_id={default_currency_id}
+                        then 1
+                        else
+                           (select  fx_rate
+                        from currencies_currencyhistory c_ch
+                        where date = '{report_date}'
+                          and c_ch.currency_id = sft.settlement_currency_id 
+                          and c_ch.pricing_policy_id = {pricing_policy_id}
+                          limit 1)
+                        end as stl_cur_fx,
+                        case
+                           when /* reporting ccy = system ccy*/ {report_currency_id} = {default_currency_id}
+                               then 1
+                           else
+                               (select  fx_rate
+                                from currencies_currencyhistory c_ch
+                                where date = '{report_date}' and 
+                                 c_ch.currency_id = {report_currency_id} and
+                                 c_ch.pricing_policy_id = {pricing_policy_id}
+                                 limit 1)
+                        end as rep_cur_fx
+                    from pl_cash_transaction_pl_transactions_with_ttype sft where 
+                              transaction_class_id in (5)
+                              and accounting_date <= '{report_date}'
+                              and master_user_id = {master_user_id}
+                              {fx_trades_and_fx_variations_filter_sql_string}
+                        ) as transaction_pl_w_fxrate
+                group by 
+                    name, {consolidation_columns} instrument_id order by name
+                ) as grouped_transaction_pl
+            ) as pre_final_union_transaction_pl_calculations_level_0
         
             """
 
@@ -1966,6 +2207,7 @@ class PLReportBuilderSql:
             ITEM_TYPE_INSTRUMENT = 1
             ITEM_TYPE_FX_VARIATIONS = 3
             ITEM_TYPE_FX_TRADES = 4
+            ITEM_TYPE_TRANSACTION_PL = 5
 
             for item in result_tmp:
 
@@ -2000,6 +2242,13 @@ class PLReportBuilderSql:
                     result_item_opened["item_group"] = 12  # TODO CHECK GROUP NUMBER
                     result_item_opened["item_group_code"] = "FX_TRADES"
                     result_item_opened["item_group_name"] = "FX Trades"
+
+                if result_item_opened['item_type'] == ITEM_TYPE_TRANSACTION_PL:
+                    result_item_opened["item_group"] = 13  # TODO CHECK GROUP NUMBER
+                    result_item_opened["item_group_code"] = "OTHER"
+                    result_item_opened["item_group_name"] = "Other"
+
+
 
                 result_item_opened["principal"] = item["principal_opened"]
                 result_item_opened["carry"] = item["carry_opened"]
@@ -2063,6 +2312,9 @@ class PLReportBuilderSql:
                     result.append(result_item_opened)
 
                 if result_item_opened['item_type'] == ITEM_TYPE_FX_TRADES and has_opened_value:
+                    result.append(result_item_opened)
+
+                if result_item_opened['item_type'] == ITEM_TYPE_TRANSACTION_PL and has_opened_value:
                     result.append(result_item_opened)
 
                 if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and item["position_size"] != 0:

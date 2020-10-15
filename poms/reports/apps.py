@@ -34,6 +34,7 @@ class ReportsConfig(AppConfig):
         self.create_view_for_positions()
         self.create_view_for_cash_fx_trades()
         self.create_view_for_cash_fx_variations()
+        self.create_view_for_cash_transaction_pl()
 
     def create_view_for_positions(self):
 
@@ -432,6 +433,66 @@ class ReportsConfig(AppConfig):
         
                     where transaction_class_id in (7)
                            
+            """
+
+            cursor.execute(query)
+
+    def create_view_for_cash_transaction_pl(self):
+
+        _l.info("create_view_for_cash_transaction_pl")
+
+        with connection.cursor() as cursor:
+            query = """
+                CREATE or REPLACE VIEW pl_cash_transaction_pl_transactions_with_ttype AS
+                    (
+                    select 
+                        id,
+                         master_user_id,
+                       
+                       transaction_date,
+                       accounting_date,
+                       cash_date,
+                       
+                       transaction_class_id,
+                       
+                       transaction_code,
+                       notes,
+                       
+                       position_size_with_sign,
+                       cash_consideration,
+                       
+                       principal_with_sign,
+                       carry_with_sign,
+                       overheads_with_sign,
+                       
+                       portfolio_id,
+                       instrument_id,
+                       
+                       settlement_currency_id,
+                       transaction_currency_id,
+                       
+                       reference_fx_rate,
+                       
+                       account_interim_id,
+                     
+                         
+                         -- order matters
+                         account_position_id,
+                         account_cash_id,
+                        
+                          strategy1_position_id,
+                         strategy1_cash_id,
+                        
+                         strategy2_position_id,
+                         strategy2_cash_id,
+                         
+                         strategy3_position_id,
+                         strategy3_cash_id
+                         
+
+                from transactions_transaction tt
+                where transaction_class_id in (5)
+                )         
             """
 
             cursor.execute(query)
