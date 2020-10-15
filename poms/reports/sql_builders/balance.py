@@ -180,7 +180,7 @@ class BalanceReportBuilderSql:
                            
                     -- добавить остальные поля
                     from unioned_transactions_for_balance -- USE TOTAL VIEW HERE
-                    where accounting_Date <= '{report_date}' /* REPORTING DATE */
+                    where accounting_date <= '{report_date}' /* REPORTING DATE */
                       and '{report_date}' < cash_date
                     
                     -- case 2
@@ -244,7 +244,7 @@ class BalanceReportBuilderSql:
                            as min_date
                            
                     from unioned_transactions_for_balance
-                    where not (accounting_Date <= '{report_date}' /* REPORTING DATE */
+                    where not (accounting_date <= '{report_date}' /* REPORTING DATE */
                       and '{report_date}' < cash_date)
                         
                 ),
@@ -485,7 +485,7 @@ class BalanceReportBuilderSql:
                               instrument_id,
                               SUM(position_size_with_sign) as position_size
                             from filtered_transactions
-                            where master_user_id = {master_user_id}
+                            where min_date <= '{report_date}' and master_user_id = {master_user_id}
                             group by
                               {consolidated_select_columns}
                               instrument_id) as t
