@@ -556,9 +556,9 @@ class BalanceReportBuilderSql:
                     position_size,
                      
                     
-                    name,
-                    short_name,
-                    user_code,
+                    ccy.name,
+                    ccy.short_name,
+                    ccy.user_code,
                     
                     (0) as market_value,
                 
@@ -576,15 +576,14 @@ class BalanceReportBuilderSql:
                 
                 from (
                     select 
-                        (notes) as name, 
-                        (notes) as short_name,
-                        (notes) as user_code,
-                        
+  
                         (5) as item_type,
                         ('Other') as item_type_name,
                         
                         (-1) as instrument_id,
                         {consolidated_select_columns}
+                        
+                        settlement_currency_id,
                         
     
                         sum(cash_consideration * stl_cur_fx/rep_cur_fx) as position_size,
@@ -632,8 +631,9 @@ class BalanceReportBuilderSql:
                                   {fx_trades_and_fx_variations_filter_sql_string}
                             ) as transaction_pl_w_fxrate
                     group by 
-                        name, {consolidated_select_columns} instrument_id order by name
+                        settlement_currency_id, {consolidated_select_columns} instrument_id order by settlement_currency_id
                     ) as grouped_transaction_pl
+                left join currencies_currency as ccy on settlement_currency_id = ccy.id
                 ) as pre_final_union_transaction_pl_calculations_level_0
             """
 
