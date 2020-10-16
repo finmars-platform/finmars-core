@@ -777,6 +777,8 @@ def serialize_pl_report_item(item):
 
     result["time_invested"] = item["time_invested"]
 
+    result["mismatch"] = item["mismatch"]
+
     # result["ytm"] = item["ytm"]
     #
     # result["market_value"] = item["market_value"]

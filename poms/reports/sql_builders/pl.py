@@ -429,6 +429,41 @@ class PLReportBuilderSql:
                                 instrument_id) as buy_tr 
                             using ({consolidation_columns} instrument_id)
                      ),
+            
+            -- for mismatch
+            transactions_to_base_currency as (
+                select
+                    linked_instrument_id,
+                    settlement_currency_id,
+                    {consolidation_columns}
+                    position_size_with_sign,
+                    principal_with_sign*stl_fx_rate as principal_with_sign,
+                    carry_with_sign*stl_fx_rate as carry_with_sign,
+                    overheads_with_sign*stl_fx_rate as overheads_with_sign,
+                    cash_consideration*stl_fx_rate as cash_consideration
+                from
+                     (
+                        select
+                               linked_instrument_id,
+                               settlement_currency_id,
+                               (select fx_rate
+                                 from currencies_currencyhistory cch
+                                 where cch.currency_id = settlement_currency_id
+                                   and cch.date = '{report_date}'
+                                   and cch.pricing_policy_id = {pricing_policy_id}
+                                    /* and pricing policy= */
+                                 ) as stl_fx_rate,
+                                {consolidation_columns}
+                               sum(position_size_with_sign) as position_size_with_sign,
+                               sum(principal_with_sign) as principal_with_sign,
+                               sum(carry_with_sign) as carry_with_sign,
+                               sum(overheads_with_sign) as overheads_with_sign,
+                               sum(cash_consideration) as cash_consideration
+                          from pl_transactions_with_ttype_filtered
+                          group by linked_instrument_id, {consolidation_columns} settlement_currency_id
+                
+                    ) as pre_aggregate
+            ),
         
             """ + cost_method_with + """
     
@@ -683,7 +718,9 @@ class PLReportBuilderSql:
             principal_fixed_closed_loc,
             carry_fixed_closed_loc,
             overheads_fixed_closed_loc,
-            total_fixed_closed_loc
+            total_fixed_closed_loc,
+            
+            mismatch
                         
         from (
             select 
@@ -771,7 +808,9 @@ class PLReportBuilderSql:
             principal_fixed_closed_loc,
             carry_fixed_closed_loc,
             overheads_fixed_closed_loc,
-            total_fixed_closed_loc
+            total_fixed_closed_loc,
+            
+            (0) as mismatch
             
             from (
                 select 
@@ -1325,7 +1364,9 @@ class PLReportBuilderSql:
             principal_fixed_closed_loc,
             carry_fixed_closed_loc,
             overheads_fixed_closed_loc,
-            total_fixed_closed_loc
+            total_fixed_closed_loc,
+            
+            mismatch
             
         from (
             select 
@@ -1414,7 +1455,9 @@ class PLReportBuilderSql:
                 (0) as principal_fixed_closed_loc,
                 (0) as carry_fixed_closed_loc,
                 (0) as overheads_fixed_closed_loc,
-                (0) as total_fixed_closed_loc
+                (0) as total_fixed_closed_loc,
+            
+                (0) as mismatch
             
             from (
                 select 
@@ -1612,7 +1655,9 @@ class PLReportBuilderSql:
             principal_fixed_closed_loc,
             carry_fixed_closed_loc,
             overheads_fixed_closed_loc,
-            total_fixed_closed_loc
+            total_fixed_closed_loc,
+            
+            mismatch
             
         from (
             select 
@@ -1702,7 +1747,9 @@ class PLReportBuilderSql:
                 (0) as principal_fixed_closed_loc,
                 (0) as carry_fixed_closed_loc,
                 (0) as overheads_fixed_closed_loc,
-                (0) as total_fixed_closed_loc
+                (0) as total_fixed_closed_loc,
+            
+                (0) as mismatch
         
             from (
                 select 
@@ -1857,7 +1904,9 @@ class PLReportBuilderSql:
             principal_fixed_closed_loc,
             carry_fixed_closed_loc,
             overheads_fixed_closed_loc,
-            total_fixed_closed_loc
+            total_fixed_closed_loc,
+            
+            mismatch
             
         from (
             select 
@@ -1946,7 +1995,9 @@ class PLReportBuilderSql:
                 (0) as principal_fixed_closed_loc,
                 (0) as carry_fixed_closed_loc,
                 (0) as overheads_fixed_closed_loc,
-                (0) as total_fixed_closed_loc
+                (0) as total_fixed_closed_loc,
+            
+                (0) as mismatch
             
             from (
                 select 
@@ -2009,6 +2060,280 @@ class PLReportBuilderSql:
                     name, {consolidation_columns} instrument_id order by name
                 ) as grouped_transaction_pl
             ) as pre_final_union_transaction_pl_calculations_level_0
+        
+         -- union with Mismatch 
+        union all
+        
+        select 
+        
+            name,
+            short_name,
+            user_code,
+            
+            item_type,
+            item_type_name,
+      
+            instrument_id,
+            {consolidation_columns}
+          
+            position_size,
+            
+            position_return,
+            net_position_return,
+            
+            net_cost_price,
+            net_cost_price_loc,
+                
+            time_invested,
+            
+            ytm,
+            ytm_at_cost,
+            return_annauly,
+   
+            principal_opened,
+            carry_opened,
+            overheads_opened,
+            total_opened,
+            
+            principal_closed,
+            carry_closed,
+            overheads_closed,
+            total_closed,
+            
+            principal_fx_opened,
+            carry_fx_opened,
+            overheads_fx_opened,
+            total_fx_opened,
+            
+            principal_fx_closed,
+            carry_fx_closed,
+            overheads_fx_closed,
+            total_fx_closed,
+            
+            principal_fixed_opened,
+            carry_fixed_opened,
+            overheads_fixed_opened,
+            total_fixed_opened,
+            
+            principal_fixed_closed,
+            carry_fixed_closed,
+            overheads_fixed_closed,
+            total_fixed_closed,
+            
+            -- loc
+  
+            principal_opened_loc,
+            carry_opened_loc,
+            overheads_opened_loc,
+            total_opened_loc,
+            
+            principal_closed_loc,
+            carry_closed_loc,
+            overheads_closed_loc,
+            total_closed_loc,
+            
+            principal_fx_opened_loc,
+            carry_fx_opened_loc,
+            overheads_fx_opened_loc,
+            total_fx_opened_loc,
+            
+            principal_fx_closed_loc,
+            carry_fx_closed_loc,
+            overheads_fx_closed_loc,
+            total_fx_closed_loc,
+            
+            principal_fixed_opened_loc,
+            carry_fixed_opened_loc,
+            overheads_fixed_opened_loc,
+            total_fixed_opened_loc,
+            
+            principal_fixed_closed_loc,
+            carry_fixed_closed_loc,
+            overheads_fixed_closed_loc,
+            total_fixed_closed_loc,
+            
+            mismatch
+            
+        from (
+            select 
+            
+                name,
+                short_name,
+                user_code,
+                
+                item_type,
+                item_type_name,
+          
+                instrument_id,
+                {consolidation_columns}
+              
+                position_opened as position_size,
+                
+                (0) as position_return,
+                (0) as net_position_return,
+                
+                (0) as net_cost_price,
+                (0) as net_cost_price_loc,
+                    
+                (0) as time_invested,
+                
+                (0) as ytm,
+                (0) as ytm_at_cost,
+                (0) as return_annauly,
+                
+                (0) as principal_opened,
+                (0) as carry_opened,
+                (0) as overheads_opened,
+                (0) as total_opened,
+                
+                (0) as principal_closed,
+                (0) as carry_closed,
+                (0) as overheads_closed,
+                (0) as total_closed,
+                
+                (0) as principal_fx_opened,
+                (0) as carry_fx_opened,
+                (0) as overheads_fx_opened,
+                (0) as total_fx_opened,
+                
+                (0) as principal_fx_closed,
+                (0) as carry_fx_closed,
+                (0) as overheads_fx_closed,
+                (0) as total_fx_closed,
+                
+                (0) as principal_fixed_opened,
+                (0) as carry_fixed_opened,
+                (0) as overheads_fixed_opened,
+                (0) as  total_fixed_opened,
+                
+                (0) as principal_fixed_closed,
+                (0) as carry_fixed_closed,
+                (0) as overheads_fixed_closed,
+                (0) as total_fixed_closed,
+                
+                -- loc
+                
+                (0) as principal_opened_loc,
+                (0) as carry_opened_loc,
+                (0) as overheads_opened_loc,
+                (0) as total_opened_loc,
+                
+                (0) as principal_closed_loc,
+                (0) as carry_closed_loc,
+                (0) as overheads_closed_loc,
+                (0) as total_closed_loc,
+                
+                (0) as principal_fx_opened_loc,
+                (0) as carry_fx_opened_loc,
+                (0) as overheads_fx_opened_loc,
+                (0) as total_fx_opened_loc,
+                
+                (0) as principal_fx_closed_loc,
+                (0) as carry_fx_closed_loc,
+                (0) as overheads_fx_closed_loc,
+                (0) as total_fx_closed_loc,
+                
+                (0) as principal_fixed_opened_loc,
+                (0) as carry_fixed_opened_loc,
+                (0) as overheads_fixed_opened_loc,
+                (0) as total_fixed_opened_loc,
+                
+                (0) as principal_fixed_closed_loc,
+                (0) as carry_fixed_closed_loc,
+                (0) as overheads_fixed_closed_loc,
+                (0) as total_fixed_closed_loc,
+                
+                (mismatch_closed+position_opened*coalesce((cur_price*price_multiplier*pricing_fx+cur_accrued*accrued_multiplier*accrued_fx),0))/reporting_fx as mismatch
+            
+            from (
+                 select 
+                    (ii.name) as name, 
+                    (ii.short_name) as short_name,
+                    (ii.user_code) as user_code,
+                    
+                    (6) as item_type,
+                    ('Mismatch') as item_type_name,
+                    
+                    (ii.id) as instrument_id,
+                    {consolidation_columns}
+                    
+                    linked_instrument_id,
+                    mismatch_closed,
+                    position_opened,
+                    
+                    ii.price_multiplier,
+                    ii.accrued_multiplier,
+                    (select principal_price
+                     from instruments_pricehistory iph
+                     where iph.instrument_id = linked_instrument_id
+                       and iph.date = '{report_date}'
+                       and iph.pricing_policy_id = {pricing_policy_id}
+                     ) as cur_price,
+                    (select accrued_price
+                     from instruments_pricehistory iph
+                     where iph.instrument_id = linked_instrument_id
+                       and iph.date = '{report_date}'
+                       and iph.pricing_policy_id = {pricing_policy_id}
+                     ) as cur_accrued,
+    
+                    case when
+                    ii.pricing_currency_id={default_currency_id} 
+                    then 1
+                    else
+                    (select fx_rate
+                     from currencies_currencyhistory cch
+                     where cch.currency_id = ii.pricing_currency_id
+                       and cch.date = '{report_date}'
+                       and cch.pricing_policy_id = {pricing_policy_id}
+                    )
+                    end                           as pricing_fx,
+                    case when
+                        ii.accrued_currency_id={default_currency_id} 
+                    then 1
+                    else
+                    (select fx_rate
+                     from currencies_currencyhistory cch
+                     where cch.currency_id = ii.accrued_currency_id
+                       and cch.date = '{report_date}'
+                       and cch.pricing_policy_id = {pricing_policy_id}
+                    )
+                        end                          as accrued_fx,
+                    case when
+                    {report_currency_id}={default_currency_id}
+                    then 1
+                    else
+                    (select fx_rate
+                     from currencies_currencyhistory cch
+                     where cch.currency_id = {report_currency_id} 
+                       and cch.date = '{report_date}'
+                       and cch.pricing_policy_id = {pricing_policy_id}
+                    )
+                    end                           as reporting_fx
+        
+        
+                 from (
+                          select 
+                            'mismatch'                   as group_type_name,
+                            linked_instrument_id,
+                            {consolidation_columns}
+                            sum(cash_consideration - principal_with_sign - carry_with_sign -
+                                     overheads_with_sign)     as mismatch_closed,
+                            sum(position_size_with_sign) as position_opened
+        
+                          from transactions_to_base_currency
+        
+        
+        -- группировать по linked_instrument_id {consolidation_columns}
+                          group by {consolidation_columns} linked_instrument_id -- add aggregation here --
+                          having not abs(sum(
+                                      cash_consideration - principal_with_sign - carry_with_sign - overheads_with_sign)) <
+                                     0.01 -- add rounding (i.e. 0.01)
+        
+                      ) as mismatch_1_stage
+                          left join
+                      instruments_instrument ii on linked_instrument_id = ii.id
+             ) as mismatch_2_stage
+        ) as pre_final_union_transaction_pl_calculations_level_0
         
             """
 
@@ -2180,7 +2505,9 @@ class PLReportBuilderSql:
                             (q2.principal_fixed_closed_loc - coalesce(q1.principal_fixed_closed_loc, 0)) as principal_fixed_closed_loc,
                             (q2.carry_fixed_closed_loc - coalesce(q1.carry_fixed_closed_loc, 0)) as carry_fixed_closed_loc,
                             (q2.overheads_fixed_closed_loc - coalesce(q1.overheads_fixed_closed_loc, 0)) as overheads_fixed_closed_loc,
-                            (q2.total_fixed_closed_loc - coalesce(q1.total_fixed_closed_loc, 0)) as total_fixed_closed_loc
+                            (q2.total_fixed_closed_loc - coalesce(q1.total_fixed_closed_loc, 0)) as total_fixed_closed_loc,
+                            
+                            (q2.mismatch - coalesce(q1.mismatch, 0)) as mismatch
                                 
                        from ({query_report_date}) as q2 
                        left join ({query_first_date}) as q1 on q1.name = q2.name and q1.instrument_id = q2.instrument_id {final_consolidation_where_filters}"""
@@ -2208,6 +2535,7 @@ class PLReportBuilderSql:
             ITEM_TYPE_FX_VARIATIONS = 3
             ITEM_TYPE_FX_TRADES = 4
             ITEM_TYPE_TRANSACTION_PL = 5
+            ITEM_TYPE_MISMATCH = 6
 
             for item in result_tmp:
 
@@ -2234,20 +2562,24 @@ class PLReportBuilderSql:
                     result_item_opened["item_group_name"] = "Opened"
 
                 if result_item_opened['item_type'] == ITEM_TYPE_FX_VARIATIONS:
-                    result_item_opened["item_group"] = 11  # TODO CHECK GROUP NUMBER
+                    result_item_opened["item_group"] = 11
                     result_item_opened["item_group_code"] = "FX_VARIATIONS"
                     result_item_opened["item_group_name"] = "FX Variations"
 
                 if result_item_opened['item_type'] == ITEM_TYPE_FX_TRADES:
-                    result_item_opened["item_group"] = 12  # TODO CHECK GROUP NUMBER
+                    result_item_opened["item_group"] = 12
                     result_item_opened["item_group_code"] = "FX_TRADES"
                     result_item_opened["item_group_name"] = "FX Trades"
 
                 if result_item_opened['item_type'] == ITEM_TYPE_TRANSACTION_PL:
-                    result_item_opened["item_group"] = 13  # TODO CHECK GROUP NUMBER
+                    result_item_opened["item_group"] = 13
                     result_item_opened["item_group_code"] = "OTHER"
                     result_item_opened["item_group_name"] = "Other"
 
+                if result_item_opened['item_type'] == ITEM_TYPE_MISMATCH:
+                    result_item_opened["item_group"] = 14
+                    result_item_opened["item_group_code"] = "MISMATCH"
+                    result_item_opened["item_group_name"] = "Mismatch"
 
 
                 result_item_opened["principal"] = item["principal_opened"]
@@ -2317,6 +2649,9 @@ class PLReportBuilderSql:
                 if result_item_opened['item_type'] == ITEM_TYPE_TRANSACTION_PL and has_opened_value:
                     result.append(result_item_opened)
 
+                if result_item_opened['item_type'] == ITEM_TYPE_MISMATCH:
+                    result.append(result_item_opened)
+
                 if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and item["position_size"] != 0:
                     result.append(result_item_opened)
 
@@ -2382,6 +2717,8 @@ class PLReportBuilderSql:
                     result_item_closed["total_fixed_loc"] = item["total_fixed_opened_loc"]
 
                     result.append(result_item_closed)
+
+
 
             _l.info('build position result %s ' % len(result))
 
