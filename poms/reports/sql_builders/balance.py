@@ -258,9 +258,10 @@ class BalanceReportBuilderSql:
                 
                 -- main query  
                 
+                -- Cash 
                 select 
                 
-                instrument_id,
+                    instrument_id,
                     {consolidated_select_columns}
                 
                     name,
@@ -285,79 +286,222 @@ class BalanceReportBuilderSql:
                     time_invested,
                     return_annauly
                 
-                from (      
+                from (   
+                
                     select 
+                     
+                         (-1) as instrument_id,
+                        {consolidated_select_columns}
                             
-                            (-1) as instrument_id,
+                        (2) as item_type,
+                        ('Currency') as item_type_name,
+                            
+                        position_size,
+                                  
+                        c.name,
+                        c.short_name,
+                        c.user_code,
+                            
+                        market_value,
+                        
+                        (0) as net_cost_price,
+                        (0) as net_cost_price_loc,
+                            
+                        (0) as ytm,
+                        (0) as ytm_at_cost, 
+                            
+                        (0) as position_return,
+                        (0) as net_position_return,
+                            
+                        (0) as time_invested,
+                        (0) as return_annauly
+                     
+                     
+                     from (
+                   
+                        select 
+                        
+                            instrument_id,
                             {consolidated_select_columns}
+                            settlement_currency_id,
                             
-                            (2) as item_type,
-                            ('Currency') as item_type_name,
+                            SUM(position_size) as position_size,
+                            SUM(market_value) as market_value
                             
-                            position_size,
-                             
+                        from (
+                         -- Cash 
+                            select 
                             
-                            c.name,
-                            c.short_name,
-                            c.user_code,
+                                instrument_id,
+                                {consolidated_select_columns}
+                                settlement_currency_id,
+    
+                                position_size,
+      
+                                (t_with_report_fx_rate.position_size * stl_fx_rate / report_fx_rate) as market_value
+                                 
+                            from 
+                                (select 
+                                    *,
+                                    case when {report_currency_id} = {default_currency_id}
+                                        then 1
+                                        else
+                                            (select
+                                        fx_rate
+                                     from currencies_currencyhistory
+                                     where
+                                        currency_id = {report_currency_id} and
+                                        date = '{report_date}' and
+                                        pricing_policy_id = {pricing_policy_id}
+                                    )
+                                        end as report_fx_rate,
+            
+                                    case when settlement_currency_id = {default_currency_id}
+                                        then 1
+                                        else
+                                            (select
+                                        fx_rate
+                                     from currencies_currencyhistory
+                                     where
+                                        currency_id = settlement_currency_id and
+                                        date = '{report_date}' and
+                                        pricing_policy_id = {pricing_policy_id}
+                                    )
+                                        end as stl_fx_rate
+                                from (
+                                    select
+                                      {consolidated_select_columns}
+                                      settlement_currency_id,
+                                       (-1) as instrument_id,
+                                      SUM(cash_consideration) as position_size
+                                    from filtered_transactions
+                                    where min_date <= '{report_date}' and master_user_id = {master_user_id}
+                                    group by
+                                      {consolidated_select_columns}
+                                      settlement_currency_id, instrument_id
+                                    ) as t
+                                ) as t_with_report_fx_rate
                             
-                            (t_with_report_fx_rate.position_size * stl_fx_rate / report_fx_rate) as market_value,
-                        
-                            (0) as net_cost_price,
-                            (0) as net_cost_price_loc,
+                            -- union with Transaction PL 
+                            union all
                             
-                            (0) as ytm,
-                            (0) as ytm_at_cost, 
+                            select 
+                
+                                instrument_id,
+                                {consolidated_select_columns}
+                                settlement_currency_id,
                             
-                            (0) as position_return,
-                            (0) as net_position_return,
-                            
-                            (0) as time_invested,
-                            (0) as return_annauly
-                        
-                        from 
-                            (select 
-                                *,
-                                case when {report_currency_id} = {default_currency_id}
-                                    then 1
-                                    else
-                                        (select
-                                    fx_rate
-                                 from currencies_currencyhistory
-                                 where
-                                    currency_id = {report_currency_id} and
-                                    date = '{report_date}' and
-                                    pricing_policy_id = {pricing_policy_id}
-                                )
-                                    end as report_fx_rate,
+                                position_size,
+                                
+                                (0) as market_value
         
-                                case when settlement_currency_id = {default_currency_id}
-                                    then 1
-                                    else
-                                        (select
-                                    fx_rate
-                                 from currencies_currencyhistory
-                                 where
-                                    currency_id = settlement_currency_id and
-                                    date = '{report_date}' and
-                                    pricing_policy_id = {pricing_policy_id}
-                                )
-                                    end as stl_fx_rate
+                        
                             from (
-                                select
+                                select 
+                                
+                                    instrument_id,
+                                    {consolidated_select_columns}
+                                    
+                                    settlement_currency_id,
+                                    
+                                    item_type,
+                                    item_type_name,
+                                    
+                                    position_size,
+                                     
+                                    
+                                    ccy.name,
+                                    ccy.short_name,
+                                    ccy.user_code,
+                                    
+                                    (0) as market_value,
+                                
+                                    (0) as net_cost_price,
+                                    (0) as net_cost_price_loc,
+                                    
+                                    (0) as ytm,
+                                    (0) as ytm_at_cost, 
+                                    
+                                    (0) as position_return,
+                                    (0) as net_position_return,
+                                    
+                                    (0) as time_invested,
+                                    (0) as return_annauly
+                                
+                                from (
+                                    select 
+                  
+                                        (5) as item_type,
+                                        ('Other') as item_type_name,
+                                        
+                                        (-1) as instrument_id,
+                                        {consolidated_select_columns}
+                                        
+                                        settlement_currency_id,
+                                        
+                    
+                                        sum(cash_consideration * stl_cur_fx/rep_cur_fx) as position_size,
+                                        
+                                        sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_opened,
+                                        sum(carry_with_sign * stl_cur_fx/rep_cur_fx)     as carry_opened,
+                                        sum(overheads_with_sign * stl_cur_fx/rep_cur_fx) as overheads_opened,
+                    
+                                        sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_fx_opened,
+                                        sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as carry_fx_opened,
+                                        sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as overheads_fx_opened,
+                                         
+                                        (0) as principal_fixed_opened,
+                                        (0) as carry_fixed_opened,
+                                        (0) as overheads_fixed_opened
+                                    
+                                    from (select 
+                                            *,
+                                            case when
+                                            sft.settlement_currency_id={default_currency_id}
+                                            then 1
+                                            else
+                                               (select  fx_rate
+                                            from currencies_currencyhistory c_ch
+                                            where date = '{report_date}'
+                                              and c_ch.currency_id = sft.settlement_currency_id 
+                                              and c_ch.pricing_policy_id = {pricing_policy_id}
+                                              limit 1)
+                                            end as stl_cur_fx,
+                                            case
+                                               when /* reporting ccy = system ccy*/ {report_currency_id} = {default_currency_id}
+                                                   then 1
+                                               else
+                                                   (select  fx_rate
+                                                    from currencies_currencyhistory c_ch
+                                                    where date = '{report_date}' and 
+                                                     c_ch.currency_id = {report_currency_id} and
+                                                     c_ch.pricing_policy_id = {pricing_policy_id}
+                                                     limit 1)
+                                            end as rep_cur_fx
+                                        from pl_cash_transaction_pl_transactions_with_ttype sft where 
+                                                  transaction_class_id in (5)
+                                                  and accounting_date <= '{report_date}'
+                                                  and master_user_id = {master_user_id}
+                                                  {fx_trades_and_fx_variations_filter_sql_string}
+                                            ) as transaction_pl_w_fxrate
+                                    group by 
+                                        settlement_currency_id, {consolidated_select_columns} instrument_id order by settlement_currency_id
+                                    ) as grouped_transaction_pl
+                                left join currencies_currency as ccy on settlement_currency_id = ccy.id
+                                ) as pre_final_union_transaction_pl_calculations_level_0
+                            
+                        ) as unioned_transaction_pl_with_cash 
+                        
+                        group by
                                   {consolidated_select_columns}
-                                  settlement_currency_id,
-                                  SUM(cash_consideration) as position_size
-                                from filtered_transactions
-                                where min_date <= '{report_date}' and master_user_id = {master_user_id}
-                                group by
-                                  {consolidated_select_columns}
-                                  settlement_currency_id 
-                                ) as t
-                            ) as t_with_report_fx_rate
-                        left join currencies_currency as c
-                        ON t_with_report_fx_rate.settlement_currency_id = c.id
-                        where position_size != 0
+                                  settlement_currency_id, instrument_id
+                        
+                    ) as grouped_cash
+                    
+                    left join currencies_currency as c
+                    ON grouped_cash.settlement_currency_id = c.id
+                    where position_size != 0
+                    
                 ) as pre_final_union_cash_calculations_level_0
                 
                 union all
@@ -512,129 +656,6 @@ class BalanceReportBuilderSql:
                     on balance_q.instrument_id = pl_q.instrument_id {pl_left_join_consolidation}
                 
                 ) as joined_positions
-                 
-                 
-                -- union with Transaction PL 
-                union all
-                
-                select 
-        
-                    instrument_id,
-                    {consolidated_select_columns}
-                
-                    name,
-                    short_name,
-                    user_code,
-                    
-                    item_type,
-                    item_type_name,
-                    
-                    position_size,
-                    market_value,
-                    
-                    net_cost_price,
-                    net_cost_price_loc,
-                    
-                    ytm,
-                    ytm_at_cost, 
-                    
-                    position_return,
-                    net_position_return,
-                    
-                    time_invested,
-                    return_annauly
-            
-                from (
-                select 
-                
-                    instrument_id,
-                    {consolidated_select_columns}
-                    
-                    item_type,
-                    item_type_name,
-                    
-                    position_size,
-                     
-                    
-                    ccy.name,
-                    ccy.short_name,
-                    ccy.user_code,
-                    
-                    (0) as market_value,
-                
-                    (0) as net_cost_price,
-                    (0) as net_cost_price_loc,
-                    
-                    (0) as ytm,
-                    (0) as ytm_at_cost, 
-                    
-                    (0) as position_return,
-                    (0) as net_position_return,
-                    
-                    (0) as time_invested,
-                    (0) as return_annauly
-                
-                from (
-                    select 
-  
-                        (5) as item_type,
-                        ('Other') as item_type_name,
-                        
-                        (-1) as instrument_id,
-                        {consolidated_select_columns}
-                        
-                        settlement_currency_id,
-                        
-    
-                        sum(cash_consideration * stl_cur_fx/rep_cur_fx) as position_size,
-                        
-                        sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_opened,
-                        sum(carry_with_sign * stl_cur_fx/rep_cur_fx)     as carry_opened,
-                        sum(overheads_with_sign * stl_cur_fx/rep_cur_fx) as overheads_opened,
-    
-                        sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_fx_opened,
-                        sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as carry_fx_opened,
-                        sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as overheads_fx_opened,
-                         
-                        (0) as principal_fixed_opened,
-                        (0) as carry_fixed_opened,
-                        (0) as overheads_fixed_opened
-                    
-                    from (select 
-                            *,
-                            case when
-                            sft.settlement_currency_id={default_currency_id}
-                            then 1
-                            else
-                               (select  fx_rate
-                            from currencies_currencyhistory c_ch
-                            where date = '{report_date}'
-                              and c_ch.currency_id = sft.settlement_currency_id 
-                              and c_ch.pricing_policy_id = {pricing_policy_id}
-                              limit 1)
-                            end as stl_cur_fx,
-                            case
-                               when /* reporting ccy = system ccy*/ {report_currency_id} = {default_currency_id}
-                                   then 1
-                               else
-                                   (select  fx_rate
-                                    from currencies_currencyhistory c_ch
-                                    where date = '{report_date}' and 
-                                     c_ch.currency_id = {report_currency_id} and
-                                     c_ch.pricing_policy_id = {pricing_policy_id}
-                                     limit 1)
-                            end as rep_cur_fx
-                        from pl_cash_transaction_pl_transactions_with_ttype sft where 
-                                  transaction_class_id in (5)
-                                  and accounting_date <= '{report_date}'
-                                  and master_user_id = {master_user_id}
-                                  {fx_trades_and_fx_variations_filter_sql_string}
-                            ) as transaction_pl_w_fxrate
-                    group by 
-                        settlement_currency_id, {consolidated_select_columns} instrument_id order by settlement_currency_id
-                    ) as grouped_transaction_pl
-                left join currencies_currency as ccy on settlement_currency_id = ccy.id
-                ) as pre_final_union_transaction_pl_calculations_level_0
             """
 
             transaction_filter_sql_string = get_transaction_filter_sql_string(self.instance)
