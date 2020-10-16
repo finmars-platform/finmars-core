@@ -12,7 +12,8 @@ from poms.reports.builders.base_builder import BaseReportBuilder
 from poms.reports.models import BalanceReportCustomField
 from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, get_report_fx_rate, \
     get_fx_trades_and_fx_variations_transaction_filter_sql_string, get_where_expression_for_position_consolidation, \
-    get_position_consolidation_for_select, get_pl_left_join_consolidation, dictfetchall
+    get_position_consolidation_for_select, get_pl_left_join_consolidation, dictfetchall, \
+    get_cash_consolidation_for_select, get_cash_as_position_consolidation_for_select
 from poms.reports.sql_builders.pl import PLReportBuilderSql
 from poms.users.models import EcosystemDefault
 from django.conf import settings
@@ -54,9 +55,41 @@ class BalanceReportBuilderSql:
 
         with connection.cursor() as cursor:
 
-            consolidated_select_columns = self.get_cash_consolidation_for_select()
-
             st = time.perf_counter()
+
+            pl_query = PLReportBuilderSql.get_source_query(cost_method=self.instance.cost_method.id)
+
+            transaction_filter_sql_string = get_transaction_filter_sql_string(self.instance)
+            report_fx_rate = get_report_fx_rate(self.instance, self.instance.report_date)
+            fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(self.instance)
+            transactions_all_with_multipliers_where_expression = get_where_expression_for_position_consolidation(self.instance,
+                                                                                                                 prefix="tt_w_m.", prefix_second="t_o.")
+            consolidation_columns = get_position_consolidation_for_select(self.instance)
+            tt_consolidation_columns = get_position_consolidation_for_select(self.instance, prefix="tt.")
+            balance_q_consolidated_select_columns = get_position_consolidation_for_select(self.instance, prefix="balance_q.")
+            pl_left_join_consolidation = get_pl_left_join_consolidation(self.instance)
+            fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
+                self.instance)
+
+            _l.info('transaction_filter_sql_string: "%s"' % transaction_filter_sql_string)
+
+            pl_query = pl_query.format(report_date=self.instance.report_date,
+                                       master_user_id=self.instance.master_user.id,
+                                       default_currency_id=self.ecosystem_defaults.currency_id,
+                                       report_currency_id=self.instance.report_currency.id,
+                                       pricing_policy_id=self.instance.pricing_policy.id,
+                                       report_fx_rate=report_fx_rate,
+                                       transaction_filter_sql_string=transaction_filter_sql_string,
+                                       fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
+                                       consolidation_columns=consolidation_columns,
+                                       balance_q_consolidated_select_columns=balance_q_consolidated_select_columns,
+                                       tt_consolidation_columns=tt_consolidation_columns,
+                                       transactions_all_with_multipliers_where_expression=transactions_all_with_multipliers_where_expression,
+                                       filter_query_for_balance_in_multipliers_table='')
+            # filter_query_for_balance_in_multipliers_table=' where multiplier = 1') # TODO ask for right where expression
+
+            ######################################
+
             # language=PostgreSQL
 
             query = """
@@ -150,7 +183,7 @@ class BalanceReportBuilderSql:
                            
                            instrument_id,
                            portfolio_id,
-                           account_cash_id,
+                           --account_cash_id,
                            -- TODO add consolidation columns
                            --strategy1_cash_id,
                            --strategy2_cash_id,
@@ -191,7 +224,7 @@ class BalanceReportBuilderSql:
                     
                            instrument_id,
                            portfolio_id,
-                           account_cash_id,
+                           -- account_cash_id,
                            -- TODO add consolidation columns
                            -- modification
                            0 as position_size_with_sign,
@@ -223,7 +256,7 @@ class BalanceReportBuilderSql:
                     
                            instrument_id,
                            portfolio_id,
-                           account_cash_id,
+                           -- account_cash_id,
                            -- TODO add consolidation columns
                     
                            position_size_with_sign,
@@ -233,7 +266,7 @@ class BalanceReportBuilderSql:
                            cash_date,
                     
                            account_position_id,
-                           account_interim_id,
+                           account_cash_id,
                            account_interim_id,
                            
                            case 
@@ -262,7 +295,7 @@ class BalanceReportBuilderSql:
                 select 
                 
                     instrument_id,
-                    {consolidated_select_columns}
+                    {consolidated_position_columns}
                 
                     name,
                     short_name,
@@ -291,7 +324,7 @@ class BalanceReportBuilderSql:
                     select 
                      
                          (-1) as instrument_id,
-                        {consolidated_select_columns}
+                        {consolidated_cash_as_position_columns}
                             
                         (2) as item_type,
                         ('Currency') as item_type_name,
@@ -322,7 +355,7 @@ class BalanceReportBuilderSql:
                         select 
                         
                             instrument_id,
-                            {consolidated_select_columns}
+                            {consolidated_cash_columns}
                             settlement_currency_id,
                             
                             SUM(position_size) as position_size,
@@ -333,7 +366,7 @@ class BalanceReportBuilderSql:
                             select 
                             
                                 instrument_id,
-                                {consolidated_select_columns}
+                                {consolidated_cash_columns}
                                 settlement_currency_id,
     
                                 position_size,
@@ -370,14 +403,14 @@ class BalanceReportBuilderSql:
                                         end as stl_fx_rate
                                 from (
                                     select
-                                      {consolidated_select_columns}
+                                      {consolidated_cash_columns}
                                       settlement_currency_id,
                                        (-1) as instrument_id,
                                       SUM(cash_consideration) as position_size
                                     from filtered_transactions
                                     where min_date <= '{report_date}' and master_user_id = {master_user_id}
                                     group by
-                                      {consolidated_select_columns}
+                                      {consolidated_cash_columns}
                                       settlement_currency_id, instrument_id
                                     ) as t
                                 ) as t_with_report_fx_rate
@@ -388,7 +421,7 @@ class BalanceReportBuilderSql:
                             select 
                 
                                 instrument_id,
-                                {consolidated_select_columns}
+                                {consolidated_cash_columns}
                                 settlement_currency_id,
                             
                                 position_size,
@@ -400,7 +433,7 @@ class BalanceReportBuilderSql:
                                 select 
                                 
                                     instrument_id,
-                                    {consolidated_select_columns}
+                                    {consolidated_cash_columns}
                                     
                                     settlement_currency_id,
                                     
@@ -435,7 +468,7 @@ class BalanceReportBuilderSql:
                                         ('Other') as item_type_name,
                                         
                                         (-1) as instrument_id,
-                                        {consolidated_select_columns}
+                                        {consolidated_cash_columns}
                                         
                                         settlement_currency_id,
                                         
@@ -485,7 +518,7 @@ class BalanceReportBuilderSql:
                                                   {fx_trades_and_fx_variations_filter_sql_string}
                                             ) as transaction_pl_w_fxrate
                                     group by 
-                                        settlement_currency_id, {consolidated_select_columns} instrument_id order by settlement_currency_id
+                                        settlement_currency_id, {consolidated_cash_columns} instrument_id order by settlement_currency_id
                                     ) as grouped_transaction_pl
                                 left join currencies_currency as ccy on settlement_currency_id = ccy.id
                                 ) as pre_final_union_transaction_pl_calculations_level_0
@@ -493,7 +526,7 @@ class BalanceReportBuilderSql:
                         ) as unioned_transaction_pl_with_cash 
                         
                         group by
-                                  {consolidated_select_columns}
+                                  {consolidated_cash_columns}
                                   settlement_currency_id, instrument_id
                         
                     ) as grouped_cash
@@ -509,7 +542,7 @@ class BalanceReportBuilderSql:
                 select 
                     
                     instrument_id,
-                    {consolidated_select_columns}
+                    {consolidated_position_columns}
                 
                     name,
                     short_name,
@@ -564,7 +597,7 @@ class BalanceReportBuilderSql:
                         select 
                     
                         instrument_id,
-                        {consolidated_select_columns}
+                        {consolidated_position_columns}
                         
                         position_size,
                         
@@ -581,7 +614,7 @@ class BalanceReportBuilderSql:
                     from (
                         select
                             instrument_id,
-                            {consolidated_select_columns}
+                            {consolidated_position_columns}
                             
                             position_size,
                             
@@ -625,13 +658,13 @@ class BalanceReportBuilderSql:
                             
                         from
                             (select
-                              {consolidated_select_columns}
+                              {consolidated_position_columns}
                               instrument_id,
                               SUM(position_size_with_sign) as position_size
                             from filtered_transactions
                             where min_date <= '{report_date}' and master_user_id = {master_user_id}
                             group by
-                              {consolidated_select_columns}
+                              {consolidated_position_columns}
                               instrument_id) as t
                         left join instruments_instrument as i
                         ON instrument_id = i.id
@@ -641,7 +674,7 @@ class BalanceReportBuilderSql:
                     left join 
                         (select 
                                 instrument_id, 
-                                {consolidated_select_columns}
+                                {consolidated_position_columns}
                                 
                                 net_cost_price,
                                 net_cost_price_loc,
@@ -658,45 +691,23 @@ class BalanceReportBuilderSql:
                 ) as joined_positions
             """
 
-            transaction_filter_sql_string = get_transaction_filter_sql_string(self.instance)
-            report_fx_rate = get_report_fx_rate(self.instance, self.instance.report_date)
-            fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(self.instance)
-            transactions_all_with_multipliers_where_expression = get_where_expression_for_position_consolidation(self.instance,
-                                                                                                                     prefix="tt_w_m.", prefix_second="t_o.")
-            consolidation_columns = get_position_consolidation_for_select(self.instance)
-            tt_consolidation_columns = get_position_consolidation_for_select(self.instance, prefix="tt.")
-            balance_q_consolidated_select_columns = get_position_consolidation_for_select(self.instance, prefix="balance_q.")
-            pl_left_join_consolidation = get_pl_left_join_consolidation(self.instance)
-            fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
-                self.instance)
-
-            pl_query = PLReportBuilderSql.get_source_query(cost_method=self.instance.cost_method.id)
-
-            _l.info('transaction_filter_sql_string: "%s"' % transaction_filter_sql_string)
-
-            pl_query = pl_query.format(report_date=self.instance.report_date,
-                                       master_user_id=self.instance.master_user.id,
-                                       default_currency_id=self.ecosystem_defaults.currency_id,
-                                       report_currency_id=self.instance.report_currency.id,
-                                       pricing_policy_id=self.instance.pricing_policy.id,
-                                       report_fx_rate=report_fx_rate,
-                                       transaction_filter_sql_string=transaction_filter_sql_string,
-                                       fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
-                                       consolidation_columns=consolidation_columns,
-                                       balance_q_consolidated_select_columns=balance_q_consolidated_select_columns,
-                                       tt_consolidation_columns=tt_consolidation_columns,
-                                       transactions_all_with_multipliers_where_expression=transactions_all_with_multipliers_where_expression,
-                                       filter_query_for_balance_in_multipliers_table='')
-                                       # filter_query_for_balance_in_multipliers_table=' where multiplier = 1') # TODO ask for right where expression
+            consolidated_cash_columns = get_cash_consolidation_for_select(self.instance)
+            consolidated_position_columns = get_position_consolidation_for_select(self.instance)
+            consolidated_cash_as_position_columns = get_cash_as_position_consolidation_for_select(self.instance)
 
             query = query.format(report_date=self.instance.report_date,
                                  master_user_id=self.instance.master_user.id,
                                  default_currency_id=self.ecosystem_defaults.currency_id,
                                  report_currency_id=self.instance.report_currency.id,
                                  pricing_policy_id=self.instance.pricing_policy.id,
-                                 consolidated_select_columns=consolidated_select_columns,
+
+                                 consolidated_cash_columns=consolidated_cash_columns,
+                                 consolidated_position_columns=consolidated_position_columns,
+                                 consolidated_cash_as_position_columns=consolidated_cash_as_position_columns,
+
                                  balance_q_consolidated_select_columns=balance_q_consolidated_select_columns,
                                  transaction_filter_sql_string=transaction_filter_sql_string,
+
                                  pl_query=pl_query,
                                  pl_left_join_consolidation=pl_left_join_consolidation,
                                  fx_trades_and_fx_variations_filter_sql_string= fx_trades_and_fx_variations_filter_sql_string
@@ -749,32 +760,6 @@ class BalanceReportBuilderSql:
             _l.info('build cash result %s ' % len(result))
 
             self.instance.items = result
-
-    def get_cash_consolidation_for_select(self):
-
-        result = []
-
-        if self.instance.portfolio_mode == Report.MODE_INDEPENDENT:
-            result.append("portfolio_id")
-
-        if self.instance.account_mode == Report.MODE_INDEPENDENT:
-            result.append("account_cash_id")
-
-        if self.instance.strategy1_mode == Report.MODE_INDEPENDENT:
-            result.append("strategy1_cash_id")
-
-        if self.instance.strategy2_mode == Report.MODE_INDEPENDENT:
-            result.append("strategy2_cash_id")
-
-        if self.instance.strategy3_mode == Report.MODE_INDEPENDENT:
-            result.append("strategy3_cash_id")
-
-        resultString = ''
-
-        if len(result):
-            resultString = ", ".join(result) + ', '
-
-        return resultString
 
     def add_data_items_instruments(self, ids):
 

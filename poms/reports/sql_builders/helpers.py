@@ -204,3 +204,58 @@ def get_pl_left_join_consolidation(instance):
         resultString = resultString +  " and ".join(result)
 
     return resultString
+
+
+def get_cash_consolidation_for_select(instance):
+
+    result = []
+
+    if instance.portfolio_mode == Report.MODE_INDEPENDENT:
+        result.append("portfolio_id")
+
+    if instance.account_mode == Report.MODE_INDEPENDENT:
+        result.append("account_cash_id")
+
+    if instance.strategy1_mode == Report.MODE_INDEPENDENT:
+        result.append("strategy1_cash_id")
+
+    if instance.strategy2_mode == Report.MODE_INDEPENDENT:
+        result.append("strategy2_cash_id")
+
+    if instance.strategy3_mode == Report.MODE_INDEPENDENT:
+        result.append("strategy3_cash_id")
+
+    resultString = ''
+
+    if len(result):
+        resultString = ", ".join(result) + ', '
+
+    return resultString
+
+
+def get_cash_as_position_consolidation_for_select(instance):
+
+    result = []
+
+    if instance.portfolio_mode == Report.MODE_INDEPENDENT:
+        result.append("portfolio_id as portfolio_id")
+
+    if instance.account_mode == Report.MODE_INDEPENDENT:
+        result.append("account_cash_id as account_position_id ")
+
+    if instance.strategy1_mode == Report.MODE_INDEPENDENT:
+        result.append("strategy1_cash_id as strategy1_position_id")
+
+    if instance.strategy2_mode == Report.MODE_INDEPENDENT:
+        result.append("strategy2_cash_id as strategy2_position_id")
+
+    if instance.strategy3_mode == Report.MODE_INDEPENDENT:
+        result.append("strategy3_cash_id as strategy3_position_id")
+
+    resultString = ''
+
+    if len(result):
+        resultString = ", ".join(result) + ', '
+
+    return resultString
+
