@@ -305,12 +305,15 @@ class BalanceReportBuilderSql:
                     instrument_pricing_currency_fx_rate,
                     instrument_accrued_currency_fx_rate,
                     
+                    instrument_principal_price,
+                    instrument_accrued_price,
                     
                     item_type,
                     item_type_name,
                     
                     position_size,
                     market_value,
+                    market_value_loc,
                     
                     net_cost_price,
                     net_cost_price_loc,
@@ -352,8 +355,11 @@ class BalanceReportBuilderSql:
                         (-1) as pricing_currency_id,
                         (-1) as instrument_pricing_currency_fx_rate,
                         (-1) as instrument_accrued_currency_fx_rate,
+                        (-1) as instrument_principal_price,
+                        (-1) as instrument_accrued_price,
                             
                         market_value,
+                        market_value_loc,
                         
                         (0) as net_cost_price,
                         (0) as net_cost_price_loc,
@@ -386,7 +392,8 @@ class BalanceReportBuilderSql:
                             settlement_currency_id,
                             
                             SUM(position_size) as position_size,
-                            SUM(market_value) as market_value
+                            SUM(market_value) as market_value,
+                            SUM(market_value_loc) as market_value_loc
                             
                         from (
                          -- Cash 
@@ -398,7 +405,8 @@ class BalanceReportBuilderSql:
     
                                 position_size,
       
-                                (t_with_report_fx_rate.position_size * stl_fx_rate / report_fx_rate) as market_value
+                                (t_with_report_fx_rate.position_size * stl_fx_rate / report_fx_rate) as market_value,
+                                (t_with_report_fx_rate.position_size * stl_fx_rate) as market_value_loc
                                  
                             from 
                                 (select 
@@ -453,7 +461,8 @@ class BalanceReportBuilderSql:
                             
                                 position_size,
                                 
-                                (0) as market_value
+                                (0) as market_value,
+                                (0) as market_value_loc
         
                         
                             from (
@@ -579,11 +588,15 @@ class BalanceReportBuilderSql:
                     instrument_pricing_currency_fx_rate,
                     instrument_accrued_currency_fx_rate,
                     
+                    instrument_principal_price,
+                    instrument_accrued_price,
+                    
                     item_type,
                     item_type_name,
                     
                     position_size,
                     market_value,
+                    market_value_loc,
                     
                     net_cost_price,
                     net_cost_price_loc,
@@ -619,11 +632,16 @@ class BalanceReportBuilderSql:
                         instrument_pricing_currency_fx_rate,
                         instrument_accrued_currency_fx_rate,
                         
+                        instrument_principal_price,
+                        instrument_accrued_price,
+                        
                         item_type,
                         item_type_name,
                         
                         position_size,
+                        
                         market_value,
+                        (market_value * cross_loc_prc_fx) as market_value_loc,
                         
                         net_cost_price,
                         net_cost_price_loc,
@@ -656,9 +674,7 @@ class BalanceReportBuilderSql:
                         
                         (1) as item_type,
                         ('Instrument') as item_type_name,
-                        
-                        
-                        
+                    
                         name,
                         short_name,
                         user_code,
@@ -667,6 +683,10 @@ class BalanceReportBuilderSql:
                         (pch_fx_rate) as instrument_pricing_currency_fx_rate,
                         (ach_fx_rate) as instrument_accrued_currency_fx_rate,
                         
+                        (rep_cur_fx/pch_fx_rate) cross_loc_prc_fx,
+                        
+                        (principal_price) as instrument_principal_price,
+                        (accrued_price) as instrument_accrued_price,
              
                         (position_size * principal_price * price_multiplier * pch_fx_rate + (position_size * accrued_price * pch_fx_rate * 1 * accrued_multiplier)) as market_value
                     from (
@@ -682,6 +702,19 @@ class BalanceReportBuilderSql:
                             i.pricing_currency_id,
                             i.price_multiplier,
                             i.accrued_multiplier,
+                            
+      
+                            case
+                                   when {report_currency_id} = {default_currency_id}
+                                       then 1
+                                   else
+                                       (select fx_rate
+                                        from currencies_currencyhistory c_ch
+                                        where date = '{report_date}'
+                                          and c_ch.currency_id = {report_currency_id}
+                                          and c_ch.pricing_policy_id = {pricing_policy_id}
+                                        limit 1)
+                            end as rep_cur_fx,
                             
                             case when i.pricing_currency_id = {default_currency_id}
                                 then 1

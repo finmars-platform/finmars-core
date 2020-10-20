@@ -682,6 +682,7 @@ def serialize_balance_report_item(item):
         "item_type_name": item["item_type_name"],
         "position_size": item["position_size"],
         "market_value": item["market_value"],
+        "market_value_loc": item["market_value_loc"],
         "modified_duration": None
     }
 
@@ -708,6 +709,15 @@ def serialize_balance_report_item(item):
     else:
         result["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
 
+    if item["instrument_principal_price"] == -1:
+        result["instrument_principal_price"] = None
+    else:
+        result["instrument_principal_price"] = item["instrument_principal_price"]
+
+    if item["instrument_accrued_price"] == -1:
+        result["instrument_accrued_price"] = None
+    else:
+        result["instrument_accrued_price"] = item["instrument_accrued_price"]
 
 
     result["account"] = item["account_position_id"]
