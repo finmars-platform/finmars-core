@@ -301,6 +301,11 @@ class BalanceReportBuilderSql:
                     short_name,
                     user_code,
                     
+                    pricing_currency_id,
+                    instrument_pricing_currency_fx_rate,
+                    instrument_accrued_currency_fx_rate,
+                    
+                    
                     item_type,
                     item_type_name,
                     
@@ -334,6 +339,10 @@ class BalanceReportBuilderSql:
                         c.name,
                         c.short_name,
                         c.user_code,
+                        
+                        (-1) as pricing_currency_id,
+                        (-1) as instrument_pricing_currency_fx_rate,
+                        (-1) as instrument_accrued_currency_fx_rate,
                             
                         market_value,
                         
@@ -548,6 +557,10 @@ class BalanceReportBuilderSql:
                     short_name,
                     user_code,
                     
+                    pricing_currency_id,
+                    instrument_pricing_currency_fx_rate,
+                    instrument_accrued_currency_fx_rate,
+                    
                     item_type,
                     item_type_name,
                     
@@ -574,6 +587,10 @@ class BalanceReportBuilderSql:
                         name,
                         short_name,
                         user_code,
+                        
+                        pricing_currency_id,
+                        instrument_pricing_currency_fx_rate,
+                        instrument_accrued_currency_fx_rate,
                         
                         item_type,
                         item_type_name,
@@ -604,10 +621,15 @@ class BalanceReportBuilderSql:
                         (1) as item_type,
                         ('Instrument') as item_type_name,
                         
+                        
+                        
                         name,
                         short_name,
                         user_code,
+                        
                         pricing_currency_id,
+                        (pch_fx_rate) as instrument_pricing_currency_fx_rate,
+                        (ach_fx_rate) as instrument_accrued_currency_fx_rate,
                         
              
                         (position_size * principal_price * price_multiplier * pch_fx_rate + (position_size * accrued_price * pch_fx_rate * 1 * accrued_multiplier)) as market_value
@@ -637,6 +659,19 @@ class BalanceReportBuilderSql:
                                 pricing_policy_id = {pricing_policy_id}
                             )
                             end as pch_fx_rate,
+                            
+                            case when i.accrued_currency_id = {default_currency_id}
+                                then 1
+                                else
+                                    (select
+                                fx_rate
+                             from currencies_currencyhistory
+                             where
+                                currency_id = i.accrued_currency_id and
+                                date = '{report_date}' and
+                                pricing_policy_id = {pricing_policy_id}
+                            )
+                            end as ach_fx_rate,
                                 
                             (select 
                                 principal_price
@@ -763,16 +798,7 @@ class BalanceReportBuilderSql:
 
     def add_data_items_instruments(self, ids):
 
-        self.instance.item_instruments = Instrument.objects.select_related(
-            'instrument_type',
-            'instrument_type__instrument_class',
-            'pricing_currency',
-            'accrued_currency',
-            'payment_size_detail',
-            'daily_pricing_model',
-            'price_download_scheme',
-            'price_download_scheme__provider',
-        ).prefetch_related(
+        self.instance.item_instruments = Instrument.objects.prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
@@ -790,7 +816,7 @@ class BalanceReportBuilderSql:
 
     def add_data_items_accounts(self, ids):
 
-        self.instance.item_accounts = Account.objects.select_related('type').prefetch_related(
+        self.instance.item_accounts = Account.objects.prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',

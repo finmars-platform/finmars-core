@@ -690,6 +690,26 @@ def serialize_balance_report_item(item):
     else:
         result["instrument"] = item["instrument_id"]
 
+
+    if item["pricing_currency_id"] == -1:
+        result["pricing_currency"] = None
+    else:
+        result["pricing_currency"] = item["pricing_currency_id"]
+
+
+    # Check if logic is right
+    if item["instrument_pricing_currency_fx_rate"] == -1:
+        result["instrument_pricing_currency_fx_rate"] = None
+    else:
+        result["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
+
+    if item["instrument_accrued_currency_fx_rate"] == -1:
+        result["instrument_accrued_currency_fx_rate"] = None
+    else:
+        result["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
+
+
+
     result["account"] = item["account_position_id"]
 
     result["strategy1"] = item["strategy1_position_id"]
