@@ -315,6 +315,15 @@ class BalanceReportBuilderSql:
                     net_cost_price,
                     net_cost_price_loc,
                     
+                    gross_cost_price,
+                    gross_cost_price_loc,
+                    
+                    principal_invested,
+                    principal_invested_loc,
+                    
+                    amount_invested,
+                    amount_invested_loc,
+                    
                     ytm,
                     ytm_at_cost, 
                     
@@ -348,6 +357,15 @@ class BalanceReportBuilderSql:
                         
                         (0) as net_cost_price,
                         (0) as net_cost_price_loc,
+                        
+                        (0) as gross_cost_price,
+                        (0) as gross_cost_price_loc,
+                        
+                        (0) as principal_invested,
+                        (0) as principal_invested_loc,
+                        
+                        (0) as amount_invested,
+                        (0) as amount_invested_loc,
                             
                         (0) as ytm,
                         (0) as ytm_at_cost, 
@@ -570,6 +588,15 @@ class BalanceReportBuilderSql:
                     net_cost_price,
                     net_cost_price_loc,
                     
+                    gross_cost_price,
+                    gross_cost_price_loc,
+                    
+                    principal_invested,
+                    principal_invested_loc,
+                    
+                    amount_invested,
+                    amount_invested_loc,
+                    
                     ytm,
                     ytm_at_cost, 
                     
@@ -600,6 +627,15 @@ class BalanceReportBuilderSql:
                         
                         net_cost_price,
                         net_cost_price_loc,
+                        
+                        gross_cost_price,
+                        gross_cost_price_loc,
+                        
+                        principal_invested,
+                        principal_invested_loc,
+                        
+                        amount_invested,
+                        amount_invested_loc,
                         
                         ytm,
                         ytm_at_cost, 
@@ -713,6 +749,15 @@ class BalanceReportBuilderSql:
                                 
                                 net_cost_price,
                                 net_cost_price_loc,
+                                gross_cost_price,
+                                gross_cost_price_loc,
+                                
+                                principal_invested,
+                                principal_invested_loc,  
+                                
+                                amount_invested,
+                                amount_invested_loc,
+                                
                                 ytm, -- is missed 
                                 ytm_at_cost, -- is missed
                                 position_return,

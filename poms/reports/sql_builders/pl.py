@@ -651,6 +651,15 @@ class PLReportBuilderSql:
             
             net_cost_price,
             net_cost_price_loc,
+            
+            gross_cost_price,
+            gross_cost_price_loc,
+            
+            principal_invested,
+            principal_invested_loc,
+            
+            amount_invested,
+            amount_invested_loc,
                 
             time_invested,
             
@@ -741,6 +750,15 @@ class PLReportBuilderSql:
             
             net_cost_price,
             net_cost_price_loc,
+            
+            gross_cost_price,
+            gross_cost_price_loc,
+            
+            principal_invested,
+            principal_invested_loc,
+            
+            amount_invested,
+            amount_invested_loc,
                 
             time_invested,
             
@@ -831,6 +849,15 @@ class PLReportBuilderSql:
                     
                     net_cost_price,
                     net_cost_price_loc,
+                    
+                    gross_cost_price,
+                    gross_cost_price_loc,
+                    
+                    principal_invested,
+                    principal_invested_loc,
+                    
+                    amount_invested,
+                    amount_invested_loc,
                         
                     time_invested,
                     
@@ -902,6 +929,8 @@ class PLReportBuilderSql:
                     overheads_fixed_closed_loc,
                     (principal_fixed_closed_loc + carry_fixed_closed_loc + overheads_fixed_closed_loc) as total_fixed_closed_loc
                 
+                
+                
                 from (
                     select 
                     
@@ -929,6 +958,9 @@ class PLReportBuilderSql:
                         
                         net_cost_price,
                         net_cost_price_loc,
+                        
+                        gross_cost_price,
+                        gross_cost_price_loc,
                         
                         time_invested,
     
@@ -983,8 +1015,14 @@ class PLReportBuilderSql:
                             else 0
                         end as net_position_return,
         
-                        mv_carry+mv_principal as mv
-            
+                        mv_carry+mv_principal as mv,
+                        
+                        principal_invested,
+                        principal_invested * cross_loc_prc_fx as principal_invested_loc,
+                        
+                        amount_invested,
+                        amount_invested * cross_loc_prc_fx as amount_invested_loc
+                        
                 from (
                     select 
                         instrument_id,
@@ -1036,7 +1074,21 @@ class PLReportBuilderSql:
                             then -((principal_opened + overheads_opened) / position_size_opened * rep_cur_fx / i.prc_cur_fx / i.price_multiplier)
                             else 0
                         end as net_cost_price_loc,
-                
+                        
+                        
+                        -- вроде, не используется
+                        case
+                            when position_size_opened > 0
+                            then -((principal_opened) / position_size_opened / i.price_multiplier)
+                            else 0
+                        end as gross_cost_price,
+                        -- испольщуется только эта
+                        case
+                            when position_size_opened > 0
+                            then -((principal_opened) / position_size_opened * rep_cur_fx / i.prc_cur_fx / i.price_multiplier)
+                            else 0
+                        end as gross_cost_price_loc,
+                        
                         case
                             when position_size_opened > 0
                             then time_invested_sum / position_size_opened / 365
@@ -1047,7 +1099,11 @@ class PLReportBuilderSql:
                         (position_size_opened * coalesce(i.cur_price, 0) * i.price_multiplier * i.prc_cur_fx / rep_cur_fx) as mv_principal,
                         (position_size_opened * coalesce(i.cur_accr_price, 0) * i.accrued_multiplier * i.accr_cur_fx  / rep_cur_fx) as mv_carry,
     
-                        (i.accrual_size * i.accrued_multiplier  / (i.cur_price * i.price_multiplier) ) as ytm
+                        (i.accrual_size * i.accrued_multiplier  / (i.cur_price * i.price_multiplier) ) as ytm,
+                
+                        (principal_with_sign_invested) as principal_invested,
+                        (principal_with_sign_invested + carry_with_sign_invested + overheads_with_sign_invested) as amount_invested
+
                 
                     from (
                         select 
@@ -1297,6 +1353,15 @@ class PLReportBuilderSql:
             
             net_cost_price,
             net_cost_price_loc,
+            
+            gross_cost_price,
+            gross_cost_price_loc,
+            
+            principal_invested,
+            principal_invested_loc,
+            
+            amount_invested,
+            amount_invested_loc,        
                 
             time_invested,
             
@@ -1388,6 +1453,15 @@ class PLReportBuilderSql:
                 
                 (0) as net_cost_price,
                 (0) as net_cost_price_loc,
+                
+                (0) as gross_cost_price,
+                (0) as gross_cost_price_loc,
+                
+                (0) as principal_invested,
+                (0) as principal_invested_loc,
+                
+                (0) as amount_invested,
+                (0) as amount_invested_loc,
                     
                 (0) as time_invested,
                 
@@ -1587,6 +1661,15 @@ class PLReportBuilderSql:
             
             net_cost_price,
             net_cost_price_loc,
+            
+            gross_cost_price,
+            gross_cost_price_loc,
+            
+            principal_invested,
+            principal_invested_loc,
+            
+            amount_invested,
+            amount_invested_loc,
                 
             time_invested,
             
@@ -1679,6 +1762,15 @@ class PLReportBuilderSql:
                 
                 (0) as net_cost_price,
                 (0) as net_cost_price_loc,
+                
+                (0) as gross_cost_price,
+                (0) as gross_cost_price_loc,
+                
+                (0) as principal_invested,
+                (0) as principal_invested_loc,
+                
+                (0) as amount_invested,
+                (0) as amount_invested_loc,
                     
                 (0) as time_invested,
                 
@@ -1837,6 +1929,15 @@ class PLReportBuilderSql:
             
             net_cost_price,
             net_cost_price_loc,
+            
+            gross_cost_price,
+            gross_cost_price_loc,
+            
+            principal_invested,
+            principal_invested_loc,
+            
+            amount_invested,
+            amount_invested_loc,
                 
             time_invested,
             
@@ -1928,6 +2029,15 @@ class PLReportBuilderSql:
                 
                 (0) as net_cost_price,
                 (0) as net_cost_price_loc,
+                
+                (0) as gross_cost_price,
+                (0) as gross_cost_price_loc,
+                
+                (0) as principal_invested,
+                (0) as principal_invested_loc,
+                
+                (0) as amount_invested,
+                (0) as amount_invested_loc,
                     
                 (0) as time_invested,
                 
@@ -2083,6 +2193,15 @@ class PLReportBuilderSql:
             
             net_cost_price,
             net_cost_price_loc,
+            
+            gross_cost_price,
+            gross_cost_price_loc,
+            
+            principal_invested,
+            principal_invested_loc,
+            
+            amount_invested,
+            amount_invested_loc,
                 
             time_invested,
             
@@ -2174,6 +2293,15 @@ class PLReportBuilderSql:
                 
                 (0) as net_cost_price,
                 (0) as net_cost_price_loc,
+                
+                (0) as gross_cost_price,
+                (0) as gross_cost_price_loc,
+                
+                (0) as principal_invested,
+                (0) as principal_invested_loc,
+                
+                (0) as amount_invested,
+                (0) as amount_invested_loc,
                     
                 (0) as time_invested,
                 
@@ -2439,6 +2567,15 @@ class PLReportBuilderSql:
                             
                             (q2.net_cost_price) as net_cost_price,
                             (q2.net_cost_price_loc) as net_cost_price_loc,
+                            
+                            (q2.gross_cost_price) as gross_cost_price,
+                            (q2.gross_cost_price_loc) as gross_cost_price_loc,
+                            
+                            (q2.principal_invested) as principal_invested,
+                            (q2.principal_invested_loc) as principal_invested_loc,
+                            
+                            (q2.amount_invested) as amount_invested,
+                            (q2.amount_invested_loc) as amount_invested_loc,
                                 
                             (q2.time_invested) as time_invested,
                             

@@ -737,6 +737,14 @@ def serialize_balance_report_item(item):
 
     result["net_cost_price"] = item["net_cost_price"]
     result["net_cost_price_loc"] = item["net_cost_price_loc"]
+    result["gross_cost_price"] = item["gross_cost_price"]
+    result["gross_cost_price_loc"] = item["gross_cost_price_loc"]
+
+    result["principal_invested"] = item["principal_invested"]
+    result["principal_invested_loc"] = item["principal_invested_loc"]
+
+    result["amount_invested"] = item["amount_invested"]
+    result["amount_invested_loc"] = item["amount_invested_loc"]
 
     result["time_invested"] = item["time_invested"]
     result["return_annauly"] = item["return_annauly"]
@@ -794,6 +802,14 @@ def serialize_pl_report_item(item):
 
     result["net_cost_price"] = item["net_cost_price"]
     result["net_cost_price_loc"] = item["net_cost_price_loc"]
+    result["gross_cost_price"] = item["gross_cost_price"]
+    result["gross_cost_price_loc"] = item["gross_cost_price_loc"]
+
+    result["principal_invested"] = item["principal_invested"]
+    result["principal_invested_loc"] = item["principal_invested_loc"]
+
+    result["amount_invested"] = item["amount_invested"]
+    result["amount_invested_loc"] = item["amount_invested_loc"]
 
     result["time_invested"] = item["time_invested"]
 
