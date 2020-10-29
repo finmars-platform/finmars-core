@@ -1210,7 +1210,7 @@ class TransactionFileResultUploadHandler(APIView):
 
         try:
 
-            procedure = RequestDataFileProcedureInstance.objects.get(pk=procedure_id)
+            procedure = RequestDataFileProcedureInstance.objects.get(id=procedure_id, master_user=master_user)
 
             try:
 
@@ -1246,7 +1246,7 @@ class TransactionFileResultUploadHandler(APIView):
 
         except RequestDataFileProcedureInstance.DoesNotExist:
 
-            _l.info("Does not exist? Procedure %s" % procedure_id)
+            _l.info("Does not exist? RequestDataFileProcedureInstance %s" % procedure_id)
 
             return Response({'status': '404'})  # TODO handle 404 properly
 
