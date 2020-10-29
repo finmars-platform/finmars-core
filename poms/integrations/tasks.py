@@ -2284,21 +2284,31 @@ def complex_transaction_csv_file_import_validate(self, instance):
     return instance
 
 
-@shared_task(name='integrations.complex_transaction_csv_file_import_from_transaction_file', bind=True)
-def complex_transaction_csv_file_import_from_transaction_file(self, transaction_file, master_user, scheme_name):
+@shared_task(name='integrations.complex_transaction_csv_file_import_by_procedure', bind=True)
+def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, transaction_file_result):
 
     with transaction.atomic():
 
         from poms.integrations.serializers import ComplexTransactionCsvFileImport
+        from poms.procedures.models import RequestDataFileProcedureInstance
 
-        scheme = ComplexTransactionImportScheme.objects.get(master_user=master_user, scheme_name=scheme_name)
+        try:
 
-        _l.info('complex_transaction_csv_file_import_from_transaction_file transaction_file: %s', transaction_file)
+            _l.info('complex_transaction_csv_file_import_by_procedure looking for scheme %s ' % procedure_instance.scheme_name)
 
-        instance = ComplexTransactionCsvFileImport(scheme=scheme,
-                                                   file_path=transaction_file.file,
-                                                   master_user=master_user)
+            scheme = ComplexTransactionImportScheme.objects.get(master_user=procedure_instance.master_user, scheme_name=procedure_instance.scheme_name)
 
-        _l.info('complex_transaction_csv_file_import_from_transaction_file instance: %s', transaction_file)
+            instance = ComplexTransactionCsvFileImport(scheme=scheme,
+                                                       file_path=transaction_file_result.file,
+                                                       master_user=procedure_instance.master_user)
 
-        transaction.on_commit(lambda: complex_transaction_csv_file_import.apply_async(kwargs={'instance': instance}))
+            _l.info('complex_transaction_csv_file_import_by_procedure instance: %s' % instance)
+
+            transaction.on_commit(lambda: complex_transaction_csv_file_import.apply_async(kwargs={'instance': instance}))
+
+        except ComplexTransactionImportScheme.DoesNotExist:
+
+            _l.info('complex_transaction_csv_file_import_by_procedure scheme %s not found' % procedure_instance.scheme_name)
+
+            procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
+            procedure_instance.save()

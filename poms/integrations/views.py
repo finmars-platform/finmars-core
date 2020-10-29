@@ -54,7 +54,7 @@ from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer
     ComplexTransactionImportSchemeLightSerializer, BloombergDataProviderCredentialSerializer, \
     PricingConditionMappingSerializer, TransactionFileResultSerializer, DataProviderSerializer, \
     InstrumentDownloadSchemeLightSerializer
-from poms.integrations.tasks import complex_transaction_csv_file_import, complex_transaction_csv_file_import_validate, complex_transaction_csv_file_import_from_transaction_file
+from poms.integrations.tasks import complex_transaction_csv_file_import, complex_transaction_csv_file_import_validate, complex_transaction_csv_file_import_by_procedure
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
@@ -1231,10 +1231,9 @@ class TransactionFileResultUploadHandler(APIView):
                     if procedure_instance.schedule_instance:
                         procedure_instance.schedule_instance.run_next_procedure()
 
-                    complex_transaction_csv_file_import_from_transaction_file.apply_async(kwargs={'transaction_file': item,
-                                                                                                  'master_user': master_user,
-                                                                                                  'scheme_name': procedure_instance.procedure.scheme_name
-                                                                                                  })
+                    complex_transaction_csv_file_import_by_procedure.apply_async(kwargs={'procedure_instance': procedure_instance,
+                                                                                         'transaction_file_result': item,
+                                                                                         })
 
                 else:
                     _l.info("No files found")

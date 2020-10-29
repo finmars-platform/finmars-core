@@ -3,7 +3,7 @@ from django.conf import settings
 import requests
 import json
 
-from poms.integrations.tasks import complex_transaction_csv_file_import_from_transaction_file
+from poms.integrations.tasks import complex_transaction_csv_file_import_by_procedure
 
 from poms.procedures.models import RequestDataFileProcedureInstance
 
@@ -50,10 +50,9 @@ def procedure_request_data_file(self,
                 transaction_file_result.save()
 
                 _l.info("Run data file import from response")
-                complex_transaction_csv_file_import_from_transaction_file.apply_async(kwargs={'transaction_file': transaction_file_result.file,
-                                                                                              'master_user': master_user,
-                                                                                              'scheme_name': procedure_instance.procedure.scheme_name
-                                                                                            })
+                complex_transaction_csv_file_import_by_procedure.apply_async(kwargs={'procedure_instance': procedure_instance,
+                                                                                    'transaction_file_result': transaction_file_result,
+                                                                                      })
 
         else:
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
