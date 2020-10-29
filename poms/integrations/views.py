@@ -1202,7 +1202,7 @@ class TransactionFileResultUploadHandler(APIView):
 
         _l.info('request.data %s' % request.data)
 
-        procedure_id = request.data['procedure']
+        procedure_id = request.data['id']
 
         master_user = MasterUser.objects.get(token=request.data['user']['token'])
 
