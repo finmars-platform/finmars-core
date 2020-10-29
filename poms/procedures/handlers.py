@@ -11,6 +11,7 @@ import logging
 from poms.procedures.models import RequestDataFileProcedureInstance
 
 from poms.integrations.tasks import complex_transaction_csv_file_import_from_transaction_file
+from django.db import transaction
 
 _l = logging.getLogger('poms.procedures')
 
@@ -47,27 +48,29 @@ class RequestDataFileProcedureProcess(object):
 
         if settings.DATA_FILE_SERVICE_URL:
 
-            procedure_instance = RequestDataFileProcedureInstance(procedure=self.procedure,
-                                                                  master_user=self.master_user,
-                                                                  status=RequestDataFileProcedureInstance.STATUS_PENDING,
+            with transaction.atomic():
 
-                                                                  action='request_transaction_file',
-                                                                  provider='finmars',
+                procedure_instance = RequestDataFileProcedureInstance(procedure=self.procedure,
+                                                                      master_user=self.master_user,
+                                                                      status=RequestDataFileProcedureInstance.STATUS_PENDING,
 
-                                                                  action_verbose='Request file with Transactions',
-                                                                  provider_verbose='Finmars'
+                                                                      action='request_transaction_file',
+                                                                      provider='finmars',
 
-                                                                  )
+                                                                      action_verbose='Request file with Transactions',
+                                                                      provider_verbose='Finmars'
 
-            if self.member:
-                procedure_instance.started_by = RequestDataFileProcedureInstance.STARTED_BY_MEMBER
-                procedure_instance.member = self.member
+                                                                      )
 
-            if self.schedule_instance:
-                procedure_instance.started_by = RequestDataFileProcedureInstance.STARTED_BY_SCHEDULE
-                procedure_instance.schedule_instance = self.schedule_instance
+                if self.member:
+                    procedure_instance.started_by = RequestDataFileProcedureInstance.STARTED_BY_MEMBER
+                    procedure_instance.member = self.member
 
-            procedure_instance.save()
+                if self.schedule_instance:
+                    procedure_instance.started_by = RequestDataFileProcedureInstance.STARTED_BY_SCHEDULE
+                    procedure_instance.schedule_instance = self.schedule_instance
+
+                procedure_instance.save()
 
             _l.info("RequestDataFileProcedureProcess: Request_transaction_file. Master User: %s. Provider: %s, Scheme name: %s" % (self.master_user, self.procedure.provider, self.procedure.scheme_name) )
 
