@@ -14,6 +14,11 @@ _l = logging.getLogger('poms.procedures')
 @shared_task(name='procedures.procedure_request_data_file', bind=True, ignore_result=True)
 def procedure_request_data_file(self, procedure_instance, transaction_file_result, data):
 
+    _l.info('procedure_request_data_file processing')
+    _l.info('procedure_request_data_file procedure %s' % procedure_instance)
+    _l.info('procedure_request_data_file transaction_file_result %s' % transaction_file_result)
+    _l.info('procedure_request_data_file data %s' % data)
+
     try:
 
         url = settings.DATA_FILE_SERVICE_URL + '/' + self.procedure.provider.user_code + '/getfile'
