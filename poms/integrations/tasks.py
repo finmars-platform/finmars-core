@@ -2287,12 +2287,14 @@ def complex_transaction_csv_file_import_validate(self, instance):
 @shared_task(name='integrations.complex_transaction_csv_file_import_from_transaction_file', bind=True)
 def complex_transaction_csv_file_import_from_transaction_file(self, transaction_file, master_user):
 
-    from poms.integrations.serializers import ComplexTransactionCsvFileImport
+    with transaction.atomic():
 
-    _l.info('complex_transaction_csv_file_import_from_transaction_file transaction_file: %s', transaction_file)
+        from poms.integrations.serializers import ComplexTransactionCsvFileImport
 
-    instance = ComplexTransactionCsvFileImport(file_path=transaction_file.file, master_user=master_user)
+        _l.info('complex_transaction_csv_file_import_from_transaction_file transaction_file: %s', transaction_file)
 
-    _l.info('complex_transaction_csv_file_import_from_transaction_file instance: %s', transaction_file)
+        instance = ComplexTransactionCsvFileImport(file_path=transaction_file.file, master_user=master_user)
 
-    complex_transaction_csv_file_import.apply_async(kwargs={'instance': instance})
+        _l.info('complex_transaction_csv_file_import_from_transaction_file instance: %s', transaction_file)
+
+        transaction.on_commit(lambda: complex_transaction_csv_file_import.apply_async(kwargs={'instance': instance}))
