@@ -35,7 +35,7 @@ from poms.integrations.models import Task, PriceDownloadScheme, InstrumentDownlo
     AccountMapping, CurrencyMapping, PortfolioMapping, CounterpartyMapping, InstrumentTypeMapping, ResponsibleMapping, \
     Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, DailyPricingModelMapping, PaymentSizeDetailMapping, \
     PriceDownloadSchemeMapping, InstrumentMapping, PeriodicityMapping, AccrualCalculationModelMapping, \
-    BloombergDataProviderCredential
+    BloombergDataProviderCredential, ComplexTransactionImportScheme
 from poms.integrations.providers.base import get_provider, parse_date_iso, fill_instrument_price, fill_currency_price, \
     AbstractProvider
 
@@ -2285,15 +2285,19 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
 
 @shared_task(name='integrations.complex_transaction_csv_file_import_from_transaction_file', bind=True)
-def complex_transaction_csv_file_import_from_transaction_file(self, transaction_file, master_user):
+def complex_transaction_csv_file_import_from_transaction_file(self, transaction_file, master_user, scheme_name):
 
     with transaction.atomic():
 
         from poms.integrations.serializers import ComplexTransactionCsvFileImport
 
+        scheme = ComplexTransactionImportScheme.objects.get(master_user=master_user, scheme_name=scheme_name)
+
         _l.info('complex_transaction_csv_file_import_from_transaction_file transaction_file: %s', transaction_file)
 
-        instance = ComplexTransactionCsvFileImport(file_path=transaction_file.file, master_user=master_user)
+        instance = ComplexTransactionCsvFileImport(scheme=scheme,
+                                                   file_path=transaction_file.file,
+                                                   master_user=master_user)
 
         _l.info('complex_transaction_csv_file_import_from_transaction_file instance: %s', transaction_file)
 

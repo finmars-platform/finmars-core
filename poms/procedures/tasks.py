@@ -51,7 +51,9 @@ def procedure_request_data_file(self,
 
                 _l.info("Run data file import from response")
                 complex_transaction_csv_file_import_from_transaction_file.apply_async(kwargs={'transaction_file': transaction_file_result.file,
-                                                                                              'master_user': master_user})
+                                                                                              'master_user': master_user,
+                                                                                              'scheme_name': procedure_instance.procedure.scheme_name
+                                                                                            })
 
         else:
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR

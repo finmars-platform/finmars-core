@@ -1210,13 +1210,13 @@ class TransactionFileResultUploadHandler(APIView):
 
         try:
 
-            procedure = RequestDataFileProcedureInstance.objects.get(id=procedure_id, master_user=master_user)
+            procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_id, master_user=master_user)
 
             try:
 
                 item = TransactionFileResult.objects.get(master_user=master_user,
                                                          provider__user_code=request.data['provider'],
-                                                         procedure_instance=procedure)
+                                                         procedure_instance=procedure_instance)
 
                 if (request.data['files'] and len(request.data['files'])):
                     item.file = request.data['files'][0]["path"]
@@ -1225,13 +1225,16 @@ class TransactionFileResultUploadHandler(APIView):
 
                     _l.info("Transaction File saved successfuly")
 
-                    procedure.status = RequestDataFileProcedureInstance.STATUS_DONE
-                    procedure.save()
+                    procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
+                    procedure_instance.save()
 
-                    if procedure.schedule_instance:
-                        procedure.schedule_instance.run_next_procedure()
+                    if procedure_instance.schedule_instance:
+                        procedure_instance.schedule_instance.run_next_procedure()
 
-                    complex_transaction_csv_file_import_from_transaction_file.apply_async(kwargs={'transaction_file': item, 'master_user': master_user})
+                    complex_transaction_csv_file_import_from_transaction_file.apply_async(kwargs={'transaction_file': item,
+                                                                                                  'master_user': master_user,
+                                                                                                  'scheme_name': procedure_instance.procedure.scheme_name
+                                                                                                  })
 
                 else:
                     _l.info("No files found")
