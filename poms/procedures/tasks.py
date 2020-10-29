@@ -21,7 +21,7 @@ def procedure_request_data_file(self, procedure_instance, transaction_file_resul
 
     try:
 
-        url = settings.DATA_FILE_SERVICE_URL + '/' + self.procedure.provider.user_code + '/getfile'
+        url = settings.DATA_FILE_SERVICE_URL + '/' + procedure_instance.procedure.provider.user_code + '/getfile'
 
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
@@ -46,7 +46,8 @@ def procedure_request_data_file(self, procedure_instance, transaction_file_resul
                 transaction_file_result.save()
 
                 _l.info("Run data file import from response")
-                complex_transaction_csv_file_import_from_transaction_file.apply_async(kwargs={'transaction_file': transaction_file_result.file, 'master_user': self.master_user})
+                complex_transaction_csv_file_import_from_transaction_file.apply_async(kwargs={'transaction_file': transaction_file_result.file,
+                                                                                              'master_user': self.master_user})
 
         else:
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
