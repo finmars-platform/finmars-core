@@ -65,7 +65,7 @@ class RequestDataFileProcedureProcess(object):
                 procedure_instance.started_by = RequestDataFileProcedureInstance.STARTED_BY_SCHEDULE
                 procedure_instance.schedule_instance = self.schedule_instance
 
-            procedure_instance.save()
+            procedure_instance = procedure_instance.save()
 
             _l.info("RequestDataFileProcedureProcess: Request_transaction_file. Master User: %s. Provider: %s, Scheme name: %s" % (self.master_user, self.procedure.provider, self.procedure.scheme_name) )
 
@@ -77,7 +77,7 @@ class RequestDataFileProcedureProcess(object):
             )
 
             data = {
-                "id": item.id,
+                "id": procedure_instance.id,
                 "user": {
                     "token": self.master_user.token,
                     "credentials": {},
