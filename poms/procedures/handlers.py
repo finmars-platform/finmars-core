@@ -50,7 +50,7 @@ class RequestDataFileProcedureProcess(object):
 
             with transaction.atomic():
 
-                procedure_instance = RequestDataFileProcedureInstance(procedure=self.procedure,
+                procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
                                                                       master_user=self.master_user,
                                                                       status=RequestDataFileProcedureInstance.STATUS_PENDING,
 
@@ -71,6 +71,8 @@ class RequestDataFileProcedureProcess(object):
                     procedure_instance.schedule_instance = self.schedule_instance
 
                 procedure_instance.save()
+
+                _l.info("RequestDataFileProcedureInstance procedure_instance created id: %s" % procedure_instance.id)
 
             _l.info("RequestDataFileProcedureProcess: Request_transaction_file. Master User: %s. Provider: %s, Scheme name: %s" % (self.master_user, self.procedure.provider, self.procedure.scheme_name) )
 
