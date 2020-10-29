@@ -1,7 +1,6 @@
 
 from django.conf import settings
-import requests
-import json
+
 from poms.common import formula
 
 from poms.integrations.models import TransactionFileResult
@@ -9,8 +8,9 @@ from poms.integrations.models import TransactionFileResult
 import logging
 
 from poms.procedures.models import RequestDataFileProcedureInstance
+from poms.procedures.tasks import procedure_request_data_file
 
-from poms.integrations.tasks import complex_transaction_csv_file_import_from_transaction_file
+
 from django.db import transaction
 
 _l = logging.getLogger('poms.procedures')
@@ -83,6 +83,8 @@ class RequestDataFileProcedureProcess(object):
                 scheme_name=self.procedure.scheme_name,
             )
 
+            item.save()
+
             data = {
                 "id": procedure_instance.id,
                 "user": {
@@ -99,51 +101,9 @@ class RequestDataFileProcedureProcess(object):
                 "error_message": ""
             }
 
-            headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
-
-            response = None
-
-            _l.info('data %s' % data )
-
-            try:
-
-                url = settings.DATA_FILE_SERVICE_URL + '/' + self.procedure.provider.user_code + '/getfile'
-
-                _l.info('url %s' % url)
-
-                response = requests.post(url=url, data=json.dumps(data), headers=headers)
-
-                _l.info('response %s' % response)
-                _l.info('response text %s' % response.text)
-
-                if response.status_code == 200:
-
-                    procedure_instance.save()
-
-                    data = response.json()
-
-                    if data['files'] and len(data['files']):
-                        item.file = data['files'][0]["path"]
-
-                        item.save()
-
-                        _l.info("Run data file import from response")
-                        complex_transaction_csv_file_import_from_transaction_file.apply_async(kwargs={'transaction_file': item.file, 'master_user': self.master_user})
-
-                else:
-                    procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
-                    procedure_instance.save()
-
-                _l.info("procedure instance saved %s" % procedure_instance)
-
-            except Exception as e:
-                _l.info("Can't send request to Data File Service. Is Transaction File Service offline?")
-                _l.info("Error %s" % e)
-
-                procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
-                procedure_instance.save()
-
-                raise Exception("Data File Service is unavailable")
+            procedure_request_data_file.apply_async(kwargs={'procedure_instance': procedure_instance,
+                                                            'transaction_file_result': item,
+                                                            'data': data})
 
         else:
             _l.info('DATA_FILE_SERVICE_URL is not set')
