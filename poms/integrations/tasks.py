@@ -2294,9 +2294,9 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
 
         try:
 
-            _l.info('complex_transaction_csv_file_import_by_procedure looking for scheme %s ' % procedure_instance.scheme_name)
+            _l.info('complex_transaction_csv_file_import_by_procedure looking for scheme %s ' % procedure_instance.procedure.scheme_name)
 
-            scheme = ComplexTransactionImportScheme.objects.get(master_user=procedure_instance.master_user, scheme_name=procedure_instance.scheme_name)
+            scheme = ComplexTransactionImportScheme.objects.get(master_user=procedure_instance.master_user, scheme_name=procedure_instance.procedure.scheme_name)
 
             instance = ComplexTransactionCsvFileImport(scheme=scheme,
                                                        file_path=transaction_file_result.file,
@@ -2308,7 +2308,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
 
         except ComplexTransactionImportScheme.DoesNotExist:
 
-            _l.info('complex_transaction_csv_file_import_by_procedure scheme %s not found' % procedure_instance.scheme_name)
+            _l.info('complex_transaction_csv_file_import_by_procedure scheme %s not found' % procedure_instance.procedure.scheme_name)
 
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
             procedure_instance.save()
