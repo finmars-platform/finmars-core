@@ -102,7 +102,9 @@ class RequestDataFileProcedureProcess(object):
             }
 
             _l.info("Executing procedure_request_data_file")
-            procedure_request_data_file.apply_async(kwargs={'procedure_instance': procedure_instance,
+            procedure_request_data_file.apply_async(kwargs={
+                                                            'master_user': self.master_user,
+                                                            'procedure_instance': procedure_instance,
                                                             'transaction_file_result': item,
                                                             'data': data})
 

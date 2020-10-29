@@ -12,7 +12,11 @@ _l = logging.getLogger('poms.procedures')
 
 
 @shared_task(name='procedures.procedure_request_data_file', bind=True, ignore_result=True)
-def procedure_request_data_file(self, procedure_instance, transaction_file_result, data):
+def procedure_request_data_file(self,
+                                master_user,
+                                procedure_instance,
+                                transaction_file_result,
+                                data):
 
     _l.info('procedure_request_data_file processing')
     _l.info('procedure_request_data_file procedure %s' % procedure_instance)
@@ -47,7 +51,7 @@ def procedure_request_data_file(self, procedure_instance, transaction_file_resul
 
                 _l.info("Run data file import from response")
                 complex_transaction_csv_file_import_from_transaction_file.apply_async(kwargs={'transaction_file': transaction_file_result.file,
-                                                                                              'master_user': self.master_user})
+                                                                                              'master_user': master_user})
 
         else:
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
