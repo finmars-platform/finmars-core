@@ -10,6 +10,8 @@ import logging
 
 from poms.procedures.models import RequestDataFileProcedureInstance
 
+from poms.integrations.tasks import complex_transaction_csv_file_import_from_transaction_file
+
 _l = logging.getLogger('poms.procedures')
 
 
@@ -119,6 +121,9 @@ class RequestDataFileProcedureProcess(object):
                         item.file = data['files'][0]["path"]
 
                         item.save()
+
+                        _l.info("Run data file import from response")
+                        complex_transaction_csv_file_import_from_transaction_file.apply_async(kwargs={'transaction_file': item.file, 'master_user': self.master_user})
 
                 else:
                     procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
