@@ -2326,7 +2326,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                                 text=text)
 
             instance = ComplexTransactionCsvFileImport(scheme=scheme,
-                                                       file_path=transaction_file_result.file.path,
+                                                       file_path=transaction_file_result.file_path,
                                                        master_user=procedure_instance.master_user)
 
             _l.info('complex_transaction_csv_file_import_by_procedure instance: %s' % instance)

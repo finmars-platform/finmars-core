@@ -1219,7 +1219,7 @@ class TransactionFileResultUploadHandler(APIView):
                                                          procedure_instance=procedure_instance)
 
                 if (request.data['files'] and len(request.data['files'])):
-                    item.file = request.data['files'][0]["path"]
+                    item.file_path = request.data['files'][0]["path"]
 
                     item.save()
 

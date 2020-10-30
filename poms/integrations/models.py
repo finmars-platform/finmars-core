@@ -1170,5 +1170,6 @@ class TransactionFileResult(DataTimeStampedModel):
 
     scheme_name = models.CharField(max_length=255)
 
-    file = models.FileField(null=True, blank=True, storage=SFS, verbose_name=ugettext_lazy('file'))
+    file_path = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('File Path'))
+    file_name = models.CharField(max_length=255, blank=True, default='')
 
