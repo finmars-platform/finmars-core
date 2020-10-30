@@ -1737,7 +1737,7 @@ def complex_transaction_csv_file_import(self, instance, send_messages=False):
 
         if send_messages:
 
-            send_system_message(master_user=self.master_user,
+            send_system_message(master_user=instance.master_user,
                                 source="Transaction Import Service",
                                 text="Import finished")
 
@@ -1781,7 +1781,7 @@ def complex_transaction_csv_file_import(self, instance, send_messages=False):
 
         if send_messages:
 
-            send_system_message(master_user=self.master_user,
+            send_system_message(master_user=instance.master_user,
                                 source="Transaction Import Service",
                                 text="Can't process file. Possibly wrong format")
 
@@ -2321,7 +2321,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
             text = "Data File Procedure %s. File is received, start data import" % (
                 procedure_instance.procedure.user_code)
 
-            send_system_message(master_user=self.master_user,
+            send_system_message(master_user=procedure_instance.master_user,
                                 source="Data File Procedure Service",
                                 text=text)
 
@@ -2339,7 +2339,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
             text = "Data File Procedure %s. Can't import file, Import scheme %s is not found" % (
             procedure_instance.procedure.user_code, procedure_instance.procedure.scheme_name)
 
-            send_system_message(master_user=self.master_user,
+            send_system_message(master_user=procedure_instance.master_user,
                                 source="Data File Procedure Service",
                                 text=text)
 
