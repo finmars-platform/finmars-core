@@ -13,6 +13,8 @@ from poms.procedures.tasks import procedure_request_data_file
 
 from django.db import transaction
 
+from poms.system_messages.handlers import send_system_message
+
 _l = logging.getLogger('poms.procedures')
 
 
@@ -110,3 +112,7 @@ class RequestDataFileProcedureProcess(object):
 
         else:
             _l.info('DATA_FILE_SERVICE_URL is not set')
+
+            send_system_message(master_user=self.master_user,
+                                source="Data File Procedure Service",
+                                text="Data Service is unknown")

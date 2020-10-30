@@ -44,12 +44,12 @@ from poms.portfolios.models import Portfolio
 from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
+from poms.system_messages.handlers import send_system_message
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import EventClass
 from poms.users.models import MasterUser, EcosystemDefault
 
 from poms.common.utils import date_now, datetime_now
-
 
 from .models import ImportConfig
 
@@ -59,8 +59,8 @@ from celery.utils.log import get_task_logger
 
 celery_logger = get_task_logger(__name__)
 
-
 from storages.backends.sftpstorage import SFTPStorage
+
 SFS = SFTPStorage()
 
 
@@ -915,6 +915,7 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
 
     return task_id
 
+
 # DEPRECATED SINCE 22.09.2020 DELETE SOON
 def _create_currency_default_prices(options, currencies, pricing_policies):
     _l.info('create_currency_default_prices: currencies=%s', currencies)
@@ -942,6 +943,7 @@ def _create_currency_default_prices(options, currencies, pricing_policies):
                 prices.append(price)
 
     return prices, errors
+
 
 # DEPRECATED SINCE 22.09.2020 DELETE SOON
 def _create_instrument_default_prices(options, instruments, pricing_policies):
@@ -971,6 +973,7 @@ def _create_instrument_default_prices(options, instruments, pricing_policies):
                 prices.append(price)
 
     return prices, errors
+
 
 # DEPRECATED SINCE 22.09.2020 DELETE SOON
 def _create_instrument_manual_prices(options, instruments):
@@ -1063,6 +1066,7 @@ def test_certificate(master_user=None, member=None, task=None):
             return task, True
         return task, False
 
+
 # DEPRECATED SINCE 22.09.2020 DELETE SOON
 def download_pricing(master_user=None, member=None, date_from=None, date_to=None, is_yesterday=None, balance_date=None,
                      fill_days=None, override_existed=None, task=None):
@@ -1094,10 +1098,10 @@ def download_pricing(master_user=None, member=None, date_from=None, date_to=None
 
             if member:
                 celery_task = CeleryTask.objects.create(master_user=master_user,
-                                                    member=member,
-                                                    task_status=task.status,
-                                                    started_at=datetime_now(),
-                                                    task_type='user_download_pricing', task_id=task.id)
+                                                        member=member,
+                                                        task_status=task.status,
+                                                        started_at=datetime_now(),
+                                                        task_type='user_download_pricing', task_id=task.id)
             else:
                 celery_task = CeleryTask.objects.create(master_user=master_user,
                                                         task_status=task.status,
@@ -1113,7 +1117,8 @@ def download_pricing(master_user=None, member=None, date_from=None, date_to=None
         if task.status == Task.STATUS_DONE:
 
             try:
-                celery_task = CeleryTask.objects.get(master_user=master_user, task_id=task.id, task_type='user_download_pricing')
+                celery_task = CeleryTask.objects.get(master_user=master_user, task_id=task.id,
+                                                     task_type='user_download_pricing')
 
                 celery_task.task_status = Task.STATUS_DONE
                 celery_task.save()
@@ -1123,6 +1128,7 @@ def download_pricing(master_user=None, member=None, date_from=None, date_to=None
 
             return task, True
         return task, False
+
 
 # @shared_task(name='integrations.file_import_delete', ignore_result=True)
 # def file_import_delete_async(path):
@@ -1140,7 +1146,6 @@ def download_pricing(master_user=None, member=None, date_from=None, date_to=None
 #             file_import_delete_async.apply_async(kwargs={'path': path}, countdown=countdown)
 
 def generate_file_report(instance, master_user, type, name):
-
     def get_unique_columns(instance):
 
         unique_columns = []
@@ -1158,26 +1163,26 @@ def generate_file_report(instance, master_user, type, name):
 
     def generate_columns_for_file(instance):
 
-            columns = ['Row number']
+        columns = ['Row number']
 
-            _l.debug('instance %s' % instance)
+        _l.debug('instance %s' % instance)
 
-            if len(instance.error_rows):
+        if len(instance.error_rows):
 
-                columns = columns + instance.error_rows[0]['error_data']['columns']['imported_columns']
-                columns = columns + instance.error_rows[0]['error_data']['columns']['converted_imported_columns']
-                columns = columns + instance.error_rows[0]['error_data']['columns']['calculated_columns']
-                columns = columns + instance.error_rows[0]['error_data']['columns']['transaction_type_selector']
+            columns = columns + instance.error_rows[0]['error_data']['columns']['imported_columns']
+            columns = columns + instance.error_rows[0]['error_data']['columns']['converted_imported_columns']
+            columns = columns + instance.error_rows[0]['error_data']['columns']['calculated_columns']
+            columns = columns + instance.error_rows[0]['error_data']['columns']['transaction_type_selector']
 
-                unique_columns = get_unique_columns(instance)
+            unique_columns = get_unique_columns(instance)
 
-                for unique_column in unique_columns:
-                    columns.append(unique_column)
+            for unique_column in unique_columns:
+                columns.append(unique_column)
 
-            columns.append('Error Message')
-            columns.append('Reaction')
+        columns.append('Error Message')
+        columns.append('Reaction')
 
-            return columns
+        return columns
 
     def generate_columns_data_for_file(instance, error_row):
 
@@ -1188,7 +1193,7 @@ def generate_file_report(instance, master_user, type, name):
 
         for unique_column in unique_columns:
 
-            result.append('') # result[index] = ''
+            result.append('')  # result[index] = ''
 
             item_column_index = 0
 
@@ -1229,7 +1234,6 @@ def generate_file_report(instance, master_user, type, name):
     else:
         rowsSuccessCount = instance.total_rows - len(error_rows)
 
-
     result.append('Rows total, ' + str(instance.total_rows))
     result.append('Rows success import, ' + str(rowsSuccessCount))
     result.append('Rows fail import, ' + str(len(error_rows)))
@@ -1239,7 +1243,6 @@ def generate_file_report(instance, master_user, type, name):
     column_row_list = []
 
     for item in columns:
-
         column_row_list.append('"' + str(item) + '"')
 
     column_row = ','.join(column_row_list)
@@ -1264,7 +1267,6 @@ def generate_file_report(instance, master_user, type, name):
         content_row_list = []
 
         for item in content:
-
             content_row_list.append('"' + str(item) + '"')
 
         content_row = ','.join(content_row_list)
@@ -1297,7 +1299,7 @@ def generate_file_report(instance, master_user, type, name):
 
 
 @shared_task(name='integrations.complex_transaction_csv_file_import', bind=True)
-def complex_transaction_csv_file_import(self, instance):
+def complex_transaction_csv_file_import(self, instance, send_messages=False):
     from poms.transactions.models import TransactionTypeInput
 
     _l.info('complex_transaction_file_import: %s', instance)
@@ -1310,7 +1312,8 @@ def complex_transaction_csv_file_import(self, instance):
 
     master_user = instance.master_user
 
-    rule_scenarios = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()
+    rule_scenarios = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields',
+                                                            'fields__transaction_type_input').all()
 
     _l.info('scheme %s - inputs=%s, rules=%s', scheme,
             [(i.name, i.column) for i in scheme_inputs],
@@ -1588,8 +1591,6 @@ def complex_transaction_csv_file_import(self, instance):
                 else:
                     continue
 
-
-
             if not rule_value:
 
                 _l.info('no rule value: %s', rule_value)
@@ -1622,7 +1623,6 @@ def complex_transaction_csv_file_import(self, instance):
                 for selector_value in selector_values:
 
                     if selector_value.value == rule_value:
-
                         matched_selector = True
 
                 if matched_selector:
@@ -1641,7 +1641,7 @@ def complex_transaction_csv_file_import(self, instance):
 
 
 
-                        except (ValueError,ExpressionEvalError):
+                        except (ValueError, ExpressionEvalError):
                             _l.info('can\'t process field: %s|%s', field.transaction_type_input.name,
                                     field.transaction_type_input.pk, exc_info=True)
                             fields_error.append(field)
@@ -1681,23 +1681,25 @@ def complex_transaction_csv_file_import(self, instance):
                             )
                             tt_process.process()
 
-                            _l.info('tt_process %s' % tt_process    )
+                            _l.info('tt_process %s' % tt_process)
 
                             if tt_process.uniqueness_status == 'skip':
                                 error_rows['level'] = 'skip'
-                                error_rows['error_message'] = error_rows['error_message'] + str(ugettext('Unique code already exist. Skip'))
+                                error_rows['error_message'] = error_rows['error_message'] + str(
+                                    ugettext('Unique code already exist. Skip'))
 
                             if tt_process.uniqueness_status == 'error':
                                 error_rows['level'] = 'error'
-                                error_rows['error_message'] = error_rows['error_message'] + str(ugettext('Unique code already exist. Error'))
-
+                                error_rows['error_message'] = error_rows['error_message'] + str(
+                                    ugettext('Unique code already exist. Error'))
 
                             instance.processed_rows = instance.processed_rows + 1
                             # instance.save()
                             self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
                                               meta={'processed_rows': instance.processed_rows,
                                                     'total_rows': instance.total_rows,
-                                                    'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
+                                                    'scheme_name': instance.scheme.scheme_name,
+                                                    'file_name': instance.filename})
 
 
                         except Exception as e:
@@ -1733,6 +1735,13 @@ def complex_transaction_csv_file_import(self, instance):
 
             instance.error_rows.append(error_rows)
 
+        if send_messages:
+
+            send_system_message(master_user=self.master_user,
+                                source="Transaction Import Service",
+                                text="Import finished")
+
+
     def _row_count(file):
 
         delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
@@ -1761,20 +1770,29 @@ def complex_transaction_csv_file_import(self, instance):
                 with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
                     instance.total_rows = _row_count(cfr)
                     self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                                      meta={'total_rows': instance.total_rows, 'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
+                                      meta={'total_rows': instance.total_rows,
+                                            'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
                     # instance.save()
                 with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
                     _process_csv_file(cf)
     except:
         _l.info('Can\'t process file', exc_info=True)
         instance.error_message = ugettext("Invalid file format or file already deleted.")
+
+        if send_messages:
+
+            send_system_message(master_user=self.master_user,
+                                source="Transaction Import Service",
+                                text="Can't process file. Possibly wrong format")
+
     finally:
         # import_file_storage.delete(instance.file_path)
         SFS.delete(instance.file_path)
 
     instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
 
-    instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.import', 'Transaction Import');
+    instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.import',
+                                                      'Transaction Import');
 
     self.update_state(task_id=instance.task_id, state=Task.STATUS_DONE,
                       meta={'processed_rows': instance.processed_rows,
@@ -1786,7 +1804,6 @@ def complex_transaction_csv_file_import(self, instance):
 
 @shared_task(name='integrations.complex_transaction_csv_file_import_validate', bind=True)
 def complex_transaction_csv_file_import_validate(self, instance):
-
     from poms.transactions.models import TransactionTypeInput
 
     instance.processed_rows = 0
@@ -1795,7 +1812,8 @@ def complex_transaction_csv_file_import_validate(self, instance):
     scheme = instance.scheme
     scheme_inputs = list(scheme.inputs.all())
     scheme_calculated_inputs = list(scheme.calculated_inputs.all())
-    rule_scenarios = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields', 'fields__transaction_type_input').all()
+    rule_scenarios = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields',
+                                                            'fields__transaction_type_input').all()
 
     _l.info('scheme %s - inputs=%s, rules=%s', scheme,
             [(i.name, i.column) for i in scheme_inputs],
@@ -2092,7 +2110,6 @@ def complex_transaction_csv_file_import_validate(self, instance):
                 for selector_value in selector_values:
 
                     if selector_value.value == rule_value:
-
                         matched_selector = True
 
                 if matched_selector:
@@ -2253,7 +2270,8 @@ def complex_transaction_csv_file_import_validate(self, instance):
                     instance.total_rows = _row_count(cfr)
                     # instance.save()
                     self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                                      meta={'total_rows': instance.total_rows, 'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
+                                      meta={'total_rows': instance.total_rows,
+                                            'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
 
                 with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
                     _validate_process_csv_file(cf)
@@ -2274,7 +2292,8 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
     instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
 
-    instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.validate', 'Transaction Import Validation')
+    instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.validate',
+                                                      'Transaction Import Validation')
 
     self.update_state(task_id=instance.task_id, state=Task.STATUS_DONE,
                       meta={'processed_rows': instance.processed_rows,
@@ -2286,7 +2305,6 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
 @shared_task(name='integrations.complex_transaction_csv_file_import_by_procedure', bind=True)
 def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, transaction_file_result):
-
     with transaction.atomic():
 
         from poms.integrations.serializers import ComplexTransactionCsvFileImport
@@ -2294,9 +2312,18 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
 
         try:
 
-            _l.info('complex_transaction_csv_file_import_by_procedure looking for scheme %s ' % procedure_instance.procedure.scheme_name)
+            _l.info(
+                'complex_transaction_csv_file_import_by_procedure looking for scheme %s ' % procedure_instance.procedure.scheme_name)
 
-            scheme = ComplexTransactionImportScheme.objects.get(master_user=procedure_instance.master_user, scheme_name=procedure_instance.procedure.scheme_name)
+            scheme = ComplexTransactionImportScheme.objects.get(master_user=procedure_instance.master_user,
+                                                                scheme_name=procedure_instance.procedure.scheme_name)
+
+            text = "Data File Procedure %s. File is received, start data import" % (
+                procedure_instance.procedure.user_code)
+
+            send_system_message(master_user=self.master_user,
+                                source="Data File Procedure Service",
+                                text=text)
 
             instance = ComplexTransactionCsvFileImport(scheme=scheme,
                                                        file_path=transaction_file_result.file.path,
@@ -2304,11 +2331,20 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
 
             _l.info('complex_transaction_csv_file_import_by_procedure instance: %s' % instance)
 
-            transaction.on_commit(lambda: complex_transaction_csv_file_import.apply_async(kwargs={'instance': instance}))
+            transaction.on_commit(
+                lambda: complex_transaction_csv_file_import.apply_async(kwargs={'instance': instance, 'send_messages': True}))
 
         except ComplexTransactionImportScheme.DoesNotExist:
 
-            _l.info('complex_transaction_csv_file_import_by_procedure scheme %s not found' % procedure_instance.procedure.scheme_name)
+            text = "Data File Procedure %s. Can't import file, Import scheme %s is not found" % (
+            procedure_instance.procedure.user_code, procedure_instance.procedure.scheme_name)
+
+            send_system_message(master_user=self.master_user,
+                                source="Data File Procedure Service",
+                                text=text)
+
+            _l.info(
+                'complex_transaction_csv_file_import_by_procedure scheme %s not found' % procedure_instance.procedure.scheme_name)
 
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
             procedure_instance.save()

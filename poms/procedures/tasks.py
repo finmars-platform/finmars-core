@@ -8,6 +8,9 @@ from poms.integrations.tasks import complex_transaction_csv_file_import_by_proce
 from poms.procedures.models import RequestDataFileProcedureInstance
 
 import logging
+
+from poms.system_messages.handlers import send_system_message
+
 _l = logging.getLogger('poms.procedures')
 
 
@@ -55,6 +58,14 @@ def procedure_request_data_file(self,
                                                                                       })
 
         else:
+
+            text = "Data File Procedure %s. Error during request to Data Service" % (
+                procedure_instance.procedure.user_code)
+
+            send_system_message(master_user=self.master_user,
+                                source="Data File Procedure Service",
+                                text=text)
+
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
             procedure_instance.save()
 
@@ -63,6 +74,13 @@ def procedure_request_data_file(self,
     except Exception as e:
         _l.info("Can't send request to Data File Service. Is Transaction File Service offline?")
         _l.info("Error %s" % e)
+
+        text = "Data File Procedure %s. Data Service is offline" % (
+            procedure_instance.procedure.user_code)
+
+        send_system_message(master_user=self.master_user,
+                            source="Data File Procedure Service",
+                            text=text)
 
         procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
         procedure_instance.save()

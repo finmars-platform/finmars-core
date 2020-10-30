@@ -112,6 +112,7 @@ INSTALLED_APPS = [
     'poms.schedules',
     'poms.procedures',
     'poms.credentials',
+    'poms.system_messages',
 
 
     'poms.layout_recovery',

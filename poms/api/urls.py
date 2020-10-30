@@ -41,6 +41,7 @@ import poms.pricing.views as pricing
 import poms.schedules.views as schedules
 import poms.procedures.views as procedures
 import poms.credentials.views as credentials
+import poms.system_messages.views as system_messages
 import poms.layout_recovery.views as layout_recovery
 from healthcheck.views import HealthcheckView
 
@@ -412,6 +413,8 @@ router.register(r'pricing/currency-history-error', pricing.CurrencyHistoryErrorV
 
 
 router.register(r'schedules/schedule', schedules.ScheduleViewSet)
+
+router.register(r'system-messages/message', system_messages.MessageViewSet)
 
 router.register(r'procedures/pricing-procedure', procedures.PricingProcedureViewSet, 'pricing_procedure')
 router.register(r'procedures/pricing-parent-procedure-instance', procedures.PricingParentProcedureInstanceViewSet, 'pricing_parent_procedure_instance')

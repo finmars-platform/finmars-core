@@ -8,6 +8,7 @@ from poms.procedures.handlers import RequestDataFileProcedureProcess
 from poms.procedures.models import RequestDataFileProcedure, PricingProcedure, PricingParentProcedureInstance
 from poms.procedures.serializers import RequestDataFileProcedureSerializer, RunRequestDataFileProcedureSerializer, \
     PricingProcedureSerializer, RunProcedureSerializer, PricingParentProcedureInstanceSerializer
+from poms.system_messages.handlers import send_system_message
 
 from poms.users.filters import OwnerByMasterUserFilter
 from rest_framework.decorators import action
@@ -131,6 +132,12 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
         # instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, date_from=date_from, date_to=date_to)
         instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user)
         instance.process()
+
+        text = "Data File Procedure %s. Start processing" % procedure.name
+
+        send_system_message(master_user=master_user,
+                            source="Data File Procedure Service",
+                            text=text)
 
         serializer = self.get_serializer(instance=instance)
 
