@@ -1219,6 +1219,10 @@ class TransactionFileResultUploadHandler(APIView):
                                                          procedure_instance=procedure_instance)
 
                 if (request.data['files'] and len(request.data['files'])):
+
+                    procedure_instance.symmetric_key = request.data['files'][0]['symmetric_key']
+                    procedure_instance.save()
+
                     item.file_path = request.data['files'][0]["path"]
 
                     item.save()
