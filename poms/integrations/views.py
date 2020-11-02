@@ -10,6 +10,8 @@ from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from django.db import transaction
+
 from poms.common.utils import date_now, datetime_now
 
 from poms.accounts.models import Account, AccountType
@@ -1220,17 +1222,19 @@ class TransactionFileResultUploadHandler(APIView):
 
                 if (request.data['files'] and len(request.data['files'])):
 
-                    procedure_instance.symmetric_key = request.data['files'][0]['symmetric_key']
-                    procedure_instance.save()
+                    with transaction.atomic():
 
-                    item.file_path = request.data['files'][0]["path"]
+                        procedure_instance.symmetric_key = request.data['files'][0]['symmetric_key']
+                        procedure_instance.save()
 
-                    item.save()
+                        item.file_path = request.data['files'][0]["path"]
 
-                    _l.info("Transaction File saved successfuly")
+                        item.save()
 
-                    procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
-                    procedure_instance.save()
+                        _l.info("Transaction File saved successfuly")
+
+                        procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
+                        procedure_instance.save()
 
                     if procedure_instance.schedule_instance:
                         procedure_instance.schedule_instance.run_next_procedure()

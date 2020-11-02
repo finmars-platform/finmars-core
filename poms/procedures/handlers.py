@@ -73,6 +73,12 @@ class RequestDataFileProcedureProcess(object):
                     procedure_instance.started_by = RequestDataFileProcedureInstance.STARTED_BY_SCHEDULE
                     procedure_instance.schedule_instance = self.schedule_instance
 
+                rsa_cipher = RSACipher()
+                private_key, public_key = rsa_cipher.createKey()
+
+                procedure_instance.private_key = private_key
+                procedure_instance.public_key = public_key
+
                 procedure_instance.save()
 
                 _l.info("RequestDataFileProcedureInstance procedure_instance created id: %s" % procedure_instance.id)
@@ -88,14 +94,6 @@ class RequestDataFileProcedureProcess(object):
 
             item.save()
 
-
-            rsa_cipher = RSACipher()
-            private_key, public_key = rsa_cipher.createKey()
-
-            procedure_instance.private_key = private_key
-            procedure_instance.public_key = public_key
-
-            procedure_instance.save()
 
             data = {
                 "id": procedure_instance.id,
