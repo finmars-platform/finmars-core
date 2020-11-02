@@ -1,11 +1,16 @@
 import base64
 import tempfile
 
+import Crypto
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Cipher import PKCS1_v1_5
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
+from Crypto.Util.number import ceil_div
 
+import logging
+
+_l = logging.getLogger('poms.common')
 
 ## https://daniao.ws/rsa-java-to-python.html
 
@@ -38,6 +43,12 @@ class RSACipher():
         ##cipher = PKCS1_OAEP.new(private_key, hashAlgo=SHA256)
         cipher = PKCS1_v1_5.new(private_key)
         aes_incrypted_raw = base64.b64decode(enc)
+
+        modBits = Crypto.Util.number.size(private_key.n)
+        k = ceil_div(modBits,8) # Convert from bits to bytes
+
+        _l.info('k %s' % k)
+        _l.info('len aes %s' % len(aes_incrypted_raw))
 
         return cipher.decrypt( aes_incrypted_raw, "Error while decrypting" )
 
