@@ -63,7 +63,7 @@ class RSACipher():
         new_key = ""
         for line in key.splitlines():
             if ( b"KEY----" in line ): continue
-            new_key = new_key + line
+            new_key = new_key + line.decode('utf-8')
 
         return new_key
 
