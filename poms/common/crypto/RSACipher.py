@@ -1,4 +1,5 @@
 import base64
+import tempfile
 
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Cipher import PKCS1_v1_5
@@ -60,10 +61,14 @@ class RSACipher():
         :return: key with removed first and last lines like "----BEGINING KEY---"
         """
 
-        new_key = ""
-        for line in key.splitlines():
-            if ( b"KEY----" in line ): continue
-            new_key = new_key + line.decode('utf-8')
+        decoded_key = key.decode('utf-8')
 
-        return new_key
+        newKey = ""
+        for line in decoded_key.splitlines():
+            #if ( line.find("KEY----")<0 ) :
+            if ( "KEY----" in line ): continue
+            newKey = newKey + line + "\n"
+
+        return newKey
+
 
