@@ -57,10 +57,14 @@ class RSACipher():
         :param key: private/public 1024 RSA key in PEM
         :return: key with removed first and last lines like "----BEGINING KEY---"
         """
-        newKey = b""
-        for line in key.splitlines():
-            #if ( line.find("KEY----")<0 ) :
-            if ( b"KEY----" in line ): continue
-            newKey = newKey + line + b"\n"
-        return newKey
+        # newKey = b""
+        # for line in key.splitlines():
+        #     #if ( line.find("KEY----")<0 ) :
+        #     if ( b"KEY----" in line ): continue
+        #     newKey = newKey + line + b"\n"
+        # return newKey
+
+        key = key.replace("-----BEGIN PUBLIC KEY-----", "")
+        key = key.replace("-----END PUBLIC KEY-----", "")
+        return key
 
