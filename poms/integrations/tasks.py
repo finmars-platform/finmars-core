@@ -2356,21 +2356,27 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
 
                     _l.info('Size of decrypted text: %s' % len(decrypt_text))
 
-                    file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
-                    file_path = '%s/data_files/%s.dat' % (procedure_instance.master_user.token, file_name)
 
-                    SFS.save(file_path, decrypt_text.encode('utf-8'))
+                    with NamedTemporaryFile() as tmpf:
 
-                    _l.info('complex_transaction_csv_file_import_by_procedure tmp file filled')
+                        tmpf.write(decrypt_text.encode('utf-8'))
+                        tmpf.flush()
 
-                    instance = ComplexTransactionCsvFileImport(scheme=scheme,
-                                                                file_path=file_path,
-                                                               master_user=procedure_instance.master_user)
+                        file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
+                        file_path = '%s/data_files/%s.dat' % (procedure_instance.master_user.token, file_name)
 
-                    _l.info('complex_transaction_csv_file_import_by_procedure instance: %s' % instance)
+                        SFS.save(file_path, tmpf)
 
-                    transaction.on_commit(
-                        lambda: complex_transaction_csv_file_import.apply_async(kwargs={'instance': instance, 'send_messages': True}))
+                        _l.info('complex_transaction_csv_file_import_by_procedure tmp file filled')
+
+                        instance = ComplexTransactionCsvFileImport(scheme=scheme,
+                                                                    file_path=file_path,
+                                                                   master_user=procedure_instance.master_user)
+
+                        _l.info('complex_transaction_csv_file_import_by_procedure instance: %s' % instance)
+
+                        transaction.on_commit(
+                            lambda: complex_transaction_csv_file_import.apply_async(kwargs={'instance': instance, 'send_messages': True}))
 
                 except Exception as e:
 
