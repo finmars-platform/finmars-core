@@ -2,6 +2,7 @@
 from django.conf import settings
 
 from poms.common import formula
+from poms.common.crypto.RSACipher import RSACipher
 
 from poms.integrations.models import TransactionFileResult
 
@@ -87,6 +88,15 @@ class RequestDataFileProcedureProcess(object):
 
             item.save()
 
+
+            rsa_cipher = RSACipher()
+            private_key, public_key = rsa_cipher.createKey()
+
+            procedure_instance.private_key = private_key
+            procedure_instance.public_key = public_key
+
+            procedure_instance.save()
+
             data = {
                 "id": procedure_instance.id,
                 "user": {
@@ -94,6 +104,7 @@ class RequestDataFileProcedureProcess(object):
                     "credentials": {},
                     "params": {},
                 },
+                "public_key": public_key,
                 # "date_from": self.procedure.date_from,
                 # "date_to": self.procedure.date_to,
                 "provider": self.procedure.provider.user_code,

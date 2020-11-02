@@ -24,6 +24,8 @@ from poms.accounts.models import Account
 from poms.audit.models import AuthLogEntry
 from poms.celery_tasks.models import CeleryTask
 from poms.common import formula
+from poms.common.crypto.AESCipher import AESCipher
+from poms.common.crypto.RSACipher import RSACipher
 from poms.common.formula import ExpressionEvalError
 from poms.common.utils import date_now, isclose
 from poms.counterparties.models import Counterparty, Responsible
@@ -2325,14 +2327,31 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                                 source="Data File Procedure Service",
                                 text=text)
 
-            instance = ComplexTransactionCsvFileImport(scheme=scheme,
-                                                       file_path=transaction_file_result.file_path,
-                                                       master_user=procedure_instance.master_user)
+            with SFS.open(transaction_file_result.file_path, 'rb') as f:
 
-            _l.info('complex_transaction_csv_file_import_by_procedure instance: %s' % instance)
+                encrypted_text = f.read()
 
-            transaction.on_commit(
-                lambda: complex_transaction_csv_file_import.apply_async(kwargs={'instance': instance, 'send_messages': True}))
+                rsa_cipher = RSACipher()
+                aes_key = rsa_cipher.decrypt(procedure_instance.private_key, procedure_instance.symmetric_key)
+                aes_cipher = AESCipher(aes_key)
+
+                decrypt_text = aes_cipher.decrypt(encrypted_text)
+
+                print('Size of decrypted text: %s' % len(decrypt_text))
+
+                with NamedTemporaryFile() as tmpf:
+
+                    tmpf.write(decrypt_text)
+                    tmpf.flush()
+
+                    instance = ComplexTransactionCsvFileImport(scheme=scheme,
+                                                                file_path=tmpf.name,
+                                                               master_user=procedure_instance.master_user)
+
+                    _l.info('complex_transaction_csv_file_import_by_procedure instance: %s' % instance)
+
+                    transaction.on_commit(
+                        lambda: complex_transaction_csv_file_import.apply_async(kwargs={'instance': instance, 'send_messages': True}))
 
         except ComplexTransactionImportScheme.DoesNotExist:
 

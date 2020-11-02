@@ -292,3 +292,7 @@ class RequestDataFileProcedureInstance(BaseProcedureInstance):
 
     procedure = models.ForeignKey(RequestDataFileProcedure, on_delete=models.CASCADE,
                                           verbose_name=ugettext_lazy('procedure'))
+
+    private_key = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('private key'))
+    public_key = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('public key'))
+    symmetric_key = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('symmetric key'))

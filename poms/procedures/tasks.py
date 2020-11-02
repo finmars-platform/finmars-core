@@ -48,6 +48,10 @@ def procedure_request_data_file(self,
             data = response.json()
 
             if data['files'] and len(data['files']):
+
+                procedure_instance.symmetric_key = data['symmetric_key']
+                procedure_instance.save()
+
                 transaction_file_result.file_path = data['files'][0]["path"]
 
                 transaction_file_result.save()
