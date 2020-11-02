@@ -2334,10 +2334,22 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                     encrypted_text = f.read()
 
                     rsa_cipher = RSACipher()
-                    aes_key = rsa_cipher.decrypt(procedure_instance.private_key, procedure_instance.symmetric_key)
+
+                    aes_key = None
+
+                    try:
+                        aes_key = rsa_cipher.decrypt(procedure_instance.private_key, procedure_instance.symmetric_key)
+                    except Exception as e:
+                        _l.info('complex_transaction_csv_file_import_by_procedure AES Key decryption error %s' % e)
+
                     aes_cipher = AESCipher(aes_key)
 
-                    decrypt_text = aes_cipher.decrypt(encrypted_text)
+                    decrypt_text = None
+
+                    try:
+                        decrypt_text = aes_cipher.decrypt(encrypted_text)
+                    except Exception as e:
+                        _l.info('complex_transaction_csv_file_import_by_procedure Text decryption error %s' % e)
 
                     _l.info('complex_transaction_csv_file_import_by_procedure file decrypted')
 
