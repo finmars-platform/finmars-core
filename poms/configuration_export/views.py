@@ -1584,8 +1584,15 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         for item in results:
 
             if item["dynamic_attribute_id"]:
-                item["___dynamic_attribute_id__user_code"] = GenericAttributeType.objects.get(
-                    pk=item["dynamic_attribute_id"]).user_code
+
+                try:
+
+                    item["___dynamic_attribute_id__user_code"] = GenericAttributeType.objects.get(
+                        pk=item["dynamic_attribute_id"]).user_code
+
+                except GenericAttributeType.DoesNotExist:
+
+                    _l.info("Simple Import Scheme. Dynamic attribute is not exist")
 
         delete_prop(results, 'scheme')
 
