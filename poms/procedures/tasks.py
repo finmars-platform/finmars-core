@@ -36,7 +36,7 @@ def procedure_request_data_file(self,
 
         _l.info('url %s' % url)
 
-        response = requests.post(url=url, data=json.dumps(data), headers=headers)
+        response = requests.post(url=url, json=data, headers=headers)
 
         _l.info('response %s' % response)
         _l.info('response text %s' % response.text)
