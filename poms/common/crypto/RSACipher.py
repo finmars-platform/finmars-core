@@ -38,7 +38,7 @@ class RSACipher():
         cipher = PKCS1_v1_5.new(private_key)
         aes_incrypted_raw = base64.b64decode(enc)
 
-        return cipher.decrypt(aes_incrypted_raw, "Error while decrypting")
+        return cipher.decrypt( aes_incrypted_raw, "Error while decrypting" )
 
     def createKey(self):
         """
@@ -46,26 +46,24 @@ class RSACipher():
         :return: Private Key, Public Key
         """
         key = RSA.generate(1024)
-        privKey = key.exportKey("PEM")
+        private_key = key.exportKey("PEM")
+        private_key = self.__trimKey(private_key)
 
-        privKey = self.__trimKey(RSA.importKey(privKey))
+        public_key = key.publickey().exportKey("PEM")
+        public_key = self.__trimKey(public_key)
 
-        publKey = key.publickey().exportKey("PEM")
-        publKey = self.__trimKey(RSA.importKey(publKey))
-        return privKey, publKey
+        return private_key, public_key
 
-    def __trimKey(self, key: str):
+    def __trimKey(self, key):
         """
         :param key: private/public 1024 RSA key in PEM
         :return: key with removed first and last lines like "----BEGINING KEY---"
         """
-        # newKey = b""
-        # for line in key.splitlines():
-        #     #if ( line.find("KEY----")<0 ) :
-        #     if ( b"KEY----" in line ): continue
-        #     newKey = newKey + line + b"\n"
-        # return newKey
 
-        key = key.replace("-----BEGIN PUBLIC KEY-----", "")
-        key = key.replace("-----END PUBLIC KEY-----", "")
-        return key
+        new_key = ""
+        for line in key.splitlines():
+            if ( b"KEY----" in line ): continue
+            new_key = new_key + line
+
+        return new_key
+
