@@ -33,12 +33,10 @@ class RSACipher():
         :param enc: base64 encoded tecrypted text as bytes (usually AES key)
         :return: recrypted  bytes
         """
-        # private_key = RSA.importKey(base64.b64decode(key))
-        private_key = RSA.importKey(base64.urlsafe_b64decode(key))
+        private_key = RSA.importKey(base64.b64decode(key))
         ##cipher = PKCS1_OAEP.new(private_key, hashAlgo=SHA256)
         cipher = PKCS1_v1_5.new(private_key)
-        # aes_incrypted_raw = base64.b64decode(enc)
-        aes_incrypted_raw = base64.urlsafe_b64decode(enc)
+        aes_incrypted_raw = base64.b64decode(enc)
 
         return cipher.decrypt( aes_incrypted_raw, "Error while decrypting" )
 
