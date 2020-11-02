@@ -1709,7 +1709,7 @@ class ImportManager(object):
                                 except TransactionType.DoesNotExist:
                                     _l.info('Cant find Transaction Type form %s for %s' % (rule['___transaction_type__user_code'], content_object['scheme_name']))
                                     stats['status'] = 'error'
-                                    stats['error']['message'] = 'Error. Can\'t Import Transaction Import Scheme for %s' % content_object['scheme_name']
+                                    stats['error']['message'] = 'Error. Can\'t Import Transaction Import Scheme for %s. Transaction Type %s is missing ' % (content_object['scheme_name'], rule['___transaction_type__user_code'])
                                     continue
 
                                 if rule['transaction_type']:
@@ -1724,7 +1724,7 @@ class ImportManager(object):
                                             _l.info('Cant find Input %s' % field['___input__name'])
                                             stats['status'] = 'error'
                                             stats['error'][
-                                                'message'] = 'Error. Can\'t Import Transaction Import Scheme for %s' % content_object['scheme_name']
+                                                'message'] = 'Error. Can\'t Import Transaction Import Scheme for %s. Input %s is missing.' % (content_object['scheme_name'], field['___input__name'])
                                             continue
 
                         if stats['status'] == 'error':
