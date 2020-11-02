@@ -104,7 +104,7 @@ class RequestDataFileProcedureProcess(object):
                     "credentials": {},
                     "params": {},
                 },
-                "public_key": public_key,
+                "public_key": public_key.encode('utf-8'),
                 # "date_from": self.procedure.date_from,
                 # "date_to": self.procedure.date_to,
                 "provider": self.procedure.provider.user_code,
