@@ -38,7 +38,7 @@ class RSACipher():
         cipher = PKCS1_v1_5.new(private_key)
         aes_incrypted_raw = base64.b64decode(enc)
 
-        return cipher.decrypt( aes_incrypted_raw, "Error while decrypting" )
+        return cipher.decrypt(aes_incrypted_raw, "Error while decrypting")
 
     def createKey(self):
         """
@@ -47,12 +47,14 @@ class RSACipher():
         """
         key = RSA.generate(1024)
         privKey = key.exportKey("PEM")
-        privKey = self.__trimKey( privKey )
+
+        privKey = self.__trimKey(RSA.importKey(privKey))
+
         publKey = key.publickey().exportKey("PEM")
-        publKey = self.__trimKey( publKey )
+        publKey = self.__trimKey(RSA.importKey(publKey))
         return privKey, publKey
 
-    def __trimKey(self, key:str):
+    def __trimKey(self, key: str):
         """
         :param key: private/public 1024 RSA key in PEM
         :return: key with removed first and last lines like "----BEGINING KEY---"
@@ -67,4 +69,3 @@ class RSACipher():
         key = key.replace("-----BEGIN PUBLIC KEY-----", "")
         key = key.replace("-----END PUBLIC KEY-----", "")
         return key
-
