@@ -57,6 +57,7 @@ from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer
     PricingConditionMappingSerializer, TransactionFileResultSerializer, DataProviderSerializer, \
     InstrumentDownloadSchemeLightSerializer
 from poms.integrations.tasks import complex_transaction_csv_file_import, complex_transaction_csv_file_import_validate, complex_transaction_csv_file_import_by_procedure
+from poms.csv_import.tasks import data_csv_file_import_by_procedure
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
@@ -1239,9 +1240,17 @@ class TransactionFileResultUploadHandler(APIView):
                     if procedure_instance.schedule_instance:
                         procedure_instance.schedule_instance.run_next_procedure()
 
-                    complex_transaction_csv_file_import_by_procedure.apply_async(kwargs={'procedure_instance': procedure_instance,
+                    if procedure_instance.procedure.scheme_type == 'transaction_import':
+
+                        complex_transaction_csv_file_import_by_procedure.apply_async(kwargs={'procedure_instance': procedure_instance,
                                                                                          'transaction_file_result': item,
                                                                                          })
+
+                    if procedure_instance.procedure.scheme_type == 'simple_import':
+
+                        data_csv_file_import_by_procedure.apply_async(kwargs={'procedure_instance': procedure_instance,
+                                                                                             'transaction_file_result': item,
+                                                                                             })
 
                 else:
                     _l.info("No files found")

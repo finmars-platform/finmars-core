@@ -271,9 +271,17 @@ class PricingProcedureInstance(BaseProcedureInstance):
         super(PricingProcedureInstance, self).save(*args, **kwargs)
 
 
+SCHEME_TYPE_CHOICES = [
+    ['transaction_import', 'Transaction Import'],
+    ['simple_import', 'Simple Import'],
+]
+
+
 class RequestDataFileProcedure(BaseProcedure):
 
     provider = models.ForeignKey(DataProvider, verbose_name=ugettext_lazy('provider'), on_delete=models.CASCADE)
+
+    scheme_type = models.CharField(max_length=255, choices=SCHEME_TYPE_CHOICES, default='transaction_import')
 
     scheme_name = models.CharField(max_length=255)
 

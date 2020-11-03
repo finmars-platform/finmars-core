@@ -1,13 +1,19 @@
+import uuid
+
 from celery import shared_task, chord, current_task
 from django.contrib.auth.models import Permission
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
+from django.utils import timezone
 from django.utils.timezone import now
 
+from poms.common.crypto.AESCipher import AESCipher
+from poms.common.crypto.RSACipher import RSACipher
 from poms.common.formula import safe_eval, ExpressionEvalError
 from poms.common.utils import date_now
 from poms.file_reports.models import FileReport
 from poms.obj_perms.models import GenericObjectPermission
 from poms.pricing.models import InstrumentPricingPolicy
+from poms.system_messages.handlers import send_system_message
 
 from poms.users.models import EcosystemDefault, Group
 from django.apps import apps
@@ -1370,3 +1376,95 @@ def data_csv_file_import(self, instance):
     handler.process(instance, self.update_state)
 
     return instance
+
+
+@shared_task(name='csv_import.data_csv_file_import_by_procedure', bind=True)
+def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file_result):
+    with transaction.atomic():
+
+        from poms.integrations.serializers import ComplexTransactionCsvFileImport
+        from poms.procedures.models import RequestDataFileProcedureInstance
+
+        try:
+
+            _l.info(
+                'data_csv_file_import_by_procedure looking for scheme %s ' % procedure_instance.procedure.scheme_name)
+
+            scheme = CsvImportScheme.objects.get(master_user=procedure_instance.master_user,
+                                                                scheme_name=procedure_instance.procedure.scheme_name)
+
+            text = "Data File Procedure %s. File is received, start data import" % (
+                procedure_instance.procedure.user_code)
+
+            send_system_message(master_user=procedure_instance.master_user,
+                                source="Data File Procedure Service",
+                                text=text)
+
+            with SFS.open(transaction_file_result.file_path, 'rb') as f:
+
+                try:
+
+                    encrypted_text = f.read()
+
+                    rsa_cipher = RSACipher()
+
+                    aes_key = None
+
+                    try:
+                        aes_key = rsa_cipher.decrypt(procedure_instance.private_key, procedure_instance.symmetric_key)
+                    except Exception as e:
+                        _l.info('data_csv_file_import_by_procedure AES Key decryption error %s' % e)
+
+                    aes_cipher = AESCipher(aes_key)
+
+                    decrypt_text = None
+
+                    try:
+                        decrypt_text = aes_cipher.decrypt(encrypted_text)
+                    except Exception as e:
+                        _l.info('data_csv_file_import_by_procedure Text decryption error %s' % e)
+
+                    _l.info('data_csv_file_import_by_procedure file decrypted')
+
+                    _l.info('Size of decrypted text: %s' % len(decrypt_text))
+
+
+                    with NamedTemporaryFile() as tmpf:
+
+                        tmpf.write(decrypt_text.encode('utf-8'))
+                        tmpf.flush()
+
+                        file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
+                        file_path = '%s/data_files/%s.dat' % (procedure_instance.master_user.token, file_name)
+
+                        SFS.save(file_path, tmpf)
+
+                        _l.info('data_csv_file_import_by_procedure tmp file filled')
+
+                        instance = ComplexTransactionCsvFileImport(scheme=scheme,
+                                                                   file_path=file_path,
+                                                                   master_user=procedure_instance.master_user)
+
+                        _l.info('data_csv_file_import_by_procedure instance: %s' % instance)
+
+                        transaction.on_commit(
+                            lambda: data_csv_file_import.apply_async(kwargs={'instance': instance, 'send_messages': True}))
+
+                except Exception as e:
+
+                    _l.info('data_csv_file_import_by_procedure decryption error %s' % e)
+
+        except CsvImportScheme.DoesNotExist:
+
+            text = "Data File Procedure %s. Can't import file, Import scheme %s is not found" % (
+                procedure_instance.procedure.user_code, procedure_instance.procedure.scheme_name)
+
+            send_system_message(master_user=procedure_instance.master_user,
+                                source="Data File Procedure Service",
+                                text=text)
+
+            _l.info(
+                'data_csv_file_import_by_procedure scheme %s not found' % procedure_instance.procedure.scheme_name)
+
+            procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
+            procedure_instance.save()

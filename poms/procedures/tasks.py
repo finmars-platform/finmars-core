@@ -4,6 +4,7 @@ import requests
 import json
 
 from poms.integrations.tasks import complex_transaction_csv_file_import_by_procedure
+from poms.csv_import.tasks import data_csv_file_import_by_procedure
 
 from poms.procedures.models import RequestDataFileProcedureInstance
 
@@ -56,10 +57,19 @@ def procedure_request_data_file(self,
 
                 transaction_file_result.save()
 
-                _l.info("Run data file import from response")
-                complex_transaction_csv_file_import_by_procedure.apply_async(kwargs={'procedure_instance': procedure_instance,
-                                                                                    'transaction_file_result': transaction_file_result,
-                                                                                      })
+                if procedure_instance.procedure.scheme_type == 'transaction_import':
+
+                    _l.info("Run Transaction import from response")
+                    complex_transaction_csv_file_import_by_procedure.apply_async(kwargs={'procedure_instance': procedure_instance,
+                                                                                        'transaction_file_result': transaction_file_result,
+                                                                                          })
+                if procedure_instance.procedure.scheme_type == 'simple_import':
+
+                    _l.info("Run Simple import from response")
+                    data_csv_file_import_by_procedure.apply_async(kwargs={'procedure_instance': procedure_instance,
+                                                                                         'transaction_file_result': transaction_file_result,
+                                                                                         })
+
 
         else:
 

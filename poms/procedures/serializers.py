@@ -124,7 +124,7 @@ class RequestDataFileProcedureSerializer(ModelWithTimeStampSerializer):
         model = RequestDataFileProcedure
         fields = [
             'id', 'master_user', 'name', 'user_code', 'notes',
-            'provider',  'scheme_name'
+            'provider',  'scheme_name', 'scheme_type'
         ]
 
 
