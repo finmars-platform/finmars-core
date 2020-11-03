@@ -87,7 +87,10 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
     class Meta:
 
         model = CsvImportScheme
-        fields = ('id', 'master_user', 'scheme_name', 'filter_expr', 'content_type', 'csv_fields', 'entity_fields')
+        fields = ('id', 'master_user', 'scheme_name', 'filter_expr', 'content_type', 'csv_fields', 'entity_fields',
+
+                  'mode', 'delimiter', 'error_handler', 'missing_data_handler', 'classifier_handler'
+                  )
 
     def create_entity_fields_if_not_exist(self, scheme):
 
@@ -243,6 +246,14 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
         scheme.scheme_name = validated_data.get('scheme_name', scheme.scheme_name)
         scheme.filter_expr = validated_data.get('filter_expr', scheme.filter_expr)
 
+        # 'mode', 'delimiter', 'error_handler', 'missing_data_handler', 'classifier_handler'
+
+        scheme.mode = validated_data.get('mode', scheme.mode)
+        scheme.delimiter = validated_data.get('delimiter', scheme.delimiter)
+        scheme.error_handler = validated_data.get('error_handler', scheme.error_handler)
+        scheme.missing_data_handler = validated_data.get('missing_data_handler', scheme.missing_data_handler)
+        scheme.classifier_handler = validated_data.get('classifier_handler', scheme.classifier_handler)
+
         self.set_entity_fields_mapping(scheme=scheme, entity_fields=entity_fields)
         self.set_dynamic_attributes_mapping(scheme=scheme, entity_fields=entity_fields)
 
@@ -315,7 +326,13 @@ class CsvDataImportSerializer(serializers.Serializer):
 
         filetmp = file = validated_data.get('file', None)
 
-        print('filetmp %s' % filetmp)
+        if 'scheme' in validated_data:
+
+            validated_data['delimiter'] = validated_data['scheme'].delimiter
+            validated_data['error_handler'] = validated_data['scheme'].error_handler
+            validated_data['mode'] = validated_data['scheme'].mode
+            validated_data['missing_data_handler'] = validated_data['scheme'].missing_data_handler
+            validated_data['classifier_handler'] = validated_data['scheme'].classifier_handler
 
         filename = None
         if filetmp:

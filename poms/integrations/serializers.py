@@ -1545,7 +1545,11 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
                   'book_uniqueness_settings',
 
                   'inputs', 'calculated_inputs', 'rule_scenarios', 'selector_values',
-                  'recon_scenarios', 'recon_layout']
+                  'recon_scenarios', 'recon_layout',
+
+                  'delimiter', 'error_handler', 'missing_data_handler'
+
+                  ]
 
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionImportSchemeSerializer, self).__init__(*args, **kwargs)
@@ -1787,6 +1791,7 @@ class ComplexTransactionCsvFileImport:
                  error_handling=None, missing_data_handler=None, error=None, error_message=None, error_row_index=None,
                  error_rows=None,
                  total_rows=None, processed_rows=None, filename=None, stats_file_report=None):
+
         self.task_id = task_id
         self.task_status = task_status
 
@@ -1860,6 +1865,12 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
     stats_file_report = serializers.ReadOnlyField()
 
     def create(self, validated_data):
+
+        if 'scheme' in validated_data:
+
+            validated_data['delimiter'] = validated_data['scheme'].delimiter
+            validated_data['error_handling'] = validated_data['scheme'].error_handler # Warning - prop is - error_handling
+            validated_data['missing_data_handler'] = validated_data['scheme'].missing_data_handler
 
         filetmp = file = validated_data.get('file', None)
 

@@ -682,6 +682,7 @@ class TransactionTypeInputSettings(models.Model):
                                                verbose_name=ugettext_lazy('transaction type input'))
 
     linked_inputs_names = models.TextField(blank=True, default='', null=True, verbose_name=ugettext_lazy('linked_input_names'))
+    recalc_on_change_linked_inputs = models.TextField(blank=True, default='', null=True, verbose_name=ugettext_lazy('recalc on change linked inputs'))
 
 
 class RebookReactionChoice():

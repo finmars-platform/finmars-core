@@ -315,6 +315,7 @@ class InstrumentDownloadSchemeAttribute(models.Model):
         return '%s' % (self.attribute_type,)
 
 
+# DEPRECATED
 class PriceDownloadScheme(models.Model):
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     scheme_name = models.CharField(max_length=255, verbose_name=ugettext_lazy('scheme name'))
@@ -971,6 +972,22 @@ class PricingAutomatedSchedule(models.Model):
 # ----------------------------------------
 
 
+ERROR_HANDLER_CHOICES = [
+    ['break', 'Break'],
+    ['continue', 'Continue'],
+]
+
+
+DELIMITER_CHOICES = [
+    [',', 'Comma'],
+    [';', 'Semicolon'],
+    ['\t', 'Tab'],
+]
+
+MISSING_DATA_CHOICES = [
+    ['throw_error', 'Treat as Error'],
+    ['set_defaults', 'Replace with Default Value'],
+]
 
 class ComplexTransactionImportScheme(DataTimeStampedModel):
 
@@ -995,6 +1012,10 @@ class ComplexTransactionImportScheme(DataTimeStampedModel):
 
     recon_layout_json = models.TextField(null=True, blank=True,
                                                 verbose_name=ugettext_lazy('recon layout json'))
+
+    delimiter = models.CharField(max_length=255, choices=DELIMITER_CHOICES, default=',')
+    error_handler = models.CharField(max_length=255, choices=ERROR_HANDLER_CHOICES, default='break')
+    missing_data_handler = models.CharField(max_length=255, choices=MISSING_DATA_CHOICES, default='throw_error')
 
     @property
     def recon_layout(self):

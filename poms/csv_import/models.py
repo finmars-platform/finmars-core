@@ -6,12 +6,46 @@ from poms.common.models import DataTimeStampedModel
 from poms.users.models import MasterUser
 
 
+ERROR_HANDLER_CHOICES = [
+    ['break', 'Break'],
+    ['continue', 'Continue'],
+]
+
+MODE_CHOICES = [
+    ['skip', 'Skip if exists'],
+    ['overwrite', 'Overwrite'],
+]
+
+DELIMITER_CHOICES = [
+    [',', 'Comma'],
+    [';', 'Semicolon'],
+    ['\t', 'Tab'],
+]
+
+MISSING_DATA_CHOICES = [
+    ['throw_error', 'Treat as Error'],
+    ['set_defaults', 'Replace with Default Value'],
+]
+
+CLASSIFIER_HANDLER = [
+    ['skip', 'Skip'],
+    ['append', 'Append'],
+]
+
+
+
 class CsvImportScheme(DataTimeStampedModel):
     scheme_name = models.CharField(max_length=255)
     content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'), on_delete=models.CASCADE)
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user') , on_delete=models.CASCADE)
 
     filter_expr = models.CharField(max_length=1000, default='', blank=True, null=True, verbose_name=ugettext_lazy('filter expression'))
+
+    mode = models.CharField(max_length=255, choices=MODE_CHOICES, default='skip')
+    delimiter = models.CharField(max_length=255, choices=DELIMITER_CHOICES, default=',')
+    error_handler = models.CharField(max_length=255, choices=ERROR_HANDLER_CHOICES, default='break')
+    missing_data_handler = models.CharField(max_length=255, choices=MISSING_DATA_CHOICES, default='throw_error')
+    classifier_handler = models.CharField(max_length=255, choices=CLASSIFIER_HANDLER, default='skip')
 
     class Meta:
         unique_together = (
@@ -58,33 +92,6 @@ class EntityField(models.Model):
             ['scheme', 'order'],
         ]
         ordering = ['order']
-
-
-ERROR_HANDLER_CHOICES = [
-    ['break', 'Break'],
-    ['continue', 'Continue'],
-]
-
-MODE_CHOICES = [
-    ['skip', 'Skip if exists'],
-    ['overwrite', 'Overwrite'],
-]
-
-DELIMITER_CHOICES = [
-    [',', 'Comma'],
-    [';', 'Semicolon'],
-    ['\t', 'Tab'],
-]
-
-MISSING_DATA_CHOICES = [
-    ['throw_error', 'Treat as Error'],
-    ['set_defaults', 'Replace with Default Value'],
-]
-
-CLASSIFIER_HANDLER = [
-    ['skip', 'Skip'],
-    ['append', 'Append'],
-]
 
 
 class CsvDataImport(models.Model):
