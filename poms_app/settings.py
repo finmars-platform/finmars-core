@@ -524,7 +524,7 @@ AUTHENTICATION_BACKENDS = (
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5mb
 
-DOMAIN_NAME = os.environ('DOMAIN_NAME', 'finmars.com')
+DOMAIN_NAME = os.environ.get('DOMAIN_NAME', 'finmars.com')
 
 print('DOMAIN_NAME %s' % DOMAIN_NAME)
 
