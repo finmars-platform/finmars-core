@@ -126,7 +126,7 @@ class TransactionTypeInputSettingsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TransactionTypeInputSettings
-        fields = ['linked_inputs_names']
+        fields = ['linked_inputs_names', 'recalc_on_change_linked_inputs']
 
 
 class TransactionTypeInputSerializer(serializers.ModelSerializer):
