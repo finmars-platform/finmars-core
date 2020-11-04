@@ -1539,6 +1539,8 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
 
     recon_layout = serializers.JSONField(required=False, allow_null=True)
 
+    delimiter = serializers.CharField(max_length=3, required=False, initial=',', default=',')
+
     class Meta:
         model = ComplexTransactionImportScheme
         fields = ['id', 'master_user', 'scheme_name', 'rule_expr',

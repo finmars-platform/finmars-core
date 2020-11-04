@@ -84,6 +84,8 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
     entity_fields = EntityFieldSerializer(many=True)
     content_type = CsvImportContentTypeField()
 
+    delimiter = serializers.CharField(max_length=3, required=False, initial=',', default=',')
+
     class Meta:
 
         model = CsvImportScheme
@@ -288,7 +290,7 @@ class CsvDataImportSerializer(serializers.Serializer):
 
     scheme = CsvImportSchemeField(required=False)
 
-    delimiter = serializers.CharField(max_length=2, required=False, initial=',', default=',')
+    delimiter = serializers.CharField(max_length=3, required=False, initial=',', default=',')
 
     quotechar = serializers.CharField(max_length=1, required=False, initial='"', default='"')
     encoding = serializers.CharField(max_length=20, required=False, initial='utf-8', default='utf-8')
