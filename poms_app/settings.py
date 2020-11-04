@@ -527,7 +527,7 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5mb
 # email config
 
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '"Finmars Notifications" <no-reply@finmars.com>')
-SERVER_EMAIL = '"ADMIN: FinMars" <no-reply@finmars.com>'
+SERVER_EMAIL = os.environ.get('SERVER_EMAIL', '"ADMIN: FinMars" <no-reply@finmars.com>')
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'email-smtp.eu-west-1.amazonaws.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', "587"))
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', None)
