@@ -437,7 +437,9 @@ class ResetPasswordRequestTokenViewSet(AbstractApiView, ViewSet):
 
                 link = "https://%s/forgot-password-confirm.html?token=%s" % (settings.DOMAIN_NAME, token.key)
 
-                message = "Your password reset link is: %s" % link
+                _l.info('link %s' % link)
+
+                message = "Your password reset <a href='%s'>link</a>" % link
 
                 subject = "Password reset"
                 recipient_list = [user.email]

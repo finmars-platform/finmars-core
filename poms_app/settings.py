@@ -526,6 +526,8 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5mb
 
 DOMAIN_NAME = os.environ('DOMAIN_NAME', 'finmars.com')
 
+print('DOMAIN_NAME %s' % DOMAIN_NAME)
+
 # email config
 
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '"Finmars Notifications" <no-reply@finmars.com>')
