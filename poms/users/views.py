@@ -435,7 +435,7 @@ class ResetPasswordRequestTokenViewSet(AbstractApiView, ViewSet):
                         ip_address=request.META['REMOTE_ADDR']
                     )
 
-                link = "https://finmars.com/forgot-password-confirm.html?token=%s" % token.key
+                link = "https://%s/forgot-password-confirm.html?token=%s" % (settings.DOMAIN_NAME, token.key)
 
                 message = "Your password reset link is: %s" % link
 
