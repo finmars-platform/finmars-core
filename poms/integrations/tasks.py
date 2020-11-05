@@ -1302,7 +1302,7 @@ def generate_file_report(instance, master_user, type, name, context=None):
 
 
 @shared_task(name='integrations.complex_transaction_csv_file_import', bind=True)
-def complex_transaction_csv_file_import(self, instance, execution_context):
+def complex_transaction_csv_file_import(self, instance, execution_context=None):
     from poms.transactions.models import TransactionTypeInput
 
     _l.info('complex_transaction_file_import: %s', instance)

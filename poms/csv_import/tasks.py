@@ -1374,7 +1374,7 @@ class ImportHandler:
 
 
 @shared_task(name='csv_import.data_csv_file_import', bind=True)
-def data_csv_file_import(self, instance, execution_context):
+def data_csv_file_import(self, instance, execution_context=None):
     handler = ImportHandler()
 
     setattr(instance, 'task_id', current_task.request.id)
