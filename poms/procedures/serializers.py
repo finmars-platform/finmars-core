@@ -112,7 +112,7 @@ class RunProcedureSerializer(serializers.Serializer):
 class RequestDataFileProcedureSerializer(ModelWithTimeStampSerializer):
 
     master_user = MasterUserField()
-    data = serializers.JSONField(allow_null=False)
+    data = serializers.JSONField(allow_null=True, required=False)
 
     def __init__(self, *args, **kwargs):
         super(RequestDataFileProcedureSerializer, self).__init__(*args, **kwargs)
