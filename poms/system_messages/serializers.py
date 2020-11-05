@@ -12,7 +12,13 @@ class SystemMessageAttachmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SystemMessageAttachment
-        fields = ('id', 'file_url', 'file_name' 'notes', 'file_report')
+        fields = ('id', 'file_url', 'file_name', 'notes', 'file_report')
+
+    def __init__(self, *args, **kwargs):
+        super(SystemMessageAttachmentSerializer, self).__init__(*args, **kwargs)
+
+        from poms.file_reports.serializers import FileReportSerializer
+        self.fields['file_report_object'] = FileReportSerializer(source='file_report',  read_only=True)
 
 
 class SystemMessageSerializer(serializers.ModelSerializer):

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import SystemMessage
+from .models import SystemMessage, SystemMessageAttachment
 
 
 class SystemMessageAdmin(admin.ModelAdmin):
@@ -11,4 +11,13 @@ class SystemMessageAdmin(admin.ModelAdmin):
 
 
 admin.site.register(SystemMessage, SystemMessageAdmin)
+
+
+class SystemMessageAttachmentAdmin(admin.ModelAdmin):
+    model = SystemMessageAttachment
+    list_display = ['id', 'system_message', 'file_report']
+    search_fields = ['id']
+
+
+admin.site.register(SystemMessageAttachment, SystemMessageAttachmentAdmin)
 
