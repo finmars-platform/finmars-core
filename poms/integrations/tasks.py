@@ -1148,7 +1148,7 @@ def download_pricing(master_user=None, member=None, date_from=None, date_to=None
 #             _l.info('schedule_file_import_delete: path=%s, countdown=%s', path, countdown)
 #             file_import_delete_async.apply_async(kwargs={'path': path}, countdown=countdown)
 
-def generate_file_report(instance, master_user, type, name):
+def generate_file_report(instance, master_user, type, name, context=None):
     def get_unique_columns(instance):
 
         unique_columns = []
@@ -1302,7 +1302,7 @@ def generate_file_report(instance, master_user, type, name):
 
 
 @shared_task(name='integrations.complex_transaction_csv_file_import', bind=True)
-def complex_transaction_csv_file_import(self, instance, send_messages=False):
+def complex_transaction_csv_file_import(self, instance, execution_context):
     from poms.transactions.models import TransactionTypeInput
 
     _l.info('complex_transaction_file_import: %s', instance)
@@ -1738,13 +1738,6 @@ def complex_transaction_csv_file_import(self, instance, send_messages=False):
 
             instance.error_rows.append(error_rows)
 
-        if send_messages:
-
-            send_system_message(master_user=instance.master_user,
-                                source="Transaction Import Service",
-                                text="Import finished")
-
-
     def _row_count(file):
 
         delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
@@ -1782,7 +1775,7 @@ def complex_transaction_csv_file_import(self, instance, send_messages=False):
         _l.info('Can\'t process file', exc_info=True)
         instance.error_message = ugettext("Invalid file format or file already deleted.")
 
-        if send_messages:
+        if execution_context and execution_context["started_by"] == 'procedure':
 
             send_system_message(master_user=instance.master_user,
                                 source="Transaction Import Service",
@@ -1795,7 +1788,14 @@ def complex_transaction_csv_file_import(self, instance, send_messages=False):
     instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
 
     instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.import',
-                                                      'Transaction Import');
+                                                      'Transaction Import', execution_context)
+
+    if execution_context and execution_context["started_by"] == 'procedure':
+
+        send_system_message(master_user=instance.master_user,
+                            source="Transaction Import Service",
+                            text="Import Finished",
+                            file_report=instance.stats_file_report)
 
     self.update_state(task_id=instance.task_id, state=Task.STATUS_DONE,
                       meta={'processed_rows': instance.processed_rows,
@@ -2376,7 +2376,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                         _l.info('complex_transaction_csv_file_import_by_procedure instance: %s' % instance)
 
                         transaction.on_commit(
-                            lambda: complex_transaction_csv_file_import.apply_async(kwargs={'instance': instance, 'send_messages': True}))
+                            lambda: complex_transaction_csv_file_import.apply_async(kwargs={'instance': instance, 'execution_context': {'started_by': 'procedure'}}))
 
                 except Exception as e:
 

@@ -100,13 +100,14 @@ class RequestDataFileProcedureProcess(object):
                 "user": {
                     "token": self.master_user.token,
                     "credentials": {},
-                    "params": {},
+                    "params": self.procedure.data,
                 },
                 "public_key": public_key,
                 # "date_from": self.procedure.date_from,
                 # "date_to": self.procedure.date_to,
                 "provider": self.procedure.provider.user_code,
                 "scheme_name": self.procedure.scheme_name,
+                "scheme_type": self.procedure.scheme_type,
                 "files": [],
                 "error_status": 0,
                 "error_message": ""

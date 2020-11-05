@@ -291,7 +291,9 @@ def process_csv_file(master_user,
                      task_instance,
                      update_state,
                      mode,
-                     process_result_handler, member):
+                     process_result_handler,
+                     member,
+                     execution_context=None):
 
     csv_fields = scheme.csv_fields.all()
     entity_fields = scheme.entity_fields.all()
@@ -1186,9 +1188,6 @@ class ImportHandler:
             _l.info("Add Pricing Policies instrument_type %s" % instance.instrument_type)
             _l.info("Add Pricing Policies for instance %s" % instance)
 
-
-
-
     def save_instance(self, scheme, result, error_handler, error_row, member, master_user):
 
         try:
@@ -1306,7 +1305,7 @@ class ImportHandler:
             pass
         return row_index
 
-    def process(self, instance, update_state):
+    def process(self, instance, update_state, execution_context=None):
 
         _l.info('ImportHandler.process: initialized')
 
@@ -1344,7 +1343,7 @@ class ImportHandler:
 
                         results, process_errors = process_csv_file(master_user, scheme, cf, error_handler, missing_data_handler,
                                                                    classifier_handler,
-                                                                   context, instance, update_state, mode, self.import_result, member)
+                                                                   context, instance, update_state, mode, self.import_result, member, execution_context)
 
                         _l.info('ImportHandler.process_csv_file: finished')
                         _l.info('ImportHandler.process_csv_file process_errors %s: ' % len(process_errors))
@@ -1364,16 +1363,23 @@ class ImportHandler:
             instance.stats_file_report = generate_file_report(instance, master_user, 'csv_import.import',
                                                               'Simple Data Import')
 
+            if execution_context and execution_context["started_by"] == 'procedure':
+
+                send_system_message(master_user=instance.master_user,
+                                    source="Simple Import Service",
+                                    text="Import Finished",
+                                    file_report=instance.stats_file_report)
+
         return instance
 
 
 @shared_task(name='csv_import.data_csv_file_import', bind=True)
-def data_csv_file_import(self, instance):
+def data_csv_file_import(self, instance, execution_context):
     handler = ImportHandler()
 
     setattr(instance, 'task_id', current_task.request.id)
 
-    handler.process(instance, self.update_state)
+    handler.process(instance, self.update_state, execution_context)
 
     return instance
 
@@ -1448,7 +1454,7 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
                         _l.info('data_csv_file_import_by_procedure instance: %s' % instance)
 
                         transaction.on_commit(
-                            lambda: data_csv_file_import.apply_async(kwargs={'instance': instance, 'send_messages': True}))
+                            lambda: data_csv_file_import.apply_async(kwargs={'instance': instance, 'execution_context': {'started_by': 'procedure'}}))
 
                 except Exception as e:
 

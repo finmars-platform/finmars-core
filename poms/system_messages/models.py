@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy
 
+from poms.file_reports.models import FileReport
+
 
 class SystemMessage(models.Model):
 
@@ -41,6 +43,16 @@ class SystemMessage(models.Model):
 
     source = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('source'))
 
-    # TODO attachments
     # TODO channels
     # TODO actions
+
+
+class SystemMessageAttachment(models.Model):
+
+    system_message = models.ForeignKey(SystemMessage, verbose_name=ugettext_lazy('system message') , on_delete=models.CASCADE, related_name="attachments")
+
+    file_url = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('File URL'))
+    file_name = models.CharField(max_length=255, blank=True, default='')
+    notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
+
+    file_report = models.ForeignKey(FileReport, null=True, verbose_name=ugettext_lazy('file report') , on_delete=models.SET_NULL)

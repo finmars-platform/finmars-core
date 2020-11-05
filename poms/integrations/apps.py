@@ -55,6 +55,11 @@ class IntegrationsConfig(AppConfig):
                 "name": "Revolut",
                 "user_code": "revolut",
             },
+            {
+                "id": 5,
+                "name": "Email Provider",
+                "user_code": "email_provider",
+            },
         ]
 
         providers_exists = DataProvider.objects.values_list('pk', flat=True)
