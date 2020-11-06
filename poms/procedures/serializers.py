@@ -95,7 +95,6 @@ class PricingParentProcedureInstanceSerializer(serializers.ModelSerializer):
         model = PricingParentProcedureInstance
         fields = ('master_user', 'id',
                   'created', 'modified',
-                  'provider_verbose', 'action_verbose',
                   'procedure', 'procedure_object',
                   'procedures')
 
