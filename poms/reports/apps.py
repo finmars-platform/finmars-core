@@ -41,6 +41,11 @@ class ReportsConfig(AppConfig):
         _l.info("create_view_for_positions")
 
         with connection.cursor() as cursor:
+
+            query = "DROP VIEW IF EXISTS pl_transactions_with_ttype"
+
+            cursor.execute(query)
+
             query = """
                 CREATE or REPLACE VIEW pl_transactions_with_ttype AS
                     SELECT
@@ -179,6 +184,11 @@ class ReportsConfig(AppConfig):
         _l.info("create_view_for_cash_fx_trades")
 
         with connection.cursor() as cursor:
+
+            query = "DROP VIEW IF EXISTS pl_cash_fx_trades_transactions_with_ttype"
+
+            cursor.execute(query)
+
             query = """
                 CREATE or REPLACE VIEW pl_cash_fx_trades_transactions_with_ttype AS
                     (
@@ -290,6 +300,11 @@ class ReportsConfig(AppConfig):
         _l.info("create_view_for_cash_fx_variations")
 
         with connection.cursor() as cursor:
+
+            query = "DROP VIEW IF EXISTS pl_cash_fx_variations_transactions_with_ttype"
+
+            cursor.execute(query)
+
             query = """
                 CREATE or REPLACE VIEW pl_cash_fx_variations_transactions_with_ttype AS
                     select
@@ -445,6 +460,11 @@ class ReportsConfig(AppConfig):
         _l.info("create_view_for_cash_transaction_pl")
 
         with connection.cursor() as cursor:
+
+            query = "DROP VIEW IF EXISTS pl_cash_transaction_pl_transactions_with_ttype"
+
+            cursor.execute(query)
+
             query = """
                 CREATE or REPLACE VIEW pl_cash_transaction_pl_transactions_with_ttype AS
                     (
