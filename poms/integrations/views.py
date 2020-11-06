@@ -64,6 +64,7 @@ from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.portfolios.models import Portfolio
 from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
+from poms.system_messages.handlers import send_system_message
 from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.models import Member, MasterUser
 from poms.users.permissions import SuperUserOrReadOnly, SuperUserOnly
@@ -1254,6 +1255,16 @@ class TransactionFileResultUploadHandler(APIView):
 
                 else:
                     _l.info("No files found")
+
+                    text = "Data File Procedure %s. Files not found" % (
+                        procedure_instance.procedure.user_code)
+
+                    send_system_message(master_user=procedure_instance.master_user,
+                                        source="Data File Procedure Service",
+                                        text=text)
+
+                    procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
+                    procedure_instance.save()
 
                 return Response({'status': 'ok'})
 

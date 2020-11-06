@@ -292,6 +292,9 @@ router.register(r'reports/pl-report/custom-field', reports.PLReportCustomFieldVi
 router.register(r'reports/transaction-report', reports.TransactionReportSyncViewSet, "transaction-report-sync")
 router.register(r'reports/transaction-report-sql', reports.TransactionReportSqlSyncViewSet, "transaction-report-sync-sql")
 
+router.register(r'reports/price-history-check-sql', reports.PriceHistoryCheckSqlSyncViewSet, "price-history-check-sql")
+
+
 router.register(r'reports/transaction-report/custom-field', reports.TransactionReportCustomFieldViewSet,
                 'transaction-report-custom-field')
 router.register(r'reports/cash-flow-projection-report', reports.CashFlowProjectionReportViewSet,

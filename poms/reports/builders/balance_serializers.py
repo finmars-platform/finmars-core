@@ -683,6 +683,10 @@ def serialize_balance_report_item(item):
         "position_size": item["position_size"],
         "market_value": item["market_value"],
         "market_value_loc": item["market_value_loc"],
+
+        "exposure": item["exposure"],
+        "exposure_loc": item["exposure_loc"],
+
         "modified_duration": None
     }
 
@@ -995,3 +999,67 @@ class PLReportSqlSerializer(ReportSerializer):
             result.append(serialize_report_item_instrument(item))
 
         return result
+
+
+def serialize_price_checker_item(item):
+
+    result = {
+        "type": item["type"]
+    }
+
+    if "name" in item:
+        result["name"] = item["name"]
+
+    if "user_code" in item:
+        result["user_code"] = item["user_code"]
+
+    if "instrument_id" in item:
+        result["instrument_id"] = item["instrument_id"]
+
+    if "accounting_date" in item:
+        result["accounting_date"] = item["accounting_date"]
+
+    if "transaction_currency_id" in item:
+        result["transaction_currency_id"] = item["transaction_currency_id"]
+
+    if "transaction_currency_name" in item:
+        result["transaction_currency_name"] = item["transaction_currency_name"]
+
+    if "transaction_currency_user_code" in item:
+        result["transaction_currency_user_code"] = item["transaction_currency_user_code"]
+
+    if "settlement_currency_name" in item:
+        result["settlement_currency_name"] = item["settlement_currency_name"]
+
+    if "settlement_currency_user_code" in item:
+        result["settlement_currency_user_code"] = item["settlement_currency_user_code"]
+
+    return result
+
+
+class PriceHistoryCheckSqlSerializer(ReportSerializer):
+    items = serializers.SerializerMethodField()
+
+    item_instruments = serializers.SerializerMethodField()
+
+    def get_items(self, obj):
+
+        result = []
+
+        for item in obj.items:
+            result.append(serialize_price_checker_item(item))
+
+        return result
+
+    def get_item_instruments(self, obj):
+
+        result = []
+
+        for item in obj.item_instruments:
+            result.append(serialize_report_item_instrument(item))
+
+        return result
+
+
+
+

@@ -315,6 +315,9 @@ class BalanceReportBuilderSql:
                     market_value,
                     market_value_loc,
                     
+                    exposure,
+                    exposure_loc,
+                    
                     net_cost_price,
                     net_cost_price_loc,
                     
@@ -361,6 +364,9 @@ class BalanceReportBuilderSql:
                         market_value,
                         market_value_loc,
                         
+                        exposure,
+                        exposure_loc,
+                        
                         (0) as net_cost_price,
                         (0) as net_cost_price_loc,
                         
@@ -393,7 +399,10 @@ class BalanceReportBuilderSql:
                             
                             SUM(position_size) as position_size,
                             SUM(market_value) as market_value,
-                            SUM(market_value_loc) as market_value_loc
+                            SUM(market_value_loc) as market_value_loc,
+                            
+                            SUM(exposure) as exposure,
+                            SUM(exposure_loc) as exposure_loc
                             
                         from (
                          -- Cash 
@@ -406,7 +415,10 @@ class BalanceReportBuilderSql:
                                 position_size,
       
                                 (t_with_report_fx_rate.position_size * stl_fx_rate / report_fx_rate) as market_value,
-                                (t_with_report_fx_rate.position_size * stl_fx_rate) as market_value_loc
+                                (t_with_report_fx_rate.position_size * stl_fx_rate) as market_value_loc,
+                                
+                                (t_with_report_fx_rate.position_size * stl_fx_rate / report_fx_rate) as exposure,
+                                (t_with_report_fx_rate.position_size * stl_fx_rate) as exposure_loc
                                  
                             from 
                                 (select 
@@ -462,7 +474,10 @@ class BalanceReportBuilderSql:
                                 position_size,
                                 
                                 (0) as market_value,
-                                (0) as market_value_loc
+                                (0) as market_value_loc,
+                                
+                                (0) as exposure,
+                                (0) as exposure_loc
         
                         
                             from (
@@ -598,6 +613,9 @@ class BalanceReportBuilderSql:
                     market_value,
                     market_value_loc,
                     
+                    exposure,
+                    exposure_loc,
+                    
                     net_cost_price,
                     net_cost_price_loc,
                     
@@ -642,6 +660,9 @@ class BalanceReportBuilderSql:
                         
                         market_value,
                         (market_value * cross_loc_prc_fx) as market_value_loc,
+                        
+                        exposure,
+                        (market_value * cross_loc_prc_fx) as exposure_loc,
                         
                         net_cost_price,
                         net_cost_price_loc,
@@ -688,7 +709,8 @@ class BalanceReportBuilderSql:
                         (principal_price) as instrument_principal_price,
                         (accrued_price) as instrument_accrued_price,
              
-                        (position_size * principal_price * price_multiplier * pch_fx_rate + (position_size * accrued_price * pch_fx_rate * 1 * accrued_multiplier)) as market_value
+                        (position_size * principal_price * price_multiplier * pch_fx_rate + (position_size * accrued_price * ach_fx_rate * 1 * accrued_multiplier)) as market_value,
+                        (position_size * principal_price * price_multiplier * pch_fx_rate + (position_size * accrued_price * ach_fx_rate * 1 * accrued_multiplier)) as exposure
                     from (
                         select
                             instrument_id,

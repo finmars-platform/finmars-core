@@ -114,7 +114,6 @@ class TransactionTypeActionInstrumentEventSchedulePhantomField(serializers.Integ
 
 
 class TransactionTypeInputSettingsSerializer(serializers.ModelSerializer):
-
     linked_inputs_names = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     recalc_on_change_linked_inputs = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
@@ -187,7 +186,8 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
             'is_fill_from_context', 'context_property', 'value', 'account', 'instrument_type', 'instrument', 'currency',
             'counterparty',
             'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3', 'daily_pricing_model',
-            'payment_size_detail', 'price_download_scheme', 'pricing_policy', 'periodicity', 'accrual_calculation_model',
+            'payment_size_detail', 'price_download_scheme', 'pricing_policy', 'periodicity',
+            'accrual_calculation_model',
             'settings',
             # 'settings_old'
             # 'account_object',
@@ -210,7 +210,8 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
         super(TransactionTypeInputSerializer, self).__init__(*args, **kwargs)
 
         from poms.accounts.serializers import AccountViewSerializer
-        from poms.instruments.serializers import InstrumentTypeViewSerializer, InstrumentViewSerializer, DailyPricingModelSerializer, \
+        from poms.instruments.serializers import InstrumentTypeViewSerializer, InstrumentViewSerializer, \
+            DailyPricingModelSerializer, \
             PaymentSizeDetailSerializer, PricingPolicySerializer
         from poms.currencies.serializers import CurrencyViewSerializer
         from poms.counterparties.serializers import CounterpartyViewSerializer, ResponsibleViewSerializer
@@ -242,7 +243,7 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
         self.fields['price_download_scheme_object'] = PriceDownloadSchemeViewSerializer(source='price_download_scheme',
                                                                                         read_only=True)
         self.fields['pricing_policy_object'] = PricingPolicySerializer(source="pricing_policy", read_only=True)
-    
+
         self.fields['periodicity_object'] = PeriodicitySerializer(source="periodicity", read_only=True)
         self.fields['accrual_calculation_model_object'] = AccrualCalculationModelSerializer(
             source="accrual_calculation_model",
@@ -1048,7 +1049,6 @@ class TransactionTypeLightSerializerWithInputs(TransactionTypeLightSerializer):
             'user_code', 'name', 'short_name', 'public_name', 'notes',
             'date_expr', 'display_expr',
 
-
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
 
@@ -1079,9 +1079,8 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
     display_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                    allow_null=True, default='')
 
-
     transaction_unique_code_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
+                                                   allow_null=True, default='')
 
     user_text_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                   allow_null=True, default='')
@@ -1279,7 +1278,6 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
         if recon_fields is not empty:
             recon_fields = self.save_recon_fields(instance, recon_fields)
 
-
         if inputs is not empty:
             instance.inputs.exclude(id__in=[i.id for i in inputs]).delete()
         if actions is not empty:
@@ -1307,8 +1305,6 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                 except TransactionTypeInput.DoesNotExist:
                     inp = TransactionTypeInput(transaction_type=instance)
 
-
-
             inp.order = order
             for attr, value in inp_data.items():
                 setattr(inp, attr, value)
@@ -1321,11 +1317,17 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                 if inp.settings:
 
                     inp.settings.linked_inputs_names = settings_data['linked_inputs_names']
+                    inp.settings.recalc_on_change_linked_inputs = settings_data['recalc_on_change_linked_inputs']
                     inp.settings.save()
 
                 else:
 
-                    item = TransactionTypeInputSettings.objects.create(transaction_type_input=inp, linked_inputs_names=settings_data['linked_inputs_names'])
+                    item = TransactionTypeInputSettings.objects.create(transaction_type_input=inp,
+                                                                       linked_inputs_names=settings_data[
+                                                                           'linked_inputs_names'],
+                    recalc_on_change_linked_inputs = settings_data['recalc_on_change_linked_inputs']
+
+                    )
                     inp.settings = item
 
             inp.save()
@@ -1345,7 +1347,8 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             recon_field = cur_recon_fields.pop(pk, None)
             if recon_field is None:
                 try:
-                    recon_field = TransactionTypeReconField.objects.get(transaction_type=instance, reference_name=rec_field_data['reference_name'])
+                    recon_field = TransactionTypeReconField.objects.get(transaction_type=instance,
+                                                                        reference_name=rec_field_data['reference_name'])
                 except TransactionTypeReconField.DoesNotExist:
                     recon_field = TransactionTypeReconField(transaction_type=instance)
 
@@ -2012,7 +2015,8 @@ class ComplexTransactionMixin:
         return data
 
 
-class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
+class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
+                                   ModelWithTimeStampSerializer):
     # text = serializers.SerializerMethodField()
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
