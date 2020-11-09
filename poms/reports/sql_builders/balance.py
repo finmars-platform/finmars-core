@@ -71,7 +71,17 @@ class BalanceReportBuilderSql:
             fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
                 self.instance)
 
+            _l.info('report_date: "%s"' % self.instance.report_date)
+            _l.info('report_fx_rate: "%s"' % report_fx_rate)
+            _l.info('default_currency_id: "%s"' % self.ecosystem_defaults.currency_id)
+            _l.info('report_currency: "%s"' % self.instance.report_currency.id)
+            _l.info('pricing_policy: "%s"' % self.instance.pricing_policy.id)
             _l.info('transaction_filter_sql_string: "%s"' % transaction_filter_sql_string)
+            _l.info('fx_trades_and_fx_variations_filter_sql_string: "%s"' % fx_trades_and_fx_variations_filter_sql_string)
+            _l.info('consolidation_columns: "%s"' % consolidation_columns)
+            _l.info('balance_q_consolidated_select_columns: "%s"' % balance_q_consolidated_select_columns)
+            _l.info('tt_consolidation_columns: "%s"' % tt_consolidation_columns)
+            _l.info('transactions_all_with_multipliers_where_expression: "%s"' % transactions_all_with_multipliers_where_expression)
 
             pl_query = pl_query.format(report_date=self.instance.report_date,
                                        master_user_id=self.instance.master_user.id,
