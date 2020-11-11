@@ -2331,7 +2331,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
             scheme = ComplexTransactionImportScheme.objects.get(master_user=procedure_instance.master_user,
                                                                 scheme_name=procedure_instance.procedure.scheme_name)
 
-            text = "Data File Procedure %s. File is received, start data import" % (
+            text = "Data File Procedure %s. File is received. Decrypting file" % (
                 procedure_instance.procedure.user_code)
 
             send_system_message(master_user=procedure_instance.master_user,
@@ -2381,7 +2381,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                         tmpf.flush()
 
                         file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
-                        file_path = '%s/data_files/%s.dat' % (procedure_instance.master_user.token, file_name)
+                        file_path = '%s/data_files/%s.csv' % (procedure_instance.master_user.token, file_name)
 
                         SFS.save(file_path, tmpf)
 
@@ -2392,6 +2392,28 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                                                                    master_user=procedure_instance.master_user)
 
                         _l.info('complex_transaction_csv_file_import_by_procedure instance: %s' % instance)
+
+                        current_date_time = now().strftime("%Y-%m-%d-%H-%M")
+                        file_report = FileReport()
+
+                        file_report.upload_file(file_name=file_name, text=decrypt_text.encode('utf-8'), master_user=procedure_instance.master_user)
+                        file_report.master_user = procedure_instance.master_user
+                        file_report.name = "'Transaction Import File. Procedure ' %s %s" % (procedure_instance.id, current_date_time)
+                        file_report.file_name = file_name
+                        file_report.type = 'transaction_import.import'
+                        file_report.notes = 'Transaction Import File. Procedure %s' % procedure_instance.id
+
+                        file_report.save()
+
+                        text = "Data File Procedure %s. File is received. Start Import" % (
+                            procedure_instance.procedure.user_code)
+
+                        send_system_message(master_user=procedure_instance.master_user,
+                                            source="Data File Procedure Service",
+                                            text=text,
+                                            file_report_id=file_report.id)
+
+
 
                         transaction.on_commit(
                             lambda: complex_transaction_csv_file_import.apply_async(kwargs={'instance': instance, 'execution_context': {'started_by': 'procedure'}}))
