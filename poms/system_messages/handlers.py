@@ -5,20 +5,25 @@ _l = logging.getLogger('poms.system_messages')
 
 def send_system_message(master_user, source=None, text=None, file_report=None, level=SystemMessage.LEVEL_INFO, status=SystemMessage.STATUS_NEW):
 
-    _l.info('send_system_message %s' % text)
+    try:
 
-    system_message = SystemMessage.objects.create(master_user=master_user,
-                                 source=source,
-                                 text=text,
-                                 level=level,
-                                 status=status)
+        _l.info('send_system_message %s' % text)
 
-    _l.info('system_message %s' % system_message)
-    _l.info('file_report %s' % file_report)
+        system_message = SystemMessage.objects.create(master_user=master_user,
+                                     source=source,
+                                     text=text,
+                                     level=level,
+                                     status=status)
 
-    if file_report:
+        _l.info('system_message %s' % system_message)
+        _l.info('file_report %s' % file_report)
 
-        attachment = SystemMessageAttachment.objects.create(system_message=system_message, file_report=file_report)
-        attachment.save()
+        if file_report is not None:
 
-        _l.info('file_report saved %s' % attachment )
+            attachment = SystemMessageAttachment.objects.create(system_message=system_message, file_report=file_report)
+            attachment.save()
+
+            _l.info('file_report saved %s' % attachment )
+
+    except Exception as e:
+        _l.info("Error send system message: %s" % e)
