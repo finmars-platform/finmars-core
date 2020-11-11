@@ -2396,7 +2396,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                         current_date_time = now().strftime("%Y-%m-%d-%H-%M")
                         file_report = FileReport()
 
-                        file_report.upload_file(file_name=file_name, text=decrypt_text.encode('utf-8'), master_user=procedure_instance.master_user)
+                        file_report.upload_file(file_name='file_report_%.csv' % procedure_instance.id, text=decrypt_text, master_user=procedure_instance.master_user)
                         file_report.master_user = procedure_instance.master_user
                         file_report.name = "'Transaction Import File. Procedure ' %s %s" % (procedure_instance.id, current_date_time)
                         file_report.file_name = file_name
@@ -2404,6 +2404,8 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                         file_report.notes = 'Transaction Import File. Procedure %s' % procedure_instance.id
 
                         file_report.save()
+
+                        _l.info('file_report %s' % file_report)
 
                         text = "Data File Procedure %s. File is received. Start Import" % (
                             procedure_instance.procedure.user_code)
