@@ -2328,6 +2328,8 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                                 source="Data File Procedure Service",
                                 text=text)
 
+            _l.info('trying to open %s' % transaction_file_result.file_path)
+
             with SFS.open(transaction_file_result.file_path, 'rb') as f:
 
                 try:
@@ -2340,6 +2342,9 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
 
                     try:
                         aes_key = rsa_cipher.decrypt(procedure_instance.private_key, procedure_instance.symmetric_key)
+
+                        _l.info("complex_transaction_csv_file_import_by_procedure decrypting symmetric key")
+
                     except Exception as e:
                         _l.info('complex_transaction_csv_file_import_by_procedure AES Key decryption error %s' % e)
 
@@ -2349,6 +2354,9 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
 
                     try:
                         decrypt_text = aes_cipher.decrypt(encrypted_text)
+
+                        _l.info("complex_transaction_csv_file_import_by_procedure decrypting text file")
+
                     except Exception as e:
                         _l.info('complex_transaction_csv_file_import_by_procedure Text decryption error %s' % e)
 
