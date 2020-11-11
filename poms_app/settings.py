@@ -670,12 +670,25 @@ print("SFTP HOST %s" % SFTP_HOST)
 SFTP_STORAGE_HOST = SFTP_HOST
 SFTP_STORAGE_ROOT = os.environ.get('SFTP_ROOT', '/finmars/')
 
+SFTP_PKEY_PATH = os.environ.get('SFTP_PKEY_PATH', None)
+
+print('SFTP_PKEY_PATH %s' % SFTP_PKEY_PATH)
+
+PKEY = None
+
+if SFTP_PKEY_PATH:
+
+    f = open(SFTP_PKEY_PATH,'r')
+    s = f.read()
+    import StringIO
+    PKEY = StringIO.StringIO(s)
+
 print('SFTP_STORAGE_ROOT %s' % SFTP_STORAGE_ROOT)
 
 SFTP_STORAGE_PARAMS = {
     'username': os.environ.get('SFTP_USERNAME', None),
     'password': os.environ.get('SFTP_PASSWORD', None),
-    'pkey': os.environ.get('SFTP_PKEY', None),
+    'pkey': PKEY,
     'port': os.environ.get('SFTP_PORT', 22),
     'allow_agent': False,
     'look_for_keys': False,
