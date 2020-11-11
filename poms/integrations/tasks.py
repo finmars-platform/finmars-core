@@ -1805,7 +1805,7 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
             send_system_message(master_user=instance.master_user,
                                 source="Transaction Import Service",
                                 text="Import Finished",
-                                file_report=instance.stats_file_report)
+                                file_report_id=instance.stats_file_report)
 
         self.update_state(task_id=instance.task_id, state=Task.STATUS_DONE,
                           meta={'processed_rows': instance.processed_rows,

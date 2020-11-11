@@ -1368,7 +1368,7 @@ class ImportHandler:
                 send_system_message(master_user=instance.master_user,
                                     source="Simple Import Service",
                                     text="Import Finished",
-                                    file_report=instance.stats_file_report)
+                                    file_report_id=instance.stats_file_report)
 
         return instance
 

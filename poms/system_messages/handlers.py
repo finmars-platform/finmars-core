@@ -3,7 +3,7 @@ from poms.system_messages.models import SystemMessage, SystemMessageAttachment
 import logging
 _l = logging.getLogger('poms.system_messages')
 
-def send_system_message(master_user, source=None, text=None, file_report=None, level=SystemMessage.LEVEL_INFO, status=SystemMessage.STATUS_NEW):
+def send_system_message(master_user, source=None, text=None, file_report_id=None, level=SystemMessage.LEVEL_INFO, status=SystemMessage.STATUS_NEW):
 
     try:
 
@@ -20,7 +20,7 @@ def send_system_message(master_user, source=None, text=None, file_report=None, l
 
         if file_report is not None:
 
-            attachment = SystemMessageAttachment.objects.create(system_message=system_message, file_report=file_report)
+            attachment = SystemMessageAttachment.objects.create(system_message=system_message, file_report_id=file_report)
             attachment.save()
 
             _l.info('file_report saved %s' % attachment )
