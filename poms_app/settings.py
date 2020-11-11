@@ -21,6 +21,8 @@ from botocore.exceptions import ClientError
 
 from io import StringIO
 
+from storages.backends.sftpstorage import SFTPStorage
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -675,23 +677,12 @@ SFTP_PKEY_PATH = os.environ.get('SFTP_PKEY_PATH', None)
 
 print('SFTP_PKEY_PATH %s' % SFTP_PKEY_PATH)
 
-PKEY = None
-
-if SFTP_PKEY_PATH:
-
-    f = open(SFTP_PKEY_PATH,'r')
-    s = f.read()
-
-    print("sftp key readed")
-
-    PKEY = StringIO(s)
-
 print('SFTP_STORAGE_ROOT %s' % SFTP_STORAGE_ROOT)
 
 SFTP_STORAGE_PARAMS = {
     'username': os.environ.get('SFTP_USERNAME', None),
     'password': os.environ.get('SFTP_PASSWORD', None),
-    'pkey': PKEY,
+    'key_filename': SFTP_PKEY_PATH,
     'port': os.environ.get('SFTP_PORT', 22),
     'allow_agent': False,
     'look_for_keys': False,
@@ -700,7 +691,6 @@ SFTP_STORAGE_PARAMS = {
 SFTP_STORAGE_INTERACTIVE = False
 
 SFTP_KNOWN_HOST_FILE = os.path.join(BASE_DIR, '.ssh/known_hosts')
-
 
 # INTEGRATIONS ------------------------------------------------
 
