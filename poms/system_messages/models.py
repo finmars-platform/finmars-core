@@ -51,8 +51,8 @@ class SystemMessageAttachment(models.Model):
 
     system_message = models.ForeignKey(SystemMessage, verbose_name=ugettext_lazy('system message') , on_delete=models.CASCADE, related_name="attachments")
 
-    file_url = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('File URL'))
-    file_name = models.CharField(max_length=255, blank=True, default='')
-    notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
+    file_url = models.TextField(null=True, blank=True, default='', verbose_name=ugettext_lazy('File URL'))
+    file_name = models.CharField(null=True, max_length=255, blank=True, default='')
+    notes = models.TextField(null=True, blank=True, default='', verbose_name=ugettext_lazy('notes'))
 
     file_report = models.ForeignKey(FileReport, null=True, verbose_name=ugettext_lazy('file report') , on_delete=models.SET_NULL)
