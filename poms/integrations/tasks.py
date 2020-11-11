@@ -1776,6 +1776,8 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
         _l.info('Can\'t process file', exc_info=True)
         instance.error_message = ugettext("Invalid file format or file already deleted.")
 
+
+
         if execution_context and execution_context["started_by"] == 'procedure':
 
             send_system_message(master_user=instance.master_user,
@@ -1785,8 +1787,6 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
     finally:
         # import_file_storage.delete(instance.file_path)
 
-
-
         SFS.delete(instance.file_path)
 
         instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
@@ -1794,9 +1794,13 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
         instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.import',
                                                           'Transaction Import', execution_context)
 
-        _l.info("Reached end instance.stats_file_report: %s " %instance.stats_file_report)
+        _l.info('complex_transaction_file_import execution_context: %s', execution_context)
+
+        _l.info("Reached end instance.stats_file_report: %s " % instance.stats_file_report)
 
         if execution_context and execution_context["started_by"] == 'procedure':
+
+            _l.info('send final import message')
 
             send_system_message(master_user=instance.master_user,
                                 source="Transaction Import Service",
