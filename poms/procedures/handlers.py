@@ -94,13 +94,34 @@ class RequestDataFileProcedureProcess(object):
 
             item.save()
 
+            params = {}
+
+            if self.procedure.data:
+
+                if 'sender' in self.procedure.data and self.procedure.data['sender']:
+                    params['sender'] = self.procedure.data['sender']
+
+                if 'filename' in self.procedure.data and self.procedure.data['filename']:
+                    params['filename'] = self.procedure.data['filename']
+
+                if 'subject' in self.procedure.data and self.procedure.data['subject']:
+                    params['subject'] = self.procedure.data['subject']
+
+                if 'hasNoDelete' in self.procedure.data:
+
+                    if self.procedure.data['hasNoDelete']: # pain
+                        params['hasNoDelete'] = 'true'
+                    else:
+                        params['hasNoDelete'] = 'false'
+
+
 
             data = {
                 "id": procedure_instance.id,
                 "user": {
                     "token": self.master_user.token,
                     "credentials": {},
-                    "params": self.procedure.data,
+                    "params": params
                 },
                 "public_key": public_key,
                 # "date_from": self.procedure.date_from,
