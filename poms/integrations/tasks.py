@@ -2399,7 +2399,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                         file_report.upload_file(file_name='file_report_%.csv' % procedure_instance.id, text=decrypt_text, master_user=procedure_instance.master_user)
                         file_report.master_user = procedure_instance.master_user
                         file_report.name = "'Transaction Import File. Procedure ' %s %s" % (procedure_instance.id, current_date_time)
-                        file_report.file_name = file_name
+                        file_report.file_name = 'file_report_%.csv'
                         file_report.type = 'transaction_import.import'
                         file_report.notes = 'Transaction Import File. Procedure %s' % procedure_instance.id
 
