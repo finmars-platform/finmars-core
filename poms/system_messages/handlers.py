@@ -16,11 +16,11 @@ def send_system_message(master_user, source=None, text=None, file_report_id=None
                                      status=status)
 
         _l.info('system_message %s' % system_message)
-        _l.info('file_report %s' % file_report)
+        _l.info('file_report %s' % file_report_id)
 
-        if file_report is not None:
+        if file_report_id is not None:
 
-            attachment = SystemMessageAttachment.objects.create(system_message=system_message, file_report_id=file_report)
+            attachment = SystemMessageAttachment.objects.create(system_message=system_message, file_report_id=file_report_id)
             attachment.save()
 
             _l.info('file_report saved %s' % attachment )
