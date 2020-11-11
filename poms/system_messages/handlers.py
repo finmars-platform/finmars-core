@@ -13,6 +13,12 @@ def send_system_message(master_user, source=None, text=None, file_report=None, l
                                  level=level,
                                  status=status)
 
+    _l.info('system_message %s' % system_message)
+    _l.info('file_report %s' % file_report)
+
     if file_report:
 
-        SystemMessageAttachment.objects.create(system_message=system_message, file_report=file_report)
+        attachment = SystemMessageAttachment.objects.create(system_message=system_message, file_report=file_report)
+        attachment.save()
+
+        _l.info('file_report saved %s' % attachment )
