@@ -1306,6 +1306,7 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
     from poms.transactions.models import TransactionTypeInput
 
     _l.info('complex_transaction_file_import: %s', instance)
+    _l.info('complex_transaction_file_import execution_context: %s', execution_context)
 
     instance.processed_rows = 0
 
@@ -1783,24 +1784,29 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
 
     finally:
         # import_file_storage.delete(instance.file_path)
+
+
+
         SFS.delete(instance.file_path)
 
-    instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
+        instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
 
-    instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.import',
-                                                      'Transaction Import', execution_context)
+        instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.import',
+                                                          'Transaction Import', execution_context)
 
-    if execution_context and execution_context["started_by"] == 'procedure':
+        _l.info("Reached end instance.stats_file_report: %s " %instance.stats_file_report)
 
-        send_system_message(master_user=instance.master_user,
-                            source="Transaction Import Service",
-                            text="Import Finished",
-                            file_report=instance.stats_file_report)
+        if execution_context and execution_context["started_by"] == 'procedure':
 
-    self.update_state(task_id=instance.task_id, state=Task.STATUS_DONE,
-                      meta={'processed_rows': instance.processed_rows,
-                            'total_rows': instance.total_rows,
-                            'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
+            send_system_message(master_user=instance.master_user,
+                                source="Transaction Import Service",
+                                text="Import Finished",
+                                file_report=instance.stats_file_report)
+
+        self.update_state(task_id=instance.task_id, state=Task.STATUS_DONE,
+                          meta={'processed_rows': instance.processed_rows,
+                                'total_rows': instance.total_rows,
+                                'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
 
     return instance
 

@@ -12,6 +12,7 @@ LOCAL=True \
 PROFILER=True \
 ENV_CSRF_TRUSTED_ORIGINS=0.0.0.0:8080 \
 SFTP_HOST=3.127.37.108 \
+SFTP_ROOT=/home/finmars/ \
 SFTP_USERNAME=finmars \
 SFTP_PKEY_PATH=/home/szhitenev/Downloads/sftp_key/aws_id_rsa \
 MEDIATOR_URL=http://localhost:8082/ \
