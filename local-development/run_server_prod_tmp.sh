@@ -13,7 +13,7 @@ PROFILER=True \
 ENV_CSRF_TRUSTED_ORIGINS=0.0.0.0:8080 \
 SFTP_HOST=sftp.finmars.com \
 SFTP_USERNAME=finmars \
-SFTP_PASSWORD=97cZgv1pL2pz \
+SFTP_PKEY_PATH=/home/szhitenev/Downloads/sftp_key/aws_id_rsa \
 MEDIATOR_URL=http://localhost:8082/ \
 BACKEND_ROLES="ALL" python manage.py runserver
 

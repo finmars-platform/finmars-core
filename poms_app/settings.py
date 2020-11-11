@@ -19,6 +19,7 @@ import boto3
 import base64
 from botocore.exceptions import ClientError
 
+from io import StringIO
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -680,8 +681,10 @@ if SFTP_PKEY_PATH:
 
     f = open(SFTP_PKEY_PATH,'r')
     s = f.read()
-    import StringIO
-    PKEY = StringIO.StringIO(s)
+
+    print("sftp key readed")
+
+    PKEY = StringIO(s)
 
 print('SFTP_STORAGE_ROOT %s' % SFTP_STORAGE_ROOT)
 
