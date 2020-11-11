@@ -1013,8 +1013,8 @@ def serialize_price_checker_item(item):
     if "user_code" in item:
         result["user_code"] = item["user_code"]
 
-    if "instrument_id" in item:
-        result["instrument_id"] = item["instrument_id"]
+    if "id" in item:
+        result["id"] = item["id"]
 
     if "accounting_date" in item:
         result["accounting_date"] = item["accounting_date"]
@@ -1033,6 +1033,87 @@ def serialize_price_checker_item(item):
 
     if "settlement_currency_user_code" in item:
         result["settlement_currency_user_code"] = item["settlement_currency_user_code"]
+
+    return result
+
+def serialize_price_checker_item_instrument(item):
+    # id', 'instrument_type',  'user_code', 'name', 'short_name',
+    # 'public_name', 'notes',
+    # 'pricing_currency', 'price_multiplier',
+    # 'accrued_currency',  'accrued_multiplier',
+    # 'default_price', 'default_accrued',
+    # 'user_text_1', 'user_text_2', 'user_text_3',
+    # 'reference_for_pricing',
+    # 'payment_size_detail',
+    # 'daily_pricing_model',
+    # 'maturity_date', 'maturity_price'
+
+    attributes = []
+
+    for attribute in item.attributes.all():
+
+        attr_result = {
+            "id": attribute.id,
+            "attribute_type": attribute.attribute_type_id,
+            "attribute_type_object": {
+                "id": attribute.attribute_type.id,
+                "user_code": attribute.attribute_type.user_code,
+                "name": attribute.attribute_type.name,
+                "short_name": attribute.attribute_type.short_name,
+                "value_type": attribute.attribute_type.value_type
+            },
+            "value_string": attribute.value_string,
+            "value_float": attribute.value_float,
+            "value_date": attribute.value_date,
+            "classifier": attribute.classifier_id
+        }
+
+        if attribute.classifier:
+            attr_result["classifier_object"] = {
+                "id": attribute.classifier.id,
+                "name": attribute.classifier.name
+            }
+
+        attributes.append(attr_result)
+
+    pricing_policies = []
+
+    for policy in item.pricing_policies.all():
+
+        policy_result = {
+            "id": policy.id,
+            "pricing_policy": policy.pricing_policy_id,
+            "pricing_scheme": policy.pricing_scheme_id,
+            "pricing_scheme_object": {
+                "id": policy.pricing_scheme.id,
+                "user_code": policy.pricing_scheme.user_code,
+                "name": policy.pricing_scheme.name,
+            },
+        }
+
+        pricing_policies.append(policy_result)
+
+    result = {
+        "id": item.id,
+        "name": item.name,
+        "short_name": item.short_name,
+        "user_code": item.user_code,
+        "public_name": item.public_name,
+        "pricing_currency": item.pricing_currency_id,
+        "price_multiplier": item.price_multiplier,
+        "accrued_currency": item.accrued_currency_id,
+        "accrued_multiplier": item.accrued_multiplier,
+        "default_accrued": item.default_accrued,
+        "default_price": item.price_multiplier,
+        "user_text_1": item.user_text_1,
+        "user_text_2": item.user_text_2,
+        "user_text_3": item.user_text_3,
+        "reference_for_pricing": item.reference_for_pricing,
+        "payment_size_detail": item.payment_size_detail_id,
+        "maturity_date": item.maturity_date,
+        "attributes": attributes,
+        "pricing_policies": pricing_policies,
+    }
 
     return result
 
@@ -1056,7 +1137,7 @@ class PriceHistoryCheckSqlSerializer(ReportSerializer):
         result = []
 
         for item in obj.item_instruments:
-            result.append(serialize_report_item_instrument(item))
+            result.append(serialize_price_checker_item_instrument(item))
 
         return result
 

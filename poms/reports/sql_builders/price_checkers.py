@@ -345,20 +345,11 @@ def execute_nav_sql(instance, cursor, ecosystem_defaults):
         )
         
         select 
-            instrument_id,
+            (instrument_id) as id,
             name,
             user_code,
             ('missing_principal_pricing_history') as type
-        from nav_positions WHERE instrument_principal_price ISNULL 
-        
-        UNION ALL
-        
-        select 
-            instrument_id,
-            name,
-            user_code,
-            ('missing_accrued_pricing_history') as type
-        from nav_positions WHERE instrument_accrued_price ISNULL 
+        from nav_positions WHERE instrument_principal_price ISNULL and instrument_accrued_price ISNULL 
         
         UNION ALL
         
@@ -366,19 +357,19 @@ def execute_nav_sql(instance, cursor, ecosystem_defaults):
             DISTINCT pricing_currency_id,
             (pricing_currency_id::VARCHAR(255)) as name,
             (pricing_currency_id::VARCHAR(255)) as user_code,
-            ('missing_instrument_pricing_currency_fx_rate') as type
+            ('missing_instrument_currency_fx_rate') as type
         from nav_positions WHERE instrument_pricing_currency_fx_rate ISNULL 
         
-        UNION ALL
+        UNION 
         
         select 
             DISTINCT accrued_currency_id,
             (accrued_currency_id::VARCHAR(255)) as name,
             (accrued_currency_id::VARCHAR(255)) as user_code,
-            ('missing_instrument_accrued_currency_fx_rate') as type
+            ('missing_instrument_currency_fx_rate') as type
         from nav_positions WHERE instrument_accrued_currency_fx_rate ISNULL
         
-        UNION ALL
+        UNION
         
         select 
             DISTINCT id,
@@ -633,8 +624,6 @@ class PriceHistoryCheckerSql:
 
             positions = execute_nav_sql(self.instance, cursor, self.ecosystem_defaults)
 
-            _l.info('positions %s ' % len(positions))
-
             self.instance.items = self.instance.items + positions
 
             transactions = execute_transaction_prices_sql(self.instance, cursor, self.ecosystem_defaults)
@@ -643,8 +632,67 @@ class PriceHistoryCheckerSql:
 
             self.instance.items = self.instance.items + transactions
 
+        self.add_data_items()
+
 
         _l.info('Price History check query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
         return self.instance
+
+    def add_data_items_instruments(self, ids):
+
+        self.instance.item_instruments = Instrument.objects.select_related(
+            'instrument_type',
+            'instrument_type__instrument_class',
+            'pricing_currency',
+            'accrued_currency',
+            'payment_size_detail',
+            'daily_pricing_model',
+            'price_download_scheme',
+            'price_download_scheme__provider',
+        ).prefetch_related(
+            'attributes',
+            'attributes__attribute_type',
+            'attributes__classifier',
+            'pricing_policies',
+            'pricing_policies__pricing_scheme'
+        ).filter(master_user=self.instance.master_user) \
+            .filter(id__in=ids)
+
+    def add_data_items_currencies(self, ids):
+
+        self.instance.item_currencies = Currency.objects.prefetch_related(
+            'attributes',
+            'attributes__attribute_type',
+            'attributes__classifier',
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
+
+    def add_data_items(self):
+
+        instance_relations_st = time.perf_counter()
+
+        _l.debug('_refresh_with_perms_optimized instance relations done: %s',
+                 "{:3.3f}".format(time.perf_counter() - instance_relations_st))
+
+        item_relations_st = time.perf_counter()
+
+        instrument_ids = []
+        currencies_ids = []
+
+        for item in self.instance.items:
+
+            if item['type'] == 'missing_principal_pricing_history':
+                instrument_ids.append(item['id'])
+
+            if item['type'] == 'missing_instrument_currency_fx_rate':
+                currencies_ids.append(item['id'])
+
+        _l.info('len instrument_ids %s' % len(instrument_ids))
+
+        self.add_data_items_instruments(instrument_ids)
+
+        self.add_data_items_currencies(currencies_ids)
+
+        _l.debug('_refresh_with_perms_optimized item relations done: %s',
+                 "{:3.3f}".format(time.perf_counter() - item_relations_st))
 
