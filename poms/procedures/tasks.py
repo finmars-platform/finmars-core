@@ -46,29 +46,29 @@ def procedure_request_data_file(self,
 
             procedure_instance.save()
 
-            data = response.json()
-
-            if data['files'] and len(data['files']):
-
-                procedure_instance.symmetric_key = data['files'][0]['symmetric_key']
-                procedure_instance.save()
-
-                transaction_file_result.file_path = data['files'][0]["path"]
-
-                transaction_file_result.save()
-
-                if procedure_instance.procedure.scheme_type == 'transaction_import':
-
-                    _l.info("Run Transaction import from response")
-                    complex_transaction_csv_file_import_by_procedure.apply_async(kwargs={'procedure_instance': procedure_instance,
-                                                                                        'transaction_file_result': transaction_file_result,
-                                                                                          })
-                if procedure_instance.procedure.scheme_type == 'simple_import':
-
-                    _l.info("Run Simple import from response")
-                    data_csv_file_import_by_procedure.apply_async(kwargs={'procedure_instance': procedure_instance,
-                                                                                         'transaction_file_result': transaction_file_result,
-                                                                                         })
+            # data = response.json()
+            #
+            # if data['files'] and len(data['files']):
+            #
+            #     procedure_instance.symmetric_key = data['files'][0]['symmetric_key']
+            #     procedure_instance.save()
+            #
+            #     transaction_file_result.file_path = data['files'][0]["path"]
+            #
+            #     transaction_file_result.save()
+            #
+            #     if procedure_instance.procedure.scheme_type == 'transaction_import':
+            #
+            #         _l.info("Run Transaction import from response")
+            #         complex_transaction_csv_file_import_by_procedure.apply_async(kwargs={'procedure_instance': procedure_instance,
+            #                                                                             'transaction_file_result': transaction_file_result,
+            #                                                                               })
+            #     if procedure_instance.procedure.scheme_type == 'simple_import':
+            #
+            #         _l.info("Run Simple import from response")
+            #         data_csv_file_import_by_procedure.apply_async(kwargs={'procedure_instance': procedure_instance,
+            #                                                                              'transaction_file_result': transaction_file_result,
+            #                                                                              })
 
 
         else:
