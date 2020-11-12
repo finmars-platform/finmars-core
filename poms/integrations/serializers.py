@@ -1873,6 +1873,9 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
             validated_data['delimiter'] = validated_data['scheme'].delimiter
             validated_data['error_handling'] = validated_data['scheme'].error_handler # Warning - prop is - error_handling
             validated_data['missing_data_handler'] = validated_data['scheme'].missing_data_handler
+            _l.info('scheme missing data helper %s' % validated_data['scheme'].missing_data_handler)
+
+        _l.info('validated_data %s' % validated_data)
 
         filetmp = file = validated_data.get('file', None)
 
