@@ -46,7 +46,22 @@ def procedure_request_data_file(self,
 
             procedure_instance.save()
 
-            # data = response.json()
+
+            data = response.json()
+
+            if 'error_message' in data and len(data['error_message']):
+
+                text = "Data File Procedure %s. Error during request to Data Service. Error Message: %s" % (
+                    procedure_instance.procedure.user_code, data['error_message'])
+
+                send_system_message(master_user=self.master_user,
+                                    source="Data File Procedure Service",
+                                    text=text)
+
+                procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
+                procedure_instance.save()
+
+
             #
             # if data['files'] and len(data['files']):
             #
