@@ -45,17 +45,19 @@ class FileReport(models.Model):
 
             encoded_text = text.encode('utf-8')
 
-            with NamedTemporaryFile() as tmpf:
+            with NamedTemporaryFile() as tmpfile:
 
-                tmpf.seek(0)
+                _l.info('FileReport tmpfile.name %s' % tmpfile.name)
 
-                tmpf.write(encoded_text)
+                tmpfile.seek(0)
 
-                tmpf.flush()
+                tmpfile.write(encoded_text)
 
-                _l.debug(tmpf)
+                tmpfile.flush()
 
-                SFS.save(file_url, tmpf)
+                _l.debug(tmpfile)
+
+                SFS.save(file_url, tmpfile)
 
         except Exception as e:
             _l.debug('Exception %s' % e)

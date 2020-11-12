@@ -2377,6 +2377,8 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
 
                     with NamedTemporaryFile() as tmpf:
 
+                        _l.info('tmpf.name %s' % tmpf.name)
+
                         tmpf.write(decrypt_text.encode('utf-8'))
                         tmpf.flush()
 
