@@ -66,7 +66,5 @@ class FileReportViewSet(AbstractModelViewSet):
         response = HttpResponse(file_data, content_type='application/force-download')
         response['Content-Disposition'] = 'attachment; filename=%s' % instance.file_name
 
-        response.write(file_data)
-
         return response
 
