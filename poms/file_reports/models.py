@@ -47,6 +47,8 @@ class FileReport(models.Model):
 
             with NamedTemporaryFile() as tmpf:
 
+                tmpf.seek(0)
+
                 tmpf.write(encoded_text)
 
                 tmpf.flush()
