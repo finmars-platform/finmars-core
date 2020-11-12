@@ -54,7 +54,7 @@ def procedure_request_data_file(self,
                 text = "Data File Procedure %s. Error during request to Data Service. Error Message: %s" % (
                     procedure_instance.procedure.user_code, data['error_message'])
 
-                send_system_message(master_user=self.master_user,
+                send_system_message(master_user=master_user,
                                     source="Data File Procedure Service",
                                     text=text)
 
@@ -91,7 +91,7 @@ def procedure_request_data_file(self,
             text = "Data File Procedure %s. Error during request to Data Service" % (
                 procedure_instance.procedure.user_code)
 
-            send_system_message(master_user=self.master_user,
+            send_system_message(master_user=master_user,
                                 source="Data File Procedure Service",
                                 text=text)
 
@@ -107,7 +107,7 @@ def procedure_request_data_file(self,
         text = "Data File Procedure %s. Data Service is offline" % (
             procedure_instance.procedure.user_code)
 
-        send_system_message(master_user=self.master_user,
+        send_system_message(master_user=master_user,
                             source="Data File Procedure Service",
                             text=text)
 
