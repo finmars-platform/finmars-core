@@ -16,7 +16,7 @@ from poms.common.models import NamedModel, AbstractClassModel, FakeDeletableMode
     DataTimeStampedModel
 from poms.common.utils import date_now
 from poms.counterparties.models import Responsible, Counterparty
-from poms.currencies.models import Currency
+from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import Instrument, InstrumentClass, PricingPolicy, AccrualCalculationModel, Periodicity, \
     EventSchedule
 from poms.obj_attrs.models import GenericAttribute
@@ -26,6 +26,10 @@ from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.tags.models import TagLink
 from poms.transactions.utils import calc_cash_for_contract_for_difference
 from poms.users.models import MasterUser, Member, FakeSequence
+
+from poms.common.formula_accruals import f_xirr
+from math import isnan, copysign
+from poms.common.utils import isclose
 
 
 class TransactionClass(CachingMixin, AbstractClassModel):
@@ -1562,6 +1566,9 @@ class Transaction(models.Model):
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
 
+
+    # ytm = models.FloatField(default=0.0, verbose_name=ugettext_lazy("ytm"))
+
     class Meta:
         verbose_name = ugettext_lazy('transaction')
         verbose_name_plural = ugettext_lazy('transactions')
@@ -1613,6 +1620,99 @@ class Transaction(models.Model):
     def is_cash_outflow(self):
         return self.transaction_class_id == TransactionClass.CASH_OUTFLOW
 
+    # def get_instr_ytm_data(self, dt):
+    #     if hasattr(self, '_instr_ytm_data'):
+    #         return self._instr_ytm_data
+    #
+    #     instr = self.instrument
+    #
+    #     if instr.maturity_date is None or instr.maturity_date == date.max:
+    #         # _l.debug('get_instr_ytm_data: [], maturity_date rule')
+    #         return []
+    #     if instr.maturity_price is None or isnan(instr.maturity_price) or isclose(instr.maturity_price, 0.0):
+    #         # _l.debug('get_instr_ytm_data: [], maturity_price rule')
+    #         return []
+    #
+    #     try:
+    #         d0, v0 = self.get_instr_ytm_data_d0_v0(dt)
+    #     except ArithmeticError:
+    #         return None
+    #
+    #     data = [(d0, v0)]
+    #
+    #     for cpn_date, cpn_val in instr.get_future_coupons(begin_date=d0, with_maturity=False):
+    #         try:
+    #             factor = instr.get_factor(cpn_date)
+    #             k = instr.accrued_multiplier * factor * \
+    #                 (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
+    #         except ArithmeticError:
+    #             k = 0
+    #         data.append((cpn_date, cpn_val * k))
+    #
+    #     prev_factor = None
+    #     for factor in instr.factor_schedules.all():
+    #         if factor.effective_date < d0 or factor.effective_date > instr.maturity_date:
+    #             prev_factor = factor
+    #             continue
+    #
+    #         prev_factor_value = prev_factor.factor_value if prev_factor else 1.0
+    #         factor_value = factor.factor_value
+    #
+    #         k = (prev_factor_value - factor_value) * instr.price_multiplier
+    #         data.append((factor.effective_date, instr.maturity_price * k))
+    #
+    #         prev_factor = factor
+    #
+    #     factor = instr.get_factor(instr.maturity_date)
+    #     k = instr.price_multiplier * factor
+    #     data.append((instr.maturity_date, instr.maturity_price * k))
+    #
+    #     # sort by date
+    #     data.sort()
+    #     self._instr_ytm_data = data
+    #
+    #     return data
+    #
+    # def get_instr_ytm_x0(self, dt):
+    #     try:
+    #         accrual_size = self.instrument.get_accrual_size(dt)
+    #         return (accrual_size * self.instrument.accrued_multiplier) * \
+    #                (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx) / \
+    #                (self.instr_price_cur_principal_price * self.instrument.price_multiplier)
+    #     except ArithmeticError:
+    #         return 0
+    #
+    # def calculate_ytm(self):
+    #
+    #     dt = self.accounting_date
+    #
+    #     if self.instrument.maturity_date is None or self.instrument.maturity_date == date.max:
+    #
+    #         try:
+    #
+    #             accrual_size = self.instrument.get_accrual_size(dt)
+    #
+    #             # TODO  * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx) happens in sql report
+    #             ytm = (accrual_size * self.instrument.accrued_multiplier) / \
+    #                   (self.instr_price_cur_principal_price * self.instrument.price_multiplier)
+    #         except ArithmeticError:
+    #             ytm = 0
+    #
+    #         return ytm
+    #
+    #     x0 = self.get_instr_ytm_x0(dt)
+    #
+    #     data = self.get_instr_ytm_data(dt)
+    #
+    #     if data:
+    #
+    #         ytm = f_xirr(data, x0=x0)
+    #
+    #     else:
+    #         ytm = 0.0
+    #
+    #     self.ytm = ytm
+
     def save(self, *args, **kwargs):
         calc_cash = kwargs.pop('calc_cash', False)
 
@@ -1628,6 +1728,9 @@ class Transaction(models.Model):
                 self.transaction_code = FakeSequence.next_value(self.master_user, 'transaction')
             else:
                 self.transaction_code = self.complex_transaction.code + self.complex_transaction_order
+
+        # self.calculate_ytm()
+
         super(Transaction, self).save(*args, **kwargs)
 
         if calc_cash:

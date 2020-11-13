@@ -38,7 +38,7 @@ from rest_framework.exceptions import ValidationError
 
 from .filters import SchemeContentTypeFilter
 from .models import CsvDataImport, CsvImportScheme
-from .serializers import CsvDataImportSerializer, CsvImportSchemeSerializer
+from .serializers import CsvDataImportSerializer, CsvImportSchemeSerializer, CsvDataFileImport
 
 from django.utils.translation import ugettext
 from logging import getLogger
@@ -50,12 +50,11 @@ from datetime import date, datetime
 from io import StringIO
 import csv
 
-
 from storages.backends.sftpstorage import SFTPStorage
+
 SFS = SFTPStorage()
 
 from tempfile import NamedTemporaryFile
-
 
 
 def generate_file_report(instance, master_user, type, name):
@@ -90,7 +89,6 @@ def generate_file_report(instance, master_user, type, name):
         localResultWrapper = []
 
         for item in localResult:
-
             localResultWrapper.append('"' + str(item) + '"')
 
         rows_content.append(localResultWrapper)
@@ -294,7 +292,6 @@ def process_csv_file(master_user,
                      process_result_handler,
                      member,
                      execution_context=None):
-
     csv_fields = scheme.csv_fields.all()
     entity_fields = scheme.entity_fields.all()
 
@@ -489,7 +486,7 @@ def process_csv_file(master_user,
 
                                             if key == 'price_download_scheme':
                                                 instance[key] = PriceDownloadScheme.objects.get(master_user=master_user,
-                                                                                              scheme_name=executed_expression)
+                                                                                                scheme_name=executed_expression)
 
                                             elif key == 'daily_pricing_model':
                                                 instance[key] = DailyPricingModel.objects.get(
@@ -922,15 +919,17 @@ class ValidateHandler:
                     with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
                         instance.total_rows = self._row_count(cfr, instance)
                         update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                                     meta={'total_rows': instance.total_rows, 'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
+                                     meta={'total_rows': instance.total_rows,
+                                           'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
 
                     with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
-
                         context = {}
 
-                        results, process_errors = process_csv_file(master_user, scheme, cf, error_handler, missing_data_handler,
+                        results, process_errors = process_csv_file(master_user, scheme, cf, error_handler,
+                                                                   missing_data_handler,
                                                                    classifier_handler,
-                                                                   context, instance, update_state, mode, self.full_clean_result, member)
+                                                                   context, instance, update_state, mode,
+                                                                   self.full_clean_result, member)
 
                         _l.info('ValidateHandler.process_csv_file: finished')
                         _l.info('ValidateHandler.process_csv_file process_errors %s: ' % len(process_errors))
@@ -1172,7 +1171,6 @@ class ImportHandler:
             InstrumentPricingPolicy.objects.filter(instrument=instance).delete()
 
             for pp_item in instance.instrument_type.pricing_policies.all():
-
                 item = InstrumentPricingPolicy()
 
                 item.instrument = instance
@@ -1335,15 +1333,17 @@ class ImportHandler:
                     with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
                         instance.total_rows = self._row_count(cfr, instance)
                         update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                                          meta={'total_rows': instance.total_rows, 'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
+                                     meta={'total_rows': instance.total_rows,
+                                           'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
 
                     with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
-
                         context = {}
 
-                        results, process_errors = process_csv_file(master_user, scheme, cf, error_handler, missing_data_handler,
+                        results, process_errors = process_csv_file(master_user, scheme, cf, error_handler,
+                                                                   missing_data_handler,
                                                                    classifier_handler,
-                                                                   context, instance, update_state, mode, self.import_result, member, execution_context)
+                                                                   context, instance, update_state, mode,
+                                                                   self.import_result, member, execution_context)
 
                         _l.info('ImportHandler.process_csv_file: finished')
                         _l.info('ImportHandler.process_csv_file process_errors %s: ' % len(process_errors))
@@ -1364,7 +1364,6 @@ class ImportHandler:
                                                               'Simple Data Import')
 
             if execution_context and execution_context["started_by"] == 'procedure':
-
                 send_system_message(master_user=instance.master_user,
                                     source="Simple Import Service",
                                     text="Import Finished",
@@ -1397,7 +1396,7 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
                 'data_csv_file_import_by_procedure looking for scheme %s ' % procedure_instance.procedure.scheme_name)
 
             scheme = CsvImportScheme.objects.get(master_user=procedure_instance.master_user,
-                                                                scheme_name=procedure_instance.procedure.scheme_name)
+                                                 scheme_name=procedure_instance.procedure.scheme_name)
 
             text = "Data File Procedure %s. File is received, start data import" % (
                 procedure_instance.procedure.user_code)
@@ -1434,7 +1433,6 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
 
                     _l.info('Size of decrypted text: %s' % len(decrypt_text))
 
-
                     with NamedTemporaryFile() as tmpf:
 
                         tmpf.write(decrypt_text.encode('utf-8'))
@@ -1447,14 +1445,20 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
 
                         _l.info('data_csv_file_import_by_procedure tmp file filled')
 
-                        instance = ComplexTransactionCsvFileImport(scheme=scheme,
-                                                                   file_path=file_path,
-                                                                   master_user=procedure_instance.master_user)
+                        instance = CsvDataFileImport(scheme=scheme,
+                                                     file_path=file_path,
+                                                     master_user=procedure_instance.master_user,
+                                                     delimiter=scheme.delimiter,
+                                                     error_handler=scheme.error_handler,
+                                                     mode=scheme.mode,
+                                                     classifier_handler=scheme.classifier_handler,
+                                                     missing_data_handler=scheme.missing_data_handler)
 
                         _l.info('data_csv_file_import_by_procedure instance: %s' % instance)
 
                         transaction.on_commit(
-                            lambda: data_csv_file_import.apply_async(kwargs={'instance': instance, 'execution_context': {'started_by': 'procedure'}}))
+                            lambda: data_csv_file_import.apply_async(
+                                kwargs={'instance': instance, 'execution_context': {'started_by': 'procedure'}}))
 
                 except Exception as e:
 

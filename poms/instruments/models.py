@@ -16,17 +16,19 @@ from mptt.models import MPTTModel
 
 from poms.cache_machine.base import CachingManager, CachingMixin
 from poms.common import formula
-from poms.common.formula_accruals import get_coupon
+from poms.common.formula_accruals import get_coupon, f_duration, f_xirr
 from poms.common.models import NamedModel, AbstractClassModel, FakeDeletableModel, EXPRESSION_FIELD_LENGTH, \
     DataTimeStampedModel
 from poms.common.utils import date_now, isclose
 from poms.common.wrapper_models import NamedModelAutoMapping
+from poms.currencies.models import CurrencyHistory
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, CurrencyPricingPolicy, \
     InstrumentTypePricingPolicy, InstrumentPricingPolicy
 from poms.tags.models import TagLink
 from poms.users.models import MasterUser, Member
+from math import isnan, copysign
 
 _l = logging.getLogger('poms.instruments')
 
@@ -420,7 +422,7 @@ class InstrumentType(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, Da
 
 
 class Instrument(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
-# class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+    # class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='instruments', verbose_name=ugettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
@@ -454,8 +456,8 @@ class Instrument(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTi
                                             on_delete=models.SET_NULL)
 
     pricing_condition = models.ForeignKey(PricingCondition, null=True, blank=True,
-                                            verbose_name=ugettext_lazy('pricing condition'),
-                                            on_delete=models.SET_NULL)
+                                          verbose_name=ugettext_lazy('pricing condition'),
+                                          on_delete=models.SET_NULL)
 
     price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.PROTECT, null=True,
                                               blank=True, verbose_name=ugettext_lazy('price download scheme'))
@@ -955,6 +957,9 @@ class PriceHistory(CachingMixin, DataTimeStampedModel):
 
     objects = CachingManager()
 
+    ytm = models.FloatField(default=0.0, verbose_name=ugettext_lazy('ytm'))
+    duration = models.FloatField(default=0.0, verbose_name=ugettext_lazy('duration'))
+
     class Meta:
         verbose_name = ugettext_lazy('price history')
         verbose_name_plural = ugettext_lazy('price histories')
@@ -969,6 +974,132 @@ class PriceHistory(CachingMixin, DataTimeStampedModel):
         # return '%s:%s:%s:%s:%s' % (
         #     self.instrument_id, self.pricing_policy_id, self.date, self.principal_price, self.accrued_price)
         return '%s;%s @%s' % (self.principal_price, self.accrued_price, self.date)
+
+    def get_instr_ytm_data_d0_v0(self, dt):
+
+        v0 = -(self.principal_price * self.instrument.price_multiplier * self.instrument.get_factor(dt) + self.accrued_price * self.instrument.accrued_multiplier * self.instrument.get_factor(dt) * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx))
+
+        return dt, v0
+
+    def get_instr_ytm_data(self, dt):
+        if hasattr(self, '_instr_ytm_data'):
+            return self._instr_ytm_data
+
+        instr = self.instrument
+
+        if instr.maturity_date is None or instr.maturity_date == date.max:
+            # _l.debug('get_instr_ytm_data: [], maturity_date rule')
+            return []
+        if instr.maturity_price is None or isnan(instr.maturity_price) or isclose(instr.maturity_price, 0.0):
+            # _l.debug('get_instr_ytm_data: [], maturity_price rule')
+            return []
+
+        try:
+            d0, v0 = self.get_instr_ytm_data_d0_v0(dt)
+        except ArithmeticError:
+            return None
+
+        data = [(d0, v0)]
+
+        for cpn_date, cpn_val in instr.get_future_coupons(begin_date=d0, with_maturity=False):
+            try:
+                factor = instr.get_factor(cpn_date)
+                k = instr.accrued_multiplier * factor * \
+                    (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
+            except ArithmeticError:
+                k = 0
+            data.append((cpn_date, cpn_val * k))
+
+        prev_factor = None
+        for factor in instr.factor_schedules.all():
+            if factor.effective_date < d0 or factor.effective_date > instr.maturity_date:
+                prev_factor = factor
+                continue
+
+            prev_factor_value = prev_factor.factor_value if prev_factor else 1.0
+            factor_value = factor.factor_value
+
+            k = (prev_factor_value - factor_value) * instr.price_multiplier
+            data.append((factor.effective_date, instr.maturity_price * k))
+
+            prev_factor = factor
+
+        factor = instr.get_factor(instr.maturity_date)
+        k = instr.price_multiplier * factor
+        data.append((instr.maturity_date, instr.maturity_price * k))
+
+        # sort by date
+        data.sort()
+        self._instr_ytm_data = data
+
+        return data
+
+    def get_instr_ytm_x0(self, dt):
+        try:
+            accrual_size = self.instrument.get_accrual_size(dt)
+            return (accrual_size * self.instrument.accrued_multiplier) * \
+                   (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx) / \
+                   (self.principal_price * self.instrument.price_multiplier)
+        except ArithmeticError:
+            return 0
+
+    def calculate_ytm(self, dt):
+
+        if self.instrument.maturity_date is None or self.instrument.maturity_date == date.max:
+            try:
+                accrual_size = self.instrument.get_accrual_size(dt)
+                ytm = (accrual_size * self.instrument.accrued_multiplier) * \
+                      (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx) / \
+                      (self.principal_price * self.instrument.price_multiplier)
+            except ArithmeticError:
+                ytm = 0
+            # _l.debug('get_instr_ytm.1: %s', ytm)
+            return ytm
+
+        x0 = self.get_instr_ytm_x0(dt)
+        # _l.debug('get_instr_ytm: x0=%s', x0)
+
+        data = self.get_instr_ytm_data(dt)
+
+        if data:
+            ytm = f_xirr(data, x0=x0)
+        else:
+            ytm = 0.0
+
+        return ytm
+
+    def calculate_duration(self, dt):
+
+        if self.instrument.maturity_date is None or self.instrument.maturity_date == date.max:
+            try:
+                duration = 1 / self.ytm
+            except ArithmeticError:
+                duration = 0
+            # _l.debug('get_instr_duration.1: %s', duration)
+            return duration
+        data = self.get_instr_ytm_data(dt)
+        if data:
+            duration = f_duration(data, ytm=self.ytm)
+        else:
+            duration = 0
+        # _l.debug('get_instr_duration: %s', duration)
+        return duration
+
+
+    def save(self, *args, **kwargs):
+
+        # TODO make readable exception if currency history is missng
+
+        self.instr_accrued_ccy_cur_fx = CurrencyHistory.objects.get(date=self.date, currency=self.instrument.accrued_currency).fx_rate
+        self.instr_pricing_ccy_cur_fx = CurrencyHistory.objects.get(date=self.date, currency=self.instrument.pricing_currency).fx_rate
+
+        self.ytm = self.calculate_ytm(self.date)
+        self.duration = self.calculate_duration(self.date)
+
+        _l.info('self.ytm %s' % self.ytm)
+        _l.info('self.duration %s' % self.duration)
+
+        super(PriceHistory, self).save(*args, **kwargs)
 
 
 class InstrumentFactorSchedule(CachingMixin, models.Model):
