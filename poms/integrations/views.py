@@ -1200,6 +1200,10 @@ class TransactionFileResultUploadHandler(APIView):
 
     permission_classes = []
 
+    def get(self, request):
+
+        return Response({'status': 'ok'})
+
     def post(self, request):
 
         # _l.info('request.data %s' % request.data)
