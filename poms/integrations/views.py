@@ -2,6 +2,7 @@ from __future__ import unicode_literals, print_function
 
 import django_filters
 from celery.result import AsyncResult
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.signing import TimestampSigner
 from django.db.models import Prefetch
@@ -1201,6 +1202,8 @@ class TransactionFileResultUploadHandler(APIView):
     permission_classes = []
 
     def get(self, request):
+
+        _l.info("BACKEND_ROLES %s" % settings.BACKEND_ROLES )
 
         return Response({'status': 'ok'})
 
