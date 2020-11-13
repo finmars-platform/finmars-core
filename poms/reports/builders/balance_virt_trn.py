@@ -1112,7 +1112,7 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
                     #     d0=self.acc_date,
                     #     v0=self.trade_price,
                     #     pricing_ccy_fx=self.instr_pricing_ccy_cur_fx,
-                    #     accrued_ccy_fx=self.instr_accrued_ccy_cur_fx,
+                    #     accrued_ccy_fx=self.instr_accrued_ccy_cfur_fx,
                     # )
                     # self.ytm = ReportBuilder.instr_ytm(
                     #     instr=self.instr,

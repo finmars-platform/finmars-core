@@ -958,7 +958,7 @@ class PriceHistory(CachingMixin, DataTimeStampedModel):
     objects = CachingManager()
 
     ytm = models.FloatField(default=0.0, verbose_name=ugettext_lazy('ytm'))
-    duration = models.FloatField(default=0.0, verbose_name=ugettext_lazy('duration'))
+    modified_duration = models.FloatField(default=0.0, verbose_name=ugettext_lazy('modified duration'))
 
     class Meta:
         verbose_name = ugettext_lazy('price history')
@@ -1094,10 +1094,10 @@ class PriceHistory(CachingMixin, DataTimeStampedModel):
         self.instr_pricing_ccy_cur_fx = CurrencyHistory.objects.get(date=self.date, currency=self.instrument.pricing_currency).fx_rate
 
         self.ytm = self.calculate_ytm(self.date)
-        self.duration = self.calculate_duration(self.date)
+        self.modified_duration = self.calculate_duration(self.date)
 
         _l.info('self.ytm %s' % self.ytm)
-        _l.info('self.duration %s' % self.duration)
+        _l.info('self.modified_duration %s' % self.modified_duration)
 
         super(PriceHistory, self).save(*args, **kwargs)
 

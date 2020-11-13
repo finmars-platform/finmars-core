@@ -1039,6 +1039,9 @@ class PLReportBuilderSql:
                         i.cur_accr_price,
                         i.prc_cur_fx,
                         i.accr_cur_fx,
+                        
+                        i.ytm,
+                        i.modiied_duration,
                         rep_cur_fx,
                         (rep_cur_fx/i.prc_cur_fx) cross_loc_prc_fx,
     
@@ -1298,6 +1301,28 @@ class PLReportBuilderSql:
                                       and c_ch.pricing_policy_id = {pricing_policy_id}
                                     limit 1)
                             end as accr_cur_fx,
+                            
+                            -- add modified_duration
+                           (select
+                                ytm
+                            from
+                                instruments_pricehistory iph
+                            where
+                                date = '{report_date}'
+                                and iph.instrument_id=ii.id
+    
+                               ) as ytm,
+                               
+                            -- add modified_duration
+                           (select
+                                modified_duration
+                            from
+                                instruments_pricehistory iph
+                            where
+                                date = '{report_date}'
+                                and iph.instrument_id=ii.id
+    
+                               ) as modified_duration,
     
                            -- add current price
                            (select
