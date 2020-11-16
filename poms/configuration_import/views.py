@@ -24,7 +24,7 @@ _l = getLogger('poms.configuration_import')
 
 def dump(obj):
     for attr in dir(obj):
-        _l.info("obj.%s = %r" % (attr, getattr(obj, attr)))
+        _l.debug("obj.%s = %r" % (attr, getattr(obj, attr)))
 
 
 class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
@@ -39,7 +39,7 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
 
     def create(self, request, *args, **kwargs):
 
-        _l.info('TASK: configuration_import_as_json')
+        _l.debug('TASK: configuration_import_as_json')
 
         # request.data['request'] = request
 
@@ -59,9 +59,9 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
                 celery_task = CeleryTask.objects.get(master_user=request.user.master_user, task_id=task_id)
             except CeleryTask.DoesNotExist:
                 celery_task = None
-                _l.info("Cant create Celery Task")
+                _l.debug("Cant create Celery Task")
 
-            _l.info('celery_task %s' % celery_task)
+            _l.debug('celery_task %s' % celery_task)
 
             st = time.perf_counter()
 
@@ -88,20 +88,20 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
                                 "processed_rows": res.result['processed_rows']
                             }
                     except TypeError:
-                        _l.info('Type erro')
+                        _l.debug('Type erro')
 
-                # _l.info('TASK ITEMS LEN %s' % len(res.result.items))
+                # _l.debug('TASK ITEMS LEN %s' % len(res.result.items))
 
-            _l.info('AsyncResult res.ready: %s' % (time.perf_counter() - st))
+            _l.debug('AsyncResult res.ready: %s' % (time.perf_counter() - st))
 
-            _l.info('instance %s' % instance)
-            _l.info('res.status %s' % res.status)
-            _l.info('celery_task %s' % celery_task)
+            _l.debug('instance %s' % instance)
+            _l.debug('res.status %s' % res.status)
+            _l.debug('celery_task %s' % celery_task)
 
-            _l.info('request.user %s' % request.user)
-            _l.info('request.user.master_user %s' % request.user.master_user)
+            _l.debug('request.user %s' % request.user)
+            _l.debug('request.user.master_user %s' % request.user.master_user)
 
-            _l.info('instance.master_user %s' % instance.master_user)
+            _l.debug('instance.master_user %s' % instance.master_user)
 
             if instance.master_user.id != request.user.master_user.id:
                 raise PermissionDenied()
@@ -130,7 +130,7 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
             celery_task.save()
 
 
-            _l.info('celery_task.task_status %s ' % celery_task.task_status)
+            _l.debug('celery_task.task_status %s ' % celery_task.task_status)
 
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)
@@ -165,13 +165,13 @@ class GenerateConfigurationEntityArchetypeViewSet(AbstractAsyncViewSet):
 
                 instance = res.result
 
-            _l.info('AsyncResult res.ready: %s' % (time.perf_counter() - st))
+            _l.debug('AsyncResult res.ready: %s' % (time.perf_counter() - st))
 
             if instance.master_user.id != request.user.master_user.id:
                 raise PermissionDenied()
 
-            _l.info('TASK RESULT %s' % res.result)
-            _l.info('TASK STATUS %s' % res.status)
+            _l.debug('TASK RESULT %s' % res.result)
+            _l.debug('TASK STATUS %s' % res.status)
 
             instance.task_id = task_id
             instance.task_status = res.status
@@ -184,7 +184,7 @@ class GenerateConfigurationEntityArchetypeViewSet(AbstractAsyncViewSet):
             res = self.celery_task.apply_async(kwargs={'instance': instance})
             instance.task_id = signer.sign('%s' % res.id)
 
-            _l.info('CREATE CELERY TASK %s' % res.id)
+            _l.debug('CREATE CELERY TASK %s' % res.id)
 
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)

@@ -47,8 +47,8 @@ class RSACipher():
         modBits = Crypto.Util.number.size(private_key.n)
         k = ceil_div(modBits,8) # Convert from bits to bytes
 
-        _l.info('k %s' % k)
-        _l.info('len aes %s' % len(aes_incrypted_raw))
+        _l.debug('k %s' % k)
+        _l.debug('len aes %s' % len(aes_incrypted_raw))
 
         return cipher.decrypt( aes_incrypted_raw, "Error while decrypting" )
 

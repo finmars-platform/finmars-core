@@ -171,7 +171,7 @@ def audit_user_login_failed(credentials=None, **kwargs):
 #
 #     if attr not in instance._tracker_data:
 #         instance._tracker_data[attr] = [o.pk for o in getattr(instance, attr).all()]
-#     _l.info('\t %s - %s -> %s', attr, attr_ctype, instance._tracker_data[attr])
+#     _l.debug('\t %s - %s -> %s', attr, attr_ctype, instance._tracker_data[attr])
 #
 #     field_data = history.object_changed_get_field(instance, attr)
 #     if field_data is None:
@@ -220,7 +220,7 @@ def audit_user_login_failed(credentials=None, **kwargs):
 #     #     }
 #     history.object_changed_update_field(instance, field_data)
 #
-#     _l.info('\t %s: %s -> %s', attr, field_data['old_value'], field_data['new_value'])
+#     _l.debug('\t %s: %s -> %s', attr, field_data['old_value'], field_data['new_value'])
 #
 #     pass
 #

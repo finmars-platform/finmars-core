@@ -40,9 +40,9 @@ class PricingProcedureViewSet(AbstractModelViewSet):
     @action(detail=True, methods=['post'], url_path='run-procedure', serializer_class=RunProcedureSerializer)
     def run_procedure(self, request, pk=None):
 
-        _l.info("Run Procedure %s" % pk)
+        _l.debug("Run Procedure %s" % pk)
 
-        _l.info("Run Procedure data %s" % request.data)
+        _l.debug("Run Procedure data %s" % request.data)
 
         procedure = PricingProcedure.objects.get(pk=pk)
 
@@ -110,9 +110,9 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
     @action(detail=True, methods=['post'], url_path='run-procedure', serializer_class=RunRequestDataFileProcedureSerializer)
     def run_procedure(self, request, pk=None):
 
-        _l.info("Run Procedure %s" % pk)
+        _l.debug("Run Procedure %s" % pk)
 
-        _l.info("Run Procedure data %s" % request.data)
+        _l.debug("Run Procedure data %s" % request.data)
 
         procedure = RequestDataFileProcedure.objects.get(pk=pk)
 

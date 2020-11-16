@@ -36,7 +36,7 @@ class ConfigurationRecoveryHandler(object):
             if 'instruments.instrumenttype' in item['entity']:
                 self.fix_instrument_types(item)
 
-        _l.info('Configuration Recovery done %s' % (time.perf_counter() - st))
+        _l.debug('Configuration Recovery done %s' % (time.perf_counter() - st))
 
         return self.configuration
 
@@ -55,11 +55,11 @@ class ConfigurationRecoveryHandler(object):
                 for content_object in data['content']:
                     content_object = recursive_dict_fix(archetype.data, content_object)
 
-            _l.info('Currency Recovery done %s' % (time.perf_counter() - st))
+            _l.debug('Currency Recovery done %s' % (time.perf_counter() - st))
 
         except (ConfigurationEntityArchetype.DoesNotExist, Exception) as e:
 
-            _l.info('Currency Recovery error %s' % e)
+            _l.debug('Currency Recovery error %s' % e)
 
     def fix_account_types(self, data):
 
@@ -76,11 +76,11 @@ class ConfigurationRecoveryHandler(object):
                 for content_object in data['content']:
                     content_object = recursive_dict_fix(archetype.data, content_object)
 
-            _l.info('Account Type Recovery done %s' % (time.perf_counter() - st))
+            _l.debug('Account Type Recovery done %s' % (time.perf_counter() - st))
 
         except (ConfigurationEntityArchetype.DoesNotExist, Exception) as e:
 
-            _l.info('Account Type Recovery error %s' % e)
+            _l.debug('Account Type Recovery error %s' % e)
 
     def fix_instrument_types(self, data):
 
@@ -97,8 +97,8 @@ class ConfigurationRecoveryHandler(object):
                 for content_object in data['content']:
                     content_object = recursive_dict_fix(archetype.data, content_object)
 
-            _l.info('Instrument Type Recovery done %s' % (time.perf_counter() - st))
+            _l.debug('Instrument Type Recovery done %s' % (time.perf_counter() - st))
 
         except (ConfigurationEntityArchetype.DoesNotExist, Exception) as e:
 
-            _l.info('Instrument Type Recovery error %s' % e)
+            _l.debug('Instrument Type Recovery error %s' % e)

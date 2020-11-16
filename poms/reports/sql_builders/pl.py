@@ -30,8 +30,8 @@ class PLReportBuilderSql:
 
         self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self.instance.master_user)
 
-        _l.info('self.instance master_user %s' % self.instance.master_user)
-        _l.info('self.instance report_date %s' % self.instance.report_date)
+        _l.debug('self.instance master_user %s' % self.instance.master_user)
+        _l.debug('self.instance report_date %s' % self.instance.report_date)
 
     def build_balance(self):
         st = time.perf_counter()
@@ -40,9 +40,9 @@ class PLReportBuilderSql:
 
         self.build_positions()
 
-        _l.info('items total %s' % len(self.instance.items))
+        _l.debug('items total %s' % len(self.instance.items))
 
-        _l.info('build_st done: %s', "{:3.3f}".format(time.perf_counter() - st))
+        _l.debug('build_st done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
         self.add_data_items()
 
@@ -106,7 +106,7 @@ class PLReportBuilderSql:
     @staticmethod
     def inject_fifo_with():
 
-        _l.info("Injecting fifo calculation algorithm")
+        _l.debug("Injecting fifo calculation algorithm")
 
         # language=PostgreSQL
         query = """
@@ -189,7 +189,7 @@ class PLReportBuilderSql:
     @staticmethod
     def inject_avco_with():
 
-        _l.info("Injecting avco calculation algorithm")
+        _l.debug("Injecting avco calculation algorithm")
 
         # language=PostgreSQL
         query = """
@@ -664,6 +664,7 @@ class PLReportBuilderSql:
             time_invested,
             
             ytm,
+            modified_duration,
             ytm_at_cost,
             return_annauly,
 
@@ -763,6 +764,7 @@ class PLReportBuilderSql:
             time_invested,
             
             ytm,
+            modified_duration,
             ytm_at_cost,
             return_annauly,
 
@@ -861,7 +863,9 @@ class PLReportBuilderSql:
                         
                     time_invested,
                     
-                    (0) as ytm,
+                    
+                    ytm,
+                    modified_duration,
                     (0) as ytm_at_cost,
                     (0) as return_annauly,
                     
@@ -963,6 +967,10 @@ class PLReportBuilderSql:
                         gross_cost_price_loc,
                         
                         time_invested,
+                        
+                        
+                        ytm,
+                        modified_duration,
     
     
                         principal_closed,
@@ -1024,333 +1032,333 @@ class PLReportBuilderSql:
                         amount_invested * cross_loc_prc_fx as amount_invested_loc
                         
                 from (
-                    select 
-                        instrument_id,
-                         {consolidation_columns}
-                
-                        i.name,
-                        i.short_name,
-                        i.user_code,
-                        i.pricing_currency_id,
-                        i.price_multiplier,
-                        i.accrued_multiplier,
-                        i.accrual_size,
-                        i.cur_price,
-                        i.cur_accr_price,
-                        i.prc_cur_fx,
-                        i.accr_cur_fx,
-                        
-                        i.ytm,
-                        i.modiied_duration,
-                        rep_cur_fx,
-                        (rep_cur_fx/i.prc_cur_fx) cross_loc_prc_fx,
-    
-                        position_size,
-                        position_size_opened,
-                        
-                        principal_opened,
-                        carry_opened,
-                        overheads_opened,
-                        
-                        principal_closed,
-                        carry_closed,
-                        overheads_closed,
-    
-                        principal_fixed_opened,
-                        carry_fixed_opened,
-                        overheads_fixed_opened,
-    
-                        principal_fixed_closed,
-                        carry_fixed_closed,
-                        overheads_fixed_closed,
-    
-    
-                        -- вроде, не используется
-                        case
-                            when position_size_opened > 0
-                            then -((principal_opened + overheads_opened) / position_size_opened / i.price_multiplier)
-                            else 0
-                        end as net_cost_price,
-                        -- испольщуется только эта
-                        case
-                            when position_size_opened > 0
-                            then -((principal_opened + overheads_opened) / position_size_opened * rep_cur_fx / i.prc_cur_fx / i.price_multiplier)
-                            else 0
-                        end as net_cost_price_loc,
-                        
-                        
-                        -- вроде, не используется
-                        case
-                            when position_size_opened > 0
-                            then -((principal_opened) / position_size_opened / i.price_multiplier)
-                            else 0
-                        end as gross_cost_price,
-                        -- испольщуется только эта
-                        case
-                            when position_size_opened > 0
-                            then -((principal_opened) / position_size_opened * rep_cur_fx / i.prc_cur_fx / i.price_multiplier)
-                            else 0
-                        end as gross_cost_price_loc,
-                        
-                        case
-                            when position_size_opened > 0
-                            then time_invested_sum / position_size_opened / 365
-                            else 0
-                        end as time_invested,
-                    
-                        -- mv precalc
-                        (position_size_opened * coalesce(i.cur_price, 0) * i.price_multiplier * i.prc_cur_fx / rep_cur_fx) as mv_principal,
-                        (position_size_opened * coalesce(i.cur_accr_price, 0) * i.accrued_multiplier * i.accr_cur_fx  / rep_cur_fx) as mv_carry,
-    
-                        (i.accrual_size * i.accrued_multiplier  / (i.cur_price * i.price_multiplier) ) as ytm,
-                
-                        (principal_with_sign_invested) as principal_invested,
-                        (principal_with_sign_invested + carry_with_sign_invested + overheads_with_sign_invested) as amount_invested
-
-                
-                    from (
                         select 
-                        
                             instrument_id,
-                            {consolidation_columns}
+                             {consolidation_columns}
+                    
+                            i.name,
+                            i.short_name,
+                            i.user_code,
+                            i.pricing_currency_id,
+                            i.price_multiplier,
+                            i.accrued_multiplier,
+                            i.accrual_size,
+                            i.cur_price,
+                            i.cur_accr_price,
+                            i.prc_cur_fx,
+                            i.accr_cur_fx,
+                            
+                            i.ytm,
+                            i.modified_duration,
+                            rep_cur_fx,
+                            (rep_cur_fx/i.prc_cur_fx) cross_loc_prc_fx,
+        
+                            position_size,
+                            position_size_opened,
+                            
+                            principal_opened,
+                            carry_opened,
+                            overheads_opened,
+                            
+                            principal_closed,
+                            carry_closed,
+                            overheads_closed,
+        
+                            principal_fixed_opened,
+                            carry_fixed_opened,
+                            overheads_fixed_opened,
+        
+                            principal_fixed_closed,
+                            carry_fixed_closed,
+                            overheads_fixed_closed,
+        
+        
+                            -- вроде, не используется
+                            case
+                                when position_size_opened > 0
+                                then -((principal_opened + overheads_opened) / position_size_opened / i.price_multiplier)
+                                else 0
+                            end as net_cost_price,
+                            -- испольщуется только эта
+                            case
+                                when position_size_opened > 0
+                                then -((principal_opened + overheads_opened) / position_size_opened * rep_cur_fx / i.prc_cur_fx / i.price_multiplier)
+                                else 0
+                            end as net_cost_price_loc,
+                            
+                            
+                            -- вроде, не используется
+                            case
+                                when position_size_opened > 0
+                                then -((principal_opened) / position_size_opened / i.price_multiplier)
+                                else 0
+                            end as gross_cost_price,
+                            -- испольщуется только эта
+                            case
+                                when position_size_opened > 0
+                                then -((principal_opened) / position_size_opened * rep_cur_fx / i.prc_cur_fx / i.price_multiplier)
+                                else 0
+                            end as gross_cost_price_loc,
                             
                             case
-                                   when {report_currency_id} = {default_currency_id}
-                                       then 1
-                                   else
-                                       (select fx_rate
-                                        from currencies_currencyhistory c_ch
-                                        where date = '{report_date}'
-                                          and c_ch.currency_id = {report_currency_id}
-                                          and c_ch.pricing_policy_id = {pricing_policy_id}
-                                        limit 1)
-                            end as rep_cur_fx,
-            
-                            SUM(position_size)                                                      as position_size,
-                            SUM(position_size_opened)                                               as position_size_opened,
-                            
-                            SUM(principal_closed * stl_cur_fx / rep_cur_fx)                         as principal_closed,
-                            SUM(carry_closed * stl_cur_fx / rep_cur_fx)                             as carry_closed,
-                            SUM(overheads_closed * stl_cur_fx / rep_cur_fx)                         as overheads_closed,
-                               
-                            SUM(principal_opened * stl_cur_fx / rep_cur_fx)                as principal_opened,
-                            SUM(carry_opened * stl_cur_fx / rep_cur_fx)                    as carry_opened,
-                            SUM(overheads_opened * stl_cur_fx / rep_cur_fx)                as overheads_opened,
-                            
-                            SUM(time_invested)                                                      as time_invested_sum,
-                            
-                            SUM(principal_with_sign_invested * stlch.fx_rate * trnch.fx_rate )      as principal_with_sign_invested,
-                            SUM(carry_with_sign_invested * stlch.fx_rate * trnch.fx_rate )          as carry_with_sign_invested,
-                            SUM(overheads_with_sign_invested * stlch.fx_rate * trnch.fx_rate )      as overheads_with_sign_invested,
-                            
-                            SUM(principal_fixed_opened)                                             as principal_fixed_opened,
-                            SUM(carry_fixed_opened)                                                 as carry_fixed_opened,
-                            SUM(overheads_fixed_opened)                                             as overheads_fixed_opened,
-                            
-                            SUM(principal_fixed_closed)                                             as principal_fixed_closed,
-                            SUM(carry_fixed_closed)                                                 as carry_fixed_closed,
-                            SUM(overheads_fixed_closed)                                             as overheads_fixed_closed
+                                when position_size_opened > 0
+                                then time_invested_sum / position_size_opened / 365
+                                else 0
+                            end as time_invested,
+                        
+                            -- mv precalc
+                            (position_size_opened * coalesce(i.cur_price, 0) * i.price_multiplier * i.prc_cur_fx / rep_cur_fx) as mv_principal,
+                            (position_size_opened * coalesce(i.cur_accr_price, 0) * i.accrued_multiplier * i.accr_cur_fx  / rep_cur_fx) as mv_carry,
+        
+                            -- (i.accrual_size * i.accrued_multiplier  / (i.cur_price * i.price_multiplier) ) as ytm,
+                    
+                            (principal_with_sign_invested) as principal_invested,
+                            (principal_with_sign_invested + carry_with_sign_invested + overheads_with_sign_invested) as amount_invested
     
+                    
                         from (
                             select 
                             
                                 instrument_id,
                                 {consolidation_columns}
                                 
-                                transaction_currency_id,
-                                settlement_currency_id,
+                                case
+                                       when {report_currency_id} = {default_currency_id}
+                                           then 1
+                                       else
+                                           (select fx_rate
+                                            from currencies_currencyhistory c_ch
+                                            where date = '{report_date}'
+                                              and c_ch.currency_id = {report_currency_id}
+                                              and c_ch.pricing_policy_id = {pricing_policy_id}
+                                            limit 1)
+                                end as rep_cur_fx,
+                
+                                SUM(position_size)                                                      as position_size,
+                                SUM(position_size_opened)                                               as position_size_opened,
                                 
+                                SUM(principal_closed * stl_cur_fx / rep_cur_fx)                         as principal_closed,
+                                SUM(carry_closed * stl_cur_fx / rep_cur_fx)                             as carry_closed,
+                                SUM(overheads_closed * stl_cur_fx / rep_cur_fx)                         as overheads_closed,
+                                   
+                                SUM(principal_opened * stl_cur_fx / rep_cur_fx)                as principal_opened,
+                                SUM(carry_opened * stl_cur_fx / rep_cur_fx)                    as carry_opened,
+                                SUM(overheads_opened * stl_cur_fx / rep_cur_fx)                as overheads_opened,
+                                
+                                SUM(time_invested)                                                      as time_invested_sum,
+                                
+                                SUM(principal_with_sign_invested * stlch.fx_rate * trnch.fx_rate )      as principal_with_sign_invested,
+                                SUM(carry_with_sign_invested * stlch.fx_rate * trnch.fx_rate )          as carry_with_sign_invested,
+                                SUM(overheads_with_sign_invested * stlch.fx_rate * trnch.fx_rate )      as overheads_with_sign_invested,
+                                
+                                SUM(principal_fixed_opened)                                             as principal_fixed_opened,
+                                SUM(carry_fixed_opened)                                                 as carry_fixed_opened,
+                                SUM(overheads_fixed_opened)                                             as overheads_fixed_opened,
+                                
+                                SUM(principal_fixed_closed)                                             as principal_fixed_closed,
+                                SUM(carry_fixed_closed)                                                 as carry_fixed_closed,
+                                SUM(overheads_fixed_closed)                                             as overheads_fixed_closed
+        
+                            from (
+                                select 
+                                
+                                    instrument_id,
+                                    {consolidation_columns}
+                                    
+                                    transaction_currency_id,
+                                    settlement_currency_id,
+                                    
+                                    case
+                                       when
+                                           tut.settlement_currency_id = {default_currency_id}
+                                           then 1
+                                       else
+                                           (select fx_rate
+                                            from currencies_currencyhistory c_ch
+                                            where date = '{report_date}'
+                                              and c_ch.currency_id = tut.settlement_currency_id
+                                              and c_ch.pricing_policy_id = {pricing_policy_id}
+                                            limit 1)
+                                    end as stl_cur_fx,
+                                    
+                                    case
+                                       when /* reporting ccy = system ccy*/ {report_currency_id} = {default_currency_id}
+                                           then 1
+                                       else
+                                           (select fx_rate
+                                            from currencies_currencyhistory c_ch
+                                            where date = '{report_date}'
+                                              and c_ch.currency_id = {report_currency_id}
+                                              and c_ch.pricing_policy_id = {pricing_policy_id}
+                                            limit 1)
+                                    end as rep_cur_fx,
+                           
+                                    SUM(position_size_with_sign)                                as position_size,
+                                    SUM(position_size_with_sign * (1 - multiplier))             as position_size_opened,
+                           
+                                    SUM(principal_with_sign)                                    as principal,
+                                    SUM(carry_with_sign)                                        as carry,
+                                    SUM(overheads_with_sign)                                    as overheads,
+                                    
+                                    
+                                    SUM(principal_with_sign * multiplier)                       as principal_closed,
+                                    SUM(carry_with_sign * multiplier)                           as carry_closed,
+                                    SUM(overheads_with_sign * multiplier)                       as overheads_closed,
+                                    
+                                    
+                                    SUM(principal_with_sign * (1 - multiplier))                 as principal_opened,
+                                    
+                                    SUM(carry_with_sign * (1 - multiplier))                     as carry_opened,
+                                    
+                                    SUM(overheads_with_sign * (1 - multiplier))                 as overheads_opened,
+                                    
+                                    
+                                    SUM(principal_with_sign_invested * (1 - multiplier))        as principal_with_sign_invested,
+                                    SUM(carry_with_sign_invested * (1 - multiplier))            as carry_with_sign_invested,
+                                    SUM(overheads_with_sign_invested * (1 - multiplier))        as overheads_with_sign_invested,
+                                    
+                                    SUM(principal_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)        as principal_fixed_opened,
+                                    SUM(carry_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)            as carry_fixed_opened,
+                                    SUM(overheads_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)        as overheads_fixed_opened,
+                                    
+                                    SUM(principal_with_sign_invested * (multiplier) *trn_hist_fx / rep_hist_fx)             as principal_fixed_closed,
+                                    SUM(carry_with_sign_invested * (multiplier) *trn_hist_fx / rep_hist_fx)                 as carry_fixed_closed,
+                                    SUM(overheads_with_sign_invested * (multiplier) *trn_hist_fx / rep_hist_fx)             as overheads_fixed_closed,
+        
+                                    SUM(day_delta * position_size_with_sign * (1-multiplier))   as time_invested 
+                                from 
+                                    transactions_unioned_table tut
+                                where accounting_date <= '{report_date}'
+                                group by 
+                                    {consolidation_columns} instrument_id, transaction_currency_id, settlement_currency_id
+                            ) as tt_without_fx_rates
+                            left join (
+                                select 
+                                    currency_id,
+                            
+                                    case
+                                        when currency_id = '{default_currency_id}'::int
+                                        then 1
+                                        else fx_rate
+                                    end as fx_rate
+                                from 
+                                    currencies_currencyhistory as c_ch
+                                where 
+                                    
+                                    date = '{report_date}' and 
+                                    c_ch.pricing_policy_id = {pricing_policy_id}
+                            ) as trnch
+                            on 
+                                transaction_currency_id = trnch.currency_id
+                            left join (
+                                select 
+                                    currency_id,
+                            
+                                    case
+                                        when currency_id = '{default_currency_id}'::int
+                                        then 1
+                                        else fx_rate
+                                    end as fx_rate
+                                from 
+                                    currencies_currencyhistory 
+                                where 
+                                    date = '{report_date}'
+                            ) as stlch
+                            on 
+                                settlement_currency_id = stlch.currency_id
+                            group by 
+                                {consolidation_columns} instrument_id
+                        ) as tt_final_calculations
+                        left join (
+                            select 
+                                *,
+                                (select
+                                    accrual_size
+                                from 
+                                    instruments_accrualcalculationschedule ias
+                                where 
+                                    accrual_start_date <= '{report_date}' and 
+                                    ias.instrument_id = ii.id 
+                                order by 
+                                    accrual_start_date 
+                                desc limit 1) as accrual_size,
+                                -- add pricing ccy current fx rate
                                 case
                                    when
-                                       tut.settlement_currency_id = {default_currency_id}
+                                       pricing_currency_id = {default_currency_id}
                                        then 1
                                    else
                                        (select fx_rate
                                         from currencies_currencyhistory c_ch
                                         where date = '{report_date}'
-                                          and c_ch.currency_id = tut.settlement_currency_id
+                                          and c_ch.currency_id = pricing_currency_id
                                           and c_ch.pricing_policy_id = {pricing_policy_id}
                                         limit 1)
-                                end as stl_cur_fx,
-                                
-                                case
-                                   when /* reporting ccy = system ccy*/ {report_currency_id} = {default_currency_id}
-                                       then 1
-                                   else
-                                       (select fx_rate
-                                        from currencies_currencyhistory c_ch
-                                        where date = '{report_date}'
-                                          and c_ch.currency_id = {report_currency_id}
-                                          and c_ch.pricing_policy_id = {pricing_policy_id}
-                                        limit 1)
-                                end as rep_cur_fx,
-                       
-                                SUM(position_size_with_sign)                                as position_size,
-                                SUM(position_size_with_sign * (1 - multiplier))             as position_size_opened,
-                       
-                                SUM(principal_with_sign)                                    as principal,
-                                SUM(carry_with_sign)                                        as carry,
-                                SUM(overheads_with_sign)                                    as overheads,
-                                
-                                
-                                SUM(principal_with_sign * multiplier)                       as principal_closed,
-                                SUM(carry_with_sign * multiplier)                           as carry_closed,
-                                SUM(overheads_with_sign * multiplier)                       as overheads_closed,
-                                
-                                
-                                SUM(principal_with_sign * (1 - multiplier))                 as principal_opened,
-                                
-                                SUM(carry_with_sign * (1 - multiplier))                     as carry_opened,
-                                
-                                SUM(overheads_with_sign * (1 - multiplier))                 as overheads_opened,
-                                
-                                
-                                SUM(principal_with_sign_invested * (1 - multiplier))        as principal_with_sign_invested,
-                                SUM(carry_with_sign_invested * (1 - multiplier))            as carry_with_sign_invested,
-                                SUM(overheads_with_sign_invested * (1 - multiplier))        as overheads_with_sign_invested,
-                                
-                                SUM(principal_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)        as principal_fixed_opened,
-                                SUM(carry_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)            as carry_fixed_opened,
-                                SUM(overheads_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)        as overheads_fixed_opened,
-                                
-                                SUM(principal_with_sign_invested * (multiplier) *trn_hist_fx / rep_hist_fx)             as principal_fixed_closed,
-                                SUM(carry_with_sign_invested * (multiplier) *trn_hist_fx / rep_hist_fx)                 as carry_fixed_closed,
-                                SUM(overheads_with_sign_invested * (multiplier) *trn_hist_fx / rep_hist_fx)             as overheads_fixed_closed,
-    
-                                SUM(day_delta * position_size_with_sign * (1-multiplier))   as time_invested 
-                            from 
-                                transactions_unioned_table tut
-                            where accounting_date <= '{report_date}'
-                            group by 
-                                {consolidation_columns} instrument_id, transaction_currency_id, settlement_currency_id
-                        ) as tt_without_fx_rates
-                        left join (
-                            select 
-                                currency_id,
-                        
-                                case
-                                    when currency_id = '{default_currency_id}'::int
-                                    then 1
-                                    else fx_rate
-                                end as fx_rate
-                            from 
-                                currencies_currencyhistory as c_ch
-                            where 
-                                
-                                date = '{report_date}' and 
-                                c_ch.pricing_policy_id = {pricing_policy_id}
-                        ) as trnch
-                        on 
-                            transaction_currency_id = trnch.currency_id
-                        left join (
-                            select 
-                                currency_id,
-                        
-                                case
-                                    when currency_id = '{default_currency_id}'::int
-                                    then 1
-                                    else fx_rate
-                                end as fx_rate
-                            from 
-                                currencies_currencyhistory 
-                            where 
-                                date = '{report_date}'
-                        ) as stlch
-                        on 
-                            settlement_currency_id = stlch.currency_id
-                        group by 
-                            {consolidation_columns} instrument_id
-                    ) as tt_final_calculations
-                    left join (
-                        select 
-                            *,
-                            (select
-                                accrual_size
-                            from 
-                                instruments_accrualcalculationschedule ias
-                            where 
-                                accrual_start_date <= '{report_date}' and 
-                                ias.instrument_id = ii.id 
-                            order by 
-                                accrual_start_date 
-                            desc limit 1) as accrual_size,
-                            -- add pricing ccy current fx rate
-                            case
-                               when
-                                   pricing_currency_id = {default_currency_id}
-                                   then 1
-                               else
-                                   (select fx_rate
-                                    from currencies_currencyhistory c_ch
-                                    where date = '{report_date}'
-                                      and c_ch.currency_id = pricing_currency_id
-                                      and c_ch.pricing_policy_id = {pricing_policy_id}
-                                    limit 1)
-                            end as prc_cur_fx,
-    
-                            -- add accrued ccy current fx rate
-                            case
-                               when
-                                   pricing_currency_id = {default_currency_id}
-                                   then 1
-                               else
-                                   (select fx_rate
-                                    from currencies_currencyhistory c_ch
-                                    where date = '{report_date}'
-                                      and c_ch.currency_id = accrued_currency_id
-                                      and c_ch.pricing_policy_id = {pricing_policy_id}
-                                    limit 1)
-                            end as accr_cur_fx,
-                            
-                            -- add modified_duration
-                           (select
-                                ytm
-                            from
-                                instruments_pricehistory iph
-                            where
-                                date = '{report_date}'
-                                and iph.instrument_id=ii.id
-    
-                               ) as ytm,
-                               
-                            -- add modified_duration
-                           (select
-                                modified_duration
-                            from
-                                instruments_pricehistory iph
-                            where
-                                date = '{report_date}'
-                                and iph.instrument_id=ii.id
-    
-                               ) as modified_duration,
-    
-                           -- add current price
-                           (select
-                                principal_price
-                            from
-                                instruments_pricehistory iph
-                            where
-                                date = '{report_date}'
-                                and iph.instrument_id=ii.id
-    
-                               ) as cur_price,
-                              -- add current accrued
-                            (select
-                                accrued_price
-                            from
-                                instruments_pricehistory iph
-                            where
-                                date = '{report_date}'
-                                and iph.instrument_id=ii.id
-    
-                               ) as cur_accr_price
+                                end as prc_cur_fx,
         
-                        from 
-                            instruments_instrument ii
-                    ) as i
-                    on 
-                        instrument_id = i.id
-                ) as partially_calculated_columns
+                                -- add accrued ccy current fx rate
+                                case
+                                   when
+                                       pricing_currency_id = {default_currency_id}
+                                       then 1
+                                   else
+                                       (select fx_rate
+                                        from currencies_currencyhistory c_ch
+                                        where date = '{report_date}'
+                                          and c_ch.currency_id = accrued_currency_id
+                                          and c_ch.pricing_policy_id = {pricing_policy_id}
+                                        limit 1)
+                                end as accr_cur_fx,
+                                
+                                -- add modified_duration
+                               (select
+                                    ytm
+                                from
+                                    instruments_pricehistory iph
+                                where
+                                    date = '{report_date}'
+                                    and iph.instrument_id=ii.id
+        
+                                   ) as ytm,
+                                   
+                                -- add modified_duration
+                               (select
+                                    modified_duration
+                                from
+                                    instruments_pricehistory iph
+                                where
+                                    date = '{report_date}'
+                                    and iph.instrument_id=ii.id
+        
+                                   ) as modified_duration,
+        
+                               -- add current price
+                               (select
+                                    principal_price
+                                from
+                                    instruments_pricehistory iph
+                                where
+                                    date = '{report_date}'
+                                    and iph.instrument_id=ii.id
+        
+                                   ) as cur_price,
+                                  -- add current accrued
+                                (select
+                                    accrued_price
+                                from
+                                    instruments_pricehistory iph
+                                where
+                                    date = '{report_date}'
+                                    and iph.instrument_id=ii.id
+        
+                                   ) as cur_accr_price
+            
+                            from 
+                                instruments_instrument ii
+                        ) as i
+                        on 
+                            instrument_id = i.id
+                    ) as partially_calculated_columns
                 ) as loc_calculated_columns
             
             ) as pre_final_union_position_calculations_level_0
@@ -1391,6 +1399,7 @@ class PLReportBuilderSql:
             time_invested,
             
             ytm,
+            modified_duration,
             ytm_at_cost,
             return_annauly,
    
@@ -1491,6 +1500,7 @@ class PLReportBuilderSql:
                 (0) as time_invested,
                 
                 (0) as ytm,
+                (0) as modified_duration,
                 (0) as ytm_at_cost,
                 (0) as return_annauly,
                 
@@ -1699,6 +1709,7 @@ class PLReportBuilderSql:
             time_invested,
             
             ytm,
+            modified_duration,
             ytm_at_cost,
             return_annauly,
             
@@ -1800,6 +1811,7 @@ class PLReportBuilderSql:
                 (0) as time_invested,
                 
                 (0) as ytm,
+                (0) as modified_duration,
                 (0) as ytm_at_cost,
                 (0) as return_annauly,
                 
@@ -1967,6 +1979,7 @@ class PLReportBuilderSql:
             time_invested,
             
             ytm,
+            modified_duration,
             ytm_at_cost,
             return_annauly,
    
@@ -2067,6 +2080,7 @@ class PLReportBuilderSql:
                 (0) as time_invested,
                 
                 (0) as ytm,
+                (0) as modified_duration,
                 (0) as ytm_at_cost,
                 (0) as return_annauly,
                 
@@ -2231,6 +2245,7 @@ class PLReportBuilderSql:
             time_invested,
             
             ytm,
+            modified_duration,
             ytm_at_cost,
             return_annauly,
    
@@ -2331,6 +2346,7 @@ class PLReportBuilderSql:
                 (0) as time_invested,
                 
                 (0) as ytm,
+                (0) as modified_duration,
                 (0) as ytm_at_cost,
                 (0) as return_annauly,
                 
@@ -2496,7 +2512,7 @@ class PLReportBuilderSql:
 
         report_fx_rate = get_report_fx_rate(self.instance, self.instance.pl_first_date)
 
-        _l.info('report_fx_rate %s' % report_fx_rate)
+        _l.debug('report_fx_rate %s' % report_fx_rate)
 
         transaction_filter_sql_string = get_transaction_filter_sql_string(self.instance)
         fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
@@ -2529,7 +2545,7 @@ class PLReportBuilderSql:
 
         report_fx_rate = get_report_fx_rate(self.instance, self.instance.report_date)
 
-        _l.info('report_fx_rate %s' % report_fx_rate)
+        _l.debug('report_fx_rate %s' % report_fx_rate)
 
         transaction_filter_sql_string = get_transaction_filter_sql_string(self.instance)
         fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
@@ -2561,7 +2577,7 @@ class PLReportBuilderSql:
 
     def build_positions(self):
 
-        _l.info("build positions ")
+        _l.debug("build positions ")
 
         with connection.cursor() as cursor:
 
@@ -2603,6 +2619,9 @@ class PLReportBuilderSql:
                             (q2.amount_invested_loc) as amount_invested_loc,
                                 
                             (q2.time_invested) as time_invested,
+                            
+                            (q2.ytm) as ytm,
+                            (q2.modified_duration) as modified_duration,
                             
                             (q2.item_type) as item_type,
                             (q2.item_type_name) as item_type_name,
@@ -2682,7 +2701,7 @@ class PLReportBuilderSql:
 
             cursor.execute(query)
 
-            _l.info('PL report query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
+            _l.debug('PL report query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
             query_str = str(cursor.query, 'utf-8')
 
@@ -2882,7 +2901,7 @@ class PLReportBuilderSql:
 
 
 
-            _l.info('build position result %s ' % len(result))
+            _l.debug('build position result %s ' % len(result))
 
             self.instance.items = self.instance.items + result
 
@@ -2994,7 +3013,7 @@ class PLReportBuilderSql:
             if 'pricing_currency_id' in item:
                 currencies_ids.append(item['pricing_currency_id'])
 
-        _l.info('len instrument_ids %s' % len(instrument_ids))
+        _l.debug('len instrument_ids %s' % len(instrument_ids))
 
         self.add_data_items_instruments(instrument_ids)
         self.add_data_items_portfolios(portfolio_ids)

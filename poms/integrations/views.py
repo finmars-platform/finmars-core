@@ -1121,8 +1121,8 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
 
                     if celery_task:
 
-                        _l.info('celery_task %s' % celery_task)
-                        _l.info('res %s' % res)
+                        _l.debug('celery_task %s' % celery_task)
+                        _l.debug('res %s' % res)
 
                         celery_task_data = {}
 
@@ -1203,21 +1203,21 @@ class TransactionFileResultUploadHandler(APIView):
 
     def get(self, request):
 
-        _l.info("BACKEND_ROLES %s" % settings.BACKEND_ROLES )
+        _l.debug("BACKEND_ROLES %s" % settings.BACKEND_ROLES )
 
         return Response({'status': 'ok'})
 
     def post(self, request):
 
-        # _l.info('request.data %s' % request.data)
+        # _l.debug('request.data %s' % request.data)
 
-        _l.info('request.data %s' % request.data)
+        _l.debug('request.data %s' % request.data)
 
         procedure_id = request.data['id']
 
         master_user = MasterUser.objects.get(token=request.data['user']['token'])
 
-        _l.info('master_user %s' % master_user)
+        _l.debug('master_user %s' % master_user)
 
         try:
 
@@ -1240,7 +1240,7 @@ class TransactionFileResultUploadHandler(APIView):
 
                         item.save()
 
-                        _l.info("Transaction File saved successfuly")
+                        _l.debug("Transaction File saved successfuly")
 
                         procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
                         procedure_instance.save()
@@ -1261,7 +1261,7 @@ class TransactionFileResultUploadHandler(APIView):
                                                                                              })
 
                 else:
-                    _l.info("No files found")
+                    _l.debug("No files found")
 
                     text = "Data File Procedure %s. Files not found" % (
                         procedure_instance.procedure.user_code)
@@ -1277,13 +1277,13 @@ class TransactionFileResultUploadHandler(APIView):
 
             except Exception as e:
 
-                _l.info("Transaction File error happened %s " % e)
+                _l.debug("Transaction File error happened %s " % e)
 
                 return Response({'status': 'error'})
 
         except RequestDataFileProcedureInstance.DoesNotExist:
 
-            _l.info("Does not exist? RequestDataFileProcedureInstance %s" % procedure_id)
+            _l.debug("Does not exist? RequestDataFileProcedureInstance %s" % procedure_id)
 
             return Response({'status': '404'})  # TODO handle 404 properly
 

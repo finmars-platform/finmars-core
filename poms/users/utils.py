@@ -47,11 +47,11 @@ def set_master_user(request, master_user):
 
                     session.save()
 
-        _l.info('set_master_user done: %s' % (time.perf_counter() - set_st))
+        _l.debug('set_master_user done: %s' % (time.perf_counter() - set_st))
 
     except Session.DoesNotExist:
 
-        _l.info('set_master_user: session not found')
+        _l.debug('set_master_user: session not found')
 
         raise NotFound()
 
@@ -99,7 +99,7 @@ def get_master_user_and_member(request):
 
     except Session.DoesNotExist:
 
-        _l.info('get_master_user_and_member: session not found')
+        _l.debug('get_master_user_and_member: session not found')
 
         raise NotFound()
 

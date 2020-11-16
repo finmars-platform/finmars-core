@@ -14,16 +14,16 @@ class AbstractReport(object):
 
     def dump_transactions(self):
         if not self._transactions:
-            _l.info('transactions is empty')
+            _l.debug('transactions is empty')
             return
 
         try:
             import pandas as pd
         except ImportError:
-            _l.info('-' * 79)
-            _l.info('transactions')
+            _l.debug('-' * 79)
+            _l.debug('transactions')
             for i, t in enumerate(self._transactions):
-                _l.info('%s - %s', t)
+                _l.debug('%s - %s', t)
             return
 
         index = ['instrument_id', 'instrument', 'position_size_with_sign', 'principal_with_sign']
@@ -31,5 +31,5 @@ class AbstractReport(object):
         for t in self._transactions:
             data.append([1, 'Газпром', 20., -30.])
         df = pd.DataFrame(data=data, columns=index)
-        _l.info('transactions\n%s', df)
-        _l.info('transactions\n%s', df.to_html())
+        _l.debug('transactions\n%s', df)
+        _l.debug('transactions\n%s', df.to_html())

@@ -85,11 +85,11 @@ class Invalidator(object):
         # if (config.CACHE_INVALIDATE_ON_CREATE == config.WHOLE_MODEL and
         #         is_new_instance and model_cls and hasattr(model_cls, 'model_flush_key')):
 
-        # _l.info('flush_keys before append %s' % flush_keys)
+        # _l.debug('flush_keys before append %s' % flush_keys)
 
         flush_keys.append(model_cls.model_flush_key())
 
-        # _l.info('flush_keys after append %s' % flush_keys)
+        # _l.debug('flush_keys after append %s' % flush_keys)
 
         if not obj_keys or not flush_keys:
             return
@@ -106,7 +106,7 @@ class Invalidator(object):
         # query_flush so that other things can be cached against the queryset
         # and still participate in invalidation.
 
-        # _l.info('objects %s' % objects)
+        # _l.debug('objects %s' % objects)
 
         flush_keys = [o.flush_key() for o in objects]
 
@@ -178,7 +178,7 @@ class Invalidator(object):
         cache.delete_many(keys)
 
     def clear_all(self):
-        # _l.info("Clear all cache")
+        # _l.debug("Clear all cache")
         cache.clear()
 
 

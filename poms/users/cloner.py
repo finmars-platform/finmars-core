@@ -775,7 +775,7 @@ class FullDataCloner(object):
                     self._simple_list_clone_member_specific(Bookmark, target_member, source_member,
                                                             'member',  'name', 'parent', 'uri', 'json_data', 'list_layout')
 
-        _l.info("Master User Clone: Members UI finished")
+        _l.debug("Master User Clone: Members UI finished")
 
     def _ui(self):
 
@@ -791,7 +791,7 @@ class FullDataCloner(object):
 
         self._simple_list_clone(InstrumentUserFieldModel, None, 'master_user', 'name', 'key')
 
-        _l.info("Master User Clone: UI finished")
+        _l.debug("Master User Clone: UI finished")
 
     def _reference_tables(self):
 
@@ -975,13 +975,13 @@ class FullDataCloner(object):
             qs = qs.prefetch_related(*fields_prefetch_related)
 
         # _l.debug('clone %s: count=%s', model._meta.model_name, qs.count())
-        _l.info('clone %s: count=%s', model._meta.model_name, qs.count())
+        _l.debug('clone %s: count=%s', model._meta.model_name, qs.count())
         for source in qs:
             self._simple_clone(None, source, *fields, pk_map=pk_map, store=store)
 
     def _simple_list_clone_2(self, model, master_user_path, *fields, pk_map=True, store=False):
         # _l.debug('clone2 %s ', model._meta.model_name)
-        _l.info('clone2 %s ', model._meta.model_name)
+        _l.debug('clone2 %s ', model._meta.model_name)
         for source in self._source_get_objects(model).values():
             target_pk = self._get_related_from_pk_map(source, source.pk)
             target = self._target_get_object(source, target_pk)
@@ -1016,7 +1016,7 @@ class FullDataCloner(object):
             qs = qs.prefetch_related(*fields_prefetch_related)
 
         # _l.debug('clone member %s specific %s: count=%s', source_member, model._meta.model_name, qs.count())
-        _l.info('clone member %s specific %s: count=%s', source_member, model._meta.model_name, qs.count())
+        _l.debug('clone member %s specific %s: count=%s', source_member, model._meta.model_name, qs.count())
         for source in qs:
             self._simple_clone_member_specific(target_member, source_member, None, source, *fields, pk_map=pk_map, store=store)
 
@@ -1079,8 +1079,8 @@ class FullDataCloner(object):
             return target
 
         except Exception as e:
-            _l.info('_simple_clone error')
-            _l.info(e)
+            _l.debug('_simple_clone error')
+            _l.debug(e)
 
     def _simple_clone_member_specific(self, target_member, source_member, target, source, *fields, pk_map=True, store=False):
 
@@ -1102,7 +1102,7 @@ class FullDataCloner(object):
             elif field.many_to_one:
                 attr_name = field.get_attname()
 
-                # _l.info('attr_name %s' % attr_name)
+                # _l.debug('attr_name %s' % attr_name)
 
                 if attr_name == 'member_id':
                     setattr(target, attr_name, target_member.id)

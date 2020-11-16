@@ -264,10 +264,10 @@ class TransactionTypeProcess(object):
 
                     value = self.context_values[i.context_property]
 
-                    _l.info("Set from context. input %s value %s" % (i.name, value))
+                    _l.debug("Set from context. input %s value %s" % (i.name, value))
 
                 except KeyError:
-                    _l.info("Can't find context variable %s" % i.context_property)
+                    _l.debug("Can't find context variable %s" % i.context_property)
 
             if value is None:
 
@@ -277,7 +277,7 @@ class TransactionTypeProcess(object):
 
                     value = _get_val_by_model_cls(i, model_class)
 
-                    _l.info("Set from default. input %s value %s" % (i.name, value))
+                    _l.debug("Set from default. input %s value %s" % (i.name, value))
 
                 else:
 
@@ -286,18 +286,18 @@ class TransactionTypeProcess(object):
                         try:
                             value = formula.safe_eval(i.value, names=self.values, now=self._now, context=self._context)
 
-                            _l.info("Set from default. input %s value %s" % (i.name, i.value))
+                            _l.debug("Set from default. input %s value %s" % (i.name, i.value))
 
                         except formula.InvalidExpression as e:
                             self._set_eval_error(errors, i.name, i.value, e)
                             self.value_errors.append(errors)
-                            _l.info("ERROR Set from default. input %s" % i.name)
+                            _l.debug("ERROR Set from default. input %s" % i.name)
                             value = None
 
             if value or value == 0:
                 self.values[i.name] = value
             else:
-                _l.info("Value is not set. No Context. No Default. input %s " % i.name)
+                _l.debug("Value is not set. No Context. No Default. input %s " % i.name)
 
         # _l.debug('setvalues %s' % self.values)
 
@@ -1618,7 +1618,7 @@ class TransactionTypeProcess(object):
 
                 except Exception as e:
 
-                    _l.info("User Field Expression Eval error %s" % e)
+                    _l.debug("User Field Expression Eval error %s" % e)
 
                     try:
                         setattr(self.complex_transaction, field_key, '<InvalidExpression>')
@@ -1699,7 +1699,7 @@ class TransactionTypeProcess(object):
                     context=self._context)
             except Exception as e:
 
-                _l.info("Cant process text %s" % e)
+                _l.debug("Cant process text %s" % e)
 
                 self.complex_transaction.text = '<InvalidExpression>'
 
@@ -1739,7 +1739,7 @@ class TransactionTypeProcess(object):
         # 3 (OVERWRITE, ugettext_lazy('Overwrite')),
         # 4 (TREAT_AS_ERROR, ugettext_lazy('Treat as error')),
 
-        _l.info('execute_uniqueness_expression self.uniqueness_reaction %s' % self.uniqueness_reaction)
+        _l.debug('execute_uniqueness_expression self.uniqueness_reaction %s' % self.uniqueness_reaction)
 
         if self.uniqueness_reaction:
 
@@ -1807,7 +1807,7 @@ class TransactionTypeProcess(object):
 
         else: # default behaviour
 
-            _l.info('execute_uniqueness_expression default behavior' )
+            _l.debug('execute_uniqueness_expression default behavior' )
 
             if self.complex_transaction.transaction_type.transaction_unique_code_expr and \
                     self.complex_transaction.status == ComplexTransaction.PRODUCTION \
@@ -1830,13 +1830,13 @@ class TransactionTypeProcess(object):
                         context=self._context)
                 except Exception as e:
 
-                    _l.info("Cant process transaction_unique_code %s" % e)
+                    _l.debug("Cant process transaction_unique_code %s" % e)
 
                     self.complex_transaction.transaction_unique_code = None
 
                 if self.complex_transaction.transaction_unique_code:
 
-                    _l.info("execute_uniqueness_expression default behavior %s" % self.complex_transaction.transaction_unique_code)
+                    _l.debug("execute_uniqueness_expression default behavior %s" % self.complex_transaction.transaction_unique_code)
 
                     try:
 
@@ -1857,7 +1857,7 @@ class TransactionTypeProcess(object):
 
                     except ComplexTransaction.DoesNotExist:
 
-                        _l.info("Unique code can be assigned")
+                        _l.debug("Unique code can be assigned")
             else:
                 self.complex_transaction.transaction_unique_code = None
 

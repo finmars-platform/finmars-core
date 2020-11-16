@@ -24,8 +24,8 @@ def clone_master_user(self, instance, name, current_user):
         new_master_user = cloner.clone()
 
     except Exception as e:
-        _l.info("Clone Master User Exception ")
-        _l.info(e)
+        _l.debug("Clone Master User Exception ")
+        _l.debug(e)
 
     setattr(instance, 'task_id', current_task.request.id)
 

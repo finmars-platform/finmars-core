@@ -31,8 +31,8 @@ class BalanceReportBuilderSql:
 
         self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self.instance.master_user)
 
-        _l.info('self.instance master_user %s' % self.instance.master_user)
-        _l.info('self.instance report_date %s' % self.instance.report_date)
+        _l.debug('self.instance master_user %s' % self.instance.master_user)
+        _l.debug('self.instance report_date %s' % self.instance.report_date)
 
     def build_balance(self):
         st = time.perf_counter()
@@ -41,9 +41,9 @@ class BalanceReportBuilderSql:
 
         self.build()
 
-        _l.info('items total %s' % len(self.instance.items))
+        _l.debug('items total %s' % len(self.instance.items))
 
-        _l.info('build_st done: %s', "{:3.3f}".format(time.perf_counter() - st))
+        _l.debug('build_st done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
         self.add_data_items()
 
@@ -51,7 +51,7 @@ class BalanceReportBuilderSql:
 
     def build(self):
 
-        _l.info("build cash")
+        _l.debug("build cash")
 
         with connection.cursor() as cursor:
 
@@ -71,17 +71,17 @@ class BalanceReportBuilderSql:
             fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
                 self.instance)
 
-            _l.info('report_date: "%s"' % self.instance.report_date)
-            _l.info('report_fx_rate: "%s"' % report_fx_rate)
-            _l.info('default_currency_id: "%s"' % self.ecosystem_defaults.currency_id)
-            _l.info('report_currency: "%s"' % self.instance.report_currency.id)
-            _l.info('pricing_policy: "%s"' % self.instance.pricing_policy.id)
-            _l.info('transaction_filter_sql_string: "%s"' % transaction_filter_sql_string)
-            _l.info('fx_trades_and_fx_variations_filter_sql_string: "%s"' % fx_trades_and_fx_variations_filter_sql_string)
-            _l.info('consolidation_columns: "%s"' % consolidation_columns)
-            _l.info('balance_q_consolidated_select_columns: "%s"' % balance_q_consolidated_select_columns)
-            _l.info('tt_consolidation_columns: "%s"' % tt_consolidation_columns)
-            _l.info('transactions_all_with_multipliers_where_expression: "%s"' % transactions_all_with_multipliers_where_expression)
+            _l.debug('report_date: "%s"' % self.instance.report_date)
+            _l.debug('report_fx_rate: "%s"' % report_fx_rate)
+            _l.debug('default_currency_id: "%s"' % self.ecosystem_defaults.currency_id)
+            _l.debug('report_currency: "%s"' % self.instance.report_currency.id)
+            _l.debug('pricing_policy: "%s"' % self.instance.pricing_policy.id)
+            _l.debug('transaction_filter_sql_string: "%s"' % transaction_filter_sql_string)
+            _l.debug('fx_trades_and_fx_variations_filter_sql_string: "%s"' % fx_trades_and_fx_variations_filter_sql_string)
+            _l.debug('consolidation_columns: "%s"' % consolidation_columns)
+            _l.debug('balance_q_consolidated_select_columns: "%s"' % balance_q_consolidated_select_columns)
+            _l.debug('tt_consolidation_columns: "%s"' % tt_consolidation_columns)
+            _l.debug('transactions_all_with_multipliers_where_expression: "%s"' % transactions_all_with_multipliers_where_expression)
 
             pl_query = pl_query.format(report_date=self.instance.report_date,
                                        master_user_id=self.instance.master_user.id,
@@ -860,7 +860,7 @@ class BalanceReportBuilderSql:
 
             cursor.execute(query)
 
-            _l.info('Balance report query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
+            _l.debug('Balance report query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
             query_str = str(cursor.query, 'utf-8')
 
@@ -902,7 +902,7 @@ class BalanceReportBuilderSql:
                 if "strategy3_position_id" not in item:
                     item["strategy3_position_id"] = self.ecosystem_defaults.strategy3_id
 
-            _l.info('build cash result %s ' % len(result))
+            _l.debug('build cash result %s ' % len(result))
 
             self.instance.items = result
 

@@ -391,7 +391,7 @@ class AbstractReportTestMixin:
 
 class CFReportTestCase(AbstractReportTestMixin, TestCase):
     def _dumps_tinstr(self, items):
-        _l.info('Instrument types: \n %s',
+        _l.debug('Instrument types: \n %s',
                 BaseReportItem.sdumps(
                     items=items,
                     columns=[
@@ -406,7 +406,7 @@ class CFReportTestCase(AbstractReportTestMixin, TestCase):
                 ))
 
     def _dumps_instr(self, items):
-        _l.info('Instuments: \n %s',
+        _l.debug('Instuments: \n %s',
                 BaseReportItem.sdumps(
                     items=items,
                     columns=[
@@ -422,7 +422,7 @@ class CFReportTestCase(AbstractReportTestMixin, TestCase):
                 ))
 
     def _dumps_accruals(self, items):
-        _l.info('AccrualCalculationSchedule: \n %s',
+        _l.debug('AccrualCalculationSchedule: \n %s',
                 BaseReportItem.sdumps(
                     items=items,
                     columns=[
@@ -436,7 +436,7 @@ class CFReportTestCase(AbstractReportTestMixin, TestCase):
                 ))
 
     def _dumps_factors(self, items):
-        _l.info('InstrumentFactorSchedule: \n %s',
+        _l.debug('InstrumentFactorSchedule: \n %s',
                 BaseReportItem.sdumps(
                     items=items,
                     columns=[
@@ -446,7 +446,7 @@ class CFReportTestCase(AbstractReportTestMixin, TestCase):
                 ))
 
     def _dumps_events_shed(self, items):
-        _l.info('EventSchedule: \n %s',
+        _l.debug('EventSchedule: \n %s',
                 BaseReportItem.sdumps(
                     items=items,
                     columns=[
@@ -464,9 +464,9 @@ class CFReportTestCase(AbstractReportTestMixin, TestCase):
                 ))
 
     def _dumps_cpns(self, cpns):
-        _l.info('get_future_coupons:')
+        _l.debug('get_future_coupons:')
         for d, v in cpns:
-            _l.info('\t%s - %s', str(d), v)
+            _l.debug('\t%s - %s', str(d), v)
 
     def _test_cf1(self):
         # settings.DEBUG = True
@@ -519,7 +519,7 @@ class CFReportTestCase(AbstractReportTestMixin, TestCase):
         self._dumps_events_shed(i1.event_schedules.all())
         self._dumps_cpns(i1.get_future_coupons(begin_date=date(2101, 2, 1)))
 
-        _l.info('-' * 80)
+        _l.debug('-' * 80)
 
         self._t_buy(instr=i1, position=10,
                     stl_ccy=self.usd, principal=-10, carry=0, overheads=-10,
@@ -624,7 +624,7 @@ class CFReportTestCase(AbstractReportTestMixin, TestCase):
         self._dumps_events_shed(i1.event_schedules.all())
         self._dumps_cpns(i1.get_future_coupons(begin_date=date(2101, 2, 2)))
 
-        _l.info('-' * 80)
+        _l.debug('-' * 80)
 
         self._t_buy(instr=i1, position=10,
                     stl_ccy=self.usd, principal=-10, carry=0, overheads=-10,

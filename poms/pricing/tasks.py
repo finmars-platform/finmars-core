@@ -14,7 +14,7 @@ _l = logging.getLogger('poms.pricing')
 @shared_task(name='pricing.clear_old_pricing_procedure_instances', bind=True, ignore_result=True)
 def clear_old_pricing_procedure_instances(self,):
 
-    _l.info("Pricing: clear_old_pricing_procedure_instances")
+    _l.debug("Pricing: clear_old_pricing_procedure_instances")
 
     today = now()
 
@@ -32,7 +32,7 @@ def clear_old_pricing_procedure_instances(self,):
     if len(ids_to_delete):
         PricingProcedureInstance.objects.filter(id__in=ids_to_delete).delete()
 
-    _l.info("PricingProcedureInstance items deleted %s" % len(ids_to_delete))
+    _l.debug("PricingProcedureInstance items deleted %s" % len(ids_to_delete))
 
     ids_to_delete = []
 
@@ -48,13 +48,13 @@ def clear_old_pricing_procedure_instances(self,):
     if len(ids_to_delete):
         PricingParentProcedureInstance.objects.filter(id__in=ids_to_delete).delete()
 
-    _l.info("PricingParentProcedureInstance items deleted %s" % len(ids_to_delete))
+    _l.debug("PricingParentProcedureInstance items deleted %s" % len(ids_to_delete))
 
 
 @shared_task(name='pricing.set_old_processing_procedure_instances_to_error', bind=True, ignore_result=True)
 def set_old_processing_procedure_instances_to_error(self,):
 
-    _l.info("Pricing: set_old_processing_procedure_instances_to_error")
+    _l.debug("Pricing: set_old_processing_procedure_instances_to_error")
 
     today = now()
 
@@ -75,5 +75,5 @@ def set_old_processing_procedure_instances_to_error(self,):
 
                count = count + 1
 
-    _l.info("PricingParentProcedureInstance items set to error status %s" % len(count))
+    _l.debug("PricingParentProcedureInstance items set to error status %s" % len(count))
 

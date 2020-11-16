@@ -211,7 +211,7 @@ class CashFlowProjectionReportBuilder(TransactionReportBuilder):
         # for key, ritem in self._rolling_items.items():
         #     instr = ritem.instrument
         #     for es in instr.event_schedules.all():
-        #         _l.info('event_schedule.get_dates: %s -> %s', es, [(str(edate), str(ndate)) for edate, ndate in es.all_dates])
+        #         _l.debug('event_schedule.get_dates: %s -> %s', es, [(str(edate), str(ndate)) for edate, ndate in es.all_dates])
 
         now = self.instance.balance_date
         td1 = datetime.timedelta(days=1)

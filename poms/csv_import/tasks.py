@@ -70,11 +70,11 @@ def generate_file_report(instance, master_user, type, name):
 
     rows_content = []
 
-    _l.info(instance.stats)
+    _l.debug(instance.stats)
 
     for errorRow in instance.stats:
 
-        # _l.info('errorRow %s' % errorRow)
+        # _l.debug('errorRow %s' % errorRow)
 
         localResult = []
 
@@ -267,7 +267,7 @@ def get_item(scheme, result):
 
         try:
 
-            _l.info('result %s' % result)
+            _l.debug('result %s' % result)
 
             if 'user_code' in result:
                 item_result = Model.objects.get(master_user_id=result['master_user'], user_code=result['user_code'])
@@ -353,7 +353,7 @@ def process_csv_file(master_user,
                     executed_filter_expression = safe_eval(scheme.filter_expr, names=csv_row_dict_raw, context={})
                 except (ExpressionEvalError, TypeError, Exception, KeyError):
 
-                    _l.info('Filter expression error')
+                    _l.debug('Filter expression error')
 
                     return
 
@@ -369,7 +369,7 @@ def process_csv_file(master_user,
 
                 csv_row_dict = get_row_data_converted(row, csv_fields, csv_row_dict_raw, {}, conversion_errors)
 
-                # _l.info('csv_row_dict %s' % csv_row_dict)
+                # _l.debug('csv_row_dict %s' % csv_row_dict)
 
                 for key, value in csv_row_dict.items():
                     error_row['error_data']['columns']['converted_imported_columns'].append(
@@ -459,8 +459,8 @@ def process_csv_file(master_user,
 
                             executed_expression = None
 
-                            # _l.info('entity_field.expression %s' % entity_field.expression)
-                            # _l.info('csv_row_dict %s' % csv_row_dict)
+                            # _l.debug('entity_field.expression %s' % entity_field.expression)
+                            # _l.debug('csv_row_dict %s' % csv_row_dict)
 
                             try:
                                 # context=self.report.context
@@ -469,7 +469,7 @@ def process_csv_file(master_user,
 
                                 executed_expressions.append(executed_expression)
 
-                                # _l.info('executed_expression %s ' % executed_expression)
+                                # _l.debug('executed_expression %s ' % executed_expression)
 
                                 if key in mapping_map:
 
@@ -482,7 +482,7 @@ def process_csv_file(master_user,
 
                                         try:
 
-                                            _l.info('Lookup by user code %s' % executed_expression)
+                                            _l.debug('Lookup by user code %s' % executed_expression)
 
                                             if key == 'price_download_scheme':
                                                 instance[key] = PriceDownloadScheme.objects.get(master_user=master_user,
@@ -521,7 +521,7 @@ def process_csv_file(master_user,
                                                 if hasattr(ecosystem_default, eco_key):
                                                     instance[key] = getattr(ecosystem_default, eco_key)
                                                 else:
-                                                    _l.info("Can't set default value for %s" % key)
+                                                    _l.debug("Can't set default value for %s" % key)
                                             else:
 
                                                 inputs_error.append(
@@ -537,7 +537,7 @@ def process_csv_file(master_user,
 
                                 else:
 
-                                    # _l.info('key %s' % key)
+                                    # _l.debug('key %s' % key)
 
                                     if key == 'user_code':
 
@@ -556,7 +556,7 @@ def process_csv_file(master_user,
 
                                         instance[key] = executed_expression
 
-                                    # _l.info('date instance[key] %s' % instance[key])
+                                    # _l.debug('date instance[key] %s' % instance[key])
 
                                     # if key == 'date':
                                     #
@@ -564,7 +564,7 @@ def process_csv_file(master_user,
                                     #
                                     #         instance[key] = formula._parse_date(instance[key])
                                     #
-                                    #         _l.info('date instance[key] %s' % instance[key])
+                                    #         _l.debug('date instance[key] %s' % instance[key])
                                     #
                                     #     except (ExpressionEvalError, TypeError):
                                     #
@@ -578,7 +578,7 @@ def process_csv_file(master_user,
 
                                 if missing_data_handler == 'set_defaults':
 
-                                    _l.info('ExpressionEvalError Settings Default %s' % ExpressionEvalError)
+                                    _l.debug('ExpressionEvalError Settings Default %s' % ExpressionEvalError)
 
                                     ecosystem_default = EcosystemDefault.objects.get(
                                         master_user=master_user)
@@ -591,11 +591,11 @@ def process_csv_file(master_user,
                                     if hasattr(ecosystem_default, eco_key):
                                         instance[key] = getattr(ecosystem_default, eco_key)
                                     else:
-                                        _l.info("Can't set default value for %s" % key)
+                                        _l.debug("Can't set default value for %s" % key)
 
                                 else:
 
-                                    _l.info('ExpressionEvalError Appending Error %s' % ExpressionEvalError)
+                                    _l.debug('ExpressionEvalError Appending Error %s' % ExpressionEvalError)
 
                                     inputs_error.append(
                                         {"field": entity_field,
@@ -604,7 +604,7 @@ def process_csv_file(master_user,
 
                                     executed_expressions.append(ugettext('Invalid expression'))
 
-                            # _l.info('executed_expression %s' % executed_expression)
+                            # _l.debug('executed_expression %s' % executed_expression)
 
                         if get_field_type(entity_field) == 'dynamic_attribute':
 
@@ -646,7 +646,7 @@ def process_csv_file(master_user,
 
                                         try:
 
-                                            # _l.info('Lookup by name in classifier')
+                                            # _l.debug('Lookup by name in classifier')
 
                                             executed_attr['executed_expression'] = GenericClassifier.objects.get(
                                                 attribute_type=attr_type, name=executed_expression)
@@ -667,8 +667,8 @@ def process_csv_file(master_user,
 
                                                 # inputs_error.append(entity_field)
                                                 #
-                                                # _l.info('%s classifier mapping  does not exist' % scheme.content_type.model)
-                                                # _l.info('expresion: %s ' % executed_expression)
+                                                # _l.debug('%s classifier mapping  does not exist' % scheme.content_type.model)
+                                                # _l.debug('expresion: %s ' % executed_expression)
 
                             else:
 
@@ -728,7 +728,7 @@ def process_csv_file(master_user,
 
         task_instance.processed_rows = row_index
 
-        # _l.info('task_instance.processed_rows: %s', task_instance.processed_rows)
+        # _l.debug('task_instance.processed_rows: %s', task_instance.processed_rows)
 
         update_state(task_id=task_instance.task_id, state=Task.STATUS_PENDING,
                      meta={'processed_rows': task_instance.processed_rows,
@@ -760,7 +760,7 @@ class ValidateHandler:
             instance = Model(**result_without_many_to_many)
         except (ValidationError, IntegrityError):
 
-            _l.info("Validation error create simple instance %s" % result)
+            _l.debug("Validation error create simple instance %s" % result)
 
             instance = None
 
@@ -776,8 +776,8 @@ class ValidateHandler:
 
                 attribute = GenericAttribute(content_object=instance, attribute_type=attr_type)
 
-                # _l.info('result_attr', result_attr)
-                # _l.info('attribute', attribute)
+                # _l.debug('result_attr', result_attr)
+                # _l.debug('attribute', attribute)
 
                 if attr_type.value_type == 10:
                     attribute.value_string = str(result_attr['executed_expression'])
@@ -821,7 +821,7 @@ class ValidateHandler:
 
     def instance_overwrite_full_clean(self, scheme, result, item, error_handler, error_row):
 
-        # _l.info('Overwrite item %s' % item)
+        # _l.debug('Overwrite item %s' % item)
 
         try:
 
@@ -893,7 +893,7 @@ class ValidateHandler:
 
     def process(self, instance, update_state):
 
-        _l.info('ValidateHandler.process: initialized')
+        _l.debug('ValidateHandler.process: initialized')
 
         scheme_id = instance.scheme.id
         error_handler = instance.error_handler
@@ -909,8 +909,8 @@ class ValidateHandler:
         try:
             with SFS.open(instance.file_path, 'rb') as f:
                 with NamedTemporaryFile() as tmpf:
-                    _l.info('tmpf')
-                    _l.info(tmpf)
+                    _l.debug('tmpf')
+                    _l.debug(tmpf)
 
                     for chunk in f.chunks():
                         tmpf.write(chunk)
@@ -931,15 +931,15 @@ class ValidateHandler:
                                                                    context, instance, update_state, mode,
                                                                    self.full_clean_result, member)
 
-                        _l.info('ValidateHandler.process_csv_file: finished')
-                        _l.info('ValidateHandler.process_csv_file process_errors %s: ' % len(process_errors))
+                        _l.debug('ValidateHandler.process_csv_file: finished')
+                        _l.debug('ValidateHandler.process_csv_file process_errors %s: ' % len(process_errors))
 
                         instance.imported = len(results)
                         instance.stats = process_errors
         except Exception as e:
 
-            _l.info(e)
-            _l.info('Can\'t process file', exc_info=True)
+            _l.debug(e)
+            _l.debug('Can\'t process file', exc_info=True)
             instance.error_message = ugettext("Invalid file format or file already deleted.")
         finally:
             # import_file_storage.delete(instance.file_path)
@@ -1164,7 +1164,7 @@ class ImportHandler:
 
     def add_instrument_type_pricing_policies(self, instance, scheme, member, master_user):
 
-        _l.info("Add Pricing Policies instrument_type %s" % instance.instrument_type)
+        _l.debug("Add Pricing Policies instrument_type %s" % instance.instrument_type)
 
         if instance.instrument_type:
 
@@ -1183,8 +1183,8 @@ class ImportHandler:
 
                 item.save()
 
-            _l.info("Add Pricing Policies instrument_type %s" % instance.instrument_type)
-            _l.info("Add Pricing Policies for instance %s" % instance)
+            _l.debug("Add Pricing Policies instrument_type %s" % instance.instrument_type)
+            _l.debug("Add Pricing Policies for instance %s" % instance)
 
     def save_instance(self, scheme, result, error_handler, error_row, member, master_user):
 
@@ -1192,7 +1192,7 @@ class ImportHandler:
 
             instance = self.create_simple_instance(scheme, result)
 
-            _l.info('ImportHandler save_instance %s ' % instance)
+            _l.debug('ImportHandler save_instance %s ' % instance)
 
             if instance:
 
@@ -1220,9 +1220,9 @@ class ImportHandler:
 
     def overwrite_instance(self, scheme, result, item, error_handler, error_row, member, master_user):
 
-        # _l.info('Overwrite item %s' % item)
+        # _l.debug('Overwrite item %s' % item)
 
-        _l.info('ImportHandler overwrite_instance %s ' % item)
+        _l.debug('ImportHandler overwrite_instance %s ' % item)
 
         try:
 
@@ -1258,31 +1258,31 @@ class ImportHandler:
 
     def import_result(self, result_item, error_row, scheme, error_handler, mode, member, master_user):
 
-        # _l.info('ImportHandler.result_item %s' % result_item)
+        # _l.debug('ImportHandler.result_item %s' % result_item)
 
         item = get_item(scheme, result_item)
 
         if mode == 'overwrite' and item:
 
-            # _l.info('Overwrite instance')
+            # _l.debug('Overwrite instance')
 
             self.overwrite_instance(scheme, result_item, item, error_handler, error_row, member, master_user)
 
         elif mode == 'overwrite' and not item:
 
-            _l.info('Create instance')
+            _l.debug('Create instance')
 
             self.save_instance(scheme, result_item, error_handler, error_row, member, master_user)
 
         elif mode == 'skip' and not item:
 
-            _l.info('Create instance')
+            _l.debug('Create instance')
 
             self.save_instance(scheme, result_item, error_handler, error_row, member, master_user)
 
         elif mode == 'skip' and item:
 
-            # _l.info('Skip instance %s')
+            # _l.debug('Skip instance %s')
 
             error_row['level'] = 'error'
             error_row['error_message'] = error_row['error_message'] + error_row[
@@ -1305,7 +1305,7 @@ class ImportHandler:
 
     def process(self, instance, update_state, execution_context=None):
 
-        _l.info('ImportHandler.process: initialized')
+        _l.debug('ImportHandler.process: initialized')
 
         scheme_id = instance.scheme.id
         error_handler = instance.error_handler
@@ -1316,15 +1316,15 @@ class ImportHandler:
         master_user = instance.master_user
         member = instance.member
 
-        _l.info('ImportHandler.mode %s' % mode)
+        _l.debug('ImportHandler.mode %s' % mode)
 
         scheme = CsvImportScheme.objects.get(pk=scheme_id)
 
         try:
             with SFS.open(instance.file_path, 'rb') as f:
                 with NamedTemporaryFile() as tmpf:
-                    _l.info('tmpf')
-                    _l.info(tmpf)
+                    _l.debug('tmpf')
+                    _l.debug(tmpf)
 
                     for chunk in f.chunks():
                         tmpf.write(chunk)
@@ -1345,15 +1345,15 @@ class ImportHandler:
                                                                    context, instance, update_state, mode,
                                                                    self.import_result, member, execution_context)
 
-                        _l.info('ImportHandler.process_csv_file: finished')
-                        _l.info('ImportHandler.process_csv_file process_errors %s: ' % len(process_errors))
+                        _l.debug('ImportHandler.process_csv_file: finished')
+                        _l.debug('ImportHandler.process_csv_file process_errors %s: ' % len(process_errors))
 
                         instance.imported = len(results)
                         instance.stats = process_errors
         except Exception as e:
 
-            _l.info(e)
-            _l.info('Can\'t process file', exc_info=True)
+            _l.debug(e)
+            _l.debug('Can\'t process file', exc_info=True)
             instance.error_message = ugettext("Invalid file format or file already deleted.")
         finally:
             # import_file_storage.delete(instance.file_path)
@@ -1392,7 +1392,7 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
 
         try:
 
-            _l.info(
+            _l.debug(
                 'data_csv_file_import_by_procedure looking for scheme %s ' % procedure_instance.procedure.scheme_name)
 
             scheme = CsvImportScheme.objects.get(master_user=procedure_instance.master_user,
@@ -1418,7 +1418,7 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
                     try:
                         aes_key = rsa_cipher.decrypt(procedure_instance.private_key, procedure_instance.symmetric_key)
                     except Exception as e:
-                        _l.info('data_csv_file_import_by_procedure AES Key decryption error %s' % e)
+                        _l.debug('data_csv_file_import_by_procedure AES Key decryption error %s' % e)
 
                     aes_cipher = AESCipher(aes_key)
 
@@ -1427,11 +1427,11 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
                     try:
                         decrypt_text = aes_cipher.decrypt(encrypted_text)
                     except Exception as e:
-                        _l.info('data_csv_file_import_by_procedure Text decryption error %s' % e)
+                        _l.debug('data_csv_file_import_by_procedure Text decryption error %s' % e)
 
-                    _l.info('data_csv_file_import_by_procedure file decrypted')
+                    _l.debug('data_csv_file_import_by_procedure file decrypted')
 
-                    _l.info('Size of decrypted text: %s' % len(decrypt_text))
+                    _l.debug('Size of decrypted text: %s' % len(decrypt_text))
 
                     with NamedTemporaryFile() as tmpf:
 
@@ -1443,7 +1443,7 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
 
                         SFS.save(file_path, tmpf)
 
-                        _l.info('data_csv_file_import_by_procedure tmp file filled')
+                        _l.debug('data_csv_file_import_by_procedure tmp file filled')
 
                         instance = CsvDataFileImport(scheme=scheme,
                                                      file_path=file_path,
@@ -1454,7 +1454,7 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
                                                      classifier_handler=scheme.classifier_handler,
                                                      missing_data_handler=scheme.missing_data_handler)
 
-                        _l.info('data_csv_file_import_by_procedure instance: %s' % instance)
+                        _l.debug('data_csv_file_import_by_procedure instance: %s' % instance)
 
                         transaction.on_commit(
                             lambda: data_csv_file_import.apply_async(
@@ -1462,7 +1462,7 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
 
                 except Exception as e:
 
-                    _l.info('data_csv_file_import_by_procedure decryption error %s' % e)
+                    _l.debug('data_csv_file_import_by_procedure decryption error %s' % e)
 
         except CsvImportScheme.DoesNotExist:
 
@@ -1473,7 +1473,7 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
                                 source="Data File Procedure Service",
                                 text=text)
 
-            _l.info(
+            _l.debug(
                 'data_csv_file_import_by_procedure scheme %s not found' % procedure_instance.procedure.scheme_name)
 
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR

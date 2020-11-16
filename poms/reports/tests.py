@@ -242,12 +242,12 @@ def load_from_csv(master_user, instr, instr_price_hist, ccy_fx_rate, trn):
         delimiter = ';'
         quotechar = '"'
         # with open(file_name, mode='rt', encoding='utf-8') as csvfile:
-        #     _l.info('-' * 10)
-        #     _l.info(file_name)
+        #     _l.debug('-' * 10)
+        #     _l.debug(file_name)
         #
         #     reader = csv.reader(csvfile, delimiter=delimiter, quotechar=quotechar)
         #     for row in reader:
-        #         _l.info('b=%s, data=%s' % (bool(row), row))
+        #         _l.debug('b=%s, data=%s' % (bool(row), row))
         #         if callable(row_handler):
         #             row_handler(row)
 
@@ -1266,8 +1266,8 @@ class ReportTestCase(TestCase):
 
     def _dump(self, *args, **kwargs):
         for r in self._sdump(*args, **kwargs).splitlines():
-            _l.info(r)
-            # _l.info(self._sdump(*args, **kwargs))
+            _l.debug(r)
+            # _l.debug(self._sdump(*args, **kwargs))
 
     def _sdump_hist(self, days=None, ccys=True, instrs=True, in_csv=False):
         s = ''
@@ -1301,14 +1301,14 @@ class ReportTestCase(TestCase):
 
     def _dump_hist(self, *args, **kwargs):
         for r in self._sdump_hist(*args, **kwargs).splitlines():
-            _l.info(r)
-            # _l.info(self._sdump_hist(*args, **kwargs))
+            _l.debug(r)
+            # _l.debug(self._sdump_hist(*args, **kwargs))
 
     def _simple_run(self, name, result=None, trns=False, trn_cols=None, item_cols=None,
                     trn_dump_all=True, in_csv=False, build_balance_for_tests=False, **kwargs):
-        _l.info('')
-        _l.info('')
-        _l.info('*' * 79)
+        _l.debug('')
+        _l.debug('')
+        _l.debug('*' * 79)
 
         kwargs.setdefault('pricing_policy', self.pp)
         r = Report(master_user=self.m, member=self.mm, **kwargs)
@@ -2837,7 +2837,7 @@ class ReportTestCase(TestCase):
         days = 1
         code = 1
         for g in range(0, 10):
-            _l.info('group: %s', g)
+            _l.debug('group: %s', g)
 
             ctrns = []
             trns = []
@@ -2972,18 +2972,18 @@ class ReportTestCase(TestCase):
 
         # test_date = date(2016, 8, 1)
         test_date = date(2017, 5, 7)
-        _l.info('test_date: %s', test_date)
+        _l.debug('test_date: %s', test_date)
 
         self._ccy_hist(self.gbp, test_date, 1.4)
         self._ccy_hist(self.eur, test_date, 1.1)
 
         data = instr.get_future_coupons(begin_date=test_date, with_maturity=False, factor=True)
         for d, v in data:
-            _l.info('1: %s -> %s', d, v)
+            _l.debug('1: %s -> %s', d, v)
 
         data = instr.get_future_coupons(begin_date=test_date, with_maturity=False, factor=False)
         for d, v in data:
-            _l.info('2: %s -> %s', d, v)
+            _l.debug('2: %s -> %s', d, v)
 
         class DummyReport:
             report_date = None
@@ -3020,13 +3020,13 @@ class ReportTestCase(TestCase):
 
         data = ytm.get_instr_ytm_data()
         for d, v in data:
-            _l.info('3: %s -> %s', d, v)
+            _l.debug('3: %s -> %s', d, v)
 
-        _l.info('4: %s', ytm.get_instr_ytm())
+        _l.debug('4: %s', ytm.get_instr_ytm())
 
             # cpns = instr.get_future_coupons(begin_date=date(2017, 5, 7), with_maturity=False)
             # for d, v in cpns:
-            #     _l.info('2.: %s -> %s', d,v)
+            #     _l.debug('2.: %s -> %s', d,v)
 
     def _test_from_csv_td_1(self):
         test_prefix = 'td_2'

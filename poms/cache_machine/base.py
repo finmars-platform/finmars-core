@@ -48,14 +48,14 @@ class CachingManager(models.Manager):
 
     def post_save(self, instance, **kwargs):
 
-        # _l.info("post_save %s" % instance)
+        # _l.debug("post_save %s" % instance)
 
         self.invalidate(instance, is_new_instance=kwargs['created'],
                         model_cls=kwargs['sender'])
 
     def post_delete(self, instance, **kwargs):
 
-        # _l.info("post_delete %s" % instance)
+        # _l.debug("post_delete %s" % instance)
 
         self.invalidate(instance)
 

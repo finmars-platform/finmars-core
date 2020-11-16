@@ -47,7 +47,7 @@ class FileReport(models.Model):
 
             with NamedTemporaryFile() as tmpfile:
 
-                _l.info('FileReport tmpfile.name %s' % tmpfile.name)
+                _l.debug('FileReport tmpfile.name %s' % tmpfile.name)
 
                 tmpfile.seek(0)
 

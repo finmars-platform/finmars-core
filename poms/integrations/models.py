@@ -87,13 +87,13 @@ class BloombergDataProviderCredential(TimeStampedModel):
 
         qs = BloombergDataProviderCredential.objects.filter(master_user=self.master_user)
 
-        _l.info('self.master_user.pk %s ' % self.master_user.pk)
-        _l.info('qs len %s' % len(qs))
+        _l.debug('self.master_user.pk %s ' % self.master_user.pk)
+        _l.debug('qs len %s' % len(qs))
         if self.pk:
             qs = qs.exclude(pk=self.pk)
             qs.delete()
 
-        _l.info('qs len after %s' % len(qs))
+        _l.debug('qs len after %s' % len(qs))
 
         super(BloombergDataProviderCredential, self).save(*args, **kwargs)
 

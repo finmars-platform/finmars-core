@@ -111,11 +111,11 @@ class PricingBrokerBloombergHandler(APIView):
 
     def post(self, request):
 
-        # _l.info('request.data %s' % request.data)
+        # _l.debug('request.data %s' % request.data)
 
         procedure_id = request.data['procedure']
 
-        _l.info("> handle_callback broker bloomberg: procedure_id %s" % procedure_id)
+        _l.debug("> handle_callback broker bloomberg: procedure_id %s" % procedure_id)
 
         try:
 
@@ -136,7 +136,7 @@ class PricingBrokerBloombergHandler(APIView):
 
         except PricingProcedureInstance.DoesNotExist:
 
-            _l.info("Does not exist? Procedure %s" % procedure_id)
+            _l.debug("Does not exist? Procedure %s" % procedure_id)
 
             return Response({'status': '404'})  # TODO handle 404 properly
 
@@ -149,11 +149,11 @@ class PricingBrokerBloombergForwardsHandler(APIView):
 
     def post(self, request):
 
-        # _l.info('request.data %s' % request.data)
+        # _l.debug('request.data %s' % request.data)
 
         procedure_id = request.data['procedure']
 
-        _l.info("> handle_callback broker bloomberg forwards: procedure_id %s" % procedure_id)
+        _l.debug("> handle_callback broker bloomberg forwards: procedure_id %s" % procedure_id)
 
         try:
 
@@ -174,7 +174,7 @@ class PricingBrokerBloombergForwardsHandler(APIView):
 
         except PricingProcedureInstance.DoesNotExist:
 
-            _l.info("Does not exist? Procedure %s" % procedure_id)
+            _l.debug("Does not exist? Procedure %s" % procedure_id)
 
             return Response({'status': '404'})  # TODO handle 404 properly
 
@@ -187,11 +187,11 @@ class PricingBrokerWtradeHandler(APIView):
 
     def post(self, request):
 
-        # _l.info('request.data %s' % request.data)
+        # _l.debug('request.data %s' % request.data)
 
         procedure_id = request.data['procedure']
 
-        _l.info("> handle_callback broker wtrade: procedure_id %s" % procedure_id)
+        _l.debug("> handle_callback broker wtrade: procedure_id %s" % procedure_id)
 
         try:
 
@@ -212,7 +212,7 @@ class PricingBrokerWtradeHandler(APIView):
 
         except PricingProcedureInstance.DoesNotExist:
 
-            _l.info("Does not exist? Procedure %s" % procedure_id)
+            _l.debug("Does not exist? Procedure %s" % procedure_id)
 
             return Response({'status': '404'})  # TODO handle 404 properly
 
@@ -225,11 +225,11 @@ class PricingBrokerFixerHandler(APIView):
 
     def post(self, request):
 
-        # _l.info('request.data %s' % request.data)
+        # _l.debug('request.data %s' % request.data)
 
         procedure_id = request.data['procedure']
 
-        _l.info("> handle_callback broker fixer: procedure_id %s" % procedure_id)
+        _l.debug("> handle_callback broker fixer: procedure_id %s" % procedure_id)
 
         try:
 
@@ -250,7 +250,7 @@ class PricingBrokerFixerHandler(APIView):
 
         except PricingProcedureInstance.DoesNotExist:
 
-            _l.info("Does not exist? Procedure %s" % procedure_id)
+            _l.debug("Does not exist? Procedure %s" % procedure_id)
 
             return Response({'status': '404'})  # TODO handle 404 properly
 
@@ -263,11 +263,11 @@ class PricingBrokerAlphavHandler(APIView):
 
     def post(self, request):
 
-        # _l.info('request.data %s' % request.data)
+        # _l.debug('request.data %s' % request.data)
 
         procedure_id = request.data['procedure']
 
-        _l.info("> handle_callback broker alphav: procedure_id %s" % procedure_id)
+        _l.debug("> handle_callback broker alphav: procedure_id %s" % procedure_id)
 
         try:
 
@@ -288,7 +288,7 @@ class PricingBrokerAlphavHandler(APIView):
 
         except PricingProcedureInstance.DoesNotExist:
 
-            _l.info("Does not exist? Procedure %s" % procedure_id)
+            _l.debug("Does not exist? Procedure %s" % procedure_id)
 
             return Response({'status': '404'})  # TODO handle 404 properly
 

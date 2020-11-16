@@ -85,7 +85,7 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
     def create(self, request, *args, **kwargs):
 
-        _l.info('TASK: data_csv_file_import')
+        _l.debug('TASK: data_csv_file_import')
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -95,7 +95,7 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
         signer = TimestampSigner()
 
-        _l.info("TASK id: %s" % task_id)
+        _l.debug("TASK id: %s" % task_id)
 
         if task_id:
 
@@ -105,9 +105,9 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
                 celery_task = CeleryTask.objects.get(master_user=request.user.master_user, task_id=task_id)
             except CeleryTask.DoesNotExist:
                 celery_task = None
-                _l.info("Cant create Celery Task")
+                _l.debug("Cant create Celery Task")
 
-            _l.info('celery_task %s' % celery_task)
+            _l.debug('celery_task %s' % celery_task)
 
             st = time.perf_counter()
 
@@ -146,16 +146,16 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
                         celery_task.data = celery_task_data
 
-                # _l.info('TASK ITEMS LEN %s' % len(res.result.items))
+                # _l.debug('TASK ITEMS LEN %s' % len(res.result.items))
 
-            _l.info('AsyncResult res.ready: %s' % (time.perf_counter() - st))
+            _l.debug('AsyncResult res.ready: %s' % (time.perf_counter() - st))
 
             if instance.master_user.id != request.user.master_user.id:
                 raise PermissionDenied()
 
-            # _l.info('TASK RESULT %s' % res.result)
-            _l.info('TASK STATUS %s' % res.status)
-            _l.info('TASK STATUS celery_task %s' % celery_task)
+            # _l.debug('TASK RESULT %s' % res.result)
+            _l.debug('TASK STATUS %s' % res.status)
+            _l.debug('TASK STATUS celery_task %s' % celery_task)
 
             instance.task_id = task_id
             instance.task_status = res.status
@@ -179,8 +179,8 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
             celery_task.save()
 
-            _l.info('CREATE CELERY TASK celery_task %s' % celery_task)
-            _l.info('CREATE CELERY TASK %s' % res.id)
+            _l.debug('CREATE CELERY TASK celery_task %s' % celery_task)
+            _l.debug('CREATE CELERY TASK %s' % res.id)
 
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)
@@ -189,7 +189,7 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
 def dump(obj):
     for attr in dir(obj):
-        _l.info("obj.%s = %r" % (attr, getattr(obj, attr)))
+        _l.debug("obj.%s = %r" % (attr, getattr(obj, attr)))
 
 
 class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
@@ -207,7 +207,7 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
 
     def create(self, request, *args, **kwargs):
 
-        _l.info('TASK: data_csv_file_import_validate')
+        _l.debug('TASK: data_csv_file_import_validate')
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -215,7 +215,7 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
 
         task_id = instance.task_id
 
-        _l.info('TASK id: %s' % task_id)
+        _l.debug('TASK id: %s' % task_id)
 
         signer = TimestampSigner()
 
@@ -227,7 +227,7 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
                 celery_task = CeleryTask.objects.get(master_user=request.user.master_user, task_id=task_id)
             except CeleryTask.DoesNotExist:
                 celery_task = None
-                _l.info("Cant create Celery Task")
+                _l.debug("Cant create Celery Task")
 
             st = time.perf_counter()
 
@@ -235,11 +235,11 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
 
                 instance = res.result
 
-                _l.info('instance')
-                _l.info(instance)
+                _l.debug('instance')
+                _l.debug(instance)
 
-                _l.info('instance %s' % instance.stats_file_report)
-                _l.info('instance.total_rows %s' % instance.total_rows)
+                _l.debug('instance %s' % instance.stats_file_report)
+                _l.debug('instance.total_rows %s' % instance.total_rows)
 
                 if celery_task:
                     celery_task.finished_at = datetime_now()

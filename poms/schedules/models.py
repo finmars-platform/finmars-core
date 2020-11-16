@@ -124,7 +124,7 @@ class ScheduleInstance(DataTimeStampedModel):
 
         self.current_processing_procedure_number = self.current_processing_procedure_number + 1
 
-        _l.info('run_next_procedure schedule %s procedure number %s' % (self.schedule, self.current_processing_procedure_number))
+        _l.debug('run_next_procedure schedule %s procedure number %s' % (self.schedule, self.current_processing_procedure_number))
 
         for procedure in self.schedule.procedures.all():
 

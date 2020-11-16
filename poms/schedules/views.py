@@ -45,9 +45,9 @@ class ScheduleViewSet(AbstractModelViewSet):
     @action(detail=True, methods=['post'], url_path='run-schedule', serializer_class=ScheduleSerializer)
     def run_schedule(self, request, pk=None):
 
-        _l.info("Run Procedure %s" % pk)
+        _l.debug("Run Procedure %s" % pk)
 
-        _l.info("Run Procedure data %s" % request.data)
+        _l.debug("Run Procedure data %s" % request.data)
 
         schedule = Schedule.objects.get(pk=pk)
 
@@ -57,10 +57,10 @@ class ScheduleViewSet(AbstractModelViewSet):
             next_run_at = timezone.localtime(schedule.next_run_at)
             schedule.schedule(save=True)
 
-            _l.info('Schedule: master_user=%s, next_run_at=%s. STARTED',
+            _l.debug('Schedule: master_user=%s, next_run_at=%s. STARTED',
                     master_user.id, schedule.next_run_at)
 
-            _l.info('Schedule: procedures count %s' % len(schedule.procedures.all()))
+            _l.debug('Schedule: procedures count %s' % len(schedule.procedures.all()))
 
             schedule_instance = ScheduleInstance(schedule=schedule, master_user=master_user)
             schedule_instance.save()
@@ -77,17 +77,17 @@ class ScheduleViewSet(AbstractModelViewSet):
 
                         process_procedure_async.apply_async(kwargs={'procedure':procedure, 'master_user':master_user, 'schedule_instance': schedule_instance})
 
-                        _l.info('Schedule: Process first procedure master_user=%s, next_run_at=%s', master_user.id, schedule.next_run_at)
+                        _l.debug('Schedule: Process first procedure master_user=%s, next_run_at=%s', master_user.id, schedule.next_run_at)
 
                 except Exception as e:
 
                     schedule_instance.status = ScheduleInstance.STATUS_ERROR
                     schedule_instance.save()
 
-                    _l.info('Schedule: master_user=%s, next_run_at=%s. Error',
+                    _l.debug('Schedule: master_user=%s, next_run_at=%s. Error',
                             master_user.id, schedule.next_run_at)
 
-                    _l.info('Schedule: Error %s' % e)
+                    _l.debug('Schedule: Error %s' % e)
 
                     pass
 

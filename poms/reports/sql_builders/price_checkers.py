@@ -628,14 +628,14 @@ class PriceHistoryCheckerSql:
 
             transactions = execute_transaction_prices_sql(self.instance, cursor, self.ecosystem_defaults)
 
-            _l.info('transactions %s ' % len(transactions))
+            _l.debug('transactions %s ' % len(transactions))
 
             self.instance.items = self.instance.items + transactions
 
         self.add_data_items()
 
 
-        _l.info('Price History check query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
+        _l.debug('Price History check query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
         return self.instance
 
@@ -687,7 +687,7 @@ class PriceHistoryCheckerSql:
             if item['type'] == 'missing_instrument_currency_fx_rate':
                 currencies_ids.append(item['id'])
 
-        _l.info('len instrument_ids %s' % len(instrument_ids))
+        _l.debug('len instrument_ids %s' % len(instrument_ids))
 
         self.add_data_items_instruments(instrument_ids)
 

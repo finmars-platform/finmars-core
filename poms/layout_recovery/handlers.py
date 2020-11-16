@@ -27,7 +27,7 @@ class LayoutArchetypeGenerateHandler(object):
                        'pricehistory', 'currencyhistory',
                        'type', 'instruenttype', 'transactiontype'])
 
-        _l.info('entity_viewer_content_types %s' % self.entity_viewer_content_types)
+        _l.debug('entity_viewer_content_types %s' % self.entity_viewer_content_types)
 
         self.ecosystem_defaults = {}
 
@@ -65,7 +65,7 @@ class LayoutArchetypeGenerateHandler(object):
 
                 layout_archetype.save()
 
-        _l.info('Generating Entity Viewer Layouts Archetypes %s' % (time.perf_counter() - st))
+        _l.debug('Generating Entity Viewer Layouts Archetypes %s' % (time.perf_counter() - st))
 
     def generate_balance_report_viewer_archetype(self):
 
@@ -98,11 +98,11 @@ class LayoutArchetypeGenerateHandler(object):
                 layout_archetype.save()
 
             except Exception as e:
-                _l.info('Balance Report Layout Error Master user %s' % master_user)
-                _l.info('Balance Report Layout Error Message %s' % e)
+                _l.debug('Balance Report Layout Error Master user %s' % master_user)
+                _l.debug('Balance Report Layout Error Message %s' % e)
                 continue
 
-        _l.info('Generating Balance Report Viewer Layouts Archetypes %s' % (time.perf_counter() - st))
+        _l.debug('Generating Balance Report Viewer Layouts Archetypes %s' % (time.perf_counter() - st))
 
     def generate_pl_report_viewer_archetype(self):
 
@@ -135,11 +135,11 @@ class LayoutArchetypeGenerateHandler(object):
                 layout_archetype.save()
 
             except Exception as e:
-                _l.info('PL Report Layout Error Master user %s' % master_user)
-                _l.info('PL Report Layout Error Message %s' % e)
+                _l.debug('PL Report Layout Error Master user %s' % master_user)
+                _l.debug('PL Report Layout Error Message %s' % e)
                 continue
 
-        _l.info('Generating PL Report Viewer Layouts Archetypes %s' % (time.perf_counter() - st))
+        _l.debug('Generating PL Report Viewer Layouts Archetypes %s' % (time.perf_counter() - st))
 
     def generate_transaction_report_viewer_archetype(self):
 
@@ -172,17 +172,17 @@ class LayoutArchetypeGenerateHandler(object):
                 layout_archetype.save()
 
             except Exception as e:
-                _l.info('Balance Report Layout Error Master user %s' % master_user)
-                _l.info('Balance Report Layout Error Message %s' % e)
+                _l.debug('Balance Report Layout Error Master user %s' % master_user)
+                _l.debug('Balance Report Layout Error Message %s' % e)
                 continue
 
-        _l.info('Generating Transaction Report Viewer Layouts Archetypes %s' % (time.perf_counter() - st))
+        _l.debug('Generating Transaction Report Viewer Layouts Archetypes %s' % (time.perf_counter() - st))
 
     def reset_fix_status(self):
 
         ListLayout.objects.all().update(is_fixed=False)
 
-        _l.info('Reset is_fixed status for List Layouts Finish')
+        _l.debug('Reset is_fixed status for List Layouts Finish')
 
     def process(self):
 
@@ -237,5 +237,5 @@ class LayoutFixHandler():
 
                     index = index + 1
 
-        _l.info('Layout Fix Process %s' % (time.perf_counter() - st))
-        _l.info("Layout Fix: Fixed layouts %s" % index)
+        _l.debug('Layout Fix Process %s' % (time.perf_counter() - st))
+        _l.debug("Layout Fix: Fixed layouts %s" % index)

@@ -1233,7 +1233,7 @@ class ReportBuilder(BaseReportBuilder):
 
             rolling_pos = self.fifo_rolling_positions[t_key]  # Cumulative exclude current
 
-            # _l.info('self.fifo_rolling_positions[t_key] %s ' % self.fifo_rolling_positions[t_key])
+            # _l.debug('self.fifo_rolling_positions[t_key] %s ' % self.fifo_rolling_positions[t_key])
 
             if isclose(rolling_pos, 0.0): # isclose - is first parameter equal to second parameter
                 k = -1
@@ -1302,7 +1302,7 @@ class ReportBuilder(BaseReportBuilder):
             self.fifo_rolling_positions[t_key] = rolling_pos
             t.fifo_rolling_pos_size = rolling_pos
 
-        # _l.info('self.fifo_rolling_positions[t_key] %s ' % self.fifo_rolling_positions)
+        # _l.debug('self.fifo_rolling_positions[t_key] %s ' % self.fifo_rolling_positions)
 
     def _get_trn_group_key(self, t, walloc=False):
         if self.instance.portfolio_mode == Report.MODE_INDEPENDENT:

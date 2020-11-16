@@ -66,7 +66,7 @@ def group_items_by_provider(items, groups):
         if item.policy.pricing_scheme:
             result[item.policy.pricing_scheme.type.id].append(item)
         else:
-            _l.info('Pricing scheme is not set in policy %s' % item.policy.id)
+            _l.debug('Pricing scheme is not set in policy %s' % item.policy.id)
 
     return result
 
@@ -137,7 +137,7 @@ def optimize_items(items):
 
 def roll_currency_history_for_n_day_forward(item, procedure, last_price, master_user, procedure_instance):
 
-    _l.info("Roll Currency History for %s " % last_price)
+    _l.debug("Roll Currency History for %s " % last_price)
 
     successful_prices_count = 0
     error_prices_count = 0
@@ -197,7 +197,7 @@ def roll_currency_history_for_n_day_forward(item, procedure, last_price, master_
 
                 error.error_text = "Prices already exists. Fx rate: " + str(price.fx_rate) + "."
 
-                # _l.info('Roll Currency History Error Skip %s ' % error)
+                # _l.debug('Roll Currency History Error Skip %s ' % error)
 
                 error.status = CurrencyHistoryError.STATUS_SKIP
                 error.save()
@@ -207,7 +207,7 @@ def roll_currency_history_for_n_day_forward(item, procedure, last_price, master_
 
 def roll_price_history_for_n_day_forward(item, procedure, last_price, master_user, procedure_instance):
 
-    _l.info("Roll Price History for  %s for %s days" % (last_price, procedure.price_fill_days))
+    _l.debug("Roll Price History for  %s for %s days" % (last_price, procedure.price_fill_days))
 
     successful_prices_count = 0
     error_prices_count = 0
@@ -232,9 +232,9 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
 
                 if not procedure.price_overwrite_principal_prices and not procedure.price_overwrite_accrued_prices:
                     can_write = False
-                    # _l.info('Roll Price History Skip %s ' % price)
+                    # _l.debug('Roll Price History Skip %s ' % price)
                 # else:
-                    # _l.info('Roll Price History Overwrite %s ' % price)
+                    # _l.debug('Roll Price History Overwrite %s ' % price)
 
             except PriceHistory.DoesNotExist:
 
@@ -244,7 +244,7 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
                     date=new_date
                 )
 
-                # _l.info('Roll Price History Create new %s ' % price)
+                # _l.debug('Roll Price History Create new %s ' % price)
 
             price.principal_price = 0
             price.accrued_price = 0
@@ -276,7 +276,7 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
 
                 error.error_text = "Prices already exists. Principal Price: " + str(price.principal_price) +"; Accrued: "+ str(price.accrued_price) +"."
 
-                # _l.info('Roll Price History Error Skip %s ' % error)
+                # _l.debug('Roll Price History Error Skip %s ' % error)
 
                 error.status = PriceHistoryError.STATUS_SKIP
                 error.save()
@@ -319,7 +319,7 @@ def get_closest_tenors(maturity_date, date, tenors):
 
     # TODO add check for weekends
 
-    # _l.info('tenors %s' % tenors)
+    # _l.debug('tenors %s' % tenors)
 
     # looking for tenor from
 
@@ -431,11 +431,11 @@ def convert_results_for_calc_avg_price(records):
 
         average_weighted_price = None
 
-        _l.info('item.tenor_from_price %s' % item.tenor_from_price)
-        _l.info('item.tenor_from_type %s' % item.tenor_from_type)
+        _l.debug('item.tenor_from_price %s' % item.tenor_from_price)
+        _l.debug('item.tenor_from_type %s' % item.tenor_from_type)
 
-        _l.info('item.tenor_to_price %s' % item.tenor_to_price)
-        _l.info('item.tenor_to_type %s' % item.tenor_to_type)
+        _l.debug('item.tenor_to_price %s' % item.tenor_to_price)
+        _l.debug('item.tenor_to_type %s' % item.tenor_to_type)
 
         if item.tenor_from_price and item.tenor_to_price:
 
@@ -445,7 +445,7 @@ def convert_results_for_calc_avg_price(records):
 
             w = (date_to - maturity_date) / (date_to - date_from)
 
-            _l.info("w %s" % w)
+            _l.debug("w %s" % w)
 
             average_weighted_price = item.tenor_from_price * w + item.tenor_to_price * (1 - w)
 

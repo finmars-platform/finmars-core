@@ -16,5 +16,6 @@ SFTP_ROOT=/home/finmars/ \
 SFTP_USERNAME=finmars \
 SFTP_PKEY_PATH=/home/szhitenev/Downloads/sftp_key/aws_id_rsa \
 MEDIATOR_URL=http://localhost:8082/ \
+DJANGO_LOG_LEVEL=DEBUG \
 BACKEND_ROLES="ALL" python manage.py runserver
 

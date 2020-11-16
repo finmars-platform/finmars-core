@@ -25,6 +25,9 @@ from storages.backends.sftpstorage import SFTPStorage
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+DJANGO_LOG_LEVEL = os.environ.get('DJANGO_LOG_LEVEL', 'INFO')
+
+print('DJANGO_LOG_LEVEL %s' % DJANGO_LOG_LEVEL)
 
 class BackendRole:
     ALL = 'ALL'
@@ -408,12 +411,12 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'level': 'DEBUG',
+            'level': DJANGO_LOG_LEVEL,
             'class': 'logging.StreamHandler',
             'formatter': 'verbose'
         },
         'filebeat-info': {
-            'level': 'INFO',
+            'level': DJANGO_LOG_LEVEL,
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': '/var/log/finmars/django-info.log',
             'maxBytes': 1024*1024*15,  # 15MB
@@ -434,40 +437,40 @@ LOGGING = {
             'handlers': ['console'],
             'propagate': False,
         },
-        'django': {
-            'level': 'INFO',
-            'handlers': ['console'],
-            'propagate': False,
-        },
+        # 'django': {
+        #     'level': DJANGO_LOG_LEVEL,
+        #     'handlers': ['console'],
+        #     'propagate': False,
+        # },
         'django.request': {
             'level': 'ERROR',
             'handlers': ['console',  'filebeat-error'],
         },
         'django_test': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': DJANGO_LOG_LEVEL,
         },
         'poms': {
-            'level': 'DEBUG',
+            'level': DJANGO_LOG_LEVEL,
             'handlers': ['console', 'filebeat-info'],
             'propagate': False,
         },
         'celery': {
-            'level': 'INFO',
+            'level': DJANGO_LOG_LEVEL,
             'handlers': ['console', 'filebeat-info'],
         },
         'suds': {
-            'level': 'INFO',
+            'level': DJANGO_LOG_LEVEL,
             'handlers': ['console'],
             'propagate': False,
         },
         'kombu': {
-            'level': 'INFO',
+            'level': DJANGO_LOG_LEVEL,
             'handlers': ['console'],
             'propagate': False,
         },
         'werkzeug': {
-            'level': 'INFO',
+            'level': DJANGO_LOG_LEVEL,
             'handlers': ['console'],
             'propagate': False,
         },

@@ -1096,8 +1096,8 @@ class PriceHistory(CachingMixin, DataTimeStampedModel):
         self.ytm = self.calculate_ytm(self.date)
         self.modified_duration = self.calculate_duration(self.date)
 
-        _l.info('self.ytm %s' % self.ytm)
-        _l.info('self.modified_duration %s' % self.modified_duration)
+        _l.debug('self.ytm %s' % self.ytm)
+        _l.debug('self.modified_duration %s' % self.modified_duration)
 
         super(PriceHistory, self).save(*args, **kwargs)
 

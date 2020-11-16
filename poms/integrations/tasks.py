@@ -135,37 +135,37 @@ def mail_managers(subject, message):
 def auth_log_statistics():
     logged_in_count = AuthLogEntry.objects.filter(is_success=True).count()
     login_failed_count = AuthLogEntry.objects.filter(is_success=False).count()
-    _l.info('auth (total): logged_in=%s, login_failed=%s', logged_in_count, login_failed_count)
+    _l.debug('auth (total): logged_in=%s, login_failed=%s', logged_in_count, login_failed_count)
 
     now = timezone.now().date()
     logged_in_count = AuthLogEntry.objects.filter(is_success=True, date__startswith=now).count()
     login_failed_count = AuthLogEntry.objects.filter(is_success=False, date__startswith=now).count()
-    _l.info('auth (today): logged_in=%s, login_failed=%s', logged_in_count, login_failed_count)
+    _l.debug('auth (today): logged_in=%s, login_failed=%s', logged_in_count, login_failed_count)
 
 
 @shared_task(name='integrations.download_instrument', bind=True, ignore_result=False)
 def download_instrument_async(self, task_id=None):
     task = Task.objects.get(pk=task_id)
-    _l.info('download_instrument_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
+    _l.debug('download_instrument_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
 
     task.add_celery_task_id(self.request.id)
 
     try:
         provider = get_provider(task.master_user, task.provider_id)
     except:
-        _l.info('provider load error', exc_info=True)
+        _l.debug('provider load error', exc_info=True)
         task.status = Task.STATUS_ERROR
         task.save()
         raise
 
     if provider is None:
-        _l.info('provider not found')
+        _l.debug('provider not found')
         task.status = Task.STATUS_ERROR
         task.save()
         return
 
     if task.status not in [Task.STATUS_PENDING, Task.STATUS_WAIT_RESPONSE]:
-        _l.info('invalid task status')
+        _l.debug('invalid task status')
         return
     options = task.options_object
 
@@ -204,7 +204,7 @@ def download_instrument_async(self, task_id=None):
 
 def download_instrument(instrument_code=None, instrument_download_scheme=None, master_user=None, member=None,
                         task=None, value_overrides=None):
-    _l.info('download_pricing: master_user_id=%s, task=%s, instrument_code=%s, instrument_download_scheme=%s',
+    _l.debug('download_pricing: master_user_id=%s, task=%s, instrument_code=%s, instrument_download_scheme=%s',
             getattr(master_user, 'id', None), getattr(task, 'info', None), instrument_code, instrument_download_scheme)
 
     if task is None:
@@ -250,20 +250,20 @@ def download_instrument(instrument_code=None, instrument_download_scheme=None, m
 @shared_task(name='integrations.download_instrument_pricing_async', bind=True, ignore_result=False)
 def download_instrument_pricing_async(self, task_id):
     task = Task.objects.get(pk=task_id)
-    _l.info('download_instrument_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
+    _l.debug('download_instrument_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
 
     task.add_celery_task_id(self.request.id)
 
     try:
         provider = get_provider(task.master_user, task.provider_id)
     except:
-        _l.info('provider load error', exc_info=True)
+        _l.debug('provider load error', exc_info=True)
         task.status = Task.STATUS_ERROR
         task.save()
         return
 
     if provider is None:
-        _l.info('provider not found')
+        _l.debug('provider not found')
         task.status = Task.STATUS_ERROR
         task.save()
         return
@@ -309,20 +309,20 @@ def download_instrument_pricing_async(self, task_id):
 @shared_task(name='integrations.test_certificate_async', bind=True, ignore_result=False)
 def test_certificate_async(self, task_id):
     task = Task.objects.get(pk=task_id)
-    _l.info('handle_test_certificate_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
+    _l.debug('handle_test_certificate_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
 
     task.add_celery_task_id(self.request.id)
 
     try:
         provider = get_provider(task.master_user, task.provider_id)
     except:
-        _l.info('provider load error', exc_info=True)
+        _l.debug('provider load error', exc_info=True)
         task.status = Task.STATUS_ERROR
         task.save()
         return
 
     if provider is None:
-        _l.info('provider not found')
+        _l.debug('provider not found')
         task.status = Task.STATUS_ERROR
         task.save()
         return
@@ -340,8 +340,8 @@ def test_certificate_async(self, task_id):
         task.status = Task.STATUS_ERROR
         return
     else:
-        _l.info('handle_test_certificate_async task: result %s' % result)
-        _l.info('handle_test_certificate_async task: result is authorized %s' % result['is_authorized'])
+        _l.debug('handle_test_certificate_async task: result %s' % result)
+        _l.debug('handle_test_certificate_async task: result is authorized %s' % result['is_authorized'])
 
         task.status = Task.STATUS_DONE
         task.result_object = result
@@ -355,22 +355,22 @@ def test_certificate_async(self, task_id):
 
             import_config = BloombergDataProviderCredential.objects.get(master_user=task.master_user)
 
-            _l.info('handle_test_certificate_async get actual bloomberg credential')
+            _l.debug('handle_test_certificate_async get actual bloomberg credential')
 
         except (BloombergDataProviderCredential.DoesNotExist, Exception) as e:
 
-            _l.info('handle_test_certificate_async get config error', e)
+            _l.debug('handle_test_certificate_async get config error', e)
 
             import_config = ImportConfig.objects.get(master_user=task.master_user, provider=1)
 
         import_config.is_valid = result['is_authorized']
         import_config.save()
 
-        _l.info('handle_test_certificate_async import_config: import_config id', import_config.id)
-        _l.info('handle_test_certificate_async import_config: import_config=%s, is_valid=%s', import_config,
+        _l.debug('handle_test_certificate_async import_config: import_config id', import_config.id)
+        _l.debug('handle_test_certificate_async import_config: import_config=%s, is_valid=%s', import_config,
                 import_config.is_valid)
-        _l.info('handle_test_certificate_async task: master_user_id=%s, task=%s', task.master_user_id, task.result)
-        _l.info('handle_test_certificate_async task.status: ', task.status)
+        _l.debug('handle_test_certificate_async task: master_user_id=%s, task=%s', task.master_user_id, task.result)
+        _l.debug('handle_test_certificate_async task.status: ', task.status)
 
     if task.status == Task.STATUS_WAIT_RESPONSE:
         if self.request.is_eager:
@@ -390,20 +390,20 @@ def test_certificate_async(self, task_id):
 @shared_task(name='integrations.download_currency_pricing_async', bind=True, ignore_result=False)
 def download_currency_pricing_async(self, task_id):
     task = Task.objects.get(pk=task_id)
-    _l.info('download_currency_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
+    _l.debug('download_currency_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
 
     task.add_celery_task_id(self.request.id)
 
     try:
         provider = get_provider(task.master_user, task.provider_id)
     except:
-        _l.info('provider load error', exc_info=True)
+        _l.debug('provider load error', exc_info=True)
         task.status = Task.STATUS_ERROR
         task.save()
         return
 
     if provider is None:
-        _l.info('provider not found')
+        _l.debug('provider not found')
         task.status = Task.STATUS_ERROR
         task.save()
         return
@@ -452,7 +452,7 @@ def download_currency_pricing_async(self, task_id):
 def download_pricing_async(self, task_id):
     celery_logger.info('download pricing async')
     task = Task.objects.get(pk=task_id)
-    _l.info('download_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
+    _l.debug('download_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
 
     if task.status not in [Task.STATUS_PENDING, Task.STATUS_WAIT_RESPONSE]:
         return
@@ -468,14 +468,14 @@ def download_pricing_async(self, task_id):
     ).exclude(
         daily_pricing_model=DailyPricingModel.SKIP
     )
-    _l.info('instruments: %s', [i.id for i in instruments])
+    _l.debug('instruments: %s', [i.id for i in instruments])
 
     currencies = Currency.objects.select_related('price_download_scheme').filter(
         master_user=master_user
     ).exclude(
         daily_pricing_model=DailyPricingModel.SKIP
     )
-    _l.info('currencies: %s', [i.id for i in currencies])
+    _l.debug('currencies: %s', [i.id for i in currencies])
 
     instruments_always = set()
     instruments_if_open = set()
@@ -513,17 +513,17 @@ def download_pricing_async(self, task_id):
         elif i.daily_pricing_model_id in [DailyPricingModel.DEFAULT]:
             currencies_default.add(i.id)
 
-    _l.info('always: instruments=%s, currencies=%s',
+    _l.debug('always: instruments=%s, currencies=%s',
             sorted(instruments_always), sorted(currencies_always))
 
     balance_date = parse_date_iso(options['balance_date'])
-    _l.info('calculate position report on %s for: instruments=%s, currencies=%s',
+    _l.debug('calculate position report on %s for: instruments=%s, currencies=%s',
             balance_date, sorted(instruments_if_open), sorted(currencies_if_open))
 
     if balance_date and (instruments_if_open or currencies_if_open):
         owner_or_admin = task.master_user.members.filter(Q(is_owner=True) | Q(is_admin=True)).first()
         report = Report(master_user=task.master_user, member=owner_or_admin, report_date=balance_date)
-        _l.info('calculate position report: %s', report)
+        _l.debug('calculate position report: %s', report)
         builder = ReportBuilder(instance=report)
         builder.build_position_only()
         for i in report.items:
@@ -541,13 +541,13 @@ def download_pricing_async(self, task_id):
                     currencies_opened.add(i.ccy.id)
                 if i.trn_ccy:
                     currencies_opened.add(i.trn_ccy.id)
-        _l.info('opened: instruments=%s, currencies=%s', sorted(instruments_opened), sorted(currencies_opened))
+        _l.debug('opened: instruments=%s, currencies=%s', sorted(instruments_opened), sorted(currencies_opened))
 
     instruments = instruments.filter(pk__in=(instruments_always | instruments_opened | instruments_default))
-    _l.info('instruments: %s', [i.id for i in instruments])
+    _l.debug('instruments: %s', [i.id for i in instruments])
 
     currencies = currencies.filter(pk__in=(currencies_always | currencies_opened | currencies_default))
-    _l.info('currencies: %s', [i.id for i in currencies])
+    _l.debug('currencies: %s', [i.id for i in currencies])
 
     price_download_schemes = {}
 
@@ -565,9 +565,9 @@ def download_pricing_async(self, task_id):
         elif i.daily_pricing_model_id in [DailyPricingModel.DEFAULT]:
             instruments_by_default.append(i)
 
-        _l.info('instruments_by_scheme: %s', instruments_by_scheme)
-    _l.info('instruments_by_formula: %s', instruments_by_formula)
-    _l.info('instruments_by_default: %s', instruments_by_default)
+        _l.debug('instruments_by_scheme: %s', instruments_by_scheme)
+    _l.debug('instruments_by_formula: %s', instruments_by_formula)
+    _l.debug('instruments_by_default: %s', instruments_by_default)
 
     currencies_by_scheme = defaultdict(list)
     currencies_by_default = []
@@ -579,8 +579,8 @@ def download_pricing_async(self, task_id):
         elif c.daily_pricing_model_id in [DailyPricingModel.DEFAULT]:
             currencies_by_default.append(c)
 
-    _l.info('currencies_by_scheme: %s', currencies_by_scheme)
-    _l.info('currencies_by_default: %s', currencies_by_default)
+    _l.debug('currencies_by_scheme: %s', currencies_by_scheme)
+    _l.debug('currencies_by_default: %s', currencies_by_default)
 
     # sub_tasks = []
     # celery_sub_tasks = []
@@ -599,13 +599,13 @@ def download_pricing_async(self, task_id):
             ct = download_currency_pricing_async.s(task_id=sub_task_id)
             celery_sub_tasks.append(ct)
 
-        _l.info('celery_sub_tasks: %s', celery_sub_tasks)
+        _l.debug('celery_sub_tasks: %s', celery_sub_tasks)
         if celery_sub_tasks:
-            _l.info('use chord')
+            _l.debug('use chord')
             sub_tasks = instrument_sub_tasks + currency_sub_tasks
             chord(celery_sub_tasks, download_pricing_wait.si(sub_tasks_id=sub_tasks, task_id=task_id)).apply_async()
         else:
-            _l.info('use apply_async')
+            _l.debug('use apply_async')
             download_pricing_wait.apply_async(kwargs={'sub_tasks_id': [], 'task_id': task_id})
 
     with transaction.atomic():
@@ -697,7 +697,7 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
     celery_logger.info('download pricing wait')
     task = Task.objects.get(pk=task_id)
     celery_task = CeleryTask.objects.get(task_id=task_id, master_user=task.master_user)
-    _l.info('download_pricing_wait: master_user_id=%s, task=%s', task.master_user_id, task.info)
+    _l.debug('download_pricing_wait: master_user_id=%s, task=%s', task.master_user_id, task.info)
 
     if task.status != Task.STATUS_WAIT_RESPONSE:
         return
@@ -721,17 +721,17 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
     instruments_prices = []
     currencies_prices = []
 
-    _l.info('instrument_task: %s', instrument_task)
-    _l.info('currency_task: %s', currency_task)
+    _l.debug('instrument_task: %s', instrument_task)
+    _l.debug('currency_task: %s', currency_task)
 
     instruments_pk = [int(pk) for pk in instrument_task.keys()]
-    _l.info('instruments_pk: %s', instruments_pk)
+    _l.debug('instruments_pk: %s', instruments_pk)
     currencies_pk = [int(pk) for pk in currency_task.keys()]
-    _l.info('currencies_pk: %s', currencies_pk)
+    _l.debug('currencies_pk: %s', currencies_pk)
 
-    _l.info('sub_tasks_id: %s', sub_tasks_id)
+    _l.debug('sub_tasks_id: %s', sub_tasks_id)
     for sub_task in Task.objects.filter(pk__in=sub_tasks_id):
-        _l.info('sub_task: %s', sub_task.info)
+        _l.debug('sub_task: %s', sub_task.info)
         if sub_task.status != Task.STATUS_DONE:
             continue
 
@@ -776,7 +776,7 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
             errors.update(sub_task_errors)
 
     instrument_for_manual_price = [int(i_id) for i_id, task_id in instrument_task.items() if task_id is None]
-    _l.info('instrument_for_manual_price: %s', instrument_for_manual_price)
+    _l.debug('instrument_for_manual_price: %s', instrument_for_manual_price)
     manual_instruments_prices, manual_instruments_errors = _create_instrument_manual_prices(
         options=options, instruments=instrument_for_manual_price)
 
@@ -785,7 +785,7 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
 
     instrument_for_default_price = [int(i_id) for i_id, task_id in instrument_task.items() if
                                     task_id == 'instrument_default']
-    _l.info('instrument_for_default_price: %s', instrument_for_default_price)
+    _l.debug('instrument_for_default_price: %s', instrument_for_default_price)
 
     default_instruments_prices, default_instruments_errors = _create_instrument_default_prices(
         options=options, instruments=instrument_for_default_price, pricing_policies=pricing_policies)
@@ -795,7 +795,7 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
 
     currencies_for_default_price = [int(i_id) for i_id, task_id in currency_task.items() if
                                     task_id == 'currency_default']
-    _l.info('currencies_for_default_price: %s', currencies_for_default_price)
+    _l.debug('currencies_for_default_price: %s', currencies_for_default_price)
 
     default_currencies_prices, default_currencies_errors = _create_currency_default_prices(options=options,
                                                                                            currencies=currencies_for_default_price,
@@ -817,17 +817,17 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
     if fill_days > 0:
         fill_date_from = date_to + timedelta(days=1)
         instrument_last_price = [p for p in instruments_prices if p.date == date_to]
-        _l.info('instrument last prices: %s', instrument_last_price)
+        _l.debug('instrument last prices: %s', instrument_last_price)
         for p in instrument_last_price:
             instruments_prices + fill_instrument_price(fill_date_from, fill_days, p)
 
         currency_last_price = [p for p in currencies_prices if p.date == date_to]
-        _l.info('currency last prices: %s', currency_last_price)
+        _l.debug('currency last prices: %s', currency_last_price)
         for p in currency_last_price:
             currencies_prices += fill_currency_price(fill_date_from, fill_days, p)
 
-    _l.info('instruments_prices: %s', instruments_prices)
-    _l.info('currencies_prices: %s', currencies_prices)
+    _l.debug('instruments_prices: %s', instruments_prices)
+    _l.debug('currencies_prices: %s', currencies_prices)
 
     for p in instruments_prices:
         # p.calculate_accrued_price(save=False)
@@ -835,13 +835,13 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
         p.accrued_price = accrued_price if accrued_price is not None else 0.0
 
     with transaction.atomic():
-        _l.info('instruments_pk: %s', instruments_pk)
+        _l.debug('instruments_pk: %s', instruments_pk)
         existed_instrument_prices = {
             (p.instrument_id, p.pricing_policy_id, p.date): p
             for p in PriceHistory.objects.filter(instrument__in=instruments_pk,
                                                  date__range=(date_from, date_to + timedelta(days=fill_days)))
         }
-        _l.info('existed_instrument_prices: %s', existed_instrument_prices)
+        _l.debug('existed_instrument_prices: %s', existed_instrument_prices)
         for p in instruments_prices:
             op = existed_instrument_prices.get((p.instrument_id, p.pricing_policy_id, p.date), None)
             if op is None:
@@ -852,13 +852,13 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
                     op.accrued_price = p.accrued_price
                     op.save()
 
-        _l.info('currencies_pk: %s', currencies_pk)
+        _l.debug('currencies_pk: %s', currencies_pk)
         existed_currency_prices = {
             (p.currency_id, p.pricing_policy_id, p.date): p
             for p in CurrencyHistory.objects.filter(currency__in=currencies_pk,
                                                     date__range=(date_from, date_to + timedelta(days=fill_days)))
         }
-        _l.info('existed_currency_prices: %s', existed_currency_prices)
+        _l.debug('existed_currency_prices: %s', existed_currency_prices)
         for p in currencies_prices:
             op = existed_currency_prices.get((p.currency_id, p.pricing_policy_id, p.date), None)
 
@@ -905,8 +905,8 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
             # currency_price_missed = CurrencyHistorySerializer(instance=currency_price_missed_objects, many=True).data
             result['currency_price_missed'] = list(currency_price_missed)
 
-            _l.info('instrument_price_missed: %s', instrument_price_missed)
-            _l.info('currency_price_missed: %s', currency_price_missed)
+            _l.debug('instrument_price_missed: %s', instrument_price_missed)
+            _l.debug('currency_price_missed: %s', currency_price_missed)
 
         task.options_object = options
         task.result_object = result
@@ -921,7 +921,7 @@ def download_pricing_wait(self, sub_tasks_id, task_id):
 
 # DEPRECATED SINCE 22.09.2020 DELETE SOON
 def _create_currency_default_prices(options, currencies, pricing_policies):
-    _l.info('create_currency_default_prices: currencies=%s', currencies)
+    _l.debug('create_currency_default_prices: currencies=%s', currencies)
 
     errors = {}
     prices = []
@@ -950,7 +950,7 @@ def _create_currency_default_prices(options, currencies, pricing_policies):
 
 # DEPRECATED SINCE 22.09.2020 DELETE SOON
 def _create_instrument_default_prices(options, instruments, pricing_policies):
-    _l.info('create_instrument_default_prices: instruments=%s', instruments)
+    _l.debug('create_instrument_default_prices: instruments=%s', instruments)
 
     date_from = parse_date_iso(options['date_from'])
     date_to = parse_date_iso(options['date_to'])
@@ -980,7 +980,7 @@ def _create_instrument_default_prices(options, instruments, pricing_policies):
 
 # DEPRECATED SINCE 22.09.2020 DELETE SOON
 def _create_instrument_manual_prices(options, instruments):
-    _l.info('create_instrument_manual_prices: instruments=%s', instruments)
+    _l.debug('create_instrument_manual_prices: instruments=%s', instruments)
 
     date_from = parse_date_iso(options['date_from'])
     date_to = parse_date_iso(options['date_to'])
@@ -1041,7 +1041,7 @@ def _create_instrument_manual_prices(options, instruments):
 
 
 def test_certificate(master_user=None, member=None, task=None):
-    _l.info('test_certificate: master_user_id=%s, task=%s',
+    _l.debug('test_certificate: master_user_id=%s, task=%s',
             getattr(master_user, 'id', None), getattr(task, 'info', None))
     if task is None:
         with transaction.atomic():
@@ -1075,7 +1075,7 @@ def download_pricing(master_user=None, member=None, date_from=None, date_to=None
                      fill_days=None, override_existed=None, task=None):
     celery_logger.info('download pricing')
 
-    _l.info('download_pricing: master_user_id=%s, task=%s, date_from=%s, date_to=%s, is_yesterday=%s,'
+    _l.debug('download_pricing: master_user_id=%s, task=%s, date_from=%s, date_to=%s, is_yesterday=%s,'
             ' balance_date=%s, fill_days=%s, override_existed=%s',
             getattr(master_user, 'id', None), getattr(task, 'info', None), date_from, date_to, is_yesterday,
             balance_date, fill_days, override_existed)
@@ -1135,7 +1135,7 @@ def download_pricing(master_user=None, member=None, date_from=None, date_to=None
 
 # @shared_task(name='integrations.file_import_delete', ignore_result=True)
 # def file_import_delete_async(path):
-#     _l.info('file_import_delete_async: path=%s', path)
+#     _l.debug('file_import_delete_async: path=%s', path)
 #     import_file_storage.delete(path)
 #
 #
@@ -1145,7 +1145,7 @@ def download_pricing(master_user=None, member=None, date_from=None, date_to=None
 #     else:
 #         if not getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', False):
 #             countdown = countdown or 600
-#             _l.info('schedule_file_import_delete: path=%s, countdown=%s', path, countdown)
+#             _l.debug('schedule_file_import_delete: path=%s, countdown=%s', path, countdown)
 #             file_import_delete_async.apply_async(kwargs={'path': path}, countdown=countdown)
 
 def generate_file_report(instance, master_user, type, name, context=None):
@@ -1305,8 +1305,8 @@ def generate_file_report(instance, master_user, type, name, context=None):
 def complex_transaction_csv_file_import(self, instance, execution_context=None):
     from poms.transactions.models import TransactionTypeInput
 
-    _l.info('complex_transaction_file_import: %s', instance)
-    _l.info('complex_transaction_file_import execution_context: %s', execution_context)
+    _l.debug('complex_transaction_file_import: %s', instance)
+    _l.debug('complex_transaction_file_import execution_context: %s', execution_context)
 
     instance.processed_rows = 0
 
@@ -1319,7 +1319,7 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
     rule_scenarios = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields',
                                                             'fields__transaction_type_input').all()
 
-    _l.info('scheme %s - inputs=%s, rules=%s', scheme,
+    _l.debug('scheme %s - inputs=%s, rules=%s', scheme,
             [(i.name, i.column) for i in scheme_inputs],
             [(r.transaction_type.user_code) for r in rule_scenarios])
 
@@ -1390,7 +1390,7 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
 
                 try:
 
-                    # _l.info('Lookup by user code %s', value)
+                    # _l.debug('Lookup by user code %s', value)
 
                     if model_class == PriceDownloadScheme:
                         v = model_class.objects.get(master_user=instance.master_user, scheme_name=value)
@@ -1432,7 +1432,7 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
                 row.append(value)
 
             except:
-                _l.info('can\'t process calculated input: %s|%s', i.name, i.column, exc_info=True)
+                _l.debug('can\'t process calculated input: %s|%s', i.name, i.column, exc_info=True)
                 row.append("Invalid Expression")
 
         return row
@@ -1448,9 +1448,9 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
 
         for row_index, row in enumerate(reader):
 
-            _l.info('process row: %s -> %s', row_index, row)
+            _l.debug('process row: %s -> %s', row_index, row)
             if (row_index == 0 and instance.skip_first_line) or not row:
-                _l.info('skip first row')
+                _l.debug('skip first row')
                 continue
 
             inputs_raw = {}
@@ -1493,11 +1493,11 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
                     inputs_raw[i.name] = row[i.column - 1]
                     error_rows['error_data']['data']['imported_columns'].append(row[i.column - 1])
                 except:
-                    _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                    _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                     error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
                     inputs_error.append(i)
 
-            _l.info('Row %s inputs_raw: %s' % (row_index, inputs_raw))
+            _l.debug('Row %s inputs_raw: %s' % (row_index, inputs_raw))
 
             original_columns_count = len(row)
 
@@ -1528,12 +1528,12 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
                     inputs[i.name] = formula.safe_eval(i.name_expr, names=inputs_raw)
                     error_rows['error_data']['data']['converted_imported_columns'].append(row[i.column - 1])
                 except:
-                    _l.info('can\'t process conversion input: %s|%s', i.name, i.column, exc_info=True)
+                    _l.debug('can\'t process conversion input: %s|%s', i.name, i.column, exc_info=True)
                     error_rows['error_data']['data']['converted_imported_columns'].append(
                         ugettext('Invalid expression'))
                     inputs_conversion_error.append(i)
 
-            _l.info('Row %s inputs_conversion: %s' % (row_index, inputs))
+            _l.debug('Row %s inputs_conversion: %s' % (row_index, inputs))
 
             if inputs_conversion_error:
 
@@ -1572,11 +1572,11 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
 
                     error_rows['error_data']['data']['calculated_columns'].append(row[index])
                 except:
-                    _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                    _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                     error_rows['error_data']['data']['calculated_columns'].append(ugettext('Invalid expression'))
                     calculated_columns_error.append(i)
 
-            _l.info('Row %s inputs_with_calculated: %s' % (row_index, inputs))
+            _l.debug('Row %s inputs_with_calculated: %s' % (row_index, inputs))
 
             try:
                 rule_value = formula.safe_eval(scheme.rule_expr, names=inputs)
@@ -1584,7 +1584,7 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
 
                 error_rows['level'] = 'error'
 
-                _l.info('can\'t process rule expression', exc_info=True)
+                _l.debug('can\'t process rule expression', exc_info=True)
                 error_rows['error_message'] = error_rows['error_message'] + '\n' + '\n' + str(ugettext(
                     'Can\'t eval rule expression'))
                 instance.error_rows.append(error_rows)
@@ -1597,7 +1597,7 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
 
             if not rule_value:
 
-                _l.info('no rule value: %s', rule_value)
+                _l.debug('no rule value: %s', rule_value)
 
                 error_rows['level'] = 'error'
 
@@ -1613,7 +1613,7 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
                     continue
 
             else:
-                _l.info('rule value: %s', rule_value)
+                _l.debug('rule value: %s', rule_value)
 
             matched_selector = False
             processed_scenarios = 0
@@ -1646,10 +1646,10 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
 
 
                         except (ValueError, ExpressionEvalError):
-                            _l.info('can\'t process field: %s|%s', field.transaction_type_input.name,
+                            _l.debug('can\'t process field: %s|%s', field.transaction_type_input.name,
                                     field.transaction_type_input.pk, exc_info=True)
                             fields_error.append(field)
-                    _l.info('fields (step 1): error=%s, values=%s', fields_error, fields)
+                    _l.debug('fields (step 1): error=%s, values=%s', fields_error, fields)
 
                     if fields_error:
 
@@ -1685,7 +1685,7 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
                             )
                             tt_process.process()
 
-                            _l.info('tt_process %s' % tt_process)
+                            _l.debug('tt_process %s' % tt_process)
 
                             if tt_process.uniqueness_status == 'skip':
                                 error_rows['level'] = 'skip'
@@ -1710,9 +1710,9 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
 
                             error_rows['level'] = 'error'
 
-                            _l.info("can't process transaction type", exc_info=True)
+                            _l.debug("can't process transaction type", exc_info=True)
 
-                            _l.info('error %s' % e)
+                            _l.debug('error %s' % e)
 
                             transaction.set_rollback(True)
                             if instance.break_on_error:
@@ -1722,7 +1722,7 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
                             else:
                                 continue
                         finally:
-                            _l.info("final")
+                            _l.debug("final")
                             # if settings.DEBUG:
                             #     transaction.set_rollback(True)
 
@@ -1758,8 +1758,8 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
         # with import_file_storage.open(instance.file_path, 'rb') as f:
         with SFS.open(instance.file_path, 'rb') as f:
             with NamedTemporaryFile() as tmpf:
-                _l.info('tmpf')
-                _l.info(tmpf)
+                _l.debug('tmpf')
+                _l.debug(tmpf)
 
                 for chunk in f.chunks():
                     tmpf.write(chunk)
@@ -1773,7 +1773,7 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
                 with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
                     _process_csv_file(cf)
     except:
-        _l.info('Can\'t process file', exc_info=True)
+        _l.debug('Can\'t process file', exc_info=True)
         instance.error_message = ugettext("Invalid file format or file already deleted.")
 
 
@@ -1794,13 +1794,13 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
         instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.import',
                                                           'Transaction Import', execution_context)
 
-        _l.info('complex_transaction_file_import execution_context: %s', execution_context)
+        _l.debug('complex_transaction_file_import execution_context: %s', execution_context)
 
-        _l.info("Reached end instance.stats_file_report: %s " % instance.stats_file_report)
+        _l.debug("Reached end instance.stats_file_report: %s " % instance.stats_file_report)
 
         if execution_context and execution_context["started_by"] == 'procedure':
 
-            _l.info('send final import message')
+            _l.debug('send final import message')
 
             send_system_message(master_user=instance.master_user,
                                 source="Transaction Import Service",
@@ -1820,7 +1820,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
     from poms.transactions.models import TransactionTypeInput
 
     instance.processed_rows = 0
-    _l.info('complex_transaction_file_import: %s', instance)
+    _l.debug('complex_transaction_file_import: %s', instance)
 
     scheme = instance.scheme
     scheme_inputs = list(scheme.inputs.all())
@@ -1828,7 +1828,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
     rule_scenarios = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields',
                                                             'fields__transaction_type_input').all()
 
-    _l.info('scheme %s - inputs=%s, rules=%s', scheme,
+    _l.debug('scheme %s - inputs=%s, rules=%s', scheme,
             [(i.name, i.column) for i in scheme_inputs],
             [(r.transaction_type.user_code) for r in rule_scenarios])
 
@@ -1901,7 +1901,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                 try:
 
-                    # _l.info('Lookup by user code %s', value)
+                    # _l.debug('Lookup by user code %s', value)
 
                     if model_class == PriceDownloadScheme:
                         v = model_class.objects.get(master_user=instance.master_user, scheme_name=value)
@@ -1916,8 +1916,8 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                         ecosystem_default = EcosystemDefault.objects.get(master_user=instance.master_user)
 
-                        # _l.info('key %s' % key)
-                        # _l.info('value %s' % value)
+                        # _l.debug('key %s' % key)
+                        # _l.debug('value %s' % value)
 
                         if hasattr(ecosystem_default, key):
                             v = getattr(ecosystem_default, key)
@@ -1940,14 +1940,14 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
         for i in scheme_calculated_inputs:
 
-            _l.info('update_row_with_calculated_data inputs %s' % inputs)
+            _l.debug('update_row_with_calculated_data inputs %s' % inputs)
 
             try:
                 value = formula.safe_eval(i.name_expr, names=inputs)
                 row.append(value)
 
             except:
-                _l.info('can\'t process calculated input: %s|%s', i.name, i.column, exc_info=True)
+                _l.debug('can\'t process calculated input: %s|%s', i.name, i.column, exc_info=True)
                 row.append(None)
 
         return row
@@ -1963,7 +1963,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
             _l.debug('_validate_process_csv_file row: %s -> %s', row_index, row)
             if (row_index == 0 and instance.skip_first_line) or not row:
-                _l.info('skip first row')
+                _l.debug('skip first row')
                 continue
 
             inputs_raw = {}
@@ -2005,11 +2005,11 @@ def complex_transaction_csv_file_import_validate(self, instance):
                     inputs_raw[i.name] = row[i.column - 1]
                     error_rows['error_data']['data']['imported_columns'].append(row[i.column - 1])
                 except:
-                    _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                    _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                     error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
                     inputs_error.append(i)
 
-            _l.info('Row %s inputs_raw: %s' % (row_index, inputs_raw))
+            _l.debug('Row %s inputs_raw: %s' % (row_index, inputs_raw))
 
             for i in scheme_inputs:
 
@@ -2020,18 +2020,18 @@ def complex_transaction_csv_file_import_validate(self, instance):
                     inputs[i.name] = formula.safe_eval(i.name_expr, names=inputs_raw)
                     error_rows['error_data']['data']['converted_imported_columns'].append(row[i.column - 1])
                 except:
-                    _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                    _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                     error_rows['error_data']['data']['converted_imported_columns'].append(
                         ugettext('Invalid expression'))
                     inputs_error.append(i)
 
-            _l.info('Row %s inputs_converted: %s' % (row_index, inputs))
+            _l.debug('Row %s inputs_converted: %s' % (row_index, inputs))
 
             original_columns_count = len(row)
 
             row = update_row_with_calculated_data(row, inputs)
 
-            _l.info('Row %s inputs_with_calculated: %s' % (row_index, inputs))
+            _l.debug('Row %s inputs_with_calculated: %s' % (row_index, inputs))
 
             for i in scheme_calculated_inputs:
 
@@ -2041,15 +2041,15 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                     index = original_columns_count + i.column - 1
 
-                    _l.info('original_columns_count %s' % original_columns_count)
-                    _l.info('i.column %s' % i.column)
-                    _l.info('row %s' % row)
+                    _l.debug('original_columns_count %s' % original_columns_count)
+                    _l.debug('i.column %s' % i.column)
+                    _l.debug('row %s' % row)
 
                     inputs[i.name] = row[index]
 
                     error_rows['error_data']['data']['calculated_columns'].append(row[index])
                 except:
-                    _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                    _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                     error_rows['error_data']['data']['calculated_columns'].append(ugettext('Invalid expression'))
                     calculated_columns_error.append(i)
 
@@ -2078,8 +2078,8 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                 error_rows['level'] = 'error'
 
-                _l.info('can\'t process rule expression', exc_info=True)
-                _l.info('error %s' % e)
+                _l.debug('can\'t process rule expression', exc_info=True)
+                _l.debug('error %s' % e)
                 error_rows['error_message'] = error_rows['error_message'] + str(ugettext('Can\'t eval rule expression'))
                 instance.error_rows.append(error_rows)
                 if instance.break_on_error:
@@ -2093,7 +2093,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
             if not rule_value:
 
-                _l.info('no rule value: %s', rule_value)
+                _l.debug('no rule value: %s', rule_value)
 
                 error_rows['level'] = 'error'
 
@@ -2109,7 +2109,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
                     continue
 
             else:
-                _l.info('rule value: %s', rule_value)
+                _l.debug('rule value: %s', rule_value)
 
             processed_scenarios = 0
             matched_rule = False
@@ -2140,7 +2140,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                         error_rows['level'] = 'error'
 
-                        _l.info('rule does not find: %s', rule_value, exc_info=True)
+                        _l.debug('rule does not find: %s', rule_value, exc_info=True)
                         error_rows['error_message'] = error_rows['error_message'] + str(
                             ugettext('Can\'t find transaction type by "%(value)s"') % {
                                 'value': rule_value
@@ -2159,7 +2159,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
                             error_rows['error_reaction'] = 'Continue import'
                             continue
 
-                    _l.info('founded rule: %s -> %s', rule, rule.transaction_type)
+                    _l.debug('founded rule: %s -> %s', rule, rule.transaction_type)
 
                     fields = {}
                     fields_error = []
@@ -2183,7 +2183,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                         except (ValueError, formula.InvalidExpression):
 
-                            _l.info('can\'t process field: %s|%s', field.transaction_type_input.name,
+                            _l.debug('can\'t process field: %s|%s', field.transaction_type_input.name,
                                     field.transaction_type_input.pk, exc_info=True)
                             fields_error.append(field)
 
@@ -2192,9 +2192,9 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
                     if len(fields_error):
 
-                        _l.info('fields (step 1): error=%s, values=%s', fields_error, fields)
+                        _l.debug('fields (step 1): error=%s, values=%s', fields_error, fields)
 
-                        _l.info(error_rows['error_message'])
+                        _l.debug(error_rows['error_message'])
 
                         inputs_messages = []
 
@@ -2251,7 +2251,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
                                     'total_rows': instance.total_rows,
                                     'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
 
-            _l.info('instance', instance)
+            _l.debug('instance', instance)
 
     def _row_count(file):
 
@@ -2272,8 +2272,8 @@ def complex_transaction_csv_file_import_validate(self, instance):
         # with import_file_storage.open(instance.file_path, 'rb') as f:
         with SFS.open(instance.file_path, 'rb') as f:
             with NamedTemporaryFile() as tmpf:
-                _l.info('tmpf')
-                _l.info(tmpf)
+                _l.debug('tmpf')
+                _l.debug(tmpf)
 
                 for chunk in f.chunks():
                     tmpf.write(chunk)
@@ -2289,19 +2289,19 @@ def complex_transaction_csv_file_import_validate(self, instance):
                 with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
                     _validate_process_csv_file(cf)
     # except csv.Error:
-    #     _l.info('Can\'t process file', exc_info=True)
+    #     _l.debug('Can\'t process file', exc_info=True)
     #     instance.error_message = ugettext("Invalid file format or file already deleted.")
     # except (FileNotFoundError, IOError):
-    #     _l.info('Can\'t process file', exc_info=True)
+    #     _l.debug('Can\'t process file', exc_info=True)
     #     instance.error_message = ugettext("Invalid file format or file already deleted.")
     except:
-        _l.info('Can\'t process file', exc_info=True)
+        _l.debug('Can\'t process file', exc_info=True)
         instance.error_message = ugettext("Invalid file format or file already deleted.")
     finally:
         # import_file_storage.delete(instance.file_path)
         SFS.delete(instance.file_path)
 
-    _l.info("ransaction import validation completed")
+    _l.debug("ransaction import validation completed")
 
     instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
 
@@ -2325,7 +2325,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
 
         try:
 
-            _l.info(
+            _l.debug(
                 'complex_transaction_csv_file_import_by_procedure looking for scheme %s ' % procedure_instance.procedure.scheme_name)
 
             scheme = ComplexTransactionImportScheme.objects.get(master_user=procedure_instance.master_user,
@@ -2338,7 +2338,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                                 source="Data File Procedure Service",
                                 text=text)
 
-            _l.info('trying to open %s' % transaction_file_result.file_path)
+            _l.debug('trying to open %s' % transaction_file_result.file_path)
 
             with SFS.open(transaction_file_result.file_path, 'rb') as f:
 
@@ -2353,10 +2353,10 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                     try:
                         aes_key = rsa_cipher.decrypt(procedure_instance.private_key, procedure_instance.symmetric_key)
 
-                        _l.info("complex_transaction_csv_file_import_by_procedure decrypting symmetric key")
+                        _l.debug("complex_transaction_csv_file_import_by_procedure decrypting symmetric key")
 
                     except Exception as e:
-                        _l.info('complex_transaction_csv_file_import_by_procedure AES Key decryption error %s' % e)
+                        _l.debug('complex_transaction_csv_file_import_by_procedure AES Key decryption error %s' % e)
 
                     aes_cipher = AESCipher(aes_key)
 
@@ -2365,19 +2365,19 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                     try:
                         decrypt_text = aes_cipher.decrypt(encrypted_text)
 
-                        _l.info("complex_transaction_csv_file_import_by_procedure decrypting text file")
+                        _l.debug("complex_transaction_csv_file_import_by_procedure decrypting text file")
 
                     except Exception as e:
-                        _l.info('complex_transaction_csv_file_import_by_procedure Text decryption error %s' % e)
+                        _l.debug('complex_transaction_csv_file_import_by_procedure Text decryption error %s' % e)
 
-                    _l.info('complex_transaction_csv_file_import_by_procedure file decrypted')
+                    _l.debug('complex_transaction_csv_file_import_by_procedure file decrypted')
 
-                    _l.info('Size of decrypted text: %s' % len(decrypt_text))
+                    _l.debug('Size of decrypted text: %s' % len(decrypt_text))
 
 
                     with NamedTemporaryFile() as tmpf:
 
-                        _l.info('tmpf.name %s' % tmpf.name)
+                        _l.debug('tmpf.name %s' % tmpf.name)
 
                         tmpf.write(decrypt_text.encode('utf-8'))
                         tmpf.flush()
@@ -2387,7 +2387,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
 
                         SFS.save(file_path, tmpf)
 
-                        _l.info('complex_transaction_csv_file_import_by_procedure tmp file filled')
+                        _l.debug('complex_transaction_csv_file_import_by_procedure tmp file filled')
 
                         instance = ComplexTransactionCsvFileImport(scheme=scheme,
                                                                     file_path=file_path,
@@ -2396,7 +2396,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                                                                    delimiter=scheme.delimiter,
                                                                    master_user=procedure_instance.master_user)
 
-                    _l.info('complex_transaction_csv_file_import_by_procedure instance: %s' % instance)
+                    _l.debug('complex_transaction_csv_file_import_by_procedure instance: %s' % instance)
 
                     current_date_time = now().strftime("%Y-%m-%d-%H-%M")
                     file_report = FileReport()
@@ -2410,7 +2410,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
 
                     file_report.save()
 
-                    _l.info('file_report %s' % file_report)
+                    _l.debug('file_report %s' % file_report)
 
                     text = "Data File Procedure %s. File is received. Start Import" % (
                         procedure_instance.procedure.user_code)
@@ -2427,7 +2427,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
 
                 except Exception as e:
 
-                    _l.info('complex_transaction_csv_file_import_by_procedure decryption error %s' % e)
+                    _l.debug('complex_transaction_csv_file_import_by_procedure decryption error %s' % e)
 
         except ComplexTransactionImportScheme.DoesNotExist:
 
@@ -2438,7 +2438,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                                 source="Data File Procedure Service",
                                 text=text)
 
-            _l.info(
+            _l.debug(
                 'complex_transaction_csv_file_import_by_procedure scheme %s not found' % procedure_instance.procedure.scheme_name)
 
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR

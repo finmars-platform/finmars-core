@@ -21,7 +21,7 @@ def test_instrument_data(b):
     """
     Test instrument data methods
     """
-    _l.info('-' * 79)
+    _l.debug('-' * 79)
 
     instrument_fields = sorted({
         "CRNCY",
@@ -103,14 +103,14 @@ def test_instrument_data(b):
     #     "SECURITY_TYP": "EURO-DOLLAR"
     # }
 
-    _l.info('response: %s', pprint.pformat(response))
+    _l.debug('response: %s', pprint.pformat(response))
 
 
 def test_pricing_latest(b):
     """
     Test pricing data methods
     """
-    _l.info('-' * 79)
+    _l.debug('-' * 79)
 
     instrument1 = {"code": 'XS1433454243', "industry": "Corp"}
     instrument2 = {"code": 'USL9326VAA46', "industry": "Corp"}
@@ -136,14 +136,14 @@ def test_pricing_latest(b):
     #         "SECURITY_TYP": "EURO-DOLLAR"
     #     }
     # }
-    _l.info('response: %s', pprint.pformat(response))
+    _l.debug('response: %s', pprint.pformat(response))
 
 
 def test_pricing_history(b):
     """
     Test pricing data methods
     """
-    _l.info('-' * 79)
+    _l.debug('-' * 79)
 
     # instrument1 = {"code": 'XS1433454243', "industry": "Corp"}
     # instrument2 = {"code": 'USL9326VAA46', "industry": "Corp"}
@@ -179,7 +179,7 @@ def test_pricing_history(b):
     #     ]
     # }
 
-    _l.info('response: %s', pprint.pformat(response))
+    _l.debug('response: %s', pprint.pformat(response))
 
 
 if __name__ == "__main__":
@@ -197,8 +197,8 @@ if __name__ == "__main__":
     test_pricing_history(b)
 
     # from dateutil import parser
-    # _l.info('1: %s', parser.parse("06/16/2023"))
-    # _l.info('2: %s', parser.parse("2016-06-15"))
+    # _l.debug('1: %s', parser.parse("06/16/2023"))
+    # _l.debug('2: %s', parser.parse("2016-06-15"))
 
     # from poms.integrations.tasks import bloomberg_call
     # from poms.users.models import MasterUser

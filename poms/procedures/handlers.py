@@ -23,7 +23,7 @@ class RequestDataFileProcedureProcess(object):
 
     def __init__(self, procedure=None, master_user=None, member=None, schedule_instance=None):
 
-        _l.info('RequestDataFileProcedureProcess. Master user: %s. Procedure: %s' % (master_user, procedure))
+        _l.debug('RequestDataFileProcedureProcess. Master user: %s. Procedure: %s' % (master_user, procedure))
 
         self.master_user = master_user
         self.procedure = procedure
@@ -39,13 +39,13 @@ class RequestDataFileProcedureProcess(object):
             try:
                 self.procedure.price_date_from = formula.safe_eval(self.procedure.price_date_from_expr, names={})
             except formula.InvalidExpression as e:
-                _l.info("Cant execute price date from expression %s " % e)
+                _l.debug("Cant execute price date from expression %s " % e)
 
         if self.procedure.price_date_to_expr:
             try:
                 self.procedure.price_date_to = formula.safe_eval(self.procedure.price_date_to_expr, names={})
             except formula.InvalidExpression as e:
-                _l.info("Cant execute price date to expression %s " % e)
+                _l.debug("Cant execute price date to expression %s " % e)
 
     def process(self):
 
@@ -81,9 +81,9 @@ class RequestDataFileProcedureProcess(object):
 
                 procedure_instance.save()
 
-                _l.info("RequestDataFileProcedureInstance procedure_instance created id: %s" % procedure_instance.id)
+                _l.debug("RequestDataFileProcedureInstance procedure_instance created id: %s" % procedure_instance.id)
 
-            _l.info("RequestDataFileProcedureProcess: Request_transaction_file. Master User: %s. Provider: %s, Scheme name: %s" % (self.master_user, self.procedure.provider, self.procedure.scheme_name) )
+            _l.debug("RequestDataFileProcedureProcess: Request_transaction_file. Master User: %s. Provider: %s, Scheme name: %s" % (self.master_user, self.procedure.provider, self.procedure.scheme_name) )
 
             item = TransactionFileResult.objects.create(
                 procedure_instance=procedure_instance,
@@ -134,7 +134,7 @@ class RequestDataFileProcedureProcess(object):
                 "error_message": ""
             }
 
-            _l.info("Executing procedure_request_data_file")
+            _l.debug("Executing procedure_request_data_file")
             procedure_request_data_file.apply_async(kwargs={
                                                             'master_user': self.master_user,
                                                             'procedure_instance': procedure_instance,
@@ -142,7 +142,7 @@ class RequestDataFileProcedureProcess(object):
                                                             'data': data})
 
         else:
-            _l.info('DATA_FILE_SERVICE_URL is not set')
+            _l.debug('DATA_FILE_SERVICE_URL is not set')
 
             send_system_message(master_user=self.master_user,
                                 source="Data File Procedure Service",

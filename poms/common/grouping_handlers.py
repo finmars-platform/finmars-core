@@ -71,7 +71,7 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
     if groups_order == 'desc':
         qs = qs.order_by(F('group_name').desc())
 
-    _l.info("get_root_dynamic_attr_group %s seconds " % (time.time() - start_time))
+    _l.debug("get_root_dynamic_attr_group %s seconds " % (time.time() - start_time))
 
     return qs
 
@@ -200,7 +200,7 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
     if groups_order == 'desc':
         qs = qs.order_by(F('group_name').desc())
 
-    _l.info("get_last_dynamic_attr_group %s seconds " % (time.time() - start_time))
+    _l.debug("get_last_dynamic_attr_group %s seconds " % (time.time() - start_time))
 
     return qs
 
@@ -331,7 +331,7 @@ def get_queryset_filters(qs, groups_types, groups_values, original_qs):
 
         i = i + 1
 
-    _l.info("get_queryset_filters %s seconds " % (time.time() - start_time))
+    _l.debug("get_queryset_filters %s seconds " % (time.time() - start_time))
 
     # original_qs = original_qs.filter(id__in=qs)
 
@@ -394,6 +394,6 @@ def handle_groups(qs, groups_types, groups_values, groups_order, master_user, or
 
     # print('handle_groups  %s' % qs)
 
-    _l.info("handle_groups %s seconds " % (time.time() - start_time))
+    _l.debug("handle_groups %s seconds " % (time.time() - start_time))
 
     return qs

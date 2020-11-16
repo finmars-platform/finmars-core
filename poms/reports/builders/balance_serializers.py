@@ -513,7 +513,7 @@ class ReportSerializer(ReportSerializerWithLogs):
 
         data = super(ReportSerializer, self).to_representation(instance)
 
-        _l.info('ReportSerializer to_representation_st done: %s' % "{:3.3f}".format(
+        _l.debug('ReportSerializer to_representation_st done: %s' % "{:3.3f}".format(
             time.perf_counter() - to_representation_st))
 
         st = time.perf_counter()
@@ -544,8 +544,8 @@ class ReportSerializer(ReportSerializerWithLogs):
                             names['%s_object' % pk_attr] = objs[pk]
                         except KeyError:
                             pass
-                            # _l.info('pk %s' % pk)
-                            # _l.info('pk_attr %s' % pk_attr)
+                            # _l.debug('pk %s' % pk)
+                            # _l.debug('pk_attr %s' % pk_attr)
                         # names[pk_attr] = objs[pk]
 
             for item in items:
@@ -578,7 +578,7 @@ class ReportSerializer(ReportSerializerWithLogs):
 
                 names = formula.value_prepare(names)
 
-                # _l.info('names %s' % names['market_value'])
+                # _l.debug('names %s' % names['market_value'])
 
                 cfv = []
 
@@ -594,7 +594,7 @@ class ReportSerializer(ReportSerializerWithLogs):
                             try:
                                 value = formula.safe_eval(expr, names=names, context=self.context)
                             except formula.InvalidExpression as e:
-                                # _l.info('error %s' % e)
+                                # _l.debug('error %s' % e)
                                 value = ugettext('Invalid expression')
                         else:
                             value = None
@@ -656,7 +656,7 @@ class ReportSerializer(ReportSerializerWithLogs):
 
                 item['custom_fields'] = cfv
 
-        _l.info('ReportSerializer custom fields execution done: %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.debug('ReportSerializer custom fields execution done: %s' % "{:3.3f}".format(time.perf_counter() - st))
 
         return data
 
@@ -991,7 +991,7 @@ class PLReportSqlSerializer(ReportSerializer):
 
     def get_item_instruments(self, obj):
 
-        _l.info('get item instruments here')
+        _l.debug('get item instruments here')
 
         result = []
 

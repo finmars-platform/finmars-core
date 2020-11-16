@@ -216,7 +216,7 @@ class MasterUserCopyViewSet(AbstractAsyncViewSet):
 
         signer = TimestampSigner()
 
-        _l.info("TASK id: %s" % task_id)
+        _l.debug("TASK id: %s" % task_id)
 
         if task_id:
 
@@ -226,9 +226,9 @@ class MasterUserCopyViewSet(AbstractAsyncViewSet):
                 celery_task = CeleryTask.objects.get(master_user=request.user.master_user, task_id=task_id)
             except CeleryTask.DoesNotExist:
                 celery_task = None
-                _l.info("Cant create Celery Task")
+                _l.debug("Cant create Celery Task")
 
-            _l.info('celery_task %s' % celery_task)
+            _l.debug('celery_task %s' % celery_task)
 
             st = time.perf_counter()
 
@@ -249,18 +249,18 @@ class MasterUserCopyViewSet(AbstractAsyncViewSet):
 
                         celery_task.data = celery_task_data
 
-                # _l.info('TASK ITEMS LEN %s' % len(res.result.items))
+                # _l.debug('TASK ITEMS LEN %s' % len(res.result.items))
 
-            _l.info('AsyncResult res.ready: %s' % (time.perf_counter() - st))
+            _l.debug('AsyncResult res.ready: %s' % (time.perf_counter() - st))
 
-            _l.info('instance %s' % instance)
+            _l.debug('instance %s' % instance)
 
             if instance.master_user.id != request.user.master_user.id:
                 raise PermissionDenied()
 
-            # _l.info('TASK RESULT %s' % res.result)
-            _l.info('TASK STATUS %s' % res.status)
-            _l.info('TASK STATUS celery_task %s' % celery_task)
+            # _l.debug('TASK RESULT %s' % res.result)
+            _l.debug('TASK STATUS %s' % res.status)
+            _l.debug('TASK STATUS celery_task %s' % celery_task)
 
             instance.task_id = task_id
             instance.task_status = res.status
@@ -437,7 +437,7 @@ class ResetPasswordRequestTokenViewSet(AbstractApiView, ViewSet):
 
                 link = "https://%s/forgot-password-confirm.html?token=%s" % (settings.DOMAIN_NAME, token.key)
 
-                _l.info('link %s' % link)
+                _l.debug('link %s' % link)
 
                 message = "Your password reset <a href='%s'>link</a>" % link
 
@@ -535,7 +535,7 @@ class MasterUserViewSet(AbstractModelViewSet):
             return self.request.user.master_user
         obj = super(MasterUserViewSet, self).get_object()
 
-        _l.info('set_master_user get_object done: %s' % (time.perf_counter() - set_st))
+        _l.debug('set_master_user get_object done: %s' % (time.perf_counter() - set_st))
 
         return obj
 

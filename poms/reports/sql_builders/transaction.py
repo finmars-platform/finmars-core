@@ -26,9 +26,9 @@ class TransactionReportBuilderSql:
 
         self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self.instance.master_user)
 
-        _l.info('self.instance master_user %s' % self.instance.master_user)
-        _l.info('self.instance begin_date %s' % self.instance.begin_date)
-        _l.info('self.instance end_date %s' % self.instance.end_date)
+        _l.debug('self.instance master_user %s' % self.instance.master_user)
+        _l.debug('self.instance begin_date %s' % self.instance.begin_date)
+        _l.debug('self.instance end_date %s' % self.instance.end_date)
 
     def build_transaction(self):
         st = time.perf_counter()
@@ -37,9 +37,9 @@ class TransactionReportBuilderSql:
 
         self.build_items()
 
-        _l.info('items total %s' % len(self.instance.items))
+        _l.debug('items total %s' % len(self.instance.items))
 
-        _l.info('build_st done: %s', "{:3.3f}".format(time.perf_counter() - st))
+        _l.debug('build_st done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
         self.add_data_items()
 
@@ -47,7 +47,7 @@ class TransactionReportBuilderSql:
 
     def build_items(self):
 
-        _l.info("build items")
+        _l.debug("build items")
 
         with connection.cursor() as cursor:
 
@@ -62,7 +62,7 @@ class TransactionReportBuilderSql:
 
             result = dictfetchall(cursor)
 
-            _l.info('build cash result %s ' % len(result))
+            _l.debug('build cash result %s ' % len(result))
 
             self.instance.items = result
 

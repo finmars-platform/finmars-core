@@ -156,7 +156,7 @@ def only_generate_events_at_date(master_user, date):
 
 @shared_task(name='instruments.only_generate_events_at_date_for_single_instrument', ignore_result=True)
 def only_generate_events_at_date_for_single_instrument(master_user, date, instrument):
-    _l.info('only_generate_events_at_date_for_single_instrument: master_user=%s, instrument=%s', (master_user.id, instrument))
+    _l.debug('only_generate_events_at_date_for_single_instrument: master_user=%s, instrument=%s', (master_user.id, instrument))
 
     opened_instrument_items = []
 
@@ -175,7 +175,7 @@ def only_generate_events_at_date_for_single_instrument(master_user, date, instru
                 if i.instr.id == instrument.id:
                     opened_instrument_items.append(i)
 
-    _l.info('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
+    _l.debug('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
     if not opened_instrument_items:
         return
 

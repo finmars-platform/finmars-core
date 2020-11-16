@@ -51,7 +51,7 @@ class ConfigurationEntityArchetypeGenerateHandler(object):
 
             archetype.save()
 
-        _l.info('Generating Currency Archetypes %s' % (time.perf_counter() - st))
+        _l.debug('Generating Currency Archetypes %s' % (time.perf_counter() - st))
 
     def generate_account_type_archetype(self):
 
@@ -73,7 +73,7 @@ class ConfigurationEntityArchetypeGenerateHandler(object):
 
             archetype.save()
 
-        _l.info('Generating Instrument Types Archetypes %s' % (time.perf_counter() - st))
+        _l.debug('Generating Instrument Types Archetypes %s' % (time.perf_counter() - st))
 
     def generate_instrument_type_archetype(self):
 
@@ -106,7 +106,7 @@ class ConfigurationEntityArchetypeGenerateHandler(object):
 
             archetype.save()
 
-        _l.info('Generating Instrument Type Archetypes %s' % (time.perf_counter() - st))
+        _l.debug('Generating Instrument Type Archetypes %s' % (time.perf_counter() - st))
 
 
 

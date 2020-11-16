@@ -127,7 +127,7 @@ class BalanceReportSyncViewSet(AbstractViewSet):
 
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.info('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.debug('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -153,7 +153,7 @@ class BalanceReportSqlSyncViewSet(AbstractViewSet):
 
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.info('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+        _l.debug('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -185,7 +185,7 @@ class PLReportSyncViewSet(AbstractViewSet):
 
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.info('serialize report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+        _l.debug('serialize report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -209,7 +209,7 @@ class PLReportSqlSyncViewSet(AbstractViewSet):
 
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.info('PL Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+        _l.debug('PL Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -253,7 +253,7 @@ class TransactionReportSyncViewSet(AbstractViewSet):
 
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.info('serialize report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+        _l.debug('serialize report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -277,7 +277,7 @@ class TransactionReportSqlSyncViewSet(AbstractViewSet):
 
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.info('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+        _l.debug('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -320,6 +320,6 @@ class PriceHistoryCheckSqlSyncViewSet(AbstractViewSet):
 
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.info('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+        _l.debug('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)

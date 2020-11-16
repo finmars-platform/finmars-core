@@ -1551,7 +1551,7 @@ def _simple_group(val, ranges, default=None):
 def _date_group(evaluator, val, ranges, default=None):
     val = _parse_date(val)
 
-    # _l.info('_date_group: val=%s', val)
+    # _l.debug('_date_group: val=%s', val)
 
     def _make_name(begin, end, fmt):
         # if end != datetime.date.max:
@@ -1592,7 +1592,7 @@ def _date_group(evaluator, val, ranges, default=None):
             if step:
                 if not isinstance(step, (datetime.timedelta, relativedelta.relativedelta,)):
                     step = _timedelta(days=step)
-                # _l.info('start=%s, end=%s, step=%s', start, end, step)
+                # _l.debug('start=%s, end=%s, step=%s', start, end, step)
 
                 ld = begin
                 while ld < end:
@@ -1601,7 +1601,7 @@ def _date_group(evaluator, val, ranges, default=None):
                     lend = ld + step - datetime.timedelta(days=1)
                     if lend > end:
                         lend = end
-                    # _l.info('  lstart=%s, lend=%s', lbegin, lend)
+                    # _l.debug('  lstart=%s, lend=%s', lbegin, lend)
                     if lbegin <= val <= lend:
                         return _make_name(lbegin, lend, fmt)
                     ld = ld + step
@@ -1998,7 +1998,7 @@ class SimpleEval2(object):
             self._table = save_table
 
     def _eval(self, node):
-        # _l.info('%s - %s - %s', node, type(node), node.__class__)
+        # _l.debug('%s - %s - %s', node, type(node), node.__class__)
         # self.tik_time = time.time()
         # if self.tik_time - self.start_time > self.max_time:
         #     raise InvalidExpression("Execution exceeded time limit, max runtime is %s" % self.max_time)
@@ -2595,37 +2595,37 @@ if __name__ == "__main__":
     }
 
 
-    # _l.info(safe_eval('(1).__class__.__bases__', names=names))
-    # _l.info(safe_eval('{"a":1, "b":2}'))
-    # _l.info(safe_eval('[1,]'))
-    # _l.info(safe_eval('(1,)'))
-    # _l.info(safe_eval('{1,}'))
-    # _l.info(safe_eval('[1, 1.0, "str", None, True, False]'))
+    # _l.debug(safe_eval('(1).__class__.__bases__', names=names))
+    # _l.debug(safe_eval('{"a":1, "b":2}'))
+    # _l.debug(safe_eval('[1,]'))
+    # _l.debug(safe_eval('(1,)'))
+    # _l.debug(safe_eval('{1,}'))
+    # _l.debug(safe_eval('[1, 1.0, "str", None, True, False]'))
 
-    # _l.info(safe_eval('parse_date("2000-01-01") + days(100)'))
-    # _l.info(safe_eval(
+    # _l.debug(safe_eval('parse_date("2000-01-01") + days(100)'))
+    # _l.debug(safe_eval(
     #     'simple_price(parse_date("2000-01-05"), parse_date("2000-01-01"), 0, parse_date("2000-04-10"), 100)'))
-    # _l.info(safe_eval('simple_price("2000-01-05", "2000-01-01", 0, "2000-04-10", 100)'))
-    # _l.info(safe_eval('simple_price("2000-01-02", "2000-01-01", 0, "2000-04-10", 100)'))
-    # _l.info(safe_eval('v0 * 10', names=names))
-    # _l.info(safe_eval('globals()["v0"] * 10', names=names))
-    # _l.info(safe_eval('v2.id', names=names))
-    # _l.info(safe_eval('v4.id', names=names))
+    # _l.debug(safe_eval('simple_price("2000-01-05", "2000-01-01", 0, "2000-04-10", 100)'))
+    # _l.debug(safe_eval('simple_price("2000-01-02", "2000-01-01", 0, "2000-04-10", 100)'))
+    # _l.debug(safe_eval('v0 * 10', names=names))
+    # _l.debug(safe_eval('globals()["v0"] * 10', names=names))
+    # _l.debug(safe_eval('v2.id', names=names))
+    # _l.debug(safe_eval('v4.id', names=names))
 
-    # _l.info(safe_eval('func1()'))
-    # _l.info(safe_eval('name1'))
-    # _l.info(safe_eval('name1.id', names={"name1": {'id':1}}))
-    # _l.info(safe_eval('name1.id2', names={"name1": {'id':1}}))
-    # _l.info(safe_eval('1+'))
-    # _l.info(safe_eval('1 if 1 > 2 else 2'))
-    # _l.info(safe_eval('"a" in "ab"'))
-    # _l.info(safe_eval('y = now().year'))
-    # _l.info(safe_eval('eval("2+eval(\\\"2+2\\\")")'))
-    # _l.info(ast.literal_eval('2+2'))
-    # _l.info(safe_eval("globals()['now']()"))
+    # _l.debug(safe_eval('func1()'))
+    # _l.debug(safe_eval('name1'))
+    # _l.debug(safe_eval('name1.id', names={"name1": {'id':1}}))
+    # _l.debug(safe_eval('name1.id2', names={"name1": {'id':1}}))
+    # _l.debug(safe_eval('1+'))
+    # _l.debug(safe_eval('1 if 1 > 2 else 2'))
+    # _l.debug(safe_eval('"a" in "ab"'))
+    # _l.debug(safe_eval('y = now().year'))
+    # _l.debug(safe_eval('eval("2+eval(\\\"2+2\\\")")'))
+    # _l.debug(ast.literal_eval('2+2'))
+    # _l.debug(safe_eval("globals()['now']()"))
 
     def test_eval(expr, names=None):
-        # _l.info('-' * 79)
+        # _l.debug('-' * 79)
         try:
             se = SimpleEval2(names=names, add_print=True)
             ret = se.eval(expr)
@@ -2637,7 +2637,7 @@ if __name__ == "__main__":
             # raise e
         except Exception as e:
             ret = "<ERROR2: %s>" % e
-        _l.info("\t%-60s -> %s" % (expr, ret))
+        _l.debug("\t%-60s -> %s" % (expr, ret))
 
 
     #     test_eval('''
@@ -2725,21 +2725,21 @@ if __name__ == "__main__":
             # ],
 
         }
-        _l.info("test variables:\n", names)
+        _l.debug("test variables:\n", names)
         # for n in sorted(six.iterkeys(names)):
-        #     _l.info(n, "\n")
+        #     _l.debug(n, "\n")
         #     pprint.pprint(names[n])
         #     # print("\t%s -> %s" % (n, json.dumps(names[n], sort_keys=True, indent=2)))
 
-        _l.info("simple:")
+        _l.debug("simple:")
         test_eval("2 * 2 + 2", names)
         test_eval("2 * (2 + 2)", names)
         test_eval("16 ** 16", names)
         test_eval("5 / 2", names)
         test_eval("5 % 2", names)
 
-        _l.info('')
-        _l.info("with variables:")
+        _l.debug('')
+        _l.debug("with variables:")
         test_eval("v0 + 1", names)
         test_eval("v1 + ' & ' + str(v0)", names)
         test_eval("v2.name", names)
@@ -2757,8 +2757,8 @@ if __name__ == "__main__":
         # test_eval("globals()['instr'].price_multiplier", names)
         # test_eval("globals()['instr']['price_multiplier']", names)
 
-        _l.info('')
-        _l.info("functions: ")
+        _l.debug('')
+        _l.debug("functions: ")
         test_eval("round(1.73456)", names)
         test_eval("round(1.73456, 3)", names)
         test_eval("round(1.73456, 4)", names)
@@ -2779,11 +2779,11 @@ if __name__ == "__main__":
 
         # r = safe_eval3('"%r" % now()', names=names, functions=functions)
         # r = safe_eval('format_date(now(), "EEE, MMM d, yy")')
-        # _l.info(repr(r))
-        # _l.info(add_workdays(datetime.date(2016, 6, 15), 3, only_workdays=False))
-        # _l.info(add_workdays(datetime.date(2016, 6, 15), 4, only_workdays=False))
-        # _l.info(add_workdays(datetime.date(2016, 6, 15), 3))
-        # _l.info(add_workdays(datetime.date(2016, 6, 15), 4))
+        # _l.debug(repr(r))
+        # _l.debug(add_workdays(datetime.date(2016, 6, 15), 3, only_workdays=False))
+        # _l.debug(add_workdays(datetime.date(2016, 6, 15), 4, only_workdays=False))
+        # _l.debug(add_workdays(datetime.date(2016, 6, 15), 3))
+        # _l.debug(add_workdays(datetime.date(2016, 6, 15), 4))
 
 
     demo()
@@ -2948,25 +2948,25 @@ def accrual_NL_365_NO_EOM(dt1, dt2):
 accrual_NL_365_NO_EOM(date(2000, 1, 1), date(2000, 1, 25))
         '''
 
-        _l.info('PERF')
+        _l.debug('PERF')
         number = 1000
-        _l.info('-' * 79)
-        _l.info(expr)
-        _l.info('-' * 79)
-        _l.info('native          : %f', timeit.timeit(f_native, number=number))
-        _l.info('parse           : %f', timeit.timeit(lambda: ast.parse(expr), number=number))
-        _l.info('exec            : %f', timeit.timeit(lambda: exec(expr, {
+        _l.debug('-' * 79)
+        _l.debug(expr)
+        _l.debug('-' * 79)
+        _l.debug('native          : %f', timeit.timeit(f_native, number=number))
+        _l.debug('parse           : %f', timeit.timeit(lambda: ast.parse(expr), number=number))
+        _l.debug('exec            : %f', timeit.timeit(lambda: exec(expr, {
             'parse_date': _parse_date,
             'isleap': calendar.isleap,
             'date': _date,
             'days': _days,
         }), number=number))
-        _l.info('safe_eval       : %f', timeit.timeit(lambda: safe_eval(expr, allow_assign=True), number=number))
+        _l.debug('safe_eval       : %f', timeit.timeit(lambda: safe_eval(expr, allow_assign=True), number=number))
 
-        _l.info('-' * 79)
+        _l.debug('-' * 79)
         expr = '-(4-1)*5+(2+4.67)+5.89/(.2+7)'
-        _l.info('eval            : %f', timeit.timeit(lambda: exec(expr), number=number))
-        _l.info('safe_eval       : %f', timeit.timeit(lambda: safe_eval(expr), number=number))
+        _l.debug('eval            : %f', timeit.timeit(lambda: exec(expr), number=number))
+        _l.debug('safe_eval       : %f', timeit.timeit(lambda: safe_eval(expr), number=number))
 
 
     # perf_tests()
@@ -2998,21 +2998,21 @@ accrual_NL_365_NO_EOM(date(2000, 1, 1), date(2000, 1, 25))
             'instrument1': Instrument.objects.filter(master_user=master_user).first(),
         }
 
-        _l.info('---------')
-        # _l.info(safe_eval('instrument', names=names, context=context))
-        # _l.info(safe_eval('instrument1.attributes', names=names, context=context))
-        # _l.info(safe_eval('instrument1.price_multiplier', names=names, context=context))
-        # _l.info(safe_eval('instrument1.price_multiplier * instrument1.price_multiplier', names=names, context=context))
-        # _l.info(safe_eval('instrument1["price_multiplier"]', names=names, context=context))
-        # _l.info(safe_eval('return instruments', names=names, context=context))
-        # _l.info(safe_eval('instruments[0].price_multiplier', names=names, context=context))
-        # _l.info(safe_eval('transactions[0].instrument.user_code', names=names, context=context))
+        _l.debug('---------')
+        # _l.debug(safe_eval('instrument', names=names, context=context))
+        # _l.debug(safe_eval('instrument1.attributes', names=names, context=context))
+        # _l.debug(safe_eval('instrument1.price_multiplier', names=names, context=context))
+        # _l.debug(safe_eval('instrument1.price_multiplier * instrument1.price_multiplier', names=names, context=context))
+        # _l.debug(safe_eval('instrument1["price_multiplier"]', names=names, context=context))
+        # _l.debug(safe_eval('return instruments', names=names, context=context))
+        # _l.debug(safe_eval('instruments[0].price_multiplier', names=names, context=context))
+        # _l.debug(safe_eval('transactions[0].instrument.user_code', names=names, context=context))
 
-        _l.info(safe_eval('account', names=names, context=context))
-        _l.info(safe_eval('account.attributes', names=names, context=context))
-        _l.info(safe_eval('account.attributes.str1.value', names=names, context=context))
-        _l.info(safe_eval('account.attributes["SomeClassifier"].value', names=names, context=context))
-        _l.info(safe_eval('account.attributes["SomeClassifier"].value.parent.parent.parent.name', names=names,
+        _l.debug(safe_eval('account', names=names, context=context))
+        _l.debug(safe_eval('account.attributes', names=names, context=context))
+        _l.debug(safe_eval('account.attributes.str1.value', names=names, context=context))
+        _l.debug(safe_eval('account.attributes["SomeClassifier"].value', names=names, context=context))
+        _l.debug(safe_eval('account.attributes["SomeClassifier"].value.parent.parent.parent.name', names=names,
                           context=context))
 
         pass
@@ -3024,8 +3024,8 @@ accrual_NL_365_NO_EOM(date(2000, 1, 1), date(2000, 1, 25))
 
     def now_test():
         now = datetime.date(2000, 1, 1)
-        _l.info(safe_eval('now()'))
-        _l.info(safe_eval('now()', now=lambda: now))
+        _l.debug(safe_eval('now()'))
+        _l.debug(safe_eval('now()', now=lambda: now))
 
 
     # now_test()
@@ -3041,11 +3041,11 @@ accrual_NL_365_NO_EOM(date(2000, 1, 1), date(2000, 1, 25))
             'member': member,
         }
 
-        # _l.info('1: %s', safe_eval('get_instrument_accrued_price("petrolios", "2017-11-01")', context=context))
-        # _l.info('2: %s', safe_eval('get_instrument_accrued_price("petrolios", "2017-11-01")', context=context))
-        _l.info('3: %s', safe_eval('get_instrument_coupon("petrolios", "2017-11-01")', context=context))
-        # _l.info('4: %s', safe_eval('get_instrument_factor("petrolios", "2017-11-01")', context=context))
-        # _l.info('5: %s', safe_eval('get_instrument_factor("petrolios", "2017-11-01")', context=context))
+        # _l.debug('1: %s', safe_eval('get_instrument_accrued_price("petrolios", "2017-11-01")', context=context))
+        # _l.debug('2: %s', safe_eval('get_instrument_accrued_price("petrolios", "2017-11-01")', context=context))
+        _l.debug('3: %s', safe_eval('get_instrument_coupon("petrolios", "2017-11-01")', context=context))
+        # _l.debug('4: %s', safe_eval('get_instrument_factor("petrolios", "2017-11-01")', context=context))
+        # _l.debug('5: %s', safe_eval('get_instrument_factor("petrolios", "2017-11-01")', context=context))
 
 
     # accrued_test()
@@ -3053,42 +3053,42 @@ accrual_NL_365_NO_EOM(date(2000, 1, 1), date(2000, 1, 25))
 
 
     def group_test():
-        _l.info('1: %s', safe_eval('simple_group(0, [[1,10,"o1"],[10,20,"o2"]], "o3")'))
-        _l.info('2: %s', safe_eval('simple_group(5, [[1,10,"o1"],[10,20,"o2"]], "o3")'))
-        _l.info('3: %s', safe_eval('simple_group(15, [[1,10,"o1"],[10,20,"o2"]], "o3")'))
-        _l.info('4: %s', safe_eval('simple_group(25, [[1,10,"o1"],[10,20,"o2"]], "o3")'))
-        _l.info('5: %s', safe_eval('simple_group(4, [["-inf",10,"o1"],[10,20,"o2"]], default="Olala")'))
-        # _l.info('5: %s', safe_eval('simple_group(4, [["begin","end","name"],...], default="Olala")'))
+        _l.debug('1: %s', safe_eval('simple_group(0, [[1,10,"o1"],[10,20,"o2"]], "o3")'))
+        _l.debug('2: %s', safe_eval('simple_group(5, [[1,10,"o1"],[10,20,"o2"]], "o3")'))
+        _l.debug('3: %s', safe_eval('simple_group(15, [[1,10,"o1"],[10,20,"o2"]], "o3")'))
+        _l.debug('4: %s', safe_eval('simple_group(25, [[1,10,"o1"],[10,20,"o2"]], "o3")'))
+        _l.debug('5: %s', safe_eval('simple_group(4, [["-inf",10,"o1"],[10,20,"o2"]], default="Olala")'))
+        # _l.debug('5: %s', safe_eval('simple_group(4, [["begin","end","name"],...], default="Olala")'))
 
-        _l.info('10: %s', safe_eval('simple_group(0, [[None,10,"o1"],[10,20,"o2"]], "o3")'))
-        _l.info('11: %s', safe_eval('simple_group(5, [[None,10,"o1"],[10,20,"o2"]], "o3")'))
-        _l.info('12: %s', safe_eval('simple_group(15, [[None,10,"o1"],[10,20,"o2"]], "o3")'))
-        _l.info('13: %s', safe_eval('simple_group(25, [[None,10,"o1"],[10,None,"o2"]], "o3")'))
+        _l.debug('10: %s', safe_eval('simple_group(0, [[None,10,"o1"],[10,20,"o2"]], "o3")'))
+        _l.debug('11: %s', safe_eval('simple_group(5, [[None,10,"o1"],[10,20,"o2"]], "o3")'))
+        _l.debug('12: %s', safe_eval('simple_group(15, [[None,10,"o1"],[10,20,"o2"]], "o3")'))
+        _l.debug('13: %s', safe_eval('simple_group(25, [[None,10,"o1"],[10,None,"o2"]], "o3")'))
 
-        _l.info('100: %s', safe_eval('date_group("2000-11-21", ['
+        _l.debug('100: %s', safe_eval('date_group("2000-11-21", ['
                                      '["2000-01-01","2001-01-01",10,"o1"],'
                                      '["2001-01-01","2002-01-01", timedelta(months=1, day=31),"o2"]'
                                      '], "o3")'))
-        _l.info('101: %s', safe_eval('date_group("2002-11-21", ['
+        _l.debug('101: %s', safe_eval('date_group("2002-11-21", ['
                                      '["2000-01-01","2001-01-01",10,"o1"],'
                                      '["2001-01-01","2002-01-01",timedelta(months=1, day=31),"o2"]'
                                      '], "o3")'))
-        _l.info('102: %s', safe_eval('date_group("2000-11-21", ['
+        _l.debug('102: %s', safe_eval('date_group("2000-11-21", ['
                                      '["2000-01-01","2001-01-01", None,"o1"],'
                                      '["2001-01-01","2002-01-01",timedelta(months=1, day=31),"o2"]'
                                      '], "o3")'))
 
-        _l.info('110: %s', safe_eval('date_group("2000-11-21", ['
+        _l.debug('110: %s', safe_eval('date_group("2000-11-21", ['
                                      '["2000-01-01","2001-01-01", 10, ["<","%Y-%m-%d-%B",">","<","%Y-%m-%d",">"]],'
                                      '["2000-01-01","2002-01-01",timedelta(months=1, day=31),"o2"]'
                                      '], "o3")'))
 
-        _l.info('120: %s', safe_eval('date_group("2002-11-21", ['
+        _l.debug('120: %s', safe_eval('date_group("2002-11-21", ['
                                      '["","2001-01-01",None, "o1"],'
                                      '["2001-01-01","2002-01-01",10, "o2"],'
                                      '["2002-01-01","",None,"o3"]'
                                      '], "o4")'))
-        _l.info('121: %s', safe_eval('date_group("2000-11-21", ['
+        _l.debug('121: %s', safe_eval('date_group("2000-11-21", ['
                                      '["","2001-01-01",None, "o1"],'
                                      '["2001-01-01","2002-01-01",10, "o2"],'
                                      '["2002-01-01","",None,"o3"]'
@@ -3109,7 +3109,7 @@ accrual_NL_365_NO_EOM(date(2000, 1, 1), date(2000, 1, 25))
         # {id: 10, caption: "Quarterly (+3m)", step: "timedelta(months=3)"},
         # {id: 11, caption: "Yearly (+12m)", step: "timedelta(years=1)",
         # {id: 12, caption: "Yearly (EoY)"}
-        _l.info('200: %s', safe_eval('date_group("2001-04-09", ['
+        _l.debug('200: %s', safe_eval('date_group("2001-04-09", ['
                                      '["","2001-02-01",None, "o1"],'
                                      '["2001-02-01","2020-02-01", timedelta(weeks=1, weekday=1), ["<","%Y-%m-%d-%a-%b","/","","%Y-%m-%d-%a-%b",">"]],'
                                      '["2020-02-01","",None,"o3"]'
@@ -3122,9 +3122,9 @@ accrual_NL_365_NO_EOM(date(2000, 1, 1), date(2000, 1, 25))
         # account.attributes["SomeClassifier"].value
         # account.attributes["SomeClassifier"].value.parent.parent.parent.name
 
-        # _l.info('102: %s', safe_eval('date_range("2000-11-21", [[None,"2001-01-01",30,"o1"],["2001-01-01","2002-01-01",timedelta(months=1, day=31),"o2"]], "o3")'))
+        # _l.debug('102: %s', safe_eval('date_range("2000-11-21", [[None,"2001-01-01",30,"o1"],["2001-01-01","2002-01-01",timedelta(months=1, day=31),"o2"]], "o3")'))
 
-        # _l.info('1: %s', safe_eval('format_date2("2001-12-12", "yyyy/MM/dd")'))
+        # _l.debug('1: %s', safe_eval('format_date2("2001-12-12", "yyyy/MM/dd")'))
 
 
     # group_test()

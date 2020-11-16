@@ -58,8 +58,8 @@ def get_json_objs(target_model, target_model_serializer, target_model_content_ty
 @shared_task(name='obj_attrs.recalculate_attributes', bind=True)
 def recalculate_attributes(self, instance):
 
-    _l.info('recalculate_attributes: instance', instance)
-    # _l.info('recalculate_attributes: context', context)
+    _l.debug('recalculate_attributes: instance', instance)
+    # _l.debug('recalculate_attributes: context', context)
 
     attribute_type = GenericAttributeType.objects.get(id=instance.attribute_type_id, master_user=instance.master_user)
 
@@ -67,10 +67,10 @@ def recalculate_attributes(self, instance):
         attribute_type=attribute_type,
         content_type=instance.target_model_content_type)
 
-    _l.info('recalculate_attributes: attributes len %s' % len(attributes))
-    _l.info('recalculate_attributes: attribute_type.expr %s' % attribute_type.expr)
+    _l.debug('recalculate_attributes: attributes len %s' % len(attributes))
+    _l.debug('recalculate_attributes: attribute_type.expr %s' % attribute_type.expr)
 
-    _l.info('self task id %s' % self.request.id)
+    _l.debug('self task id %s' % self.request.id)
 
     celery_task = CeleryTask.objects.create(master_user=instance.master_user,
                                             member=instance.member,
@@ -99,7 +99,7 @@ def recalculate_attributes(self, instance):
 
         data = json_objs[attr.object_id]
 
-        # _l.info('data %s' % data)
+        # _l.debug('data %s' % data)
 
         try:
             executed_expression = safe_eval(attribute_type.expr, names={'this': data}, context=context)

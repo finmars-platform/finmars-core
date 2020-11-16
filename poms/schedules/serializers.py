@@ -50,7 +50,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
 
-        _l.info("create validated_data %s" % validated_data)
+        _l.debug("create validated_data %s" % validated_data)
 
         procedures = validated_data.pop('procedures', empty)
 
@@ -63,8 +63,8 @@ class ScheduleSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
 
-        _l.info("update instance %s" % instance)
-        _l.info("update validated_data %s" % validated_data)
+        _l.debug("update instance %s" % instance)
+        _l.debug("update validated_data %s" % validated_data)
 
         procedures = validated_data.pop('procedures', empty)
 
@@ -85,14 +85,14 @@ class ScheduleSerializer(serializers.ModelSerializer):
         current_procedures = {i.id: i for i in instance.procedures.all()}
         new_procedures = []
 
-        _l.info('procedures_data %s' % procedures_data)
+        _l.debug('procedures_data %s' % procedures_data)
 
         for order, procedure_data in enumerate(procedures_data):
 
             pk = procedure_data.pop('id', None)
             procedure = current_procedures.pop(pk, None)
 
-            _l.info('procedure %s' % procedure)
+            _l.debug('procedure %s' % procedure)
 
             if procedure is None:
                 try:

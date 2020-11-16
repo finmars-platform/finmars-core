@@ -426,7 +426,7 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
 
         data = super(TransactionReportSqlSerializer, self).to_representation(instance)
 
-        _l.info('TransactionReportSerializer to_representation_st done: %s' % "{:3.3f}".format(
+        _l.debug('TransactionReportSerializer to_representation_st done: %s' % "{:3.3f}".format(
             time.perf_counter() - to_representation_st))
 
         st = time.perf_counter()
@@ -559,6 +559,6 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
 
                 item['custom_fields'] = cfv
 
-        _l.info('TransactionReportSerializer custom fields execution done: %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.debug('TransactionReportSerializer custom fields execution done: %s' % "{:3.3f}".format(time.perf_counter() - st))
 
         return data

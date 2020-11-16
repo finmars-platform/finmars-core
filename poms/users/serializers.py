@@ -884,6 +884,6 @@ class InviteCreateSerializer(serializers.Serializer):
         try:
             send_mail(subject, message, None, recipient_list, html_message=message)
         except (Exception, smtplib.SMTPSenderRefused):
-            _l.info("Can't send email. SMTP is not configured?")
+            _l.debug("Can't send email. SMTP is not configured?")
 
         return validated_data

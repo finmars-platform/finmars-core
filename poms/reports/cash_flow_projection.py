@@ -446,7 +446,7 @@
 #                 self._set_ref(t.allocation_pl, 'accrued_currency', clazz=Currency)
 #
 #     def _refresh_from_db(self):
-#         _l.info('> _refresh_from_db')
+#         _l.debug('> _refresh_from_db')
 #
 #         complex_transactions = self._similar_cache[ComplexTransaction]
 #         if complex_transactions:
@@ -617,7 +617,7 @@
 #             )
 #             attribute_types.update(qs.in_bulk(id_list=attribute_types.keys()))
 #
-#         _l.info('< _refresh_from_db')
+#         _l.debug('< _refresh_from_db')
 #
 #     def _update_instance(self):
 #         self.instance.items = self._items

@@ -343,7 +343,7 @@ class PerformanceReportBuilder(ReportBuilder):
     #     _l.debug('< calc')
 
     def _refresh_from_db(self):
-        _l.info('> refresh from db')
+        _l.debug('> refresh from db')
 
         self.instance.portfolios = self._refresh_portfolios(
             master_user=self.instance.master_user,
@@ -414,4 +414,4 @@ class PerformanceReportBuilder(ReportBuilder):
             attrs=['strategy3']
         )
 
-        _l.info('< refresh from db')
+        _l.debug('< refresh from db')

@@ -160,7 +160,7 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
 
         page = self.paginate_queryset(filtered_qs)
 
-        _l.info("List %s seconds " % (time.time() - start_time))
+        _l.debug("List %s seconds " % (time.time() - start_time))
 
         if page is not None:
             return self.get_paginated_response(page)
@@ -212,7 +212,7 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
 
         page = self.paginator.post_paginate_queryset(filtered_qs, request)
 
-        _l.info("Filtered EV Group List %s seconds " % str((time.time() - start_time)))
+        _l.debug("Filtered EV Group List %s seconds " % str((time.time() - start_time)))
 
         if page is not None:
             return self.get_paginated_response(page)
@@ -307,7 +307,7 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
 
         serializer = self.get_serializer(page, many=True)
 
-        _l.info("Filtered List %s seconds " % (time.time() - start_time))
+        _l.debug("Filtered List %s seconds " % (time.time() - start_time))
 
         return self.get_paginated_response(serializer.data)
 

@@ -25,7 +25,7 @@ SFS = SFTPStorage()
 
 @shared_task(name='reconciliation.process_bank_file_for_reconcile', bind=True)
 def process_bank_file_for_reconcile(self, instance):
-    _l.info('complex_transaction_file_import: %s', instance)
+    _l.debug('complex_transaction_file_import: %s', instance)
 
     instance.processed_rows = 0
 
@@ -49,9 +49,9 @@ def process_bank_file_for_reconcile(self, instance):
 
         for row_index, row in enumerate(reader):
 
-            _l.info('process row: %s -> %s', row_index, row)
+            _l.debug('process row: %s -> %s', row_index, row)
             if (row_index == 0 and instance.skip_first_line) or not row:
-                _l.info('skip first row')
+                _l.debug('skip first row')
                 continue
 
             inputs_raw = {}
@@ -91,7 +91,7 @@ def process_bank_file_for_reconcile(self, instance):
                     inputs_raw[i.name] = row[i.column - 1]
                     error_rows['error_data']['data']['imported_columns'].append(row[i.column - 1])
                 except:
-                    _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                    _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                     error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
                     inputs_error.append(i)
 
@@ -122,7 +122,7 @@ def process_bank_file_for_reconcile(self, instance):
                     inputs[i.name] = formula.safe_eval(i.name_expr, names=inputs_raw)
                     error_rows['error_data']['data']['converted_imported_columns'].append(row[i.column - 1])
                 except:
-                    _l.info('can\'t process conversion input: %s|%s', i.name, i.column, exc_info=True)
+                    _l.debug('can\'t process conversion input: %s|%s', i.name, i.column, exc_info=True)
                     error_rows['error_data']['data']['converted_imported_columns'].append(
                         ugettext('Invalid expression'))
                     inputs_conversion_error.append(i)
@@ -153,7 +153,7 @@ def process_bank_file_for_reconcile(self, instance):
 
                 error_rows['level'] = 'error'
 
-                _l.info('can\'t process selector value expression', exc_info=True)
+                _l.debug('can\'t process selector value expression', exc_info=True)
                 error_rows['error_message'] = error_rows['error_message'] + '\n' + '\n' + str(ugettext(
                     'Can\'t eval rule expression'))
                 instance.error_rows.append(error_rows)
@@ -163,7 +163,7 @@ def process_bank_file_for_reconcile(self, instance):
                     return
                 else:
                     continue
-            _l.info('selector_value value: %s', selector_value)
+            _l.debug('selector_value value: %s', selector_value)
 
             matched_selector = False
             processed_scenarios = 0
@@ -294,8 +294,8 @@ def process_bank_file_for_reconcile(self, instance):
     try:
         with SFS.open(instance.file_path, 'rb') as f:
             with NamedTemporaryFile() as tmpf:
-                _l.info('tmpf')
-                _l.info(tmpf)
+                _l.debug('tmpf')
+                _l.debug(tmpf)
 
                 for chunk in f.chunks():
                     tmpf.write(chunk)
@@ -310,7 +310,7 @@ def process_bank_file_for_reconcile(self, instance):
                     _process_csv_file(cf)
 
     except:
-        _l.info('Can\'t process file', exc_info=True)
+        _l.debug('Can\'t process file', exc_info=True)
         instance.error_message = ugettext("Invalid file format or file already deleted.")
     finally:
         SFS.delete(instance.file_path)

@@ -30,7 +30,7 @@ class PricingProcedureProcess(object):
 
     def __init__(self, procedure=None, master_user=None, date_from=None, date_to=None, member=None, schedule_instance=None):
 
-        _l.info('PricingProcedureProcess. Master user: %s. Procedure: %s' % (master_user, procedure))
+        _l.debug('PricingProcedureProcess. Master user: %s. Procedure: %s' % (master_user, procedure))
 
         self.master_user = master_user
         self.procedure = procedure
@@ -43,11 +43,11 @@ class PricingProcedureProcess(object):
         if date_from:
             self.procedure.price_date_from = date_from
         if date_to:
-            _l.info("Date To set from user Settings")
+            _l.debug("Date To set from user Settings")
             self.procedure.price_date_to = date_to
 
-        _l.info('price_date_from %s' % self.procedure.price_date_from)
-        _l.info('price_date_to %s' % self.procedure.price_date_to)
+        _l.debug('price_date_from %s' % self.procedure.price_date_from)
+        _l.debug('price_date_to %s' % self.procedure.price_date_to)
 
         self.parent_procedure = PricingParentProcedureInstance(procedure=procedure, master_user=master_user)
         self.parent_procedure.save()
@@ -63,13 +63,13 @@ class PricingProcedureProcess(object):
                                                                member=self.member,
                                                                schedule_instance=self.schedule_instance)
 
-        _l.info("Procedure settings - Get Principal Prices: %s" % self.procedure.price_get_principal_prices)
-        _l.info("Procedure settings - Get Accrued Prices: %s" % self.procedure.price_get_accrued_prices)
-        _l.info("Procedure settings - Get FX Rates: %s" % self.procedure.price_get_fx_rates)
-        _l.info("Procedure settings - Overwrite Principal Prices: %s" % self.procedure.price_overwrite_principal_prices)
-        _l.info("Procedure settings - Overwrite Accrued Prices: %s" % self.procedure.price_overwrite_accrued_prices)
-        _l.info("Procedure settings - Overwrite FX Rates: %s" % self.procedure.price_overwrite_fx_rates)
-        _l.info("Procedure settings - Roll Days N Forward: %s" % self.procedure.price_fill_days)
+        _l.debug("Procedure settings - Get Principal Prices: %s" % self.procedure.price_get_principal_prices)
+        _l.debug("Procedure settings - Get Accrued Prices: %s" % self.procedure.price_get_accrued_prices)
+        _l.debug("Procedure settings - Get FX Rates: %s" % self.procedure.price_get_fx_rates)
+        _l.debug("Procedure settings - Overwrite Principal Prices: %s" % self.procedure.price_overwrite_principal_prices)
+        _l.debug("Procedure settings - Overwrite Accrued Prices: %s" % self.procedure.price_overwrite_accrued_prices)
+        _l.debug("Procedure settings - Overwrite FX Rates: %s" % self.procedure.price_overwrite_fx_rates)
+        _l.debug("Procedure settings - Roll Days N Forward: %s" % self.procedure.price_fill_days)
 
     def get_base_transactions(self):
 
@@ -100,8 +100,8 @@ class PricingProcedureProcess(object):
 
         results = list(results)  # execute query
 
-        _l.info('< get_base_transactions len %s', len(results))
-        _l.info('< get_base_transactions done in %s', (time.perf_counter() - processing_st))
+        _l.debug('< get_base_transactions len %s', len(results))
+        _l.debug('< get_base_transactions done in %s', (time.perf_counter() - processing_st))
 
         return results
 
@@ -111,13 +111,13 @@ class PricingProcedureProcess(object):
             try:
                 self.procedure.price_date_from = formula.safe_eval(self.procedure.price_date_from_expr, names={})
             except formula.InvalidExpression as e:
-                _l.info("Cant execute price date from expression %s " % e)
+                _l.debug("Cant execute price date from expression %s " % e)
 
         if self.procedure.price_date_to_expr:
             try:
                 self.procedure.price_date_to = formula.safe_eval(self.procedure.price_date_to_expr, names={})
             except formula.InvalidExpression as e:
-                _l.info("Cant execute price date to expression %s " % e)
+                _l.debug("Cant execute price date to expression %s " % e)
 
     def process(self):
 
@@ -140,18 +140,18 @@ class FillPricesBrokerBloombergProcess(object):
 
 
 
-        _l.info("Broker Bloomberg - Get Principal Prices: %s" % self.procedure.price_get_principal_prices)
-        _l.info("Broker Bloomberg - Get Accrued Prices: %s" % self.procedure.price_get_accrued_prices)
-        _l.info("Broker Bloomberg - Get FX Rates: %s" % self.procedure.price_get_fx_rates)
-        _l.info("Broker Bloomberg - Overwrite Principal Prices: %s" % self.procedure.price_overwrite_principal_prices)
-        _l.info("Broker Bloomberg - Overwrite Accrued Prices: %s" % self.procedure.price_overwrite_accrued_prices)
-        _l.info("Broker Bloomberg - Overwrite FX Rates: %s" % self.procedure.price_overwrite_fx_rates)
-        _l.info("Broker Bloomberg - Roll Days N Forward: %s" % self.procedure.price_fill_days)
+        _l.debug("Broker Bloomberg - Get Principal Prices: %s" % self.procedure.price_get_principal_prices)
+        _l.debug("Broker Bloomberg - Get Accrued Prices: %s" % self.procedure.price_get_accrued_prices)
+        _l.debug("Broker Bloomberg - Get FX Rates: %s" % self.procedure.price_get_fx_rates)
+        _l.debug("Broker Bloomberg - Overwrite Principal Prices: %s" % self.procedure.price_overwrite_principal_prices)
+        _l.debug("Broker Bloomberg - Overwrite Accrued Prices: %s" % self.procedure.price_overwrite_accrued_prices)
+        _l.debug("Broker Bloomberg - Overwrite FX Rates: %s" % self.procedure.price_overwrite_fx_rates)
+        _l.debug("Broker Bloomberg - Roll Days N Forward: %s" % self.procedure.price_fill_days)
 
     def process(self):
 
-        _l.info('< fill prices: total items len %s' % len(self.instance['data']['items']))
-        _l.info('< action:  %s' % self.instance['action'])
+        _l.debug('< fill prices: total items len %s' % len(self.instance['data']['items']))
+        _l.debug('< action:  %s' % self.instance['action'])
 
         if self.instance['action'] == 'bloomberg_get_currency_prices':
 
@@ -166,11 +166,11 @@ class FillPricesBrokerBloombergProcess(object):
                     currency_parameters=str(item['parameters'])
                 )
 
-                _l.info('< fill currency prices: records for %s len %s' % (item['reference'], len(list(records))))
+                _l.debug('< fill currency prices: records for %s len %s' % (item['reference'], len(list(records))))
 
                 processing_st = time.perf_counter()
 
-                _l.info('< get records from db done: %s', (time.perf_counter() - records_st))
+                _l.debug('< get records from db done: %s', (time.perf_counter() - records_st))
 
                 for record in records:
 
@@ -186,18 +186,18 @@ class FillPricesBrokerBloombergProcess(object):
                                         try:
                                             record.fx_rate_value = float(val_obj['value'])
                                         except Exception as e:
-                                            _l.info('fx_rate_value e %s ' % e)
+                                            _l.debug('fx_rate_value e %s ' % e)
 
                                 record.save()
 
                         if not len(records):
-                            _l.info('Cant fill the value. Related records not found. Reference %s' % item['reference'])
+                            _l.debug('Cant fill the value. Related records not found. Reference %s' % item['reference'])
 
-                _l.info('< processing item: %s', (time.perf_counter() - processing_st))
+                _l.debug('< processing item: %s', (time.perf_counter() - processing_st))
 
             self.create_currency_history()
 
-            _l.info("process fill currency prices")
+            _l.debug("process fill currency prices")
 
         elif self.instance['action'] == 'bloomberg_get_instrument_prices':
 
@@ -212,11 +212,11 @@ class FillPricesBrokerBloombergProcess(object):
                     instrument_parameters=str(item['parameters'])
                 )
 
-                _l.info('< fill instrument prices: records for %s len %s' % (item['reference'], len(list(records))))
+                _l.debug('< fill instrument prices: records for %s len %s' % (item['reference'], len(list(records))))
 
                 processing_st = time.perf_counter()
 
-                _l.info('< get records from db done: %s', (time.perf_counter() - records_st))
+                _l.debug('< get records from db done: %s', (time.perf_counter() - records_st))
 
                 for record in records:
 
@@ -232,7 +232,7 @@ class FillPricesBrokerBloombergProcess(object):
                                         try:
                                             record.ask_value = float(val_obj['value'])
                                         except Exception as e:
-                                            _l.info('ask value e %s ' % e)
+                                            _l.debug('ask value e %s ' % e)
 
                                 if record.bid_parameters:
                                     if field['code'] in record.bid_parameters:
@@ -240,7 +240,7 @@ class FillPricesBrokerBloombergProcess(object):
                                         try:
                                             record.bid_value = float(val_obj['value'])
                                         except Exception as e:
-                                             _l.info('bid value e %s ' % e)
+                                             _l.debug('bid value e %s ' % e)
 
                                 if record.last_parameters:
                                     if field['code'] in record.last_parameters:
@@ -248,7 +248,7 @@ class FillPricesBrokerBloombergProcess(object):
                                         try:
                                             record.last_value = float(val_obj['value'])
                                         except Exception as e:
-                                            _l.info('last value e %s ' % e)
+                                            _l.debug('last value e %s ' % e)
 
                                 if record.accrual_parameters:
                                     if field['code'] in record.accrual_parameters:
@@ -256,22 +256,22 @@ class FillPricesBrokerBloombergProcess(object):
                                         try:
                                             record.accrual_value = float(val_obj['value'])
                                         except Exception as e:
-                                            _l.info('accrual_value value e %s ' % e)
+                                            _l.debug('accrual_value value e %s ' % e)
 
                                 record.save()
 
                         if not len(records):
-                            _l.info('Cant fill the value. Related records not found. Reference %s' % item['reference'])
+                            _l.debug('Cant fill the value. Related records not found. Reference %s' % item['reference'])
 
-                _l.info('< processing item: %s', (time.perf_counter() - processing_st))
+                _l.debug('< processing item: %s', (time.perf_counter() - processing_st))
 
             self.create_price_history()
 
-            _l.info("process fill instrument prices")
+            _l.debug("process fill instrument prices")
 
     def create_price_history(self):
 
-        _l.info("Creating price history")
+        _l.debug("Creating price history")
 
         successful_prices_count = 0
         error_prices_count = 0
@@ -305,8 +305,8 @@ class FillPricesBrokerBloombergProcess(object):
             pricing_error_text_expr = pricing_scheme_parameters.pricing_error_text_expr
             accrual_error_text_expr = pricing_scheme_parameters.accrual_error_text_expr
 
-            _l.info('values %s' % values)
-            _l.info('expr %s' % expr)
+            _l.debug('values %s' % values)
+            _l.debug('expr %s' % expr)
 
             has_error = False
             error = PriceHistoryError(
@@ -335,9 +335,9 @@ class FillPricesBrokerBloombergProcess(object):
                     error.error_text = 'Invalid Error Text Expression'
 
 
-            _l.info('principal_price %s' % principal_price)
-            _l.info('instrument %s' % record.instrument.user_code)
-            _l.info('pricing_policy %s' % record.pricing_policy.user_code)
+            _l.debug('principal_price %s' % principal_price)
+            _l.debug('instrument %s' % record.instrument.user_code)
+            _l.debug('pricing_policy %s' % record.pricing_policy.user_code)
 
             if pricing_scheme_parameters.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
 
@@ -348,7 +348,7 @@ class FillPricesBrokerBloombergProcess(object):
 
                     try:
 
-                        _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
+                        _l.debug('accrual_error_text_expr %s' % accrual_error_text_expr)
 
                         error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
@@ -364,7 +364,7 @@ class FillPricesBrokerBloombergProcess(object):
 
                     try:
 
-                        _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
+                        _l.debug('accrual_error_text_expr %s' % accrual_error_text_expr)
 
                         error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
@@ -383,9 +383,9 @@ class FillPricesBrokerBloombergProcess(object):
 
                 if not self.procedure.price_overwrite_principal_prices and not self.procedure.price_overwrite_accrued_prices:
                     can_write = False
-                    _l.info('Skip %s' % price)
+                    _l.debug('Skip %s' % price)
                 else:
-                    _l.info('Overwrite existing %s' % price)
+                    _l.debug('Overwrite existing %s' % price)
 
             except PriceHistory.DoesNotExist:
 
@@ -396,7 +396,7 @@ class FillPricesBrokerBloombergProcess(object):
                     principal_price=principal_price
                 )
 
-                _l.info('Create new %s' % price)
+                _l.debug('Create new %s' % price)
 
             price.principal_price = 0
             price.accrued_price = 0
@@ -421,7 +421,7 @@ class FillPricesBrokerBloombergProcess(object):
 
                 error.accrued_price = accrued_price
 
-            _l.info('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
+            _l.debug('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
 
             if can_write:
 
@@ -448,7 +448,7 @@ class FillPricesBrokerBloombergProcess(object):
 
             if self.instance['data']['date_to'] == str(record.date):
 
-                _l.info("Bloomberg Roll Prices for Price History")
+                _l.debug("Bloomberg Roll Prices for Price History")
 
                 # roll_price_history_for_n_day_forward(self.procedure, price)
                 roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance)
@@ -458,9 +458,9 @@ class FillPricesBrokerBloombergProcess(object):
                                                        date__gte=self.instance['data']['date_from'],
                                                        date__lte=self.instance['data']['date_to']).delete()
 
-        _l.info('bloomberg price procedure_instance %s' % self.procedure_instance)
-        _l.info('bloomberg price successful_prices_count %s' % successful_prices_count)
-        _l.info('bloomberg price error_prices_count %s' % error_prices_count)
+        _l.debug('bloomberg price procedure_instance %s' % self.procedure_instance)
+        _l.debug('bloomberg price successful_prices_count %s' % successful_prices_count)
+        _l.debug('bloomberg price error_prices_count %s' % error_prices_count)
 
         self.procedure_instance.successful_prices_count = successful_prices_count
         self.procedure_instance.error_prices_count = error_prices_count
@@ -469,15 +469,15 @@ class FillPricesBrokerBloombergProcess(object):
 
         self.procedure_instance.save()
 
-        _l.info('bloomberg price self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
-        _l.info('bloomberg price self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
+        _l.debug('bloomberg price self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
+        _l.debug('bloomberg price self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
 
         if self.procedure_instance.schedule_instance:
             self.procedure_instance.schedule_instance.run_next_procedure()
 
     def create_currency_history(self):
 
-        _l.info("Creating currency history")
+        _l.debug("Creating currency history")
 
         successful_prices_count = 0
         error_prices_count = 0
@@ -489,7 +489,7 @@ class FillPricesBrokerBloombergProcess(object):
             date__lte=self.instance['data']['date_to']
         )
 
-        _l.info('create_currency_history: records len %s' % len(records))
+        _l.debug('create_currency_history: records len %s' % len(records))
 
         for record in records:
 
@@ -518,8 +518,8 @@ class FillPricesBrokerBloombergProcess(object):
             expr = pricing_scheme_parameters.expr
             error_text_expr = pricing_scheme_parameters.error_text_expr
 
-            _l.info('values %s' % values)
-            _l.info('expr %s' % expr)
+            _l.debug('values %s' % values)
+            _l.debug('expr %s' % expr)
 
             fx_rate = None
 
@@ -534,9 +534,9 @@ class FillPricesBrokerBloombergProcess(object):
                 except formula.InvalidExpression:
                     error.error_text = 'Invalid Error Text Expression'
 
-            _l.info('fx_rate %s' % fx_rate)
-            _l.info('currency %s' % record.currency.user_code)
-            _l.info('pricing_policy %s' % record.pricing_policy.user_code)
+            _l.debug('fx_rate %s' % fx_rate)
+            _l.debug('currency %s' % record.currency.user_code)
+            _l.debug('pricing_policy %s' % record.pricing_policy.user_code)
 
             can_write = True
 
@@ -550,9 +550,9 @@ class FillPricesBrokerBloombergProcess(object):
 
                 if not self.procedure.price_overwrite_fx_rates:
                     can_write = False
-                    _l.info('Skip %s' % price)
+                    _l.debug('Skip %s' % price)
                 else:
-                    _l.info('Overwrite existing %s' % price)
+                    _l.debug('Overwrite existing %s' % price)
 
 
             except CurrencyHistory.DoesNotExist:
@@ -563,7 +563,7 @@ class FillPricesBrokerBloombergProcess(object):
                     date=record.date
                 )
 
-                _l.info('Create new %s' % price)
+                _l.debug('Create new %s' % price)
 
             price.fx_rate = 0
 
@@ -594,7 +594,7 @@ class FillPricesBrokerBloombergProcess(object):
 
             if parse_date_iso(self.instance['data']['date_to']) == record.date:
 
-                _l.info("Bloomberg Roll Prices for Currency History")
+                _l.debug("Bloomberg Roll Prices for Currency History")
 
                 successes, errors = roll_currency_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance)
 
@@ -627,18 +627,18 @@ class FillPricesBrokerBloombergForwardsProcess(object):
         self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
         self.procedure = self.procedure_instance.procedure
 
-        _l.info("Broker Bloomberg Forwards - Get Principal Prices: %s" % self.procedure.price_get_principal_prices)
-        _l.info("Broker Bloomberg Forwards - Get Accrued Prices: %s" % self.procedure.price_get_accrued_prices)
-        _l.info("Broker Bloomberg Forwards - Get FX Rates: %s" % self.procedure.price_get_fx_rates)
-        _l.info("Broker Bloomberg Forwards - Overwrite Principal Prices: %s" % self.procedure.price_overwrite_principal_prices)
-        _l.info("Broker Bloomberg Forwards - Overwrite Accrued Prices: %s" % self.procedure.price_overwrite_accrued_prices)
-        _l.info("Broker Bloomberg Forwards - Overwrite FX Rates: %s" % self.procedure.price_overwrite_fx_rates)
-        _l.info("Broker Bloomberg Forwards - Roll Days N Forward: %s" % self.procedure.price_fill_days)
+        _l.debug("Broker Bloomberg Forwards - Get Principal Prices: %s" % self.procedure.price_get_principal_prices)
+        _l.debug("Broker Bloomberg Forwards - Get Accrued Prices: %s" % self.procedure.price_get_accrued_prices)
+        _l.debug("Broker Bloomberg Forwards - Get FX Rates: %s" % self.procedure.price_get_fx_rates)
+        _l.debug("Broker Bloomberg Forwards - Overwrite Principal Prices: %s" % self.procedure.price_overwrite_principal_prices)
+        _l.debug("Broker Bloomberg Forwards - Overwrite Accrued Prices: %s" % self.procedure.price_overwrite_accrued_prices)
+        _l.debug("Broker Bloomberg Forwards - Overwrite FX Rates: %s" % self.procedure.price_overwrite_fx_rates)
+        _l.debug("Broker Bloomberg Forwards - Roll Days N Forward: %s" % self.procedure.price_fill_days)
 
     def process(self):
 
-        _l.info('< fill prices: total items len %s' % len(self.instance['data']['items']))
-        _l.info('< action:  %s' % self.instance['action'])
+        _l.debug('< fill prices: total items len %s' % len(self.instance['data']['items']))
+        _l.debug('< action:  %s' % self.instance['action'])
 
         if self.instance['action'] == 'bloomberg_forwards_get_instrument_prices':
 
@@ -652,11 +652,11 @@ class FillPricesBrokerBloombergForwardsProcess(object):
                     reference=item['reference']
                 )
 
-                _l.info('< fill instrument prices: records for %s len %s' % (item['reference'], len(list(records))))
+                _l.debug('< fill instrument prices: records for %s len %s' % (item['reference'], len(list(records))))
 
                 processing_st = time.perf_counter()
 
-                _l.info('< get records from db done: %s', (time.perf_counter() - records_st))
+                _l.debug('< get records from db done: %s', (time.perf_counter() - records_st))
 
                 for record in records:
 
@@ -672,22 +672,22 @@ class FillPricesBrokerBloombergForwardsProcess(object):
                                         try:
                                             record.price_code_value = float(val_obj['value'])
                                         except Exception as e:
-                                            _l.info('price_code_value %s ' % e)
+                                            _l.debug('price_code_value %s ' % e)
 
                                 record.save()
 
                         if not len(records):
-                            _l.info('Cant fill the value. Related records not found. Reference %s' % item['reference'])
+                            _l.debug('Cant fill the value. Related records not found. Reference %s' % item['reference'])
 
-                _l.info('< processing item: %s', (time.perf_counter() - processing_st))
+                _l.debug('< processing item: %s', (time.perf_counter() - processing_st))
 
             self.create_price_history()
 
-            _l.info("process fill instrument prices")
+            _l.debug("process fill instrument prices")
 
     def create_price_history(self):
 
-        _l.info("Creating price history")
+        _l.debug("Creating price history")
 
         successful_prices_count = 0
         error_prices_count = 0
@@ -720,8 +720,8 @@ class FillPricesBrokerBloombergForwardsProcess(object):
             pricing_error_text_expr = pricing_scheme_parameters.pricing_error_text_expr
             accrual_error_text_expr = pricing_scheme_parameters.accrual_error_text_expr
 
-            _l.info('values %s' % values)
-            _l.info('expr %s' % expr)
+            _l.debug('values %s' % values)
+            _l.debug('expr %s' % expr)
 
             has_error = False
             error = PriceHistoryError(
@@ -750,9 +750,9 @@ class FillPricesBrokerBloombergForwardsProcess(object):
                     error.error_text = 'Invalid Error Text Expression'
 
 
-            _l.info('principal_price %s' % principal_price)
-            _l.info('instrument %s' % record.instrument.user_code)
-            _l.info('pricing_policy %s' % record.pricing_policy.user_code)
+            _l.debug('principal_price %s' % principal_price)
+            _l.debug('instrument %s' % record.instrument.user_code)
+            _l.debug('pricing_policy %s' % record.pricing_policy.user_code)
 
             if pricing_scheme_parameters.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
 
@@ -763,7 +763,7 @@ class FillPricesBrokerBloombergForwardsProcess(object):
 
                     try:
 
-                        _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
+                        _l.debug('accrual_error_text_expr %s' % accrual_error_text_expr)
 
                         error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
@@ -779,7 +779,7 @@ class FillPricesBrokerBloombergForwardsProcess(object):
 
                     try:
 
-                        _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
+                        _l.debug('accrual_error_text_expr %s' % accrual_error_text_expr)
 
                         error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
@@ -798,9 +798,9 @@ class FillPricesBrokerBloombergForwardsProcess(object):
 
                 if not self.procedure.price_overwrite_principal_prices and not self.procedure.price_overwrite_accrued_prices:
                     can_write = False
-                    _l.info('Skip %s' % price)
+                    _l.debug('Skip %s' % price)
                 else:
-                    _l.info('Overwrite existing %s' % price)
+                    _l.debug('Overwrite existing %s' % price)
 
             except PriceHistory.DoesNotExist:
 
@@ -811,7 +811,7 @@ class FillPricesBrokerBloombergForwardsProcess(object):
                     principal_price=principal_price
                 )
 
-                _l.info('Create new %s' % price)
+                _l.debug('Create new %s' % price)
 
             price.principal_price = 0
             price.accrued_price = 0
@@ -836,7 +836,7 @@ class FillPricesBrokerBloombergForwardsProcess(object):
 
                 error.accrued_price = accrued_price
 
-            _l.info('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
+            _l.debug('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
 
             if can_write:
 
@@ -863,7 +863,7 @@ class FillPricesBrokerBloombergForwardsProcess(object):
 
             if self.instance['data']['date_to'] == str(record.date):
 
-                _l.info("Bloomberg Forwards Roll Prices for Price History")
+                _l.debug("Bloomberg Forwards Roll Prices for Price History")
 
                 # roll_price_history_for_n_day_forward(self.procedure, price)
                 roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance)
@@ -873,9 +873,9 @@ class FillPricesBrokerBloombergForwardsProcess(object):
                                                                  date__gte=self.instance['data']['date_from'],
                                                                  date__lte=self.instance['data']['date_to']).delete()
 
-        _l.info('bloomberg forwards price procedure_instance %s' % self.procedure_instance)
-        _l.info('bloomberg forwards price successful_prices_count %s' % successful_prices_count)
-        _l.info('bloomberg forwards price error_prices_count %s' % error_prices_count)
+        _l.debug('bloomberg forwards price procedure_instance %s' % self.procedure_instance)
+        _l.debug('bloomberg forwards price successful_prices_count %s' % successful_prices_count)
+        _l.debug('bloomberg forwards price error_prices_count %s' % error_prices_count)
 
         self.procedure_instance.successful_prices_count = successful_prices_count
         self.procedure_instance.error_prices_count = error_prices_count
@@ -887,8 +887,8 @@ class FillPricesBrokerBloombergForwardsProcess(object):
         if self.procedure_instance.schedule_instance:
             self.procedure_instance.schedule_instance.run_next_procedure()
 
-        _l.info('bloomberg forwards price self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
-        _l.info('bloomberg forwards price self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
+        _l.debug('bloomberg forwards price self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
+        _l.debug('bloomberg forwards price self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
 
 
 class FillPricesBrokerWtradeProcess(object):
@@ -901,12 +901,12 @@ class FillPricesBrokerWtradeProcess(object):
         self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
         self.procedure = self.procedure_instance.procedure
 
-        _l.info('Broker Wtrade - Roll Days N Forward: %s' % self.procedure.price_fill_days)
+        _l.debug('Broker Wtrade - Roll Days N Forward: %s' % self.procedure.price_fill_days)
 
     def process(self):
 
-        _l.info('< fill prices: total items len %s' % len(self.instance['data']['items']))
-        _l.info('< action:  %s' % self.instance['action'])
+        _l.debug('< fill prices: total items len %s' % len(self.instance['data']['items']))
+        _l.debug('< action:  %s' % self.instance['action'])
 
         if self.instance['action'] == 'wtrade_get_instrument_prices':
 
@@ -921,11 +921,11 @@ class FillPricesBrokerWtradeProcess(object):
                     instrument_parameters=str(item['parameters'])
                 )
 
-                _l.info('< fill instrument prices: records for %s len %s' % (item['reference'], len(list(records))))
+                _l.debug('< fill instrument prices: records for %s len %s' % (item['reference'], len(list(records))))
 
                 processing_st = time.perf_counter()
 
-                _l.info('< get records from db done: %s', (time.perf_counter() - records_st))
+                _l.debug('< get records from db done: %s', (time.perf_counter() - records_st))
 
                 for record in records:
 
@@ -940,50 +940,50 @@ class FillPricesBrokerWtradeProcess(object):
                                     try:
                                         record.open_value = float(val_obj['value'])
                                     except Exception as e:
-                                        _l.info('fx_rate_value e %s ' % e)
+                                        _l.debug('fx_rate_value e %s ' % e)
 
                                 if field['code'] == 'close':
 
                                     try:
                                         record.close_value = float(val_obj['value'])
                                     except Exception as e:
-                                        _l.info('close_value e %s ' % e)
+                                        _l.debug('close_value e %s ' % e)
 
                                 if field['code'] == 'high':
 
                                     try:
                                         record.high_value = float(val_obj['value'])
                                     except Exception as e:
-                                        _l.info('high_value e %s ' % e)
+                                        _l.debug('high_value e %s ' % e)
 
                                 if field['code'] == 'low':
 
                                     try:
                                         record.low_value = float(val_obj['value'])
                                     except Exception as e:
-                                        _l.info('low_value e %s ' % e)
+                                        _l.debug('low_value e %s ' % e)
 
                                 if field['code'] == 'volume':
 
                                     try:
                                         record.volume_value = float(val_obj['value'])
                                     except Exception as e:
-                                        _l.info('volume_value e %s ' % e)
+                                        _l.debug('volume_value e %s ' % e)
 
                                 record.save()
 
                         if not len(records):
-                            _l.info('Cant fill the value. Related records not found. Reference %s' % item['reference'])
+                            _l.debug('Cant fill the value. Related records not found. Reference %s' % item['reference'])
 
-                _l.info('< processing item: %s', (time.perf_counter() - processing_st))
+                _l.debug('< processing item: %s', (time.perf_counter() - processing_st))
 
             self.create_price_history()
 
-            _l.info("process fill instrument prices")
+            _l.debug("process fill instrument prices")
 
     def create_price_history(self):
 
-        _l.info("Creating price history")
+        _l.debug("Creating price history")
 
         successful_prices_count = 0
         error_prices_count = 0
@@ -1018,8 +1018,8 @@ class FillPricesBrokerWtradeProcess(object):
             pricing_error_text_expr = pricing_scheme_parameters.pricing_error_text_expr
             accrual_error_text_expr = pricing_scheme_parameters.accrual_error_text_expr
 
-            _l.info('values %s' % values)
-            _l.info('expr %s' % expr)
+            _l.debug('values %s' % values)
+            _l.debug('expr %s' % expr)
 
             has_error = False
             error = PriceHistoryError(
@@ -1048,9 +1048,9 @@ class FillPricesBrokerWtradeProcess(object):
                     error.error_text = 'Invalid Error Text Expression'
 
 
-            _l.info('principal_price %s' % principal_price)
-            _l.info('instrument %s' % record.instrument.user_code)
-            _l.info('pricing_policy %s' % record.pricing_policy.user_code)
+            _l.debug('principal_price %s' % principal_price)
+            _l.debug('instrument %s' % record.instrument.user_code)
+            _l.debug('pricing_policy %s' % record.pricing_policy.user_code)
 
             if pricing_scheme_parameters.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
 
@@ -1061,7 +1061,7 @@ class FillPricesBrokerWtradeProcess(object):
 
                     try:
 
-                        _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
+                        _l.debug('accrual_error_text_expr %s' % accrual_error_text_expr)
 
                         error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
@@ -1077,7 +1077,7 @@ class FillPricesBrokerWtradeProcess(object):
 
                     try:
 
-                        _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
+                        _l.debug('accrual_error_text_expr %s' % accrual_error_text_expr)
 
                         error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
@@ -1096,9 +1096,9 @@ class FillPricesBrokerWtradeProcess(object):
 
                 if not self.procedure.price_overwrite_principal_prices and not self.procedure.price_overwrite_accrued_prices:
                     can_write = False
-                    _l.info('Skips %s' % price)
+                    _l.debug('Skips %s' % price)
                 else:
-                    _l.info('Overwrite existing %s' % price)
+                    _l.debug('Overwrite existing %s' % price)
 
             except PriceHistory.DoesNotExist:
 
@@ -1109,7 +1109,7 @@ class FillPricesBrokerWtradeProcess(object):
                     principal_price=principal_price
                 )
 
-                _l.info('Create new %s' % price)
+                _l.debug('Create new %s' % price)
 
             price.principal_price = 0
             price.accrued_price = 0
@@ -1134,7 +1134,7 @@ class FillPricesBrokerWtradeProcess(object):
 
                 error.accrued_price = accrued_price
 
-            _l.info('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
+            _l.debug('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
 
             if can_write:
 
@@ -1161,7 +1161,7 @@ class FillPricesBrokerWtradeProcess(object):
 
             if self.instance['data']['date_to'] == str(record.date):
 
-                _l.info("Wtrade Roll Prices for Price History")
+                _l.debug("Wtrade Roll Prices for Price History")
 
                 successes, errors = roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance)
 
@@ -1194,14 +1194,14 @@ class FillPricesBrokerFixerProcess(object):
         self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
         self.procedure = self.procedure_instance.procedure
 
-        _l.info("Broker Fixer - Get FX Rates: %s" % self.procedure.price_get_fx_rates)
-        _l.info("Broker Fixer - Overwrite FX Rates: %s" % self.procedure.price_overwrite_fx_rates)
-        _l.info('Broker Fixer - Roll Days N Forward: %s' % self.procedure.price_fill_days)
+        _l.debug("Broker Fixer - Get FX Rates: %s" % self.procedure.price_get_fx_rates)
+        _l.debug("Broker Fixer - Overwrite FX Rates: %s" % self.procedure.price_overwrite_fx_rates)
+        _l.debug('Broker Fixer - Roll Days N Forward: %s' % self.procedure.price_fill_days)
 
     def process(self):
 
-        _l.info('< fill prices: total items len %s' % len(self.instance['data']['items']))
-        _l.info('< action:  %s' % self.instance['action'])
+        _l.debug('< fill prices: total items len %s' % len(self.instance['data']['items']))
+        _l.debug('< action:  %s' % self.instance['action'])
 
         if self.instance['action'] == 'fixer_get_currency_prices':
 
@@ -1216,11 +1216,11 @@ class FillPricesBrokerFixerProcess(object):
                     currency_parameters=str(item['parameters'])
                 )
 
-                _l.info('< fill currency prices: records for %s len %s' % (item['reference'], len(list(records))))
+                _l.debug('< fill currency prices: records for %s len %s' % (item['reference'], len(list(records))))
 
                 processing_st = time.perf_counter()
 
-                _l.info('< get records from db done: %s', (time.perf_counter() - records_st))
+                _l.debug('< get records from db done: %s', (time.perf_counter() - records_st))
 
                 for record in records:
 
@@ -1235,22 +1235,22 @@ class FillPricesBrokerFixerProcess(object):
                                     try:
                                         record.close_value = float(val_obj['value'])
                                     except Exception as e:
-                                        _l.info('close_value e %s ' % e)
+                                        _l.debug('close_value e %s ' % e)
 
                                 record.save()
 
                         if not len(records):
-                            _l.info('Cant fill the value. Related records not found. Reference %s' % item['reference'])
+                            _l.debug('Cant fill the value. Related records not found. Reference %s' % item['reference'])
 
-                _l.info('< processing item: %s', (time.perf_counter() - processing_st))
+                _l.debug('< processing item: %s', (time.perf_counter() - processing_st))
 
             self.create_currency_history()
 
-            _l.info("process fill currency prices")
+            _l.debug("process fill currency prices")
 
     def create_currency_history(self):
 
-        _l.info("Creating currency history")
+        _l.debug("Creating currency history")
 
         successful_prices_count = 0
         error_prices_count = 0
@@ -1262,7 +1262,7 @@ class FillPricesBrokerFixerProcess(object):
             date__lte=self.instance['data']['date_to']
         )
 
-        _l.info('create_currency_history: records len %s' % len(records))
+        _l.debug('create_currency_history: records len %s' % len(records))
 
         for record in records:
 
@@ -1291,8 +1291,8 @@ class FillPricesBrokerFixerProcess(object):
             expr = pricing_scheme_parameters.expr
             error_text_expr = pricing_scheme_parameters.error_text_expr
 
-            _l.info('values %s' % values)
-            _l.info('expr %s' % expr)
+            _l.debug('values %s' % values)
+            _l.debug('expr %s' % expr)
 
             fx_rate = None
 
@@ -1307,9 +1307,9 @@ class FillPricesBrokerFixerProcess(object):
                 except formula.InvalidExpression:
                     error.error_text = 'Invalid Error Text Expression'
 
-            _l.info('fx_rate %s' % fx_rate)
-            _l.info('currency %s' % record.currency.user_code)
-            _l.info('pricing_policy %s' % record.pricing_policy.user_code)
+            _l.debug('fx_rate %s' % fx_rate)
+            _l.debug('currency %s' % record.currency.user_code)
+            _l.debug('pricing_policy %s' % record.pricing_policy.user_code)
 
             can_write = True
 
@@ -1323,9 +1323,9 @@ class FillPricesBrokerFixerProcess(object):
 
                 if not self.procedure.price_overwrite_fx_rates:
                     can_write = False
-                    _l.info('Skip %s' % price)
+                    _l.debug('Skip %s' % price)
                 else:
-                    _l.info('Overwrite existing %s' % price)
+                    _l.debug('Overwrite existing %s' % price)
 
             except CurrencyHistory.DoesNotExist:
 
@@ -1335,7 +1335,7 @@ class FillPricesBrokerFixerProcess(object):
                     date=record.date
                 )
 
-                _l.info('Create new %s' % price)
+                _l.debug('Create new %s' % price)
 
             price.fx_rate = 0
 
@@ -1367,7 +1367,7 @@ class FillPricesBrokerFixerProcess(object):
 
             if parse_date_iso(self.instance['data']['date_to']) == record.date:
 
-                _l.info("Fixer Roll Prices for Currency History")
+                _l.debug("Fixer Roll Prices for Currency History")
 
                 successes, errors = roll_currency_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance)
 
@@ -1379,9 +1379,9 @@ class FillPricesBrokerFixerProcess(object):
                                                                date__gte=self.instance['data']['date_from'],
                                                                date__lte=self.instance['data']['date_to']).delete()
 
-        _l.info('fixer self.procedure_instance %s' % self.procedure_instance)
-        _l.info('fixer fx successful_prices_count %s' % successful_prices_count)
-        _l.info('fixer fx error_prices_count %s' % error_prices_count)
+        _l.debug('fixer self.procedure_instance %s' % self.procedure_instance)
+        _l.debug('fixer fx successful_prices_count %s' % successful_prices_count)
+        _l.debug('fixer fx error_prices_count %s' % error_prices_count)
 
         self.procedure_instance.successful_prices_count = int(successful_prices_count)
         self.procedure_instance.error_prices_count = int(error_prices_count)
@@ -1390,8 +1390,8 @@ class FillPricesBrokerFixerProcess(object):
 
         self.procedure_instance.save()
 
-        _l.info('fixer self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
-        _l.info('fixer self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
+        _l.debug('fixer self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
+        _l.debug('fixer self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
 
         if self.procedure_instance.schedule_instance:
             self.procedure_instance.schedule_instance.run_next_procedure()
@@ -1407,12 +1407,12 @@ class FillPricesBrokerAlphavProcess(object):
         self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
         self.procedure = self.procedure_instance.procedure
 
-        _l.info('Broker Alphav - Roll Days N Forward: %s' % self.procedure.price_fill_days)
+        _l.debug('Broker Alphav - Roll Days N Forward: %s' % self.procedure.price_fill_days)
 
     def process(self):
 
-        _l.info('< fill prices: total items len %s' % len(self.instance['data']['items']))
-        _l.info('< action:  %s' % self.instance['action'])
+        _l.debug('< fill prices: total items len %s' % len(self.instance['data']['items']))
+        _l.debug('< action:  %s' % self.instance['action'])
 
         if self.instance['action'] == 'alphav_get_instrument_prices':
 
@@ -1427,11 +1427,11 @@ class FillPricesBrokerAlphavProcess(object):
                     instrument_parameters=str(item['parameters'])
                 )
 
-                _l.info('< fill instrument prices: records for %s len %s' % (item['reference'], len(list(records))))
+                _l.debug('< fill instrument prices: records for %s len %s' % (item['reference'], len(list(records))))
 
                 processing_st = time.perf_counter()
 
-                _l.info('< get records from db done: %s', (time.perf_counter() - records_st))
+                _l.debug('< get records from db done: %s', (time.perf_counter() - records_st))
 
                 for record in records:
 
@@ -1446,22 +1446,22 @@ class FillPricesBrokerAlphavProcess(object):
                                     try:
                                         record.close_value = float(val_obj['value'])
                                     except Exception as e:
-                                        _l.info('close_value e %s ' % e)
+                                        _l.debug('close_value e %s ' % e)
 
                                 record.save()
 
                         if not len(records):
-                            _l.info('Cant fill the value. Related records not found. Reference %s' % item['reference'])
+                            _l.debug('Cant fill the value. Related records not found. Reference %s' % item['reference'])
 
-                _l.info('< processing item: %s', (time.perf_counter() - processing_st))
+                _l.debug('< processing item: %s', (time.perf_counter() - processing_st))
 
             self.create_price_history()
 
-            _l.info("process fill instrument prices")
+            _l.debug("process fill instrument prices")
 
     def create_price_history(self):
 
-        _l.info("Creating price history")
+        _l.debug("Creating price history")
 
         successful_prices_count = 0
         error_prices_count = 0
@@ -1492,8 +1492,8 @@ class FillPricesBrokerAlphavProcess(object):
             pricing_error_text_expr = pricing_scheme_parameters.pricing_error_text_expr
             accrual_error_text_expr = pricing_scheme_parameters.accrual_error_text_expr
 
-            _l.info('values %s' % values)
-            _l.info('expr %s' % expr)
+            _l.debug('values %s' % values)
+            _l.debug('expr %s' % expr)
 
             has_error = False
             error = PriceHistoryError(
@@ -1522,9 +1522,9 @@ class FillPricesBrokerAlphavProcess(object):
                     error.error_text = 'Invalid Error Text Expression'
 
 
-            _l.info('principal_price %s' % principal_price)
-            _l.info('instrument %s' % record.instrument.user_code)
-            _l.info('pricing_policy %s' % record.pricing_policy.user_code)
+            _l.debug('principal_price %s' % principal_price)
+            _l.debug('instrument %s' % record.instrument.user_code)
+            _l.debug('pricing_policy %s' % record.pricing_policy.user_code)
 
             if pricing_scheme_parameters.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
 
@@ -1535,7 +1535,7 @@ class FillPricesBrokerAlphavProcess(object):
 
                     try:
 
-                        _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
+                        _l.debug('accrual_error_text_expr %s' % accrual_error_text_expr)
 
                         error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
@@ -1551,7 +1551,7 @@ class FillPricesBrokerAlphavProcess(object):
 
                     try:
 
-                        _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
+                        _l.debug('accrual_error_text_expr %s' % accrual_error_text_expr)
 
                         error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
@@ -1570,9 +1570,9 @@ class FillPricesBrokerAlphavProcess(object):
 
                 if not self.procedure.price_overwrite_principal_prices and not self.procedure.price_overwrite_accrued_prices:
                     can_write = False
-                    _l.info('Skips %s' % price)
+                    _l.debug('Skips %s' % price)
                 else:
-                    _l.info('Overwrite existing %s' % price)
+                    _l.debug('Overwrite existing %s' % price)
 
             except PriceHistory.DoesNotExist:
 
@@ -1583,7 +1583,7 @@ class FillPricesBrokerAlphavProcess(object):
                     principal_price=principal_price
                 )
 
-                _l.info('Create new %s' % price)
+                _l.debug('Create new %s' % price)
 
             price.principal_price = 0
             price.accrued_price = 0
@@ -1608,7 +1608,7 @@ class FillPricesBrokerAlphavProcess(object):
 
                 error.accrued_price = accrued_price
 
-            _l.info('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
+            _l.debug('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
 
             if can_write:
 
@@ -1635,7 +1635,7 @@ class FillPricesBrokerAlphavProcess(object):
 
             if self.instance['data']['date_to'] == str(record.date):
 
-                _l.info("Wtrade Roll Prices for Price History")
+                _l.debug("Wtrade Roll Prices for Price History")
 
                 successes, errors = roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance)
 

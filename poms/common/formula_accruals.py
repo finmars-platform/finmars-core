@@ -1102,25 +1102,25 @@ if __name__ == "__main__":
         dates = [date(2016, 2, 16), date(2016, 3, 10), date(2016, 9, 1), date(2017, 1, 17), ]
         values = [-90, 5, 5, 105, ]
         data = [(d, v) for d, v in zip(dates, values)]
-        _l.info('data: %s', [(str(d), v) for d, v in data])
-        _l.info('xirr: %s', f_xirr(data))
+        _l.debug('data: %s', [(str(d), v) for d, v in data])
+        _l.debug('xirr: %s', f_xirr(data))
 
-        _l.info('https://support.office.com/en-us/article/XIRR-function-de1242ec-6477-445b-b11b-a303ad9adc9d')
+        _l.debug('https://support.office.com/en-us/article/XIRR-function-de1242ec-6477-445b-b11b-a303ad9adc9d')
         dates = [date(2008, 1, 1), date(2008, 3, 1), date(2008, 10, 30), date(2009, 2, 15), date(2009, 4, 1), ]
         values = [-10000, 2750, 4250, 3250, 2750, ]
         data = [(d, v) for d, v in zip(dates, values)]
-        _l.info('data: %s', [(str(d), v) for d, v in data])
-        _l.info('xirr: %s', f_xirr(data))
-        _l.info('xirr: %s <- from MS', 0.373362535)
+        _l.debug('data: %s', [(str(d), v) for d, v in data])
+        _l.debug('xirr: %s', f_xirr(data))
+        _l.debug('xirr: %s <- from MS', 0.373362535)
 
         # trn
         data = [(date(2017, 1, 27), -1.0), (date(2019, 9, 30), 1.0)]
-        _l.info('data: %s', [(str(d), v) for d, v in data])
-        _l.info('xirr: %s', f_xirr(data, x0=1.0))
+        _l.debug('data: %s', [(str(d), v) for d, v in data])
+        _l.debug('xirr: %s', f_xirr(data, x0=1.0))
         # item
         data = [(date(2017, 2, 3), -1.00857), (date(2019, 9, 30), 1.0)]
-        _l.info('data: %s', [(str(d), v) for d, v in data])
-        _l.info('xirr: %s', f_xirr(data, x0=0.0))
+        _l.debug('data: %s', [(str(d), v) for d, v in data])
+        _l.debug('xirr: %s', f_xirr(data, x0=0.0))
 
     _test_ytm()
     pass
@@ -1134,7 +1134,7 @@ if __name__ == "__main__":
                                           name="i1",
                                           pricing_currency=usd, accrued_currency=usd)
 
-            _l.info('-' * 10)
+            _l.debug('-' * 10)
             accruals = [
                 AccrualCalculationSchedule.objects.create(
                     instrument=i,
@@ -1161,24 +1161,24 @@ if __name__ == "__main__":
             ed = i.maturity_date + timedelta(days=4)
             cpn_date = sd
             while cpn_date <= ed:
-                # _l.info('%s', cpn_date)
+                # _l.debug('%s', cpn_date)
                 cpn_val, is_cpn = i.get_coupon(cpn_date=cpn_date)
                 if is_cpn:
-                    _l.info('    %s - %s (is_cpn=%s)', cpn_date, cpn_val, is_cpn)
+                    _l.debug('    %s - %s (is_cpn=%s)', cpn_date, cpn_val, is_cpn)
                 cpn_date += timedelta(days=1)
 
-            _l.info('get_future_coupons: %s',
+            _l.debug('get_future_coupons: %s',
                     [(str(d), v) for d, v in i.get_future_coupons(begin_date=date(2000, 1, 1))])
-            _l.info('get_future_coupons: %s',
+            _l.debug('get_future_coupons: %s',
                     [(str(d), v) for d, v in i.get_future_coupons(begin_date=date(2007, 1, 1))])
 
             for d, v in i.get_future_coupons(begin_date=date(2000, 1, 1)):
-                _l.info('get_coupon: %s - %s', d, i.get_coupon(d))
+                _l.debug('get_coupon: %s - %s', d, i.get_coupon(d))
 
             i = Instrument.objects.create(master_user=master_user, instrument_type=master_user.instrument_type,
                                           name="i2",
                                           pricing_currency=usd, accrued_currency=usd)
-            _l.info('-' * 10)
+            _l.debug('-' * 10)
             accruals = [
                 AccrualCalculationSchedule.objects.create(
                     instrument=i,
@@ -1205,13 +1205,13 @@ if __name__ == "__main__":
             ed = i.maturity_date + timedelta(days=4)
             cpn_date = sd
             while cpn_date <= ed:
-                # _l.info('%s', cpn_date)
+                # _l.debug('%s', cpn_date)
                 cpn_val, is_cpn = i.get_coupon(cpn_date=cpn_date)
                 if is_cpn:
-                    _l.info('    %s - %s (is_cpn=%s)', cpn_date, cpn_val, is_cpn)
+                    _l.debug('    %s - %s (is_cpn=%s)', cpn_date, cpn_val, is_cpn)
                 cpn_date += timedelta(days=1)
 
-            _l.info('get_future_coupons: %s',
+            _l.debug('get_future_coupons: %s',
                     [(str(d), v) for d, v in i.get_future_coupons(begin_date=date(2000, 1, 1))])
         finally:
             transaction.set_rollback(True)

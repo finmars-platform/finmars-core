@@ -485,9 +485,9 @@ class ReportSerializerWithLogs(serializers.Serializer):
                 if hasattr(instance, 'is_report'):
                     result_time = "{:3.3f}".format(time.perf_counter() - field_st)
 
-                    _l.info('field %s to representation done %s' % (field.field_name, result_time))
+                    _l.debug('field %s to representation done %s' % (field.field_name, result_time))
 
         if hasattr(instance, 'is_report'):
-            _l.info('report to representation done %s' % "{:3.3f}".format(time.perf_counter() - st))
+            _l.debug('report to representation done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
         return ret

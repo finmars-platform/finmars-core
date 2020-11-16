@@ -157,22 +157,22 @@ class PricingInstrumentHandler(object):
 
     def process(self):
 
-        _l.info("Pricing Instrument Handler: Process")
+        _l.debug("Pricing Instrument Handler: Process")
 
         self.instruments = self.get_instruments()
 
         self.instrument_pricing_schemes = get_unique_pricing_schemes(self.instruments)
 
-        _l.info('instrument_pricing_schemes len %s' % len(self.instrument_pricing_schemes))
+        _l.debug('instrument_pricing_schemes len %s' % len(self.instrument_pricing_schemes))
 
         self.instrument_items = self.get_instrument_items()
 
-        _l.info('instrument_items len %s' % len(self.instrument_items))
+        _l.debug('instrument_items len %s' % len(self.instrument_items))
 
         self.instrument_items_grouped = group_items_by_provider(items=self.instrument_items,
                                                                 groups=self.instrument_pricing_schemes)
 
-        _l.info('instrument_items_grouped len %s' % len(self.instrument_items_grouped))
+        _l.debug('instrument_items_grouped len %s' % len(self.instrument_items_grouped))
 
         self.print_grouped_instruments()
 
@@ -227,7 +227,7 @@ class PricingInstrumentHandler(object):
                     if i.pricing_condition_id in [PricingCondition.RUN_VALUATION_ALWAYS]:
                         instruments_always.add(i.id)
 
-            _l.info('PricingInstrumentHandler.get_instruments: instruments always len %s' % len(instruments_always))
+            _l.debug('PricingInstrumentHandler.get_instruments: instruments always len %s' % len(instruments_always))
 
             # Add RUN_VALUATION_IF_NON_ZERO currencies only if pricing condition is enabled
             if PricingCondition.RUN_VALUATION_IF_NON_ZERO in active_pricing_conditions:
@@ -253,8 +253,8 @@ class PricingInstrumentHandler(object):
 
                     base_transactions_a = base_transactions_a.filter(portfolio__user_code__in=portfolio_user_codes)
 
-                _l.info('< get_instruments base transactions (step a) len %s', len(base_transactions_a))
-                _l.info('< get_instruments base transactions (step a) done in %s', (time.perf_counter() - processing_st_a))
+                _l.debug('< get_instruments base transactions (step a) len %s', len(base_transactions_a))
+                _l.debug('< get_instruments base transactions (step a) done in %s', (time.perf_counter() - processing_st_a))
 
                 if len(list(base_transactions_a)):
 
@@ -275,7 +275,7 @@ class PricingInstrumentHandler(object):
 
                             instruments_opened.add(id)
 
-                _l.info('< get_instruments instruments_opened (step a) len %s' % len(instruments_opened))
+                _l.debug('< get_instruments instruments_opened (step a) len %s' % len(instruments_opened))
 
                 # Step "a" ends here
 
@@ -294,8 +294,8 @@ class PricingInstrumentHandler(object):
 
                     base_transactions_b = base_transactions_b.filter(portfolio__user_code__in=portfolio_user_codes)
 
-                _l.info('< get_instruments base transactions (step b) len %s', len(base_transactions_b))
-                _l.info('< get_instruments base transactions (step b) done in %s', (time.perf_counter() - processing_st_b))
+                _l.debug('< get_instruments base transactions (step b) len %s', len(base_transactions_b))
+                _l.debug('< get_instruments base transactions (step b) done in %s', (time.perf_counter() - processing_st_b))
 
                 for trn in base_transactions_b:
 
@@ -303,24 +303,24 @@ class PricingInstrumentHandler(object):
 
                         instruments_opened.add(trn.instrument_id)
 
-                _l.info('< get_instruments instruments_opened (step b) len %s' % len(instruments_opened))
+                _l.debug('< get_instruments instruments_opened (step b) len %s' % len(instruments_opened))
 
                 # Step "b" ends here
 
-            _l.info('PricingInstrumentHandler.get_instruments: instruments opened len %s' % len(instruments_opened))
+            _l.debug('PricingInstrumentHandler.get_instruments: instruments opened len %s' % len(instruments_opened))
 
             instruments = instruments.filter(pk__in=(instruments_always | instruments_opened))
 
-            _l.info('PricingInstrumentHandler.get_instruments: instruments filtered len %s' % len(instruments))
+            _l.debug('PricingInstrumentHandler.get_instruments: instruments filtered len %s' % len(instruments))
 
             if self.procedure.instrument_type_filters:
                 user_codes = self.procedure.instrument_type_filters.split(",")
 
-                _l.info("Filter by Instrument Types %s " % user_codes)
+                _l.debug("Filter by Instrument Types %s " % user_codes)
 
-                _l.info("instruments before filter %s " % len(instruments))
+                _l.debug("instruments before filter %s " % len(instruments))
                 instruments = instruments.filter(instrument_type__user_code__in=user_codes)
-                _l.info("instruments after filter %s " % len(instruments))
+                _l.debug("instruments after filter %s " % len(instruments))
 
             result = instruments
 
@@ -329,11 +329,11 @@ class PricingInstrumentHandler(object):
             if self.procedure.instrument_filters:
                 user_codes = self.procedure.instrument_filters.split(",")
 
-                _l.info("Filter by Instruments %s " % user_codes)
+                _l.debug("Filter by Instruments %s " % user_codes)
 
-                _l.info("instruments before filter %s " % len(instruments))
+                _l.debug("instruments before filter %s " % len(instruments))
                 instruments = instruments.filter(user_code__in=user_codes)
-                _l.info("instruments after filter %s " % len(instruments))
+                _l.debug("instruments after filter %s " % len(instruments))
 
                 result = instruments
 
@@ -369,7 +369,7 @@ class PricingInstrumentHandler(object):
 
     def process_to_single_parameter_formula(self, items):
 
-        _l.info("Pricing Instrument Handler - Single parameters Formula: len %s" % len(items))
+        _l.debug("Pricing Instrument Handler - Single parameters Formula: len %s" % len(items))
 
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
@@ -459,7 +459,7 @@ class PricingInstrumentHandler(object):
 
                     except Exception as e:
 
-                        _l.info("Cant find parameter value. Error: %s" % e)
+                        _l.debug("Cant find parameter value. Error: %s" % e)
 
                         parameter = None
 
@@ -474,8 +474,8 @@ class PricingInstrumentHandler(object):
                     pricing_error_text_expr = scheme_parameters.pricing_error_text_expr
                     accrual_error_text_expr = scheme_parameters.accrual_error_text_expr
 
-                    _l.info('values %s' % values)
-                    _l.info('expr %s' % expr)
+                    _l.debug('values %s' % values)
+                    _l.debug('expr %s' % expr)
 
                     has_error = False
                     error = PriceHistoryError(
@@ -498,7 +498,7 @@ class PricingInstrumentHandler(object):
 
                         try:
 
-                            _l.info('pricing_error_text_expr %s' % pricing_error_text_expr)
+                            _l.debug('pricing_error_text_expr %s' % pricing_error_text_expr)
 
                             error.error_text = formula.safe_eval(pricing_error_text_expr, names=values)
 
@@ -514,7 +514,7 @@ class PricingInstrumentHandler(object):
 
                             try:
 
-                                _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
+                                _l.debug('accrual_error_text_expr %s' % accrual_error_text_expr)
 
                                 error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
@@ -530,7 +530,7 @@ class PricingInstrumentHandler(object):
 
                             try:
 
-                                _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
+                                _l.debug('accrual_error_text_expr %s' % accrual_error_text_expr)
 
                                 error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
@@ -549,9 +549,9 @@ class PricingInstrumentHandler(object):
 
                         if not self.procedure.price_overwrite_principal_prices and not self.procedure.price_overwrite_accrued_prices:
                             can_write = False
-                            _l.info('Skip %s' % price)
+                            _l.debug('Skip %s' % price)
                         else:
-                            _l.info('Overwrite existing %s' % price)
+                            _l.debug('Overwrite existing %s' % price)
 
                     except PriceHistory.DoesNotExist:
 
@@ -561,7 +561,7 @@ class PricingInstrumentHandler(object):
                             date=date
                         )
 
-                        _l.info('Create new %s' % price)
+                        _l.debug('Create new %s' % price)
 
                     price.principal_price = 0
                     price.accrued_price = 0
@@ -586,7 +586,7 @@ class PricingInstrumentHandler(object):
 
                         error.accrued_price = accrued_price
 
-                    _l.info('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
+                    _l.debug('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
 
                     if can_write:
 
@@ -630,7 +630,7 @@ class PricingInstrumentHandler(object):
 
     def process_to_multiple_parameter_formula(self, items):
 
-        _l.info("Pricing Instrument Handler - Multiple parameters Formula: len %s" % len(items))
+        _l.debug("Pricing Instrument Handler - Multiple parameters Formula: len %s" % len(items))
 
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
@@ -720,7 +720,7 @@ class PricingInstrumentHandler(object):
 
                     except Exception as e:
 
-                        _l.info("Cant find parameter value. Error: %s" % e)
+                        _l.debug("Cant find parameter value. Error: %s" % e)
 
                         parameter = None
 
@@ -783,8 +783,8 @@ class PricingInstrumentHandler(object):
                     pricing_error_text_expr = scheme_parameters.pricing_error_text_expr
                     accrual_error_text_expr = scheme_parameters.accrual_error_text_expr
 
-                    _l.info('values %s' % values)
-                    _l.info('expr %s' % expr)
+                    _l.debug('values %s' % values)
+                    _l.debug('expr %s' % expr)
 
                     has_error = False
                     error = PriceHistoryError(
@@ -809,7 +809,7 @@ class PricingInstrumentHandler(object):
                         except formula.InvalidExpression:
                             error.error_text = 'Invalid Error Text Expression'
 
-                    _l.info('principal_price %s' % principal_price)
+                    _l.debug('principal_price %s' % principal_price)
 
                     if scheme_parameters.accrual_calculation_method == 2:  # ACCRUAL_PER_SCHEDULE
 
@@ -820,7 +820,7 @@ class PricingInstrumentHandler(object):
 
                             try:
 
-                                _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
+                                _l.debug('accrual_error_text_expr %s' % accrual_error_text_expr)
 
                                 error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
@@ -836,7 +836,7 @@ class PricingInstrumentHandler(object):
 
                             try:
 
-                                _l.info('accrual_error_text_expr %s' % accrual_error_text_expr)
+                                _l.debug('accrual_error_text_expr %s' % accrual_error_text_expr)
 
                                 error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
@@ -855,9 +855,9 @@ class PricingInstrumentHandler(object):
 
                         if not self.procedure.price_overwrite_principal_prices and not self.procedure.price_overwrite_accrued_prices:
                             can_write = False
-                            _l.info('Skip %s' % price)
+                            _l.debug('Skip %s' % price)
                         else:
-                            _l.info('Overwrite existing %s' % price)
+                            _l.debug('Overwrite existing %s' % price)
 
                     except PriceHistory.DoesNotExist:
 
@@ -867,7 +867,7 @@ class PricingInstrumentHandler(object):
                             date=date
                         )
 
-                        _l.info('Create new %s' % price)
+                        _l.debug('Create new %s' % price)
 
                     price.principal_price = 0
                     price.accrued_price = 0
@@ -892,7 +892,7 @@ class PricingInstrumentHandler(object):
 
                         error.accrued_price = accrued_price
 
-                    _l.info('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
+                    _l.debug('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
 
                     if can_write:
 
@@ -947,7 +947,7 @@ class PricingInstrumentHandler(object):
 
     def process_to_bloomberg_provider(self, items):
 
-        _l.info("Pricing Instrument Handler - Bloomberg Provider: len %s" % len(items))
+        _l.debug("Pricing Instrument Handler - Bloomberg Provider: len %s" % len(items))
 
 
 
@@ -1013,14 +1013,14 @@ class PricingInstrumentHandler(object):
 
         is_yesterday = get_is_yesterday(self.procedure.price_date_from, self.procedure.price_date_to)
 
-        _l.info('is_yesterday %s' % is_yesterday)
-        _l.info('procedure id %s' % body['procedure'])
+        _l.debug('is_yesterday %s' % is_yesterday)
+        _l.debug('procedure id %s' % body['procedure'])
 
         full_items = []
 
         empty_values = get_empty_values_for_dates(dates)
 
-        # _l.info('empty_values %s' % empty_values)
+        # _l.debug('empty_values %s' % empty_values)
 
         for item in items:
 
@@ -1064,7 +1064,7 @@ class PricingInstrumentHandler(object):
                                 record.save()
 
                             except Exception as e:
-                                _l.info("Cant create Result Record %s" % e)
+                                _l.debug("Cant create Result Record %s" % e)
                                 pass
 
                     item_obj = {
@@ -1139,7 +1139,7 @@ class PricingInstrumentHandler(object):
                                 record.save()
 
                             except Exception as e:
-                                _l.info("Cant create Result Record %s" % e)
+                                _l.debug("Cant create Result Record %s" % e)
 
                     item_obj = {
                         'reference': item.parameters[0],
@@ -1180,19 +1180,19 @@ class PricingInstrumentHandler(object):
             else:
                 items_with_missing_parameters.append(item)
 
-        _l.info('full_items len: %s' % len(full_items))
+        _l.debug('full_items len: %s' % len(full_items))
 
         optimized_items = optimize_items(full_items)
 
-        _l.info('optimized_items len: %s' % len(optimized_items))
+        _l.debug('optimized_items len: %s' % len(optimized_items))
 
         body['data']['items'] = optimized_items
 
-        _l.info('items_with_missing_parameters %s' % len(items_with_missing_parameters))
-        # _l.info('data %s' % data)
+        _l.debug('items_with_missing_parameters %s' % len(items_with_missing_parameters))
+        # _l.debug('data %s' % data)
 
-        _l.info('self.procedure %s' % self.procedure.id)
-        _l.info('send request %s' % body)
+        _l.debug('self.procedure %s' % self.procedure.id)
+        _l.debug('send request %s' % body)
 
         try:
 
@@ -1208,7 +1208,7 @@ class PricingInstrumentHandler(object):
 
     def process_to_bloomberg_forwards_provider(self, items):
 
-        _l.info("Pricing Instrument Handler - Bloomberg Forwards Provider: len %s" % len(items))
+        _l.debug("Pricing Instrument Handler - Bloomberg Forwards Provider: len %s" % len(items))
 
         procedure_instance = PricingProcedureInstance(procedure=self.procedure,
                                                       parent_procedure_instance=self.parent_procedure,
@@ -1270,7 +1270,7 @@ class PricingInstrumentHandler(object):
                                                     date_to=self.procedure.price_date_to)
 
 
-        _l.info('procedure id %s' % body['procedure'])
+        _l.debug('procedure id %s' % body['procedure'])
 
         full_items = []
 
@@ -1341,22 +1341,22 @@ class PricingInstrumentHandler(object):
 
 
                     except Exception as e:
-                        _l.info("Cant create Result Record %s" % e)
+                        _l.debug("Cant create Result Record %s" % e)
 
 
-        _l.info('full_items len: %s' % len(full_items))
+        _l.debug('full_items len: %s' % len(full_items))
 
         optimized_items = optimize_items(full_items)
 
-        _l.info('optimized_items len: %s' % len(optimized_items))
+        _l.debug('optimized_items len: %s' % len(optimized_items))
 
         body['data']['items'] = optimized_items
 
-        _l.info('items_with_missing_parameters %s' % len(items_with_missing_parameters))
-        # _l.info('data %s' % data)
+        _l.debug('items_with_missing_parameters %s' % len(items_with_missing_parameters))
+        # _l.debug('data %s' % data)
 
-        _l.info('self.procedure %s' % self.procedure.id)
-        _l.info('send request %s' % body)
+        _l.debug('self.procedure %s' % self.procedure.id)
+        _l.debug('send request %s' % body)
 
         try:
 
@@ -1372,7 +1372,7 @@ class PricingInstrumentHandler(object):
 
     def process_to_wtrade_provider(self, items):
 
-        _l.info("Pricing Instrument Handler - Wtrade Provider: len %s" % len(items))
+        _l.debug("Pricing Instrument Handler - Wtrade Provider: len %s" % len(items))
 
         procedure_instance = PricingProcedureInstance(procedure=self.procedure,
                                                       parent_procedure_instance=self.parent_procedure,
@@ -1421,7 +1421,7 @@ class PricingInstrumentHandler(object):
 
         empty_values = get_empty_values_for_dates(dates)
 
-        _l.info('procedure id %s' % body['procedure'])
+        _l.debug('procedure id %s' % body['procedure'])
 
         full_items = []
 
@@ -1449,7 +1449,7 @@ class PricingInstrumentHandler(object):
                             record.save()
 
                         except Exception as e:
-                            _l.info("Cant create Result Record %s" % e)
+                            _l.debug("Cant create Result Record %s" % e)
                             pass
 
                 item_obj = {
@@ -1493,19 +1493,19 @@ class PricingInstrumentHandler(object):
             else:
                 items_with_missing_parameters.append(item)
 
-        _l.info('full_items len: %s' % len(full_items))
+        _l.debug('full_items len: %s' % len(full_items))
 
         optimized_items = optimize_items(full_items)
 
-        _l.info('optimized_items len: %s' % len(optimized_items))
+        _l.debug('optimized_items len: %s' % len(optimized_items))
 
         body['data']['items'] = optimized_items
 
-        _l.info('items_with_missing_parameters %s' % len(items_with_missing_parameters))
-        # _l.info('data %s' % data)
+        _l.debug('items_with_missing_parameters %s' % len(items_with_missing_parameters))
+        # _l.debug('data %s' % data)
 
-        _l.info('self.procedure %s' % self.procedure.id)
-        _l.info('send request %s' % body)
+        _l.debug('self.procedure %s' % self.procedure.id)
+        _l.debug('send request %s' % body)
 
         try:
 
@@ -1522,7 +1522,7 @@ class PricingInstrumentHandler(object):
 
     def process_to_alphav_provider(self, items):
 
-        _l.info("Pricing Instrument Handler - Alphav Provider: len %s" % len(items))
+        _l.debug("Pricing Instrument Handler - Alphav Provider: len %s" % len(items))
 
         procedure_instance = PricingProcedureInstance(procedure=self.procedure,
                                                       parent_procedure_instance=self.parent_procedure,
@@ -1569,7 +1569,7 @@ class PricingInstrumentHandler(object):
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
 
-        _l.info('procedure id %s' % body['procedure'])
+        _l.debug('procedure id %s' % body['procedure'])
 
         empty_values = get_empty_values_for_dates(dates)
 
@@ -1599,7 +1599,7 @@ class PricingInstrumentHandler(object):
                             record.save()
 
                         except Exception as e:
-                            _l.info("Cant create Result Record %s" % e)
+                            _l.debug("Cant create Result Record %s" % e)
                             pass
 
                 item_obj = {
@@ -1619,19 +1619,19 @@ class PricingInstrumentHandler(object):
             else:
                 items_with_missing_parameters.append(item)
 
-        _l.info('full_items len: %s' % len(full_items))
+        _l.debug('full_items len: %s' % len(full_items))
 
         optimized_items = optimize_items(full_items)
 
-        _l.info('optimized_items len: %s' % len(optimized_items))
+        _l.debug('optimized_items len: %s' % len(optimized_items))
 
         body['data']['items'] = optimized_items
 
-        _l.info('items_with_missing_parameters %s' % len(items_with_missing_parameters))
-        # _l.info('data %s' % data)
+        _l.debug('items_with_missing_parameters %s' % len(items_with_missing_parameters))
+        # _l.debug('data %s' % data)
 
-        _l.info('self.procedure %s' % self.procedure.id)
-        _l.info('send request %s' % body)
+        _l.debug('self.procedure %s' % self.procedure.id)
+        _l.debug('send request %s' % body)
 
         try:
 
@@ -1639,7 +1639,7 @@ class PricingInstrumentHandler(object):
 
         except Exception as e:
 
-            _l.info("Handle here")
+            _l.debug("Handle here")
 
             procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
             procedure_instance.error_code = 500
@@ -1663,4 +1663,4 @@ class PricingInstrumentHandler(object):
         }
 
         for provider_id, items in self.instrument_items_grouped.items():
-            _l.info("Pricing Instrument Handler - Provider %s: len: %s" % (names[provider_id], len(items)))
+            _l.debug("Pricing Instrument Handler - Provider %s: len: %s" % (names[provider_id], len(items)))

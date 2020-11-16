@@ -813,6 +813,6 @@ def handle_filters(qs, filter_settings, master_user, content_type):
             else:
                 qs = add_filter(qs, filter_config)
 
-    _l.info("handle_filters done in %s seconds " % (time.time() - start_time))
+    _l.debug("handle_filters done in %s seconds " % (time.time() - start_time))
 
     return qs

@@ -104,12 +104,12 @@ class PerfReportTestCase(AbstractReportTestMixin, TestCase):
 
     def _dump(self, *args, **kwargs):
         for r in self._sdump(*args, **kwargs).splitlines():
-            _l.info(r)
+            _l.debug(r)
 
     def _simple_run(self, name, trns=False, trn_cols=None, item_cols=None, **kwargs):
-        _l.info('')
-        _l.info('')
-        _l.info('*' * 79)
+        _l.debug('')
+        _l.debug('')
+        _l.debug('*' * 79)
 
         kwargs.setdefault('pricing_policy', self.pp)
 

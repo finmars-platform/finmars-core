@@ -27,7 +27,7 @@ class PricingTransport(object):
             response = requests.post(url=self.mediator_url + 'process/pricing/', data=json.dumps(data), headers=headers)
 
         except Exception:
-            _l.info("Can't send request to Mediator. Is Mediator offline?")
+            _l.debug("Can't send request to Mediator. Is Mediator offline?")
 
             raise Exception("Mediator is unavailable")
 

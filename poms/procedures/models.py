@@ -268,9 +268,9 @@ class PricingProcedureInstance(BaseProcedureInstance):
 
     def save(self, *args, **kwargs):
 
-        _l.info("before PricingProcedureInstance save id %s"  % self.pk)
-        _l.info("before PricingProcedureInstance save successful_prices_count %s" % self.successful_prices_count)
-        _l.info("before PricingProcedureInstance save error_prices_count %s" %  self.error_prices_count)
+        _l.debug("before PricingProcedureInstance save id %s"  % self.pk)
+        _l.debug("before PricingProcedureInstance save successful_prices_count %s" % self.successful_prices_count)
+        _l.debug("before PricingProcedureInstance save error_prices_count %s" %  self.error_prices_count)
 
         super(PricingProcedureInstance, self).save(*args, **kwargs)
 

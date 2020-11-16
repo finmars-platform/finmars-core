@@ -92,7 +92,7 @@ class CurrencyItem(object):
 
         if self.pricing_scheme.type.id == 5:
 
-            # _l.info('parameters.fx_rate %s' % parameters.fx_rate)
+            # _l.debug('parameters.fx_rate %s' % parameters.fx_rate)
 
             self.scheme_fields_map = {}
 
@@ -100,7 +100,7 @@ class CurrencyItem(object):
                 self.scheme_fields.append([parameters.fx_rate])
                 self.scheme_fields_map['fx_rate'] = parameters.fx_rate
 
-            # _l.info('self.scheme_fields_map %s' % self.scheme_fields_map)
+            # _l.debug('self.scheme_fields_map %s' % self.scheme_fields_map)
 
 
 class PricingCurrencyHandler(object):
@@ -127,27 +127,27 @@ class PricingCurrencyHandler(object):
 
     def process(self):
 
-        _l.info("Pricing Currency Handler: Process")
+        _l.debug("Pricing Currency Handler: Process")
 
         self.currencies = self.get_currencies()
 
         try:
-            _l.info('currencies len %s ' % len(self.currencies))
+            _l.debug('currencies len %s ' % len(self.currencies))
         except Exception as e:
-            _l.info(e)
+            _l.debug(e)
 
         self.currencies_pricing_schemes = get_unique_pricing_schemes(self.currencies)
 
-        _l.info('currencies_pricing_schemes len %s' % len(self.currencies_pricing_schemes))
+        _l.debug('currencies_pricing_schemes len %s' % len(self.currencies_pricing_schemes))
 
         self.currency_items = self.get_currency_items()
 
-        _l.info('currency_items len %s' % len(self.currency_items))
+        _l.debug('currency_items len %s' % len(self.currency_items))
 
         self.currency_items_grouped = group_items_by_provider(items=self.currency_items,
                                                                    groups=self.currencies_pricing_schemes)
 
-        _l.info('currency_items_grouped len %s' % len(self.currency_items_grouped))
+        _l.debug('currency_items_grouped len %s' % len(self.currency_items_grouped))
 
         self.print_grouped_currencies()
 
@@ -190,7 +190,7 @@ class PricingCurrencyHandler(object):
             if self.procedure.currency_pricing_condition_filters:
                 active_pricing_conditions = list(map(int, self.procedure.currency_pricing_condition_filters.split(",")))
 
-            _l.info('active_pricing_conditions %s' % active_pricing_conditions)
+            _l.debug('active_pricing_conditions %s' % active_pricing_conditions)
 
             # Add RUN_VALUATION_ALWAYS currencies only if pricing condition is enabled
             if PricingCondition.RUN_VALUATION_ALWAYS in active_pricing_conditions:
@@ -215,8 +215,8 @@ class PricingCurrencyHandler(object):
 
                     base_transactions = base_transactions.filter(portfolio__user_code__in=portfolio_user_codes)
 
-                _l.info('< get_currencies base transactions len %s', len(base_transactions))
-                _l.info('< get_currencies base transactions done in %s', (time.perf_counter() - processing_st))
+                _l.debug('< get_currencies base transactions len %s', len(base_transactions))
+                _l.debug('< get_currencies base transactions done in %s', (time.perf_counter() - processing_st))
 
                 if len(list(base_transactions)):
 
@@ -237,11 +237,11 @@ class PricingCurrencyHandler(object):
             if self.procedure.currency_filters:
                 user_codes = self.procedure.currency_filters.split(",")
 
-                _l.info("Filter by Currencies %s " % user_codes)
+                _l.debug("Filter by Currencies %s " % user_codes)
 
-                _l.info("currencies before filter %s " % len(currencies))
+                _l.debug("currencies before filter %s " % len(currencies))
                 currencies = currencies.filter(user_code__in=user_codes)
-                _l.info("instruments after filter %s " % len(currencies))
+                _l.debug("instruments after filter %s " % len(currencies))
 
 
         return currencies
@@ -276,7 +276,7 @@ class PricingCurrencyHandler(object):
 
     def process_to_single_parameter_formula(self, items):
 
-        _l.info("Pricing Currency Handler - Single Parameter Formula: len %s" % len(items))
+        _l.debug("Pricing Currency Handler - Single Parameter Formula: len %s" % len(items))
 
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
@@ -305,7 +305,7 @@ class PricingCurrencyHandler(object):
 
         procedure_instance.save()
 
-        _l.info('process_to_single_parameter_formula dates %s' % dates)
+        _l.debug('process_to_single_parameter_formula dates %s' % dates)
 
         for item in items:
 
@@ -315,7 +315,7 @@ class PricingCurrencyHandler(object):
 
                 scheme_parameters = item.pricing_scheme.get_parameters()
 
-                _l.info('process_to_single_parameter_formula scheme_parameters  %s ' % scheme_parameters)
+                _l.debug('process_to_single_parameter_formula scheme_parameters  %s ' % scheme_parameters)
 
                 if scheme_parameters:
 
@@ -371,7 +371,7 @@ class PricingCurrencyHandler(object):
 
                     except Exception as e:
 
-                        _l.info("Cant find parameter value. Error: %s" % e)
+                        _l.debug("Cant find parameter value. Error: %s" % e)
 
                         parameter = None
 
@@ -394,8 +394,8 @@ class PricingCurrencyHandler(object):
                     expr = scheme_parameters.expr
                     error_text_expr = scheme_parameters.error_text_expr
 
-                    _l.info('values %s' % values)
-                    _l.info('expr %s' % expr)
+                    _l.debug('values %s' % values)
+                    _l.debug('expr %s' % expr)
 
                     fx_rate = None
 
@@ -409,7 +409,7 @@ class PricingCurrencyHandler(object):
                         except formula.InvalidExpression:
                             error.error_text = 'Invalid Error Text Expression'
 
-                    _l.info('fx_rate %s' % fx_rate)
+                    _l.debug('fx_rate %s' % fx_rate)
 
                     can_write = True
 
@@ -423,9 +423,9 @@ class PricingCurrencyHandler(object):
 
                         if not self.procedure.price_overwrite_fx_rates:
                             can_write = False
-                            _l.info('Skip %s' % price)
+                            _l.debug('Skip %s' % price)
                         else:
-                            _l.info('Overwrite existing %s' % price)
+                            _l.debug('Overwrite existing %s' % price)
 
                     except CurrencyHistory.DoesNotExist:
 
@@ -482,7 +482,7 @@ class PricingCurrencyHandler(object):
 
     def process_to_multiple_parameter_formula(self, items):
 
-        _l.info("Pricing Currency Handler - Multiple Parameter Formula: len %s" % len(items))
+        _l.debug("Pricing Currency Handler - Multiple Parameter Formula: len %s" % len(items))
 
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
@@ -573,7 +573,7 @@ class PricingCurrencyHandler(object):
 
                     except Exception as e:
 
-                        _l.info("Cant find parameter value. Error: %s" % e)
+                        _l.debug("Cant find parameter value. Error: %s" % e)
 
                         parameter = None
 
@@ -589,7 +589,7 @@ class PricingCurrencyHandler(object):
 
                             for parameter in item.policy.data['parameters']:
 
-                                _l.info('parameter %s ' % parameter)
+                                _l.debug('parameter %s ' % parameter)
 
                                 if 'default_value' in parameter and parameter['default_value']:
 
@@ -649,8 +649,8 @@ class PricingCurrencyHandler(object):
                     expr = scheme_parameters.expr
                     error_text_expr = scheme_parameters.error_text_expr
 
-                    _l.info('values %s' % values)
-                    _l.info('expr %s' % expr)
+                    _l.debug('values %s' % values)
+                    _l.debug('expr %s' % expr)
 
                     fx_rate = None
 
@@ -664,7 +664,7 @@ class PricingCurrencyHandler(object):
                         except formula.InvalidExpression:
                             error.error_text = 'Invalid Error Text Expression'
 
-                    _l.info('fx_rate %s' % fx_rate)
+                    _l.debug('fx_rate %s' % fx_rate)
 
                     can_write = True
 
@@ -678,9 +678,9 @@ class PricingCurrencyHandler(object):
 
                         if not self.procedure.price_overwrite_fx_rates:
                             can_write = False
-                            _l.info('Skip %s' % price)
+                            _l.debug('Skip %s' % price)
                         else:
-                            _l.info('Overwrite existing %s' % price)
+                            _l.debug('Overwrite existing %s' % price)
 
                     except CurrencyHistory.DoesNotExist:
 
@@ -690,7 +690,7 @@ class PricingCurrencyHandler(object):
                             date=date
                         )
 
-                        _l.info('Create new %s' % price)
+                        _l.debug('Create new %s' % price)
 
                     price.fx_rate = 0
 
@@ -740,7 +740,7 @@ class PricingCurrencyHandler(object):
 
     def process_to_bloomberg_provider(self, items):
 
-        _l.info("Pricing Currency Handler - Bloomberg Provider: len %s" % len(items))
+        _l.debug("Pricing Currency Handler - Bloomberg Provider: len %s" % len(items))
 
 
         procedure_instance = PricingProcedureInstance(procedure=self.procedure,
@@ -807,8 +807,8 @@ class PricingCurrencyHandler(object):
 
         empty_values = get_empty_values_for_dates(dates)
 
-        _l.info('is_yesterday %s' % is_yesterday)
-        _l.info('procedure id %s' % body['procedure'])
+        _l.debug('is_yesterday %s' % is_yesterday)
+        _l.debug('procedure id %s' % body['procedure'])
 
         full_items = []
 
@@ -840,7 +840,7 @@ class PricingCurrencyHandler(object):
                             record.save()
 
                         except Exception as e:
-                            _l.info("Cant create Result Record %s" % e)
+                            _l.debug("Cant create Result Record %s" % e)
 
                 item_obj = {
                     'reference': item.parameters[0],
@@ -860,19 +860,19 @@ class PricingCurrencyHandler(object):
             else:
                 items_with_missing_parameters.append(item)
 
-        _l.info('full_items len: %s' % len(full_items))
+        _l.debug('full_items len: %s' % len(full_items))
 
         optimized_items = optimize_items(full_items)
 
-        _l.info('optimized_items len: %s' % len(optimized_items))
+        _l.debug('optimized_items len: %s' % len(optimized_items))
 
         body['data']['items'] = optimized_items
 
-        _l.info('items_with_missing_parameters %s' % len(items_with_missing_parameters))
-        # _l.info('data %s' % data)
+        _l.debug('items_with_missing_parameters %s' % len(items_with_missing_parameters))
+        # _l.debug('data %s' % data)
 
-        _l.info('self.procedure %s' % self.procedure.id)
-        _l.info('send request %s' % body)
+        _l.debug('self.procedure %s' % self.procedure.id)
+        _l.debug('send request %s' % body)
 
         try:
 
@@ -889,7 +889,7 @@ class PricingCurrencyHandler(object):
 
     def process_to_fixer_provider(self, items):
 
-        _l.info("Pricing Currency Handler - Fixer Provider: len %s" % len(items))
+        _l.debug("Pricing Currency Handler - Fixer Provider: len %s" % len(items))
 
         with transaction.atomic():
 
@@ -938,7 +938,7 @@ class PricingCurrencyHandler(object):
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
 
-        _l.info('procedure id %s' % body['procedure'])
+        _l.debug('procedure id %s' % body['procedure'])
 
         empty_values = get_empty_values_for_dates(dates)
 
@@ -968,7 +968,7 @@ class PricingCurrencyHandler(object):
                             record.save()
 
                         except Exception as e:
-                            _l.info("Cant create Result Record %s" % e)
+                            _l.debug("Cant create Result Record %s" % e)
 
                 item_obj = {
                     'reference': item.parameters[0],
@@ -987,19 +987,19 @@ class PricingCurrencyHandler(object):
             else:
                 items_with_missing_parameters.append(item)
 
-        _l.info('full_items len: %s' % len(full_items))
+        _l.debug('full_items len: %s' % len(full_items))
 
         optimized_items = optimize_items(full_items)
 
-        _l.info('optimized_items len: %s' % len(optimized_items))
+        _l.debug('optimized_items len: %s' % len(optimized_items))
 
         body['data']['items'] = optimized_items
 
-        _l.info('items_with_missing_parameters %s' % len(items_with_missing_parameters))
-        # _l.info('data %s' % data)
+        _l.debug('items_with_missing_parameters %s' % len(items_with_missing_parameters))
+        # _l.debug('data %s' % data)
 
-        _l.info('self.procedure %s' % self.procedure.id)
-        _l.info('send request %s' % body)
+        _l.debug('self.procedure %s' % self.procedure.id)
+        _l.debug('send request %s' % body)
 
         try:
 
@@ -1029,4 +1029,4 @@ class PricingCurrencyHandler(object):
         }
 
         for provider_id, items in self.currency_items_grouped.items():
-            _l.info("Pricing Currency Handler - Provider %s: len: %s" % (names[provider_id], len(items)))
+            _l.debug("Pricing Currency Handler - Provider %s: len: %s" % (names[provider_id], len(items)))

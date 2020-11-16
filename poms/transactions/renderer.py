@@ -39,7 +39,7 @@ _l = logging.getLogger('poms.transactions.renderer')
 #         #             tkey = key[:-7]
 #         #             transaction_data[tkey] = value
 #
-#         # _l.info(json.dumps(transactions_data, indent=2))
+#         # _l.debug(json.dumps(transactions_data, indent=2))
 #
 #         transaction_type = complex_transaction.transaction_type
 #         display_expr = transaction_type.display_expr

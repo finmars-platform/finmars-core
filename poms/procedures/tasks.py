@@ -22,10 +22,10 @@ def procedure_request_data_file(self,
                                 transaction_file_result,
                                 data):
 
-    _l.info('procedure_request_data_file processing')
-    _l.info('procedure_request_data_file procedure %s' % procedure_instance)
-    _l.info('procedure_request_data_file transaction_file_result %s' % transaction_file_result)
-    _l.info('procedure_request_data_file data %s' % data)
+    _l.debug('procedure_request_data_file processing')
+    _l.debug('procedure_request_data_file procedure %s' % procedure_instance)
+    _l.debug('procedure_request_data_file transaction_file_result %s' % transaction_file_result)
+    _l.debug('procedure_request_data_file data %s' % data)
 
     try:
 
@@ -35,12 +35,12 @@ def procedure_request_data_file(self,
 
         response = None
 
-        _l.info('url %s' % url)
+        _l.debug('url %s' % url)
 
         response = requests.post(url=url, json=data, headers=headers)
 
-        _l.info('response %s' % response)
-        _l.info('response text %s' % response.text)
+        _l.debug('response %s' % response)
+        _l.debug('response text %s' % response.text)
 
         if response.status_code == 200:
 
@@ -74,13 +74,13 @@ def procedure_request_data_file(self,
             #
             #     if procedure_instance.procedure.scheme_type == 'transaction_import':
             #
-            #         _l.info("Run Transaction import from response")
+            #         _l.debug("Run Transaction import from response")
             #         complex_transaction_csv_file_import_by_procedure.apply_async(kwargs={'procedure_instance': procedure_instance,
             #                                                                             'transaction_file_result': transaction_file_result,
             #                                                                               })
             #     if procedure_instance.procedure.scheme_type == 'simple_import':
             #
-            #         _l.info("Run Simple import from response")
+            #         _l.debug("Run Simple import from response")
             #         data_csv_file_import_by_procedure.apply_async(kwargs={'procedure_instance': procedure_instance,
             #                                                                              'transaction_file_result': transaction_file_result,
             #                                                                              })
@@ -98,11 +98,11 @@ def procedure_request_data_file(self,
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
             procedure_instance.save()
 
-        _l.info("procedure instance saved %s" % procedure_instance)
+        _l.debug("procedure instance saved %s" % procedure_instance)
 
     except Exception as e:
-        _l.info("Can't send request to Data File Service. Is Transaction File Service offline?")
-        _l.info("Error %s" % e)
+        _l.debug("Can't send request to Data File Service. Is Transaction File Service offline?")
+        _l.debug("Error %s" % e)
 
         text = "Data File Procedure %s. Data Service is offline" % (
             procedure_instance.procedure.user_code)

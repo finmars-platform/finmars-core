@@ -128,7 +128,7 @@ def get_current_version():
                 version = f.read()
 
             except Exception as e:
-                _l.info("Can't get Version")
+                _l.debug("Can't get Version")
 
     return version
 
@@ -680,12 +680,12 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         }
 
-        # _l.info('relation_keys %s' % relation_keys)
+        # _l.debug('relation_keys %s' % relation_keys)
 
         if transaction_type_action_key not in relation_keys:
             return
 
-        # _l.info('transaction_type_action_key %s' % transaction_type_action_key)
+        # _l.debug('transaction_type_action_key %s' % transaction_type_action_key)
 
         for attr in relation_keys[transaction_type_action_key]:
 
@@ -983,13 +983,13 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 result_item["__default_instrument_pricing_scheme__user_code"] = InstrumentPricingScheme.objects.get(
                     pk=result_item["default_instrument_pricing_scheme"]).user_code
             except Exception:
-                _l.info("Cant find default instrument pricing scheme")
+                _l.debug("Cant find default instrument pricing scheme")
 
             try:
                 result_item["__default_currency_pricing_scheme__user_code"] = CurrencyPricingScheme.objects.get(
                     pk=result_item["default_currency_pricing_scheme"]).user_code
             except Exception:
-                _l.info("Cant find default currency pricing scheme")
+                _l.debug("Cant find default currency pricing scheme")
 
             result_item.pop("master_user", None)
             result_item.pop("default_currency_pricing_scheme", None)
@@ -1592,7 +1592,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
                 except GenericAttributeType.DoesNotExist:
 
-                    _l.info("Simple Import Scheme. Dynamic attribute is not exist")
+                    _l.debug("Simple Import Scheme. Dynamic attribute is not exist")
 
         delete_prop(results, 'scheme')
 
@@ -1602,8 +1602,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         schemes = to_json_objects(CsvImportScheme.objects.filter(master_user=self._master_user))
         results = []
 
-        # _l.info('schemes %s' % len(schemes))
-        # _l.info('self._master_user %s' % self._master_user)
+        # _l.debug('schemes %s' % len(schemes))
+        # _l.debug('self._master_user %s' % self._master_user)
 
         for scheme in schemes:
             result_item = scheme["fields"]
@@ -2827,7 +2827,7 @@ class ConfigurationDuplicateCheckViewSet(AbstractModelViewSet):
 
                     else:
 
-                        # _l.info('item %s' % item)
+                        # _l.debug('item %s' % item)
 
                         if 'scheme_name' in item:
 

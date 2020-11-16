@@ -29,7 +29,7 @@ class ReportsConfig(AppConfig):
 
     def create_views_for_sql_reports(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
 
-        _l.info("Creating views for SQL reports")
+        _l.debug("Creating views for SQL reports")
 
         self.create_view_for_positions()
         self.create_view_for_cash_fx_trades()
@@ -38,7 +38,7 @@ class ReportsConfig(AppConfig):
 
     def create_view_for_positions(self):
 
-        _l.info("create_view_for_positions")
+        _l.debug("create_view_for_positions")
 
         with connection.cursor() as cursor:
 
@@ -181,7 +181,7 @@ class ReportsConfig(AppConfig):
 
     def create_view_for_cash_fx_trades(self):
 
-        _l.info("create_view_for_cash_fx_trades")
+        _l.debug("create_view_for_cash_fx_trades")
 
         with connection.cursor() as cursor:
 
@@ -297,7 +297,7 @@ class ReportsConfig(AppConfig):
 
     def create_view_for_cash_fx_variations(self):
 
-        _l.info("create_view_for_cash_fx_variations")
+        _l.debug("create_view_for_cash_fx_variations")
 
         with connection.cursor() as cursor:
 
@@ -457,7 +457,7 @@ class ReportsConfig(AppConfig):
 
     def create_view_for_cash_transaction_pl(self):
 
-        _l.info("create_view_for_cash_transaction_pl")
+        _l.debug("create_view_for_cash_transaction_pl")
 
         with connection.cursor() as cursor:
 
