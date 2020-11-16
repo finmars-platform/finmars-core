@@ -90,7 +90,7 @@ class ReportsConfig(AppConfig):
                          else 1
                          end as ttype
                     FROM transactions_transaction
-                    WHERE transaction_class_id in (1,2,4)
+                    WHERE transaction_class_id in (1,2,4) and NOT is_canceled
                     
                     UNION ALL
                     
@@ -132,7 +132,7 @@ class ReportsConfig(AppConfig):
                         else 1
                         end as ttype
                     from transactions_transaction
-                    WHERE transaction_class_id in (6)
+                    WHERE transaction_class_id in (6) and NOT is_canceled
                     
                     UNION ALL
                     
@@ -174,7 +174,7 @@ class ReportsConfig(AppConfig):
                         else 1
                         end as ttype
                     from transactions_transaction
-                    WHERE transaction_class_id in (6);            
+                    WHERE transaction_class_id in (6) and NOT is_canceled;            
             """
 
             cursor.execute(query)
@@ -237,7 +237,7 @@ class ReportsConfig(AppConfig):
                          
 
                 from transactions_transaction tt
-                where transaction_class_id in (3)
+                where transaction_class_id in (3) and NOT is_canceled
                 
                 union
                 
@@ -288,7 +288,7 @@ class ReportsConfig(AppConfig):
 
           from transactions_transaction tt
 
-          where transaction_class_id in (3)
+          where transaction_class_id in (3) and NOT is_canceled
 
          )         
             """
@@ -351,7 +351,7 @@ class ReportsConfig(AppConfig):
                            
 
                     from transactions_transaction
-                    where transaction_class_id in (8,9)      
+                    where transaction_class_id in (8,9) and NOT is_canceled  
                     
                     union all
 
@@ -400,7 +400,7 @@ class ReportsConfig(AppConfig):
                          
                       from transactions_transaction tt
                 
-                      where transaction_class_id in (7)
+                      where transaction_class_id in (7) and NOT is_canceled
                           
                     union all
 
@@ -449,7 +449,7 @@ class ReportsConfig(AppConfig):
                          
                     from transactions_transaction tt
         
-                    where transaction_class_id in (7)
+                    where transaction_class_id in (7) and NOT is_canceled
                            
             """
 
@@ -514,7 +514,7 @@ class ReportsConfig(AppConfig):
                          
 
                 from transactions_transaction tt
-                where transaction_class_id in (5)
+                where transaction_class_id in (5) and NOT is_canceled
                 )         
             """
 

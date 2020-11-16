@@ -1318,7 +1318,7 @@ class PLReportBuilderSql:
                                 where
                                     date = '{report_date}'
                                     and iph.instrument_id=ii.id
-        
+                                    and iph.pricing_policy_id = {pricing_policy_id}
                                    ) as ytm,
                                    
                                 -- add modified_duration
@@ -1329,7 +1329,7 @@ class PLReportBuilderSql:
                                 where
                                     date = '{report_date}'
                                     and iph.instrument_id=ii.id
-        
+                                    and iph.pricing_policy_id = {pricing_policy_id}
                                    ) as modified_duration,
         
                                -- add current price
@@ -1340,7 +1340,7 @@ class PLReportBuilderSql:
                                 where
                                     date = '{report_date}'
                                     and iph.instrument_id=ii.id
-        
+                                    and iph.pricing_policy_id = {pricing_policy_id}
                                    ) as cur_price,
                                   -- add current accrued
                                 (select
@@ -1350,7 +1350,7 @@ class PLReportBuilderSql:
                                 where
                                     date = '{report_date}'
                                     and iph.instrument_id=ii.id
-        
+                                    and iph.pricing_policy_id = {pricing_policy_id}
                                    ) as cur_accr_price
             
                             from 
@@ -2698,6 +2698,10 @@ class PLReportBuilderSql:
                                  final_consolidation_columns=self.get_final_consolidation_columns(),
                                  final_consolidation_where_filters=self.get_final_consolidation_where_filters_columns()
                                  )
+
+            if settings.LOCAL:
+                with open('/tmp/query_result_before_execution.txt', 'w') as the_file:
+                    the_file.write(query)
 
             cursor.execute(query)
 
