@@ -126,7 +126,11 @@ class BalanceReportBuilderSql:
                         settlement_currency_id,
                         
                         position_size_with_sign,
-                        cash_consideration
+                        cash_consideration,
+                        
+                        strategy1_cash_id,
+                        strategy2_cash_id,
+                        strategy3_cash_id
                         
                     from pl_transactions_with_ttype
                     
@@ -152,7 +156,11 @@ class BalanceReportBuilderSql:
                         settlement_currency_id,
                         
                         (0) as position_size_with_sign,
-                        cash_consideration
+                        cash_consideration,
+                        
+                        strategy1_cash_id,
+                        strategy2_cash_id,
+                        strategy3_cash_id
                         
                     from pl_cash_fx_trades_transactions_with_ttype
                     
@@ -178,11 +186,44 @@ class BalanceReportBuilderSql:
                         settlement_currency_id,
                         
                         position_size_with_sign,
-                        cash_consideration
+                        cash_consideration,
+                        
+                        strategy1_cash_id,
+                        strategy2_cash_id,
+                        strategy3_cash_id
                         
                     from pl_cash_fx_variations_transactions_with_ttype
                     
-                
+                    union all
+                    
+                    select 
+                        id,
+                        master_user_id,
+                        
+                        instrument_id,
+                        portfolio_id,
+                        transaction_class_id,
+                        
+                        transaction_date,
+                        accounting_date,
+                        cash_date,
+                        
+                        account_cash_id,
+                        account_position_id,
+                        account_interim_id,
+                        
+                        transaction_currency_id,
+                        settlement_currency_id,
+                        
+                        position_size_with_sign,
+                        cash_consideration,
+                        
+                        strategy1_cash_id,
+                        strategy2_cash_id,
+                        strategy3_cash_id
+                        
+                    from pl_cash_transaction_pl_transactions_with_ttype
+                  
                 ),
                 
                 unioned_interim_account_transactions as (
@@ -193,11 +234,10 @@ class BalanceReportBuilderSql:
                            
                            instrument_id,
                            portfolio_id,
-                           --account_cash_id,
-                           -- TODO add consolidation columns
-                           --strategy1_cash_id,
-                           --strategy2_cash_id,
-                           --strategy2_cash_id,
+              
+                           strategy1_cash_id,
+                           strategy2_cash_id,
+                           strategy3_cash_id,
                            
                            position_size_with_sign,
                            /* не нужны для БАЛАНСА
@@ -234,8 +274,9 @@ class BalanceReportBuilderSql:
                     
                            instrument_id,
                            portfolio_id,
-                           -- account_cash_id,
-                           -- TODO add consolidation columns
+                           strategy1_cash_id,
+                           strategy2_cash_id,
+                           strategy3_cash_id,
                            -- modification
                            0 as position_size_with_sign,
                            (-cash_consideration) as cash_consideration,
@@ -266,8 +307,9 @@ class BalanceReportBuilderSql:
                     
                            instrument_id,
                            portfolio_id,
-                           -- account_cash_id,
-                           -- TODO add consolidation columns
+                           strategy1_cash_id,
+                           strategy2_cash_id,
+                           strategy3_cash_id,
                     
                            position_size_with_sign,
                            cash_consideration,
@@ -287,8 +329,11 @@ class BalanceReportBuilderSql:
                            as min_date
                            
                     from unioned_transactions_for_balance
-                    where not (accounting_date <= '{report_date}' /* REPORTING DATE */
-                      and '{report_date}' < cash_date)
+                    --where not (accounting_date <= '{report_date}' /* REPORTING DATE */
+                    --  and '{report_date}' < cash_date)
+                    where not ( (accounting_date <= '{report_date}' 
+                      and '{report_date}' < cash_date) 
+                      or (cash_date  <= '{report_date}' and '{report_date}' < accounting_date)) 
                         
                 ),
                 
@@ -472,118 +517,6 @@ class BalanceReportBuilderSql:
                                     ) as t
                                 ) as t_with_report_fx_rate
                             
-                            -- union with Transaction PL 
-                            union all
-                            
-                            select 
-                
-                                instrument_id,
-                                {consolidated_cash_columns}
-                                settlement_currency_id,
-                            
-                                position_size,
-                                
-                                (0) as market_value,
-                                (0) as market_value_loc,
-                                
-                                (0) as exposure,
-                                (0) as exposure_loc
-        
-                        
-                            from (
-                                select 
-                                
-                                    instrument_id,
-                                    {consolidated_cash_columns}
-                                    
-                                    settlement_currency_id,
-                                    
-                                    item_type,
-                                    item_type_name,
-                                    
-                                    position_size,
-                                     
-                                    
-                                    ccy.name,
-                                    ccy.short_name,
-                                    ccy.user_code,
-                                    
-                                    (0) as market_value,
-                                
-                                    (0) as net_cost_price,
-                                    (0) as net_cost_price_loc,
-                                    
-                                    (0) as ytm,
-                                    (0) as ytm_at_cost, 
-                                    
-                                    (0) as position_return,
-                                    (0) as net_position_return,
-                                    
-                                    (0) as time_invested,
-                                    (0) as return_annauly
-                                
-                                from (
-                                    select 
-                  
-                                        (5) as item_type,
-                                        ('Other') as item_type_name,
-                                        
-                                        (-1) as instrument_id,
-                                        {consolidated_cash_columns}
-                                        
-                                        settlement_currency_id,
-                                        
-                    
-                                        sum(cash_consideration * stl_cur_fx/rep_cur_fx) as position_size,
-                                        
-                                        sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_opened,
-                                        sum(carry_with_sign * stl_cur_fx/rep_cur_fx)     as carry_opened,
-                                        sum(overheads_with_sign * stl_cur_fx/rep_cur_fx) as overheads_opened,
-                    
-                                        sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_fx_opened,
-                                        sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as carry_fx_opened,
-                                        sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as overheads_fx_opened,
-                                         
-                                        (0) as principal_fixed_opened,
-                                        (0) as carry_fixed_opened,
-                                        (0) as overheads_fixed_opened
-                                    
-                                    from (select 
-                                            *,
-                                            case when
-                                            sft.settlement_currency_id={default_currency_id}
-                                            then 1
-                                            else
-                                               (select  fx_rate
-                                            from currencies_currencyhistory c_ch
-                                            where date = '{report_date}'
-                                              and c_ch.currency_id = sft.settlement_currency_id 
-                                              and c_ch.pricing_policy_id = {pricing_policy_id}
-                                              limit 1)
-                                            end as stl_cur_fx,
-                                            case
-                                               when /* reporting ccy = system ccy*/ {report_currency_id} = {default_currency_id}
-                                                   then 1
-                                               else
-                                                   (select  fx_rate
-                                                    from currencies_currencyhistory c_ch
-                                                    where date = '{report_date}' and 
-                                                     c_ch.currency_id = {report_currency_id} and
-                                                     c_ch.pricing_policy_id = {pricing_policy_id}
-                                                     limit 1)
-                                            end as rep_cur_fx
-                                        from pl_cash_transaction_pl_transactions_with_ttype sft where 
-                                                  transaction_class_id in (5)
-                                                  and accounting_date <= '{report_date}'
-                                                  and master_user_id = {master_user_id}
-                                                  {fx_trades_and_fx_variations_filter_sql_string}
-                                            ) as transaction_pl_w_fxrate
-                                    group by 
-                                        settlement_currency_id, {consolidated_cash_columns} instrument_id order by settlement_currency_id
-                                    ) as grouped_transaction_pl
-                                left join currencies_currency as ccy on settlement_currency_id = ccy.id
-                                ) as pre_final_union_transaction_pl_calculations_level_0
-                            
                         ) as unioned_transaction_pl_with_cash 
                         
                         group by
@@ -600,6 +533,7 @@ class BalanceReportBuilderSql:
                 
                 union all
                 
+                -- Positions
                 select 
                     
                     instrument_id,
