@@ -686,8 +686,6 @@ def serialize_balance_report_item(item):
 
         "exposure": item["exposure"],
         "exposure_loc": item["exposure_loc"],
-
-        "modified_duration": None
     }
 
     if item["instrument_id"] == -1:
@@ -745,6 +743,7 @@ def serialize_balance_report_item(item):
 
     result["ytm"] = item["ytm"]
     result["ytm_at_cost"] = item["ytm_at_cost"]
+    result["modified_duration"] = item["modified_duration"]
 
     result["position_return"] = item["position_return"]
     result["net_position_return"] = item["net_position_return"]
@@ -761,7 +760,73 @@ def serialize_balance_report_item(item):
     result["amount_invested_loc"] = item["amount_invested_loc"]
 
     result["time_invested"] = item["time_invested"]
-    result["return_annauly"] = item["return_annauly"]
+    result["return_annually"] = item["return_annually"]
+
+    # performance
+
+    result["principal_opened"] = item["principal_opened"]
+    result["carry_opened"] = item["carry_opened"]
+    result["overheads_opened"] = item["overheads_opened"]
+    result["total_opened"] = item["total_opened"]
+
+    result["principal_fx_opened"] = item["principal_fx_opened"]
+    result["carry_fx_opened"] = item["carry_fx_opened"]
+    result["overheads_fx_opened"] = item["overheads_fx_opened"]
+    result["total_fx_opened"] = item["total_fx_opened"]
+
+    result["principal_fixed_opened"] = item["principal_fixed_opened"]
+    result["carry_fixed_opened"] = item["carry_fixed_opened"]
+    result["overheads_fixed_opened"] = item["overheads_fixed_opened"]
+    result["total_fixed_opened"] = item["total_fixed_opened"]
+
+    # loc started
+
+    result["principal_opened_loc"] = item["principal_opened_loc"]
+    result["carry_opened_loc"] = item["carry_opened_loc"]
+    result["overheads_opened_loc"] = item["overheads_opened_loc"]
+    result["total_opened_loc"] = item["total_opened_loc"]
+
+    result["principal_fx_opened_loc"] = item["principal_fx_opened_loc"]
+    result["carry_fx_opened_loc"] = item["carry_fx_opened_loc"]
+    result["overheads_fx_opened_loc"] = item["overheads_fx_opened_loc"]
+    result["total_fx_opened_loc"] = item["total_fx_opened_loc"]
+
+    result["principal_fixed_opened_loc"] = item["principal_fixed_opened_loc"]
+    result["carry_fixed_opened_loc"] = item["carry_fixed_opened_loc"]
+    result["overheads_fixed_opened_loc"] = item["overheads_fixed_opened_loc"]
+    result["total_fixed_opened_loc"] = item["total_fixed_opened_loc"]
+
+    result["principal_closed"] = item["principal_closed"]
+    result["carry_closed"] = item["carry_closed"]
+    result["overheads_closed"] = item["overheads_closed"]
+    result["total_closed"] = item["total_closed"]
+
+    result["principal_fx_closed"] = item["principal_fx_closed"]
+    result["carry_fx_closed"] = item["carry_fx_closed"]
+    result["overheads_fx_closed"] = item["overheads_fx_closed"]
+    result["total_fx_closed"] = item["total_fx_closed"]
+
+    result["principal_fixed_closed"] = item["principal_fixed_closed"]
+    result["carry_fixed_closed"] = item["carry_fixed_closed"]
+    result["overheads_fixed_closed"] = item["overheads_fixed_closed"]
+    result["total_fixed_closed"] = item["total_fixed_closed"]
+
+    # loc started
+
+    result["principal_closed_loc"] = item["principal_closed_loc"]
+    result["carry_closed_loc"] = item["carry_closed_loc"]
+    result["overheads_closed_loc"] = item["overheads_closed_loc"]
+    result["total_closed_loc"] = item["total_closed_loc"]
+
+    result["principal_fx_closed_loc"] = item["principal_fx_closed_loc"]
+    result["carry_fx_closed_loc"] = item["carry_fx_closed_loc"]
+    result["overheads_fx_closed_loc"] = item["overheads_fx_closed_loc"]
+    result["total_fx_closed_loc"] = item["total_fx_closed_loc"]
+
+    result["principal_fixed_closed_loc"] = item["principal_fixed_closed_loc"]
+    result["carry_fixed_closed_loc"] = item["carry_fixed_closed_loc"]
+    result["overheads_fixed_closed_loc"] = item["overheads_fixed_closed_loc"]
+    result["total_fixed_closed_loc"] = item["total_fixed_closed_loc"]
 
     return result
 
@@ -829,11 +894,10 @@ def serialize_pl_report_item(item):
 
     result["mismatch"] = item["mismatch"]
 
-    # result["ytm"] = item["ytm"]
-    #
-    # result["market_value"] = item["market_value"]
-    # result["exposure"] = item["exposure"]
+    result["ytm"] = item["ytm"]
 
+    result["market_value"] = item["market_value"]
+    result["exposure"] = item["exposure"]
 
     result["principal"] = item["principal"]
     result["carry"] = item["carry"]
@@ -866,23 +930,6 @@ def serialize_pl_report_item(item):
     result["carry_fixed_loc"] = item["carry_fixed_loc"]
     result["overheads_fixed_loc"] = item["overheads_fixed_loc"]
     result["total_fixed_loc"] = item["total_fixed_loc"]
-
-    # result["market_value_loc"] = item["market_value_loc"]
-    # result["exposure_loc"] = item["exposure_loc"]
-
-
-
-    # if item["item_type"] == 2:  # currency
-    #
-    #     result["currency"] = item["currency_id"]
-    #     result["account"] = item["account_cash_id"]
-    #
-    #     result["strategy1"] = item["strategy1_cash_id"]
-    #     result["strategy2"] = item["strategy2_cash_id"]
-    #     result["strategy3"] = item["strategy3_cash_id"]
-    #
-    #     result["pricing_currency"] = None
-    #     result["instrument"] = None
 
     return result
 

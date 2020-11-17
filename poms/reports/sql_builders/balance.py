@@ -385,14 +385,76 @@ class BalanceReportBuilderSql:
                     amount_invested,
                     amount_invested_loc,
                     
-                    ytm,
-                    ytm_at_cost, 
-                    
                     position_return,
                     net_position_return,
-                    
                     time_invested,
-                    return_annauly
+                    
+                    ytm,
+                    modified_duration,
+                    ytm_at_cost,
+                    return_annually,
+        
+                    principal_opened,
+                    carry_opened,
+                    overheads_opened,
+                    total_opened,
+                    
+                    principal_closed,
+                    carry_closed,
+                    overheads_closed,
+                    total_closed,
+                    
+                    principal_fx_opened,
+                    carry_fx_opened,
+                    overheads_fx_opened,
+                    total_fx_opened,
+                    
+                    principal_fx_closed,
+                    carry_fx_closed,
+                    overheads_fx_closed,
+                    total_fx_closed,
+                    
+                    principal_fixed_opened,
+                    carry_fixed_opened,
+                    overheads_fixed_opened,
+                    total_fixed_opened,
+                    
+                    principal_fixed_closed,
+                    carry_fixed_closed,
+                    overheads_fixed_closed,
+                    total_fixed_closed,
+                    
+                    -- loc
+                    
+                    principal_opened_loc,
+                    carry_opened_loc,
+                    overheads_opened_loc,
+                    total_opened_loc,
+                    
+                    principal_closed_loc,
+                    carry_closed_loc,
+                    overheads_closed_loc,
+                    total_closed_loc,
+                    
+                    principal_fx_opened_loc,
+                    carry_fx_opened_loc,
+                    overheads_fx_opened_loc,
+                    total_fx_opened_loc,
+                    
+                    principal_fx_closed_loc,
+                    carry_fx_closed_loc,
+                    overheads_fx_closed_loc,
+                    total_fx_closed_loc,
+                    
+                    principal_fixed_opened_loc,
+                    carry_fixed_opened_loc,
+                    overheads_fixed_opened_loc,
+                    total_fixed_opened_loc,
+                    
+                    principal_fixed_closed_loc,
+                    carry_fixed_closed_loc,
+                    overheads_fixed_closed_loc,
+                    total_fixed_closed_loc
                 
                 from (   
                 
@@ -434,16 +496,77 @@ class BalanceReportBuilderSql:
                         (0) as amount_invested,
                         (0) as amount_invested_loc,
                             
-                        (0) as ytm,
-                        (0) as ytm_at_cost, 
-                            
                         (0) as position_return,
                         (0) as net_position_return,
-                            
                         (0) as time_invested,
-                        (0) as return_annauly
-                     
-                     
+                        
+                        (0) as ytm,
+                        (0) as modified_duration,
+                        (0) as ytm_at_cost,
+                        (0) as return_annually,
+                        
+                        (0) as principal_opened,
+                        (0) as carry_opened,
+                        (0) as overheads_opened,
+                        (0) as total_opened,
+                        
+                        (0) as principal_closed,
+                        (0) as carry_closed,
+                        (0) as overheads_closed,
+                        (0) as total_closed,
+                        
+                        (0) as principal_fx_opened,
+                        (0) as carry_fx_opened,
+                        (0) as overheads_fx_opened,
+                        (0) as total_fx_opened,
+                        
+                        (0) as principal_fx_closed,
+                        (0) as carry_fx_closed,
+                        (0) as overheads_fx_closed,
+                        (0) as total_fx_closed,
+                        
+                        (0) as principal_fixed_opened,
+                        (0) as carry_fixed_opened,
+                        (0) as overheads_fixed_opened,
+                        (0) as total_fixed_opened,
+                        
+                        (0) as principal_fixed_closed,
+                        (0) as carry_fixed_closed,
+                        (0) as overheads_fixed_closed,
+                        (0) as total_fixed_closed,
+                        
+                        -- loc
+                        
+                        (0) as principal_opened_loc,
+                        (0) as carry_opened_loc,
+                        (0) as overheads_opened_loc,
+                        (0) as total_opened_loc,
+                        
+                        (0) as principal_closed_loc,
+                        (0) as carry_closed_loc,
+                        (0) as overheads_closed_loc,
+                        (0) as total_closed_loc,
+                        
+                        (0) as principal_fx_opened_loc,
+                        (0) as carry_fx_opened_loc,
+                        (0) as overheads_fx_opened_loc,
+                        (0) as total_fx_opened_loc,
+                        
+                        (0) as principal_fx_closed_loc,
+                        (0) as carry_fx_closed_loc,
+                        (0) as overheads_fx_closed_loc,
+                        (0) as total_fx_closed_loc,
+                        
+                        (0) as principal_fixed_opened_loc,
+                        (0) as carry_fixed_opened_loc,
+                        (0) as overheads_fixed_opened_loc,
+                        (0) as total_fixed_opened_loc,
+                        
+                        (0) as principal_fixed_closed_loc,
+                        (0) as carry_fixed_closed_loc,
+                        (0) as overheads_fixed_closed_loc,
+                        (0) as total_fixed_closed_loc
+                    
                      from (
                    
                         select 
@@ -572,14 +695,76 @@ class BalanceReportBuilderSql:
                     amount_invested,
                     amount_invested_loc,
                     
-                    ytm,
-                    ytm_at_cost, 
-                    
                     position_return,
                     net_position_return,
-                    
                     time_invested,
-                    return_annauly
+                    
+                    ytm,
+                    modified_duration,
+                    ytm_at_cost,
+                    return_annually,
+        
+                    principal_opened,
+                    carry_opened,
+                    overheads_opened,
+                    total_opened,
+                    
+                    principal_closed,
+                    carry_closed,
+                    overheads_closed,
+                    total_closed,
+                    
+                    principal_fx_opened,
+                    carry_fx_opened,
+                    overheads_fx_opened,
+                    total_fx_opened,
+                    
+                    principal_fx_closed,
+                    carry_fx_closed,
+                    overheads_fx_closed,
+                    total_fx_closed,
+                    
+                    principal_fixed_opened,
+                    carry_fixed_opened,
+                    overheads_fixed_opened,
+                    total_fixed_opened,
+                    
+                    principal_fixed_closed,
+                    carry_fixed_closed,
+                    overheads_fixed_closed,
+                    total_fixed_closed,
+                    
+                    -- loc
+                    
+                    principal_opened_loc,
+                    carry_opened_loc,
+                    overheads_opened_loc,
+                    total_opened_loc,
+                    
+                    principal_closed_loc,
+                    carry_closed_loc,
+                    overheads_closed_loc,
+                    total_closed_loc,
+                    
+                    principal_fx_opened_loc,
+                    carry_fx_opened_loc,
+                    overheads_fx_opened_loc,
+                    total_fx_opened_loc,
+                    
+                    principal_fx_closed_loc,
+                    carry_fx_closed_loc,
+                    overheads_fx_closed_loc,
+                    total_fx_closed_loc,
+                    
+                    principal_fixed_opened_loc,
+                    carry_fixed_opened_loc,
+                    overheads_fixed_opened_loc,
+                    total_fixed_opened_loc,
+                    
+                    principal_fixed_closed_loc,
+                    carry_fixed_closed_loc,
+                    overheads_fixed_closed_loc,
+                    total_fixed_closed_loc
                     
                 from (
                     select 
@@ -620,14 +805,76 @@ class BalanceReportBuilderSql:
                         amount_invested,
                         amount_invested_loc,
                         
-                        ytm,
-                        ytm_at_cost, 
-                        
                         position_return,
                         net_position_return,
-                        
                         time_invested,
-                        return_annauly 
+                        
+                        ytm,
+                        modified_duration,
+                        ytm_at_cost,
+                        return_annually,
+            
+                        principal_opened,
+                        carry_opened,
+                        overheads_opened,
+                        total_opened,
+                        
+                        principal_closed,
+                        carry_closed,
+                        overheads_closed,
+                        total_closed,
+                        
+                        principal_fx_opened,
+                        carry_fx_opened,
+                        overheads_fx_opened,
+                        total_fx_opened,
+                        
+                        principal_fx_closed,
+                        carry_fx_closed,
+                        overheads_fx_closed,
+                        total_fx_closed,
+                        
+                        principal_fixed_opened,
+                        carry_fixed_opened,
+                        overheads_fixed_opened,
+                        total_fixed_opened,
+                        
+                        principal_fixed_closed,
+                        carry_fixed_closed,
+                        overheads_fixed_closed,
+                        total_fixed_closed,
+                        
+                        -- loc
+                        
+                        principal_opened_loc,
+                        carry_opened_loc,
+                        overheads_opened_loc,
+                        total_opened_loc,
+                        
+                        principal_closed_loc,
+                        carry_closed_loc,
+                        overheads_closed_loc,
+                        total_closed_loc,
+                        
+                        principal_fx_opened_loc,
+                        carry_fx_opened_loc,
+                        overheads_fx_opened_loc,
+                        total_fx_opened_loc,
+                        
+                        principal_fx_closed_loc,
+                        carry_fx_closed_loc,
+                        overheads_fx_closed_loc,
+                        total_fx_closed_loc,
+                        
+                        principal_fixed_opened_loc,
+                        carry_fixed_opened_loc,
+                        overheads_fixed_opened_loc,
+                        total_fixed_opened_loc,
+                        
+                        principal_fixed_closed_loc,
+                        carry_fixed_closed_loc,
+                        overheads_fixed_closed_loc,
+                        total_fixed_closed_loc
                         
                     from (
                         select 
@@ -757,12 +1004,77 @@ class BalanceReportBuilderSql:
                                 amount_invested,
                                 amount_invested_loc,
                                 
-                                ytm, -- is missed 
-                                ytm_at_cost, -- is missed
                                 position_return,
                                 net_position_return,
                                 time_invested,
-                                return_annauly --is missed   
+                                
+                                ytm,
+                                modified_duration,
+                                ytm_at_cost,
+                                return_annually,
+                    
+                                principal_opened,
+                                carry_opened,
+                                overheads_opened,
+                                total_opened,
+                                
+                                principal_closed,
+                                carry_closed,
+                                overheads_closed,
+                                total_closed,
+                                
+                                principal_fx_opened,
+                                carry_fx_opened,
+                                overheads_fx_opened,
+                                total_fx_opened,
+                                
+                                principal_fx_closed,
+                                carry_fx_closed,
+                                overheads_fx_closed,
+                                total_fx_closed,
+                                
+                                principal_fixed_opened,
+                                carry_fixed_opened,
+                                overheads_fixed_opened,
+                                total_fixed_opened,
+                                
+                                principal_fixed_closed,
+                                carry_fixed_closed,
+                                overheads_fixed_closed,
+                                total_fixed_closed,
+                                
+                                -- loc
+                                
+                                principal_opened_loc,
+                                carry_opened_loc,
+                                overheads_opened_loc,
+                                total_opened_loc,
+                                
+                                principal_closed_loc,
+                                carry_closed_loc,
+                                overheads_closed_loc,
+                                total_closed_loc,
+                                
+                                principal_fx_opened_loc,
+                                carry_fx_opened_loc,
+                                overheads_fx_opened_loc,
+                                total_fx_opened_loc,
+                                
+                                principal_fx_closed_loc,
+                                carry_fx_closed_loc,
+                                overheads_fx_closed_loc,
+                                total_fx_closed_loc,
+                                
+                                principal_fixed_opened_loc,
+                                carry_fixed_opened_loc,
+                                overheads_fixed_opened_loc,
+                                total_fixed_opened_loc,
+                                
+                                principal_fixed_closed_loc,
+                                carry_fixed_closed_loc,
+                                overheads_fixed_closed_loc,
+                                total_fixed_closed_loc
+                                
                               from ({pl_query}) as pl 
                     ) as pl_q
                     on balance_q.instrument_id = pl_q.instrument_id {pl_left_join_consolidation}
@@ -804,6 +1116,12 @@ class BalanceReportBuilderSql:
 
 
             result = dictfetchall(cursor)
+
+            ITEM_TYPE_INSTRUMENT = 1
+            ITEM_TYPE_FX_VARIATIONS = 3
+            ITEM_TYPE_FX_TRADES = 4
+            ITEM_TYPE_TRANSACTION_PL = 5
+            ITEM_TYPE_MISMATCH = 6
 
             for item in result:
 

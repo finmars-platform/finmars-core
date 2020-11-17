@@ -666,7 +666,7 @@ class PLReportBuilderSql:
             ytm,
             modified_duration,
             ytm_at_cost,
-            return_annauly,
+            return_annually,
 
             principal_opened,
             carry_opened,
@@ -766,7 +766,7 @@ class PLReportBuilderSql:
             ytm,
             modified_duration,
             ytm_at_cost,
-            return_annauly,
+            return_annually,
 
             principal_opened,
             carry_opened,
@@ -867,7 +867,7 @@ class PLReportBuilderSql:
                     ytm,
                     modified_duration,
                     (0) as ytm_at_cost,
-                    (0) as return_annauly,
+                    (0) as return_annually,
                     
                     principal_opened,
                     carry_opened,
@@ -1401,7 +1401,7 @@ class PLReportBuilderSql:
             ytm,
             modified_duration,
             ytm_at_cost,
-            return_annauly,
+            return_annually,
    
             principal_opened,
             carry_opened,
@@ -1502,7 +1502,7 @@ class PLReportBuilderSql:
                 (0) as ytm,
                 (0) as modified_duration,
                 (0) as ytm_at_cost,
-                (0) as return_annauly,
+                (0) as return_annually,
                 
                 principal_opened,
                 carry_opened,
@@ -1711,7 +1711,7 @@ class PLReportBuilderSql:
             ytm,
             modified_duration,
             ytm_at_cost,
-            return_annauly,
+            return_annually,
             
             principal_opened,
             carry_opened,
@@ -1813,7 +1813,7 @@ class PLReportBuilderSql:
                 (0) as ytm,
                 (0) as modified_duration,
                 (0) as ytm_at_cost,
-                (0) as return_annauly,
+                (0) as return_annually,
                 
                 principal_opened,
                 carry_opened,
@@ -1981,7 +1981,7 @@ class PLReportBuilderSql:
             ytm,
             modified_duration,
             ytm_at_cost,
-            return_annauly,
+            return_annually,
    
             principal_opened,
             carry_opened,
@@ -2082,7 +2082,7 @@ class PLReportBuilderSql:
                 (0) as ytm,
                 (0) as modified_duration,
                 (0) as ytm_at_cost,
-                (0) as return_annauly,
+                (0) as return_annually,
                 
                 principal_opened,
                 carry_opened,
@@ -2247,7 +2247,7 @@ class PLReportBuilderSql:
             ytm,
             modified_duration,
             ytm_at_cost,
-            return_annauly,
+            return_annually,
    
             principal_opened,
             carry_opened,
@@ -2348,7 +2348,7 @@ class PLReportBuilderSql:
                 (0) as ytm,
                 (0) as modified_duration,
                 (0) as ytm_at_cost,
-                (0) as return_annauly,
+                (0) as return_annually,
                 
                 (0) as principal_opened,
                 (0) as carry_opened,
@@ -2902,8 +2902,6 @@ class PLReportBuilderSql:
                     result_item_closed["total_fixed_loc"] = item["total_fixed_opened_loc"]
 
                     result.append(result_item_closed)
-
-
 
             _l.debug('build position result %s ' % len(result))
 
