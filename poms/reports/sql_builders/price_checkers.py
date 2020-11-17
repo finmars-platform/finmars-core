@@ -687,6 +687,9 @@ class PriceHistoryCheckerSql:
             if item['type'] == 'missing_instrument_currency_fx_rate':
                 currencies_ids.append(item['id'])
 
+            if item['type'] == 'fixed_calc':
+                currencies_ids.append(item['transaction_currency_id'])
+
         _l.debug('len instrument_ids %s' % len(instrument_ids))
 
         self.add_data_items_instruments(instrument_ids)
