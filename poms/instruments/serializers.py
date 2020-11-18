@@ -450,6 +450,14 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
     pricing_currency_object = serializers.PrimaryKeyRelatedField(source='pricing_currency', read_only=True)
     accrued_currency = CurrencyField(default=CurrencyDefault())
     accrued_currency_object = serializers.PrimaryKeyRelatedField(source='accrued_currency', read_only=True)
+
+    exposure_currency_1 = CurrencyField(default=CurrencyDefault())
+    exposure_currency_1_object = serializers.PrimaryKeyRelatedField(source='exposure_currency_1', read_only=True)
+
+    exposure_currency_2 = CurrencyField(default=CurrencyDefault())
+    exposure_currency_2_object = serializers.PrimaryKeyRelatedField(source='exposure_currency_2', read_only=True)
+
+
     payment_size_detail_object = PaymentSizeDetailSerializer(source='payment_size_detail', read_only=True)
     daily_pricing_model_object = DailyPricingModelSerializer(source='daily_pricing_model', read_only=True)
     pricing_condition_object = PricingConditionSerializer(source='pricing_condition', read_only=True)
@@ -477,6 +485,10 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
             'public_name', 'notes', 'is_active', 'is_deleted',
             'pricing_currency', 'pricing_currency_object', 'price_multiplier',
             'accrued_currency', 'accrued_currency_object', 'accrued_multiplier',
+
+            'exposure_currency_1', 'exposure_currency_2',
+            'exposure_currency_1_object', 'exposure_currency_2_object',
+
             'payment_size_detail', 'payment_size_detail_object', 'default_price', 'default_accrued',
             'user_text_1', 'user_text_2', 'user_text_3',
             'reference_for_pricing',

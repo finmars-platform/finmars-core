@@ -205,7 +205,7 @@ class PLReportBuilderSql:
                instrument_id,
                position_size_with_sign,
                principal_with_sign,
-               carry_with_sign,
+               carry_with_sign, 
                overheads_with_sign,
                
                transaction_currency_id,
@@ -667,6 +667,12 @@ class PLReportBuilderSql:
             modified_duration,
             ytm_at_cost,
             return_annually,
+            
+            market_value,
+            exposure,
+            
+            market_value_loc,
+            exposure_loc,
 
             principal_opened,
             carry_opened,
@@ -767,6 +773,13 @@ class PLReportBuilderSql:
             modified_duration,
             ytm_at_cost,
             return_annually,
+            
+            
+            market_value,
+            exposure,
+            
+            market_value_loc,
+            exposure_loc,
 
             principal_opened,
             carry_opened,
@@ -868,6 +881,12 @@ class PLReportBuilderSql:
                     modified_duration,
                     (0) as ytm_at_cost,
                     (0) as return_annually,
+                    
+                    market_value,
+                    exposure,
+                    
+                    market_value_loc,
+                    exposure_loc,
                     
                     principal_opened,
                     carry_opened,
@@ -1023,7 +1042,12 @@ class PLReportBuilderSql:
                             else 0
                         end as net_position_return,
         
-                        mv_carry+mv_principal as mv,
+                        -- will be taken from balance
+                        mv_carry+mv_principal as market_value,
+                        mv_carry+mv_principal as exposure,
+                        
+                        (mv_carry+mv_principal) * cross_loc_prc_fx as market_value_loc,
+                        (mv_carry+mv_principal) * cross_loc_prc_fx as exposure_loc,
                         
                         principal_invested,
                         principal_invested * cross_loc_prc_fx as principal_invested_loc,
@@ -1107,8 +1131,8 @@ class PLReportBuilderSql:
                             end as time_invested,
                         
                             -- mv precalc
-                            (position_size_opened * coalesce(i.cur_price, 0) * i.price_multiplier * i.prc_cur_fx / rep_cur_fx) as mv_principal,
-                            (position_size_opened * coalesce(i.cur_accr_price, 0) * i.accrued_multiplier * i.accr_cur_fx  / rep_cur_fx) as mv_carry,
+                                (position_size_opened * coalesce(i.cur_price, 0) * i.price_multiplier * i.prc_cur_fx / rep_cur_fx) as mv_principal,
+                                (position_size_opened * coalesce(i.cur_accr_price, 0) * i.accrued_multiplier * i.accr_cur_fx  / rep_cur_fx) as mv_carry,
         
                             -- (i.accrual_size * i.accrued_multiplier  / (i.cur_price * i.price_multiplier) ) as ytm,
                     
@@ -1402,6 +1426,12 @@ class PLReportBuilderSql:
             modified_duration,
             ytm_at_cost,
             return_annually,
+            
+            market_value,
+            exposure,
+            
+            market_value_loc,
+            exposure_loc,
    
             principal_opened,
             carry_opened,
@@ -1503,6 +1533,12 @@ class PLReportBuilderSql:
                 (0) as modified_duration,
                 (0) as ytm_at_cost,
                 (0) as return_annually,
+                
+                (0) as market_value,
+                (0) as exposure,
+                
+                (0) as market_value_loc,
+                (0) as exposure_loc,
                 
                 principal_opened,
                 carry_opened,
@@ -1713,6 +1749,12 @@ class PLReportBuilderSql:
             ytm_at_cost,
             return_annually,
             
+            market_value,
+            exposure,
+            
+            market_value_loc,
+            exposure_loc,
+
             principal_opened,
             carry_opened,
             overheads_opened,
@@ -1815,6 +1857,12 @@ class PLReportBuilderSql:
                 (0) as ytm_at_cost,
                 (0) as return_annually,
                 
+                (0) as market_value,
+                (0) as exposure,
+                
+                (0) as market_value_loc,
+                (0) as exposure_loc,
+
                 principal_opened,
                 carry_opened,
                 overheads_opened,
@@ -1982,6 +2030,12 @@ class PLReportBuilderSql:
             modified_duration,
             ytm_at_cost,
             return_annually,
+            
+            market_value,
+            exposure,
+            
+            market_value_loc,
+            exposure_loc,
    
             principal_opened,
             carry_opened,
@@ -2083,6 +2137,12 @@ class PLReportBuilderSql:
                 (0) as modified_duration,
                 (0) as ytm_at_cost,
                 (0) as return_annually,
+                
+                (0) as market_value,
+                (0) as exposure,
+                
+                (0) as market_value_loc,
+                (0) as exposure_loc,
                 
                 principal_opened,
                 carry_opened,
@@ -2248,6 +2308,12 @@ class PLReportBuilderSql:
             modified_duration,
             ytm_at_cost,
             return_annually,
+            
+            market_value,
+            exposure,
+            
+            market_value_loc,
+            exposure_loc,
    
             principal_opened,
             carry_opened,
@@ -2349,6 +2415,13 @@ class PLReportBuilderSql:
                 (0) as modified_duration,
                 (0) as ytm_at_cost,
                 (0) as return_annually,
+                
+                (0) as market_value,
+                (0) as exposure,
+                
+                (0) as market_value_loc,
+                (0) as exposure_loc,
+
                 
                 (0) as principal_opened,
                 (0) as carry_opened,
@@ -2622,6 +2695,9 @@ class PLReportBuilderSql:
                             
                             (q2.ytm) as ytm,
                             (q2.modified_duration) as modified_duration,
+                            
+                            (q2.market_value) as market_value,
+                            (q2.exposure) as exposure,
                             
                             (q2.item_type) as item_type,
                             (q2.item_type_name) as item_type_name,
