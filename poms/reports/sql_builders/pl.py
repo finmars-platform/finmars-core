@@ -287,7 +287,8 @@ class PLReportBuilderSql:
                             -- вычисляем границы групп (где меняется знак кумулятивный, либо 0)
                              (select tt_in1.instrument_id, max(tt_in1.rn_total) as group_border
                               from avco_rolling tt_in1
-                              where (tt_in1.rolling_position_size = 0 or tt_in1.rolling_position_size * tt_in1.rolling_position_size_prev < 0)
+                              --where (tt_in1.rolling_position_size = 0 or tt_in1.rolling_position_size * tt_in1.rolling_position_size_prev < 0)
+                              where (tt_in1.rolling_position_size * tt_in1.rolling_position_size_prev <= 0)
                               group by tt_in1.instrument_id) as tt1 using (instrument_id)
                         where rn_total > group_border
                            or rn_total = group_border
