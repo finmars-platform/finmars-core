@@ -17,6 +17,8 @@ from poms.users.models import EcosystemDefault
 
 from django.conf import settings
 
+import copy
+
 _l = logging.getLogger('poms.reports')
 
 
@@ -2806,24 +2808,71 @@ class PLReportBuilderSql:
             ITEM_TYPE_TRANSACTION_PL = 5
             ITEM_TYPE_MISMATCH = 6
 
+
             for item in result_tmp:
 
-                result_item_opened = item.copy()
+                # result_item_opened = item.copy()
+                result_item_opened = {}
+
+                result_item_opened['name'] = item['name']
+                result_item_opened['short_name'] = item['short_name']
+                result_item_opened['user_code'] = item['user_code']
+                result_item_opened['item_type'] = item['item_type']
+                result_item_opened['item_type_name'] = item['item_type_name']
+
+
+                result_item_opened['market_value'] = item['market_value']
+                result_item_opened['exposure'] = item['exposure']
+                result_item_opened['ytm'] = item['ytm']
+                result_item_opened['modified_duration'] = item['modified_duration']
+                result_item_opened['time_invested'] = item['time_invested']
+
+                result_item_opened['amount_invested'] = item['amount_invested']
+                result_item_opened['amount_invested_loc'] = item['amount_invested_loc']
+
+                result_item_opened['principal_invested'] = item['principal_invested']
+                result_item_opened['principal_invested_loc'] = item['principal_invested_loc']
+
+                result_item_opened['gross_cost_price'] = item['gross_cost_price']
+                result_item_opened['gross_cost_price_loc'] = item['gross_cost_price_loc']
+
+                result_item_opened['net_cost_price'] = item['net_cost_price']
+                result_item_opened['net_cost_price_loc'] = item['net_cost_price_loc']
+
+                result_item_opened['position_return'] = item['position_return']
+                result_item_opened['net_position_return'] = item['net_position_return']
+
+                result_item_opened['position_size'] = item['position_size']
+                result_item_opened['mismatch'] = item['mismatch']
+
+                result_item_opened['instrument_id'] = item['instrument_id']
+
 
                 if "portfolio_id" not in item:
                     result_item_opened['portfolio_id'] = self.ecosystem_defaults.portfolio_id
+                else:
+                    result_item_opened['portfolio_id'] = item['portfolio_id']
 
-                if "account_position__id" not in item:
+                if "account_position_id" not in item:
                     result_item_opened['account_position_id'] = self.ecosystem_defaults.account_id
+                else:
+                    result_item_opened['account_position_id'] = item['account_position_id']
 
                 if "strategy1_position_id" not in item:
                     result_item_opened['strategy1_position_id'] = self.ecosystem_defaults.strategy1_id
+                else:
+                    result_item_opened['strategy1_position_id'] = item['strategy1_position_id']
 
                 if "strategy2_position_id" not in item:
                     result_item_opened['strategy2_position_id'] = self.ecosystem_defaults.strategy2_id
+                else:
+                    result_item_opened['strategy2_position_id'] = item['strategy2_position_id']
 
                 if "strategy3_position_id" not in item:
                     result_item_opened['strategy3_position_id'] = self.ecosystem_defaults.strategy3_id
+                else:
+                    result_item_opened['strategy3_position_id'] = item['strategy3_position_id']
+
 
                 if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT:
                     result_item_opened["item_group"] = 10
@@ -2849,6 +2898,7 @@ class PLReportBuilderSql:
                     result_item_opened["item_group"] = 14
                     result_item_opened["item_group_code"] = "MISMATCH"
                     result_item_opened["item_group_name"] = "Mismatch"
+
 
 
                 result_item_opened["principal"] = item["principal_opened"]
@@ -2926,26 +2976,95 @@ class PLReportBuilderSql:
 
                 if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and has_closed_value:
 
-                    result_item_closed = item.copy()
+                    # result_item_closed = item.copy()
+                    # result_item_closed = copy.deepcopy(item)
+
+                    result_item_closed = {}
 
                     # result_item_closed['item_type'] = ITEM_INSTRUMENT
                     # result_item_closed['item_type_code'] = "INSTR"
                     # result_item_closed['item_type_name'] = "Instrument"
 
+                    result_item_closed['name'] = item['name']
+                    result_item_closed['short_name'] = item['short_name']
+                    result_item_closed['user_code'] = item['user_code']
+                    result_item_closed['item_type'] = item['item_type']
+                    result_item_closed['item_type_name'] = item['item_type_name']
+
+                    result_item_closed['market_value'] = item['market_value']
+                    result_item_closed['exposure'] = item['exposure']
+                    result_item_closed['ytm'] = item['ytm']
+                    result_item_closed['modified_duration'] = item['modified_duration']
+                    result_item_closed['time_invested'] = item['time_invested']
+
+                    result_item_closed['amount_invested'] = item['amount_invested']
+                    result_item_closed['amount_invested_loc'] = item['amount_invested_loc']
+
+                    result_item_closed['principal_invested'] = item['principal_invested']
+                    result_item_closed['principal_invested_loc'] = item['principal_invested_loc']
+
+                    result_item_closed['gross_cost_price'] = item['gross_cost_price']
+                    result_item_closed['gross_cost_price_loc'] = item['gross_cost_price_loc']
+
+                    result_item_closed['net_cost_price'] = item['net_cost_price']
+                    result_item_closed['net_cost_price_loc'] = item['net_cost_price_loc']
+
+                    result_item_closed['position_return'] = item['position_return']
+                    result_item_closed['net_position_return'] = item['net_position_return']
+
+                    result_item_closed['position_size'] = item['position_size']
+                    result_item_closed['mismatch'] = item['mismatch']
+                    result_item_closed['market_value'] = item['market_value']
+                    result_item_closed['exposure'] = item['exposure']
+                    result_item_closed['ytm'] = item['ytm']
+                    result_item_closed['modified_duration'] = item['modified_duration']
+                    result_item_closed['time_invested'] = item['time_invested']
+
+                    result_item_closed['amount_invested'] = item['amount_invested']
+                    result_item_closed['amount_invested_loc'] = item['amount_invested_loc']
+
+                    result_item_closed['principal_invested'] = item['principal_invested']
+                    result_item_closed['principal_invested_loc'] = item['principal_invested_loc']
+
+                    result_item_closed['gross_cost_price'] = item['gross_cost_price']
+                    result_item_closed['gross_cost_price_loc'] = item['gross_cost_price_loc']
+
+                    result_item_closed['net_cost_price'] = item['net_cost_price']
+                    result_item_closed['net_cost_price_loc'] = item['net_cost_price_loc']
+
+                    result_item_closed['position_return'] = item['position_return']
+                    result_item_closed['net_position_return'] = item['net_position_return']
+
+                    result_item_closed['position_size'] = item['position_size']
+                    result_item_closed['mismatch'] = item['mismatch']
+
+                    result_item_closed['instrument_id'] = item['instrument_id']
+
                     if "portfolio_id" not in item:
                         result_item_closed['portfolio_id'] = self.ecosystem_defaults.portfolio_id
+                    else:
+                        result_item_closed['portfolio_id'] = item['portfolio_id']
 
-                    if "account_position__id" not in item:
+                    if "account_position_id" not in item:
                         result_item_closed['account_position_id'] = self.ecosystem_defaults.account_id
+                    else:
+                        result_item_closed['account_position_id'] = item['account_position_id']
 
                     if "strategy1_position_id" not in item:
                         result_item_closed['strategy1_position_id'] = self.ecosystem_defaults.strategy1_id
+                    else:
+                        result_item_closed['strategy1_position_id'] = item['strategy1_position_id']
 
                     if "strategy2_position_id" not in item:
                         result_item_closed['strategy2_position_id'] = self.ecosystem_defaults.strategy2_id
+                    else:
+                        result_item_closed['strategy2_position_id'] = item['strategy2_position_id']
 
                     if "strategy3_position_id" not in item:
                         result_item_closed['strategy3_position_id'] = self.ecosystem_defaults.strategy3_id
+                    else:
+                        result_item_closed['strategy3_position_id'] = item['strategy3_position_id']
+
 
                     result_item_closed["item_group"] = 11
                     result_item_closed["item_group_code"] = "CLOSED"
@@ -2984,6 +3103,7 @@ class PLReportBuilderSql:
                     result_item_closed["carry_fixed_loc"] = item["carry_fixed_opened_loc"]
                     result_item_closed["overheads_fixed_loc"] = item["overheads_fixed_opened_loc"]
                     result_item_closed["total_fixed_loc"] = item["total_fixed_opened_loc"]
+
 
                     result.append(result_item_closed)
 
