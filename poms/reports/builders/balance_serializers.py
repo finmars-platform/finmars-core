@@ -935,16 +935,6 @@ def serialize_pl_report_item(item):
 
 
 def serialize_report_item_instrument(item):
-    # id', 'instrument_type',  'user_code', 'name', 'short_name',
-    # 'public_name', 'notes',
-    # 'pricing_currency', 'price_multiplier',
-    # 'accrued_currency',  'accrued_multiplier',
-    # 'default_price', 'default_accrued',
-    # 'user_text_1', 'user_text_2', 'user_text_3',
-    # 'reference_for_pricing',
-    # 'payment_size_detail',
-    # 'daily_pricing_model',
-    # 'maturity_date', 'maturity_price'
 
     attributes = []
 
@@ -974,6 +964,14 @@ def serialize_report_item_instrument(item):
 
         attributes.append(attr_result)
 
+    instrument_type = {
+        "id": item.instrument_type.id,
+        "name": item.instrument_type.name,
+        "user_code": item.instrument_type.user_code,
+        "short_name": item.instrument_type.short_name
+    }
+
+
     result = {
         "id": item.id,
         "name": item.name,
@@ -992,7 +990,9 @@ def serialize_report_item_instrument(item):
         "reference_for_pricing": item.reference_for_pricing,
         "payment_size_detail": item.payment_size_detail_id,
         "maturity_date": item.maturity_date,
-        "attributes": attributes
+        "attributes": attributes,
+        "instrument_type": item.instrument_type.id,
+        "instrument_type_object": instrument_type
     }
 
     return result
@@ -1140,6 +1140,13 @@ def serialize_price_checker_item_instrument(item):
 
         pricing_policies.append(policy_result)
 
+    instrument_type = {
+        "id": item.instrument_type.id,
+        "name": item.instrument_type.name,
+        "user_code": item.instrument_type.user_code,
+        "short_name": item.instrument_type.short_name
+    }
+
     result = {
         "id": item.id,
         "name": item.name,
@@ -1160,6 +1167,9 @@ def serialize_price_checker_item_instrument(item):
         "maturity_date": item.maturity_date,
         "attributes": attributes,
         "pricing_policies": pricing_policies,
+        "instrument_type": item.instrument_type.id,
+        "instrument_type_object": instrument_type
+
     }
 
     return result

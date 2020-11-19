@@ -5,7 +5,7 @@ from django.db import connection
 
 from poms.accounts.models import Account
 from poms.currencies.models import Currency, CurrencyHistory
-from poms.instruments.models import Instrument, CostMethod
+from poms.instruments.models import Instrument, CostMethod, InstrumentType
 from poms.portfolios.models import Portfolio
 from poms.reports.builders.balance_item import Report
 from poms.reports.builders.base_builder import BaseReportBuilder
@@ -285,11 +285,12 @@ class PLReportBuilderSql:
                         from avco_rolling
                                  left join
                             -- вычисляем границы групп (где меняется знак кумулятивный, либо 0)
-                             (select tt_in1.instrument_id, max(tt_in1.rn_total) as group_border
+                             (select 
+                                {tt_in1_consolidation_columns}
+                                tt_in1.instrument_id, max(tt_in1.rn_total) as group_border
                               from avco_rolling tt_in1
-                              --where (tt_in1.rolling_position_size = 0 or tt_in1.rolling_position_size * tt_in1.rolling_position_size_prev < 0)
                               where (tt_in1.rolling_position_size * tt_in1.rolling_position_size_prev <= 0)
-                              group by tt_in1.instrument_id) as tt1 using (instrument_id)
+                              group by {tt_in1_consolidation_columns} tt_in1.instrument_id) as tt1 using ({consolidation_columns} instrument_id)
                         where rn_total > group_border
                            or rn_total = group_border
                         ) as tt_mult_coef
@@ -326,13 +327,14 @@ class PLReportBuilderSql:
           from avco_rolling
           left join
               (select 
+                    {tt_in1_consolidation_columns}
                     tt_in1.instrument_id, 
                     max(tt_in1.rn_total) as group_border
                       from avco_rolling tt_in1
                       where (tt_in1.rolling_position_size * tt_in1.rolling_position_size_prev <= 0)
-                      group by tt_in1.instrument_id) as tt1 using (instrument_id)
+                      group by {tt_in1_consolidation_columns} tt_in1.instrument_id) as tt1 using ({consolidation_columns} instrument_id)
           where rn_total < group_border
-          order by instrument_id asc,rn_total desc
+          order by {consolidation_columns} instrument_id asc,rn_total desc
         ),
         """
 
@@ -2596,6 +2598,7 @@ class PLReportBuilderSql:
             prefix="tt_w_m.", prefix_second="t_o.")
         consolidation_columns = get_position_consolidation_for_select(self.instance)
         tt_consolidation_columns = get_position_consolidation_for_select(self.instance, prefix="tt.")
+        tt_in1_consolidation_columns = get_position_consolidation_for_select(self.instance, prefix="tt_in1.")
 
         query = self.get_source_query(cost_method=self.instance.cost_method.id)
 
@@ -2609,6 +2612,7 @@ class PLReportBuilderSql:
                              fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
                              consolidation_columns=consolidation_columns,
                              tt_consolidation_columns=tt_consolidation_columns,
+                             tt_in1_consolidation_columns=tt_in1_consolidation_columns,
                              transactions_all_with_multipliers_where_expression=transactions_all_with_multipliers_where_expression,
                              filter_query_for_balance_in_multipliers_table=''
                              )
@@ -2631,6 +2635,8 @@ class PLReportBuilderSql:
         tt_consolidation_columns = get_position_consolidation_for_select(self.instance,
                                                                          prefix="tt.")
 
+        tt_in1_consolidation_columns = get_position_consolidation_for_select(self.instance, prefix="tt_in1.")
+
         query = self.get_source_query(cost_method=self.instance.cost_method.id)
 
         query = query.format(report_date=self.instance.report_date,
@@ -2643,6 +2649,7 @@ class PLReportBuilderSql:
                              fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
                              consolidation_columns=consolidation_columns,
                              tt_consolidation_columns=tt_consolidation_columns,
+                             tt_in1_consolidation_columns=tt_in1_consolidation_columns,
                              transactions_all_with_multipliers_where_expression=transactions_all_with_multipliers_where_expression,
                              filter_query_for_balance_in_multipliers_table=''
                              )
@@ -3028,6 +3035,20 @@ class PLReportBuilderSql:
         ).filter(master_user=self.instance.master_user) \
             .filter(id__in=ids)
 
+    def add_data_items_instrument_types(self, instruments):
+
+        ids = []
+
+        for instrument in instruments:
+            ids.append(instrument.instrument_type_id)
+
+        self.instance.item_instrument_types = InstrumentType.objects.prefetch_related(
+            'attributes',
+            'attributes__attribute_type',
+            'attributes__classifier',
+        ).filter(master_user=self.instance.master_user) \
+            .filter(id__in=ids)
+
     def add_data_items_portfolios(self, ids):
 
         self.instance.item_portfolios = Portfolio.objects.prefetch_related(
@@ -3095,6 +3116,7 @@ class PLReportBuilderSql:
         _l.debug('len instrument_ids %s' % len(instrument_ids))
 
         self.add_data_items_instruments(instrument_ids)
+        self.add_data_items_instrument_types(self.instance.item_instruments)
         self.add_data_items_portfolios(portfolio_ids)
         self.add_data_items_accounts(account_ids)
         self.add_data_items_currencies(currencies_ids)

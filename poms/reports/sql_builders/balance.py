@@ -5,7 +5,7 @@ from django.db import connection
 
 from poms.accounts.models import Account
 from poms.currencies.models import Currency
-from poms.instruments.models import Instrument
+from poms.instruments.models import Instrument, InstrumentType
 from poms.portfolios.models import Portfolio
 from poms.reports.builders.balance_item import Report
 from poms.reports.builders.base_builder import BaseReportBuilder
@@ -66,6 +66,7 @@ class BalanceReportBuilderSql:
                                                                                                                  prefix="tt_w_m.", prefix_second="t_o.")
             consolidation_columns = get_position_consolidation_for_select(self.instance)
             tt_consolidation_columns = get_position_consolidation_for_select(self.instance, prefix="tt.")
+            tt_in1_consolidation_columns = get_position_consolidation_for_select(self.instance, prefix="tt_in1.")
             balance_q_consolidated_select_columns = get_position_consolidation_for_select(self.instance, prefix="balance_q.")
             pl_left_join_consolidation = get_pl_left_join_consolidation(self.instance)
             fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
@@ -81,6 +82,7 @@ class BalanceReportBuilderSql:
             _l.debug('consolidation_columns: "%s"' % consolidation_columns)
             _l.debug('balance_q_consolidated_select_columns: "%s"' % balance_q_consolidated_select_columns)
             _l.debug('tt_consolidation_columns: "%s"' % tt_consolidation_columns)
+            _l.debug('tt_in1_consolidation_columns: "%s"' % tt_in1_consolidation_columns)
             _l.debug('transactions_all_with_multipliers_where_expression: "%s"' % transactions_all_with_multipliers_where_expression)
 
             pl_query = pl_query.format(report_date=self.instance.report_date,
@@ -94,6 +96,7 @@ class BalanceReportBuilderSql:
                                        consolidation_columns=consolidation_columns,
                                        balance_q_consolidated_select_columns=balance_q_consolidated_select_columns,
                                        tt_consolidation_columns=tt_consolidation_columns,
+                                       tt_in1_consolidation_columns=tt_in1_consolidation_columns,
                                        transactions_all_with_multipliers_where_expression=transactions_all_with_multipliers_where_expression,
                                        filter_query_for_balance_in_multipliers_table='')
             # filter_query_for_balance_in_multipliers_table=' where multiplier = 1') # TODO ask for right where expression
@@ -1167,6 +1170,23 @@ class BalanceReportBuilderSql:
         ).filter(master_user=self.instance.master_user) \
             .filter(id__in=ids)
 
+    def add_data_items_instrument_types(self, instruments):
+
+        ids = []
+
+        for instrument in instruments:
+            ids.append(instrument.instrument_type_id)
+
+        print('add_data_items_instrument_types %s' % ids)
+
+        self.instance.item_instrument_types = InstrumentType.objects.prefetch_related(
+            'attributes',
+            'attributes__attribute_type',
+            'attributes__classifier',
+        ).filter(master_user=self.instance.master_user) \
+            .filter(id__in=ids)
+
+
     def add_data_items_portfolios(self, ids):
 
         self.instance.item_portfolios = Portfolio.objects.prefetch_related(
@@ -1232,6 +1252,8 @@ class BalanceReportBuilderSql:
         self.add_data_items_portfolios(portfolio_ids)
         self.add_data_items_accounts(account_ids)
         self.add_data_items_currencies(currencies_ids)
+
+        self.add_data_items_instrument_types(self.instance.item_instruments)
 
         self.instance.custom_fields = BalanceReportCustomField.objects.filter(master_user=self.instance.master_user)
 
