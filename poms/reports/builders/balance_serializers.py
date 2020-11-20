@@ -584,7 +584,8 @@ class ReportSerializer(ReportSerializerWithLogs):
 
                 custom_fields_names = {}
 
-                for i in range(5):
+                # for i in range(5):
+                for i in range(2):
 
                     for cf in custom_fields:
                         expr = cf['expr']

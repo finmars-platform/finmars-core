@@ -215,7 +215,8 @@ class TransactionReportSerializer(serializers.Serializer):
 
                 custom_fields_names = {}
 
-                for i in range(5):
+                # for i in range(5):
+                for i in range(2):
 
                     for cf in custom_fields:
                         expr = cf['expr']
@@ -493,7 +494,8 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
 
                 custom_fields_names = {}
 
-                for i in range(5):
+                # for i in range(5):
+                for i in range(2):
 
                     for cf in custom_fields:
                         expr = cf['expr']
