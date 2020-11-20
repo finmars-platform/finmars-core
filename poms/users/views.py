@@ -653,6 +653,7 @@ class OtpTokenViewSet(AbstractModelViewSet):
         result = False
 
         user = None
+        id = None
 
         try:
             user = User.objects.get(username=username)
@@ -661,6 +662,7 @@ class OtpTokenViewSet(AbstractModelViewSet):
 
         try:
             token = OtpToken.objects.get(user=user)
+            id = token.id
 
             totp = pyotp.TOTP(token.secret)
 
@@ -673,7 +675,7 @@ class OtpTokenViewSet(AbstractModelViewSet):
         if result:
             login(request, user)
 
-        return Response({'match': result})
+        return Response({'match': result, "id": id})
 
 class EcosystemDefaultViewSet(AbstractModelViewSet):
     queryset = EcosystemDefault.objects.select_related(
