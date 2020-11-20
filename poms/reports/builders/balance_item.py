@@ -2162,6 +2162,7 @@ class Report(BaseReport):
                  transaction_classes=None,
                  date_field=None,
                  custom_fields=None,
+                 custom_fields_to_calculate=None,
                  items=None):
         super(Report, self).__init__(id=id, master_user=master_user, member=member,
                                      task_id=task_id, task_status=task_status)
@@ -2218,6 +2219,7 @@ class Report(BaseReport):
                 self.date_field = 'transaction_date'
 
         self.custom_fields = custom_fields or []
+        self.custom_fields_to_calculate = custom_fields_to_calculate or ''
 
         self.items = items or []
         self.transactions = []

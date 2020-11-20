@@ -172,21 +172,24 @@ class PerformanceReportSerializer(serializers.Serializer):
                 for i in range(2):
 
                     for cf in custom_fields:
-                        expr = cf['expr']
 
-                        if expr:
-                            try:
-                                value = formula.safe_eval(expr, names=names, context=self.context)
-                            except formula.InvalidExpression:
-                                value = ugettext('Invalid expression')
-                        else:
-                            value = None
+                        if cf["name"] in data["custom_fields_to_calculate"]:
 
-                        if not cf['user_code'] in custom_fields_names:
-                            custom_fields_names[cf['user_code']] = value
-                        else:
-                            if custom_fields_names[cf['user_code']] == None or custom_fields_names[cf['user_code']] == ugettext('Invalid expression'):
+                            expr = cf['expr']
+
+                            if expr:
+                                try:
+                                    value = formula.safe_eval(expr, names=names, context=self.context)
+                                except formula.InvalidExpression:
+                                    value = ugettext('Invalid expression')
+                            else:
+                                value = None
+
+                            if not cf['user_code'] in custom_fields_names:
                                 custom_fields_names[cf['user_code']] = value
+                            else:
+                                if custom_fields_names[cf['user_code']] == None or custom_fields_names[cf['user_code']] == ugettext('Invalid expression'):
+                                    custom_fields_names[cf['user_code']] = value
 
                     names['custom_fields'] = custom_fields_names
 

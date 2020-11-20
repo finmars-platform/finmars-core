@@ -405,6 +405,8 @@ class ReportSerializer(ReportSerializerWithLogs):
 
     custom_fields = BalanceReportCustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
 
+    custom_fields_to_calculate = serializers.CharField( allow_null=True, allow_blank=True, required=False)
+
     portfolios = PortfolioField(many=True, required=False, allow_null=True, allow_empty=True)
     accounts = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
     accounts_position = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
@@ -516,6 +518,8 @@ class ReportSerializer(ReportSerializerWithLogs):
         _l.debug('ReportSerializer to_representation_st done: %s' % "{:3.3f}".format(
             time.perf_counter() - to_representation_st))
 
+        _l.debug('data["custom_fields_to_calculate"] %s' % data["custom_fields_to_calculate"])
+
         st = time.perf_counter()
 
         custom_fields = data['custom_fields_object']
@@ -584,28 +588,33 @@ class ReportSerializer(ReportSerializerWithLogs):
 
                 custom_fields_names = {}
 
+                # data["custom_fields_to_calculate"] = 'custom_fields.Currency_asset'
+
                 # for i in range(5):
                 for i in range(2):
 
                     for cf in custom_fields:
-                        expr = cf['expr']
 
-                        if expr:
+                        if cf["name"] in data["custom_fields_to_calculate"]:
 
-                            try:
-                                value = formula.safe_eval(expr, names=names, context=self.context)
-                            except formula.InvalidExpression as e:
-                                # _l.debug('error %s' % e)
-                                value = ugettext('Invalid expression')
-                        else:
-                            value = None
+                            expr = cf['expr']
 
-                        if not cf['user_code'] in custom_fields_names:
-                            custom_fields_names[cf['user_code']] = value
-                        else:
-                            if custom_fields_names[cf['user_code']] == None or custom_fields_names[
-                                cf['user_code']] == ugettext('Invalid expression'):
+                            if expr:
+
+                                try:
+                                    value = formula.safe_eval(expr, names=names, context=self.context)
+                                except formula.InvalidExpression as e:
+                                    # _l.debug('error %s' % e)
+                                    value = ugettext('Invalid expression')
+                            else:
+                                value = None
+
+                            if not cf['user_code'] in custom_fields_names:
                                 custom_fields_names[cf['user_code']] = value
+                            else:
+                                if custom_fields_names[cf['user_code']] == None or custom_fields_names[
+                                    cf['user_code']] == ugettext('Invalid expression'):
+                                    custom_fields_names[cf['user_code']] = value
 
                     names['custom_fields'] = custom_fields_names
 
