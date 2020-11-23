@@ -1098,14 +1098,20 @@ class PriceHistory(CachingMixin, DataTimeStampedModel):
 
         # TODO make readable exception if currency history is missng
 
-        self.instr_accrued_ccy_cur_fx = CurrencyHistory.objects.get(date=self.date, currency=self.instrument.accrued_currency).fx_rate
-        self.instr_pricing_ccy_cur_fx = CurrencyHistory.objects.get(date=self.date, currency=self.instrument.pricing_currency).fx_rate
+        try:
 
-        self.ytm = self.calculate_ytm(self.date)
-        self.modified_duration = self.calculate_duration(self.date)
+            self.instr_accrued_ccy_cur_fx = CurrencyHistory.objects.get(date=self.date, currency=self.instrument.accrued_currency).fx_rate
+            self.instr_pricing_ccy_cur_fx = CurrencyHistory.objects.get(date=self.date, currency=self.instrument.pricing_currency).fx_rate
 
-        _l.debug('self.ytm %s' % self.ytm)
-        _l.debug('self.modified_duration %s' % self.modified_duration)
+            self.ytm = self.calculate_ytm(self.date)
+            self.modified_duration = self.calculate_duration(self.date)
+
+            _l.debug('self.ytm %s' % self.ytm)
+            _l.debug('self.modified_duration %s' % self.modified_duration)
+
+        except Exception as error:
+
+            _l.debug('Price History save error %s' % error)
 
         super(PriceHistory, self).save(*args, **kwargs)
 
