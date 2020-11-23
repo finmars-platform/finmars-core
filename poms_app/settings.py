@@ -685,11 +685,12 @@ print('SFTP_STORAGE_ROOT %s' % SFTP_STORAGE_ROOT)
 SFTP_STORAGE_PARAMS = {
     'username': os.environ.get('SFTP_USERNAME', None),
     'password': os.environ.get('SFTP_PASSWORD', None),
-    'key_filename': SFTP_PKEY_PATH,
     'port': os.environ.get('SFTP_PORT', 22),
     'allow_agent': False,
     'look_for_keys': False,
 }
+if SFTP_PKEY_PATH:
+    SFTP_STORAGE_PARAMS['key_filename'] = SFTP_PKEY_PATH
 
 SFTP_STORAGE_INTERACTIVE = False
 
