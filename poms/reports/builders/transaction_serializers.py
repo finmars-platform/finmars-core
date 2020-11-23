@@ -71,6 +71,8 @@ class TransactionReportItemSerializer(serializers.Serializer):
 
     custom_fields = ReportItemTransactionReportCustomFieldSerializer(many=True, read_only=True)
 
+    custom_fields_to_calculate = serializers.CharField(default='', allow_null=True, allow_blank=True, required=False)
+
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('read_only', True)
 
@@ -377,6 +379,7 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
     # custom_fields = CustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
 
     custom_fields = TransactionReportCustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
+    custom_fields_to_calculate = serializers.CharField(default='', allow_null=True, allow_blank=True, required=False)
 
     portfolios_object = PortfolioViewSerializer(source='portfolios', read_only=True, many=True)
     accounts_object = AccountViewSerializer(source='accounts', read_only=True, many=True)
@@ -387,6 +390,7 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
     strategies3_object = Strategy3ViewSerializer(source='strategies3', read_only=True, many=True)
 
     custom_fields_object = TransactionReportCustomFieldSerializer(source='custom_fields', read_only=True, many=True)
+
 
     items = serializers.SerializerMethodField()
     item_transaction_classes = TransactionClassSerializer(many=True, read_only=True)
