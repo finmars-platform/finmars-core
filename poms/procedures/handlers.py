@@ -3,6 +3,7 @@ from django.conf import settings
 
 from poms.common import formula
 from poms.common.crypto.RSACipher import RSACipher
+from poms.credentials.models import Credentials
 
 from poms.integrations.models import TransactionFileResult
 
@@ -98,14 +99,48 @@ class RequestDataFileProcedureProcess(object):
 
             if self.procedure.data:
 
-                if 'sender' in self.procedure.data and self.procedure.data['sender']:
-                    params['sender'] = self.procedure.data['sender']
+                if self.procedure.provider.user_code == 'email_provider':
 
-                if 'filename' in self.procedure.data and self.procedure.data['filename']:
-                    params['filename'] = self.procedure.data['filename']
+                    if 'sender' in self.procedure.data and self.procedure.data['sender']:
+                        params['sender'] = self.procedure.data['sender']
 
-                if 'subject' in self.procedure.data and self.procedure.data['subject']:
-                    params['subject'] = self.procedure.data['subject']
+                    if 'filename' in self.procedure.data and self.procedure.data['filename']:
+                        params['filename'] = self.procedure.data['filename']
+
+                    if 'subject' in self.procedure.data and self.procedure.data['subject']:
+                        params['subject'] = self.procedure.data['subject']
+
+                if self.procedure.provider.user_code == 'julius_baer':
+
+                    try:
+
+                        credentials = Credentials.objects.get(master_user=self.master_user, provider=self.procedure.provider)
+
+                        params['sftpuser'] = credentials.username
+                        params['sftpkeypath'] = credentials.path_to_private_key
+
+                    except Exception as error:
+                        send_system_message(master_user=self.master_user,
+                                            source="Data File Procedure Service",
+                                            text="Can't configure Julius Baer Provider")
+
+                if self.procedure.provider.user_code == 'lombard_odier':
+
+                    try:
+
+                        credentials = Credentials.objects.get(master_user=self.master_user, provider=self.procedure.provider)
+
+                        params['sftpuser'] = credentials.username
+                        params['sftppassword'] = credentials.password
+
+                        if 'archivepassword' in self.procedure.data and self.procedure.data['archivepassword']:
+                            params['archivepassword'] = self.procedure.data['archivepassword']
+
+                    except Exception as error:
+                        send_system_message(master_user=self.master_user,
+                                        source="Data File Procedure Service",
+                                        text="Can't configure Lombard Odier Provider")
+
 
                 if 'hasNoDelete' in self.procedure.data:
 

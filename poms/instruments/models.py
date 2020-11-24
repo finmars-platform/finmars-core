@@ -1100,8 +1100,15 @@ class PriceHistory(CachingMixin, DataTimeStampedModel):
 
         try:
 
-            self.instr_accrued_ccy_cur_fx = CurrencyHistory.objects.get(date=self.date, currency=self.instrument.accrued_currency).fx_rate
-            self.instr_pricing_ccy_cur_fx = CurrencyHistory.objects.get(date=self.date, currency=self.instrument.pricing_currency).fx_rate
+            if self.instrument.master_user.system_currency_id == self.instrument.accrued_currency_id:
+                self.instr_accrued_ccy_cur_fx = 1
+            else:
+                self.instr_accrued_ccy_cur_fx = CurrencyHistory.objects.get(date=self.date, currency=self.instrument.accrued_currency).fx_rate
+
+            if self.instrument.master_user.system_currency_id == self.instrument.pricing_currency_id:
+                self.instr_pricing_ccy_cur_fx = 1
+            else:
+                self.instr_pricing_ccy_cur_fx = CurrencyHistory.objects.get(date=self.date, currency=self.instrument.pricing_currency).fx_rate
 
             self.ytm = self.calculate_ytm(self.date)
             self.modified_duration = self.calculate_duration(self.date)

@@ -26,4 +26,8 @@ class Credentials(NamedModel, DataTimeStampedModel):
 
     username = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('username'))
     password = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('password'))
-    key = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('key'))
+    public_key = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('public key'))
+    path_to_public_key = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('Path to public key'))
+
+    private_key = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('private key'))
+    path_to_private_key = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('Path to private key'))

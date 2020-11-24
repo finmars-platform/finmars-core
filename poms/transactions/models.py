@@ -31,6 +31,9 @@ from poms.common.formula_accruals import f_xirr
 from math import isnan, copysign
 from poms.common.utils import isclose
 
+import logging
+_l = logging.getLogger('poms.transactions')
+
 
 class TransactionClass(CachingMixin, AbstractClassModel):
     BUY = 1
@@ -1620,6 +1623,10 @@ class Transaction(models.Model):
     def is_cash_outflow(self):
         return self.transaction_class_id == TransactionClass.CASH_OUTFLOW
 
+    def get_instr_ytm_data_d0_v0(self, dt):
+        return dt, -(
+                self.trade_price * self.instrument.price_multiplier * self.instrument.get_factor(dt))
+
     def get_instr_ytm_data(self, dt):
         if hasattr(self, '_instr_ytm_data'):
             return self._instr_ytm_data
@@ -1684,6 +1691,16 @@ class Transaction(models.Model):
 
     def calculate_ytm(self):
 
+        if self.master_user.system_currency_id == self.instrument.accrued_currency_id:
+            self.instr_accrued_ccy_cur_fx = 1
+        else:
+            self.instr_accrued_ccy_cur_fx = CurrencyHistory.objects.get(date=self.accounting_date, currency=self.instrument.accrued_currency).fx_rate
+
+        if self.master_user.system_currency_id == self.instrument.pricing_currency_id:
+            self.instr_pricing_ccy_cur_fx = 1
+        else:
+            self.instr_pricing_ccy_cur_fx = CurrencyHistory.objects.get(date=self.accounting_date, currency=self.instrument.pricing_currency).fx_rate
+
         dt = self.accounting_date
 
         if self.instrument.maturity_date is None or self.instrument.maturity_date == date.max:
@@ -1729,7 +1746,10 @@ class Transaction(models.Model):
             else:
                 self.transaction_code = self.complex_transaction.code + self.complex_transaction_order
 
-        # self.ytm = self.calculate_ytm()
+        try:
+            self.ytm = self.calculate_ytm()
+        except Exception as error:
+            _l.debug("Cant calculate transaction ytm %s" % error)
 
         super(Transaction, self).save(*args, **kwargs)
 
