@@ -169,6 +169,12 @@ class RequestDataFileProcedureProcess(object):
                 "error_message": ""
             }
 
+            if self.procedure.date_from:
+                data["date_from"] = self.procedure.date_from
+
+            if self.procedure.date_to:
+                data["date_to"] = self.procedure.date_to
+
             _l.debug("Executing procedure_request_data_file")
             procedure_request_data_file.apply_async(kwargs={
                                                             'master_user': self.master_user,
