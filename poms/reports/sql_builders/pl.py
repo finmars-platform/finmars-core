@@ -136,6 +136,7 @@ class PLReportBuilderSql:
                    settlement_currency_id,
                    
                    reference_fx_rate,
+                   transaction_ytm,
                    
                    ('{report_date}'::date - accounting_date::date) as day_delta,
                    
@@ -169,6 +170,7 @@ class PLReportBuilderSql:
                         settlement_currency_id,
                          
                         reference_fx_rate,
+                        transaction_ytm,
                          
                          sum(position_size_with_sign)
                              over (partition by instrument_id, {consolidation_columns} ttype order by rn) as rolling_position_size,
@@ -214,6 +216,7 @@ class PLReportBuilderSql:
                settlement_currency_id,
                
                reference_fx_rate,
+               transaction_ytm,
               
                sum(position_size_with_sign) over (partition by {consolidation_columns} instrument_id  order by rn_total) as rolling_position_size,
                sum(position_size_with_sign) over (partition by {consolidation_columns} instrument_id  order by rn_total)-position_size_with_sign as rolling_position_size_prev
@@ -241,6 +244,7 @@ class PLReportBuilderSql:
            settlement_currency_id,
            
            reference_fx_rate,
+           transaction_ytm,
            
            ('{report_date}'::date - accounting_date::date) as day_delta,
   
@@ -320,6 +324,7 @@ class PLReportBuilderSql:
            settlement_currency_id,
            
            reference_fx_rate,
+           transaction_ytm,
            
            ('{report_date}'::date - accounting_date::date) as day_delta, 
 
@@ -381,6 +386,7 @@ class PLReportBuilderSql:
                    tt.settlement_currency_id,
                    
                    tt.reference_fx_rate,
+                   tt.transaction_ytm,
                    
                    buy_tr.buy_positions_total_size,
                    sell_tr.sell_positions_total_size
@@ -399,6 +405,7 @@ class PLReportBuilderSql:
                          settlement_currency_id,
                          
                          reference_fx_rate,
+                         (ytm) as transaction_ytm, -- Very important! Just not to be confused between price history ytm and transaction ytm
                          
                          ttype
                          from pl_transactions_with_ttype_filtered 
@@ -495,6 +502,7 @@ class PLReportBuilderSql:
                         settlement_currency_id,
                         
                         reference_fx_rate,
+                        transaction_ytm,
                         
         
                         case 
@@ -558,6 +566,7 @@ class PLReportBuilderSql:
                        settlement_currency_id,
                        
                        reference_fx_rate,
+                       transaction_ytm,
                        
                        multiplier
                         
@@ -587,6 +596,7 @@ class PLReportBuilderSql:
                    settlement_currency_id,
                    
                    reference_fx_rate,
+                   transaction_ytm,
                    
                    
                    /*
@@ -884,8 +894,13 @@ class PLReportBuilderSql:
                     
                     ytm,
                     modified_duration,
-                    (0) as ytm_at_cost,
-                    (0) as return_annually,
+                    ytm_at_cost,
+
+                    case
+                        when time_invested != 0
+                        then (position_return / time_invested)
+                        else 0
+                    end as return_annually,
                     
                     market_value,
                     exposure,
@@ -995,6 +1010,7 @@ class PLReportBuilderSql:
                         
                         ytm,
                         modified_duration,
+                        ytm_at_cost,
     
     
                         principal_closed,
@@ -1079,6 +1095,13 @@ class PLReportBuilderSql:
                             
                             i.ytm,
                             i.modified_duration,
+                            
+                            case
+                                when position_size != 0
+                                then ytm_at_cost / position_size
+                                else 0
+                            end as ytm_at_cost,
+                            
                             rep_cur_fx,
                             (rep_cur_fx/i.prc_cur_fx) cross_loc_prc_fx,
         
@@ -1186,7 +1209,8 @@ class PLReportBuilderSql:
                                 
                                 SUM(principal_fixed_closed)                                             as principal_fixed_closed,
                                 SUM(carry_fixed_closed)                                                 as carry_fixed_closed,
-                                SUM(overheads_fixed_closed)                                             as overheads_fixed_closed
+                                SUM(overheads_fixed_closed)                                             as overheads_fixed_closed,
+                                SUM(ytm_at_cost)                                             as ytm_at_cost
         
                             from (
                                 select 
@@ -1254,7 +1278,10 @@ class PLReportBuilderSql:
                                     SUM(carry_with_sign_invested * (multiplier) *trn_hist_fx / rep_hist_fx)                 as carry_fixed_closed,
                                     SUM(overheads_with_sign_invested * (multiplier) *trn_hist_fx / rep_hist_fx)             as overheads_fixed_closed,
         
-                                    SUM(day_delta * position_size_with_sign * (1-multiplier))   as time_invested 
+                                    SUM(day_delta * position_size_with_sign * (1-multiplier))   as time_invested, 
+                                    SUM(transaction_ytm * position_size_with_sign * (1-multiplier))   as ytm_at_cost
+                                    
+                                    
                                 from 
                                     transactions_unioned_table tut
                                 where accounting_date <= '{report_date}'
@@ -2606,7 +2633,7 @@ class PLReportBuilderSql:
 
         query = query.format(report_date=self.instance.pl_first_date,
                              master_user_id=self.instance.master_user.id,
-                             default_currency_id=self.ecosystem_defaults.currency_id,
+                             default_currency_id=self.instance.master_user.system_currency_id,
                              report_currency_id=self.instance.report_currency.id,
                              pricing_policy_id=self.instance.pricing_policy.id,
                              report_fx_rate=report_fx_rate,
@@ -2643,7 +2670,7 @@ class PLReportBuilderSql:
 
         query = query.format(report_date=self.instance.report_date,
                              master_user_id=self.instance.master_user.id,
-                             default_currency_id=self.ecosystem_defaults.currency_id,
+                             default_currency_id=self.instance.master_user.system_currency_id,
                              report_currency_id=self.instance.report_currency.id,
                              pricing_policy_id=self.instance.pricing_policy.id,
                              report_fx_rate=report_fx_rate,
@@ -2705,6 +2732,8 @@ class PLReportBuilderSql:
                             
                             (q2.ytm) as ytm,
                             (q2.modified_duration) as modified_duration,
+                            (q2.ytm_at_cost) as ytm_at_cost,
+                            (q2.return_annually) as return_annually,
                             
                             (q2.market_value) as market_value,
                             (q2.exposure) as exposure,

@@ -46,6 +46,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
     value_type = str(filter_config['value_type'])
     value = None
 
+
     exclude_empty_cells = filter_config['exclude_empty_cells']
 
     source_key = filter_config['key']

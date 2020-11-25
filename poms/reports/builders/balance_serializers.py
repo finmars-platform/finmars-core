@@ -754,6 +754,7 @@ def serialize_balance_report_item(item):
     result["ytm"] = item["ytm"]
     result["ytm_at_cost"] = item["ytm_at_cost"]
     result["modified_duration"] = item["modified_duration"]
+    result["return_annually"] = item["return_annually"]
 
     result["position_return"] = item["position_return"]
     result["net_position_return"] = item["net_position_return"]

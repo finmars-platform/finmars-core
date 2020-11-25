@@ -403,7 +403,7 @@ def execute_nav_sql(instance, cursor, ecosystem_defaults):
 
     query = query.format(report_date=instance.report_date,
                          master_user_id=instance.master_user.id,
-                         default_currency_id=ecosystem_defaults.currency_id,
+                         default_currency_id=instance.master_user.system_currency_id,
                          report_currency_id=instance.report_currency.id,
                          pricing_policy_id=instance.pricing_policy.id,
 
@@ -581,7 +581,7 @@ def execute_transaction_prices_sql(instance, cursor, ecosystem_defaults):
 
     query = query.format(report_date=instance.report_date,
                          master_user_id=instance.master_user.id,
-                         default_currency_id=ecosystem_defaults.currency_id,
+                         default_currency_id=instance.master_user.system_currency_id,
                          report_currency_id=instance.report_currency.id,
                          pricing_policy_id=instance.pricing_policy.id,
 

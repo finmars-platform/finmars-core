@@ -1691,15 +1691,20 @@ class Transaction(models.Model):
 
     def calculate_ytm(self):
 
-        if self.master_user.system_currency_id == self.instrument.accrued_currency_id:
+        if self.instrument.accrued_currency_id == self.instrument.pricing_currency_id:
             self.instr_accrued_ccy_cur_fx = 1
-        else:
-            self.instr_accrued_ccy_cur_fx = CurrencyHistory.objects.get(date=self.accounting_date, currency=self.instrument.accrued_currency).fx_rate
-
-        if self.master_user.system_currency_id == self.instrument.pricing_currency_id:
             self.instr_pricing_ccy_cur_fx = 1
         else:
-            self.instr_pricing_ccy_cur_fx = CurrencyHistory.objects.get(date=self.accounting_date, currency=self.instrument.pricing_currency).fx_rate
+
+            if self.master_user.system_currency_id == self.instrument.accrued_currency_id:
+                self.instr_accrued_ccy_cur_fx = 1
+            else:
+                self.instr_accrued_ccy_cur_fx = CurrencyHistory.objects.get(date=self.accounting_date, currency=self.instrument.accrued_currency).fx_rate
+
+            if self.master_user.system_currency_id == self.instrument.pricing_currency_id:
+                self.instr_pricing_ccy_cur_fx = 1
+            else:
+                self.instr_pricing_ccy_cur_fx = CurrencyHistory.objects.get(date=self.accounting_date, currency=self.instrument.pricing_currency).fx_rate
 
         dt = self.accounting_date
 
