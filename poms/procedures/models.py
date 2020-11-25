@@ -289,14 +289,14 @@ class RequestDataFileProcedure(BaseProcedure):
 
     scheme_name = models.CharField(max_length=255)
 
-    price_date_from = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price date from'))
+    date_from = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price date from'))
 
-    price_date_from_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+    date_from_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                             verbose_name=ugettext_lazy('price date from expr'))
 
-    price_date_to = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price date to'))
+    date_to = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price date to'))
 
-    price_date_to_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+    date_to_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                           verbose_name=ugettext_lazy('price date to expr'))
 
 
