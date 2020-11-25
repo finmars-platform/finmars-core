@@ -170,10 +170,10 @@ class RequestDataFileProcedureProcess(object):
             }
 
             if self.procedure.date_from:
-                data["date_from"] = self.procedure.date_from
+                data["date_from"] = str(self.procedure.date_from)
 
             if self.procedure.date_to:
-                data["date_to"] = self.procedure.date_to
+                data["date_to"] = str(self.procedure.date_to)
 
             _l.debug("Executing procedure_request_data_file")
             procedure_request_data_file.apply_async(kwargs={
