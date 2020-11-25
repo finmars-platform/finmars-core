@@ -36,17 +36,17 @@ class RequestDataFileProcedureProcess(object):
 
     def execute_procedure_date_expressions(self):
 
-        if self.procedure.price_date_from_expr:
+        if self.procedure.date_from_expr:
             try:
-                self.procedure.price_date_from = formula.safe_eval(self.procedure.price_date_from_expr, names={})
+                self.procedure.date_from = formula.safe_eval(self.procedure.date_from_expr, names={})
             except formula.InvalidExpression as e:
-                _l.debug("Cant execute price date from expression %s " % e)
+                _l.debug("Cant execute date from expression %s " % e)
 
-        if self.procedure.price_date_to_expr:
+        if self.procedure.date_to_expr:
             try:
-                self.procedure.price_date_to = formula.safe_eval(self.procedure.price_date_to_expr, names={})
+                self.procedure.date_to = formula.safe_eval(self.procedure.date_to_expr, names={})
             except formula.InvalidExpression as e:
-                _l.debug("Cant execute price date to expression %s " % e)
+                _l.debug("Cant execute date to expression %s " % e)
 
     def process(self):
 
