@@ -1753,6 +1753,9 @@ class Transaction(models.Model):
         except Exception as error:
             _l.debug("Cant calculate transaction ytm_at_cost %s" % error)
 
+        if self.ytm_at_cost is None:
+            self.ytm_at_cost = 0
+
         super(Transaction, self).save(*args, **kwargs)
 
         if calc_cash:
