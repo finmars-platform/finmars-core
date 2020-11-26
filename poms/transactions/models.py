@@ -1569,9 +1569,6 @@ class Transaction(models.Model):
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
 
-
-    ytm = models.FloatField(default=0.0, verbose_name=ugettext_lazy("ytm"))
-
     class Meta:
         verbose_name = ugettext_lazy('transaction')
         verbose_name_plural = ugettext_lazy('transactions')
@@ -1752,9 +1749,9 @@ class Transaction(models.Model):
                 self.transaction_code = self.complex_transaction.code + self.complex_transaction_order
 
         try:
-            self.ytm = self.calculate_ytm()
+            self.ytm_at_cost = self.calculate_ytm()
         except Exception as error:
-            _l.debug("Cant calculate transaction ytm %s" % error)
+            _l.debug("Cant calculate transaction ytm_at_cost %s" % error)
 
         super(Transaction, self).save(*args, **kwargs)
 

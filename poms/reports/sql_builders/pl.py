@@ -405,7 +405,7 @@ class PLReportBuilderSql:
                          settlement_currency_id,
                          
                          reference_fx_rate,
-                         (ytm) as transaction_ytm, -- Very important! Just not to be confused between price history ytm and transaction ytm
+                         (ytm_at_cost) as transaction_ytm, -- Very important! Just not to be confused between price history ytm and transaction ytm
                          
                          ttype
                          from pl_transactions_with_ttype_filtered 

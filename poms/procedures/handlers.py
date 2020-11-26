@@ -164,10 +164,13 @@ class RequestDataFileProcedureProcess(object):
                 "provider": self.procedure.provider.user_code,
                 "scheme_name": self.procedure.scheme_name,
                 "scheme_type": self.procedure.scheme_type,
+
                 "files": [],
                 "error_status": 0,
                 "error_message": ""
             }
+
+            # internal/data/transactions/callback
 
             if self.procedure.date_from:
                 data["date_from"] = str(self.procedure.date_from)

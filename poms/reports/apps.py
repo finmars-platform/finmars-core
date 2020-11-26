@@ -80,7 +80,7 @@ class ReportsConfig(AppConfig):
                        settlement_currency_id,
                        
                        reference_fx_rate,
-                       ytm,
+                       ytm_at_cost,
                        
                        case
                          
@@ -126,7 +126,7 @@ class ReportsConfig(AppConfig):
                       settlement_currency_id,
                       
                       reference_fx_rate,
-                      ytm,
+                      ytm_at_cost,
                       
                       case
                         when position_size_with_sign < 0
@@ -169,7 +169,7 @@ class ReportsConfig(AppConfig):
                       settlement_currency_id,
                       
                       reference_fx_rate,
-                      ytm,
+                      ytm_at_cost,
                       
                       case
                         when (-position_size_with_sign) < 0 
@@ -221,7 +221,7 @@ class ReportsConfig(AppConfig):
                        transaction_currency_id,
                        
                        reference_fx_rate,
-                       ytm,
+                       ytm_at_cost,
                        
                        account_interim_id,
                      
@@ -272,7 +272,7 @@ class ReportsConfig(AppConfig):
                        
                        
                        reference_fx_rate,
-                       ytm,
+                       ytm_at_cost,
                        
                         account_interim_id,
                      
@@ -339,7 +339,7 @@ class ReportsConfig(AppConfig):
                            settlement_currency_id,
                            
                            reference_fx_rate,
-                           ytm,
+                           ytm_at_cost,
                            
                            account_interim_id,
                            
@@ -388,7 +388,7 @@ class ReportsConfig(AppConfig):
                          transaction_currency_id,
                          
                          reference_fx_rate,
-                         ytm,
+                         ytm_at_cost,
                          
                           account_interim_id,
                          
@@ -438,7 +438,7 @@ class ReportsConfig(AppConfig):
                          transaction_currency_id,
                          
                          reference_fx_rate,
-                         ytm,
+                         ytm_at_cost,
                          
                           account_interim_id,
                          
@@ -503,7 +503,7 @@ class ReportsConfig(AppConfig):
                        transaction_currency_id,
                        
                        reference_fx_rate,
-                       ytm,
+                       ytm_at_cost,
                        
                        account_interim_id,
                      
