@@ -1682,7 +1682,7 @@ class Transaction(models.Model):
             accrual_size = self.instrument.get_accrual_size(dt)
             return (accrual_size * self.instrument.accrued_multiplier) * \
                    (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx) / \
-                   (self.instr_price_cur_principal_price * self.instrument.price_multiplier)
+                   (self.trade_price * self.instrument.price_multiplier)
         except ArithmeticError:
             return 0
 
@@ -1703,6 +1703,8 @@ class Transaction(models.Model):
             else:
                 self.instr_pricing_ccy_cur_fx = CurrencyHistory.objects.get(date=self.accounting_date, currency=self.instrument.pricing_currency).fx_rate
 
+
+
         dt = self.accounting_date
 
         if self.instrument.maturity_date is None or self.instrument.maturity_date == date.max:
@@ -1713,7 +1715,7 @@ class Transaction(models.Model):
 
                 # TODO  * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx) happens in sql report
                 ytm = (accrual_size * self.instrument.accrued_multiplier) / \
-                      (self.instr_price_cur_principal_price * self.instrument.price_multiplier)
+                      (self.trade_price * self.instrument.price_multiplier)
             except ArithmeticError:
                 ytm = 0
 
