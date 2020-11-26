@@ -1053,6 +1053,8 @@ class PriceHistory(CachingMixin, DataTimeStampedModel):
 
     def calculate_ytm(self, dt):
 
+        _l.debug('Calculating ytm for %s for %s' % (self.instrument.name, self.date))
+
         if self.instrument.maturity_date is None or self.instrument.maturity_date == date.max:
             try:
                 accrual_size = self.instrument.get_accrual_size(dt)
