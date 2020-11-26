@@ -23,22 +23,22 @@ class CredentialsSerializer(ModelWithTimeStampSerializer):
 
     def create(self, validated_data):
 
-        path_to_public_key = validated_data.pop('path_to_private_key', None)
+        path_to_public_key = validated_data.pop('path_to_public_key', None)
         path_to_private_key = validated_data.pop('path_to_private_key', None)
 
         credentials = Credentials.objects.create(**validated_data)
 
         if path_to_public_key:
-            file_path = '%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_public_key.name)
+            public_file_path = '%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_public_key.name)
 
-            SFS.save(file_path, path_to_public_key)
-            credentials.path_to_public_key = file_path
+            SFS.save(public_file_path, path_to_public_key)
+            credentials.path_to_public_key = public_file_path
 
         if path_to_private_key:
-            file_path = '%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_private_key.name)
+            private_file_path = '%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_private_key.name)
 
-            SFS.save(file_path, path_to_private_key)
-            credentials.path_to_private_key = file_path
+            SFS.save(private_file_path, path_to_private_key)
+            credentials.path_to_private_key = private_file_path
 
         credentials.save()
 
@@ -47,7 +47,7 @@ class CredentialsSerializer(ModelWithTimeStampSerializer):
 
     def update(self, credentials, validated_data):
 
-        path_to_public_key = validated_data.pop('path_to_private_key', None)
+        path_to_public_key = validated_data.pop('path_to_public_key', None)
         path_to_private_key = validated_data.pop('path_to_private_key', None)
 
         credentials.name = validated_data.get('name', credentials.name)
@@ -60,16 +60,16 @@ class CredentialsSerializer(ModelWithTimeStampSerializer):
         credentials.private_key = validated_data.get('private_key', credentials.private_key)
 
         if path_to_public_key:
-            file_path = '%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_public_key.name)
+            public_file_path = '%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_public_key.name)
 
-            SFS.save(file_path, path_to_public_key)
-            credentials.path_to_public_key = file_path
+            SFS.save(public_file_path, path_to_public_key)
+            credentials.path_to_public_key = public_file_path
 
         if path_to_private_key:
-            file_path = '%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_private_key.name)
+            private_file_path = '%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_private_key.name)
 
-            SFS.save(file_path, path_to_private_key)
-            credentials.path_to_private_key = file_path
+            SFS.save(private_file_path, path_to_private_key)
+            credentials.path_to_private_key = private_file_path
 
         credentials.save()
 
