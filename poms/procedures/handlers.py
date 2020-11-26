@@ -141,6 +141,20 @@ class RequestDataFileProcedureProcess(object):
                                         source="Data File Procedure Service",
                                         text="Can't configure Lombard Odier Provider")
 
+                if self.procedure.provider.user_code == 'revolut':
+
+                    if 'code' in self.procedure.data and self.procedure.data['code']:
+                        params['code'] = self.procedure.data['code']
+
+                    if 'issuer' in self.procedure.data and self.procedure.data['issuer']:
+                        params['issuer'] = self.procedure.data['issuer']
+
+                    if 'client_id' in self.procedure.data and self.procedure.data['client_id']:
+                        params['client_id'] = self.procedure.data['client_id']
+
+                    if 'jwt' in self.procedure.data and self.procedure.data['jwt']:
+                        params['jwt'] = self.procedure.data['jwt']
+
 
                 if 'hasNoDelete' in self.procedure.data:
 
