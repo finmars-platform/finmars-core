@@ -1627,54 +1627,60 @@ class TransactionTypeProcess(object):
 
     def execute_recon_fields_expressions(self):
 
-        from poms.reconciliation.models import ReconciliationComplexTransactionField
+        try:
 
-        ctrn = formula.value_prepare(self.complex_transaction)
-        trns = self.complex_transaction.transactions.all()
+            from poms.reconciliation.models import ReconciliationComplexTransactionField
 
-        names = {
-            'complex_transaction': ctrn,
-            'transactions': trns,
-        }
+            ctrn = formula.value_prepare(self.complex_transaction)
+            trns = self.complex_transaction.transactions.all()
 
-        for key, value in self.values.items():
-            names[key] = value
+            names = {
+                'complex_transaction': ctrn,
+                'transactions': trns,
+            }
 
-        ReconciliationComplexTransactionField.objects.filter(
-            master_user=self.transaction_type.master_user,
-            complex_transaction=self.complex_transaction).delete()
+            for key, value in self.values.items():
+                names[key] = value
 
-        ttype_fields = TransactionTypeReconField.objects.filter(
-            transaction_type=self.transaction_type)
+            ReconciliationComplexTransactionField.objects.filter(
+                master_user=self.transaction_type.master_user,
+                complex_transaction=self.complex_transaction).delete()
 
-        for ttype_field in ttype_fields:
+            ttype_fields = TransactionTypeReconField.objects.filter(
+                transaction_type=self.transaction_type)
 
-            field = ReconciliationComplexTransactionField(master_user=self.transaction_type.master_user,
-                                                          complex_transaction=self.complex_transaction)
+            for ttype_field in ttype_fields:
 
-            if ttype_field.value_string:
-                try:
-                    field.value_string = formula.safe_eval(ttype_field.value_string, names=names,
-                                                           context=self._context)
-                except formula.InvalidExpression:
-                    field.value_string = '<InvalidExpression>'
-            if ttype_field.value_float:
-                try:
-                    field.value_float = formula.safe_eval(ttype_field.value_float, names=names,
-                                                          context=self._context)
-                except formula.InvalidExpression:
-                    pass
+                field = ReconciliationComplexTransactionField(master_user=self.transaction_type.master_user,
+                                                              complex_transaction=self.complex_transaction)
 
-            if ttype_field.value_date:
-                try:
-                    field.value_date = formula.safe_eval(ttype_field.value_date, names=names,
-                                                         context=self._context)
-                except formula.InvalidExpression:
-                    pass
+                if ttype_field.value_string:
+                    try:
+                        field.value_string = formula.safe_eval(ttype_field.value_string, names=names,
+                                                               context=self._context)
+                    except formula.InvalidExpression:
+                        field.value_string = '<InvalidExpression>'
+                if ttype_field.value_float:
+                    try:
+                        field.value_float = formula.safe_eval(ttype_field.value_float, names=names,
+                                                              context=self._context)
+                    except formula.InvalidExpression:
+                        pass
 
-            field.reference_name = ttype_field.reference_name
-            field.description = ttype_field.description
-            field.save()
+                if ttype_field.value_date:
+                    try:
+                        field.value_date = formula.safe_eval(ttype_field.value_date, names=names,
+                                                             context=self._context)
+                    except formula.InvalidExpression:
+                        pass
+
+                field.reference_name = ttype_field.reference_name
+                field.description = ttype_field.description
+                field.save()
+
+        except Exception as error:
+
+            _l.info("execute_recon_fields_expressions %s"  % error)
 
     def execute_complex_transaction_main_expressions(self):
 
