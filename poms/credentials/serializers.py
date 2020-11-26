@@ -29,13 +29,13 @@ class CredentialsSerializer(ModelWithTimeStampSerializer):
         credentials = Credentials.objects.create(**validated_data)
 
         if path_to_public_key:
-            public_file_path = '%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_public_key.name)
+            public_file_path = 'banks/%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_public_key.name)
 
             SFS.save(public_file_path, path_to_public_key)
             credentials.path_to_public_key = public_file_path
 
         if path_to_private_key:
-            private_file_path = '%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_private_key.name)
+            private_file_path = 'banks/%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_private_key.name)
 
             SFS.save(private_file_path, path_to_private_key)
             credentials.path_to_private_key = private_file_path
@@ -60,13 +60,13 @@ class CredentialsSerializer(ModelWithTimeStampSerializer):
         credentials.private_key = validated_data.get('private_key', credentials.private_key)
 
         if path_to_public_key:
-            public_file_path = '%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_public_key.name)
+            public_file_path = 'banks/%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_public_key.name)
 
             SFS.save(public_file_path, path_to_public_key)
             credentials.path_to_public_key = public_file_path
 
         if path_to_private_key:
-            private_file_path = '%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_private_key.name)
+            private_file_path = 'banks/%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_private_key.name)
 
             SFS.save(private_file_path, path_to_private_key)
             credentials.path_to_private_key = private_file_path
