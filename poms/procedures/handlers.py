@@ -97,9 +97,9 @@ class RequestDataFileProcedureProcess(object):
 
             params = {}
 
-            if self.procedure.data:
+            if self.procedure.provider.user_code == 'email_provider':
 
-                if self.procedure.provider.user_code == 'email_provider':
+                if self.procedure.data:
 
                     if 'sender' in self.procedure.data and self.procedure.data['sender']:
                         params['sender'] = self.procedure.data['sender']
@@ -110,38 +110,58 @@ class RequestDataFileProcedureProcess(object):
                     if 'subject' in self.procedure.data and self.procedure.data['subject']:
                         params['subject'] = self.procedure.data['subject']
 
-                if self.procedure.provider.user_code == 'julius_baer':
+                    if 'hasNoDelete' in self.procedure.data:
 
-                    try:
+                        if self.procedure.data['hasNoDelete']: # pain
+                            params['hasNoDelete'] = 'true'
+                        else:
+                            params['hasNoDelete'] = 'false'
+                else:
+                    send_system_message(master_user=self.master_user,
+                                        source="Data File Procedure Service",
+                                        text="Email Provider Procedure is not configured")
 
-                        credentials = Credentials.objects.get(master_user=self.master_user, provider=self.procedure.provider)
+            if self.procedure.provider.user_code == 'julius_baer':
 
-                        params['sftpuser'] = credentials.username
-                        params['sftpkeypath'] = credentials.path_to_private_key
+                try:
 
-                    except Exception as error:
-                        send_system_message(master_user=self.master_user,
-                                            source="Data File Procedure Service",
-                                            text="Can't configure Julius Baer Provider")
+                    credentials = Credentials.objects.get(master_user=self.master_user, provider=self.procedure.provider)
 
-                if self.procedure.provider.user_code == 'lombard_odier':
+                    params['sftpuser'] = credentials.username
+                    params['sftpkeypath'] = credentials.path_to_private_key
 
-                    try:
+                except Exception as error:
+                    send_system_message(master_user=self.master_user,
+                                        source="Data File Procedure Service",
+                                        text="Can't configure Julius Baer Provider")
 
-                        credentials = Credentials.objects.get(master_user=self.master_user, provider=self.procedure.provider)
+            if self.procedure.provider.user_code == 'lombard_odier':
 
-                        params['sftpuser'] = credentials.username
-                        params['sftppassword'] = credentials.password
+                try:
+
+                    credentials = Credentials.objects.get(master_user=self.master_user, provider=self.procedure.provider)
+
+                    params['sftpuser'] = credentials.username
+                    params['sftppassword'] = credentials.password
+
+                    if self.procedure.data:
 
                         if 'archivepassword' in self.procedure.data and self.procedure.data['archivepassword']:
                             params['archivepassword'] = self.procedure.data['archivepassword']
 
-                    except Exception as error:
+                    else:
                         send_system_message(master_user=self.master_user,
-                                        source="Data File Procedure Service",
-                                        text="Can't configure Lombard Odier Provider")
+                                            source="Data File Procedure Service",
+                                            text="Lombard Odier Provider Procedure is not configured")
 
-                if self.procedure.provider.user_code == 'revolut':
+                except Exception as error:
+                    send_system_message(master_user=self.master_user,
+                                    source="Data File Procedure Service",
+                                    text="Can't configure Lombard Odier Provider")
+
+            if self.procedure.provider.user_code == 'revolut':
+
+                if self.procedure.data:
 
                     if 'code' in self.procedure.data and self.procedure.data['code']:
                         params['code'] = self.procedure.data['code']
@@ -155,15 +175,10 @@ class RequestDataFileProcedureProcess(object):
                     if 'jwt' in self.procedure.data and self.procedure.data['jwt']:
                         params['jwt'] = self.procedure.data['jwt']
 
-
-                if 'hasNoDelete' in self.procedure.data:
-
-                    if self.procedure.data['hasNoDelete']: # pain
-                        params['hasNoDelete'] = 'true'
-                    else:
-                        params['hasNoDelete'] = 'false'
-
-
+                else:
+                    send_system_message(master_user=self.master_user,
+                                        source="Data File Procedure Service",
+                                        text="Revolut rovider Procedure is not configured")
 
             data = {
                 "id": procedure_instance.id,
