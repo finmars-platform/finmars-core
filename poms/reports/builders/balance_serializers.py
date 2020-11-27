@@ -524,147 +524,148 @@ class ReportSerializer(ReportSerializerWithLogs):
 
         custom_fields = data['custom_fields_object']
 
-        if custom_fields:
-            items = data['items']
+        if len(data["custom_fields_to_calculate"]):
+            if custom_fields:
+                items = data['items']
 
-            item_instruments = {o['id']: o for o in data['item_instruments']}
-            item_currencies = {o['id']: o for o in data['item_currencies']}
-            item_portfolios = {o['id']: o for o in data['item_portfolios']}
-            item_accounts = {o['id']: o for o in data['item_accounts']}
-            item_strategies1 = {o['id']: o for o in data['item_strategies1']}
-            item_strategies2 = {o['id']: o for o in data['item_strategies2']}
-            item_strategies3 = {o['id']: o for o in data['item_strategies3']}
-            item_currency_fx_rates = {o['id']: o for o in data['item_currency_fx_rates']}
-            item_instrument_pricings = {o['id']: o for o in data['item_instrument_pricings']}
-            item_instrument_accruals = {o['id']: o for o in data['item_instrument_accruals']}
+                item_instruments = {o['id']: o for o in data['item_instruments']}
+                item_currencies = {o['id']: o for o in data['item_currencies']}
+                item_portfolios = {o['id']: o for o in data['item_portfolios']}
+                item_accounts = {o['id']: o for o in data['item_accounts']}
+                item_strategies1 = {o['id']: o for o in data['item_strategies1']}
+                item_strategies2 = {o['id']: o for o in data['item_strategies2']}
+                item_strategies3 = {o['id']: o for o in data['item_strategies3']}
+                item_currency_fx_rates = {o['id']: o for o in data['item_currency_fx_rates']}
+                item_instrument_pricings = {o['id']: o for o in data['item_instrument_pricings']}
+                item_instrument_accruals = {o['id']: o for o in data['item_instrument_accruals']}
 
-            def _set_object(names, pk_attr, objs):
+                def _set_object(names, pk_attr, objs):
 
-                if pk_attr in names:
-                    pk = names[pk_attr]
-                    if pk is not None:
+                    if pk_attr in names:
+                        pk = names[pk_attr]
+                        if pk is not None:
 
-                        try:
-                            names['%s_object' % pk_attr] = objs[pk]
-                        except KeyError:
-                            pass
-                            # _l.debug('pk %s' % pk)
-                            # _l.debug('pk_attr %s' % pk_attr)
-                        # names[pk_attr] = objs[pk]
+                            try:
+                                names['%s_object' % pk_attr] = objs[pk]
+                            except KeyError:
+                                pass
+                                # _l.debug('pk %s' % pk)
+                                # _l.debug('pk_attr %s' % pk_attr)
+                            # names[pk_attr] = objs[pk]
 
-            for item in items:
+                for item in items:
 
-                names = {}
+                    names = {}
 
-                for key, value in item.items():
-                    names[key] = value
+                    for key, value in item.items():
+                        names[key] = value
 
-                _set_object(names, 'portfolio', item_portfolios)
-                _set_object(names, 'account', item_accounts)
-                _set_object(names, 'strategy1', item_strategies1)
-                _set_object(names, 'strategy2', item_strategies2)
-                _set_object(names, 'strategy3', item_strategies3)
-                _set_object(names, 'instrument', item_instruments)
-                _set_object(names, 'currency', item_currencies)
-                _set_object(names, 'pricing_currency', item_currencies)
-                _set_object(names, 'allocation', item_instruments)
-                _set_object(names, 'mismatch_portfolio', item_portfolios)
-                _set_object(names, 'mismatch_account', item_accounts)
-                _set_object(names, 'report_currency_history', item_currency_fx_rates)
+                    _set_object(names, 'portfolio', item_portfolios)
+                    _set_object(names, 'account', item_accounts)
+                    _set_object(names, 'strategy1', item_strategies1)
+                    _set_object(names, 'strategy2', item_strategies2)
+                    _set_object(names, 'strategy3', item_strategies3)
+                    _set_object(names, 'instrument', item_instruments)
+                    _set_object(names, 'currency', item_currencies)
+                    _set_object(names, 'pricing_currency', item_currencies)
+                    _set_object(names, 'allocation', item_instruments)
+                    _set_object(names, 'mismatch_portfolio', item_portfolios)
+                    _set_object(names, 'mismatch_account', item_accounts)
+                    _set_object(names, 'report_currency_history', item_currency_fx_rates)
 
-                _set_object(names, 'instrument_price_history', item_instrument_pricings)
-                _set_object(names, 'instrument_pricing_currency_history', item_currency_fx_rates)
-                _set_object(names, 'instrument_accrued_currency_history', item_currency_fx_rates)
+                    _set_object(names, 'instrument_price_history', item_instrument_pricings)
+                    _set_object(names, 'instrument_pricing_currency_history', item_currency_fx_rates)
+                    _set_object(names, 'instrument_accrued_currency_history', item_currency_fx_rates)
 
-                _set_object(names, 'currency_history', item_currency_fx_rates)
-                _set_object(names, 'pricing_currency_history', item_currency_fx_rates)
-                _set_object(names, 'instrument_accrual', item_instrument_accruals)
+                    _set_object(names, 'currency_history', item_currency_fx_rates)
+                    _set_object(names, 'pricing_currency_history', item_currency_fx_rates)
+                    _set_object(names, 'instrument_accrual', item_instrument_accruals)
 
-                names = formula.value_prepare(names)
+                    names = formula.value_prepare(names)
 
-                # _l.debug('names %s' % names['market_value'])
+                    # _l.debug('names %s' % names['market_value'])
 
-                cfv = []
+                    cfv = []
 
-                custom_fields_names = {}
+                    custom_fields_names = {}
 
-                # data["custom_fields_to_calculate"] = 'custom_fields.Currency_asset'
+                    # data["custom_fields_to_calculate"] = 'custom_fields.Currency_asset'
 
-                # for i in range(5):
-                for i in range(2):
+                    # for i in range(5):
+                    for i in range(2):
 
-                    for cf in custom_fields:
+                        for cf in custom_fields:
 
-                        if cf["name"] in data["custom_fields_to_calculate"]:
+                            if cf["name"] in data["custom_fields_to_calculate"]:
 
-                            expr = cf['expr']
+                                expr = cf['expr']
 
-                            if expr:
+                                if expr:
 
-                                try:
-                                    value = formula.safe_eval(expr, names=names, context=self.context)
-                                except formula.InvalidExpression as e:
-                                    # _l.debug('error %s' % e)
-                                    value = ugettext('Invalid expression')
-                            else:
-                                value = None
+                                    try:
+                                        value = formula.safe_eval(expr, names=names, context=self.context)
+                                    except formula.InvalidExpression as e:
+                                        # _l.debug('error %s' % e)
+                                        value = ugettext('Invalid expression')
+                                else:
+                                    value = None
 
-                            if not cf['user_code'] in custom_fields_names:
-                                custom_fields_names[cf['user_code']] = value
-                            else:
-                                if custom_fields_names[cf['user_code']] == None or custom_fields_names[
-                                    cf['user_code']] == ugettext('Invalid expression'):
+                                if not cf['user_code'] in custom_fields_names:
                                     custom_fields_names[cf['user_code']] = value
-
-                    names['custom_fields'] = custom_fields_names
-
-                for key, value in custom_fields_names.items():
-
-                    for cf in custom_fields:
-
-                        if cf['user_code'] == key:
-
-                            expr = cf['expr']
-
-                            if cf['value_type'] == 10:
-
-                                if expr:
-                                    try:
-                                        value = formula.safe_eval('str(item)', names={'item': value},
-                                                                  context=self.context)
-                                    except formula.InvalidExpression:
-                                        value = ugettext('Invalid expression')
                                 else:
-                                    value = None
+                                    if custom_fields_names[cf['user_code']] == None or custom_fields_names[
+                                        cf['user_code']] == ugettext('Invalid expression'):
+                                        custom_fields_names[cf['user_code']] = value
 
-                            elif cf['value_type'] == 20:
+                        names['custom_fields'] = custom_fields_names
 
-                                if expr:
-                                    try:
-                                        value = formula.safe_eval('float(item)', names={'item': value},
-                                                                  context=self.context)
-                                    except formula.InvalidExpression:
-                                        value = ugettext('Invalid expression')
-                                else:
-                                    value = None
-                            elif cf['value_type'] == 40:
+                    for key, value in custom_fields_names.items():
 
-                                if expr:
-                                    try:
-                                        value = formula.safe_eval("parse_date(item, '%d/%m/%Y')", names={'item': value},
-                                                                  context=self.context)
-                                    except formula.InvalidExpression:
-                                        value = ugettext('Invalid expression')
-                                else:
-                                    value = None
+                        for cf in custom_fields:
 
-                            cfv.append({
-                                'custom_field': cf['id'],
-                                'user_code': cf['user_code'],
-                                'value': value,
-                            })
+                            if cf['user_code'] == key:
 
-                item['custom_fields'] = cfv
+                                expr = cf['expr']
+
+                                if cf['value_type'] == 10:
+
+                                    if expr:
+                                        try:
+                                            value = formula.safe_eval('str(item)', names={'item': value},
+                                                                      context=self.context)
+                                        except formula.InvalidExpression:
+                                            value = ugettext('Invalid expression')
+                                    else:
+                                        value = None
+
+                                elif cf['value_type'] == 20:
+
+                                    if expr:
+                                        try:
+                                            value = formula.safe_eval('float(item)', names={'item': value},
+                                                                      context=self.context)
+                                        except formula.InvalidExpression:
+                                            value = ugettext('Invalid expression')
+                                    else:
+                                        value = None
+                                elif cf['value_type'] == 40:
+
+                                    if expr:
+                                        try:
+                                            value = formula.safe_eval("parse_date(item, '%d/%m/%Y')", names={'item': value},
+                                                                      context=self.context)
+                                        except formula.InvalidExpression:
+                                            value = ugettext('Invalid expression')
+                                    else:
+                                        value = None
+
+                                cfv.append({
+                                    'custom_field': cf['id'],
+                                    'user_code': cf['user_code'],
+                                    'value': value,
+                                })
+
+                    item['custom_fields'] = cfv
 
         _l.debug('ReportSerializer custom fields execution done: %s' % "{:3.3f}".format(time.perf_counter() - st))
 
