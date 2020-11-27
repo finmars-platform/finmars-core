@@ -656,6 +656,7 @@ class PLReportBuilderSql:
             item_type,
             item_type_name,
       
+            currency_id,
             instrument_id,
             {consolidation_columns}
           
@@ -762,6 +763,7 @@ class PLReportBuilderSql:
             item_type,
             item_type_name,
       
+            (-1) as currency_id,
             instrument_id,
             {consolidation_columns}
           
@@ -1432,6 +1434,7 @@ class PLReportBuilderSql:
             item_type,
             item_type_name,
       
+            currency_id,
             instrument_id,
             {consolidation_columns}
           
@@ -1539,6 +1542,7 @@ class PLReportBuilderSql:
                 item_type,
                 item_type_name,
           
+                currency_id, 
                 instrument_id,
                 {consolidation_columns}
               
@@ -1645,6 +1649,7 @@ class PLReportBuilderSql:
                     (3) as item_type,
                     ('FX Variations') as item_type_name,
                     
+                    (-1) as currency_id,
                     (-1) as instrument_id,
                     {consolidation_columns}
                     
@@ -1754,6 +1759,7 @@ class PLReportBuilderSql:
             item_type,
             item_type_name,
       
+            currency_id,
             instrument_id,
             {consolidation_columns}
           
@@ -1862,6 +1868,7 @@ class PLReportBuilderSql:
                 item_type,
                 item_type_name,
           
+                currency_id,
                 instrument_id,
                 {consolidation_columns}
               
@@ -1969,6 +1976,7 @@ class PLReportBuilderSql:
                     (4) as item_type,
                     ('FX Trades') as item_type_name,
                     
+                    (-1) as currency_id,
                     (-1) as instrument_id,
                     {consolidation_columns}
                     
@@ -2036,6 +2044,7 @@ class PLReportBuilderSql:
             item_type,
             item_type_name,
       
+            currency_id,
             instrument_id,
             {consolidation_columns}
           
@@ -2143,6 +2152,7 @@ class PLReportBuilderSql:
                 item_type,
                 item_type_name,
           
+                currency_id,
                 instrument_id,
                 {consolidation_columns}
               
@@ -2249,6 +2259,7 @@ class PLReportBuilderSql:
                     (5) as item_type,
                     ('Other') as item_type_name,
                     
+                    (-1) as currency_id,
                     (-1) as instrument_id,
                     {consolidation_columns}
                     
@@ -2314,6 +2325,7 @@ class PLReportBuilderSql:
             item_type,
             item_type_name,
       
+            currency_id,
             instrument_id,
             {consolidation_columns}
           
@@ -2421,6 +2433,7 @@ class PLReportBuilderSql:
                 item_type,
                 item_type_name,
           
+                currency_id,
                 instrument_id,
                 {consolidation_columns}
               
@@ -2528,6 +2541,7 @@ class PLReportBuilderSql:
                     (6) as item_type,
                     ('Mismatch') as item_type_name,
                     
+                    (-1) as currency_id,
                     (ii.id) as instrument_id,
                     {consolidation_columns}
                     
@@ -2708,6 +2722,7 @@ class PLReportBuilderSql:
                             -- add optional account_position, strategy1 position etc
                             
                             (q2.instrument_id) as instrument_id,
+                            (q2.currency_id) as currency_id,
                             
                             {final_consolidation_columns}
                             

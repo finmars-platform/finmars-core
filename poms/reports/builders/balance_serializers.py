@@ -703,6 +703,10 @@ def serialize_balance_report_item(item):
     else:
         result["instrument"] = item["instrument_id"]
 
+    if item["currency_id"] == -1:
+        result["currency"] = None
+    else:
+        result["currency"] = item["currency_id"]
 
     if item["pricing_currency_id"] == -1:
         result["pricing_currency"] = None
@@ -740,7 +744,13 @@ def serialize_balance_report_item(item):
 
     ids = []
     ids.append(str(result["item_type"]))
-    ids.append(str(result["instrument"]))
+
+    if item['item_type'] == 1:
+        ids.append(str(result["instrument"]))
+
+    if item['item_type'] == 2:
+        ids.append(str(result["currency"]))
+
     ids.append(str(result["account"]))
     ids.append(str(result["strategy1"]))
     ids.append(str(result["strategy2"]))
@@ -876,7 +886,23 @@ def serialize_pl_report_item(item):
     ids = []
     ids.append(str(result["item_type"]))
     ids.append(str(result["item_group"]))
-    ids.append(str(result["instrument"]))
+
+    if item['item_type'] == 1: # instrument
+        ids.append(str(result["instrument"]))
+
+    if item['item_type'] == 3: # FX Variations
+        ids.append(str(result["name"]))
+
+    if item['item_type'] == 4: # FX Trades
+        ids.append(str(result["name"]))
+
+    if item['item_type'] == 5:
+        ids.append(str(result["name"]))
+
+    if item['item_type'] == 6: # mismatch
+        ids.append(str(result["instrument"]))
+
+
     ids.append(str(result["account"]))
     ids.append(str(result["strategy1"]))
     ids.append(str(result["strategy2"]))

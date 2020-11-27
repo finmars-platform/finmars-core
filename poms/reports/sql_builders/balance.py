@@ -366,6 +366,8 @@ class BalanceReportBuilderSql:
                     instrument_principal_price,
                     instrument_accrued_price,
                     
+                    currency_id,
+                    
                     item_type,
                     item_type_name,
                     
@@ -465,6 +467,8 @@ class BalanceReportBuilderSql:
                      
                          (-1) as instrument_id,
                         {consolidated_cash_as_position_columns}
+                        
+                        (settlement_currency_id) as currency_id,
                             
                         (2) as item_type,
                         ('Currency') as item_type_name,
@@ -676,6 +680,8 @@ class BalanceReportBuilderSql:
                     instrument_principal_price,
                     instrument_accrued_price,
                     
+                    currency_id,
+                    
                     item_type,
                     item_type_name,
                     
@@ -784,6 +790,8 @@ class BalanceReportBuilderSql:
                         
                         instrument_principal_price,
                         instrument_accrued_price,
+                        
+                        (-1) as currency_id,
                         
                         item_type,
                         item_type_name,
