@@ -269,7 +269,8 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
             'notes', 'is_default', 'is_deleted', 'one_off_event', 'one_off_event_object',
             'regular_event', 'regular_event_object', 'factor_same', 'factor_same_object',
             'factor_up', 'factor_up_object', 'factor_down', 'factor_down_object',
-            'is_enabled', 'pricing_policies'
+            'is_enabled', 'pricing_policies',
+            'has_second_exposure_currency'
             # 'tags', 'tags_object',
         ]
 
