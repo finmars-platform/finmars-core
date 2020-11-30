@@ -10,33 +10,38 @@ from rest_framework.fields import empty
 
 from poms.accounts.fields import AccountField, AccountDefault
 from poms.accounts.models import Account
+from poms.accounts.serializers import AccountViewSerializer
 from poms.common import formula
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
 from poms.counterparties.fields import ResponsibleField, CounterpartyField, ResponsibleDefault, CounterpartyDefault
 from poms.counterparties.models import Counterparty, Responsible
+from poms.counterparties.serializers import ResponsibleViewSerializer, CounterpartyViewSerializer
 from poms.currencies.fields import CurrencyField, CurrencyDefault, SystemCurrencyDefault
 from poms.currencies.models import Currency
+from poms.currencies.serializers import CurrencyViewSerializer
 from poms.instruments.fields import InstrumentField, InstrumentTypeField, InstrumentDefault, PricingPolicyField, \
     AccrualCalculationModelField, PeriodicityField, NotificationClassField, EventClassField, EventScheduleField, \
     TransactionTypeInputSettingsField
 from poms.instruments.models import Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail, PricingPolicy, \
     Periodicity, AccrualCalculationModel, EventSchedule
 from poms.instruments.serializers import PeriodicitySerializer, \
-    AccrualCalculationModelSerializer
+    AccrualCalculationModelSerializer, InstrumentViewSerializer
 from poms.integrations.fields import PriceDownloadSchemeField
 from poms.integrations.models import PriceDownloadScheme, ComplexTransactionImportSchemeReconField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer, GenericObjectPermissionSerializer
 from poms.portfolios.fields import PortfolioField, PortfolioDefault
 from poms.portfolios.models import Portfolio
+from poms.portfolios.serializers import PortfolioViewSerializer
 from poms.reconciliation.models import TransactionTypeReconField
 from poms.reconciliation.serializers import TransactionTypeReconFieldSerializer, \
     ReconciliationComplexTransactionFieldSerializer
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field, Strategy1Default, Strategy2Default, \
     Strategy3Default
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
+from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, Strategy3ViewSerializer
 from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeInputContentTypeField, \
     TransactionTypeGroupField, ReadOnlyContentTypeField, TransactionTypeField, TransactionTypeInputField
@@ -886,8 +891,159 @@ class TransactionTypeActionSerializer(serializers.ModelSerializer):
         return attrs
 
 
-class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
-                                     ModelWithTagSerializer, ModelWithAttributesSerializer):
+class TransactionTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer, ModelWithAttributesSerializer):
+    master_user = MasterUserField()
+    group = TransactionTypeGroupField(required=False, allow_null=False)
+    date_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                allow_null=True, default='now()')
+    display_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+
+    transaction_unique_code_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                                   allow_null=True, default='')
+
+    user_text_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_4 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_5 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_6 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_7 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_8 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_9 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_text_10 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+
+    user_text_11 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_12 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_13 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_14 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_15 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_16 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_17 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_18 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_19 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_20 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+
+    user_number_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_4 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_5 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_6 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_7 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_8 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_9 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                    allow_null=True, default='')
+    user_number_10 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                     allow_null=True, default='')
+
+    user_number_11 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                     allow_null=True, default='')
+    user_number_12 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                     allow_null=True, default='')
+    user_number_13 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                     allow_null=True, default='')
+    user_number_14 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                     allow_null=True, default='')
+    user_number_15 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                     allow_null=True, default='')
+    user_number_16 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                     allow_null=True, default='')
+    user_number_17 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                     allow_null=True, default='')
+    user_number_18 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                     allow_null=True, default='')
+    user_number_19 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                     allow_null=True, default='')
+    user_number_20 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                     allow_null=True, default='')
+
+    user_date_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_date_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_date_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_date_4 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+    user_date_5 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                  allow_null=True, default='')
+
+    instrument_types = InstrumentTypeField(required=False, allow_null=True, many=True)
+    portfolios = PortfolioField(required=False, allow_null=True, many=True)
+
+    group_object = TransactionTypeGroupViewSerializer(source='group', read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        super(TransactionTypeEvSerializer, self).__init__(*args, **kwargs)
+
+        from poms.instruments.serializers import InstrumentTypeViewSerializer
+        from poms.portfolios.serializers import PortfolioViewSerializer
+
+        self.fields['instrument_types_object'] = InstrumentTypeViewSerializer(source='instrument_types', many=True,
+                                                                              read_only=True)
+        self.fields['portfolios_object'] = PortfolioViewSerializer(source='portfolios', many=True, read_only=True)
+
+    class Meta:
+        model = TransactionType
+        fields = [
+            'id', 'master_user',
+            'group', 'group_object',
+            'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'date_expr', 'display_expr',
+            'transaction_unique_code_expr',
+            'transaction_unique_code_options',
+
+            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
+            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
+
+            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
+            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
+
+            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
+            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+
+            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
+            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
+
+            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
+
+            'is_valid_for_all_portfolios', 'is_valid_for_all_instruments', 'is_deleted',
+
+            'instrument_types', 'portfolios',
+
+        ]
+
+class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+
     master_user = MasterUserField()
     group = TransactionTypeGroupField(required=False, allow_null=False)
     date_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
@@ -1949,6 +2105,149 @@ class TransactionSerializer(ModelWithObjectPermissionSerializer):
         self.fields['allocation_pl_object'] = InstrumentViewSerializer(source='allocation_pl', read_only=True)
 
 
+class InstrumentSimpleViewSerializer(ModelWithObjectPermissionSerializer):
+
+    class Meta(ModelWithObjectPermissionSerializer.Meta):
+        model = Instrument
+        fields = [
+            'id',  'user_code', 'name', 'short_name', 'public_name'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(InstrumentSimpleViewSerializer, self).__init__(*args, **kwargs)
+
+
+class AccountSimpleViewSerializer(ModelWithObjectPermissionSerializer):
+
+    class Meta(ModelWithObjectPermissionSerializer.Meta):
+        model = Account
+        fields = [
+            'id', 'user_code', 'name', 'short_name', 'public_name',
+        ]
+
+
+class ResponsibleSimpleViewSerializer(ModelWithObjectPermissionSerializer):
+
+    class Meta(ModelWithObjectPermissionSerializer.Meta):
+        model = Responsible
+        fields = [
+            'id', 'user_code', 'name', 'short_name', 'public_name',
+        ]
+
+
+class CounterpartySimpleViewSerializer(ModelWithObjectPermissionSerializer):
+
+    class Meta(ModelWithObjectPermissionSerializer.Meta):
+        model = Counterparty
+        fields = [
+            'id', 'user_code', 'name', 'short_name', 'public_name',
+        ]
+
+
+class Strategy1SimpleViewSerializer(ModelWithObjectPermissionSerializer):
+
+    class Meta(ModelWithObjectPermissionSerializer.Meta):
+        model = Strategy1
+        fields = [
+            'id',  'user_code', 'name', 'short_name', 'public_name', 'is_deleted',
+        ]
+
+class Strategy2SimpleViewSerializer(ModelWithObjectPermissionSerializer):
+
+    class Meta(ModelWithObjectPermissionSerializer.Meta):
+        model = Strategy2
+        fields = [
+            'id',  'user_code', 'name', 'short_name', 'public_name', 'is_deleted',
+        ]
+
+class Strategy3SimpleViewSerializer(ModelWithObjectPermissionSerializer):
+
+    class Meta(ModelWithObjectPermissionSerializer.Meta):
+        model = Strategy3
+        fields = [
+            'id',  'user_code', 'name', 'short_name', 'public_name', 'is_deleted',
+        ]
+
+class TransactionEvSerializer(ModelWithObjectPermissionSerializer):
+
+    master_user = MasterUserField()
+
+    instrument_object = InstrumentSimpleViewSerializer(source='instrument', read_only=True)
+    linked_instrument_object = InstrumentSimpleViewSerializer(source='linked_instrument', read_only=True)
+    allocation_balance_object = InstrumentSimpleViewSerializer(source='allocation_balance', read_only=True)
+    allocation_pl_object = InstrumentSimpleViewSerializer(source='allocation_pl', read_only=True)
+
+    portfolio_object = PortfolioViewSerializer(source='portfolio', read_only=True)
+
+    transaction_currency_object = CurrencyViewSerializer(source='transaction_currency', read_only=True)
+    settlement_currency_object = CurrencyViewSerializer(source='settlement_currency', read_only=True)
+
+    account_position_object = AccountSimpleViewSerializer(source='account_position', read_only=True)
+    account_cash_object = AccountSimpleViewSerializer(source='account_cash', read_only=True)
+    account_interim_object = AccountSimpleViewSerializer(source='account_interim', read_only=True)
+
+    strategy1_position_object = Strategy1SimpleViewSerializer(source='strategy1_position', read_only=True)
+    strategy1_cash_object = Strategy1SimpleViewSerializer(source='strategy1_cash', read_only=True)
+
+    strategy2_position_object = Strategy2SimpleViewSerializer(source='strategy2_position', read_only=True)
+    strategy2_cash_object = Strategy2SimpleViewSerializer(source='strategy2_cash', read_only=True)
+
+    strategy3_position_object = Strategy3SimpleViewSerializer(source='strategy3_position', read_only=True)
+    strategy3_cash_object = Strategy3SimpleViewSerializer(source='strategy3_cash', read_only=True)
+
+    responsible_object = ResponsibleSimpleViewSerializer(source='responsible', read_only=True)
+    counterparty_object = CounterpartySimpleViewSerializer(source='counterparty', read_only=True)
+
+    class Meta(ModelWithObjectPermissionSerializer.Meta):
+        model = Transaction
+        fields = [
+            'id', 'master_user',
+
+            'transaction_code', 'complex_transaction', 'complex_transaction_order', 'transaction_class',
+
+            'instrument', 'instrument_object',
+
+            'transaction_currency', 'transaction_currency_object',
+            'settlement_currency', 'settlement_currency_object',
+           
+            'position_size_with_sign', 'cash_consideration', 'principal_with_sign',
+            'carry_with_sign', 'overheads_with_sign', 'reference_fx_rate',
+
+            'accounting_date', 'cash_date', 'transaction_date',
+
+            'portfolio', 'portfolio_object',
+
+            'account_cash', 'account_cash_object',
+            'account_position', 'account_position_object',
+            'account_interim', 'account_interim_object',
+                               
+            'strategy1_position', 'strategy1_position_object',
+            'strategy1_cash', 'strategy1_cash_object',
+            'strategy2_position', 'strategy2_position_object',
+            'strategy2_cash', 'strategy2_cash_object',
+            'strategy3_position', 'strategy3_position_object',
+            'strategy3_cash', 'strategy3_cash_object',
+
+            'responsible', 'responsible_object',
+            'counterparty', 'counterparty_object',
+                            
+            'linked_instrument', 'linked_instrument_object',
+            'allocation_balance', 'allocation_balance_object',
+            'allocation_pl', 'allocation_pl_object',
+
+            'is_canceled', 'error_code',
+
+            'factor', 'trade_price',
+            'position_amount', 'principal_amount',
+            'carry_amount', 'overheads',
+
+            'notes'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(TransactionEvSerializer, self).__init__(*args, **kwargs)
+
+
 class TransactionTextRenderSerializer(TransactionSerializer):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('skip_complex_transaction', True)
@@ -2285,6 +2584,123 @@ class ComplexTransactionViewSerializer(ComplexTransactionMixin, serializers.Mode
     def to_representation(self, instance):
         data = super(ComplexTransactionViewSerializer, self).to_representation(instance)
         data.pop('transactions_object', None)
+        return data
+
+
+class ComplexTransactionEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer):
+
+    master_user = MasterUserField()
+    transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
+    transaction_type_object = TransactionTypeViewSerializer(source='transaction_type', read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        super(ComplexTransactionEvSerializer, self).__init__(*args, **kwargs)
+
+
+    class Meta:
+        model = ComplexTransaction
+        fields = [
+            'id', 'master_user',
+            'date', 'status', 'code', 'text',
+            'is_deleted',
+
+            'transaction_type', 'transaction_type_object',
+
+            'visibility_status', 'is_locked', 'is_canceled', 'transaction_unique_code',
+
+            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
+            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
+
+            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
+            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
+
+            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
+            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+
+            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
+            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
+
+            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5'
+
+        ]
+
+    def to_representation(self, instance):
+
+        st = time.perf_counter()
+
+        data = super(ComplexTransactionEvSerializer, self).to_representation(instance)
+
+        # print('instance.visibility_status %s' % instance.visibility_status)
+
+        hide_parameters = False
+
+        member = get_member_from_context(self.context)
+
+        groups = member.groups.all()
+
+        if 'object_permissions' in data:
+
+            for perm in data['object_permissions']:
+
+                if perm['permission'] == 'view_complextransaction_hide_parameters':
+
+                    if perm['group'] in groups:
+                        hide_parameters = True
+
+        if member.is_admin or member.is_owner:
+            hide_parameters = False
+
+        if hide_parameters:
+            data.pop('user_text_1')
+            data.pop('user_text_2')
+            data.pop('user_text_3')
+            data.pop('user_text_4')
+            data.pop('user_text_5')
+            data.pop('user_text_6')
+            data.pop('user_text_7')
+            data.pop('user_text_8')
+            data.pop('user_text_9')
+            data.pop('user_text_10')
+            data.pop('user_text_11')
+            data.pop('user_text_12')
+            data.pop('user_text_13')
+            data.pop('user_text_14')
+            data.pop('user_text_15')
+            data.pop('user_text_16')
+            data.pop('user_text_17')
+            data.pop('user_text_18')
+            data.pop('user_text_19')
+            data.pop('user_text_20')
+
+            data.pop('user_number_1')
+            data.pop('user_number_2')
+            data.pop('user_number_3')
+            data.pop('user_number_4')
+            data.pop('user_number_5')
+            data.pop('user_number_6')
+            data.pop('user_number_7')
+            data.pop('user_number_8')
+            data.pop('user_number_9')
+            data.pop('user_number_10')
+            data.pop('user_number_11')
+            data.pop('user_number_12')
+            data.pop('user_number_13')
+            data.pop('user_number_14')
+            data.pop('user_number_15')
+            data.pop('user_number_16')
+            data.pop('user_number_17')
+            data.pop('user_number_18')
+            data.pop('user_number_19')
+            data.pop('user_number_20')
+
+            data.pop('user_date_1')
+            data.pop('user_date_2')
+            data.pop('user_date_3')
+            data.pop('user_date_4')
+            data.pop('user_date_5')
+
+        # print('ComplexTransactionEvSerializer visibility status done: %s' % (time.perf_counter() - st))
+
         return data
 
 

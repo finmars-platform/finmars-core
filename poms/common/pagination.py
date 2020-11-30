@@ -6,6 +6,11 @@ from rest_framework.exceptions import NotFound
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.settings import api_settings
 from django.utils import six
+from django.conf import settings
+
+import logging
+_l = logging.getLogger('poms.common')
+
 
 def _positive_int(integer_string, strict=False, cutoff=None):
     """
@@ -36,8 +41,8 @@ class PageNumberPaginationExt(PageNumberPagination):
         if page_number in self.last_page_strings:
             page_number = paginator.num_pages
 
-        # print('page_number %s' % page_number)
-        # print('page_size %s' % page_size)
+        _l.debug('post_paginate_queryset page_number %s' % page_number)
+        _l.debug('post_paginate_queryset django_paginator_class %s' % self.django_paginator_class)
 
         try:
             self.page = paginator.page(page_number)
@@ -53,11 +58,17 @@ class PageNumberPaginationExt(PageNumberPagination):
 
         self.request = request
 
+        _l.debug('post_paginate_queryset before list page')
+
+        list_page_st = time.perf_counter()
         res = list(self.page)
 
-        # print(len(res))
+        if settings.LOCAL:
+            with open('/tmp/query.sql', 'w') as the_file:
+                query_str = str(queryset.query)
+                the_file.write(query_str)
 
-        # print("post_paginate_queryset done %s seconds " % (time.time() - start_time))
+        _l.debug('post_paginate_queryset list page done: %s', "{:3.3f}".format(time.perf_counter() - list_page_st))
 
         return res
 

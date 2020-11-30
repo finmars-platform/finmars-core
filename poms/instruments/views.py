@@ -37,7 +37,7 @@ from poms.instruments.serializers import InstrumentSerializer, PriceHistorySeria
     PaymentSizeDetailSerializer, PeriodicitySerializer, CostMethodSerializer, InstrumentTypeSerializer, \
     PricingPolicySerializer, EventScheduleConfigSerializer, InstrumentCalculatePricesAccruedPriceSerializer, \
     GeneratedEventSerializer, EventScheduleActionSerializer, InstrumentTypeLightSerializer, InstrumentLightSerializer, \
-    PricingPolicyLightSerializer, PricingConditionSerializer
+    PricingPolicyLightSerializer, PricingConditionSerializer, InstrumentEvSerializer, InstrumentTypeEvSerializer
 from poms.instruments.tasks import calculate_prices_accrued_price, generate_events, process_events, \
     only_generate_events_at_date, generate_events_do_not_inform_apply_default0, \
     generate_events_do_not_inform_apply_default, only_generate_events_at_date_for_single_instrument
@@ -264,6 +264,52 @@ class InstrumentTypeViewSet(AbstractWithObjectPermissionViewSet):
         return Response({"status": "ok"})
 
 
+class InstrumentTypeEvFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+    public_name = CharFilter()
+    instrument_class = django_filters.ModelMultipleChoiceFilter(queryset=InstrumentClass.objects)
+
+    class Meta:
+        model = InstrumentType
+        fields = []
+
+
+class InstrumentTypeEvViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = InstrumentType.objects.select_related(
+        'master_user',
+        'instrument_class',
+        'one_off_event',
+        'regular_event',
+        'factor_same',
+        'factor_up',
+        'factor_down',
+    ).prefetch_related(
+        get_attributes_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, InstrumentType),
+            ('one_off_event', TransactionType),
+            ('regular_event', TransactionType),
+            ('factor_same', TransactionType),
+            ('factor_up', TransactionType),
+            ('factor_down', TransactionType),
+        )
+    )
+    serializer_class = InstrumentTypeEvSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+        EntitySpecificFilter
+    ]
+    filter_class = InstrumentTypeEvFilterSet
+    ordering_fields = [
+        'user_code', 'name', 'short_name', 'public_name',
+    ]
+
 class InstrumentTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = InstrumentType.objects.select_related(
         'master_user',
@@ -405,7 +451,8 @@ class InstrumentFilterSet(FilterSet):
         model = Instrument
         fields = []
 
-
+# For usual GET/PUT/ADD/CREATE
+# Not for getting List
 class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Instrument.objects.select_related(
         'instrument_type',
@@ -635,6 +682,7 @@ class InstrumentLightFilterSet(FilterSet):
         fields = []
 
 
+# List method for selects
 class InstrumentLightViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Instrument.objects.select_related(
         'master_user'
@@ -653,6 +701,44 @@ class InstrumentLightViewSet(AbstractWithObjectPermissionViewSet):
         'user_code', 'name', 'short_name', 'public_name',
     ]
 
+class InstrumentEvFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    public_name = CharFilter()
+    short_name = CharFilter()
+
+    class Meta:
+        model = Instrument
+        fields = []
+
+# List method for Entity Viewer
+class InstrumentEvViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = Instrument.objects.select_related(
+        'master_user',
+        'instrument_type',
+        'instrument_type__instrument_class',
+        'accrued_currency',
+        'pricing_currency',
+        'pricing_condition',
+        'payment_size_detail'
+    ).prefetch_related(
+        get_attributes_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, Instrument),
+            ('instrument_type', InstrumentType)
+        )
+    )
+    serializer_class = InstrumentEvSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        EntitySpecificFilter
+    ]
+    filter_class = InstrumentEvFilterSet
+    ordering_fields = [
+        'user_code', 'name', 'short_name', 'public_name',
+    ]
 
 class InstrumentEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Instrument.objects.select_related(

@@ -48,7 +48,8 @@ from poms.transactions.serializers import TransactionClassSerializer, Transactio
     EventClassSerializer, NotificationClassSerializer, TransactionTypeLightSerializer, \
     ComplexTransactionLightSerializer, ComplexTransactionSimpleSerializer, \
     RecalculatePermissionTransactionSerializer, RecalculatePermissionComplexTransactionSerializer, \
-    TransactionTypeLightSerializerWithInputs
+    TransactionTypeLightSerializerWithInputs, TransactionTypeEvSerializer, ComplexTransactionEvSerializer, \
+    TransactionEvSerializer
 from poms.transactions.tasks import recalculate_permissions_transaction, recalculate_permissions_complex_transaction
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -212,6 +213,56 @@ class TransactionTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
 
     permission_classes = GenericAttributeTypeViewSet.permission_classes + [
         PomsConfigurationPermission
+    ]
+
+class TransactionTypeEvFilterSet(FilterSet):
+    id = NoOpFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+    public_name = CharFilter()
+    group = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionTypeGroup)
+    is_valid_for_all_portfolios = django_filters.BooleanFilter()
+    is_valid_for_all_instruments = django_filters.BooleanFilter()
+    member = ObjectPermissionMemberFilter(object_permission_model=TransactionType)
+    member_group = ObjectPermissionGroupFilter(object_permission_model=TransactionType)
+    permission = ObjectPermissionPermissionFilter(object_permission_model=TransactionType)
+
+    class Meta:
+        model = TransactionType
+        fields = []
+
+
+class TransactionTypeEvViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = TransactionType.objects\
+        .select_related('group')\
+        .prefetch_related(
+            'portfolios',
+            'instrument_types',
+            get_attributes_prefetch(),
+            *get_permissions_prefetch_lookups(
+                (None, TransactionType),
+                ('group', TransactionTypeGroup),
+        )
+    )
+    serializer_class = TransactionTypeEvSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+        EntitySpecificFilter
+    ]
+    filter_class = TransactionTypeEvFilterSet
+    ordering_fields = [
+        'user_code',
+        'name',
+        'short_name',
+        'public_name',
+        'group',
+        'group__user_code',
+        'group__name',
+        'group__short_name',
+        'group__public_name',
     ]
 
 
@@ -927,6 +978,183 @@ class TransactionViewSet(AbstractWithObjectPermissionViewSet):
         instance.calc_cash_by_formulas()
 
 
+class TransactionEvViewSet(AbstractWithObjectPermissionViewSet):
+
+    queryset = qs = Transaction.objects.select_related(
+        'master_user',
+        'complex_transaction',
+        'transaction_class',
+        'instrument',
+        'transaction_currency',
+        'settlement_currency',
+        'portfolio',
+        'account_cash',
+        'account_position',
+        'account_interim',
+        'strategy1_position',
+        'strategy1_cash',
+        'strategy2_position',
+        'strategy2_cash',
+        'strategy3_position',
+        'strategy3_cash',
+        'responsible',
+        'counterparty',
+        'linked_instrument',
+        'allocation_balance',
+        'allocation_pl',
+    ).prefetch_related(
+        *get_permissions_prefetch_lookups(
+            (None, Transaction),
+            ('complex_transaction', ComplexTransaction),
+            ('portfolio', Portfolio),
+            ('instrument', Instrument),
+            ('account_cash', Account),
+            ('account_position', Account),
+            ('account_interim', Account),
+            ('strategy1_position', Strategy1),
+            ('strategy1_cash', Strategy1),
+            ('strategy2_position', Strategy2),
+            ('strategy2_cash', Strategy2),
+            ('strategy3_position', Strategy3),
+            ('strategy3_cash', Strategy3),
+            ('responsible', Responsible),
+            ('counterparty', Counterparty),
+            ('linked_instrument', Instrument),
+            ('allocation_balance', Instrument),
+            ('allocation_pl', Instrument),
+        )
+    )
+    serializer_class = TransactionEvSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    permission_classes = AbstractWithObjectPermissionViewSet.permission_classes + [
+        # TransactionObjectPermission,
+    ]
+    # filter_class = TransactionFilterSet
+    ordering_fields = [
+        'complex_transaction',
+        'complex_transaction__code',
+        'complex_transaction__date',
+        'complex_transaction_order',
+        'transaction_code',
+        'portfolio',
+        'portfolio__user_code',
+        'portfolio__name',
+        'portfolio__short_name',
+        'portfolio__public_name',
+        'instrument',
+        'instrument__user_code',
+        'instrument__name',
+        'instrument__short_name',
+        'instrument__public_name',
+        'transaction_currency',
+        'transaction_currency__user_code',
+        'transaction_currency__name',
+        'transaction_currency__short_name',
+        'transaction_currency__public_name',
+        'position_size_with_sign',
+        'settlement_currency',
+        'settlement_currency__user_code',
+        'settlement_currency__name',
+        'settlement_currency__short_name',
+        'settlement_currency__public_name',
+        'cash_consideration',
+        'principal_with_sign',
+        'carry_with_sign',
+        'overheads_with_sign',
+        'transaction_date',
+        'accounting_date',
+        'cash_date',
+        'account_cash',
+        'account_cash__user_code',
+        'account_cash__name',
+        'account_cash__short_name',
+        'account_cash__public_name',
+        'account_cash',
+        'account_cash__user_code',
+        'account_position__name',
+        'account_position__short_name',
+        'account_position__public_name',
+        'account_interim',
+        'account_interim__user_code',
+        'account_interim__name',
+        'account_interim__short_name',
+        'account_interim__public_name',
+        'strategy1_position',
+        'strategy1_position__user_code',
+        'strategy1_position__name',
+        'strategy1_position__short_name',
+        'strategy1_position__public_name',
+        'strategy1_cash',
+        'strategy1_cash__user_code',
+        'strategy1_cash__name',
+        'strategy1_cash__short_name',
+        'strategy1_cash__public_name',
+        'strategy2_position',
+        'strategy2_position__user_code',
+        'strategy2_position__name',
+        'strategy2_position__short_name',
+        'strategy2_position__public_name',
+        'strategy2_cash',
+        'strategy2_cash__user_code',
+        'strategy2_cash__name',
+        'strategy2_cash__short_name',
+        'strategy2_cash__public_name',
+        'strategy3_position',
+        'strategy3_position__user_code',
+        'strategy3_position__name',
+        'strategy3_position__short_name',
+        'strategy3_position__public_name',
+        'strategy3_cash',
+        'strategy3_cash__user_code',
+        'strategy3_cash__name',
+        'strategy3_cash__short_name',
+        'strategy3_cash__public_name',
+        'reference_fx_rate',
+        'is_locked',
+        'is_deleted',
+        'factor',
+        'trade_price',
+        'principal_amount',
+        'carry_amount',
+        'overheads',
+        'responsible',
+        'responsible__user_code',
+        'responsible__name',
+        'responsible__short_name',
+        'responsible__public_name',
+        'counterparty',
+        'counterparty__user_code',
+        'counterparty__name',
+        'counterparty__short_name',
+        'counterparty__public_name',
+        'linked_instrument',
+        'linked_instrument__user_code',
+        'linked_instrument__name',
+        'linked_instrument__short_name',
+        'linked_instrument__public_name',
+        'allocation_balance',
+        'allocation_balance__user_code',
+        'allocation_balance__name',
+        'allocation_balance__short_name',
+        'allocation_balance__public_name',
+        'allocation_pl',
+        'allocation_pl__user_code',
+        'allocation_pl__name',
+        'allocation_pl__short_name',
+        'allocation_pl__public_name',
+    ]
+
+    def perform_update(self, serializer):
+        super(TransactionViewSet, self).perform_update(serializer)
+        serializer.instance.calc_cash_by_formulas()
+
+    def perform_destroy(self, instance):
+        super(TransactionViewSet, self).perform_destroy(instance)
+        instance.calc_cash_by_formulas()
+
+
 class TransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = get_transaction_queryset(select_related=False, complex_transaction_transactions=True)
     serializer_class = TransactionSerializer
@@ -1130,7 +1358,6 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
             return Response(list(ret_serializer.data), status=status.HTTP_200_OK)
 
 
-
 class ComplexTransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = get_complex_transaction_queryset(select_related=False, transactions=True)
     serializer_class = ComplexTransactionSerializer
@@ -1151,12 +1378,43 @@ class ComplexTransactionLightViewSet(AbstractWithObjectPermissionViewSet):
     ).prefetch_related(
         get_attributes_prefetch(),
         *get_permissions_prefetch_lookups(
+            (None, ComplexTransaction),
             ('transaction_type', TransactionType),
             ('transaction_type__group', TransactionTypeGroup),
         )
     )
 
     serializer_class = ComplexTransactionLightSerializer
+
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        # ComplexTransactionPermissionFilter,
+        ComplexTransactionSpecificFilter,
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+    ]
+    # filter_class = ComplexTransactionFilterSet
+    ordering_fields = [
+        'date',
+        'code',
+        'is_deleted',
+    ]
+
+
+class ComplexTransactionEvViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = qs = ComplexTransaction.objects.select_related(
+        'transaction_type',
+        'transaction_type__group',
+    ).prefetch_related(
+        get_attributes_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, ComplexTransaction),
+            ('transaction_type', TransactionType),
+            ('transaction_type__group', TransactionTypeGroup),
+        )
+    )
+
+    serializer_class = ComplexTransactionEvSerializer
 
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         # ComplexTransactionPermissionFilter,

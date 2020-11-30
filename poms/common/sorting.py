@@ -9,6 +9,9 @@ import math
 
 from django.db.models.functions import Lower
 
+import logging
+_l = logging.getLogger('poms.common')
+
 def is_relation(item):
     return item in ['type', 'currency', 'instrument',
                     'instrument_type', 'group',
@@ -34,7 +37,8 @@ def is_relation(item):
                     ]
 
 def sort_by_dynamic_attrs(queryset, ordering, master_user, content_type):
-    print('sort_by_dynamic_attrs.ordering %s' % ordering)
+
+    _l.debug('sort_by_dynamic_attrs.ordering %s' % ordering)
 
     parts = ordering.split('attributes.')
 
@@ -43,15 +47,12 @@ def sort_by_dynamic_attrs(queryset, ordering, master_user, content_type):
         order = parts[0]
         key = parts[1]
 
-        print('order %s' % order)
-        print('key %s' % key)
-
         attribute_type = GenericAttributeType.objects.get(user_code__exact=key, master_user=master_user,
                                                           content_type=content_type)
 
         attributes_queryset = GenericAttribute.objects.filter(attribute_type=attribute_type, object_id__in=queryset)
 
-        print('attribute_type.value_type1 %s' % attribute_type.value_type)
+        _l.debug('attribute_type.value_type1 %s' % attribute_type.value_type)
 
         if order == '-':
 
@@ -102,7 +103,7 @@ def sort_by_dynamic_attrs(queryset, ordering, master_user, content_type):
                                                                             Value('0001-01-01'))).order_by(
                     'value_date_null')
 
-        # print('attributes_queryset %s' % attributes_queryset)
+        # _l.debug('attributes_queryset %s' % attributes_queryset)
 
         # TODO refactor!
 
@@ -120,14 +121,15 @@ def sort_by_dynamic_attrs(queryset, ordering, master_user, content_type):
         queryset = result
     else:
 
-        print("ordering in system attrs %s" % ordering)
+        _l.debug("ordering in system attrs %s" % ordering)
 
         if '-' in ordering:
             field = ordering.split('-')[1]
         else :
             field = ordering
 
-        print('ordering field %s' % field)
+        _l.debug('ordering field %s' % field)
+        _l.debug('ordering is relation %s' % is_relation(field))
 
         if is_relation(field):
 
@@ -135,6 +137,5 @@ def sort_by_dynamic_attrs(queryset, ordering, master_user, content_type):
 
         else:
             queryset = queryset.order_by(ordering)
-
 
     return queryset

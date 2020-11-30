@@ -20,7 +20,7 @@ from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
 from poms.portfolios.models import Portfolio
-from poms.portfolios.serializers import PortfolioSerializer, PortfolioLightSerializer
+from poms.portfolios.serializers import PortfolioSerializer, PortfolioLightSerializer, PortfolioEvSerializer
 from poms.tags.filters import TagFilter
 from poms.tags.utils import get_tag_prefetch
 from poms.transactions.models import TransactionType, TransactionTypeGroup
@@ -112,6 +112,46 @@ class PortfolioLightFilterSet(FilterSet):
     class Meta:
         model = Portfolio
         fields = []
+
+class PortfolioEvFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+    public_name = CharFilter()
+    account = ModelExtWithPermissionMultipleChoiceFilter(model=Account, field_name='accounts')
+    responsible = ModelExtWithPermissionMultipleChoiceFilter(model=Responsible, field_name='responsibles')
+    counterparty = ModelExtWithPermissionMultipleChoiceFilter(model=Counterparty, field_name='counterparties')
+    transaction_type = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionType, field_name='transaction_types')
+    tag = TagFilter(model=Portfolio)
+    member = ObjectPermissionMemberFilter(object_permission_model=Portfolio)
+    member_group = ObjectPermissionGroupFilter(object_permission_model=Portfolio)
+    permission = ObjectPermissionPermissionFilter(object_permission_model=Portfolio)
+    attribute_types = GroupsAttributeFilter()
+    attribute_values = GroupsAttributeFilter()
+
+    class Meta:
+        model = Portfolio
+        fields = []
+
+class PortfolioEvViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = Portfolio.objects.select_related(
+        'master_user',
+    ).prefetch_related(
+        get_attributes_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, Portfolio),
+        )
+    )
+    serializer_class = PortfolioEvSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter
+    ]
+    filter_class = PortfolioEvFilterSet
+    ordering_fields = [
+        'user_code', 'name', 'short_name', 'public_name',
+    ]
 
 
 class PortfolioLightViewSet(AbstractWithObjectPermissionViewSet):

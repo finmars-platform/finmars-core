@@ -13,21 +13,26 @@ from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
 from poms.common.utils import date_now
 from poms.currencies.fields import CurrencyDefault
-from poms.currencies.serializers import CurrencyField
+from poms.currencies.serializers import CurrencyField, CurrencyViewSerializer
 from poms.instruments.fields import InstrumentField, InstrumentTypeField, PricingPolicyField, InstrumentTypeDefault
 from poms.instruments.models import Instrument, PriceHistory, InstrumentClass, DailyPricingModel, \
     AccrualCalculationModel, PaymentSizeDetail, Periodicity, CostMethod, InstrumentType, \
     ManualPricingFormula, AccrualCalculationSchedule, InstrumentFactorSchedule, EventSchedule, \
     PricingPolicy, EventScheduleAction, EventScheduleConfig, GeneratedEvent, PricingCondition
 from poms.integrations.fields import PriceDownloadSchemeField
-from poms.obj_attrs.serializers import ModelWithAttributesSerializer
+from poms.obj_attrs.serializers import ModelWithAttributesSerializer, ModelWithAttributesOnlySerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.pricing.models import InstrumentPricingPolicy, InstrumentTypePricingPolicy
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
     InstrumentTypePricingPolicySerializer, InstrumentPricingPolicySerializer
 from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeField
+from poms.transactions.models import TransactionType
 from poms.users.fields import MasterUserField
+
+import time
+import logging
+_l = logging.getLogger('poms.instruments')
 
 
 class InstrumentClassSerializer(PomsClassSerializer):
@@ -243,6 +248,8 @@ class PricingPolicyViewSerializer(ModelWithUserCodeSerializer):
         fields = ['id', 'user_code', 'name', 'short_name', 'notes', 'expr']
 
 
+
+
 class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
                                ModelWithTagSerializer, ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
@@ -277,12 +284,11 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
     def __init__(self, *args, **kwargs):
         super(InstrumentTypeSerializer, self).__init__(*args, **kwargs)
 
-        from poms.transactions.serializers import TransactionTypeViewSerializer
-        self.fields['one_off_event_object'] = TransactionTypeViewSerializer(source='one_off_event', read_only=True)
-        self.fields['regular_event_object'] = TransactionTypeViewSerializer(source='regular_event', read_only=True)
-        self.fields['factor_same_object'] = TransactionTypeViewSerializer(source='factor_same', read_only=True)
-        self.fields['factor_up_object'] = TransactionTypeViewSerializer(source='factor_up', read_only=True)
-        self.fields['factor_down_object'] = TransactionTypeViewSerializer(source='factor_down', read_only=True)
+        self.fields['one_off_event_object'] = TransactionTypeSimpleViewSerializer(source='one_off_event', read_only=True)
+        self.fields['regular_event_object'] = TransactionTypeSimpleViewSerializer(source='regular_event', read_only=True)
+        self.fields['factor_same_object'] = TransactionTypeSimpleViewSerializer(source='factor_same', read_only=True)
+        self.fields['factor_up_object'] = TransactionTypeSimpleViewSerializer(source='factor_up', read_only=True)
+        self.fields['factor_down_object'] = TransactionTypeSimpleViewSerializer(source='factor_down', read_only=True)
 
         self.fields['pricing_policies'] = InstrumentTypePricingPolicySerializer(many=True, required=False, allow_null=True)
 
@@ -417,6 +423,44 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
         if len(ids):
             InstrumentTypePricingPolicy.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
+
+
+class TransactionTypeSimpleViewSerializer(ModelWithObjectPermissionSerializer):
+
+    class Meta(ModelWithObjectPermissionSerializer.Meta):
+        model = TransactionType
+        fields = [
+            'id', 'user_code', 'name', 'short_name', 'public_name',
+            'is_deleted'
+        ]
+
+class InstrumentTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
+
+    master_user = MasterUserField()
+
+    instrument_class_object = InstrumentClassSerializer(source='instrument_class', read_only=True)
+
+    one_off_event_object = TransactionTypeSimpleViewSerializer(source='one_off_event', read_only=True)
+    regular_event_object = TransactionTypeSimpleViewSerializer(source='regular_event', read_only=True)
+    factor_same_object = TransactionTypeSimpleViewSerializer(source='factor_same', read_only=True)
+    factor_up_object = TransactionTypeSimpleViewSerializer(source='factor_up', read_only=True)
+    factor_down_object = TransactionTypeSimpleViewSerializer(source='factor_down', read_only=True)
+
+    class Meta:
+        model = InstrumentType
+        fields = [
+            'id', 'master_user',
+            'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'is_default', 'is_deleted', 'is_enabled',
+
+            'one_off_event', 'one_off_event_object',
+            'regular_event', 'regular_event_object',
+            'factor_same', 'factor_same_object',
+            'factor_up', 'factor_up_object',
+            'factor_down', 'factor_down_object',
+
+            'instrument_class', 'instrument_class_object'
+        ]
 
 
 class InstrumentTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
@@ -766,6 +810,66 @@ class InstrumentLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             'id', 'master_user', 'user_code', 'name', 'short_name',
             'public_name', 'is_active', 'is_deleted', 'is_enabled'
         ]
+
+    def to_representation(self, instance):
+
+        st = time.perf_counter()
+
+        result = super(InstrumentLightSerializer, self).to_representation(instance)
+
+        # _l.debug('InstrumentLightSerializer done: %s', "{:3.3f}".format(time.perf_counter() - st))
+
+        return result
+
+
+class InstrumentEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
+
+    master_user = MasterUserField()
+
+    instrument_type_object = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
+
+    pricing_currency_object = CurrencyViewSerializer(source='pricing_currency', read_only=True)
+    accrued_currency_object = CurrencyViewSerializer(source='accrued_currency', read_only=True)
+
+    pricing_condition_object = PricingConditionSerializer(source='pricing_condition', read_only=True)
+    payment_size_detail_object = PaymentSizeDetailSerializer(source='payment_size_detail', read_only=True)
+
+    class Meta:
+        model = Instrument
+        fields = [
+            'id', 'master_user',
+
+            'user_code', 'name', 'short_name', 'public_name', 'notes',
+
+            'is_active', 'is_deleted', 'is_enabled',
+
+            'instrument_type', 'instrument_type_object',
+
+            'pricing_currency', 'pricing_currency_object',
+            'accrued_currency', 'accrued_currency_object',
+
+            'pricing_condition', 'pricing_condition_object',
+            'payment_size_detail', 'payment_size_detail_object',
+    
+            'user_text_1', 'user_text_2', 'user_text_3',
+
+            'reference_for_pricing',
+            'maturity_date', 'maturity_price',
+            'price_multiplier', 'accrued_multiplier',
+            'default_price', 'default_accrued'
+
+        ]
+
+    def to_representation(self, instance):
+
+        st = time.perf_counter()
+
+        result = super(InstrumentEvSerializer, self).to_representation(instance)
+
+        # _l.debug('InstrumentEvSerializer done: %s', "{:3.3f}".format(time.perf_counter() - st))
+
+        return result
+
 
 
 class InstrumentViewSerializer(ModelWithObjectPermissionSerializer):

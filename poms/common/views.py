@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-import logging
+
 from collections import OrderedDict
 
 from celery.result import AsyncResult
@@ -34,7 +34,7 @@ from django.contrib.contenttypes.models import ContentType
 from poms.common.grouping_handlers import handle_groups
 import time
 
-
+import logging
 _l = logging.getLogger('poms.common')
 
 
@@ -268,19 +268,17 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['post'], url_path='filtered')
+    @action(detail=False, methods=['post', 'get'], url_path='filtered')
     def filtered_list(self, request, *args, **kwargs):
 
-        start_time = time.time()
+        start_time = time.perf_counter()
 
         filter_settings = request.data.get('filter_settings', None)
         content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
         master_user = request.user.master_user
 
+        filters_st = time.perf_counter()
         queryset = self.filter_queryset(self.get_queryset())
-
-        # if content_type.model not in ['currencyhistory', 'pricehistory', 'pricingpolicy', 'transaction', 'currencyhistoryerror', 'pricehistoryerror']:
-        #     queryset = queryset.filter(is_deleted=False)
 
         if content_type.model not in ['currencyhistory', 'pricehistory', 'complextransaction', 'transaction', 'currencyhistoryerror', 'pricehistoryerror']:
 
@@ -293,23 +291,30 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
 
         ordering = request.data.get('ordering', None)
 
-        # print('ordering %s' % ordering)
+        _l.debug('ordering %s' % ordering)
 
         if ordering:
             queryset = sort_by_dynamic_attrs(queryset, ordering, master_user, content_type)
 
+        _l.debug('filtered_list apply filters done: %s', "{:3.3f}".format(time.perf_counter() - filters_st))
+
+        page_st = time.perf_counter()
+
         page = self.paginator.post_paginate_queryset(queryset, request)
 
-        # if page is not None:
+        _l.debug('filtered_list get page done: %s', "{:3.3f}".format(time.perf_counter() - page_st))
 
-        # if (request.data.get('page', 1) == 5):
-        #     raise Exception("Something went wrong")
+        serialize_st = time.perf_counter()
 
         serializer = self.get_serializer(page, many=True)
 
-        _l.debug("Filtered List %s seconds " % (time.time() - start_time))
+        result = self.get_paginated_response(serializer.data)
 
-        return self.get_paginated_response(serializer.data)
+        _l.debug('filtered_list serialize done: %s', "{:3.3f}".format(time.perf_counter() - serialize_st))
+
+        _l.debug('filtered_list done: %s', "{:3.3f}".format(time.perf_counter() - start_time))
+
+        return result
 
         # serializer = self.get_serializer(queryset, many=True)
         #

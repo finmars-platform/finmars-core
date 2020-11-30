@@ -64,6 +64,21 @@ class CounterpartySerializer(ModelWithObjectPermissionSerializer, ModelWithAttri
         self.fields['portfolios_object'] = PortfolioViewSerializer(source='portfolios', many=True, read_only=True)
 
 
+class CounterpartyEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
+
+    master_user = MasterUserField()
+    group_object = CounterpartyGroupViewSerializer(source='group', read_only=True)
+
+    class Meta:
+        model = Counterparty
+        fields = [
+            'id', 'master_user',
+            'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'is_default',  'is_deleted', 'is_enabled',
+            'group', 'group_object'
+        ]
+
+
 class CounterpartyLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
@@ -138,6 +153,21 @@ class ResponsibleSerializer(ModelWithObjectPermissionSerializer, ModelWithAttrib
 
         from poms.portfolios.serializers import PortfolioViewSerializer
         self.fields['portfolios_object'] = PortfolioViewSerializer(source='portfolios', many=True, read_only=True)
+
+
+class ResponsibleEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
+
+    master_user = MasterUserField()
+    group_object = ResponsibleGroupViewSerializer(source='group', read_only=True)
+
+    class Meta:
+        model = Responsible
+        fields = [
+            'id', 'master_user',
+            'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'is_default',  'is_deleted', 'is_enabled',
+            'group', 'group_object'
+        ]
 
 
 class ResponsibleLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):

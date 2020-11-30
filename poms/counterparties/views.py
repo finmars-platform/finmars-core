@@ -11,7 +11,8 @@ from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMu
 from poms.common.pagination import CustomPaginationMixin
 from poms.counterparties.models import Counterparty, Responsible, CounterpartyGroup, ResponsibleGroup
 from poms.counterparties.serializers import CounterpartySerializer, ResponsibleSerializer, CounterpartyGroupSerializer, \
-    ResponsibleGroupSerializer, ResponsibleLightSerializer, CounterpartyLightSerializer
+    ResponsibleGroupSerializer, ResponsibleLightSerializer, CounterpartyLightSerializer, CounterpartyEvSerializer, \
+    ResponsibleEvSerializer
 from poms.obj_attrs.filters import AttributeTypeValueTypeFilter
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import AbstractAttributeTypeViewSet, AbstractClassifierViewSet, GenericAttributeTypeViewSet, \
@@ -103,6 +104,7 @@ class CounterpartyGroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet
         EntitySpecificFilter
     ]
 
+
 class CounterpartyFilterSet(FilterSet):
     id = NoOpFilter()
     is_deleted = django_filters.BooleanFilter()
@@ -150,6 +152,45 @@ class CounterpartyViewSet(AbstractWithObjectPermissionViewSet):
         'user_code', 'name', 'short_name', 'public_name',
         'group', 'group__user_code', 'group__name', 'group__short_name', 'group__public_name',
     ]
+
+
+class CounterpartyEvFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+    group = ModelExtWithPermissionMultipleChoiceFilter(model=CounterpartyGroup)
+    member = ObjectPermissionMemberFilter(object_permission_model=Counterparty)
+    member_group = ObjectPermissionGroupFilter(object_permission_model=Counterparty)
+    permission = ObjectPermissionPermissionFilter(object_permission_model=Counterparty)
+
+    class Meta:
+        model = Counterparty
+        fields = []
+
+
+class CounterpartyEvViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = Counterparty.objects.select_related(
+        'master_user',
+        'group',
+    ).prefetch_related(
+        get_attributes_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, Counterparty),
+            ('group', CounterpartyGroup),
+        )
+    )
+    serializer_class = CounterpartyEvSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        EntitySpecificFilter
+    ]
+    filter_class = CounterpartyEvFilterSet
+    ordering_fields = [
+        'user_code', 'name', 'short_name', 'public_name'
+    ]
+
 
 
 class CounterpartyLightFilterSet(FilterSet):
@@ -339,6 +380,45 @@ class ResponsibleViewSet(AbstractWithObjectPermissionViewSet):
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
         'group', 'group__user_code', 'group__name', 'group__short_name', 'group__public_name',
+    ]
+
+
+class ResponsibleEvFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+    public_name = CharFilter()
+    is_valid_for_all_portfolios = django_filters.BooleanFilter()
+    group = ModelExtWithPermissionMultipleChoiceFilter(model=CounterpartyGroup)
+    member = ObjectPermissionMemberFilter(object_permission_model=Responsible)
+    member_group = ObjectPermissionGroupFilter(object_permission_model=Responsible)
+    permission = ObjectPermissionPermissionFilter(object_permission_model=Responsible)
+
+    class Meta:
+        model = Responsible
+        fields = []
+
+
+class ResponsibleEvViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = Responsible.objects.select_related(
+        'master_user',
+        'group',
+    ).prefetch_related(
+        get_attributes_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, Responsible),
+            ('group', ResponsibleGroup),
+        )
+    )
+    serializer_class = ResponsibleEvSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter
+    ]
+    filter_class = ResponsibleEvFilterSet
+    ordering_fields = [
+        'user_code', 'name', 'short_name', 'public_name',
     ]
 
 

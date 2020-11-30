@@ -77,7 +77,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
             except (GenericAttribute.DoesNotExist, KeyError):
 
                 obj = GenericAttribute.objects.create(attribute_type=attribute_type, content_type=content_type,
-                                                object_id=instance.id)
+                                                      object_id=instance.id)
 
                 obj.save()
 
@@ -88,7 +88,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
             if attribute_type.can_recalculate:
                 try:
                     executed_expressions[attribute_type.user_code] = safe_eval(attribute_type.expr, names={'this': eval_data},
-                                                                        context={})
+                                                                               context={})
                 except (ExpressionEvalError, TypeError, Exception, KeyError):
                     executed_expressions[attribute_type.user_code] = 'Invalid Expression'
 
@@ -244,6 +244,12 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
         # attrs_qs.exclude(attribute_type_id__in=processed).delete()
 
+
+
+class ModelWithAttributesOnlySerializer(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        super(ModelWithAttributesOnlySerializer, self).__init__(*args, **kwargs)
+        self.fields['attributes'] = GenericAttributeOnlySerializer(many=True, required=False, allow_null=True)
 
 class GenericClassifierRecursiveField(serializers.Serializer):
     def to_representation(self, instance):
@@ -589,6 +595,8 @@ class GenericAttributeViewListSerializer(serializers.ListSerializer):
         ]
 
 
+
+
 class GenericAttributeSerializer(serializers.ModelSerializer):
     attribute_type = GenericAttributeTypeField()
     classifier = GenericClassifierField(required=False, allow_null=True)
@@ -649,6 +657,39 @@ class GenericAttributeSerializer(serializers.ModelSerializer):
             instance.classifier = self._attribute_type_classifiers[instance.classifier_id]
 
         return super(GenericAttributeSerializer, self).to_representation(instance)
+
+class GenericAttributeOnlySerializer(serializers.ModelSerializer):
+    attribute_type = GenericAttributeTypeField()
+    classifier = GenericClassifierField(required=False, allow_null=True)
+    classifier_object = GenericClassifierViewSerializer(source='classifier', read_only=True)
+    list_serializer_class = GenericAttributeViewListSerializer
+
+    class Meta:
+        model = GenericAttribute
+        list_serializer_class = GenericAttributeListSerializer
+        fields = [
+            'id', 'attribute_type', 'value_string', 'value_float', 'value_date', 'classifier', 'classifier_object'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(GenericAttributeOnlySerializer, self).__init__(*args, **kwargs)
+        self._attribute_type_classifiers = {}
+
+    def to_representation(self, instance):
+
+        if instance.classifier_id:
+            # classifiers must be already loaded through prefetch_related()
+            if instance.attribute_type_id not in self._attribute_type_classifiers:
+                l = list(instance.attribute_type.classifiers.all())
+                for c in l:
+                    self._attribute_type_classifiers[c.id] = c
+                get_cached_trees(l)
+
+            # print('_attribute_type_classifiers %s' % self._attribute_type_classifiers)
+
+            instance.classifier = self._attribute_type_classifiers[instance.classifier_id]
+
+        return super(GenericAttributeOnlySerializer, self).to_representation(instance)
 
 
 class RecalculateAttributes:

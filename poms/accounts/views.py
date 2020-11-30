@@ -5,7 +5,8 @@ from django_filters.rest_framework import FilterSet
 from rest_framework.settings import api_settings
 
 from poms.accounts.models import Account, AccountType
-from poms.accounts.serializers import AccountSerializer, AccountTypeSerializer, AccountLightSerializer
+from poms.accounts.serializers import AccountSerializer, AccountTypeSerializer, AccountLightSerializer, \
+    AccountEvSerializer, AccountTypeEvSerializer
 from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMultipleChoiceFilter, \
     GroupsAttributeFilter, AttributeFilter, EntitySpecificFilter
 from poms.common.pagination import CustomPaginationMixin
@@ -74,6 +75,48 @@ class AccountTypeViewSet(AbstractWithObjectPermissionViewSet):
     ]
 
 
+class AccountTypeEvFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+    public_name = CharFilter()
+    show_transaction_details = django_filters.BooleanFilter()
+    tag = TagFilter(model=AccountType)
+    member = ObjectPermissionMemberFilter(object_permission_model=AccountType)
+    member_group = ObjectPermissionGroupFilter(object_permission_model=AccountType)
+    permission = ObjectPermissionPermissionFilter(object_permission_model=AccountType)
+
+    class Meta:
+        model = AccountType
+        fields = []
+
+
+class AccountTypeEvViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = AccountType.objects.select_related(
+        'master_user'
+    ).prefetch_related(
+        get_attributes_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, AccountType),
+        )
+    )
+    serializer_class = AccountTypeEvSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+        EntitySpecificFilter
+        # TagFilterBackend,
+    ]
+    filter_class = AccountTypeEvFilterSet
+    ordering_fields = [
+        'user_code', 'name', 'short_name', 'public_name', 'show_transaction_details'
+    ]
+
+
+
 class AccountTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = AccountType.objects.select_related(
         'master_user'
@@ -92,6 +135,7 @@ class AccountTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cust
         AttributeFilter,
         EntitySpecificFilter
     ]
+
 
 class AccountAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Account
@@ -166,6 +210,49 @@ class AccountViewSet(AbstractWithObjectPermissionViewSet):
         'type', 'type__user_code', 'type__name', 'type__short_name', 'type__public_name',
     ]
 
+
+class AccountEvFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+    public_name = CharFilter()
+    is_valid_for_all_portfolios = django_filters.BooleanFilter()
+    type = ModelExtWithPermissionMultipleChoiceFilter(model=AccountType)
+    portfolio = ModelExtWithPermissionMultipleChoiceFilter(model=Portfolio, field_name='portfolios')
+    tag = TagFilter(model=Account)
+    member = ObjectPermissionMemberFilter(object_permission_model=Account)
+    member_group = ObjectPermissionGroupFilter(object_permission_model=Account)
+    permission = ObjectPermissionPermissionFilter(object_permission_model=Account)
+    attribute_types = GroupsAttributeFilter()
+    attribute_values = GroupsAttributeFilter()
+
+    class Meta:
+        model = Account
+        fields = []
+
+
+class AccountEvViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = Account.objects.select_related(
+        'master_user',
+        'type'
+    ).prefetch_related(
+        get_attributes_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, Account),
+            ('type', AccountType),
+
+        )
+    )
+    serializer_class = AccountEvSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = AccountEvFilterSet
+    ordering_fields = [
+        'user_code', 'name', 'short_name', 'public_name'
+    ]
 
 class AccountLightFilterSet(FilterSet):
     id = NoOpFilter()

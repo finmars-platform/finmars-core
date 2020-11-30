@@ -45,6 +45,18 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
                                                                                 read_only=True)
 
 
+class PortfolioEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = Portfolio
+        fields = [
+            'id', 'master_user',
+            'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'is_default', 'is_deleted', 'is_enabled'
+        ]
+
+
 class PortfolioLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 

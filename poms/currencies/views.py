@@ -11,12 +11,14 @@ from poms.common.pagination import CustomPaginationMixin
 from poms.common.views import AbstractModelViewSet
 from poms.currencies.filters import OwnerByCurrencyFilter
 from poms.currencies.models import Currency, CurrencyHistory
-from poms.currencies.serializers import CurrencySerializer, CurrencyHistorySerializer, CurrencyLightSerializer
+from poms.currencies.serializers import CurrencySerializer, CurrencyHistorySerializer, CurrencyLightSerializer, \
+    CurrencyEvSerializer
 from poms.instruments.models import PricingPolicy, DailyPricingModel
 from poms.integrations.models import PriceDownloadScheme
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet
 from poms.obj_perms.permissions import PomsConfigurationPermission
+from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractEvGroupWithObjectPermissionViewSet, AbstractWithObjectPermissionViewSet
 from poms.tags.filters import TagFilter
 from poms.tags.utils import get_tag_prefetch
@@ -73,6 +75,40 @@ class CurrencyViewSet(AbstractWithObjectPermissionViewSet):
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name', 'reference_for_pricing',
         'price_download_scheme', 'price_download_scheme__scheme_name',
+    ]
+
+
+class CurrencyEvFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+    public_name = CharFilter()
+    reference_for_pricing = CharFilter()
+
+    class Meta:
+        model = Currency
+        fields = []
+
+
+class CurrencyEvViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = Currency.objects.select_related(
+        'master_user',
+    ).prefetch_related(
+        get_attributes_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, Currency),
+        )
+    )
+    serializer_class = CurrencyEvSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        EntitySpecificFilter
+    ]
+    filter_class = CurrencyEvFilterSet
+    ordering_fields = [
+        'user_code', 'name', 'short_name', 'public_name'
     ]
 
 

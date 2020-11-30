@@ -32,6 +32,24 @@ class AccountTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCo
         ]
 
 
+class AccountTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
+                             ModelWithAttributesSerializer):
+    master_user = MasterUserField()
+    transaction_details_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                               allow_null=True, default='""')
+
+    class Meta(ModelWithObjectPermissionSerializer.Meta):
+        model = AccountType
+        fields = [
+            'id', 'master_user',
+            'user_code', 'name', 'short_name', 'public_name', 'notes',
+             'is_default', 'is_deleted', 'is_enabled',
+            'show_transaction_details', 'transaction_details_expr',
+        ]
+
+
+
+
 class AccountTypeViewSerializer(ModelWithObjectPermissionSerializer):
     class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = AccountType
@@ -72,6 +90,21 @@ class AccountSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributes
         self.fields['type_object'] = AccountTypeViewSerializer(source='type', read_only=True)
         self.fields['portfolios_object'] = PortfolioViewSerializer(source='portfolios', many=True, read_only=True)
 
+
+class AccountEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
+
+    master_user = MasterUserField()
+
+    type_object = AccountTypeViewSerializer(source='type', read_only=True)
+
+    class Meta(ModelWithObjectPermissionSerializer.Meta):
+        model = Account
+        fields = [
+            'id', 'master_user',
+            'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'is_default', 'is_deleted', 'is_enabled',
+            'type', 'type_object'
+        ]
 
 class AccountLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
 

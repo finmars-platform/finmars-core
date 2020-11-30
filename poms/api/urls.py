@@ -81,6 +81,7 @@ router.register(r'users/ecosystem-default', users.EcosystemDefaultViewSet, 'ecos
 
 router.register(r'accounts/account-type-ev-group', accounts.AccountTypeEvGroupViewSet)
 router.register(r'accounts/account-type', accounts.AccountTypeViewSet)
+router.register(r'accounts/account-type-ev', accounts.AccountTypeEvViewSet)
 router.register(r'accounts/account-type-attribute-type', accounts.AccountTypeAttributeTypeViewSet,
                 'accounttypeattributetype')
 
@@ -89,6 +90,7 @@ router.register(r'accounts/account-attribute-type', accounts.AccountAttributeTyp
 # router.register(r'accounts/account-classifier', accounts.AccountClassifierViewSet)
 router.register(r'accounts/account-classifier', accounts.AccountClassifierViewSet, 'accountclassifier')
 router.register(r'accounts/account-ev-group', accounts.AccountEvGroupViewSet, 'accountevgroup')
+router.register(r'accounts/account-ev', accounts.AccountEvViewSet)
 router.register(r'accounts/account', accounts.AccountViewSet)
 router.register(r'accounts/account-light', accounts.AccountLightViewSet)
 
@@ -104,8 +106,9 @@ router.register(r'counterparties/counterparty-group', counterparties.Counterpart
 
 router.register(r'counterparties/counterparty-ev-group', counterparties.CounterpartyEvGroupViewSet,
                 'counterpartyevgroup')
-router.register(r'counterparties/counterparty', counterparties.CounterpartyViewSet)
-router.register(r'counterparties/counterparty-light', counterparties.CounterpartyLightViewSet)
+router.register(r'counterparties/counterparty', counterparties.CounterpartyViewSet, 'counterparty')
+router.register(r'counterparties/counterparty-ev', counterparties.CounterpartyEvViewSet, 'counterpartyev')
+router.register(r'counterparties/counterparty-light', counterparties.CounterpartyLightViewSet, 'counterpartylight')
 
 # router.register(r'counterparties/responsible-attribute-type', counterparties.ResponsibleAttributeTypeViewSet)
 router.register(r'counterparties/responsible-attribute-type', counterparties.ResponsibleAttributeTypeViewSet,
@@ -119,10 +122,12 @@ router.register(r'counterparties/responsible-group', counterparties.ResponsibleG
 
 router.register(r'counterparties/responsible-ev-group', counterparties.ResponsibleEvGroupViewSet, 'responsibleevgroup')
 router.register(r'counterparties/responsible', counterparties.ResponsibleViewSet)
-router.register(r'counterparties/responsible-light', counterparties.ResponsibleLightViewSet)
+router.register(r'counterparties/responsible-ev', counterparties.ResponsibleEvViewSet, 'responsibleev')
+router.register(r'counterparties/responsible-light', counterparties.ResponsibleLightViewSet, 'responsiblelight')
 
 router.register(r'currencies/currency-ev-group', currencies.CurrencyEvGroupViewSet, 'currencyevgroup')
 router.register(r'currencies/currency', currencies.CurrencyViewSet)
+router.register(r'currencies/currency-ev', currencies.CurrencyEvViewSet)
 router.register(r'currencies/currency-light', currencies.CurrencyLightViewSet)
 
 router.register(r'currencies/currency-history-ev-group', currencies.CurrencyHistoryEvGroupViewSet)
@@ -144,6 +149,7 @@ router.register(r'instruments/event-schedule-config', instruments.EventScheduleC
 
 router.register(r'instruments/instrument-type-ev-group', instruments.InstrumentTypeEvGroupViewSet)
 router.register(r'instruments/instrument-type', instruments.InstrumentTypeViewSet)
+router.register(r'instruments/instrument-type-ev', instruments.InstrumentTypeEvViewSet)
 router.register(r'instruments/instrument-type-light', instruments.InstrumentTypeLightViewSet)
 router.register(r'instruments/instrument-type-attribute-type', instruments.InstrumentTypeAttributeTypeViewSet)
 
@@ -155,6 +161,7 @@ router.register(r'instruments/instrument-classifier', instruments.InstrumentClas
 
 router.register(r'instruments/instrument-ev-group', instruments.InstrumentEvGroupViewSet)
 router.register(r'instruments/instrument', instruments.InstrumentViewSet)
+router.register(r'instruments/instrument-ev', instruments.InstrumentEvViewSet)
 router.register(r'instruments/instrument-light', instruments.InstrumentLightViewSet)
 
 router.register(r'instruments/price-history-ev-group', instruments.PriceHistoryEvGroupViewSet, 'instrumentevgroup')
@@ -169,6 +176,7 @@ router.register(r'portfolios/portfolio-attribute-type', portfolios.PortfolioAttr
 router.register(r'portfolios/portfolio-classifier', portfolios.PortfolioClassifierViewSet, 'portfolioclassifier')
 
 router.register(r'portfolios/portfolio-ev-group', portfolios.PortfolioEvGroupViewSet, 'portfolioevgroup')
+router.register(r'portfolios/portfolio-ev', portfolios.PortfolioEvViewSet)
 router.register(r'portfolios/portfolio', portfolios.PortfolioViewSet)
 router.register(r'portfolios/portfolio-light', portfolios.PortfolioLightViewSet)
 
@@ -181,6 +189,7 @@ router.register(r'strategies/1/subgroup', strategies.Strategy1SubgroupViewSet)
 
 router.register(r'strategies/1/strategy-ev-group', strategies.Strategy1EvGroupViewSet, 'strategy1evgroup')
 router.register(r'strategies/1/strategy', strategies.Strategy1ViewSet)
+router.register(r'strategies/1/strategy-ev', strategies.Strategy1EvViewSet)
 router.register(r'strategies/1/strategy-light', strategies.Strategy1LightViewSet)
 
 router.register(r'strategies/1/strategy-attribute-type', strategies.Strategy1AttributeTypeViewSet)
@@ -194,6 +203,7 @@ router.register(r'strategies/2/subgroup', strategies.Strategy2SubgroupViewSet)
 
 router.register(r'strategies/2/strategy-ev-group', strategies.Strategy2EvGroupViewSet, 'strategy2evgroup')
 router.register(r'strategies/2/strategy', strategies.Strategy2ViewSet)
+router.register(r'strategies/2/strategy-ev', strategies.Strategy2EvViewSet)
 router.register(r'strategies/2/strategy-light', strategies.Strategy2LightViewSet)
 
 router.register(r'strategies/2/strategy-attribute-type', strategies.Strategy2AttributeTypeViewSet)
@@ -207,6 +217,7 @@ router.register(r'strategies/3/subgroup', strategies.Strategy3SubgroupViewSet)
 
 router.register(r'strategies/3/strategy-ev-group', strategies.Strategy3EvGroupViewSet, 'strategy3evgroup')
 router.register(r'strategies/3/strategy', strategies.Strategy3ViewSet)
+router.register(r'strategies/3/strategy-ev', strategies.Strategy3EvViewSet)
 router.register(r'strategies/3/strategy-light', strategies.Strategy3LightViewSet)
 
 router.register(r'strategies/3/strategy-attribute-type', strategies.Strategy3AttributeTypeViewSet)
@@ -229,6 +240,7 @@ router.register(r'transactions/transaction-type-light-ev-group', transactions.Tr
                 'transactiontypelightevgroup')
 
 router.register(r'transactions/transaction-type', transactions.TransactionTypeViewSet)
+router.register(r'transactions/transaction-type-ev', transactions.TransactionTypeEvViewSet)
 router.register(r'transactions/transaction-type-light', transactions.TransactionTypeLightViewSet,
                 'transactiontypelight')
 router.register(r'transactions/transaction-type-light-with-inputs', transactions.TransactionTypeLightWithInputsViewSet,
@@ -243,6 +255,7 @@ router.register(r'transactions/transaction-classifier', transactions.Transaction
 
 router.register(r'transactions/transaction-ev-group', transactions.TransactionEvGroupViewSet, 'transactionevgroup')
 router.register(r'transactions/transaction', transactions.TransactionViewSet)
+router.register(r'transactions/transaction-ev', transactions.TransactionEvViewSet)
 
 router.register(r'transactions/complex-transaction-attribute-type', transactions.ComplexTransactionAttributeTypeViewSet,
                 'complextransactionattributetype')
@@ -252,6 +265,7 @@ router.register(r'transactions/complex-transaction-ev-group', transactions.Compl
 router.register(r'transactions/complex-transaction-light-ev-group', transactions.ComplexTransactionLightEvGroupViewSet,
                 'complextransactionlightevgroup')
 router.register(r'transactions/complex-transaction', transactions.ComplexTransactionViewSet)
+router.register(r'transactions/complex-transaction-ev', transactions.ComplexTransactionEvViewSet)
 router.register(r'transactions/complex-transaction-light', transactions.ComplexTransactionLightViewSet,
                 'complextransactionlight')
 router.register(r'transactions/recalculate-permission-transaction',

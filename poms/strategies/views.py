@@ -19,7 +19,7 @@ from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1,
 from poms.strategies.serializers import Strategy1GroupSerializer, Strategy1Serializer, Strategy2GroupSerializer, \
     Strategy2SubgroupSerializer, Strategy2Serializer, Strategy1SubgroupSerializer, Strategy3GroupSerializer, \
     Strategy3SubgroupSerializer, Strategy3Serializer, Strategy1LightSerializer, Strategy2LightSerializer, \
-    Strategy3LightSerializer
+    Strategy3LightSerializer, Strategy1EvSerializer, Strategy2EvSerializer, Strategy3EvSerializer
 from poms.tags.filters import TagFilter
 from poms.tags.models import Tag
 from poms.tags.utils import get_tag_prefetch
@@ -203,6 +203,53 @@ class Strategy1ViewSet(AbstractWithObjectPermissionViewSet):
         EntitySpecificFilter
     ]
     filter_class = Strategy1FilterSet
+    ordering_fields = [
+        'user_code', 'name', 'short_name', 'public_name',
+        'subgroup__group', 'subgroup__group__user_code', 'subgroup__group__name', 'subgroup__group__short_name',
+        'subgroup__group__public_name',
+        'subgroup', 'subgroup__user_code', 'subgroup__name', 'subgroup__short_name', 'subgroup__public_name',
+    ]
+
+
+class Strategy1EvFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+    public_name = CharFilter()
+    subgroup__group = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy1Group)
+    subgroup = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy1Subgroup)
+    member = ObjectPermissionMemberFilter(object_permission_model=Strategy1)
+    member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy1)
+    permission = ObjectPermissionPermissionFilter(object_permission_model=Strategy1)
+
+    class Meta:
+        model = Strategy1
+        fields = []
+
+
+class Strategy1EvViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = Strategy1.objects.select_related(
+        'master_user',
+        'subgroup',
+        'subgroup__group'
+    ).prefetch_related(
+        get_attributes_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, Strategy1),
+            ('subgroup', Strategy1Subgroup),
+            ('subgroup__group', Strategy1Group),
+        )
+    )
+    serializer_class = Strategy1EvSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+        EntitySpecificFilter
+    ]
+    filter_class = Strategy1EvFilterSet
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
         'subgroup__group', 'subgroup__group__user_code', 'subgroup__group__name', 'subgroup__group__short_name',
@@ -413,6 +460,42 @@ class Strategy2ViewSet(Strategy1ViewSet):
     filter_class = Strategy2FilterSet
 
 
+class Strategy2EvFilterSet(Strategy1FilterSet):
+    tag = TagFilter(model=Strategy2)
+    subgroup__group = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy2Group)
+    subgroup = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy2Subgroup)
+    member = ObjectPermissionMemberFilter(object_permission_model=Strategy2)
+    member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy2)
+    permission = ObjectPermissionPermissionFilter(object_permission_model=Strategy2)
+
+    class Meta:
+        model = Strategy2
+        fields = []
+
+
+class Strategy2EvViewSet(Strategy1ViewSet):
+    queryset = Strategy2.objects.select_related(
+        'master_user',
+        'subgroup',
+        'subgroup__group'
+    ).prefetch_related(
+        get_attributes_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, Strategy2),
+            ('subgroup', Strategy2Subgroup),
+            ('subgroup__group', Strategy2Group),
+        )
+    )
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+        EntitySpecificFilter
+    ]
+    serializer_class = Strategy2EvSerializer
+    filter_class = Strategy2EvFilterSet
+
+
 class Strategy2LightFilterSet(FilterSet):
     id = NoOpFilter()
     is_deleted = django_filters.BooleanFilter()
@@ -606,6 +689,42 @@ class Strategy3ViewSet(Strategy1ViewSet):
     ]
     serializer_class = Strategy3Serializer
     filter_class = Strategy3FilterSet
+
+
+class Strategy3EvFilterSet(Strategy1FilterSet):
+    subgroup__group = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy3Group)
+    subgroup = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy3Subgroup)
+    member = ObjectPermissionMemberFilter(object_permission_model=Strategy3)
+    member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy3)
+    permission = ObjectPermissionPermissionFilter(object_permission_model=Strategy3)
+
+    class Meta:
+        model = Strategy3
+        fields = []
+
+
+class Strategy3EvViewSet(Strategy1ViewSet):
+    queryset = Strategy3.objects.select_related(
+        'master_user',
+        'subgroup',
+        'subgroup__group'
+    ).prefetch_related(
+        get_attributes_prefetch(),
+        *get_permissions_prefetch_lookups(
+            (None, Strategy3),
+            ('subgroup', Strategy3Subgroup),
+            ('subgroup__group', Strategy3Group),
+        )
+    )
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+        EntitySpecificFilter
+    ]
+    serializer_class = Strategy3EvSerializer
+    filter_class = Strategy3EvFilterSet
+
 
 
 class Strategy3LightFilterSet(FilterSet):
