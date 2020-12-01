@@ -1121,7 +1121,8 @@ class BalanceReportBuilderSql:
                                  fx_trades_and_fx_variations_filter_sql_string= fx_trades_and_fx_variations_filter_sql_string
                                  )
 
-            _l.debug('query %s' % str(query))
+            with open('/tmp/query_result.txt', 'w') as the_file:
+                the_file.write(query)
 
             cursor.execute(query)
 
