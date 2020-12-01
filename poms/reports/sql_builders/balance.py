@@ -103,8 +103,6 @@ class BalanceReportBuilderSql:
 
             ######################################
 
-            _l.debug('pl_query %s' % str(pl_query))
-
             # language=PostgreSQL
 
             query = """
@@ -1120,9 +1118,6 @@ class BalanceReportBuilderSql:
                                  pl_left_join_consolidation=pl_left_join_consolidation,
                                  fx_trades_and_fx_variations_filter_sql_string= fx_trades_and_fx_variations_filter_sql_string
                                  )
-
-            with open('/tmp/query_result.txt', 'w') as the_file:
-                the_file.write(query)
 
             cursor.execute(query)
 
