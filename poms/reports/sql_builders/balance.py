@@ -103,6 +103,8 @@ class BalanceReportBuilderSql:
 
             ######################################
 
+            _l.debug('pl_query %s' % pl_query)
+
             # language=PostgreSQL
 
             query = """
@@ -1096,6 +1098,10 @@ class BalanceReportBuilderSql:
             consolidated_cash_columns = get_cash_consolidation_for_select(self.instance)
             consolidated_position_columns = get_position_consolidation_for_select(self.instance)
             consolidated_cash_as_position_columns = get_cash_as_position_consolidation_for_select(self.instance)
+
+            _l.debug('consolidated_cash_columns %s' % consolidated_cash_columns)
+            _l.debug('consolidated_position_columns %s' % consolidated_position_columns)
+            _l.debug('consolidated_cash_as_position_columns %s' % consolidated_cash_as_position_columns)
 
             query = query.format(report_date=self.instance.report_date,
                                  master_user_id=self.instance.master_user.id,
