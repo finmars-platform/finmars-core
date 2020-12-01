@@ -103,7 +103,7 @@ class BalanceReportBuilderSql:
 
             ######################################
 
-            _l.debug('pl_query %s' % pl_query)
+            _l.debug('pl_query %s' % str(pl_query))
 
             # language=PostgreSQL
 
@@ -1121,7 +1121,7 @@ class BalanceReportBuilderSql:
                                  fx_trades_and_fx_variations_filter_sql_string= fx_trades_and_fx_variations_filter_sql_string
                                  )
 
-            _l.debug('query %s' % query)
+            _l.debug('query %s' % str(query))
 
             cursor.execute(query)
 
