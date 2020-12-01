@@ -539,6 +539,7 @@ class TransactionTypeInput(models.Model):
     DATE = 40
     RELATION = 100
     SELECTOR = 110
+    BUTTON = 120
 
     # ACCOUNT = 110
     # INSTRUMENT = 120
@@ -559,6 +560,7 @@ class TransactionTypeInput(models.Model):
         # (EXPRESSION, ugettext_lazy('Expression')),
         (RELATION, ugettext_lazy('Relation')),
         (SELECTOR, ugettext_lazy('Selector')),
+        (BUTTON, ugettext_lazy('Button')),
         # (ACCOUNT, ugettext_lazy('Account')),
         # (INSTRUMENT, ugettext_lazy('Instrument')),
         # (CURRENCY, ugettext_lazy('Currency')),
@@ -651,6 +653,25 @@ class TransactionTypeInput(models.Model):
     settings = models.ForeignKey('transactions.TransactionTypeInputSettings', null=True, blank=True,
                                  on_delete=models.SET_NULL,
                                  verbose_name=ugettext_lazy('settings'))
+
+    json_button_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json button data'))
+
+    @property
+    def button_data(self):
+        if self.json_button_data:
+            try:
+                return json.loads(self.json_button_data)
+            except (ValueError, TypeError):
+                return None
+        else:
+            return None
+
+    @button_data.setter
+    def button_data(self, val):
+        if val:
+            self.json_button_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+        else:
+            self.json_button_data = None
 
     class Meta:
         verbose_name = ugettext_lazy('transaction type input')

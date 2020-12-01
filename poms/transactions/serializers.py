@@ -164,6 +164,8 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
 
     settings = TransactionTypeInputSettingsSerializer(allow_null=True, required=False)
 
+    button_data = serializers.JSONField(allow_null=False)
+
     # settings = TransactionTypeInputSettingsField(required=False, allow_null=True)
 
     # account_object = serializers.PrimaryKeyRelatedField(source='account', read_only=True)
@@ -194,6 +196,9 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
             'payment_size_detail', 'price_download_scheme', 'pricing_policy', 'periodicity',
             'accrual_calculation_model',
             'settings',
+
+            'button_data'
+
             # 'settings_old'
             # 'account_object',
             # 'instrument_type_object',
