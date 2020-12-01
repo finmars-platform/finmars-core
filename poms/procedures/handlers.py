@@ -16,6 +16,7 @@ from poms.procedures.tasks import procedure_request_data_file
 from django.db import transaction
 
 from poms.system_messages.handlers import send_system_message
+from poms.users.models import Member
 
 _l = logging.getLogger('poms.procedures')
 
@@ -71,6 +72,10 @@ class RequestDataFileProcedureProcess(object):
                     procedure_instance.member = self.member
 
                 if self.schedule_instance:
+
+                    member = Member.objects.get(master_user=self.master_user, is_owner=True)
+
+                    procedure_instance.member = member # Add owner of ecosystem as member who stared schedule (Need to transaction expr execution)
                     procedure_instance.started_by = RequestDataFileProcedureInstance.STARTED_BY_SCHEDULE
                     procedure_instance.schedule_instance = self.schedule_instance
 

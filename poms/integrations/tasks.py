@@ -2394,6 +2394,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                                                                    missing_data_handler=scheme.missing_data_handler,
                                                                    error_handling=scheme.error_handler,
                                                                    delimiter=scheme.delimiter,
+                                                                   member=procedure_instance.member,
                                                                    master_user=procedure_instance.master_user)
 
                     _l.debug('complex_transaction_csv_file_import_by_procedure instance: %s' % instance)

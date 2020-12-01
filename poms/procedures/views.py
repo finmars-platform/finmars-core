@@ -117,6 +117,7 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
         procedure = RequestDataFileProcedure.objects.get(pk=pk)
 
         master_user = request.user.master_user
+        member = request.user.member
 
         # date_from = None
         # date_to = None
@@ -130,7 +131,8 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
         #         date_to = parse_date_iso(request.data['user_price_date_to'])
 
         # instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, date_from=date_from, date_to=date_to)
-        instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user)
+
+        instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, member=member)
         instance.process()
 
         text = "Data File Procedure %s. Start processing" % procedure.name
