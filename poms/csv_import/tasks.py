@@ -123,7 +123,7 @@ def generate_file_report(instance, master_user, type, name):
             rowsSkippedCount = rowsSkippedCount + 1
 
     for item in instance.stats:
-        if item['error_reaction'] != 'Skipped':
+        if item['error_reaction'] != 'Skipped' and item['error_reaction'] != 'Success':
             rowsFailedCount = rowsFailedCount + 1
 
     if instance.error_handler == 'break':
