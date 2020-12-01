@@ -1115,6 +1115,8 @@ class BalanceReportBuilderSql:
                                  fx_trades_and_fx_variations_filter_sql_string= fx_trades_and_fx_variations_filter_sql_string
                                  )
 
+            _l.debug('query %s' % query)
+
             cursor.execute(query)
 
             _l.debug('Balance report query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
