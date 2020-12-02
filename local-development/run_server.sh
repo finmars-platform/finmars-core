@@ -15,4 +15,5 @@ SFTP_HOST=sftp.finmars.com \
 SFTP_USERNAME=finmars \
 SFTP_PASSWORD=97cZgv1pL2pz \
 MEDIATOR_URL=http://localhost:8082/ \
+DJANGO_LOG_LEVEL=DEBUG \
 BACKEND_ROLES="ALL" python manage.py runserver

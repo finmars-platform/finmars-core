@@ -142,3 +142,4 @@ cython_debug/
 
 local-development/run_migrate_prod_tmp.sh
 local-development/run_server_prod_tmp.sh
+local-development/run_celery_prod_tmp.sh

@@ -10,4 +10,5 @@ DEBUG=True \
 SFTP_HOST=sftp.finmars.com \
 SFTP_USERNAME=finmars \
 SFTP_PASSWORD=97cZgv1pL2pz \
+DJANGO_LOG_LEVEL=DEBUG \
 celery worker --app poms_app --beat --loglevel=DEBUG

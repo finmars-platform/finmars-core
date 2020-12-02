@@ -41,7 +41,7 @@ from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, 
     InstrumentTypePricingPolicy
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
     CurrencyPricingPolicySerializer, InstrumentTypePricingPolicySerializer
-from poms.procedures.models import PricingProcedure
+from poms.procedures.models import PricingProcedure, RequestDataFileProcedure
 from poms.reconciliation.models import TransactionTypeReconField
 from poms.reference_tables.models import ReferenceTable, ReferenceTableRow
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
@@ -56,10 +56,13 @@ from poms.transactions.models import TransactionType, TransactionTypeInput, Tran
     TransactionTypeActionInstrumentManualPricingFormula, NotificationClass, EventClass, TransactionClass, \
     TransactionTypeInputSettings
 
+
+
 from rest_framework.exceptions import ValidationError
 
 from django.core import serializers
 import json
+import time
 
 from poms.transactions.serializers import TransactionTypeSerializer
 from poms.ui.models import EditLayout, ListLayout, Bookmark, TransactionUserFieldModel, InstrumentUserFieldModel, \
@@ -211,17 +214,24 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         self.access_table = get_access_table(self._member)
 
+        st = time.perf_counter()
+
+        _l.debug('ConfigurationExportViewSet')
 
         response = HttpResponse(content_type='application/json')
         # response['Content-Disposition'] = 'attachment; filename="data-%s.json"' % str(datetime.now().date())
 
         configuration = self.createConfiguration()
 
+        _l.debug('ConfigurationExportViewSet createConfiguration done: %s',
+                 "{:3.3f}".format(time.perf_counter() - st))
+
         response.write(json.dumps(configuration))
 
         return response
 
     def createConfiguration(self):
+
         configuration = {}
         configuration["head"] = {}
         configuration["head"]["date"] = str(datetime.now().date())
@@ -230,8 +240,24 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         can_export = check_configuration_section(self.access_table)
 
+        transaction_type_st = time.perf_counter()
+
         transaction_types = self.get_transaction_types()
         transaction_type_groups = self.get_transaction_type_groups()
+
+        _l.debug('ConfigurationExportViewSet createConfiguration got transaction types done: %s',
+                 "{:3.3f}".format(time.perf_counter() - transaction_type_st))
+
+        entity_types_st = time.perf_counter()
+
+        account_types = self.get_account_types()
+        instrument_types = self.get_instrument_types()
+
+        _l.debug('ConfigurationExportViewSet createConfiguration got entity types done: %s',
+                 "{:3.3f}".format(time.perf_counter() - entity_types_st))
+
+        ui_st = time.perf_counter()
+
         edit_layouts = self.get_edit_layouts()
         list_layouts = self.get_list_layouts()
         entity_tooltips = self.get_entity_tooltips()
@@ -241,23 +267,41 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         dashboard_layouts = self.get_dashboard_layouts()
         report_layouts = self.get_report_layouts()
         bookmarks = self.get_bookmarks()
+        reference_tables = self.get_reference_tables()
+
+        _l.debug('ConfigurationExportViewSet createConfiguration got ui entities done: %s',
+                 "{:3.3f}".format(time.perf_counter() - ui_st))
+
+        schemes_st = time.perf_counter()
+
         csv_import_schemes = self.get_csv_import_schemes()
         complex_import_schemes = self.get_complex_import_schemes()
         instrument_download_schemes = self.get_instrument_download_schemes()
         price_download_schemes = self.get_price_download_schemes()
         complex_transaction_import_scheme = self.get_complex_transaction_import_scheme()
-        account_types = self.get_account_types()
-        instrument_types = self.get_instrument_types()
-        pricing_automated_schedule = self.get_pricing_automated_schedule()
-        pricing_policies = self.get_pricing_policies()
+
+        _l.debug('ConfigurationExportViewSet createConfiguration got schemes done: %s',
+                 "{:3.3f}".format(time.perf_counter() - schemes_st))
+
+        currencies_st = time.perf_counter()
+
         currencies = self.get_currencies()
 
-        reference_tables = self.get_reference_tables()
+        _l.debug('ConfigurationExportViewSet createConfiguration got currencies done: %s',
+                 "{:3.3f}".format(time.perf_counter() - currencies_st))
+
+        policies_st = time.perf_counter()
+        pricing_policies = self.get_pricing_policies()
+        _l.debug('ConfigurationExportViewSet createConfiguration got policies done: %s',
+                 "{:3.3f}".format(time.perf_counter() - policies_st))
+
+        attributes_st = time.perf_counter()
 
         portfolio_attribute_types = self.get_entity_attribute_types('portfolios', 'portfolio')
         currency_attribute_types = self.get_entity_attribute_types('currencies', 'currency')
         account_attribute_types = self.get_entity_attribute_types('accounts', 'account')
         account_type_attribute_types = self.get_entity_attribute_types('accounts', 'accounttype')
+
 
         responsible_attribute_types = self.get_entity_attribute_types('counterparties', 'responsible')
         counterparty_attribute_types = self.get_entity_attribute_types('counterparties', 'counterparty')
@@ -271,19 +315,33 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         strategy2_attribute_types = self.get_entity_attribute_types('strategies', 'strategy2')
         strategy3_attribute_types = self.get_entity_attribute_types('strategies', 'strategy3')
 
+        _l.debug('ConfigurationExportViewSet createConfiguration got attribute types done: %s',
+                 "{:3.3f}".format(time.perf_counter() - attributes_st))
+
+        custom_fields_st = time.perf_counter()
+
         balance_report_custom_fields = self.get_balance_report_custom_fields()
         pl_report_custom_fields = self.get_pl_report_custom_fields()
         transaction_report_custom_fields = self.get_transaction_report_custom_fields()
+
+        _l.debug('ConfigurationExportViewSet createConfiguration got custom fields done: %s',
+                 "{:3.3f}".format(time.perf_counter() - custom_fields_st))
 
         get_transaction_user_fields = self.get_transaction_user_fields()
         instrument_user_fields = self.get_instrument_user_fields()
 
         # Pricing
 
+        pricing_st = time.perf_counter()
+
         instrument_pricing_schemes = self.get_instrument_pricing_schemes()
         currency_pricing_schemes = self.get_currency_pricing_schemes()
         pricing_procedures = self.get_pricing_procedures()
+        data_procedures = self.get_data_procedures()
         schedules = self.get_schedules()
+
+        _l.debug('ConfigurationExportViewSet createConfiguration got pricing done: %s',
+                 "{:3.3f}".format(time.perf_counter() - pricing_st))
 
 
         if can_export:
@@ -320,7 +378,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             configuration["body"].append(currencies)
             configuration["body"].append(pricing_policies)
             configuration["body"].append(instrument_types)
-            configuration["body"].append(pricing_automated_schedule)
 
             if self.access_table['reference_tables.referencetable']:
                 configuration["body"].append(reference_tables)
@@ -357,6 +414,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             configuration["body"].append(instrument_pricing_schemes)
             configuration["body"].append(currency_pricing_schemes)
             configuration["body"].append(pricing_procedures)
+            configuration["body"].append(data_procedures)
 
             configuration["body"].append(schedules)
 
@@ -2090,6 +2148,31 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         }
 
         return result
+
+    def get_data_procedures(self):
+
+        items = to_json_objects(RequestDataFileProcedure.objects.filter(master_user=self._master_user))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item.pop("master_user", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "procedures.requestdatafileprocedure",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
 
     def get_schedules(self):
 

@@ -445,7 +445,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
             o = GenericClassifier()
             is_new_node = True
 
-        print('o %s', o)
+        # print('o %s', o)
 
         try:
 

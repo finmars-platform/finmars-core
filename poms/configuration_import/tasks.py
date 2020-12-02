@@ -32,8 +32,8 @@ from poms.obj_attrs.serializers import GenericAttributeTypeSerializer
 from poms.portfolios.models import Portfolio
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer
-from poms.procedures.models import PricingProcedure
-from poms.procedures.serializers import PricingProcedureSerializer
+from poms.procedures.models import PricingProcedure, RequestDataFileProcedure
+from poms.procedures.serializers import PricingProcedureSerializer, RequestDataFileProcedureSerializer
 from poms.reference_tables.models import ReferenceTable
 from poms.reference_tables.serializers import ReferenceTableSerializer
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
@@ -296,9 +296,6 @@ class ImportManager(object):
                 if input_object['portfolio']:
                     input_object['portfolio'] = self.ecosystem_default.portfolio.pk
 
-                if input_object['price_download_scheme']:
-                    input_object['price_download_scheme'] = self.ecosystem_default.price_download_scheme.pk
-
                 if input_object['pricing_policy']:
                     input_object['pricing_policy'] = self.ecosystem_default.pricing_policy.pk
 
@@ -345,14 +342,6 @@ class ImportManager(object):
                     '___payment_size_detail__system_code']).pk
             except PaymentSizeDetail.DoesNotExist:
                 item_object['payment_size_detail'] = self.ecosystem_default.payment_size_detail.pk
-
-        if item_object['price_download_scheme']:
-            try:
-                item_object['price_download_scheme'] = PriceDownloadScheme.objects.get(master_user=self.master_user,
-                                                                                       scheme_name=item_object[
-                                                                                           '___price_download_scheme__scheme_name']).pk
-            except PriceDownloadScheme.DoesNotExist:
-                item_object['price_download_scheme'] = self.ecosystem_default.instrument_type.pk
 
         if item_object['accrued_currency']:
             try:
@@ -1612,14 +1601,6 @@ class ImportManager(object):
 
                         _l.debug('content_object %s '  % content_object )
 
-                        if '___price_download_scheme__scheme_name' in content_object:
-
-                            try:
-                                content_object["price_download_scheme"] = PriceDownloadScheme.objects.get(
-                                scheme_name=content_object["___price_download_scheme__scheme_name"], master_user=self.master_user).id
-                            except PriceDownloadScheme.DoesNotExist:
-                                content_object["price_download_scheme"] = self.ecosystem_default.price_download_scheme.id
-
                         serializer = InstrumentDownloadSchemeSerializer(data=content_object,
                                                                               context=self.get_serializer_context())
                         stats = {
@@ -2612,6 +2593,68 @@ class ImportManager(object):
 
         _l.debug('Import Configuration Pricing Procedure done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
+    def import_data_procedures(self, configuration_section):
+
+        st = time.perf_counter()
+
+        for item in configuration_section['items']:
+
+            if 'procedures.requestdatafileprocedure' in item['entity']:
+
+                self.instance.stats['configuration'][item['entity']] = []
+
+                if 'content' in item:
+
+                    for content_object in item['content']:
+
+                        serializer = RequestDataFileProcedureSerializer(data=content_object,
+                                                                context=self.get_serializer_context())
+
+                        stats = {
+                            'content_type': item['entity'],
+                            'mode': self.instance.mode,
+                            'item': content_object,
+                            'error': {
+                                'message': None
+                            },
+                            'status': 'info'
+                        }
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                try:
+
+                                    instance = RequestDataFileProcedure.objects.get(master_user=self.master_user,
+                                                                            name=content_object['name'])
+
+                                    serializer = RequestDataFileProcedureSerializer(data=content_object,
+                                                                            instance=instance,
+                                                                            context=self.get_serializer_context())
+                                    serializer.is_valid(raise_exception=True)
+                                    serializer.save()
+
+                                except Exception as error:
+
+                                    stats['status'] = 'error'
+                                    stats['error'][
+                                        'message'] = 'Error. Can\'t Overwrite Data Procedure for %s' % content_object['name']
+
+                            else:
+
+                                stats['status'] = 'error'
+                                stats['error']['message'] = 'Data Procedure %s already exists' % content_object['name']
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
+
+                        self.update_progress()
+
+        _l.debug('Import Configuration Pricing Procedure done %s' % "{:3.3f}".format(time.perf_counter() - st))
+
     # Configuration import logic end
 
     def print_entities_in_file(self, configuration_section):
@@ -2659,6 +2702,7 @@ class ImportManager(object):
                 self.import_instrument_pricing_schemes(configuration_section)
                 self.import_currency_pricing_schemes(configuration_section)
                 self.import_pricing_procedures(configuration_section)
+                self.import_data_procedures(configuration_section)
                 self.import_schedules(configuration_section)
 
                 self.import_pricing_policies(configuration_section)  # configuration section

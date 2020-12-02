@@ -169,7 +169,7 @@ def delete_keys_from_dict(dict_del, the_keys):
 def recursive_callback(dict, callback, prop="children"):
     callback(dict)
 
-    print(dict)
+    # print(dict)
 
     if prop in dict:
         for item in dict[prop]:
