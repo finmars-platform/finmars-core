@@ -132,6 +132,7 @@ router.register(r'currencies/currency-light', currencies.CurrencyLightViewSet)
 
 router.register(r'currencies/currency-history-ev-group', currencies.CurrencyHistoryEvGroupViewSet)
 router.register(r'currencies/currency-attribute-type', currencies.CurrencyAttributeTypeViewSet, 'currencyattributetype')
+router.register(r'currencies/currency-history-ev', currencies.CurrencyHistoryViewSet)
 router.register(r'currencies/currency-history', currencies.CurrencyHistoryViewSet)
 
 router.register(r'instruments/instrument-class', instruments.InstrumentClassViewSet)
@@ -165,6 +166,7 @@ router.register(r'instruments/instrument-ev', instruments.InstrumentEvViewSet)
 router.register(r'instruments/instrument-light', instruments.InstrumentLightViewSet)
 
 router.register(r'instruments/price-history-ev-group', instruments.PriceHistoryEvGroupViewSet, 'instrumentevgroup')
+router.register(r'instruments/price-history-ev', instruments.PriceHistoryViewSet)
 router.register(r'instruments/price-history', instruments.PriceHistoryViewSet)
 
 router.register(r'instruments/generated-event', instruments.GeneratedEventViewSet)
