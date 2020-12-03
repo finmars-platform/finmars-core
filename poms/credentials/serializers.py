@@ -28,14 +28,20 @@ class CredentialsSerializer(ModelWithTimeStampSerializer):
 
         credentials = Credentials.objects.create(**validated_data)
 
+        #  banks/julius/keys/$UserName
+
         if path_to_public_key:
-            public_file_path = 'banks/%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_public_key.name)
+            # old path
+            # public_file_path = 'banks/%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_public_key.name)
+            public_file_path = 'banks/%s/keys/%s/%s' % (credentials.provider.user_code, credentials.master_user.token, path_to_public_key.name)
 
             SFS.save(public_file_path, path_to_public_key)
             credentials.path_to_public_key = public_file_path
 
         if path_to_private_key:
-            private_file_path = 'banks/%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_private_key.name)
+            # old path
+            # private_file_path = 'banks/%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_private_key.name)
+            private_file_path = 'banks/%s/keys/%s/%s' % (credentials.provider.user_code, credentials.master_user.token, path_to_private_key.name)
 
             SFS.save(private_file_path, path_to_private_key)
             credentials.path_to_private_key = private_file_path
