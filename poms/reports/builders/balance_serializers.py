@@ -691,12 +691,6 @@ def serialize_balance_report_item(item):
         "portfolio": item["portfolio_id"],
         "item_type": item["item_type"],
         "item_type_name": item["item_type_name"],
-        "position_size": item["position_size"],
-        "market_value": item["market_value"],
-        "market_value_loc": item["market_value_loc"],
-
-        "exposure": item["exposure"],
-        "exposure_loc": item["exposure_loc"],
     }
 
     if item["instrument_id"] == -1:
@@ -714,27 +708,17 @@ def serialize_balance_report_item(item):
     else:
         result["pricing_currency"] = item["pricing_currency_id"]
 
+    if item["exposure_currency_1_id"] == -1:
+        result["exposure_currency_id"] = None
+    else:
+        result["exposure_currency_id"] = item["exposure_currency_1_id"]
+
 
     # Check if logic is right
-    if item["instrument_pricing_currency_fx_rate"] == -1:
-        result["instrument_pricing_currency_fx_rate"] = None
-    else:
-        result["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
-
-    if item["instrument_accrued_currency_fx_rate"] == -1:
-        result["instrument_accrued_currency_fx_rate"] = None
-    else:
-        result["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
-
-    if item["instrument_principal_price"] == -1:
-        result["instrument_principal_price"] = None
-    else:
-        result["instrument_principal_price"] = item["instrument_principal_price"]
-
-    if item["instrument_accrued_price"] == -1:
-        result["instrument_accrued_price"] = None
-    else:
-        result["instrument_accrued_price"] = item["instrument_accrued_price"]
+    result["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
+    result["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
+    result["instrument_principal_price"] = item["instrument_principal_price"]
+    result["instrument_accrued_price"] = item["instrument_accrued_price"]
 
 
     result["account"] = item["account_position_id"]
@@ -761,6 +745,14 @@ def serialize_balance_report_item(item):
 
     # result["pricing_currency"] = item["pricing_currency_id"]
     result["currency"] = None
+
+
+    result["position_size"] = item["position_size"]
+    result["market_value"] = item["market_value"]
+    result["market_value_loc"] = item["market_value_loc"]
+    result["exposure"] = item["exposure"]
+    result["exposure_loc"] = item["exposure_loc"]
+
 
     result["ytm"] = item["ytm"]
     result["ytm_at_cost"] = item["ytm_at_cost"]
@@ -875,6 +867,11 @@ def serialize_pl_report_item(item):
     else:
         result["instrument"] = item["instrument_id"]
 
+    if item["pricing_currency_id"] == -1:
+            result["pricing_currency"] = None
+    else:
+        result["pricing_currency"] = item["pricing_currency_id"]
+
     result["account"] = item["account_position_id"]
 
     result["strategy1"] = item["strategy1_position_id"]
@@ -911,6 +908,12 @@ def serialize_pl_report_item(item):
 
     result['id'] = ','.join(ids)
 
+
+    result["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
+    result["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
+    result["instrument_principal_price"] = item["instrument_principal_price"]
+    result["instrument_accrued_price"] = item["instrument_accrued_price"]
+
     #
     result["position_size"] = item["position_size"]
 
@@ -935,7 +938,9 @@ def serialize_pl_report_item(item):
     result["ytm"] = item["ytm"]
 
     result["market_value"] = item["market_value"]
+    result["market_value_loc"] = item["market_value_loc"]
     result["exposure"] = item["exposure"]
+    result["exposure_loc"] = item["exposure_loc"]
 
     result["principal"] = item["principal"]
     result["carry"] = item["carry"]

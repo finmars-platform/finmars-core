@@ -372,11 +372,20 @@ class BalanceReportBuilderSql:
                     item_type_name,
                     
                     position_size,
+                    
+                    exposure_currency_1_id,
+                    exposure_currency_2_id,
+                
+                    has_second_exposure_currency,
+                    
                     market_value,
                     market_value_loc,
                     
                     exposure,
                     exposure_loc,
+                    
+                    exposure_2,
+                    exposure_2_loc,
                     
                     net_cost_price,
                     net_cost_price_loc,
@@ -480,16 +489,24 @@ class BalanceReportBuilderSql:
                         c.user_code,
                         
                         (-1) as pricing_currency_id,
-                        (-1) as instrument_pricing_currency_fx_rate,
-                        (-1) as instrument_accrued_currency_fx_rate,
-                        (-1) as instrument_principal_price,
-                        (-1) as instrument_accrued_price,
+                        (0) as instrument_pricing_currency_fx_rate,
+                        (0) as instrument_accrued_currency_fx_rate,
+                        (0) as instrument_principal_price,
+                        (0) as instrument_accrued_price,
+                        
+                        (-1) as exposure_currency_1_id,
+                        (-1) as exposure_currency_2_id,
+                    
+                        (false) as has_second_exposure_currency,
                             
                         market_value,
                         market_value_loc,
                         
                         exposure,
                         exposure_loc,
+                        
+                        (0) as exposure_2,
+                        (0) as exposure_2_loc,
                         
                         (0) as net_cost_price,
                         (0) as net_cost_price_loc,
@@ -686,11 +703,20 @@ class BalanceReportBuilderSql:
                     item_type_name,
                     
                     position_size,
+                    
+                    exposure_currency_1_id,
+                    exposure_currency_2_id,
+                
+                    has_second_exposure_currency,
+                    
                     market_value,
                     market_value_loc,
                     
                     exposure,
                     exposure_loc,
+                    
+                    exposure_2,
+                    exposure_2_loc,
                     
                     net_cost_price,
                     net_cost_price_loc,
@@ -798,11 +824,28 @@ class BalanceReportBuilderSql:
                         
                         position_size,
                         
-                        market_value,
-                        (market_value * cross_loc_prc_fx) as market_value_loc,
+                        exposure_currency_1_id,
+                        exposure_currency_2_id,
+            
+                        has_second_exposure_currency,
                         
-                        exposure,
-                        (market_value * cross_loc_prc_fx) as exposure_loc,
+                        case
+                             when instrument_class_id = 5
+                                 then (position_size * (instrument_principal_price - pl_q.principal_cost_price_loc) * price_multiplier * pch_fx_rate) / rep_cur_fx
+                             else market_value / rep_cur_fx
+                         end as market_value,
+            
+                        case
+                             when instrument_class_id = 5
+                                 then (position_size * (instrument_principal_price - pl_q.principal_cost_price_loc) * price_multiplier)
+                             else market_value / pch_fx_rate
+                        end as market_value_loc,
+            
+                        (exposure / rep_cur_fx) as exposure,
+                        (exposure_2 / rep_cur_fx) as exposure_2,
+            
+                        (exposure / ec1_fx_rate) as exposure_loc,
+                        (exposure_2 / ec2_fx_rate) as exposure_2_loc,
                         
                         net_cost_price,
                         net_cost_price_loc,
@@ -894,25 +937,44 @@ class BalanceReportBuilderSql:
                         {consolidated_position_columns}
                         
                         position_size,
-                        
+
                         (1) as item_type,
                         ('Instrument') as item_type_name,
-                    
+    
                         name,
                         short_name,
                         user_code,
-                        
+    
                         pricing_currency_id,
                         (pch_fx_rate) as instrument_pricing_currency_fx_rate,
                         (ach_fx_rate) as instrument_accrued_currency_fx_rate,
                         
-                        (rep_cur_fx/pch_fx_rate) cross_loc_prc_fx,
-                        
+                        instrument_class_id,
+                        exposure_currency_1_id,
+                        exposure_currency_2_id,
+
+                        has_second_exposure_currency,
+    
+                        case when pricing_currency_id = {report_currency_id}
+                               then 1
+                           else
+                               (rep_cur_fx/pch_fx_rate)
+                        end as cross_loc_prc_fx,
+    
                         (principal_price) as instrument_principal_price,
                         (accrued_price) as instrument_accrued_price,
-             
+    
                         (position_size * principal_price * price_multiplier * pch_fx_rate + (position_size * accrued_price * ach_fx_rate * 1 * accrued_multiplier)) as market_value,
-                        (position_size * principal_price * price_multiplier * pch_fx_rate + (position_size * accrued_price * ach_fx_rate * 1 * accrued_multiplier)) as exposure
+                        (position_size * principal_price * price_multiplier * pch_fx_rate + (position_size * accrued_price * ach_fx_rate * 1 * accrued_multiplier)) as exposure,
+
+                        -(position_size * principal_price * price_multiplier * pch_fx_rate + (position_size * accrued_price * ach_fx_rate * 1 * accrued_multiplier)) as exposure_2,
+                        
+                        price_multiplier,
+                        pch_fx_rate,
+                        rep_cur_fx,
+                        ec1_fx_rate,
+                        ec2_fx_rate
+                        
                     from (
                         select
                             instrument_id,
@@ -927,7 +989,38 @@ class BalanceReportBuilderSql:
                             i.price_multiplier,
                             i.accrued_multiplier,
                             
-      
+                            i.exposure_currency_1_id,
+                            i.exposure_currency_2_id,
+                            it.instrument_class_id,
+
+                            it.has_second_exposure_currency,
+                            
+                            case when i.exposure_currency_1_id = {report_currency_id}
+                                        then 1
+                                    else
+                                        (select
+                                             fx_rate
+                                         from currencies_currencyhistory
+                                         where
+                                                 currency_id = i.exposure_currency_1_id and
+                                                 date = '2019-12-31' and
+                                                 pricing_policy_id = 843
+                                        )
+                                   end as ec1_fx_rate,
+
+                               case when i.exposure_currency_2_id = {report_currency_id}
+                                        then 1
+                                    else
+                                        (select
+                                             fx_rate
+                                         from currencies_currencyhistory
+                                         where
+                                                 currency_id = i.exposure_currency_2_id and
+                                                 date = '2019-12-31' and
+                                                 pricing_policy_id = 843
+                                        )
+                                end as ec2_fx_rate,
+                            
                             case
                                    when {report_currency_id} = {default_currency_id}
                                        then 1
@@ -996,6 +1089,8 @@ class BalanceReportBuilderSql:
                               instrument_id) as t
                         left join instruments_instrument as i
                         ON instrument_id = i.id
+                        left join instruments_instrumenttype as it
+                        ON instrument_type_id = it.id
                         ) as grouped
                     where position_size != 0
                     ) as balance_q
@@ -1006,6 +1101,7 @@ class BalanceReportBuilderSql:
                                 
                                 net_cost_price,
                                 net_cost_price_loc,
+                                principal_cost_price_loc,
                                 gross_cost_price,
                                 gross_cost_price_loc,
                                 
@@ -1137,6 +1233,9 @@ class BalanceReportBuilderSql:
             ITEM_TYPE_FX_TRADES = 4
             ITEM_TYPE_TRANSACTION_PL = 5
             ITEM_TYPE_MISMATCH = 6
+            ITEM_TYPE_EXPOSURE_COPY = 7
+
+            updated_result = []
 
             for item in result:
 
@@ -1169,9 +1268,141 @@ class BalanceReportBuilderSql:
                 if "strategy3_position_id" not in item:
                     item["strategy3_position_id"] = self.ecosystem_defaults.strategy3_id
 
+                updated_result.append(item)
+
+                if ITEM_TYPE_INSTRUMENT == 1:
+
+                    if item['has_second_exposure_currency']:
+
+                        new_exposure_item = {
+                            "name": item["name"],
+                            "user_code": item["user_code"],
+                            "short_name": item["short_name"],
+                            "pricing_currency_id": item["pricing_currency_id"],
+                            "currency_id": item["currency_id"],
+                            "instrument_id": item["instrument_id"],
+                            "portfolio_id": item["portfolio_id"],
+
+
+                            "account_cash_id": item["account_cash_id"],
+                            "strategy1_cash_id": item["strategy1_cash_id"],
+                            "strategy2_cash_id": item["strategy2_cash_id"],
+                            "strategy3_cash_id": item["strategy3_cash_id"],
+
+                            "account_position_id": item["account_position_id"],
+                            "strategy1_position_id": item["strategy1_position_id"],
+                            "strategy2_position_id": item["strategy2_position_id"],
+                            "strategy3_position_id": item["strategy3_position_id"],
+
+                            "instrument_pricing_currency_fx_rate": None,
+                            "instrument_accrued_currency_fx_rate": None,
+                            "instrument_principal_price": None,
+                            "instrument_accrued_price": None,
+
+                            "market_value": None,
+                            "market_value_loc": None,
+
+                            "item_type": 7,
+                            "item_type_name": "Exposure",
+                            "exposure": item["exposure_2"],
+                            "exposure_loc": item["exposure_2_loc"],
+                            "exposure_currency_1_id": item["exposure_currency_2_id"]
+                        }
+
+                        new_exposure_item["position_size"] = None
+                        new_exposure_item["ytm"] = None
+                        new_exposure_item["ytm_at_cost"] = None
+                        new_exposure_item["modified_duration"] = None
+                        new_exposure_item["return_annually"] = None
+
+                        new_exposure_item["position_return"] = None
+                        new_exposure_item["net_position_return"] = None
+
+                        new_exposure_item["net_cost_price"] = None
+                        new_exposure_item["net_cost_price_loc"] = None
+                        new_exposure_item["gross_cost_price"] = None
+                        new_exposure_item["gross_cost_price_loc"] = None
+
+                        new_exposure_item["principal_invested"] = None
+                        new_exposure_item["principal_invested_loc"] = None
+
+                        new_exposure_item["amount_invested"] = None
+                        new_exposure_item["amount_invested_loc"] = None
+
+                        new_exposure_item["time_invested"] = None
+                        new_exposure_item["return_annually"] = None
+
+                        # performance
+
+                        new_exposure_item["principal_opened"] = None
+                        new_exposure_item["carry_opened"] = None
+                        new_exposure_item["overheads_opened"] = None
+                        new_exposure_item["total_opened"] = None
+
+                        new_exposure_item["principal_fx_opened"] = None
+                        new_exposure_item["carry_fx_opened"] = None
+                        new_exposure_item["overheads_fx_opened"] = None
+                        new_exposure_item["total_fx_opened"] = None
+
+                        new_exposure_item["principal_fixed_opened"] = None
+                        new_exposure_item["carry_fixed_opened"] = None
+                        new_exposure_item["overheads_fixed_opened"] = None
+                        new_exposure_item["total_fixed_opened"] = None
+
+                        # loc started
+
+                        new_exposure_item["principal_opened_loc"] = None
+                        new_exposure_item["carry_opened_loc"] = None
+                        new_exposure_item["overheads_opened_loc"] = None
+                        new_exposure_item["total_opened_loc"] = None
+
+                        new_exposure_item["principal_fx_opened_loc"] = None
+                        new_exposure_item["carry_fx_opened_loc"] = None
+                        new_exposure_item["overheads_fx_opened_loc"] = None
+                        new_exposure_item["total_fx_opened_loc"] = None
+
+                        new_exposure_item["principal_fixed_opened_loc"] = None
+                        new_exposure_item["carry_fixed_opened_loc"] = None
+                        new_exposure_item["overheads_fixed_opened_loc"] = None
+                        new_exposure_item["total_fixed_opened_loc"] = None
+
+                        new_exposure_item["principal_closed"] = None
+                        new_exposure_item["carry_closed"] = None
+                        new_exposure_item["overheads_closed"] = None
+                        new_exposure_item["total_closed"] = None
+
+                        new_exposure_item["principal_fx_closed"] = None
+                        new_exposure_item["carry_fx_closed"] = None
+                        new_exposure_item["overheads_fx_closed"] = None
+                        new_exposure_item["total_fx_closed"] = None
+
+                        new_exposure_item["principal_fixed_closed"] = None
+                        new_exposure_item["carry_fixed_closed"] = None
+                        new_exposure_item["overheads_fixed_closed"] = None
+                        new_exposure_item["total_fixed_closed"] = None
+
+                        # loc started
+
+                        new_exposure_item["principal_closed_loc"] = None
+                        new_exposure_item["carry_closed_loc"] = None
+                        new_exposure_item["overheads_closed_loc"] = None
+                        new_exposure_item["total_closed_loc"] = None
+
+                        new_exposure_item["principal_fx_closed_loc"] = None
+                        new_exposure_item["carry_fx_closed_loc"] = None
+                        new_exposure_item["overheads_fx_closed_loc"] = None
+                        new_exposure_item["total_fx_closed_loc"] = None
+
+                        new_exposure_item["principal_fixed_closed_loc"] = None
+                        new_exposure_item["carry_fixed_closed_loc"] = None
+                        new_exposure_item["overheads_fixed_closed_loc"] = None
+                        new_exposure_item["total_fixed_closed_loc"] = None
+
+                        updated_result.append(new_exposure_item)
+
             _l.debug('build cash result %s ' % len(result))
 
-            self.instance.items = result
+            self.instance.items = updated_result
 
     def add_data_items_instruments(self, ids):
 

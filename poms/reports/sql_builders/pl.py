@@ -659,6 +659,12 @@ class PLReportBuilderSql:
             currency_id,
             instrument_id,
             {consolidation_columns}
+        
+            pricing_currency_id,
+            instrument_pricing_currency_fx_rate,
+            instrument_accrued_currency_fx_rate,    
+            instrument_principal_price,
+            instrument_accrued_price,    
           
             position_size,
             
@@ -667,6 +673,7 @@ class PLReportBuilderSql:
             
             net_cost_price,
             net_cost_price_loc,
+            principal_cost_price_loc,
             
             gross_cost_price,
             gross_cost_price_loc,
@@ -766,6 +773,12 @@ class PLReportBuilderSql:
             (-1) as currency_id,
             instrument_id,
             {consolidation_columns}
+            
+            pricing_currency_id,
+            instrument_pricing_currency_fx_rate,
+            instrument_accrued_currency_fx_rate,    
+            instrument_principal_price,
+            instrument_accrued_price,   
           
             position_size,
             
@@ -774,6 +787,7 @@ class PLReportBuilderSql:
             
             net_cost_price,
             net_cost_price_loc,
+            principal_cost_price_loc,
             
             gross_cost_price,
             gross_cost_price_loc,
@@ -873,6 +887,13 @@ class PLReportBuilderSql:
               
                     instrument_id,
                     {consolidation_columns}
+                    
+                    
+                    pricing_currency_id,
+                    instrument_pricing_currency_fx_rate,
+                    instrument_accrued_currency_fx_rate,    
+                    instrument_principal_price,
+                    instrument_accrued_price,   
 
                     position_size,
                     
@@ -881,6 +902,7 @@ class PLReportBuilderSql:
                     
                     net_cost_price,
                     net_cost_price_loc,
+                    principal_cost_price_loc,
                     
                     gross_cost_price,
                     gross_cost_price_loc,
@@ -989,10 +1011,10 @@ class PLReportBuilderSql:
                         price_multiplier,
                         accrued_multiplier,
                         accrual_size,
-                        cur_price,
-                        cur_accr_price,
-                        prc_cur_fx,
-                        accr_cur_fx,
+                        (cur_price) as instrument_principal_price,
+                        (cur_accr_price) as instrument_accrued_price,
+                        (prc_cur_fx) as instrument_pricing_currency_fx_rate,
+                        (accr_cur_fx) as instrument_accrued_currency_fx_rate,
                         rep_cur_fx,
                         mv_principal,
                         mv_carry,
@@ -1003,6 +1025,7 @@ class PLReportBuilderSql:
                         
                         net_cost_price,
                         net_cost_price_loc,
+                        principal_cost_price_loc,
                         
                         gross_cost_price,
                         gross_cost_price_loc,
@@ -1139,6 +1162,12 @@ class PLReportBuilderSql:
                                 then -((principal_opened + overheads_opened) / position_size_opened * rep_cur_fx / i.prc_cur_fx / i.price_multiplier)
                                 else 0
                             end as net_cost_price_loc,
+                            
+                            case
+                                when position_size_opened > 0
+                                    then -((principal_opened) / position_size_opened * rep_cur_fx / i.prc_cur_fx / i.price_multiplier)
+                                else 0
+                            end as principal_cost_price_loc,
                             
                             
                             -- вроде, не используется
@@ -1437,6 +1466,12 @@ class PLReportBuilderSql:
             currency_id,
             instrument_id,
             {consolidation_columns}
+
+            pricing_currency_id,
+            instrument_pricing_currency_fx_rate,
+            instrument_accrued_currency_fx_rate,    
+            instrument_principal_price,
+            instrument_accrued_price, 
           
             position_size,
             
@@ -1445,6 +1480,7 @@ class PLReportBuilderSql:
             
             net_cost_price,
             net_cost_price_loc,
+            principal_cost_price_loc,
             
             gross_cost_price,
             gross_cost_price_loc,
@@ -1546,6 +1582,12 @@ class PLReportBuilderSql:
                 instrument_id,
                 {consolidation_columns}
               
+                (-1) as pricing_currency_id,
+                (0) as instrument_pricing_currency_fx_rate,
+                (0) as instrument_accrued_currency_fx_rate,    
+                (0) as instrument_principal_price,
+                (0) as instrument_accrued_price, 
+
                 position_size,
                 
                 (0) as position_return,
@@ -1553,6 +1595,7 @@ class PLReportBuilderSql:
                 
                 (0) as net_cost_price,
                 (0) as net_cost_price_loc,
+                (0) as principal_cost_price_loc,
                 
                 (0) as gross_cost_price,
                 (0) as gross_cost_price_loc,
@@ -1762,6 +1805,12 @@ class PLReportBuilderSql:
             currency_id,
             instrument_id,
             {consolidation_columns}
+
+            pricing_currency_id,
+            instrument_pricing_currency_fx_rate,
+            instrument_accrued_currency_fx_rate,    
+            instrument_principal_price,
+            instrument_accrued_price, 
           
             position_size,
             
@@ -1770,6 +1819,7 @@ class PLReportBuilderSql:
             
             net_cost_price,
             net_cost_price_loc,
+            principal_cost_price_loc,
             
             gross_cost_price,
             gross_cost_price_loc,
@@ -1871,6 +1921,12 @@ class PLReportBuilderSql:
                 currency_id,
                 instrument_id,
                 {consolidation_columns}
+
+                (-1) as pricing_currency_id,
+                (0) as instrument_pricing_currency_fx_rate,
+                (0) as instrument_accrued_currency_fx_rate,    
+                (0) as instrument_principal_price,
+                (0) as instrument_accrued_price, 
               
                 position_size,
                 
@@ -1879,6 +1935,7 @@ class PLReportBuilderSql:
                 
                 (0) as net_cost_price,
                 (0) as net_cost_price_loc,
+                (0) as principal_cost_price_loc,
                 
                 (0) as gross_cost_price,
                 (0) as gross_cost_price_loc,
@@ -2048,6 +2105,12 @@ class PLReportBuilderSql:
             instrument_id,
             {consolidation_columns}
           
+            pricing_currency_id,
+            instrument_pricing_currency_fx_rate,
+            instrument_accrued_currency_fx_rate,    
+            instrument_principal_price,
+            instrument_accrued_price, 
+
             position_size,
             
             position_return,
@@ -2055,6 +2118,7 @@ class PLReportBuilderSql:
             
             net_cost_price,
             net_cost_price_loc,
+            principal_cost_price_loc,
             
             gross_cost_price,
             gross_cost_price_loc,
@@ -2155,6 +2219,12 @@ class PLReportBuilderSql:
                 currency_id,
                 instrument_id,
                 {consolidation_columns}
+
+                (-1) as pricing_currency_id,
+                (0) as instrument_pricing_currency_fx_rate,
+                (0) as instrument_accrued_currency_fx_rate,    
+                (0) as instrument_principal_price,
+                (0) as instrument_accrued_price, 
               
                 position_size,
                 
@@ -2163,6 +2233,7 @@ class PLReportBuilderSql:
                 
                 (0) as net_cost_price,
                 (0) as net_cost_price_loc,
+                (0) as principal_cost_price_loc,
                 
                 (0) as gross_cost_price,
                 (0) as gross_cost_price_loc,
@@ -2328,6 +2399,12 @@ class PLReportBuilderSql:
             currency_id,
             instrument_id,
             {consolidation_columns}
+
+            pricing_currency_id,
+            instrument_pricing_currency_fx_rate,
+            instrument_accrued_currency_fx_rate,    
+            instrument_principal_price,
+            instrument_accrued_price, 
           
             position_size,
             
@@ -2336,6 +2413,7 @@ class PLReportBuilderSql:
             
             net_cost_price,
             net_cost_price_loc,
+            principal_cost_price_loc,
             
             gross_cost_price,
             gross_cost_price_loc,
@@ -2436,6 +2514,12 @@ class PLReportBuilderSql:
                 currency_id,
                 instrument_id,
                 {consolidation_columns}
+
+                (-1) as pricing_currency_id,
+                (0) as instrument_pricing_currency_fx_rate,
+                (0) as instrument_accrued_currency_fx_rate,    
+                (0) as instrument_principal_price,
+                (0) as instrument_accrued_price, 
               
                 position_opened as position_size,
                 
@@ -2444,6 +2528,7 @@ class PLReportBuilderSql:
                 
                 (0) as net_cost_price,
                 (0) as net_cost_price_loc,
+                (0) as principal_cost_price_loc,
                 
                 (0) as gross_cost_price,
                 (0) as gross_cost_price_loc,
@@ -2745,6 +2830,14 @@ class PLReportBuilderSql:
                                 
                             (q2.time_invested) as time_invested,
                             
+                            (q2.pricing_currency_id) as pricing_currency_id,
+                            (q2.instrument_pricing_currency_fx_rate) as instrument_pricing_currency_fx_rate,
+                            (q2.instrument_accrued_currency_fx_rate) as instrument_accrued_currency_fx_rate,
+                            
+                            (q2.instrument_principal_price) as instrument_principal_price,
+                            (q2.instrument_accrued_price) as instrument_accrued_price,
+                            
+                            
                             (q2.ytm) as ytm,
                             (q2.modified_duration) as modified_duration,
                             (q2.ytm_at_cost) as ytm_at_cost,
@@ -2752,6 +2845,9 @@ class PLReportBuilderSql:
                             
                             (q2.market_value) as market_value,
                             (q2.exposure) as exposure,
+                            
+                            (q2.market_value_loc) as market_value_loc,
+                            (q2.exposure_loc) as exposure_loc,
                             
                             (q2.item_type) as item_type,
                             (q2.item_type_name) as item_type_name,
@@ -2867,6 +2963,10 @@ class PLReportBuilderSql:
 
                 result_item_opened['market_value'] = item['market_value']
                 result_item_opened['exposure'] = item['exposure']
+
+                result_item_opened['market_value_loc'] = item['market_value_loc']
+                result_item_opened['exposure_loc'] = item['exposure_loc']
+
                 result_item_opened['ytm'] = item['ytm']
                 result_item_opened['modified_duration'] = item['modified_duration']
                 result_item_opened['time_invested'] = item['time_invested']
@@ -2943,6 +3043,12 @@ class PLReportBuilderSql:
                     result_item_opened["item_group_code"] = "MISMATCH"
                     result_item_opened["item_group_name"] = "Mismatch"
 
+
+                result_item_opened["pricing_currency_id"] = item["pricing_currency_id"]
+                result_item_opened["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
+                result_item_opened["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
+                result_item_opened["instrument_principal_price"] = item["instrument_principal_price"]
+                result_item_opened["instrument_accrued_price"] = item["instrument_accrued_price"]
 
 
                 result_item_opened["principal"] = item["principal_opened"]
@@ -3037,6 +3143,10 @@ class PLReportBuilderSql:
 
                     result_item_closed['market_value'] = item['market_value']
                     result_item_closed['exposure'] = item['exposure']
+
+                    result_item_closed['market_value_loc'] = item['market_value_loc']
+                    result_item_closed['exposure_loc'] = item['exposure_loc']
+
                     result_item_closed['ytm'] = item['ytm']
                     result_item_closed['modified_duration'] = item['modified_duration']
                     result_item_closed['time_invested'] = item['time_invested']
@@ -3113,6 +3223,12 @@ class PLReportBuilderSql:
                     result_item_closed["item_group"] = 11
                     result_item_closed["item_group_code"] = "CLOSED"
                     result_item_closed["item_group_name"] = "Closed"
+
+                    result_item_closed["pricing_currency_id"] = item["pricing_currency_id"]
+                    result_item_closed["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
+                    result_item_closed["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
+                    result_item_closed["instrument_principal_price"] = item["instrument_principal_price"]
+                    result_item_closed["instrument_accrued_price"] = item["instrument_accrued_price"]
 
                     result_item_closed["position_size"] = 0
 
