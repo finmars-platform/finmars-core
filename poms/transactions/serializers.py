@@ -164,7 +164,7 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
 
     settings = TransactionTypeInputSettingsSerializer(allow_null=True, required=False)
 
-    button_data = serializers.JSONField(allow_null=False)
+    button_data = serializers.JSONField(allow_null=True, required=False)
 
     # settings = TransactionTypeInputSettingsField(required=False, allow_null=True)
 
