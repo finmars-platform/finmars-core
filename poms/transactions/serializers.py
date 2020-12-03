@@ -156,7 +156,6 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
     strategy1 = Strategy1Field(required=False, allow_null=True)
     strategy2 = Strategy2Field(required=False, allow_null=True)
     strategy3 = Strategy3Field(required=False, allow_null=True)
-    price_download_scheme = PriceDownloadSchemeField(required=False, allow_null=True)
     pricing_policy = PricingPolicyField(required=False, allow_null=True)
 
     periodicity = PeriodicityField(required=False, allow_null=True)
@@ -180,7 +179,6 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
     # strategy3_object = serializers.PrimaryKeyRelatedField(source='strategy3', read_only=True)
     # daily_pricing_model_object = serializers.PrimaryKeyRelatedField(source='daily_pricing_model', read_only=True)
     # payment_size_detail_object = serializers.PrimaryKeyRelatedField(source='daily_pricing_model', read_only=True)
-    # price_download_scheme_object = serializers.PrimaryKeyRelatedField(source='price_download_scheme', read_only=True)
 
     class Meta:
         model = TransactionTypeInput
@@ -193,7 +191,7 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
             'is_fill_from_context', 'context_property', 'value', 'account', 'instrument_type', 'instrument', 'currency',
             'counterparty',
             'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3', 'daily_pricing_model',
-            'payment_size_detail', 'price_download_scheme', 'pricing_policy', 'periodicity',
+            'payment_size_detail', 'pricing_policy', 'periodicity',
             'accrual_calculation_model',
             'settings',
 
@@ -212,7 +210,6 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
             # 'strategy3_object',
             # 'daily_pricing_model_object',
             # 'payment_size_detail_object',
-            # 'price_download_scheme_object',
         ]
         read_only_fields = ['order']
 
@@ -250,8 +247,6 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
         self.fields['strategy2_object'] = Strategy2ViewSerializer(source='strategy2', read_only=True)
         self.fields['strategy3_object'] = Strategy3ViewSerializer(source='strategy3', read_only=True)
 
-        self.fields['price_download_scheme_object'] = PriceDownloadSchemeViewSerializer(source='price_download_scheme',
-                                                                                        read_only=True)
         self.fields['pricing_policy_object'] = PricingPolicySerializer(source="pricing_policy", read_only=True)
 
         self.fields['periodicity_object'] = PeriodicitySerializer(source="periodicity", read_only=True)
@@ -291,8 +286,6 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
                     target_attr = 'payment_size_detail'
                 elif issubclass(model_class, Portfolio):
                     target_attr = 'portfolio'
-                elif issubclass(model_class, PriceDownloadScheme):
-                    target_attr = 'price_download_scheme'
                 elif issubclass(model_class, PricingPolicy):
                     target_attr = 'pricing_policy'
                 elif issubclass(model_class, Periodicity):
@@ -308,7 +301,7 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
 
                 attrs = ['account', 'instrument_type', 'instrument', 'currency', 'counterparty', 'responsible',
                          'portfolio', 'strategy1', 'strategy2', 'strategy3', 'daily_pricing_model',
-                         'payment_size_detail', 'price_download_scheme', 'pricing_policy', 'periodicity',
+                         'payment_size_detail', 'pricing_policy', 'periodicity',
                          'accrual_calculation_model']
 
                 for attr in attrs:
@@ -365,8 +358,6 @@ class TransactionTypeActionInstrumentSerializer(serializers.ModelSerializer):
                                             default='')
     daily_pricing_model_input = TransactionInputField(required=False, allow_null=True)
     payment_size_detail_input = TransactionInputField(required=False, allow_null=True)
-    price_download_scheme = PriceDownloadSchemeField(required=False, allow_null=True)
-    price_download_scheme_input = TransactionInputField(required=False, allow_null=True)
 
     maturity_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
     maturity_price = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
@@ -376,7 +367,6 @@ class TransactionTypeActionInstrumentSerializer(serializers.ModelSerializer):
     # accrued_currency_object = serializers.PrimaryKeyRelatedField(source='accrued_currency', read_only=True)
     # daily_pricing_model_object = serializers.PrimaryKeyRelatedField(source='daily_pricing_model', read_only=True)
     # payment_size_detail_object = serializers.PrimaryKeyRelatedField(source='daily_pricing_model', read_only=True)
-    # price_download_scheme_object = serializers.PrimaryKeyRelatedField(source='price_download_scheme', read_only=True)
 
     class Meta:
         model = TransactionTypeActionInstrument
@@ -398,8 +388,6 @@ class TransactionTypeActionInstrumentSerializer(serializers.ModelSerializer):
             'user_text_2',
             'user_text_3',
             'reference_for_pricing',
-            'price_download_scheme',
-            'price_download_scheme_input',
             'daily_pricing_model',
             'daily_pricing_model_input',
             'maturity_date',
@@ -411,7 +399,6 @@ class TransactionTypeActionInstrumentSerializer(serializers.ModelSerializer):
             # 'pricing_currency_object',
             # 'accrued_currency_object',
             # 'payment_size_detail_object',
-            # 'price_download_scheme_object',
             # 'daily_pricing_model_object',
         ]
 
@@ -431,9 +418,6 @@ class TransactionTypeActionInstrumentSerializer(serializers.ModelSerializer):
 
         self.fields['pricing_currency_object'] = CurrencyViewSerializer(source='pricing_currency', read_only=True)
         self.fields['accrued_currency_object'] = CurrencyViewSerializer(source='accrued_currency', read_only=True)
-
-        self.fields['price_download_scheme_object'] = PriceDownloadSchemeViewSerializer(source='price_download_scheme',
-                                                                                        read_only=True)
 
 
 class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
@@ -896,7 +880,8 @@ class TransactionTypeActionSerializer(serializers.ModelSerializer):
         return attrs
 
 
-class TransactionTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer, ModelWithAttributesSerializer):
+class TransactionTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
+                                  ModelWithAttributesSerializer):
     master_user = MasterUserField()
     group = TransactionTypeGroupField(required=False, allow_null=False)
     date_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
@@ -1047,8 +1032,8 @@ class TransactionTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWith
 
         ]
 
-class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
 
+class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
     master_user = MasterUserField()
     group = TransactionTypeGroupField(required=False, allow_null=False)
     date_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
@@ -1477,18 +1462,26 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
 
                 if inp.settings:
 
-                    inp.settings.linked_inputs_names = settings_data['linked_inputs_names']
-                    inp.settings.recalc_on_change_linked_inputs = settings_data['recalc_on_change_linked_inputs']
+                    if 'linked_inputs_names' is settings_data:
+                        inp.settings.linked_inputs_names = settings_data['linked_inputs_names']
+
+                    if 'recalc_on_change_linked_inputs' in settings_data:
+                        inp.settings.recalc_on_change_linked_inputs = settings_data['recalc_on_change_linked_inputs']
+
                     inp.settings.save()
 
                 else:
 
-                    item = TransactionTypeInputSettings.objects.create(transaction_type_input=inp,
-                                                                       linked_inputs_names=settings_data[
-                                                                           'linked_inputs_names'],
-                    recalc_on_change_linked_inputs = settings_data['recalc_on_change_linked_inputs']
+                    item = TransactionTypeInputSettings.objects.create(transaction_type_input=inp)
 
-                    )
+                    if 'linked_inputs_names' in settings_data:
+                        item.linked_inputs_names = settings_data['linked_inputs_names']
+
+                    if 'recalc_on_change_linked_inputs' in settings_data:
+                        item.recalc_on_change_linked_inputs = settings_data['recalc_on_change_linked_inputs']
+
+                    item.save()
+
                     inp.settings = item
 
             inp.save()
@@ -2111,11 +2104,10 @@ class TransactionSerializer(ModelWithObjectPermissionSerializer):
 
 
 class InstrumentSimpleViewSerializer(ModelWithObjectPermissionSerializer):
-
     class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = Instrument
         fields = [
-            'id',  'user_code', 'name', 'short_name', 'public_name'
+            'id', 'user_code', 'name', 'short_name', 'public_name'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -2123,7 +2115,6 @@ class InstrumentSimpleViewSerializer(ModelWithObjectPermissionSerializer):
 
 
 class AccountSimpleViewSerializer(ModelWithObjectPermissionSerializer):
-
     class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = Account
         fields = [
@@ -2132,7 +2123,6 @@ class AccountSimpleViewSerializer(ModelWithObjectPermissionSerializer):
 
 
 class ResponsibleSimpleViewSerializer(ModelWithObjectPermissionSerializer):
-
     class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = Responsible
         fields = [
@@ -2141,7 +2131,6 @@ class ResponsibleSimpleViewSerializer(ModelWithObjectPermissionSerializer):
 
 
 class CounterpartySimpleViewSerializer(ModelWithObjectPermissionSerializer):
-
     class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = Counterparty
         fields = [
@@ -2150,31 +2139,30 @@ class CounterpartySimpleViewSerializer(ModelWithObjectPermissionSerializer):
 
 
 class Strategy1SimpleViewSerializer(ModelWithObjectPermissionSerializer):
-
     class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = Strategy1
         fields = [
-            'id',  'user_code', 'name', 'short_name', 'public_name', 'is_deleted',
+            'id', 'user_code', 'name', 'short_name', 'public_name', 'is_deleted',
         ]
 
-class Strategy2SimpleViewSerializer(ModelWithObjectPermissionSerializer):
 
+class Strategy2SimpleViewSerializer(ModelWithObjectPermissionSerializer):
     class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = Strategy2
         fields = [
-            'id',  'user_code', 'name', 'short_name', 'public_name', 'is_deleted',
+            'id', 'user_code', 'name', 'short_name', 'public_name', 'is_deleted',
         ]
 
-class Strategy3SimpleViewSerializer(ModelWithObjectPermissionSerializer):
 
+class Strategy3SimpleViewSerializer(ModelWithObjectPermissionSerializer):
     class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = Strategy3
         fields = [
-            'id',  'user_code', 'name', 'short_name', 'public_name', 'is_deleted',
+            'id', 'user_code', 'name', 'short_name', 'public_name', 'is_deleted',
         ]
 
-class TransactionEvSerializer(ModelWithObjectPermissionSerializer):
 
+class TransactionEvSerializer(ModelWithObjectPermissionSerializer):
     master_user = MasterUserField()
 
     instrument_object = InstrumentSimpleViewSerializer(source='instrument', read_only=True)
@@ -2214,7 +2202,7 @@ class TransactionEvSerializer(ModelWithObjectPermissionSerializer):
 
             'transaction_currency', 'transaction_currency_object',
             'settlement_currency', 'settlement_currency_object',
-           
+
             'position_size_with_sign', 'cash_consideration', 'principal_with_sign',
             'carry_with_sign', 'overheads_with_sign', 'reference_fx_rate',
 
@@ -2225,7 +2213,7 @@ class TransactionEvSerializer(ModelWithObjectPermissionSerializer):
             'account_cash', 'account_cash_object',
             'account_position', 'account_position_object',
             'account_interim', 'account_interim_object',
-                               
+
             'strategy1_position', 'strategy1_position_object',
             'strategy1_cash', 'strategy1_cash_object',
             'strategy2_position', 'strategy2_position_object',
@@ -2235,7 +2223,7 @@ class TransactionEvSerializer(ModelWithObjectPermissionSerializer):
 
             'responsible', 'responsible_object',
             'counterparty', 'counterparty_object',
-                            
+
             'linked_instrument', 'linked_instrument_object',
             'allocation_balance', 'allocation_balance_object',
             'allocation_pl', 'allocation_pl_object',
@@ -2593,14 +2581,12 @@ class ComplexTransactionViewSerializer(ComplexTransactionMixin, serializers.Mode
 
 
 class ComplexTransactionEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer):
-
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
     transaction_type_object = TransactionTypeViewSerializer(source='transaction_type', read_only=True)
 
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionEvSerializer, self).__init__(*args, **kwargs)
-
 
     class Meta:
         model = ComplexTransaction
@@ -3379,8 +3365,6 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
     #                 ci.payment_size_detail = val
     #             elif issubclass(model_class, Portfolio):
     #                 ci.portfolio = val
-    #             elif issubclass(model_class, PriceDownloadScheme):
-    #                 ci.price_download_scheme = val
     #             elif issubclass(model_class, PricingPolicy):
     #                 ci.pricing_policy = val
     #             elif issubclass(model_class, Periodicity):

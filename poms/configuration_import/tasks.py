@@ -51,6 +51,8 @@ from poms.ui.serializers import EditLayoutSerializer, ListLayoutSerializer, Dash
     TemplateLayoutSerializer, EntityTooltipSerializer, ColorPaletteSerializer
 from poms.users.models import EcosystemDefault
 
+import traceback
+
 from logging import getLogger
 
 _l = getLogger('poms.configuration_import')
@@ -836,8 +838,6 @@ class ImportManager(object):
                             },
                             'status': 'info'
                         }
-
-                        _l.debug('content_object input  %s' % content_object['inputs'][0])
 
                         try:
                             serializer.is_valid(raise_exception=True)
@@ -2969,6 +2969,7 @@ def configuration_import_as_json(self, instance):
     except Exception as e:
 
         _l.debug("Error occurred %s" % e)
+        traceback.print_exc()
 
     return instance
 

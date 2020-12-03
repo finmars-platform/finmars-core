@@ -192,7 +192,7 @@ class TransactionTypeInputInline(admin.TabularInline):
     #     'verbose_name', 'order',
     #     'is_fill_from_context', 'value',
     #     'account', 'instrument_type', 'instrument', 'currency', 'counterparty',
-    #     'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3', 'price_download_scheme',
+    #     'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3',
     #     'daily_pricing_model', 'payment_size_detail',)
     # fieldsets = (
     #     (None, {
@@ -202,12 +202,12 @@ class TransactionTypeInputInline(admin.TabularInline):
     #         'classes': ('collapse',),
     #         'fields': ('is_fill_from_context', 'value',
     #                    'account', 'instrument_type', 'instrument', 'currency', 'counterparty',
-    #                    'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3', 'price_download_scheme',
+    #                    'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3',
     #                    'daily_pricing_model', 'payment_size_detail',),
     #     }),
     # )
     raw_id_fields = ('account', 'instrument_type', 'instrument', 'currency', 'counterparty',
-                     'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3', 'price_download_scheme', 'settings')
+                     'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3',  'settings')
     readonly_fields = ('id',)
 
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
@@ -248,7 +248,7 @@ class TransactionTypeActionInstrumentInline(admin.StackedInline):
         ('default_price', 'default_accrued',),
         ('user_text_1', 'user_text_2', 'user_text_3',),
         ('daily_pricing_model', 'daily_pricing_model_input',),
-        ('reference_for_pricing', 'price_download_scheme', 'price_download_scheme_input',),
+        ('reference_for_pricing',),
         ('maturity_date',),
     )
 
@@ -258,7 +258,6 @@ class TransactionTypeActionInstrumentInline(admin.StackedInline):
         'accrued_currency', 'accrued_currency_input',
         'payment_size_detail_input',
         'daily_pricing_model_input',
-        'price_download_scheme', 'price_download_scheme_input',
     )
 
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
@@ -403,7 +402,7 @@ class ComplexTransactionInputInline(admin.TabularInline):
     extra = 0
     raw_id_fields = (
         'transaction_type_input', 'account', 'instrument_type', 'instrument', 'currency', 'counterparty',
-        'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3', 'price_download_scheme'
+        'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3',
     )
     readonly_fields = ('id',)
 

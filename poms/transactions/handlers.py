@@ -211,8 +211,6 @@ class TransactionTypeProcess(object):
                 return obj.payment_size_detail
             elif issubclass(model_class, Portfolio):
                 return obj.portfolio
-            elif issubclass(model_class, PriceDownloadScheme):
-                return obj.price_download_scheme
             elif issubclass(model_class, PricingPolicy):
                 return obj.pricing_policy
             elif issubclass(model_class, Periodicity):
@@ -420,9 +418,6 @@ class TransactionTypeProcess(object):
                     self._set_val(errors=errors, values=self.values, default_value='',
                                   target=instrument, target_attr_name='reference_for_pricing',
                                   source=action_instrument, source_attr_name='reference_for_pricing')
-                    self._set_rel(errors=errors, values=self.values, default_value=None,
-                                  target=instrument, target_attr_name='price_download_scheme',
-                                  source=action_instrument, source_attr_name='price_download_scheme')
                     self._set_rel(errors=errors, values=self.values, default_value=daily_pricing_model,
                                   target=instrument, target_attr_name='daily_pricing_model',
                                   source=action_instrument, source_attr_name='daily_pricing_model')
@@ -1554,8 +1549,6 @@ class TransactionTypeProcess(object):
                     ci.payment_size_detail = val
                 elif issubclass(model_class, Portfolio):
                     ci.portfolio = val
-                elif issubclass(model_class, PriceDownloadScheme):
-                    ci.price_download_scheme = val
                 elif issubclass(model_class, PricingPolicy):
                     ci.pricing_policy = val
                 elif issubclass(model_class, Periodicity):
@@ -2030,7 +2023,6 @@ class TransactionTypeProcess(object):
                             'strategy3': 'strategy3',
                             'dailypricingmodel': 'daily_pricing_model',
                             'paymentsizedetail': 'payment_size_detail',
-                            'pricedownloadscheme': 'price_download_scheme',
                             'pricingpolicy': 'pricing_policy',
                             'periodicity': 'periodicity',
                             'accrualcalculationmodel': 'accrual_calculation_model',

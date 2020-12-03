@@ -627,9 +627,9 @@ class TransactionTypeInput(models.Model):
     payment_size_detail = models.ForeignKey('instruments.PaymentSizeDetail', null=True, blank=True,
                                             on_delete=models.PROTECT, related_name='+',
                                             verbose_name=ugettext_lazy('payment size detail'))
-    price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', null=True, blank=True,
-                                              on_delete=models.PROTECT, related_name='+',
-                                              verbose_name=ugettext_lazy('price download scheme'))
+    # price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', null=True, blank=True,
+    #                                           on_delete=models.PROTECT, related_name='+',
+    #                                           verbose_name=ugettext_lazy('price download scheme'))
     pricing_policy = models.ForeignKey('instruments.PricingPolicy', null=True, blank=True,
                                        on_delete=models.PROTECT, related_name='+',
                                        verbose_name=ugettext_lazy('pricing policy'))
@@ -823,11 +823,11 @@ class TransactionTypeActionInstrument(TransactionTypeAction):
                                                   on_delete=models.SET_NULL,
                                                   related_name='+',
                                                   verbose_name=ugettext_lazy('daily pricing model input'))
-    price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.SET_NULL, null=True,
-                                              blank=True, verbose_name=ugettext_lazy('price download scheme'))
-    price_download_scheme_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True,
-                                                    on_delete=models.SET_NULL, related_name='+',
-                                                    verbose_name=ugettext_lazy('price download scheme input'))
+    # price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.SET_NULL, null=True,
+    #                                           blank=True, verbose_name=ugettext_lazy('price download scheme'))
+    # price_download_scheme_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True,
+    #                                                 on_delete=models.SET_NULL, related_name='+',
+    #                                                 verbose_name=ugettext_lazy('price download scheme input'))
     maturity_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='now()',
                                      verbose_name=ugettext_lazy('maturity date'))
     maturity_price = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.0',
@@ -1421,9 +1421,9 @@ class ComplexTransactionInput(models.Model):
     payment_size_detail = models.ForeignKey('instruments.PaymentSizeDetail', null=True, blank=True,
                                             on_delete=models.SET_NULL, related_name='+',
                                             verbose_name=ugettext_lazy('payment size detail'))
-    price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', null=True, blank=True,
-                                              on_delete=models.SET_NULL, related_name='+',
-                                              verbose_name=ugettext_lazy('price download scheme'))
+    # price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', null=True, blank=True,
+    #                                           on_delete=models.SET_NULL, related_name='+',
+    #                                           verbose_name=ugettext_lazy('price download scheme'))
 
     pricing_policy = models.ForeignKey('instruments.PricingPolicy', null=True, blank=True,
                                        on_delete=models.SET_NULL, related_name='+',
