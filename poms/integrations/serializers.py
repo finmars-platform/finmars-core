@@ -166,9 +166,6 @@ class InstrumentDownloadSchemeSerializer(serializers.ModelSerializer):
     user_text_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
 
     payment_size_detail_object = serializers.PrimaryKeyRelatedField(source='payment_size_detail', read_only=True)
-    daily_pricing_model_object = serializers.PrimaryKeyRelatedField(source='daily_pricing_model', read_only=True)
-    price_download_scheme = PriceDownloadSchemeField()
-    price_download_scheme_object = serializers.PrimaryKeyRelatedField(source='price_download_scheme', read_only=True)
     factor_schedule_method_object = serializers.PrimaryKeyRelatedField(source='factor_schedule_method', read_only=True)
     accrual_calculation_schedule_method_object = serializers.PrimaryKeyRelatedField(
         source='accrual_calculation_schedule_method', read_only=True)
@@ -183,8 +180,6 @@ class InstrumentDownloadSchemeSerializer(serializers.ModelSerializer):
             'instrument_type', 'pricing_currency', 'price_multiplier', 'accrued_currency', 'accrued_multiplier',
             'user_text_1', 'user_text_2', 'user_text_3', 'maturity_date', 'maturity_price',
             'payment_size_detail', 'payment_size_detail_object',
-            'daily_pricing_model', 'daily_pricing_model_object',
-            'price_download_scheme', 'price_download_scheme_object',
             'default_price', 'default_accrued',
             'factor_schedule_method', 'factor_schedule_method_object',
             'accrual_calculation_schedule_method', 'accrual_calculation_schedule_method_object',
@@ -197,10 +192,6 @@ class InstrumentDownloadSchemeSerializer(serializers.ModelSerializer):
         from poms.instruments.serializers import PaymentSizeDetailSerializer, DailyPricingModelSerializer
         self.fields['payment_size_detail_object'] = PaymentSizeDetailSerializer(source='payment_size_detail',
                                                                                 read_only=True)
-        self.fields['daily_pricing_model_object'] = DailyPricingModelSerializer(source='daily_pricing_model',
-                                                                                read_only=True)
-        self.fields['price_download_scheme_object'] = PriceDownloadSchemeViewSerializer(source='price_download_scheme',
-                                                                                        read_only=True)
         self.fields['factor_schedule_method_object'] = FactorScheduleDownloadMethodSerializer(
             source='factor_schedule_method', read_only=True)
         self.fields['accrual_calculation_schedule_method_object'] = AccrualScheduleDownloadMethodSerializer(
@@ -927,8 +918,6 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObj
     accrued_currency_object = serializers.PrimaryKeyRelatedField(source='accrued_currency', read_only=True)
     payment_size_detail_object = serializers.PrimaryKeyRelatedField(source='payment_size_detail', read_only=True)
     daily_pricing_model_object = serializers.PrimaryKeyRelatedField(source='daily_pricing_model', read_only=True)
-    price_download_scheme = PriceDownloadSchemeField(allow_null=True)
-    price_download_scheme_object = serializers.PrimaryKeyRelatedField(source='price_download_scheme', read_only=True)
 
     accrual_calculation_schedules = serializers.SerializerMethodField()
     factor_schedules = serializers.SerializerMethodField()
@@ -948,8 +937,7 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObj
             'accrued_currency', 'accrued_currency_object', 'accrued_multiplier',
             'payment_size_detail', 'payment_size_detail_object', 'default_price', 'default_accrued',
             'user_text_1', 'user_text_2', 'user_text_3',
-            'reference_for_pricing', 'daily_pricing_model', 'daily_pricing_model_object',
-            'price_download_scheme', 'price_download_scheme_object',
+            'reference_for_pricing',
             'maturity_date',
             # 'manual_pricing_formulas',
             'accrual_calculation_schedules', 'factor_schedules', 'event_schedules',
@@ -967,14 +955,9 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObj
         from poms.instruments.serializers import InstrumentTypeViewSerializer, PaymentSizeDetailSerializer, \
             DailyPricingModelSerializer, EventScheduleSerializer
         self.fields['instrument_type_object'] = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
-        self.fields['daily_pricing_model_object'] = DailyPricingModelSerializer(source='daily_pricing_model',
-                                                                                read_only=True)
         self.fields['payment_size_detail_object'] = PaymentSizeDetailSerializer(source='payment_size_detail',
                                                                                 read_only=True)
         self.fields['event_schedules'] = EventScheduleSerializer(many=True, required=False, allow_null=True)
-
-        self.fields['price_download_scheme_object'] = PriceDownloadSchemeViewSerializer(source='price_download_scheme',
-                                                                                        read_only=True)
 
         self.fields['attributes'] = serializers.SerializerMethodField()
 

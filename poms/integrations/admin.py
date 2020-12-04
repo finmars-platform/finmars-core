@@ -80,7 +80,7 @@ class InstrumentDownloadSchemeAdmin(AbstractModelAdmin):
     list_select_related = ['master_user', 'provider', ]
     list_filter = ['provider']
     search_fields = ['id', 'scheme_name', ]
-    raw_id_fields = ['master_user', 'price_download_scheme']
+    raw_id_fields = ['master_user']
     inlines = [
         InstrumentDownloadSchemeInputInline,
         InstrumentDownloadSchemeAttributeInline,

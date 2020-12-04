@@ -236,8 +236,6 @@ class InstrumentDownloadScheme(models.Model):
                                             null=True, blank=True, verbose_name=ugettext_lazy('payment size detail'))
     daily_pricing_model = models.ForeignKey('instruments.DailyPricingModel', null=True, blank=True,
                                             verbose_name=ugettext_lazy('daily pricing model'), on_delete=models.SET_NULL)
-    price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.PROTECT, null=True,
-                                              blank=True, verbose_name=ugettext_lazy('price download scheme'))
     default_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('default price'))
     default_accrued = models.FloatField(default=0.0, verbose_name=ugettext_lazy('default accrued'))
 
