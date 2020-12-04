@@ -170,9 +170,6 @@ class Strategy2EvSerializer(Strategy1EvSerializer):
 
 class Strategy2LightSerializer(Strategy1LightSerializer):
 
-    subgroup = Strategy2SubgroupField(default=Strategy2SubgroupDefault())
-    subgroup_object = Strategy2SubgroupViewSerializer(source='subgroup', read_only=True)
-
     class Meta(Strategy1LightSerializer.Meta):
         model = Strategy2
 
@@ -231,9 +228,6 @@ class Strategy3EvSerializer(Strategy1EvSerializer):
 
 
 class Strategy3LightSerializer(Strategy1LightSerializer):
-
-    subgroup = Strategy3SubgroupField(default=Strategy3SubgroupDefault())
-    subgroup_object = Strategy3SubgroupViewSerializer(source='subgroup', read_only=True)
 
     class Meta(Strategy1LightSerializer.Meta):
         model = Strategy3
