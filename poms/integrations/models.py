@@ -992,7 +992,7 @@ class ComplexTransactionImportScheme(DataTimeStampedModel):
     SKIP = 1
     BOOK_WITHOUT_UNIQUE_CODE = 2
     OVERWRITE = 3
-    TREAT_AS_ERROR = 3
+    TREAT_AS_ERROR = 4
 
     BOOK_UNIQUENESS_CHOICES = (
         (SKIP, ugettext_lazy('Skip')),
