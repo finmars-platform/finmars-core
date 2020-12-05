@@ -40,9 +40,7 @@ class BackendRole:
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'jrixf-%65l5&#@hbmq()sa-pzy@e)=zpdr6g0cg8a!i_&w-c!)'
 
-LOCAL = False
-if os.environ.get('LOCAL') == 'True':
-    LOCAL = True
+SERVER_TYPE = os.environ.get('SERVER_TYPE', 'LOCAL')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -143,7 +141,7 @@ INSTALLED_APPS = [
     # 'debug_toolbar',
 ]
 
-if LOCAL:
+if SERVER_TYPE == 'LOCAL':
     INSTALLED_APPS.append('debug_toolbar')
 
 # MIDDLEWARE_CLASSES = [
@@ -176,7 +174,7 @@ MIDDLEWARE = [
 
 ]
 
-if LOCAL:
+if SERVER_TYPE == 'LOCAL':
     MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
 
 
@@ -279,24 +277,24 @@ USE_ETAGS = True
 ENV_CSRF_COOKIE_DOMAIN = os.environ.get('ENV_CSRF_COOKIE_DOMAIN', 'finmars.com')
 ENV_CSRF_TRUSTED_ORIGINS = os.environ.get('ENV_CSRF_TRUSTED_ORIGINS', 'finmars.com')
 
-if not LOCAL:
+if SERVER_TYPE == "PRODUCTION":
 
+    CORS_URLS_REGEX = r'^/api/.*$'
+    CORS_REPLACE_HTTPS_REFERER = True
+    CORS_ALLOW_CREDENTIALS = True
+    CORS_PREFLIGHT_MAX_AGE = 300
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     CSRF_COOKIE_SAMESITE = 'Strict'
-    # CSRF_COOKIE_DOMAIN = ENV_CSRF_COOKIE_DOMAIN
+    CSRF_COOKIE_DOMAIN = ENV_CSRF_COOKIE_DOMAIN
     CSRF_TRUSTED_ORIGINS = ENV_CSRF_TRUSTED_ORIGINS.split(',')
 
-    print('CSRF_TRUSTED_ORIGINS %s' % CSRF_TRUSTED_ORIGINS)
+if SERVER_TYPE == "DEVELOPMENT":
 
-CORS_ORIGIN_WHITELIST = ENV_CSRF_TRUSTED_ORIGINS.split(',')
+    CORS_ORIGIN_WHITELIST = ENV_CSRF_TRUSTED_ORIGINS.split(',')
 
-CORS_URLS_REGEX = r'^/api/.*$'
-CORS_REPLACE_HTTPS_REFERER = True
-CORS_ALLOW_CREDENTIALS = True
-CORS_PREFLIGHT_MAX_AGE = 300
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
@@ -699,7 +697,7 @@ SFTP_KNOWN_HOST_FILE = os.path.join(BASE_DIR, '.ssh/known_hosts')
 # INTEGRATIONS ------------------------------------------------
 
 
-if LOCAL:
+if SERVER_TYPE == 'LOCAL':
 
     IMPORT_CONFIG_STORAGE = {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
