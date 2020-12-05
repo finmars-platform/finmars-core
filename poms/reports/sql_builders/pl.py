@@ -2925,7 +2925,7 @@ class PLReportBuilderSql:
                                  final_consolidation_where_filters=self.get_final_consolidation_where_filters_columns()
                                  )
 
-            if settings.LOCAL:
+            if settings.SERVER_TYPE == 'LOCAL':
                 with open('/tmp/query_result_before_execution.txt', 'w') as the_file:
                     the_file.write(query)
 
@@ -2935,7 +2935,7 @@ class PLReportBuilderSql:
 
             query_str = str(cursor.query, 'utf-8')
 
-            if settings.LOCAL:
+            if settings.SERVER_TYPE == 'LOCAL':
                 with open('/tmp/query_result.txt', 'w') as the_file:
                     the_file.write(query_str)
 

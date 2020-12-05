@@ -63,7 +63,7 @@ class PageNumberPaginationExt(PageNumberPagination):
         list_page_st = time.perf_counter()
         res = list(self.page)
 
-        if settings.LOCAL:
+        if settings.SERVER_TYPE == 'LOCAL':
             with open('/tmp/query.sql', 'w') as the_file:
                 query_str = str(queryset.query)
                 the_file.write(query_str)

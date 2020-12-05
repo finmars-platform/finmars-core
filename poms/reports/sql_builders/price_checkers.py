@@ -418,7 +418,7 @@ def execute_nav_sql(instance, cursor, ecosystem_defaults):
 
     query_str = str(cursor.query, 'utf-8')
 
-    if settings.LOCAL:
+    if settings.SERVER_TYPE == 'LOCAL':
         with open('/tmp/query_result.txt', 'w') as the_file:
             the_file.write(query_str)
 
@@ -596,7 +596,7 @@ def execute_transaction_prices_sql(instance, cursor, ecosystem_defaults):
 
     query_str = str(cursor.query, 'utf-8')
 
-    if settings.LOCAL:
+    if settings.SERVER_TYPE == 'LOCAL':
         with open('/tmp/query_result.txt', 'w') as the_file:
             the_file.write(query_str)
 
