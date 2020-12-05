@@ -297,13 +297,6 @@ if SERVER_TYPE == "DEVELOPMENT":
 
     CORS_ALLOWED_ORIGINS = ENV_CSRF_TRUSTED_ORIGINS.split(',')
     CORS_ORIGIN_WHITELIST = ENV_CSRF_TRUSTED_ORIGINS.split(',')
-    CORS_ALLOW_ALL_ORIGINS = True  # TODO very danger, replace soon
-    CORS_ORIGIN_ALLOW_ALL = True  # TODO very danger, replace soon
-
-    from corsheaders.defaults import default_headers
-    CORS_ALLOW_HEADERS = default_headers + (
-        'Access-Control-Allow-Origin',
-    )
 
     print('CORS_ALLOWED_ORIGINS %s' % CORS_ALLOWED_ORIGINS)
 
