@@ -42,6 +42,8 @@ SECRET_KEY = 'jrixf-%65l5&#@hbmq()sa-pzy@e)=zpdr6g0cg8a!i_&w-c!)'
 
 SERVER_TYPE = os.environ.get('SERVER_TYPE', 'LOCAL')
 
+print('SERVER_TYPE %s' % SERVER_TYPE)
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 if os.environ.get('DEBUG') == 'True':
@@ -295,7 +297,8 @@ if SERVER_TYPE == "DEVELOPMENT":
 
     CORS_ALLOWED_ORIGINS = ENV_CSRF_TRUSTED_ORIGINS.split(',')
     CORS_ORIGIN_WHITELIST = ENV_CSRF_TRUSTED_ORIGINS.split(',')
-    CORS_ALLOW_ALL_ORIGINS = True # TODO very danger, replace soon
+    CORS_ALLOW_ALL_ORIGINS = True  # TODO very danger, replace soon
+    CORS_ORIGIN_ALLOW_ALL = True  # TODO very danger, replace soon
 
     print('CORS_ALLOWED_ORIGINS %s' % CORS_ALLOWED_ORIGINS)
 
