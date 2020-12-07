@@ -2585,6 +2585,8 @@ class ComplexTransactionEvSerializer(ModelWithObjectPermissionSerializer, ModelW
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
     transaction_type_object = TransactionTypeViewSerializer(source='transaction_type', read_only=True)
 
+    recon_fields = ReconciliationComplexTransactionFieldSerializer(required=False, many=True)  # for reconciliation
+
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionEvSerializer, self).__init__(*args, **kwargs)
 
@@ -2611,7 +2613,8 @@ class ComplexTransactionEvSerializer(ModelWithObjectPermissionSerializer, ModelW
             'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
             'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
 
-            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5'
+            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
+            'recon_fields'
 
         ]
 
@@ -2699,7 +2702,6 @@ class ComplexTransactionLightSerializer(ModelWithObjectPermissionSerializer, Mod
     # text = serializers.SerializerMethodField()
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
-    recon_fields = ReconciliationComplexTransactionFieldSerializer(required=False, many=True)
 
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionLightSerializer, self).__init__(*args, **kwargs)
@@ -2727,7 +2729,7 @@ class ComplexTransactionLightSerializer(ModelWithObjectPermissionSerializer, Mod
             'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
 
             'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
-            'recon_fields'
+
 
         ]
 
