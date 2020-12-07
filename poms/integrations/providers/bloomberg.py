@@ -305,6 +305,7 @@ class BloombergDataProvider(AbstractProvider):
             result = self.get_instrument_get_response(response_id)
             return result, result is not None
 
+    # DEPRECATED
     def download_instrument_pricing(self, options):
         _l.debug('download_instrument_pricing: %s', options)
 

@@ -139,7 +139,7 @@ class InstrumentDownloadSchemeFilterSet(FilterSet):
 
 class InstrumentDownloadSchemeViewSet(AbstractModelViewSet):
     queryset = InstrumentDownloadScheme.objects.select_related(
-        'provider', 'payment_size_detail', 'daily_pricing_model', 'price_download_scheme', 'factor_schedule_method',
+        'provider', 'payment_size_detail', 'daily_pricing_model', 'factor_schedule_method',
         'accrual_calculation_schedule_method',
     ).prefetch_related(
         'inputs',
