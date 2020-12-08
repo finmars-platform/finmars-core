@@ -609,6 +609,7 @@ class EntitySpecificFilter(BaseFilterBackend):
             is_disabled = False
             is_deleted = False
             is_inactive = False
+            is_active = False
 
             if 'ev_options' in request.data:
 
@@ -626,6 +627,10 @@ class EntitySpecificFilter(BaseFilterBackend):
 
                         is_inactive = True
 
+                    if 'active' in request.data['ev_options']['entity_filters']:
+
+                        is_active = True
+
             # Show Disabled
             if is_disabled == False:
                 queryset = queryset.filter(is_enabled=True)
@@ -634,7 +639,7 @@ class EntitySpecificFilter(BaseFilterBackend):
             if is_deleted == False:
                 queryset = queryset.filter(is_deleted=False)
 
-            if is_inactive == False:
+            if is_inactive == False and is_active == True:
 
                 try:
                     field = queryset.model._meta.get_field('is_active')
@@ -643,5 +648,13 @@ class EntitySpecificFilter(BaseFilterBackend):
                 except FieldDoesNotExist:
                     pass
 
+            if is_active == False and is_inactive == True:
+
+                try:
+                    field = queryset.model._meta.get_field('is_active')
+
+                    queryset = queryset.filter(is_active=False)
+                except FieldDoesNotExist:
+                    pass
 
         return queryset

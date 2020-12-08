@@ -210,6 +210,7 @@ class ComplexTransactionSpecificFilter(BaseFilterBackend):
         # print("ComplexTransactionSpecificFilter before %s" % len(queryset))
 
         is_locked = False
+        is_unlocked = False
         is_canceled = False
         is_partially_visible = False
 
@@ -223,6 +224,10 @@ class ComplexTransactionSpecificFilter(BaseFilterBackend):
 
                     is_locked = True
 
+                if 'unlocked' in request.data['ev_options']['complex_transaction_filters']:
+
+                    is_unlocked = True
+
                 if 'ignored' in request.data['ev_options']['complex_transaction_filters']:
 
                     is_canceled = True
@@ -234,8 +239,12 @@ class ComplexTransactionSpecificFilter(BaseFilterBackend):
         # print('is_locked %s' % is_locked)
         # print('is_canceled %s' % is_canceled)
         # print('is_partial_visible %s' % is_partial_visible)
-        if is_locked == False:
-            queryset = queryset.filter(is_locked=is_locked)
+        if is_locked == False and is_unlocked == True:
+            queryset = queryset.filter(is_locked=False)
+
+        # Uncomment later
+        if is_unlocked == False and is_locked == True:
+            queryset = queryset.filter(is_locked=True)
 
         if is_canceled == False:
             queryset = queryset.filter(is_canceled=is_canceled)
