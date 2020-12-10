@@ -1027,6 +1027,8 @@ class TransactionEvViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = TransactionEvSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
     ]
     permission_classes = AbstractWithObjectPermissionViewSet.permission_classes + [
         # TransactionObjectPermission,

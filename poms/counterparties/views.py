@@ -184,6 +184,8 @@ class CounterpartyEvViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = CounterpartyEvSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
         EntitySpecificFilter
     ]
     filter_class = CounterpartyEvFilterSet
@@ -414,7 +416,10 @@ class ResponsibleEvViewSet(AbstractWithObjectPermissionViewSet):
     )
     serializer_class = ResponsibleEvSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+        EntitySpecificFilter
     ]
     filter_class = ResponsibleEvFilterSet
     ordering_fields = [

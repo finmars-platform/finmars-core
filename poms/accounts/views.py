@@ -248,6 +248,8 @@ class AccountEvViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = AccountEvSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        GroupsAttributeFilter,
+        AttributeFilter,
     ]
     filter_class = AccountEvFilterSet
     ordering_fields = [

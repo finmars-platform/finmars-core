@@ -733,6 +733,8 @@ class InstrumentEvViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = InstrumentEvSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
         EntitySpecificFilter
     ]
     filter_class = InstrumentEvFilterSet
