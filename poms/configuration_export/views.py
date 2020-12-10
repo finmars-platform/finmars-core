@@ -277,7 +277,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         csv_import_schemes = self.get_csv_import_schemes()
         complex_import_schemes = self.get_complex_import_schemes()
         instrument_download_schemes = self.get_instrument_download_schemes()
-        price_download_schemes = self.get_price_download_schemes()
+        # price_download_schemes = self.get_price_download_schemes()
         complex_transaction_import_scheme = self.get_complex_transaction_import_scheme()
 
         _l.debug('ConfigurationExportViewSet createConfiguration got schemes done: %s',
@@ -365,8 +365,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             if self.access_table['complex_import.compleximportscheme']:
                 configuration["body"].append(complex_import_schemes)
 
-            if self.access_table['integrations.pricedownloadscheme']:
-                configuration["body"].append(price_download_schemes)
+            # if self.access_table['integrations.pricedownloadscheme']:
+            #     configuration["body"].append(price_download_schemes)
 
             if self.access_table['integrations.instrumentdownloadscheme']:
                 configuration["body"].append(instrument_download_schemes)
@@ -609,10 +609,11 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                     'key': 'payment_size_detail',
                     'model': PaymentSizeDetail
                 },
+                # {
+                #     'key': 'price_download_scheme',
+                #     'model': PriceDownloadScheme
+                # },
                 {
-                    'key': 'price_download_scheme',
-                    'model': PriceDownloadScheme
-                }, {
                     'key': 'pricing_currency',
                     'model': Currency
                 }],
@@ -1822,8 +1823,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             # result_item["attributes"] = self.get_instrument_download_scheme_attributes(scheme)
             result_item["attributes"] = []
 
-            result_item["___price_download_scheme__scheme_name"] = PriceDownloadScheme.objects.get(
-                pk=result_item["price_download_scheme"]).scheme_name
+            # result_item["___price_download_scheme__scheme_name"] = PriceDownloadScheme.objects.get(
+            #     pk=result_item["price_download_scheme"]).scheme_name
 
             clear_none_attrs(result_item)
 
@@ -1837,6 +1838,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
+    # DEPRECATED
     def get_price_download_schemes(self):
         schemes = to_json_objects(PriceDownloadScheme.objects.filter(master_user=self._master_user))
 
@@ -2251,7 +2253,7 @@ class MappingExportViewSet(AbstractModelViewSet):
                 pricing_condition_mapping = self.get_pricing_condition_mapping()
                 payment_size_detail_mapping = self.get_payment_size_detail_mapping()
                 accrual_calculation_model_mapping = self.get_accrual_calculation_model_mapping()
-                price_download_scheme_mapping = self.get_price_download_scheme_mapping()
+                # price_download_scheme_mapping = self.get_price_download_scheme_mapping()
 
                 configuration["body"].append(account_type_mapping)
                 configuration["body"].append(portfolio_mapping)
@@ -2268,7 +2270,7 @@ class MappingExportViewSet(AbstractModelViewSet):
                 configuration["body"].append(daily_pricing_model_mapping)
                 configuration["body"].append(payment_size_detail_mapping)
                 configuration["body"].append(accrual_calculation_model_mapping)
-                configuration["body"].append(price_download_scheme_mapping)
+                # configuration["body"].append(price_download_scheme_mapping)
 
         return configuration
 
@@ -2801,6 +2803,7 @@ class MappingExportViewSet(AbstractModelViewSet):
 
         return result
 
+    # DEPRECATED
     def get_price_download_scheme_mapping(self):
         items = to_json_objects(
             PriceDownloadSchemeMapping.objects.filter(master_user=self._master_user))
