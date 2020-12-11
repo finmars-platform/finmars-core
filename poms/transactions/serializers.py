@@ -1462,7 +1462,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
 
                 if inp.settings:
 
-                    if 'linked_inputs_names' is settings_data:
+                    if 'linked_inputs_names' in settings_data:
                         inp.settings.linked_inputs_names = settings_data['linked_inputs_names']
 
                     if 'recalc_on_change_linked_inputs' in settings_data:
