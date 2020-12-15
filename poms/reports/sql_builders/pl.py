@@ -3141,10 +3141,10 @@ class PLReportBuilderSql:
                     result_item_closed['item_type'] = item['item_type']
                     result_item_closed['item_type_name'] = item['item_type_name']
 
-                    result_item_closed['market_value'] = item['market_value']
+                    result_item_closed['market_value'] = None
                     result_item_closed['exposure'] = item['exposure']
 
-                    result_item_closed['market_value_loc'] = item['market_value_loc']
+                    result_item_closed['market_value_loc'] = None
                     result_item_closed['exposure_loc'] = item['exposure_loc']
 
                     result_item_closed['ytm'] = item['ytm']
