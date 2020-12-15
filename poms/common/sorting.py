@@ -5,6 +5,7 @@ from poms.obj_attrs.models import GenericAttributeType, GenericAttribute
 from django.db.models import Value
 from django.db.models.functions import Coalesce
 
+import time
 import math
 
 from django.db.models.functions import Lower
@@ -40,9 +41,13 @@ def sort_by_dynamic_attrs(queryset, ordering, master_user, content_type):
 
     _l.debug('sort_by_dynamic_attrs.ordering %s' % ordering)
 
+    sort_st = time.perf_counter()
+
     parts = ordering.split('attributes.')
 
     if parts and len(parts) == 2:
+
+        attributes_queryset_st = time.perf_counter()
 
         order = parts[0]
         key = parts[1]
@@ -52,7 +57,7 @@ def sort_by_dynamic_attrs(queryset, ordering, master_user, content_type):
 
         attributes_queryset = GenericAttribute.objects.filter(attribute_type=attribute_type, object_id__in=queryset)
 
-        _l.debug('attribute_type.value_type1 %s' % attribute_type.value_type)
+        _l.debug('attribute_type.value_type %s' % attribute_type.value_type)
 
         if order == '-':
 
@@ -105,20 +110,19 @@ def sort_by_dynamic_attrs(queryset, ordering, master_user, content_type):
 
         # _l.debug('attributes_queryset %s' % attributes_queryset)
 
-        # TODO refactor!
+        result_ids = attributes_queryset.values_list('object_id', flat=True)
 
-        result = []
-        result_ids = []
+        _l.debug('sort_by_dynamic_attrs  attributes_queryset done: %s', "{:3.3f}".format(time.perf_counter() - attributes_queryset_st))
 
-        for a in attributes_queryset:
+        table_name = content_type.app_label + '_' + content_type.model
 
-            for i in queryset:
+        clauses = ' '.join(['WHEN %s.id=%s THEN %s' % (table_name, pk, i) for i, pk in enumerate(result_ids)])
+        ordering = 'CASE %s END' % clauses
+        queryset = queryset.filter(pk__in=result_ids).extra(
+            select={'ordering': ordering}, order_by=('ordering',))
 
-                if a.object_id == i.id and a.object_id not in result_ids:
-                    result_ids.append(i.id)
-                    result.append(i)
+        _l.debug('sort_by_dynamic_attrs dynamic attrs done: %s', "{:3.3f}".format(time.perf_counter() - sort_st))
 
-        queryset = result
     else:
 
         _l.debug("ordering in system attrs %s" % ordering)
@@ -137,5 +141,7 @@ def sort_by_dynamic_attrs(queryset, ordering, master_user, content_type):
 
         else:
             queryset = queryset.order_by(ordering)
+
+        _l.debug('sort_by_dynamic_attrs system attrs done: %s', "{:3.3f}".format(time.perf_counter() - sort_st))
 
     return queryset

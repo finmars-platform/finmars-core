@@ -294,7 +294,9 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         _l.debug('ordering %s' % ordering)
 
         if ordering:
+            sort_st = time.perf_counter()
             queryset = sort_by_dynamic_attrs(queryset, ordering, master_user, content_type)
+            _l.debug('filtered_list sort done: %s', "{:3.3f}".format(time.perf_counter() - sort_st))
 
         _l.debug('filtered_list apply filters done: %s', "{:3.3f}".format(time.perf_counter() - filters_st))
 

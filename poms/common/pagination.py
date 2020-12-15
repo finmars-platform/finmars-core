@@ -63,10 +63,7 @@ class PageNumberPaginationExt(PageNumberPagination):
         list_page_st = time.perf_counter()
         res = list(self.page)
 
-        if settings.SERVER_TYPE == 'LOCAL':
-            with open('/tmp/query.sql', 'w') as the_file:
-                query_str = str(queryset.query)
-                the_file.write(query_str)
+        _l.debug('res %s' % len(res))
 
         _l.debug('post_paginate_queryset list page done: %s', "{:3.3f}".format(time.perf_counter() - list_page_st))
 
