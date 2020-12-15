@@ -103,7 +103,7 @@ class CurrencyEvViewSet(AbstractWithObjectPermissionViewSet):
     )
     serializer_class = CurrencyEvSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByCurrencyFilter,
+        OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter
     ]
