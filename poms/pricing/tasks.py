@@ -7,12 +7,12 @@ from poms.file_reports.models import FileReport
 
 from django.utils.timezone import now
 
-from poms.pricing.models import PricingProcedureInstance, PricingParentProcedureInstance
+from poms.pricing.models import PricingProcedureInstance
 
 _l = logging.getLogger('poms.pricing')
 
 @shared_task(name='pricing.clear_old_pricing_procedure_instances', bind=True, ignore_result=True)
-def clear_old_pricing_procedure_instances(self,):
+def clear_old_pricing_procedure_instances():
 
     _l.debug("Pricing: clear_old_pricing_procedure_instances")
 
@@ -52,7 +52,7 @@ def clear_old_pricing_procedure_instances(self,):
 
 
 @shared_task(name='pricing.set_old_processing_procedure_instances_to_error', bind=True, ignore_result=True)
-def set_old_processing_procedure_instances_to_error(self,):
+def set_old_processing_procedure_instances_to_error():
 
     _l.debug("Pricing: set_old_processing_procedure_instances_to_error")
 
