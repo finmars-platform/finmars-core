@@ -1221,7 +1221,7 @@ class BalanceReportBuilderSql:
 
             query_str = str(cursor.query, 'utf-8')
 
-            if settings.SERVER_TYPE == 'LOCAL':
+            if settings.SERVER_TYPE == 'local':
                 with open('/tmp/query_result.txt', 'w') as the_file:
                     the_file.write(query_str)
 

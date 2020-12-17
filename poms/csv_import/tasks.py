@@ -43,6 +43,8 @@ from .serializers import CsvDataImportSerializer, CsvImportSchemeSerializer, Csv
 from django.utils.translation import ugettext
 from logging import getLogger
 
+from ..common.websockets import send_websocket_message
+
 _l = getLogger('poms.csv_import')
 
 from datetime import date, datetime
@@ -730,6 +732,18 @@ def process_csv_file(master_user,
 
         # _l.debug('task_instance.processed_rows: %s', task_instance.processed_rows)
 
+        send_websocket_message(data={
+            'type': 'simple_import_validation_status',
+            'payload': {'task_id': task_instance.task_id,
+                        'state': Task.STATUS_PENDING,
+                        'processed_rows': task_instance.processed_rows,
+                        'total_rows': task_instance.total_rows,
+                        'scheme_name': scheme.scheme_name,
+                        'file_name': task_instance.filename}
+        }, level="master_user",
+            context={"master_user": master_user, "member": member})
+
+        # Deprecated
         update_state(task_id=task_instance.task_id, state=Task.STATUS_PENDING,
                      meta={'processed_rows': task_instance.processed_rows,
                            'total_rows': task_instance.total_rows, 'scheme_name': scheme.scheme_name,
@@ -1362,6 +1376,12 @@ class ImportHandler:
         if instance.stats and len(instance.stats):
             instance.stats_file_report = generate_file_report(instance, master_user, 'csv_import.import',
                                                               'Simple Data Import')
+
+            send_websocket_message(data={'type': "simple_message",
+                                         'payload': {
+                                             'message': "Member %s imported data with Simple Import Service" % member.username
+                                         }
+                                         }, level="master_user", context={"master_user": master_user, "member": member})
 
             if execution_context and execution_context["started_by"] == 'procedure':
                 send_system_message(master_user=instance.master_user,

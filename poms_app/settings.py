@@ -40,7 +40,7 @@ class BackendRole:
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'jrixf-%65l5&#@hbmq()sa-pzy@e)=zpdr6g0cg8a!i_&w-c!)'
 
-SERVER_TYPE = os.environ.get('SERVER_TYPE', 'LOCAL')
+SERVER_TYPE = os.environ.get('SERVER_TYPE', 'local')
 
 print('SERVER_TYPE %s' % SERVER_TYPE)
 
@@ -143,7 +143,7 @@ INSTALLED_APPS = [
     # 'debug_toolbar',
 ]
 
-if SERVER_TYPE == 'LOCAL':
+if SERVER_TYPE == 'local':
     INSTALLED_APPS.append('debug_toolbar')
 
 # MIDDLEWARE_CLASSES = [
@@ -176,7 +176,7 @@ MIDDLEWARE = [
 
 ]
 
-if SERVER_TYPE == 'LOCAL':
+if SERVER_TYPE == 'local':
     MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
 
 
@@ -280,7 +280,7 @@ ENV_CSRF_COOKIE_DOMAIN = os.environ.get('ENV_CSRF_COOKIE_DOMAIN', 'finmars.com')
 ENV_CSRF_TRUSTED_ORIGINS = os.environ.get('ENV_CSRF_TRUSTED_ORIGINS', 'finmars.com')
 
 
-if SERVER_TYPE == "PRODUCTION":
+if SERVER_TYPE == "production":
 
     CORS_URLS_REGEX = r'^/api/.*$'
     CORS_REPLACE_HTTPS_REFERER = True
@@ -294,7 +294,7 @@ if SERVER_TYPE == "PRODUCTION":
     CSRF_COOKIE_DOMAIN = ENV_CSRF_COOKIE_DOMAIN
     CSRF_TRUSTED_ORIGINS = ENV_CSRF_TRUSTED_ORIGINS.split(',')
 
-if SERVER_TYPE == "DEVELOPMENT":
+if SERVER_TYPE == "development":
 
     CORS_ORIGIN_ALLOW_ALL = True
     CORS_URLS_REGEX = r'^/api/.*$'
@@ -305,7 +305,7 @@ if SERVER_TYPE == "DEVELOPMENT":
 
 
 
-if SERVER_TYPE == "LOCAL":
+if SERVER_TYPE == "local":
 
     CORS_URLS_REGEX = r'^/api/.*$'
     CORS_ALLOW_CREDENTIALS = True
@@ -319,6 +319,16 @@ if SERVER_TYPE == "LOCAL":
 
 STATIC_URL = '/api/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
+
+USE_WEBSOCKETS = False
+
+if os.environ.get('USE_WEBSOCKETS', None) == 'True':
+    USE_WEBSOCKETS = True
+
+WEBSOCKET_HOST = os.environ.get('WEBSOCKET_HOST', 'ws://0.0.0.0:6969')
+WEBSOCKET_APP_TOKEN = os.environ.get('WEBSOCKET_APP_TOKEN', '943821230')
+
+print('WEBSOCKET_HOST %s' % WEBSOCKET_HOST)
 
 REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost:6379')
 
@@ -715,7 +725,7 @@ SFTP_KNOWN_HOST_FILE = os.path.join(BASE_DIR, '.ssh/known_hosts')
 # INTEGRATIONS ------------------------------------------------
 
 
-if SERVER_TYPE == 'LOCAL':
+if SERVER_TYPE == 'local':
 
     IMPORT_CONFIG_STORAGE = {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',

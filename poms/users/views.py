@@ -25,6 +25,7 @@ from poms.common.filters import CharFilter, NoOpFilter, ModelExtMultipleChoiceFi
 from poms.common.mixins import UpdateModelMixinExt, DestroyModelFakeMixin
 from poms.common.pagination import BigPagination
 from poms.common.views import AbstractModelViewSet, AbstractApiView, AbstractViewSet, AbstractAsyncViewSet
+from poms.common.websockets import send_websocket_message
 from poms.complex_import.models import ComplexImportSchemeAction, ComplexImportScheme
 from poms.counterparties.models import CounterpartyGroup, Counterparty, ResponsibleGroup, Responsible
 from poms.currencies.models import Currency
@@ -94,6 +95,7 @@ class PingViewSet(AbstractApiView, ViewSet):
 
     @method_decorator(ensure_csrf_cookie)
     def list(self, request, *args, **kwargs):
+
         serializer = PingSerializer(instance={
             'message': 'pong',
             'version': request.version,
@@ -103,6 +105,19 @@ class PingViewSet(AbstractApiView, ViewSet):
         })
         return Response(serializer.data)
 
+    @action(detail=False, methods=('Get',), url_path='ws')
+    def send_message(self, request):
+
+        send_websocket_message(data={"type": 'simple_message', "payload": {"message": "pong"}}, level="master_user", context={"request": request})
+
+        serializer = PingSerializer(instance={
+            'message': 'pong',
+            'version': request.version,
+            'is_authenticated': request.user.is_authenticated,
+            'is_anonymous': request.user.is_anonymous,
+            'now': timezone.template_localtime(timezone.now()),
+        })
+        return Response(serializer.data)
 
 class ProtectedPingViewSet(PingViewSet):
     permission_classes = [IsAuthenticated, ]
