@@ -1,4 +1,6 @@
-FROM ubuntu:16.04
+FROM ubuntu:18.04
+
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
     apt-get install -y apt-utils && \
@@ -6,6 +8,7 @@ RUN apt-get update && \
     apt-get install -y \
         htop \
         curl \
+        build-essential \
         openssl libssl-dev \
         python3-dev python3-pip python3-venv python3-setuptools python3-wheel \
         libpq-dev libgdal-dev libgeos-dev libproj-dev \
@@ -19,8 +22,9 @@ RUN curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.
     dpkg -i filebeat-7.6.2-amd64.deb
 
 ADD requirements.txt /var/app/
-RUN pyvenv-3.5 /var/app-venv
-RUN /var/app-venv/bin/pip install -U pip wheel && /var/app-venv/bin/pip install -r /var/app/requirements.txt
+RUN python3 -m venv /var/app-venv
+RUN /var/app-venv/bin/pip install -U pip wheel
+RUN /var/app-venv/bin/pip install -r /var/app/requirements.txt
 
 ADD docker/finmars-run.sh /var/app/docker/finmars-run.sh
 ADD data/ /var/app/data/
