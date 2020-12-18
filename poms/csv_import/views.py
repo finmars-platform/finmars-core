@@ -93,21 +93,19 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
         task_id = instance.task_id
 
-        signer = TimestampSigner()
-
-        _l.debug("TASK id: %s" % task_id)
+        # signer = TimestampSigner()
 
         if task_id:
 
-            res = AsyncResult(signer.unsign(task_id))
+            # res = AsyncResult(signer.unsign(task_id))
+            res = AsyncResult(task_id)
 
             try:
                 celery_task = CeleryTask.objects.get(master_user=request.user.master_user, task_id=task_id)
             except CeleryTask.DoesNotExist:
-                celery_task = None
+                # celery_task = None
                 _l.debug("Cant create Celery Task")
-
-            _l.debug('celery_task %s' % celery_task)
+                raise PermissionDenied()
 
             st = time.perf_counter()
 
@@ -123,6 +121,7 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
                 if res.result:
 
+                    #  DEPRECATED, REMOVE IN FUTURE
                     if 'processed_rows' in res.result:
                         instance.processed_rows = res.result['processed_rows']
                     if 'total_rows' in res.result:
@@ -146,16 +145,10 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
                         celery_task.data = celery_task_data
 
-                # _l.debug('TASK ITEMS LEN %s' % len(res.result.items))
-
             _l.debug('AsyncResult res.ready: %s' % (time.perf_counter() - st))
 
             if instance.master_user.id != request.user.master_user.id:
                 raise PermissionDenied()
-
-            # _l.debug('TASK RESULT %s' % res.result)
-            _l.debug('TASK STATUS %s' % res.status)
-            _l.debug('TASK STATUS celery_task %s' % celery_task)
 
             instance.task_id = task_id
             instance.task_status = res.status
@@ -170,7 +163,8 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
         else:
 
             res = self.celery_task.apply_async(kwargs={'instance': instance})
-            instance.task_id = signer.sign('%s' % res.id)
+            # instance.task_id = signer.sign('%s' % res.id)
+            instance.task_id = res.id
 
             celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                     member=request.user.member,
@@ -179,17 +173,9 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
             celery_task.save()
 
-            _l.debug('CREATE CELERY TASK celery_task %s' % celery_task)
-            _l.debug('CREATE CELERY TASK %s' % res.id)
-
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-def dump(obj):
-    for attr in dir(obj):
-        _l.debug("obj.%s = %r" % (attr, getattr(obj, attr)))
 
 
 class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
@@ -215,31 +201,25 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
 
         task_id = instance.task_id
 
-        _l.debug('TASK id: %s' % task_id)
-
-        signer = TimestampSigner()
+        # signer = TimestampSigner()
 
         if task_id:
 
-            res = AsyncResult(signer.unsign(task_id))
+            # res = AsyncResult(signer.unsign(task_id))
+            res = AsyncResult(task_id)
 
             try:
                 celery_task = CeleryTask.objects.get(master_user=request.user.master_user, task_id=task_id)
             except CeleryTask.DoesNotExist:
                 celery_task = None
                 _l.debug("Cant create Celery Task")
+                raise PermissionDenied()
 
             st = time.perf_counter()
 
             if res.ready():
 
                 instance = res.result
-
-                _l.debug('instance')
-                _l.debug(instance)
-
-                _l.debug('instance %s' % instance.stats_file_report)
-                _l.debug('instance.total_rows %s' % instance.total_rows)
 
                 if celery_task:
                     celery_task.finished_at = datetime_now()
@@ -289,7 +269,8 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
             # delattr(instance, 'file')
 
             res = self.celery_task.apply_async(kwargs={'instance': instance})
-            instance.task_id = signer.sign('%s' % res.id)
+            # instance.task_id = signer.sign('%s' % res.id)
+            instance.task_id = res.id
 
             celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                     member=request.user.member,

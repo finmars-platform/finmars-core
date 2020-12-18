@@ -589,7 +589,6 @@ class CsvImportTestCase(TestCase):
 
         process_errors = viewset.import_results(self.counterparty_scheme, error_handler, results, process_errors)
 
-        print(process_errors)
 
         # Correct Scheme and correct File produces 0 errors
 
@@ -606,8 +605,6 @@ class CsvImportTestCase(TestCase):
                                                            error_handler)
 
         process_errors = viewset.import_results(self.counterparty_scheme, error_handler, results, process_errors)
-
-        print(process_errors)
 
         # Correct Scheme and correct File produces 0 errors
 

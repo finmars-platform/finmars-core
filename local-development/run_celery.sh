@@ -11,4 +11,6 @@ SFTP_HOST=sftp.finmars.com \
 SFTP_USERNAME=finmars \
 SFTP_PASSWORD=97cZgv1pL2pz \
 DJANGO_LOG_LEVEL=DEBUG \
-celery worker --app poms_app --beat --loglevel=DEBUG
+USE_WEBSOCKETS=True \
+WEBSOCKET_HOST=ws://0.0.0.0:6969 \
+celery worker --app poms_app --beat --loglevel=INFO

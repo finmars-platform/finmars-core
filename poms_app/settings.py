@@ -276,8 +276,8 @@ USE_L10N = True
 USE_TZ = True
 USE_ETAGS = True
 
-ENV_CSRF_COOKIE_DOMAIN = os.environ.get('ENV_CSRF_COOKIE_DOMAIN', 'finmars.com')
-ENV_CSRF_TRUSTED_ORIGINS = os.environ.get('ENV_CSRF_TRUSTED_ORIGINS', 'finmars.com')
+ENV_CSRF_COOKIE_DOMAIN = os.environ.get('ENV_CSRF_COOKIE_DOMAIN', 'https://finmars.com')
+ENV_CSRF_TRUSTED_ORIGINS = os.environ.get('ENV_CSRF_TRUSTED_ORIGINS', 'https://finmars.com')
 
 
 if SERVER_TYPE == "production":
@@ -482,7 +482,7 @@ LOGGING = {
             'propagate': False,
         },
         'celery': {
-            'level': DJANGO_LOG_LEVEL,
+            'level': 'INFO',
             'handlers': ['console', 'filebeat-info'],
         },
         'suds': {

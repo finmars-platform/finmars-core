@@ -226,8 +226,6 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
 
     def create(self, validated_data):
 
-        print(self.context)
-
         csv_fields = validated_data.pop('csv_fields')
         entity_fields = validated_data.pop('entity_fields')
         scheme = CsvImportScheme.objects.create(**validated_data)
@@ -339,8 +337,6 @@ class CsvDataImportSerializer(serializers.Serializer):
         filename = None
         if filetmp:
             filename = filetmp.name
-
-            print('filename %s' % filename)
 
             validated_data['filename'] = filename
 

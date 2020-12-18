@@ -60,7 +60,6 @@ from tempfile import NamedTemporaryFile
 
 
 def generate_file_report(instance, master_user, type, name):
-    _l.debug('instance %s' % instance)
 
     columns = ['Row number']
 
@@ -72,11 +71,7 @@ def generate_file_report(instance, master_user, type, name):
 
     rows_content = []
 
-    _l.debug(instance.stats)
-
     for errorRow in instance.stats:
-
-        # _l.debug('errorRow %s' % errorRow)
 
         localResult = []
 
@@ -151,11 +146,7 @@ def generate_file_report(instance, master_user, type, name):
     for contentRow in rows_content:
         contentRowStr = list(map(str, contentRow))
 
-        # _l.debug('contentRowStr %s ' % contentRowStr)
-
         result.append(','.join(contentRowStr))
-
-    # _l.debug('result %s ' % result)
 
     result = '\n'.join(result)
 
@@ -165,8 +156,6 @@ def generate_file_report(instance, master_user, type, name):
 
     file_report = FileReport()
 
-    _l.debug('generate_file_report uploading file ')
-
     file_report.upload_file(file_name=file_name, text=result, master_user=master_user)
     file_report.master_user = master_user
     file_report.name = "%s %s" % (name, current_date_time)
@@ -175,9 +164,6 @@ def generate_file_report(instance, master_user, type, name):
     file_report.notes = 'System File'
 
     file_report.save()
-
-    _l.debug('file_report %s' % file_report)
-    _l.debug('file_report %s' % file_report.file_url)
 
     return file_report.pk
 
@@ -269,8 +255,6 @@ def get_item(scheme, result):
 
         try:
 
-            _l.debug('result %s' % result)
-
             if 'user_code' in result:
                 item_result = Model.objects.get(master_user_id=result['master_user'], user_code=result['user_code'])
 
@@ -355,7 +339,7 @@ def process_csv_file(master_user,
                     executed_filter_expression = safe_eval(scheme.filter_expr, names=csv_row_dict_raw, context={})
                 except (ExpressionEvalError, TypeError, Exception, KeyError):
 
-                    _l.debug('Filter expression error')
+                    # _l.debug('Filter expression error')
 
                     return
 
@@ -371,7 +355,6 @@ def process_csv_file(master_user,
 
                 csv_row_dict = get_row_data_converted(row, csv_fields, csv_row_dict_raw, {}, conversion_errors)
 
-                # _l.debug('csv_row_dict %s' % csv_row_dict)
 
                 for key, value in csv_row_dict.items():
                     error_row['error_data']['columns']['converted_imported_columns'].append(
@@ -461,9 +444,6 @@ def process_csv_file(master_user,
 
                             executed_expression = None
 
-                            # _l.debug('entity_field.expression %s' % entity_field.expression)
-                            # _l.debug('csv_row_dict %s' % csv_row_dict)
-
                             try:
                                 # context=self.report.context
                                 executed_expression = safe_eval(entity_field.expression, names=csv_row_dict,
@@ -471,7 +451,6 @@ def process_csv_file(master_user,
 
                                 executed_expressions.append(executed_expression)
 
-                                # _l.debug('executed_expression %s ' % executed_expression)
 
                                 if key in mapping_map:
 
@@ -483,8 +462,6 @@ def process_csv_file(master_user,
                                     except (mapping_map[key].DoesNotExist, KeyError):
 
                                         try:
-
-                                            _l.debug('Lookup by user code %s' % executed_expression)
 
                                             if key == 'price_download_scheme':
                                                 instance[key] = PriceDownloadScheme.objects.get(master_user=master_user,
@@ -533,8 +510,6 @@ def process_csv_file(master_user,
 
                                                 # inputs_error.append(entity_field)
 
-                                                _l.debug('Mapping for key does not exist', key)
-                                                _l.debug('Expression', executed_expression)
 
 
                                 else:
@@ -579,8 +554,6 @@ def process_csv_file(master_user,
                             except (ExpressionEvalError, TypeError, Exception, KeyError):
 
                                 if missing_data_handler == 'set_defaults':
-
-                                    _l.debug('ExpressionEvalError Settings Default %s' % ExpressionEvalError)
 
                                     ecosystem_default = EcosystemDefault.objects.get(
                                         master_user=master_user)
@@ -733,14 +706,14 @@ def process_csv_file(master_user,
         # _l.debug('task_instance.processed_rows: %s', task_instance.processed_rows)
 
         send_websocket_message(data={
-            'type': 'simple_import_validation_status',
+            'type': 'simple_import_status',
             'payload': {'task_id': task_instance.task_id,
                         'state': Task.STATUS_PENDING,
                         'processed_rows': task_instance.processed_rows,
                         'total_rows': task_instance.total_rows,
                         'scheme_name': scheme.scheme_name,
                         'file_name': task_instance.filename}
-        }, level="master_user",
+        }, level="member",
             context={"master_user": master_user, "member": member})
 
         # Deprecated
@@ -773,9 +746,6 @@ class ValidateHandler:
         try:
             instance = Model(**result_without_many_to_many)
         except (ValidationError, IntegrityError):
-
-            _l.debug("Validation error create simple instance %s" % result)
-
             instance = None
 
         return instance
@@ -923,8 +893,6 @@ class ValidateHandler:
         try:
             with SFS.open(instance.file_path, 'rb') as f:
                 with NamedTemporaryFile() as tmpf:
-                    _l.debug('tmpf')
-                    _l.debug(tmpf)
 
                     for chunk in f.chunks():
                         tmpf.write(chunk)
@@ -962,6 +930,28 @@ class ValidateHandler:
         if instance.stats and len(instance.stats):
             instance.stats_file_report = generate_file_report(instance, master_user, 'csv_import.validate',
                                                               'Simple Data Import Validation')
+
+            send_websocket_message(data={
+                'type': 'simple_import_status',
+                'payload': {'task_id': instance.task_id,
+                            'state': Task.STATUS_DONE,
+                            'processed_rows': instance.processed_rows,
+                            'total_rows': instance.total_rows,
+                            'file_name': instance.filename,
+                            'stats': instance.stats,
+                            'stats_file_report': instance.stats_file_report,
+                            'scheme': scheme.id,
+                            'scheme_object': {
+                                'id': scheme.id,
+                                'scheme_name': scheme.scheme_name,
+                                'classifier_handler': scheme.classifier_handler,
+                                'delimiter': scheme.delimiter,
+                                'error_handler': scheme.error_handler,
+                                'missing_data_handler': scheme.missing_data_handler,
+                                'mode': scheme.mode,
+                            }}
+            }, level="member",
+                context={"master_user": master_user, "member": member})
 
         return instance
 
@@ -1046,7 +1036,7 @@ class ImportHandler:
 
         try:
             instance = Model.objects.create(**result_without_many_to_many)
-        except (ValidationError, IntegrityError):
+        except (ValidationError, IntegrityError, ValueError):
             instance = None
 
         return instance
@@ -1055,10 +1045,7 @@ class ImportHandler:
 
         groups = Group.objects.filter(master_user=master_user)
 
-        _l.debug('Add permissions for %s' % instance)
-
         _l.debug('len groups for %s' % len(list(groups)))
-        _l.debug('len member groups for %s' % member.groups.all())
 
         for group in groups:
 
@@ -1073,7 +1060,7 @@ class ImportHandler:
                         table = item['data']
 
                 _l.debug('content_type %s' % scheme.content_type.app_label + '.' + scheme.content_type.model)
-                _l.debug('table %s' % table)
+                # _l.debug('table %s' % table)
 
                 if table:
 
@@ -1197,16 +1184,11 @@ class ImportHandler:
 
                 item.save()
 
-            _l.debug("Add Pricing Policies instrument_type %s" % instance.instrument_type)
-            _l.debug("Add Pricing Policies for instance %s" % instance)
-
     def save_instance(self, scheme, result, error_handler, error_row, member, master_user):
 
         try:
 
             instance = self.create_simple_instance(scheme, result)
-
-            _l.debug('ImportHandler save_instance %s ' % instance)
 
             if instance:
 
@@ -1236,7 +1218,7 @@ class ImportHandler:
 
         # _l.debug('Overwrite item %s' % item)
 
-        _l.debug('ImportHandler overwrite_instance %s ' % item)
+        # _l.debug('ImportHandler overwrite_instance %s ' % item)
 
         try:
 
@@ -1337,8 +1319,6 @@ class ImportHandler:
         try:
             with SFS.open(instance.file_path, 'rb') as f:
                 with NamedTemporaryFile() as tmpf:
-                    _l.debug('tmpf')
-                    _l.debug(tmpf)
 
                     for chunk in f.chunks():
                         tmpf.write(chunk)
@@ -1376,6 +1356,28 @@ class ImportHandler:
         if instance.stats and len(instance.stats):
             instance.stats_file_report = generate_file_report(instance, master_user, 'csv_import.import',
                                                               'Simple Data Import')
+
+            send_websocket_message(data={
+                'type': 'simple_import_status',
+                'payload': {'task_id': instance.task_id,
+                            'state': Task.STATUS_DONE,
+                            'processed_rows': instance.processed_rows,
+                            'total_rows': instance.total_rows,
+                            'file_name': instance.filename,
+                            'stats': instance.stats,
+                            'stats_file_report': instance.stats_file_report,
+                            'scheme': scheme.id,
+                            'scheme_object': {
+                                'id': scheme.id,
+                                'scheme_name': scheme.scheme_name,
+                                'classifier_handler': scheme.classifier_handler,
+                                'delimiter': scheme.delimiter,
+                                'error_handler': scheme.error_handler,
+                                'missing_data_handler': scheme.missing_data_handler,
+                                'mode': scheme.mode,
+                            }}
+            }, level="member",
+                context={"master_user": master_user, "member": member})
 
             send_websocket_message(data={'type': "simple_message",
                                          'payload': {

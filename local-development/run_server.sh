@@ -17,5 +17,6 @@ SFTP_PASSWORD=97cZgv1pL2pz \
 MEDIATOR_URL=http://localhost:8082/ \
 DJANGO_LOG_LEVEL=DEBUG \
 SERVER_TYPE=local \
+USE_WEBSOCKETS=True \
 WEBSOCKET_HOST=ws://0.0.0.0:6969 \
 BACKEND_ROLES="ALL" python manage.py runserver
