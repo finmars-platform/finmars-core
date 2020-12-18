@@ -37,16 +37,16 @@ class Currency(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTime
     reference_for_pricing = models.CharField(max_length=100, blank=True, default='',
                                              verbose_name=ugettext_lazy('reference for pricing'))
 
-    daily_pricing_model = models.ForeignKey('instruments.DailyPricingModel', null=True, blank=True,
-                                            verbose_name=ugettext_lazy('daily pricing model'), on_delete=models.CASCADE)
-    price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.PROTECT, null=True,
-                                              blank=True, verbose_name=ugettext_lazy('price download scheme'))
+    # daily_pricing_model = models.ForeignKey('instruments.DailyPricingModel', null=True, blank=True,
+    #                                         verbose_name=ugettext_lazy('daily pricing model'), on_delete=models.CASCADE)
+    # price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.PROTECT, null=True,
+    #                                           blank=True, verbose_name=ugettext_lazy('price download scheme'))
 
     pricing_condition = models.ForeignKey('instruments.PricingCondition', null=True, blank=True,
                                             verbose_name=ugettext_lazy('pricing condition'), on_delete=models.CASCADE)
 
     attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
-    tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
+    # tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
 
     default_fx_rate = models.FloatField(default=1, verbose_name=ugettext_lazy('default fx rate'))
 

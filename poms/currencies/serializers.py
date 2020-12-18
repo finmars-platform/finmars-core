@@ -54,25 +54,17 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
         model = Currency
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'notes',
-            'reference_for_pricing', 'daily_pricing_model',
+            'reference_for_pricing',
             'pricing_condition',
-            'price_download_scheme', 'default_fx_rate',
+            'default_fx_rate',
             'is_default', 'is_deleted', 'is_enabled',
             'pricing_policies'
-            # 'tags', 'tags_object',
-            # 'daily_pricing_model_object', 'price_download_scheme_object',
         ]
 
     def __init__(self, *args, **kwargs):
         super(CurrencySerializer, self).__init__(*args, **kwargs)
 
-        from poms.instruments.serializers import DailyPricingModelSerializer
-        from poms.integrations.serializers import PriceDownloadSchemeViewSerializer
 
-        self.fields['daily_pricing_model_object'] = DailyPricingModelSerializer(source='daily_pricing_model',
-                                                                                read_only=True)
-        self.fields['price_download_scheme_object'] = PriceDownloadSchemeViewSerializer(source='price_download_scheme',
-                                                                                        read_only=True)
 
     def create(self, validated_data):
 

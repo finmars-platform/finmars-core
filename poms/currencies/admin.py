@@ -6,20 +6,18 @@ from django.utils.translation import ugettext_lazy
 from poms.common.admin import AbstractModelAdmin
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.obj_attrs.admin import GenericAttributeInline
-from poms.tags.admin import GenericTagLinkInline
 
 
 class CurrencyAdmin(AbstractModelAdmin):
     model = Currency
     master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'user_code', 'name', 'is_deleted', ]
+    list_display = ['id', 'master_user', 'user_code', 'name', 'is_deleted']
     list_select_related = ['master_user']
     list_filter = ['is_deleted', ]
     search_fields = ['id', 'user_code', 'name']
-    raw_id_fields = ['master_user', 'price_download_scheme']
+    raw_id_fields = ['master_user']
     inlines = [
-        GenericAttributeInline,
-        GenericTagLinkInline,
+        GenericAttributeInline
     ]
 
     def is_system(self, obj):

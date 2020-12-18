@@ -399,6 +399,7 @@ class ReportSerializer(ReportSerializerWithLogs):
                                              help_text='Strategy3 consolidation')
 
     show_transaction_details = serializers.BooleanField(default=False, initial=False)
+    show_balance_exposure_details = serializers.BooleanField(default=False, initial=False)
     approach_multiplier = serializers.FloatField(default=0.5, initial=0.5, min_value=0.0, max_value=1.0, required=False)
     allocation_detailing = serializers.BooleanField(default=True, initial=True)
     pl_include_zero = serializers.BooleanField(default=False, initial=False)
@@ -708,10 +709,10 @@ def serialize_balance_report_item(item):
     else:
         result["pricing_currency"] = item["pricing_currency_id"]
 
-    if item["exposure_currency_1_id"] == -1:
-        result["exposure_currency_id"] = None
+    if item["exposure_currency_id"] == -1:
+        result["exposure_currency"] = None
     else:
-        result["exposure_currency_id"] = item["exposure_currency_1_id"]
+        result["exposure_currency"] = item["exposure_currency_id"]
 
 
     # Check if logic is right

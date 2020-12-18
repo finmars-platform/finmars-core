@@ -2148,6 +2148,7 @@ class Report(BaseReport):
                  strategy3_mode=BaseReport.MODE_INDEPENDENT,
                  allocation_mode=BaseReport.MODE_INDEPENDENT,
                  show_transaction_details=False,
+                 show_balance_exposure_details=False,
                  approach_multiplier=0.5,
                  allocation_detailing=True,
                  pl_include_zero=True,
@@ -2192,6 +2193,7 @@ class Report(BaseReport):
         self.strategy3_mode = strategy3_mode
         self.allocation_mode = allocation_mode
         self.show_transaction_details = show_transaction_details
+        self.show_balance_exposure_details = show_balance_exposure_details
         self.approach_multiplier = approach_multiplier
         self.allocation_detailing = allocation_detailing
         self.pl_include_zero = pl_include_zero

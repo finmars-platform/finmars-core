@@ -1268,11 +1268,13 @@ class BalanceReportBuilderSql:
                 if "strategy3_position_id" not in item:
                     item["strategy3_position_id"] = self.ecosystem_defaults.strategy3_id
 
+                item["exposure_currency_id"] = item["exposure_currency_1_id"]
+
                 updated_result.append(item)
 
                 if ITEM_TYPE_INSTRUMENT == 1:
 
-                    if item['has_second_exposure_currency']:
+                    if item['has_second_exposure_currency'] and self.instance.show_balance_exposure_details:
 
                         new_exposure_item = {
                             "name": item["name"],
@@ -1306,7 +1308,7 @@ class BalanceReportBuilderSql:
                             "item_type_name": "Exposure",
                             "exposure": item["exposure_2"],
                             "exposure_loc": item["exposure_2_loc"],
-                            "exposure_currency_1_id": item["exposure_currency_2_id"]
+                            "exposure_currency_id": item["exposure_currency_2_id"]
                         }
 
                         new_exposure_item["position_size"] = None
@@ -1490,6 +1492,8 @@ class BalanceReportBuilderSql:
                 currencies_ids.append(item['currency_id'])
             if 'pricing_currency_id' in item:
                 currencies_ids.append(item['pricing_currency_id'])
+            if 'exposure_currency_id' in item:
+                currencies_ids.append(item['exposure_currency_id'])
 
         self.add_data_items_instruments(instrument_ids)
         self.add_data_items_portfolios(portfolio_ids)

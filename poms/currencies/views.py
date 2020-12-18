@@ -42,9 +42,6 @@ class CurrencyFilterSet(FilterSet):
     short_name = CharFilter()
     public_name = CharFilter()
     reference_for_pricing = CharFilter()
-    daily_pricing_model = django_filters.ModelMultipleChoiceFilter(queryset=DailyPricingModel.objects)
-    price_download_scheme = ModelExtMultipleChoiceFilter(model=PriceDownloadScheme, field_name='scheme_name')
-    tag = TagFilter(model=Currency)
 
     class Meta:
         model = Currency
@@ -54,12 +51,8 @@ class CurrencyFilterSet(FilterSet):
 class CurrencyViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Currency.objects.select_related(
         'master_user',
-        'daily_pricing_model',
-        'price_download_scheme',
-        'price_download_scheme__provider',
     ).prefetch_related(
-        get_attributes_prefetch(),
-        get_tag_prefetch()
+        get_attributes_prefetch()
     )
     serializer_class = CurrencySerializer
     # permission_classes = AbstractModelViewSet.permission_classes + [
@@ -144,12 +137,8 @@ class CurrencyLightViewSet(AbstractWithObjectPermissionViewSet):
 class CurrencyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Currency.objects.select_related(
         'master_user',
-        'daily_pricing_model',
-        'price_download_scheme',
-        'price_download_scheme__provider',
     ).prefetch_related(
-        get_attributes_prefetch(),
-        get_tag_prefetch()
+        get_attributes_prefetch()
     )
     serializer_class = CurrencySerializer
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
