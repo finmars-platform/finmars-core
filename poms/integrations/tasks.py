@@ -8,7 +8,9 @@ from collections import defaultdict
 from datetime import timedelta, date
 from tempfile import NamedTemporaryFile
 
-from celery import shared_task, chord
+
+
+from celery import shared_task, chord, current_task
 from celery.exceptions import TimeoutError, MaxRetriesExceededError
 from dateutil.rrule import rrule, DAILY
 from django.conf import settings
@@ -55,6 +57,7 @@ from poms.users.models import MasterUser, EcosystemDefault
 from poms.common.utils import date_now, datetime_now
 
 from .models import ImportConfig
+from ..common.websockets import send_websocket_message
 
 _l = logging.getLogger('poms.integrations')
 
@@ -1305,6 +1308,8 @@ def generate_file_report(instance, master_user, type, name, context=None):
 def complex_transaction_csv_file_import(self, instance, execution_context=None):
     from poms.transactions.models import TransactionTypeInput
 
+    setattr(instance, 'task_id', current_task.request.id)
+
     _l.debug('complex_transaction_file_import: %s', instance)
     _l.debug('complex_transaction_file_import execution_context: %s', execution_context)
 
@@ -1315,6 +1320,7 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
     scheme_calculated_inputs = list(scheme.calculated_inputs.all())
 
     master_user = instance.master_user
+    member = instance.member
 
     rule_scenarios = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields',
                                                             'fields__transaction_type_input').all()
@@ -1699,6 +1705,10 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
 
                             instance.processed_rows = instance.processed_rows + 1
                             # instance.save()
+
+
+
+                            # DEPRECATED
                             self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
                                               meta={'processed_rows': instance.processed_rows,
                                                     'total_rows': instance.total_rows,
@@ -1739,6 +1749,20 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
 
             instance.error_rows.append(error_rows)
 
+            instance.processed_rows = instance.processed_rows + 1
+
+            send_websocket_message(data={
+                'type': 'transaction_import_status',
+                'payload': {'task_id': instance.task_id,
+                            'state': Task.STATUS_PENDING,
+                            'processed_rows': instance.processed_rows,
+                            'total_rows': instance.total_rows,
+                            'scheme_name': scheme.scheme_name,
+                            'file_name': instance.filename}
+            }, level="member",
+                context={"master_user": master_user, "member": member})
+
+
     def _row_count(file):
 
         delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
@@ -1758,12 +1782,11 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
         # with import_file_storage.open(instance.file_path, 'rb') as f:
         with SFS.open(instance.file_path, 'rb') as f:
             with NamedTemporaryFile() as tmpf:
-                _l.debug('tmpf')
-                _l.debug(tmpf)
 
                 for chunk in f.chunks():
                     tmpf.write(chunk)
                 tmpf.flush()
+
                 with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
                     instance.total_rows = _row_count(cfr)
                     self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
@@ -1773,10 +1796,9 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
                 with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
                     _process_csv_file(cf)
     except:
+
         _l.debug('Can\'t process file', exc_info=True)
         instance.error_message = ugettext("Invalid file format or file already deleted.")
-
-
 
         if execution_context and execution_context["started_by"] == 'procedure':
 
@@ -1807,6 +1829,26 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
                                 text="Import Finished",
                                 file_report_id=instance.stats_file_report)
 
+        send_websocket_message(data={
+            'type': 'transaction_import_status',
+            'payload': {'task_id': instance.task_id,
+                        'state': Task.STATUS_DONE,
+                        'processed_rows': instance.processed_rows,
+                        'total_rows': instance.total_rows,
+                        'file_name': instance.filename,
+                        'error_rows': instance.error_rows,
+                        'stats_file_report': instance.stats_file_report,
+                        'scheme': scheme.id,
+                        'scheme_object': {
+                            'id': scheme.id,
+                            'scheme_name': scheme.scheme_name,
+                            'delimiter': scheme.delimiter,
+                            'error_handler': scheme.error_handler,
+                            'missing_data_handler': scheme.missing_data_handler
+                        }}
+        }, level="member",
+            context={"master_user": master_user, "member": member})
+
         self.update_state(task_id=instance.task_id, state=Task.STATUS_DONE,
                           meta={'processed_rows': instance.processed_rows,
                                 'total_rows': instance.total_rows,
@@ -1818,6 +1860,8 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
 @shared_task(name='integrations.complex_transaction_csv_file_import_validate', bind=True)
 def complex_transaction_csv_file_import_validate(self, instance):
     from poms.transactions.models import TransactionTypeInput
+
+    setattr(instance, 'task_id', current_task.request.id)
 
     instance.processed_rows = 0
     _l.debug('complex_transaction_file_import: %s', instance)
@@ -1833,6 +1877,7 @@ def complex_transaction_csv_file_import_validate(self, instance):
             [(r.transaction_type.user_code) for r in rule_scenarios])
 
     master_user = instance.master_user
+    member = instance.member
 
     mapping_map = {
         Account: AccountMapping,
@@ -2246,6 +2291,19 @@ def complex_transaction_csv_file_import_validate(self, instance):
 
             instance.processed_rows = instance.processed_rows + 1
             # instance.save()
+
+            send_websocket_message(data={
+                'type': 'transaction_import_status',
+                'payload': {'task_id': instance.task_id,
+                            'state': Task.STATUS_PENDING,
+                            'processed_rows': instance.processed_rows,
+                            'total_rows': instance.total_rows,
+                            'scheme_name': scheme.scheme_name,
+                            'file_name': instance.filename}
+            }, level="member",
+                context={"master_user": master_user, "member": member})
+
+            # DEPRECATED
             self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
                               meta={'processed_rows': instance.processed_rows,
                                     'total_rows': instance.total_rows,
@@ -2272,8 +2330,6 @@ def complex_transaction_csv_file_import_validate(self, instance):
         # with import_file_storage.open(instance.file_path, 'rb') as f:
         with SFS.open(instance.file_path, 'rb') as f:
             with NamedTemporaryFile() as tmpf:
-                _l.debug('tmpf')
-                _l.debug(tmpf)
 
                 for chunk in f.chunks():
                     tmpf.write(chunk)
@@ -2308,6 +2364,27 @@ def complex_transaction_csv_file_import_validate(self, instance):
     instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.validate',
                                                       'Transaction Import Validation')
 
+    send_websocket_message(data={
+        'type': 'transaction_import_status',
+        'payload': {'task_id': instance.task_id,
+                    'state': Task.STATUS_DONE,
+                    'processed_rows': instance.processed_rows,
+                    'total_rows': instance.total_rows,
+                    'file_name': instance.filename,
+                    'error_rows': instance.error_rows,
+                    'stats_file_report': instance.stats_file_report,
+                    'scheme': scheme.id,
+                    'scheme_object': {
+                        'id': scheme.id,
+                        'scheme_name': scheme.scheme_name,
+                        'delimiter': scheme.delimiter,
+                        'error_handler': scheme.error_handler,
+                        'missing_data_handler': scheme.missing_data_handler
+                    }}
+    }, level="member",
+        context={"master_user": master_user, "member": member})
+
+    # DEPRECATED
     self.update_state(task_id=instance.task_id, state=Task.STATUS_DONE,
                       meta={'processed_rows': instance.processed_rows,
                             'total_rows': instance.total_rows,

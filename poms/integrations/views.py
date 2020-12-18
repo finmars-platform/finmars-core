@@ -183,7 +183,6 @@ class InstrumentDownloadSchemeLightViewSet(AbstractModelViewSet):
     ]
 
 
-
 class PriceDownloadSchemeFilterSet(FilterSet):
     id = NoOpFilter()
     provider = django_filters.ModelMultipleChoiceFilter(queryset=ProviderClass.objects)
@@ -213,173 +212,6 @@ class PriceDownloadSchemeViewSet(AbstractModelViewSet):
     permission_classes = AbstractModelViewSet.permission_classes + [
         PomsConfigurationPermission
     ]
-
-
-# ---------
-
-
-# class CurrencyMappingFilterSet(FilterSet):
-#     id = NoOpFilter()
-#     provider = django_filters.ModelMultipleChoiceFilter(queryset=ProviderClass.objects)
-#     value = CharFilter()
-#     currency = ModelExtMultipleChoiceFilter(model=Currency)
-#
-#     class Meta:
-#         model = CurrencyMapping
-#         fields = []
-#
-#
-# class CurrencyMappingViewSet(AbstractModelViewSet):
-#     queryset = CurrencyMapping.objects.select_related(
-#         'master_user',
-#         'provider',
-#         'currency'
-#     )
-#     serializer_class = CurrencyMappingSerializer
-#     permission_classes = AbstractModelViewSet.permission_classes + [
-#         SuperUserOrReadOnly,
-#     ]
-#     filter_backends = AbstractModelViewSet.filter_backends + [
-#         OwnerByMasterUserFilter,
-#     ]
-#     filter_class = CurrencyMappingFilterSet
-#     ordering_fields = [
-#         'provider', 'provider__name',
-#         'value',
-#         'currency', 'currency__user_code', 'currency__name', 'currency__short_name', 'currency__public_name',
-#     ]
-
-
-# class InstrumentTypeMappingFilterSet(FilterSet):
-#     id = NoOpFilter()
-#     provider = django_filters.ModelMultipleChoiceFilter(queryset=ProviderClass.objects)
-#     value = CharFilter()
-#     instrument_type = ModelExtWithPermissionMultipleChoiceFilter(model=InstrumentType)
-#
-#     class Meta:
-#         model = InstrumentTypeMapping
-#         fields = []
-#
-#
-# class InstrumentTypeMappingViewSet(AbstractModelViewSet):
-#     queryset = InstrumentTypeMapping.objects.select_related(
-#         'master_user',
-#         'provider',
-#         'instrument_type'
-#     )
-#     serializer_class = InstrumentTypeMappingSerializer
-#     # permission_classes = AbstractModelViewSet.permission_classes + [
-#     #     SuperUserOrReadOnly,
-#     # ]
-#     filter_backends = AbstractModelViewSet.filter_backends + [
-#         OwnerByMasterUserFilter,
-#         InstrumentTypeMappingObjectPermissionFilter,
-#     ]
-#     filter_class = InstrumentTypeMappingFilterSet
-#     ordering_fields = [
-#         'value',
-#         'instrument_type', 'instrument_type__user_code', 'instrument_type__name', 'instrument_type__short_name',
-#         'instrument_type__public_name',
-#     ]
-#
-#
-# class InstrumentAttributeValueMappingFilterSet(FilterSet):
-#     id = NoOpFilter()
-#     provider = django_filters.ModelMultipleChoiceFilter(queryset=ProviderClass.objects)
-#     value = CharFilter()
-#     attribute_type = ModelExtWithPermissionMultipleChoiceFilter(model=GenericAttributeType)
-#
-#     class Meta:
-#         model = InstrumentAttributeValueMapping
-#         fields = []
-#
-#
-# class InstrumentAttributeValueMappingViewSet(AbstractModelViewSet):
-#     queryset = InstrumentAttributeValueMapping.objects.select_related(
-#         'master_user',
-#         'provider',
-#         'attribute_type',
-#         'classifier'
-#     )
-#     serializer_class = InstrumentAttributeValueMappingSerializer
-#     # permission_classes = AbstractModelViewSet.permission_classes + [
-#     #     SuperUserOrReadOnly,
-#     # ]
-#     filter_backends = AbstractModelViewSet.filter_backends + [
-#         OwnerByMasterUserFilter,
-#         InstrumentAttributeValueMappingObjectPermissionFilter,
-#     ]
-#     filter_class = InstrumentAttributeValueMappingFilterSet
-#     ordering_fields = [
-#         'provider', 'provider__name',
-#         'value',
-#         'attribute_type', 'attribute_type__user_code', 'attribute_type__name', 'attribute_type__short_name',
-#         'attribute_type__public_name',
-#     ]
-#
-#
-# class AccrualCalculationModelMappingFilterSet(FilterSet):
-#     id = NoOpFilter()
-#     provider = django_filters.ModelMultipleChoiceFilter(queryset=ProviderClass.objects)
-#     value = CharFilter()
-#     accrual_calculation_model = django_filters.ModelMultipleChoiceFilter(queryset=AccrualCalculationModel.objects)
-#
-#     class Meta:
-#         model = AccrualCalculationModelMapping
-#         fields = []
-#
-#
-# class AccrualCalculationModelMappingViewSet(AbstractModelViewSet):
-#     queryset = AccrualCalculationModelMapping.objects.select_related(
-#         'master_user',
-#         'provider',
-#         'accrual_calculation_model'
-#     )
-#     serializer_class = AccrualCalculationModelMappingSerializer
-#     # permission_classes = AbstractModelViewSet.permission_classes + [
-#     #     SuperUserOrReadOnly,
-#     # ]
-#     filter_backends = AbstractModelViewSet.filter_backends + [
-#         OwnerByMasterUserFilter,
-#     ]
-#     filter_class = AccrualCalculationModelMappingFilterSet
-#     ordering_fields = [
-#         'provider', 'provider__name',
-#         'value',
-#         'accrual_calculation_model', 'accrual_calculation_model__name'
-#     ]
-#
-#
-# class PeriodicityMappingFilterSet(FilterSet):
-#     id = NoOpFilter()
-#     provider = django_filters.ModelMultipleChoiceFilter(queryset=ProviderClass.objects)
-#     value = CharFilter()
-#     periodicity = django_filters.ModelMultipleChoiceFilter(queryset=Periodicity.objects)
-#
-#     class Meta:
-#         model = PeriodicityMapping
-#         fields = []
-#
-#
-# class PeriodicityMappingViewSet(AbstractModelViewSet):
-#     queryset = PeriodicityMapping.objects.select_related(
-#         'master_user',
-#         'provider',
-#         'periodicity'
-#     )
-#     serializer_class = PeriodicityMappingSerializer
-#     # permission_classes = AbstractModelViewSet.permission_classes + [
-#     #     SuperUserOrReadOnly,
-#     # ]
-#     filter_backends = AbstractModelViewSet.filter_backends + [
-#         OwnerByMasterUserFilter,
-#     ]
-#     filter_class = PeriodicityMappingFilterSet
-#     ordering_fields = [
-#         'provider', 'provider__name',
-#         'value',
-#         'periodicity', 'periodicity__name',
-#     ]
 
 
 class AbstractMappingFilterSet(FilterSet):
@@ -981,17 +813,18 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
 
         task_id = instance.task_id
 
-        signer = TimestampSigner()
+        # signer = TimestampSigner()
 
         if task_id:
 
-            res = AsyncResult(signer.unsign(task_id))
+            # res = AsyncResult(signer.unsign(task_id))
+            res = AsyncResult(task_id)
 
             try:
                 celery_task = CeleryTask.objects.get(master_user=request.user.master_user, task_id=task_id)
             except CeleryTask.DoesNotExist:
                 celery_task = None
-                print("Cant create Celery Task")
+                raise PermissionDenied()
 
             st = time.perf_counter()
 
@@ -1052,7 +885,8 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         else:
 
             res = self.celery_task.apply_async(kwargs={'instance': instance})
-            instance.task_id = signer.sign('%s' % res.id)
+            # instance.task_id = signer.sign('%s' % res.id)
+            instance.task_id = res.id
 
             celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                     member=request.user.member,
@@ -1060,8 +894,6 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
                                                     task_type='transaction_import', task_id=instance.task_id)
 
             celery_task.save()
-
-            print('CREATE CELERY TASK %s' % res.id)
 
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)
@@ -1089,18 +921,18 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
 
         task_id = instance.task_id
 
-        signer = TimestampSigner()
+        # signer = TimestampSigner()
 
         if task_id:
 
-            res = AsyncResult(signer.unsign(task_id))
+            # res = AsyncResult(signer.unsign(task_id))
+            res = AsyncResult(task_id)
 
             try:
                 celery_task = CeleryTask.objects.get(master_user=request.user.master_user, task_id=task_id)
             except CeleryTask.DoesNotExist:
                 celery_task = None
-                print("Cant create Celery Task")
-
+                raise PermissionDenied()
 
             st = time.perf_counter()
 
@@ -1113,6 +945,7 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
 
             else:
 
+                # DEPRECATED
                 if res.result:
                     if 'processed_rows' in res.result:
                         instance.processed_rows = res.result['processed_rows']
@@ -1163,7 +996,8 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
         else:
 
             res = self.celery_task.apply_async(kwargs={'instance': instance})
-            instance.task_id = signer.sign('%s' % res.id)
+            # instance.task_id = signer.sign('%s' % res.id)
+            instance.task_id = res.id
 
             celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                     member=request.user.member,
