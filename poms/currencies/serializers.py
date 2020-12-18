@@ -8,7 +8,6 @@ from poms.currencies.fields import CurrencyField
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.fields import PricingPolicyField
 from poms.instruments.models import PricingPolicy
-from poms.integrations.fields import PriceDownloadSchemeField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.pricing.models import CurrencyPricingPolicy
@@ -38,15 +37,8 @@ def set_currency_pricing_scheme_parameters(pricing_policy, parameters):
 
 class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
                          ModelWithAttributesSerializer, ModelWithTagSerializer, ModelWithTimeStampSerializer):
-    # url = serializers.HyperlinkedIdentityField(view_name='currency-detail')
+
     master_user = MasterUserField()
-    price_download_scheme = PriceDownloadSchemeField(allow_null=True, required=False)
-
-    # daily_pricing_model_object = serializers.PrimaryKeyRelatedField(source='daily_pricing_model', read_only=True)
-    # price_download_scheme_object = serializers.PrimaryKeyRelatedField(source='price_download_scheme', read_only=True)
-
-    # tags = TagField(many=True, required=False, allow_null=True)
-    # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
 
     pricing_policies = CurrencyPricingPolicySerializer(allow_null=True, many=True, required=False)
 
