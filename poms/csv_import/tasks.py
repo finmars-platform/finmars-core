@@ -284,7 +284,7 @@ def process_csv_file(master_user,
     errors = []
     results = []
 
-    row_index = 0
+    processed_row_index = 0
 
     delimiter = task_instance.delimiter.encode('utf-8').decode('unicode_escape')
 
@@ -699,9 +699,10 @@ def process_csv_file(master_user,
                 error_row['error_reaction'] = 'Skipped'
                 errors.append(error_row)
 
-        row_index = row_index + 1
+        if row_index != 0: # skip header from counting
+            processed_row_index = processed_row_index + 1
 
-        task_instance.processed_rows = row_index
+        task_instance.processed_rows = processed_row_index
 
         # _l.debug('task_instance.processed_rows: %s', task_instance.processed_rows)
 
@@ -873,6 +874,7 @@ class ValidateHandler:
 
         for row_index, row in enumerate(reader):
             pass
+
         return row_index
 
     def process(self, instance, update_state):
@@ -1297,6 +1299,9 @@ class ImportHandler:
 
         for row_index, row in enumerate(reader):
             pass
+
+        # return plain index, -1 row because of ignoring csv header row
+
         return row_index
 
     def process(self, instance, update_state, execution_context=None):
