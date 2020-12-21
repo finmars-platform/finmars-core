@@ -108,6 +108,8 @@ class PingViewSet(AbstractApiView, ViewSet):
     @action(detail=False, methods=('Get',), url_path='ws')
     def send_message(self, request):
 
+        from datetime import timedelta, date
+
         send_websocket_message(data={"type": 'simple_message', "payload": {"message": "pong"}}, level="master_user", context={"request": request})
 
         serializer = PingSerializer(instance={

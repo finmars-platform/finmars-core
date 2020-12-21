@@ -751,35 +751,46 @@ class ValidateHandler:
 
         return instance
 
-    def attributes_full_clean(self, instance, attributes):
+    def attributes_full_clean(self, instance, attributes, error_handler, error_row):
 
         for result_attr in attributes:
 
-            attr_type = GenericAttributeType.objects.get(pk=result_attr['dynamic_attribute_id'])
+            try:
 
-            if attr_type:
+                attr_type = GenericAttributeType.objects.get(pk=result_attr['dynamic_attribute_id'])
 
-                attribute = GenericAttribute(content_object=instance, attribute_type=attr_type)
+                if attr_type:
 
-                # _l.debug('result_attr', result_attr)
-                # _l.debug('attribute', attribute)
+                    attribute = GenericAttribute(content_object=instance, attribute_type=attr_type)
 
-                if attr_type.value_type == 10:
-                    attribute.value_string = str(result_attr['executed_expression'])
-                elif attr_type.value_type == 20:
-                    attribute.value_float = float(result_attr['executed_expression'])
-                elif attr_type.value_type == 30:
+                    # _l.debug('result_attr', result_attr)
+                    # _l.debug('attribute', attribute)
 
-                    attribute.classifier = result_attr['executed_expression']
+                    if attr_type.value_type == 10:
+                        attribute.value_string = str(result_attr['executed_expression'])
+                    elif attr_type.value_type == 20:
+                        attribute.value_float = float(result_attr['executed_expression'])
+                    elif attr_type.value_type == 30:
 
-                elif attr_type.value_type == 40:
-                    attribute.value_date = formula._parse_date(result_attr['executed_expression'])
-                else:
-                    pass
+                        attribute.classifier = result_attr['executed_expression']
 
-                attribute.object_id = 1  # To pass object id check
+                    elif attr_type.value_type == 40:
+                        attribute.value_date = formula._parse_date(result_attr['executed_expression'])
+                    else:
+                        pass
 
-                attribute.full_clean()
+                    attribute.object_id = 1  # To pass object id check
+
+                    attribute.full_clean()
+
+            except Exception as e:
+
+                error_row['error_reaction'] = 'Continue import'
+                error_row['level'] = 'error'
+                error_row['error_message'] = error_row['error_message'] + ugettext(
+                    'Validation error %(error)s ') % {
+                                                 'error': e
+                                         },
 
     def instance_full_clean(self, scheme, result, error_handler, error_row):
 
@@ -791,7 +802,7 @@ class ValidateHandler:
 
                 # self.fill_with_relation_attributes(instance, result)
                 if scheme.content_type.model != 'pricehistory' and scheme.content_type.model != 'currencyhistory':
-                    self.attributes_full_clean(instance, result['attributes'])
+                    self.attributes_full_clean(instance, result['attributes'], error_handler, error_row)
 
                 instance.full_clean()
 
@@ -822,7 +833,7 @@ class ValidateHandler:
 
             # self.fill_with_relation_attributes(item, result)
             if scheme.content_type.model != 'pricehistory' and scheme.content_type.model != 'currencyhistory':
-                self.attributes_full_clean(item, result['attributes'])
+                self.attributes_full_clean(item, result['attributes'], error_handler, error_row)
 
             item.full_clean()
 

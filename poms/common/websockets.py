@@ -13,6 +13,8 @@ from django.conf import settings
 _l = getLogger('poms.common')
 
 import asyncio
+import datetime
+from datetime import timedelta, date
 
 event_loop = asyncio.new_event_loop()
 
@@ -36,6 +38,13 @@ async def send_message(message):
 # System - to everyone on finmars shard
 # Ecosystem - to every member in master user
 # Member - to specific member
+
+def jsonconverter(o):
+    if isinstance(o, datetime.datetime):
+        return o.__str__()
+    if isinstance(o, date):
+        return o.__str__()
+
 
 def send_websocket_message(data,  level='system', context=None):
 
@@ -82,7 +91,8 @@ def send_websocket_message(data,  level='system', context=None):
                 "username": member.username
             }
 
-            json_message = json.dumps(message)
+            json_message = json.dumps(message, default = jsonconverter)
+            # json_message = json.dumps(message)
 
             event_loop.run_until_complete(send_message(json_message))
 
