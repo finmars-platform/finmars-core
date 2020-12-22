@@ -4,6 +4,7 @@ import csv
 import logging
 import time
 import uuid
+import hashlib
 from collections import defaultdict
 from datetime import timedelta, date
 from tempfile import NamedTemporaryFile
@@ -2477,12 +2478,16 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                     _l.debug('complex_transaction_csv_file_import_by_procedure instance: %s' % instance)
 
                     current_date_time = now().strftime("%Y-%m-%d-%H-%M")
+
+                    file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
+                    file_name_hash = hashlib.md5(file_name.encode('utf-8')).hexdigest()
+
                     file_report = FileReport()
 
-                    file_report.upload_file(file_name='file_report_%s.csv' % procedure_instance.id, text=decrypt_text, master_user=procedure_instance.master_user)
+                    file_report.upload_file(file_name='Data Procedure %s (%s).csv' % (current_date_time, file_name_hash), text=decrypt_text, master_user=procedure_instance.master_user)
                     file_report.master_user = procedure_instance.master_user
                     file_report.name = "'Transaction Import File. Procedure ' %s %s" % (procedure_instance.id, current_date_time)
-                    file_report.file_name = 'file_report_%s.csv' % procedure_instance.id
+                    file_report.file_name = 'Data Procedure %s (%s).csv' % (current_date_time, file_name_hash)
                     file_report.type = 'transaction_import.import'
                     file_report.notes = 'Transaction Import File. Procedure %s' % procedure_instance.id
 

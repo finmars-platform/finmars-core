@@ -1,4 +1,5 @@
 import uuid
+import hashlib
 
 from celery import shared_task, chord, current_task
 from django.contrib.auth.models import Permission
@@ -1494,6 +1495,32 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
                                                      missing_data_handler=scheme.missing_data_handler)
 
                         _l.debug('data_csv_file_import_by_procedure instance: %s' % instance)
+
+                        current_date_time = now().strftime("%Y-%m-%d-%H-%M")
+
+                        file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
+                        file_name_hash = hashlib.md5(file_name.encode('utf-8')).hexdigest()
+
+                        file_report = FileReport()
+
+                        file_report.upload_file(file_name='Data Procedure %s (%s).csv' % (current_date_time, file_name_hash), text=decrypt_text, master_user=procedure_instance.master_user)
+                        file_report.master_user = procedure_instance.master_user
+                        file_report.name = "'Data Import File. Procedure ' %s %s" % (procedure_instance.id, current_date_time)
+                        file_report.file_name = 'Data Procedure %s (%s).csv' % (current_date_time, file_name_hash)
+                        file_report.type = 'csv_import.import'
+                        file_report.notes = 'Data Import File. Procedure %s' % procedure_instance.id
+
+                        file_report.save()
+
+                        _l.debug('file_report %s' % file_report)
+
+                        text = "Data File Procedure %s. File is received. Start Import" % (
+                            procedure_instance.procedure.user_code)
+
+                        send_system_message(master_user=procedure_instance.master_user,
+                                            source="Data File Procedure Service",
+                                            text=text,
+                                            file_report_id=file_report.id)
 
                         transaction.on_commit(
                             lambda: data_csv_file_import.apply_async(
