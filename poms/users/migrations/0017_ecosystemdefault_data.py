@@ -187,10 +187,6 @@ def fix_ecosystem_default(apps, schema_editor):
             except TransactionType.DoesNotExist:
                 ecosystem_defaults.transaction_type = None
 
-            try:
-                ecosystem_defaults.price_download_scheme = PriceDownloadScheme.objects.get(master_user=master_user, scheme_name='-')
-            except PriceDownloadScheme.DoesNotExist:
-                ecosystem_defaults.price_download_scheme = None
 
             ecosystem_defaults.instrument_class = InstrumentClass.objects.get(pk=6)  # InstrumentClass.DEFAULT
             ecosystem_defaults.daily_pricing_model = DailyPricingModel.objects.get(pk=6) # DailyPricingModel.DEFAULT

@@ -395,8 +395,7 @@ class FullDataCloner(object):
 
     def _currencies(self):
         self._simple_list_clone(Currency, None, 'master_user', 'user_code', 'name', 'short_name',
-                                'public_name', 'notes', 'is_deleted', 'reference_for_pricing', 'daily_pricing_model',
-                                'price_download_scheme')
+                                'public_name', 'notes', 'is_deleted', 'reference_for_pricing')
         self._simple_list_clone(CurrencyHistory, 'currency__master_user', 'currency', 'pricing_policy', 'date',
                                 'fx_rate', pk_map=False)
 
@@ -415,7 +414,7 @@ class FullDataCloner(object):
                                 'pricing_currency', 'price_multiplier', 'accrued_currency', 'accrued_multiplier',
                                 'payment_size_detail', 'default_price', 'default_accrued',
                                 'user_text_1', 'user_text_2', 'user_text_3',
-                                'reference_for_pricing', 'daily_pricing_model', 'price_download_scheme',
+                                'reference_for_pricing',
                                 'maturity_date', 'maturity_price')
 
         self._simple_list_clone(ManualPricingFormula, 'instrument__master_user', 'instrument', 'pricing_policy', 'expr',
@@ -473,7 +472,7 @@ class FullDataCloner(object):
                                 'reference_for_pricing', 'user_code', 'name', 'short_name', 'public_name', 'notes',
                                 'instrument_type', 'pricing_currency', 'price_multiplier', 'accrued_currency',
                                 'accrued_multiplier', 'maturity_date', 'user_text_1', 'user_text_2', 'user_text_3',
-                                'payment_size_detail', 'daily_pricing_model', 'price_download_scheme', 'default_price',
+                                'payment_size_detail', 'default_price',
                                 'default_accrued', 'factor_schedule_method', 'accrual_calculation_schedule_method')
 
         self._simple_list_clone(InstrumentDownloadSchemeInput, 'scheme__master_user', 'scheme', 'name', 'field')
@@ -623,8 +622,7 @@ class FullDataCloner(object):
                                 'price_multiplier', 'accrued_currency', 'accrued_currency_input', 'accrued_multiplier',
                                 'payment_size_detail', 'payment_size_detail_input', 'default_price', 'default_accrued',
                                 'user_text_1', 'user_text_2', 'user_text_3', 'reference_for_pricing',
-                                'daily_pricing_model', 'daily_pricing_model_input', 'price_download_scheme',
-                                'price_download_scheme_input', 'maturity_date', 'maturity_price')
+                                'maturity_date', 'maturity_price')
 
         self._simple_list_clone(TransactionTypeActionTransaction, 'transaction_type__master_user',
                                 'transaction_type', 'order', 'action_notes',
@@ -700,7 +698,7 @@ class FullDataCloner(object):
         self._simple_list_clone(ComplexTransactionInput, 'complex_transaction__master_user', 'complex_transaction', 'transaction_type_input',
                                 'value_string', 'value_float', 'value_date', 'account', 'instrument_type',
                                 'instrument', 'currency', 'counterparty', 'responsible', 'portfolio', 'strategy1', 'strategy2',
-                                'strategy3', 'daily_pricing_model', 'payment_size_detail', 'price_download_scheme',
+                                'strategy3', 'daily_pricing_model', 'payment_size_detail',
                                 'pricing_policy', 'periodicity', 'accrual_calculation_model', 'event_class', 'notification_class')
 
 

@@ -202,9 +202,9 @@ class MasterUser(models.Model):
     pricing_policy = models.ForeignKey('instruments.PricingPolicy', null=True, blank=True, on_delete=models.SET_NULL,
                                        verbose_name=ugettext_lazy('pricing policy'))
 
-    price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', null=True, blank=True,
-                                              on_delete=models.SET_NULL,
-                                              verbose_name=ugettext_lazy('price download scheme'))
+    # price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', null=True, blank=True,
+    #                                           on_delete=models.SET_NULL,
+    #                                           verbose_name=ugettext_lazy('price download scheme'))
 
     # TODO: what is notification_business_days
     notification_business_days = models.IntegerField(default=0)
@@ -792,7 +792,7 @@ class MasterUser(models.Model):
         from poms.counterparties.models import Counterparty, CounterpartyGroup, Responsible, ResponsibleGroup
         from poms.portfolios.models import Portfolio
         from poms.instruments.models import InstrumentClass, InstrumentType, EventScheduleConfig, Instrument, \
-            DailyPricingModel, AccrualCalculationModel, PaymentSizeDetail, Periodicity
+             AccrualCalculationModel, PaymentSizeDetail, Periodicity
         from poms.integrations.models import PricingAutomatedSchedule, CurrencyMapping, ProviderClass
         from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, \
             Strategy2Subgroup, Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
@@ -800,7 +800,6 @@ class MasterUser(models.Model):
         from poms.transactions.models import NotificationClass, TransactionTypeGroup, TransactionType
         from poms.obj_perms.utils import get_change_perms, assign_perms3
         from poms.instruments.models import PricingPolicy
-        from poms.integrations.models import PriceDownloadScheme
 
         if not EventScheduleConfig.objects.filter(master_user=self).exists():
             EventScheduleConfig.create_default(master_user=self)
@@ -808,9 +807,9 @@ class MasterUser(models.Model):
         if not PricingAutomatedSchedule.objects.filter(master_user=self).exists():
             PricingAutomatedSchedule.objects.create(master_user=self, is_enabled=False)
 
-        price_download_scheme = PriceDownloadScheme.objects.create(master_user=self, scheme_name='-',
-                                                                   provider=ProviderClass.objects.get(
-                                                                       pk=ProviderClass.BLOOMBERG))
+        # price_download_scheme = PriceDownloadScheme.objects.create(master_user=self, scheme_name='-',
+        #                                                            provider=ProviderClass.objects.get(
+        #                                                                pk=ProviderClass.BLOOMBERG))
 
         ccys = {}
         ccy = Currency.objects.create(master_user=self, name='-', user_code='-')
@@ -823,7 +822,7 @@ class MasterUser(models.Model):
             dc_name = dc.get('name', dc_user_code)
             # dc_reference_for_pricing = dc.get('reference_for_pricing', None)
             dc_reference_for_pricing = ''
-            price_download_scheme = PriceDownloadScheme.objects.get(scheme_name='-', master_user=self)
+            # price_download_scheme = PriceDownloadScheme.objects.get(scheme_name='-', master_user=self)
 
             if dc_user_code == '-':
                 pass
@@ -831,14 +830,12 @@ class MasterUser(models.Model):
 
                 if dc_user_code == 'USD':
                     c = Currency.objects.create(master_user=self, user_code=dc_user_code, short_name=dc_user_code,
-                                                name=dc_name, daily_pricing_model=DailyPricingModel.objects.get(
-                            pk=DailyPricingModel.SKIP), price_download_scheme=price_download_scheme,
+                                                name=dc_name,
                                                 reference_for_pricing=dc_reference_for_pricing)
                     ccy_usd = c
                 else:
                     c = Currency.objects.create(master_user=self, user_code=dc_user_code, short_name=dc_user_code,
-                                                name=dc_name, daily_pricing_model=DailyPricingModel.objects.get(
-                            pk=DailyPricingModel.DEFAULT), price_download_scheme=price_download_scheme,
+                                                name=dc_name,
                                                 reference_for_pricing=dc_reference_for_pricing)
                 ccys[c.user_code] = c
 
@@ -916,7 +913,7 @@ class MasterUser(models.Model):
         self.mismatch_account = account
         self.pricing_policy = pricing_policy
         self.transaction_type = transaction_type
-        self.price_download_scheme = price_download_scheme
+        # self.price_download_scheme = price_download_scheme
 
         ecosystem_defaults = EcosystemDefault()
 
@@ -946,10 +943,10 @@ class MasterUser(models.Model):
         ecosystem_defaults.mismatch_account = account
         ecosystem_defaults.pricing_policy = pricing_policy
         ecosystem_defaults.transaction_type = transaction_type
-        ecosystem_defaults.price_download_scheme = price_download_scheme
+        # ecosystem_defaults.price_download_scheme = price_download_scheme
 
         ecosystem_defaults.instrument_class = InstrumentClass.objects.get(pk=InstrumentClass.DEFAULT)
-        ecosystem_defaults.daily_pricing_model = DailyPricingModel.objects.get(pk=DailyPricingModel.DEFAULT)
+        # ecosystem_defaults.daily_pricing_model = DailyPricingModel.objects.get(pk=DailyPricingModel.DEFAULT)
         ecosystem_defaults.accrual_calculation_model = AccrualCalculationModel.objects.get(
             pk=AccrualCalculationModel.DEFAULT)
         ecosystem_defaults.payment_size_detail = PaymentSizeDetail.objects.get(pk=PaymentSizeDetail.DEFAULT)
@@ -1117,17 +1114,17 @@ class EcosystemDefault(models.Model):
     pricing_policy = models.ForeignKey('instruments.PricingPolicy', null=True, blank=True, on_delete=models.PROTECT,
                                        verbose_name=ugettext_lazy('pricing policy'))
 
-    price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', null=True, blank=True,
-                                              on_delete=models.PROTECT,
-                                              verbose_name=ugettext_lazy('price download scheme'))
+    # price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', null=True, blank=True,
+    #                                           on_delete=models.PROTECT,
+    #                                           verbose_name=ugettext_lazy('price download scheme'))
 
     instrument_class = models.ForeignKey('instruments.InstrumentClass', null=True, blank=True,
                                          on_delete=models.PROTECT,
                                          verbose_name=ugettext_lazy('instrument class'))
 
-    daily_pricing_model = models.ForeignKey('instruments.DailyPricingModel', null=True, blank=True,
-                                            on_delete=models.PROTECT,
-                                            verbose_name=ugettext_lazy('daily pricing model'))
+    # daily_pricing_model = models.ForeignKey('instruments.DailyPricingModel', null=True, blank=True,
+    #                                         on_delete=models.PROTECT,
+    #                                         verbose_name=ugettext_lazy('daily pricing model'))
 
     accrual_calculation_model = models.ForeignKey('instruments.AccrualCalculationModel', null=True, blank=True,
                                                   on_delete=models.PROTECT,

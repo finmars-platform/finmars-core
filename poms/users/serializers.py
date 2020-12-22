@@ -545,14 +545,13 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
             'responsible_group', 'responsible',
             'instrument_type', 'instrument',
             'portfolio',
-            'price_download_scheme',
             'strategy1_group', 'strategy1_subgroup', 'strategy1',
             'strategy2_group', 'strategy2_subgroup', 'strategy2',
             'strategy3_group', 'strategy3_subgroup', 'strategy3',
             'thread_group',
             'mismatch_portfolio', 'mismatch_account',
             'pricing_policy', 'transaction_type',
-            'instrument_class', 'daily_pricing_model', 'accrual_calculation_model', 'pricing_condition',
+            'instrument_class', 'accrual_calculation_model', 'pricing_condition',
             'payment_size_detail', 'periodicity'
         ]
 
@@ -580,8 +579,8 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
         self.fields['accrual_calculation_model_object'] = AccrualCalculationModelViewSerializer(
             source='accrual_calculation_model', read_only=True)
 
-        self.fields['daily_pricing_model_object'] = DailyPricingModelViewSerializer(
-            source='daily_pricing_model', read_only=True)
+        # self.fields['daily_pricing_model_object'] = DailyPricingModelViewSerializer(
+        #     source='daily_pricing_model', read_only=True)
 
         self.fields['pricing_condition_object'] = PricingConditionViewSerializer(
             source='pricing_condition', read_only=True)
@@ -595,8 +594,8 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
         self.fields['instrument_class_object'] = InstrumentClassViewSerializer(
             source='instrument_class', read_only=True)
 
-        self.fields['price_download_scheme_object'] = PriceDownloadSchemeViewSerializer(
-            source='price_download_scheme', read_only=True)
+        # self.fields['price_download_scheme_object'] = PriceDownloadSchemeViewSerializer(
+        #     source='price_download_scheme', read_only=True)
 
         self.fields['currency_object'] = CurrencyViewSerializer(source='currency', read_only=True)
 
