@@ -430,8 +430,10 @@ router.register(r'pricing/currency-pricing-scheme-type', pricing.CurrencyPricing
 
 
 router.register(r'pricing/price-history-error-ev-group', pricing.PriceHistoryErrorEvGroupViewSet, 'pricehistoryerrorevgroup')
+router.register(r'pricing/price-history-error-ev', pricing.PriceHistoryErrorEvViewSet)
 router.register(r'pricing/price-history-error', pricing.PriceHistoryErrorViewSet)
 router.register(r'pricing/currency-history-error-ev-group', pricing.CurrencyHistoryErrorEvGroupViewSet, 'currencyhistoryerrorevgroup')
+router.register(r'pricing/currency-history-error-ev', pricing.CurrencyHistoryErrorEvViewSet)
 router.register(r'pricing/currency-history-error', pricing.CurrencyHistoryErrorViewSet)
 
 

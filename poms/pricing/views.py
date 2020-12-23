@@ -8,7 +8,8 @@ from poms.common.filters import NoOpFilter
 from poms.common.pagination import CustomPaginationMixin
 
 from poms.common.views import AbstractModelViewSet, AbstractEvGroupViewSet
-
+from poms.instruments.models import Instrument, PricingPolicy
+from poms.obj_perms.utils import get_permissions_prefetch_lookups
 
 from poms.pricing.handlers import FillPricesBrokerBloombergProcess, \
     FillPricesBrokerWtradeProcess, FillPricesBrokerFixerProcess, FillPricesBrokerAlphavProcess, \
@@ -306,6 +307,38 @@ class PriceHistoryErrorFilterSet(FilterSet):
 class PriceHistoryErrorViewSet(AbstractModelViewSet):
     queryset = PriceHistoryError.objects.select_related(
         'master_user',
+        'instrument',
+        'pricing_policy',
+        'pricing_scheme',
+        'procedure_instance',
+        'procedure_instance__procedure'
+    ).prefetch_related(
+        *get_permissions_prefetch_lookups(
+            ('instrument', Instrument)
+        )
+    )
+    serializer_class = PriceHistoryErrorSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = PriceHistoryErrorFilterSet
+    ordering_fields = [
+        'date'
+    ]
+
+
+class PriceHistoryErrorEvViewSet(AbstractModelViewSet):
+    queryset = PriceHistoryError.objects.select_related(
+        'master_user',
+        'instrument',
+        'pricing_policy',
+        'pricing_scheme',
+        'procedure_instance',
+        'procedure_instance__procedure'
+    ).prefetch_related(
+        *get_permissions_prefetch_lookups(
+            ('instrument', Instrument)
+        )
     )
     serializer_class = PriceHistoryErrorSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
@@ -320,6 +353,15 @@ class PriceHistoryErrorViewSet(AbstractModelViewSet):
 class PriceHistoryErrorEvGroupViewSet(AbstractEvGroupViewSet, CustomPaginationMixin):
     queryset = PriceHistoryError.objects.select_related(
         'master_user',
+        'instrument',
+        'pricing_policy',
+        'pricing_scheme',
+        'procedure_instance',
+        'procedure_instance__procedure'
+    ).prefetch_related(
+        *get_permissions_prefetch_lookups(
+            ('instrument', Instrument)
+        )
     )
 
     serializer_class = PriceHistoryErrorSerializer
@@ -342,6 +384,29 @@ class CurrencyHistoryErrorFilterSet(FilterSet):
 class CurrencyHistoryErrorViewSet(AbstractModelViewSet):
     queryset = CurrencyHistoryError.objects.select_related(
         'master_user',
+        'currency',
+        'pricing_policy',
+        'pricing_scheme',
+        'procedure_instance',
+        'procedure_instance__procedure'
+    )
+    serializer_class = CurrencyHistoryErrorSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = CurrencyHistoryErrorFilterSet
+    ordering_fields = [
+        'date'
+    ]
+
+class CurrencyHistoryErrorEvViewSet(AbstractModelViewSet):
+    queryset = CurrencyHistoryError.objects.select_related(
+        'master_user',
+        'currency',
+        'pricing_policy',
+        'pricing_scheme',
+        'procedure_instance',
+        'procedure_instance__procedure'
     )
     serializer_class = CurrencyHistoryErrorSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
@@ -356,6 +421,11 @@ class CurrencyHistoryErrorViewSet(AbstractModelViewSet):
 class CurrencyHistoryErrorEvGroupViewSet(AbstractEvGroupViewSet, CustomPaginationMixin):
     queryset = CurrencyHistoryError.objects.select_related(
         'master_user',
+        'currency',
+        'pricing_policy',
+        'pricing_scheme',
+        'procedure_instance',
+        'procedure_instance__procedure'
     )
 
     serializer_class = CurrencyHistoryErrorSerializer

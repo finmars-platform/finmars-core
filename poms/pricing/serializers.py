@@ -667,6 +667,18 @@ class InstrumentPricingSchemeSerializer(ModelWithTimeStampSerializer):
         return instance
 
 
+class InstrumentPricingSchemeLightSerializer(ModelWithTimeStampSerializer):
+    master_user = MasterUserField()
+
+    def __init__(self, *args, **kwargs):
+        super(InstrumentPricingSchemeLightSerializer, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = InstrumentPricingScheme
+        fields = (
+            'id', 'name', 'user_code', 'master_user', 'error_handler')
+
+
 class CurrencyPricingSchemeTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = CurrencyPricingSchemeType
@@ -1012,6 +1024,14 @@ class CurrencyPricingSchemeSerializer(ModelWithTimeStampSerializer):
         return instance
 
 
+class CurrencyPricingSchemeLightSerializer(ModelWithTimeStampSerializer):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = CurrencyPricingScheme
+        fields = (
+            'id', 'name', 'user_code', 'master_user',  'error_handler')
+
 class PricingPolicyViewSerializer(ModelWithUserCodeSerializer):
     class Meta:
         model = PricingPolicy
@@ -1078,17 +1098,17 @@ class BrokerBloombergSerializer(serializers.Serializer):
 
 class PriceHistoryErrorSerializer(serializers.ModelSerializer):
 
-    pricing_scheme_object = InstrumentPricingSchemeSerializer(source='pricing_scheme', read_only=True)
+    pricing_scheme_object = InstrumentPricingSchemeLightSerializer(source='pricing_scheme', read_only=True)
     procedure_instance_object = PricingProcedureInstanceSerializer(source='procedure_instance', read_only=True)
 
     def __init__(self, *args, **kwargs):
         super(PriceHistoryErrorSerializer, self).__init__(*args, **kwargs)
 
-        from poms.instruments.serializers import InstrumentViewSerializer
-        from poms.instruments.serializers import PricingPolicySerializer
+        from poms.instruments.serializers import InstrumentLightSerializer
+        from poms.instruments.serializers import PricingPolicyLightSerializer
 
-        self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
-        self.fields['pricing_policy_object'] = PricingPolicySerializer(source='pricing_policy', read_only=True)
+        self.fields['instrument_object'] = InstrumentLightSerializer(source='instrument', read_only=True)
+        self.fields['pricing_policy_object'] = PricingPolicyLightSerializer(source='pricing_policy', read_only=True)
 
     class Meta:
         model = PriceHistoryError
@@ -1123,17 +1143,17 @@ class PriceHistoryErrorSerializer(serializers.ModelSerializer):
 
 class CurrencyHistoryErrorSerializer(serializers.ModelSerializer):
 
-    pricing_scheme_object = CurrencyPricingSchemeSerializer(source='pricing_scheme', read_only=True)
+    pricing_scheme_object = CurrencyPricingSchemeLightSerializer(source='pricing_scheme', read_only=True)
     procedure_instance_object = PricingProcedureInstanceSerializer(source='procedure_instance', read_only=True)
 
     def __init__(self, *args, **kwargs):
         super(CurrencyHistoryErrorSerializer, self).__init__(*args, **kwargs)
 
-        from poms.instruments.serializers import PricingPolicySerializer
+        from poms.instruments.serializers import PricingPolicyLightSerializer
         from poms.currencies.serializers import CurrencyViewSerializer
 
         self.fields['currency_object'] = CurrencyViewSerializer(source='currency', read_only=True)
-        self.fields['pricing_policy_object'] = PricingPolicySerializer(source='pricing_policy', read_only=True)
+        self.fields['pricing_policy_object'] = PricingPolicyLightSerializer(source='pricing_policy', read_only=True)
 
 
 
