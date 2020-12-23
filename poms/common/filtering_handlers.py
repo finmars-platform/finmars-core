@@ -8,6 +8,10 @@ from django.db.models import CharField, Case, When
 from django.db.models.functions import Coalesce
 from django.contrib.contenttypes.models import ContentType
 
+import operator
+from functools import reduce
+
+
 from datetime import date, timedelta, datetime
 
 from django.db.models import Q
@@ -28,6 +32,8 @@ class ValueType:
 
 
 class FilterType:
+    MULTISELECTOR = 'multiselector'
+    SELECTOR = 'selector'
     EMPTY = 'empty'
     CONTAINS = 'contains'
     DOES_NOT_CONTAINS = 'does_not_contains'
@@ -61,6 +67,52 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
     # print('value_type %s' % value_type)
 
     # CLASSIFIER FILTERS START
+
+    if filter_type == FilterType.MULTISELECTOR and value_type == ValueType.CLASSIFIER:
+
+        print(filter_config['value'])
+
+        if len(filter_config['value']):
+            values = filter_config['value']
+
+        if values:
+
+            clauses = []
+
+            for value in values:
+                clauses.append(Q(classifier__name__icontains=value))
+
+            include_null_options = {}
+            if not exclude_empty_cells:
+                include_null_options['classifier__isnull'] = True
+                include_null_options['value_string__isnull'] = True
+                include_null_options['value_float__isnull'] = True
+                include_null_options['value_date__isnull'] = True
+
+            clauses.append(Q(**include_null_options))
+
+            query = reduce(operator.or_, clauses)
+
+            attributes_qs = attributes_qs.filter(query)
+
+    if filter_type == FilterType.SELECTOR and value_type == ValueType.CLASSIFIER:
+
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
+
+        if value:
+
+            options = {}
+            options['classifier__name__icontains'] = value
+
+            include_null_options = {}
+            if not exclude_empty_cells:
+                include_null_options['classifier__isnull'] = True
+                include_null_options['value_string__isnull'] = True
+                include_null_options['value_float__isnull'] = True
+                include_null_options['value_date__isnull'] = True
+
+            attributes_qs = attributes_qs.filter(Q(**options) | Q(**include_null_options))
 
     if filter_type == FilterType.CONTAINS and value_type == ValueType.CLASSIFIER:
 
@@ -110,6 +162,51 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
     # CLASSIFIER FILTERS END
 
     # STRING FILTERS START
+
+    if filter_type == FilterType.MULTISELECTOR and value_type == ValueType.STRING:
+
+        print(filter_config['value'])
+
+        if len(filter_config['value']):
+            values = filter_config['value']
+
+        if values:
+
+            clauses = []
+
+            for value in values:
+                clauses.append(Q(value_string__icontains=value))
+
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options['value_string__isnull'] = True
+                include_empty_string_options['value_string'] = ''
+
+            clauses.append(Q(**include_null_options))
+            clauses.append(Q(**include_empty_string_options))
+
+            query = reduce(operator.or_, clauses)
+
+            attributes_qs = attributes_qs.filter(query)
+
+    if filter_type == FilterType.SELECTOR and value_type == ValueType.STRING:
+
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
+
+        if value:
+
+            options = {}
+            options['value_string__icontains'] = value
+
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options['value_string__isnull'] = True
+                include_empty_string_options['value_string'] = ''
+
+            attributes_qs = attributes_qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
     if filter_type == FilterType.CONTAINS and value_type == ValueType.STRING:
 
@@ -482,6 +579,114 @@ def add_filter(qs, filter_config):
         qs = qs.filter(Q(**include_null_options) | Q(**include_empty_string_options))
 
     # STRING FILTERS START
+
+    elif filter_type == FilterType.MULTISELECTOR and value_type == ValueType.STRING:
+
+        print(filter_config['value'])
+
+        if len(filter_config['value']):
+            values = filter_config['value']
+
+        if values:
+
+            clauses = []
+
+            for value in values:
+
+                options = {}
+                options[key + '__icontains'] = value
+
+                clauses.append(Q(**options))
+
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+                include_empty_string_options[key] = ''
+
+            clauses.append(Q(**include_null_options))
+            clauses.append(Q(**include_empty_string_options))
+
+            query = reduce(operator.or_, clauses)
+
+            qs = qs.filter(query)
+
+    elif filter_type == FilterType.MULTISELECTOR and value_type == ValueType.FIELD:
+
+        print(filter_config['value'])
+
+        if len(filter_config['value']):
+            values = filter_config['value']
+
+        if values:
+
+            clauses = []
+
+            for value in values:
+
+                options = {}
+                options[key + '__user_code__icontains'] = value
+
+                clauses.append(Q(**options))
+
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__user_code__isnull'] = True
+                include_empty_string_options[key + '__user_code'] = ''
+
+            clauses.append(Q(**include_null_options))
+            clauses.append(Q(**include_empty_string_options))
+
+            query = reduce(operator.or_, clauses)
+
+            qs = qs.filter(query)
+
+    elif filter_type == FilterType.SELECTOR and value_type == ValueType.STRING:
+
+        # print('here?')
+
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
+
+        if value:
+
+            options = {}
+            options[key + '__icontains'] = value
+
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+                include_empty_string_options[key] = ''
+
+            # print('include_null_options %s' % include_null_options)
+            # print('options %s' % options)
+
+            qs = qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
+
+    elif filter_type == FilterType.SELECTOR and value_type == ValueType.FIELD:
+
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
+
+        if value:
+
+            print('value %s' % value)
+
+            options = {}
+            options[key + '__user_code__icontains'] = value
+
+            include_null_options = {}
+            include_empty_string_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__user_code__isnull'] = True
+                include_empty_string_options[key + '__user_code'] = ''
+
+            # print('include_null_options %s' % include_null_options)
+            # print('options %s' % options)
+
+            qs = qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
     elif filter_type == FilterType.CONTAINS and value_type == ValueType.STRING:
 

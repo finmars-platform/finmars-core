@@ -45,6 +45,8 @@ import poms.system_messages.views as system_messages
 import poms.layout_recovery.views as layout_recovery
 from healthcheck.views import HealthcheckView
 
+import poms.common.views as common
+
 router = routers.DefaultRouter()
 
 router.register(r'system/ecosystem-configuration', system.EcosystemConfigurationViewSet, 'ecosystemconfiguration')
@@ -276,6 +278,8 @@ router.register(r'transactions/recalculate-permission-complex-transaction',
                 transactions.RecalculatePermissionComplexTransactionViewSet, 'recalculatepermissioncomplextrasaction')
 
 router.register(r'transactions/bank-file', integrations.TransactionFileResultViewSet)
+
+router.register(r'specific-data/values-for-select', common.ValuesForSelectViewSet, 'valuesforselect')
 
 
 router.register(r'ui/portal-interface-access', ui.PortalInterfaceAccessViewSet)

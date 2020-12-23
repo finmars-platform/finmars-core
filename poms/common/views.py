@@ -441,3 +441,108 @@ class AbstractSyncViewSet(AbstractViewSet):
 
         serializer = self.get_serializer(instance=res, many=False)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ValuesForSelectViewSet(AbstractApiView, ViewSet):
+
+    def list(self, request):
+
+            results = []
+
+            content_type_name = request.query_params.get('content_type', None)
+            key = request.query_params.get('key', None)
+            value_type = request.query_params.get('value_type', None)
+
+            master_user = request.user.master_user
+
+            if not content_type_name:
+
+                return Response({
+                    "status": status.HTTP_404_NOT_FOUND,
+                    "message": 'No content type provided.',
+                    "results": []
+                })
+
+            if not key:
+
+                return Response({
+                    "status": status.HTTP_404_NOT_FOUND,
+                    "message": 'No key provided.',
+                    "results": []
+                })
+
+            if not value_type:
+
+                return Response({
+                    "status": status.HTTP_404_NOT_FOUND,
+                    "message": 'No value type provided.',
+                    "results": []
+                })
+
+            if value_type != 'field':
+
+                try:
+                    value_type = int(value_type)
+                except Exception as e:
+                    return Response({
+                        "status": status.HTTP_404_NOT_FOUND,
+                        "message": 'Value type is invalid.',
+                        "results": []
+                    })
+
+
+            _l.debug('content_type %s' % content_type_name)
+            _l.debug('key %s' % key)
+
+            content_type_pieces = content_type_name.split('.')
+
+            try:
+                content_type = ContentType.objects.get(app_label=content_type_pieces[0], model=content_type_pieces[1])
+            except ContentType.DoesNotExist:
+                return Response({
+                    "status": status.HTTP_404_NOT_FOUND,
+                    "message": 'Content type does not exist.',
+                    "results": []
+                })
+
+            model = content_type.model_class()
+
+            if 'attributes.' in key:
+
+                attribute_type_user_code = key.split('attributes.')[1]
+
+                try:
+                    attribute_type = GenericAttributeType.objects.get(master_user=master_user, user_code=attribute_type_user_code, content_type=content_type)
+                except GenericAttributeType.DoesNotExist:
+
+                    return Response({
+                        "status": status.HTTP_404_NOT_FOUND,
+                        "message": 'No content type provided.',
+                        "results": []
+                    })
+
+                if value_type == 10:
+                    results = GenericAttribute.objects.filter(content_type=content_type, attribute_type=attribute_type).order_by('value_string').values_list('value_string', flat=True).distinct('value_string')
+                if value_type == 20:
+                    results = GenericAttribute.objects.filter(content_type=content_type, attribute_type=attribute_type).order_by('value_float').values_list('value_float', flat=True).distinct('value_float')
+                if value_type == 30:
+                    results = GenericAttribute.objects.filter(content_type=content_type, attribute_type=attribute_type).order_by('classifier__name').values_list('classifier__name', flat=True).distinct('classifier__name')
+                if value_type == 40:
+                    results = GenericAttribute.objects.filter(content_type=content_type, attribute_type=attribute_type).order_by('value_date').values_list('value_date', flat=True).distinct('value_date')
+
+            else:
+
+                if value_type == 10:
+                    results = model.objects.filter(master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
+                if value_type == 20:
+                    results = model.objects.filter(master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
+                if value_type == 40:
+                    results = model.objects.filter(master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
+                if value_type == 'field':
+                    results = model.objects.filter(master_user=master_user).order_by(key + '__user_code').values_list(key + '__user_code', flat=True).distinct(key + '__user_code')
+
+            _l.debug('model %s' % model)
+
+            return Response({
+                "results": results
+            })
