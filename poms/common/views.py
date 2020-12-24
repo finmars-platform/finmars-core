@@ -532,14 +532,40 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
 
             else:
 
-                if value_type == 10:
-                    results = model.objects.filter(master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
-                if value_type == 20:
-                    results = model.objects.filter(master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
-                if value_type == 40:
-                    results = model.objects.filter(master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
-                if value_type == 'field':
-                    results = model.objects.filter(master_user=master_user).order_by(key + '__user_code').values_list(key + '__user_code', flat=True).distinct(key + '__user_code')
+                if content_type_name == 'instruments.pricehistory':
+
+                    if value_type == 10:
+                        results = model.objects.filter(instrument__master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
+                    if value_type == 20:
+                        results = model.objects.filter(instrument__master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
+                    if value_type == 40:
+                        results = model.objects.filter(instrument__master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
+                    if value_type == 'field':
+                        results = model.objects.filter(instrument__master_user=master_user).order_by(key + '__user_code').values_list(key + '__user_code', flat=True).distinct(key + '__user_code')
+
+
+                elif content_type_name == 'currencies.currencyhistory':
+
+                    if value_type == 10:
+                        results = model.objects.filter(currency__master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
+                    if value_type == 20:
+                        results = model.objects.filter(currency__master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
+                    if value_type == 40:
+                        results = model.objects.filter(currency__master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
+                    if value_type == 'field':
+                        results = model.objects.filter(currency__master_user=master_user).order_by(key + '__user_code').values_list(key + '__user_code', flat=True).distinct(key + '__user_code')
+
+
+                else:
+
+                    if value_type == 10:
+                        results = model.objects.filter(master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
+                    if value_type == 20:
+                        results = model.objects.filter(master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
+                    if value_type == 40:
+                        results = model.objects.filter(master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
+                    if value_type == 'field':
+                        results = model.objects.filter(master_user=master_user).order_by(key + '__user_code').values_list(key + '__user_code', flat=True).distinct(key + '__user_code')
 
             _l.debug('model %s' % model)
 

@@ -566,7 +566,7 @@ class PricingInstrumentHandler(object):
                     price.principal_price = 0
                     price.accrued_price = 0
 
-                    if principal_price:
+                    if principal_price is not None:
 
                         if price.id:
                             if self.procedure.price_overwrite_principal_prices:
@@ -576,7 +576,7 @@ class PricingInstrumentHandler(object):
 
                         error.principal_price = principal_price
 
-                    if accrued_price:
+                    if accrued_price is not None:
 
                         if price.id:
                             if self.procedure.price_overwrite_accrued_prices:
@@ -590,7 +590,8 @@ class PricingInstrumentHandler(object):
 
                     if can_write:
 
-                        if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+                        if has_error:
+                        # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
 
                             error_prices_count = error_prices_count + 1
 
@@ -872,7 +873,7 @@ class PricingInstrumentHandler(object):
                     price.principal_price = 0
                     price.accrued_price = 0
 
-                    if principal_price:
+                    if principal_price is not None:
 
                         if price.id:
                             if self.procedure.price_overwrite_principal_prices:
@@ -882,7 +883,7 @@ class PricingInstrumentHandler(object):
 
                         error.principal_price = principal_price
 
-                    if accrued_price:
+                    if accrued_price is not None:
 
                         if price.id:
                             if self.procedure.price_overwrite_accrued_prices:
@@ -896,7 +897,8 @@ class PricingInstrumentHandler(object):
 
                     if can_write:
 
-                        if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+                        # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+                        if has_error:
 
                             error_prices_count = error_prices_count + 1
 
