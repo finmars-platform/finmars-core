@@ -595,7 +595,6 @@ class BalanceReportBuilderSql:
                    
                         select 
                         
-                            instrument_id,
                             {consolidated_cash_columns}
                             settlement_currency_id,
                             
@@ -668,7 +667,7 @@ class BalanceReportBuilderSql:
                         
                         group by
                                   {consolidated_cash_columns}
-                                  settlement_currency_id, instrument_id
+                                  settlement_currency_id
                         
                     ) as grouped_cash
                     
