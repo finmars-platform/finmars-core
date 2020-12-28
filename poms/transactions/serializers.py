@@ -2958,6 +2958,9 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
                                                label=i.name, help_text=i.verbose_name)
                     field_object = EventScheduleSerializer(source=name, read_only=True)
 
+            elif i.value_type == TransactionTypeInput.BUTTON:
+                field = serializers.JSONField(allow_null=True, required=False)
+
             if field:
                 self.fields[name] = field
                 if field_object:
