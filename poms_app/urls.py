@@ -17,8 +17,6 @@ urlpatterns += [
     url(r'^api/', include('poms.api.urls')),
 ]
 
-print('settings.DEBUG %s' % settings.DEBUG)
-
 if settings.DEBUG:
     import debug_toolbar
     urlpatterns = [
@@ -39,13 +37,6 @@ if 'django.contrib.admin' in settings.INSTALLED_APPS:
         urlpatterns += [
             url(r'^411C74D6C4E24D2B98D6B085A580FF61/admin/', admin.site.urls),
         ]
-
-# if settings.DEBUG:
-#     if 'silk' in settings.INSTALLED_APPS:
-#
-#         urlpatterns += [
-#             url(r'^silk/', include('silk.urls', namespace='silk'))
-#         ]
 
 if getattr(settings, 'MEDIA_SERVE', False):
     urlpatterns += [

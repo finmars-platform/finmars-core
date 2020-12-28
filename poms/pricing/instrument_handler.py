@@ -27,6 +27,7 @@ from datetime import date
 
 import logging
 
+from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import Transaction
 
 _l = logging.getLogger('poms.pricing')
@@ -1208,6 +1209,10 @@ class PricingInstrumentHandler(object):
 
             procedure_instance.save()
 
+            send_system_message(master_user=self.master_user,
+                                source="Pricing Procedure Service",
+                                text="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
+
     def process_to_bloomberg_forwards_provider(self, items):
 
         _l.debug("Pricing Instrument Handler - Bloomberg Forwards Provider: len %s" % len(items))
@@ -1372,6 +1377,10 @@ class PricingInstrumentHandler(object):
 
             procedure_instance.save()
 
+            send_system_message(master_user=self.master_user,
+                                source="Pricing Procedure Service",
+                                text="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
+
     def process_to_wtrade_provider(self, items):
 
         _l.debug("Pricing Instrument Handler - Wtrade Provider: len %s" % len(items))
@@ -1521,6 +1530,10 @@ class PricingInstrumentHandler(object):
 
             procedure_instance.save()
 
+            send_system_message(master_user=self.master_user,
+                                source="Pricing Procedure Service",
+                                text="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
+
 
     def process_to_alphav_provider(self, items):
 
@@ -1648,6 +1661,10 @@ class PricingInstrumentHandler(object):
             procedure_instance.error_message = "Mediator is unavailable. Please try later."
 
             procedure_instance.save()
+
+            send_system_message(master_user=self.master_user,
+                                source="Pricing Procedure Service",
+                                text="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
 
 
     def print_grouped_instruments(self):

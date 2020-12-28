@@ -4,6 +4,7 @@ from django.utils.translation import ugettext_lazy
 
 from poms.common.models import NamedModel, DataTimeStampedModel
 from poms.integrations.models import DataProvider
+from poms.system_messages.handlers import send_system_message
 from poms.users.models import MasterUser
 
 from croniter import croniter
@@ -122,6 +123,12 @@ class ScheduleInstance(DataTimeStampedModel):
 
         from poms.schedules.tasks import process_procedure_async
 
+        total_procedures = len(self.schedule.procedures.all())
+
+        send_system_message(master_user=self.master_user,
+                            source="Schedule Service",
+                            text="Schedule %s. Step  %s/%s finished" % (self.schedule.name, self.current_processing_procedure_number, total_procedures))
+
         self.current_processing_procedure_number = self.current_processing_procedure_number + 1
 
         _l.debug('run_next_procedure schedule %s procedure number %s' % (self.schedule, self.current_processing_procedure_number))
@@ -136,9 +143,17 @@ class ScheduleInstance(DataTimeStampedModel):
 
                         self.save()
 
+                        send_system_message(master_user=self.master_user,
+                                            source="Schedule Service",
+                                            text="Schedule %s. Start processing step %s/%s " % (self.schedule.name, self.current_processing_procedure_number, total_procedures))
+
                         process_procedure_async.apply_async(kwargs={'procedure':procedure, 'master_user':self.master_user, 'schedule_instance': self})
 
             except Exception as e:
 
                 self.status = ScheduleInstance.STATUS_ERROR
                 self.save()
+
+                send_system_message(master_user=self.master_user,
+                                    source="Schedule Service",
+                                    text="Schedule %s. Error occurred at step %s/%s" % (self.schedule.name, self.current_processing_procedure_number, total_procedures))

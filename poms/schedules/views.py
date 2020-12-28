@@ -12,7 +12,7 @@ from django.conf import settings
 from poms.schedules.models import Schedule, ScheduleInstance
 from poms.schedules.serializers import RunScheduleSerializer, ScheduleSerializer
 from poms.schedules.tasks import process_procedure_async
-
+from poms.system_messages.handlers import send_system_message
 
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -65,6 +65,8 @@ class ScheduleViewSet(AbstractModelViewSet):
             schedule_instance = ScheduleInstance(schedule=schedule, master_user=master_user)
             schedule_instance.save()
 
+            total_procedures = len(schedule.procedures.all())
+
             for procedure in schedule.procedures.all():
 
                 try:
@@ -74,6 +76,11 @@ class ScheduleViewSet(AbstractModelViewSet):
                         schedule_instance.current_processing_procedure_number = 1
                         schedule_instance.status = ScheduleInstance.STATUS_PENDING
                         schedule_instance.save()
+
+                        send_system_message(master_user=master_user,
+                                            source="Schedule Service",
+                                            text="Schedule %s. Start processing step %s/%s" % (schedule.name, schedule_instance.current_processing_procedure_number, total_procedures))
+
 
                         process_procedure_async.apply_async(kwargs={'procedure':procedure, 'master_user':master_user, 'schedule_instance': schedule_instance})
 
@@ -88,6 +95,10 @@ class ScheduleViewSet(AbstractModelViewSet):
                             master_user.id, schedule.next_run_at)
 
                     _l.debug('Schedule: Error %s' % e)
+
+                    send_system_message(master_user=master_user,
+                                        source="Schedule Service",
+                                        text="Schedule %s. Error occurred" % schedule.name)
 
                     pass
 

@@ -9,6 +9,7 @@ from poms.pricing.handlers import PricingProcedureProcess
 from poms.procedures.handlers import RequestDataFileProcedureProcess
 from poms.procedures.models import RequestDataFileProcedure, PricingProcedure
 from poms.schedules.models import Schedule, ScheduleInstance
+from poms.system_messages.handlers import send_system_message
 
 _l = logging.getLogger('poms.schedules')
 
@@ -73,6 +74,8 @@ def process(self):
             schedule_instance = ScheduleInstance(schedule=s, master_user=master_user)
             schedule_instance.save()
 
+            total_procedures = len(s.procedures.all())
+
             for procedure in s.procedures.all():
 
                 try:
@@ -83,7 +86,11 @@ def process(self):
                         schedule_instance.status = ScheduleInstance.STATUS_PENDING
                         schedule_instance.save()
 
-                        process_procedure_async.apply_async(kwargs={'procedure':procedure, 'master_user':master_user, 'schedule_instance': schedule_instance})
+                        send_system_message(master_user=self.master_user,
+                                            source="Schedule Service",
+                                            text="Schedule %s. Start processing step %s/%s" % (s.name, schedule_instance.current_processing_procedure_number, total_procedures))
+
+                        process_procedure_async.apply_async(kwargs={'procedure': procedure, 'master_user':master_user, 'schedule_instance': schedule_instance})
 
                         _l.debug('Schedule: Process first procedure master_user=%s, next_run_at=%s', master_user.id, s.next_run_at)
 
@@ -93,6 +100,10 @@ def process(self):
 
                     schedule_instance.status = ScheduleInstance.STATUS_ERROR
                     schedule_instance.save()
+
+                    send_system_message(master_user=self.master_user,
+                                        source="Schedule Service",
+                                        text="Schedule %s. Error occurred" % s.name)
 
                     _l.debug('Schedule: master_user=%s, next_run_at=%s. Error',
                             master_user.id, s.next_run_at)

@@ -22,6 +22,7 @@ import logging
 from poms.procedures.models import PricingProcedure, BaseProcedureInstance
 from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
+from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import Transaction
 
 _l = logging.getLogger('poms.pricing')
@@ -888,6 +889,10 @@ class PricingCurrencyHandler(object):
 
             procedure_instance.save()
 
+            send_system_message(master_user=self.master_user,
+                                source="Pricing Procedure Service",
+                                text="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
+
 
     def process_to_fixer_provider(self, items):
 
@@ -1014,6 +1019,10 @@ class PricingCurrencyHandler(object):
             procedure_instance.error_message = "Mediator is unavailable. Please try later."
 
             procedure_instance.save()
+
+            send_system_message(master_user=self.master_user,
+                                source="Pricing Procedure Service",
+                                text="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
 
 
 
