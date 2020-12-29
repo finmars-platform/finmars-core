@@ -4,6 +4,8 @@ from django.conf import settings
 from django.conf.urls import url, include
 from django.contrib import admin
 from django.views import static
+
+from healthcheck.views import HealthcheckView
 from poms.api.views import index
 from django.views.generic import TemplateView
 
@@ -15,6 +17,7 @@ urlpatterns += [
     url(r'^import/add/', TemplateView.as_view(template_name='import_form.html'), name='import_add'),
     # url(r'^import/(?P<pk>\d+)/change/$', ImportUpdate.as_view(), name='import_change'),
     url(r'^api/', include('poms.api.urls')),
+    url(r'^healthcheck', HealthcheckView.as_view()),
 ]
 
 if settings.DEBUG:

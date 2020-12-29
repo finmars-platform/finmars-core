@@ -9,6 +9,8 @@ from healthcheck.handlers import DatabasePlugin, MemoryUsagePlugin, DiskUsagePlu
 
 class HealthcheckView(APIView):
 
+    permission_classes = []
+
     _errors = None
     _plugins = None
 

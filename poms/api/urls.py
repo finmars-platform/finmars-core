@@ -43,7 +43,6 @@ import poms.procedures.views as procedures
 import poms.credentials.views as credentials
 import poms.system_messages.views as system_messages
 import poms.layout_recovery.views as layout_recovery
-from healthcheck.views import HealthcheckView
 
 import poms.common.views as common
 
@@ -457,7 +456,7 @@ router.register(r'recovery/layout', layout_recovery.FixLayoutViewSet, 'recovery_
 
 urlpatterns = [
     url(r'^v1/', include(router.urls)),
-    url(r'^healthcheck', HealthcheckView.as_view()),
+
 
     # external callbacks
 
