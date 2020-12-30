@@ -675,6 +675,7 @@ class FillPricesBrokerBloombergForwardsProcess(object):
                                             record.price_code_value = float(val_obj['value'])
                                         except Exception as e:
                                             _l.debug('price_code_value %s ' % e)
+                                            _l.debug('price_code_value original value %s ' % val_obj['value'])
 
                                 record.save()
 
