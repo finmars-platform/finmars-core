@@ -425,7 +425,8 @@ class FillPricesBrokerBloombergProcess(object):
 
             if can_write:
 
-                if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+                # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+                if has_error:
 
                     error_prices_count = error_prices_count + 1
 
@@ -572,7 +573,8 @@ class FillPricesBrokerBloombergProcess(object):
 
             if can_write:
 
-                if has_error or fx_rate == 0:
+                # if has_error or fx_rate == 0:
+                if has_error:
 
                     error_prices_count = error_prices_count + 1
 
@@ -840,7 +842,8 @@ class FillPricesBrokerBloombergForwardsProcess(object):
 
             if can_write:
 
-                if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+                # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+                if has_error:
 
                     error_prices_count = error_prices_count + 1
 
@@ -1138,7 +1141,8 @@ class FillPricesBrokerWtradeProcess(object):
 
             if can_write:
 
-                if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+                # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+                if has_error:
 
                     error_prices_count = error_prices_count + 1
 
@@ -1344,7 +1348,8 @@ class FillPricesBrokerFixerProcess(object):
 
             if can_write:
 
-                if has_error or fx_rate == 0:
+                # if has_error or fx_rate == 0:
+                if has_error:
 
                     error_prices_count = error_prices_count + 1
 
@@ -1612,7 +1617,8 @@ class FillPricesBrokerAlphavProcess(object):
 
             if can_write:
 
-                if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+                # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+                if has_error:
 
                     error_prices_count = error_prices_count + 1
 
