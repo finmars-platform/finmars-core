@@ -183,7 +183,7 @@ class PLReportBuilderSql:
                              coalesce(buy_positions_total_size, 0)
                            end
                         as min_closed
-                      from transactions_ordered where transaction_class_id in (1,2)
+                      from transactions_ordered where transaction_class_id in (1,2) and position_size_with_sign != 0
                     ) as tt_fin
           ),
         """
@@ -221,7 +221,7 @@ class PLReportBuilderSql:
                sum(position_size_with_sign) over (partition by {consolidation_columns} instrument_id  order by rn_total) as rolling_position_size,
                sum(position_size_with_sign) over (partition by {consolidation_columns} instrument_id  order by rn_total)-position_size_with_sign as rolling_position_size_prev
          
-           from transactions_ordered where transaction_class_id in (1,2)
+           from transactions_ordered where transaction_class_id in (1,2) and position_size_with_sign != 0
         ),
         
         transactions_with_multipliers as (
