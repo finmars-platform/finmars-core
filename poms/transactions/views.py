@@ -626,22 +626,11 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
 
         _l.debug('rebook TransactionTypeProcess done: %s', "{:3.3f}".format(time.perf_counter() - process_st))
 
-        try:
+        serializer = self.get_serializer(instance=instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
-            history.set_flag_addition()
-
-            serializer = self.get_serializer(instance=instance, data=request.data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-
-            return Response(serializer.data)
-
-        finally:
-
-            _l.debug('rebook finaly done: %s', "{:3.3f}".format(time.perf_counter() - st))
-
-            if instance.has_errors:
-                transaction.set_rollback(True)
+        return Response(serializer.data)
 
 
 class TransactionTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
@@ -1338,27 +1327,19 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
 
         _l.debug('rebook TransactionTypeProcess done: %s', "{:3.3f}".format(time.perf_counter() - process_st))
 
-        try:
+        if request.data['complex_transaction']:
+            request.data['complex_transaction']['status'] = ComplexTransaction.PRODUCTION
 
-            if request.data['complex_transaction']:
-                request.data['complex_transaction']['status'] = ComplexTransaction.PRODUCTION
+        serialize_st = time.perf_counter()
 
-            serialize_st = time.perf_counter()
+        serializer = self.get_serializer(instance=instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
-            serializer = self.get_serializer(instance=instance, data=request.data)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
+        _l.debug('rebook serialize done: %s', "{:3.3f}".format(time.perf_counter() - serialize_st))
 
-            _l.debug('rebook serialize done: %s', "{:3.3f}".format(time.perf_counter() - serialize_st))
+        return Response(serializer.data)
 
-            return Response(serializer.data)
-
-        finally:
-
-            _l.debug('rebook finaly done: %s', "{:3.3f}".format(time.perf_counter() - st))
-
-            if instance.has_errors:
-                transaction.set_rollback(True)
 
     @action(detail=True, methods=['get', 'put'], url_path='rebook-pending', serializer_class=TransactionTypeProcessSerializer, permission_classes=[IsAuthenticated])
     def rebook_pending(self, request, pk=None):

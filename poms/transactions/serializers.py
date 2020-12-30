@@ -3391,6 +3391,7 @@ class TransactionTypeRecalculateSerializer(serializers.Serializer):
 
     def __init__(self, **kwargs):
         from poms.instruments.serializers import InstrumentSerializer
+        st = time.perf_counter()
 
         kwargs['context'] = context = kwargs.get('context', {}) or {}
         super(TransactionTypeRecalculateSerializer, self).__init__(**kwargs)
@@ -3423,6 +3424,8 @@ class TransactionTypeRecalculateSerializer(serializers.Serializer):
                                                                                 choices=[])
 
         self.fields['complex_transaction'] =  serializers.PrimaryKeyRelatedField(read_only=True)
+
+        _l.debug('TransactionTypeRecalculateSerializer init done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
     def validate(self, attrs):
         if attrs['process_mode'] == TransactionTypeProcess.MODE_BOOK:
@@ -3494,6 +3497,7 @@ class TransactionTypeRecalculateSerializer(serializers.Serializer):
         _l.debug('TransactionTypeRecalculateSerializer to representation done %s' %  result_st)
 
         return res
+
 
 class RecalculatePermission:
     def __init__(self, task_id=None, task_status=None, master_user=None, member=None):
