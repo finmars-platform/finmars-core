@@ -573,8 +573,8 @@ class FillPricesBrokerBloombergProcess(object):
 
             if can_write:
 
-                # if has_error or fx_rate == 0:
-                if has_error:
+                if has_error or fx_rate == 0:
+                # if has_error:
 
                     error_prices_count = error_prices_count + 1
 
@@ -1349,8 +1349,8 @@ class FillPricesBrokerFixerProcess(object):
 
             if can_write:
 
-                # if has_error or fx_rate == 0:
-                if has_error:
+                if has_error or fx_rate == 0:
+                # if has_error:
 
                     error_prices_count = error_prices_count + 1
 
