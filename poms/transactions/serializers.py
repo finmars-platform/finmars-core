@@ -60,6 +60,9 @@ from django.core.validators import RegexValidator
 from poms.common.utils import date_now
 from poms.users.utils import get_member_from_context
 
+import logging
+_l = logging.getLogger('poms.transactions')
+
 
 class EventClassSerializer(PomsClassSerializer):
     class Meta(PomsClassSerializer.Meta):
@@ -3383,6 +3386,114 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
     #
     #         ci.save()
 
+
+class TransactionTypeRecalculateSerializer(serializers.Serializer):
+
+    def __init__(self, **kwargs):
+        from poms.instruments.serializers import InstrumentSerializer
+
+        kwargs['context'] = context = kwargs.get('context', {}) or {}
+        super(TransactionTypeRecalculateSerializer, self).__init__(**kwargs)
+        context['instance'] = self.instance
+
+        self.fields['transaction_type'] = serializers.PrimaryKeyRelatedField(read_only=True)
+
+        self.fields['process_mode'] = serializers.ChoiceField(
+            required=False,
+            allow_null=True,
+            initial=TransactionTypeProcess.MODE_BOOK,
+            default=TransactionTypeProcess.MODE_BOOK,
+            choices=(
+                (TransactionTypeProcess.MODE_BOOK, 'Book'),
+                (TransactionTypeProcess.MODE_RECALCULATE, 'Recalculate fields values'),
+                (TransactionTypeProcess.MODE_REBOOK, 'Rebook'),
+            )
+        )
+
+        if self.instance:
+            self.fields['values'] = TransactionTypeProcessValuesSerializer(instance=self.instance, required=False)
+
+        if self.instance:
+            # recalculate_inputs = [(i.name, i.verbose_name) for i in self.instance.inputs if i.can_recalculate]
+            recalculate_inputs = [(i.name, i.verbose_name) for i in self.instance.inputs]
+            self.fields['recalculate_inputs'] = serializers.MultipleChoiceField(required=False, allow_null=True,
+                                                                                choices=recalculate_inputs)
+        else:
+            self.fields['recalculate_inputs'] = serializers.MultipleChoiceField(required=False, allow_null=True,
+                                                                                choices=[])
+
+        self.fields['complex_transaction'] =  serializers.PrimaryKeyRelatedField(read_only=True)
+
+    def validate(self, attrs):
+        if attrs['process_mode'] == TransactionTypeProcess.MODE_BOOK:
+            values = attrs['values']
+            fvalues = self.fields['values']
+            errors = {}
+            for k, v in values.items():
+                if v is None or v == '':
+                    try:
+
+                        if fvalues.fields[k].label != 'notes':
+                            fvalues.fields[k].fail('required')
+
+                    except ValidationError as e:
+                        errors[k] = e.detail
+            if errors:
+                raise ValidationError({'values': errors})
+        return attrs
+
+    def get_book_transaction_layout(self, obj):
+        return obj.transaction_type.book_transaction_layout
+
+    def create(self, validated_data):
+        return validated_data
+
+    def update(self, instance, validated_data):
+
+        st = time.perf_counter()
+
+        for key, value in validated_data.items():
+            if key not in ['complex_transaction', ]:
+                setattr(instance, key, value)
+        instance.value_errors = []
+
+        ctrn_values = validated_data.get('complex_transaction', None)
+        if ctrn_values:
+            ctrn_ser = ComplexTransactionSerializer(instance=instance.complex_transaction, context=self.context)
+            ctrn_values = ctrn_values.copy()
+
+            is_date_was_empty = False
+            if not ctrn_values.get('date', None):
+                ctrn_values['date'] = datetime.date.min
+                is_date_was_empty = True
+
+            if instance.complex_transaction:
+                ctrn = ctrn_ser.update(ctrn_ser.instance, ctrn_values)
+            else:
+                ctrn = ctrn_ser.create(ctrn_values)
+
+            if is_date_was_empty:
+                ctrn.date = None
+
+            instance.complex_transaction = ctrn
+
+        instance.process()
+
+        _l.debug('TransactionTypeRecalculateSerializer done: %s', "{:3.3f}".format(time.perf_counter() - st))
+
+        return instance
+
+    def to_representation(self, instance):
+
+        st = time.perf_counter()
+
+        res = super(TransactionTypeRecalculateSerializer, self).to_representation(instance)
+
+        result_st = time.perf_counter() - st
+
+        _l.debug('TransactionTypeRecalculateSerializer to representation done %s' %  result_st)
+
+        return res
 
 class RecalculatePermission:
     def __init__(self, task_id=None, task_status=None, master_user=None, member=None):

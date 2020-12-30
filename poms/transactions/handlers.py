@@ -29,6 +29,7 @@ from poms.transactions.models import ComplexTransaction, TransactionTypeInput, T
 from poms.users.models import EcosystemDefault, Group
 from django.apps import apps
 
+import time
 _l = logging.getLogger('poms.transactions')
 
 
@@ -1728,7 +1729,6 @@ class TransactionTypeProcess(object):
         else:
             self.complex_transaction.date = self._now
 
-
     def execute_uniqueness_expression(self):
 
         # uniqueness below
@@ -1905,18 +1905,33 @@ class TransactionTypeProcess(object):
         event_schedules_map = {}
         actions = self.transaction_type.actions.order_by('order').all()
 
+        instruments_st = time.perf_counter()
         instrument_map = self.book_create_instruments(actions, master_user, instrument_map)
+        _l.debug('TransactionTypeProcess: book_create_instruments done: %s', "{:3.3f}".format(time.perf_counter() - instruments_st))
 
-        _l.debug('instrument_map process %s ' % instrument_map)
-
+        create_factor_st = time.perf_counter()
         self.book_create_factor_schedules(actions, instrument_map)
+        _l.debug('TransactionTypeProcess: book_create_factor_schedules done: %s', "{:3.3f}".format(time.perf_counter() - create_factor_st))
+
+        create_manual_pricing_st = time.perf_counter()
         self.book_create_manual_pricing_formulas(actions, instrument_map)
+        _l.debug('TransactionTypeProcess: book_create_manual_pricing_formulas done: %s', "{:3.3f}".format(time.perf_counter() - create_manual_pricing_st))
+
+        create_accrual_calculation_st = time.perf_counter()
         self.book_create_accrual_calculation_schedules(actions, instrument_map)
+        _l.debug('TransactionTypeProcess: book_create_accrual_calculation_schedules done: %s', "{:3.3f}".format(time.perf_counter() - create_accrual_calculation_st))
+
+        create_event_schedules_st = time.perf_counter()
         event_schedules_map = self.book_create_event_schedules(actions, instrument_map, event_schedules_map)
+        _l.debug('TransactionTypeProcess: book_create_event_schedules done: %s', "{:3.3f}".format(time.perf_counter() - create_event_schedules_st))
 
+        create_event_st = time.perf_counter()
         self.book_create_event_actions(actions, instrument_map, event_schedules_map)
+        _l.debug('TransactionTypeProcess: book_create_event_actions done: %s', "{:3.3f}".format(time.perf_counter() - create_event_st))
 
+        execute_commands_st = time.perf_counter()
         self.book_execute_commands(actions)
+        _l.debug('TransactionTypeProcess: book_execute_commands done: %s', "{:3.3f}".format(time.perf_counter() - execute_commands_st))
 
         # complex_transaction
         complex_transaction_errors = {}
@@ -1969,6 +1984,8 @@ class TransactionTypeProcess(object):
     def process_recalculate(self):
         if not self.recalculate_inputs:
             return
+
+        process_recalculate_st = time.perf_counter()
 
         inputs = {i.name: i for i in self.inputs}
 
@@ -2055,6 +2072,9 @@ class TransactionTypeProcess(object):
 
                         self._set_eval_error(errors, inp.name, inp.value_expr, e)
                         self.value_errors.append(errors)
+
+        _l.debug('TransactionTypeProcess: process_recalculate done: %s', "{:3.3f}".format(time.perf_counter() - process_recalculate_st))
+
 
     @property
     def has_errors(self):

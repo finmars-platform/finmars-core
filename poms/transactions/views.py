@@ -49,9 +49,14 @@ from poms.transactions.serializers import TransactionClassSerializer, Transactio
     ComplexTransactionLightSerializer, ComplexTransactionSimpleSerializer, \
     RecalculatePermissionTransactionSerializer, RecalculatePermissionComplexTransactionSerializer, \
     TransactionTypeLightSerializerWithInputs, TransactionTypeEvSerializer, ComplexTransactionEvSerializer, \
-    TransactionEvSerializer
+    TransactionEvSerializer, TransactionTypeRecalculateSerializer
 from poms.transactions.tasks import recalculate_permissions_transaction, recalculate_permissions_complex_transaction
 from poms.users.filters import OwnerByMasterUserFilter
+
+import logging
+import time
+_l = logging.getLogger('poms.transactions')
+
 
 
 class EventClassViewSet(AbstractClassModelViewSet):
@@ -595,6 +600,48 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
             finally:
                 if instance.has_errors:
                     transaction.set_rollback(True)
+
+    @action(detail=True, methods=['get', 'put'], url_path='recalculate', serializer_class=TransactionTypeRecalculateSerializer, permission_classes=[IsAuthenticated])
+    def recalculate(self, request, pk=None):
+
+        st = time.perf_counter()
+
+        complex_transaction_status = ComplexTransaction.PRODUCTION
+
+        transaction_type = TransactionType.objects.get(pk=pk)
+
+        context_values = self.get_context_for_book(request)
+        # But by default Context Variables overwrites default value
+        default_values = self.get_context_for_book(request)
+
+        uniqueness_reaction = request.data.get('uniqueness_reaction', None)
+
+        process_st = time.perf_counter()
+
+        instance = TransactionTypeProcess(process_mode=request.data['process_mode'], transaction_type=transaction_type,
+                                          context=self.get_serializer_context(), context_values=context_values,
+                                          default_values=default_values,
+                                          complex_transaction_status=complex_transaction_status,
+                                          uniqueness_reaction=uniqueness_reaction)
+
+        _l.debug('rebook TransactionTypeProcess done: %s', "{:3.3f}".format(time.perf_counter() - process_st))
+
+        try:
+
+            history.set_flag_addition()
+
+            serializer = self.get_serializer(instance=instance, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+
+            return Response(serializer.data)
+
+        finally:
+
+            _l.debug('rebook finaly done: %s', "{:3.3f}".format(time.perf_counter() - st))
+
+            if instance.has_errors:
+                transaction.set_rollback(True)
 
 
 class TransactionTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
@@ -1237,13 +1284,19 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
             return Response(serializer.data)
         else:
 
+            st = time.perf_counter()
+
             uniqueness_reaction = request.data.get('uniqueness_reaction', None)
+
+            process_st = time.perf_counter()
 
             instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
                                               process_mode=request.data['process_mode'],
                                               complex_transaction=complex_transaction,
                                               context=self.get_serializer_context(),
                                               uniqueness_reaction=uniqueness_reaction)
+
+            _l.debug('rebook TransactionTypeProcess done: %s', "{:3.3f}".format(time.perf_counter() - process_st))
 
             try:
                 history.set_flag_change()
@@ -1258,9 +1311,54 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
                 history.set_actor_content_object(complex_transaction)
 
                 return Response(serializer.data)
+
             finally:
+
+                _l.debug('rebook done: %s', "{:3.3f}".format(time.perf_counter() - st))
+
                 if instance.has_errors:
                     transaction.set_rollback(True)
+
+    @action(detail=True, methods=['get', 'put'], url_path='recalculate', serializer_class=TransactionTypeRecalculateSerializer, permission_classes=[IsAuthenticated])
+    def recalculate(self, request, pk=None):
+
+        st = time.perf_counter()
+
+        complex_transaction = self.get_object()
+
+        uniqueness_reaction = request.data.get('uniqueness_reaction', None)
+
+        process_st = time.perf_counter()
+
+        instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
+                                          process_mode=request.data['process_mode'],
+                                          complex_transaction=complex_transaction,
+                                          context=self.get_serializer_context(),
+                                          uniqueness_reaction=uniqueness_reaction)
+
+        _l.debug('rebook TransactionTypeProcess done: %s', "{:3.3f}".format(time.perf_counter() - process_st))
+
+        try:
+
+            if request.data['complex_transaction']:
+                request.data['complex_transaction']['status'] = ComplexTransaction.PRODUCTION
+
+            serialize_st = time.perf_counter()
+
+            serializer = self.get_serializer(instance=instance, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+
+            _l.debug('rebook serialize done: %s', "{:3.3f}".format(time.perf_counter() - serialize_st))
+
+            return Response(serializer.data)
+
+        finally:
+
+            _l.debug('rebook finaly done: %s', "{:3.3f}".format(time.perf_counter() - st))
+
+            if instance.has_errors:
+                transaction.set_rollback(True)
 
     @action(detail=True, methods=['get', 'put'], url_path='rebook-pending', serializer_class=TransactionTypeProcessSerializer, permission_classes=[IsAuthenticated])
     def rebook_pending(self, request, pk=None):
