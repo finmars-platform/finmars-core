@@ -535,6 +535,14 @@ if SERVER_TYPE == 'production':
                 'class': 'logging.StreamHandler',
                 'formatter': 'verbose'
             },
+            'filebeat-info': {
+                'level': DJANGO_LOG_LEVEL,
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': '/var/log/finmars/django-info.log',
+                'maxBytes': 1024*1024*15,  # 15MB
+                'backupCount': 10,
+                'formatter': 'verbose'
+            },
             'filebeat-error': {
                 'level': 'ERROR',
                 'class': 'logging.handlers.RotatingFileHandler',
