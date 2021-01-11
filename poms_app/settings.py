@@ -419,6 +419,97 @@ CACHES = {
 SESSION_ENGINE = "poms.http_sessions.backends.cached_db"
 SESSION_CACHE_ALIAS = 'http_session'
 
+if SERVER_TYPE == 'local':
+
+    LOGGING = {
+        'version': 1,
+        'formatters': {
+            'verbose': {
+                # 'format': '%(asctime)s %(levelname)s %(process)d/%(thread)d %(module)s - %(message)s'
+                # 'format': '[%(levelname)1.1s %(asctime)s %(process)d:%(thread)d %(name)s %(module)s:%(lineno)d] %(message)s',
+                'format': '[%(levelname)s] [%(asctime)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s',
+            },
+        },
+        'filters': {
+            'require_debug_true': {
+                '()': 'django.utils.log.RequireDebugTrue',
+            },
+            'require_debug_false': {
+                '()': 'django.utils.log.RequireDebugFalse',
+            },
+        },
+        'handlers': {
+            'console': {
+                'level': DJANGO_LOG_LEVEL,
+                'class': 'logging.StreamHandler',
+                'formatter': 'verbose'
+            },
+            'filebeat-info': {
+                'level': DJANGO_LOG_LEVEL,
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': '/var/log/finmars/django-info.log',
+                'maxBytes': 1024*1024*15,  # 15MB
+                'backupCount': 10,
+                'formatter': 'verbose'
+            },
+            'filebeat-error': {
+                'level': 'ERROR',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': '/var/log/finmars/django-error.log',
+                'maxBytes': 1024*1024*15,  # 15MB
+                'backupCount': 10,
+                'formatter': 'verbose'
+            }
+        },
+        'loggers': {
+            '': {
+                'level': 'ERROR',
+                'handlers': ['filebeat-error'],
+            },
+            'py.warnings': {
+                'handlers': ['console'],
+                'propagate': False,
+            },
+            # 'django': {
+            #     'level': DJANGO_LOG_LEVEL,
+            #     'handlers': ['console'],
+            #     'propagate': False,
+            # },
+            'django.request': {
+                'level': 'ERROR',
+                'handlers': ['console'],
+            },
+            'django_test': {
+                'handlers': ['console'],
+                'level': DJANGO_LOG_LEVEL,
+            },
+            'poms': {
+                'level': DJANGO_LOG_LEVEL,
+                'handlers': ['console'],
+                'propagate': False,
+            },
+            'celery': {
+                'level': 'INFO',
+                'handlers': ['console'],
+            },
+            'suds': {
+                'level': DJANGO_LOG_LEVEL,
+                'handlers': ['console'],
+                'propagate': False,
+            },
+            'kombu': {
+                'level': DJANGO_LOG_LEVEL,
+                'handlers': ['console'],
+                'propagate': False,
+            },
+            'werkzeug': {
+                'level': DJANGO_LOG_LEVEL,
+                'handlers': ['console'],
+                'propagate': False,
+            },
+        }
+    }
+
 if SERVER_TYPE == 'development':
 
     LOGGING = {
@@ -477,7 +568,7 @@ if SERVER_TYPE == 'development':
             # },
             'django.request': {
                 'level': 'ERROR',
-                'handlers': ['console',  'filebeat-error'],
+                'handlers': ['console'],
             },
             'django_test': {
                 'handlers': ['console'],
@@ -485,12 +576,12 @@ if SERVER_TYPE == 'development':
             },
             'poms': {
                 'level': DJANGO_LOG_LEVEL,
-                'handlers': ['console', 'filebeat-info'],
+                'handlers': ['console'],
                 'propagate': False,
             },
             'celery': {
                 'level': 'INFO',
-                'handlers': ['console', 'filebeat-info'],
+                'handlers': ['console'],
             },
             'suds': {
                 'level': DJANGO_LOG_LEVEL,

@@ -297,7 +297,7 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
                             queryset = queryset.filter(**params)
 
-                    force_qs_evaluation(queryset)
+                    # force_qs_evaluation(queryset)
 
                 i = i + 1
 
@@ -428,7 +428,7 @@ class AttributeFilter(BaseFilterBackend):
 
                             queryset = queryset.filter(**params)
 
-                    force_qs_evaluation(queryset)
+                    # force_qs_evaluation(queryset)
 
                 i = i + 1
 
