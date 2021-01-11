@@ -530,6 +530,11 @@ if SERVER_TYPE == 'production':
             },
         },
         'handlers': {
+            'console': {
+                'level': DJANGO_LOG_LEVEL,
+                'class': 'logging.StreamHandler',
+                'formatter': 'verbose'
+            },
             'filebeat-error': {
                 'level': 'ERROR',
                 'class': 'logging.handlers.RotatingFileHandler',
