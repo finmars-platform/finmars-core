@@ -236,7 +236,7 @@ def get_item(scheme, result):
             item_result = Model.objects.get(instrument=result['instrument'],
                                             pricing_policy=result['pricing_policy'],
                                             date=result['date'])
-        except Model.DoesNotExist:
+        except Exception:
 
             item_result = None
 
@@ -248,7 +248,7 @@ def get_item(scheme, result):
             item_result = Model.objects.get(currency=result['currency'], pricing_policy=result['pricing_policy'],
                                             date=result['date'])
 
-        except Model.DoesNotExist:
+        except Exception:
 
             item_result = None
 
@@ -259,7 +259,7 @@ def get_item(scheme, result):
             if 'user_code' in result:
                 item_result = Model.objects.get(master_user_id=result['master_user'], user_code=result['user_code'])
 
-        except Model.DoesNotExist:
+        except Exception:
 
             item_result = None
 

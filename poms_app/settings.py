@@ -419,90 +419,143 @@ CACHES = {
 SESSION_ENGINE = "poms.http_sessions.backends.cached_db"
 SESSION_CACHE_ALIAS = 'http_session'
 
-LOGGING = {
-    'version': 1,
-    'formatters': {
-        'verbose': {
-            # 'format': '%(asctime)s %(levelname)s %(process)d/%(thread)d %(module)s - %(message)s'
-            # 'format': '[%(levelname)1.1s %(asctime)s %(process)d:%(thread)d %(name)s %(module)s:%(lineno)d] %(message)s',
-            'format': '[%(levelname)s] [%(asctime)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s',
+if SERVER_TYPE == 'development':
+
+    LOGGING = {
+        'version': 1,
+        'formatters': {
+            'verbose': {
+                # 'format': '%(asctime)s %(levelname)s %(process)d/%(thread)d %(module)s - %(message)s'
+                # 'format': '[%(levelname)1.1s %(asctime)s %(process)d:%(thread)d %(name)s %(module)s:%(lineno)d] %(message)s',
+                'format': '[%(levelname)s] [%(asctime)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s',
+            },
         },
-    },
-    'filters': {
-        'require_debug_true': {
-            '()': 'django.utils.log.RequireDebugTrue',
+        'filters': {
+            'require_debug_true': {
+                '()': 'django.utils.log.RequireDebugTrue',
+            },
+            'require_debug_false': {
+                '()': 'django.utils.log.RequireDebugFalse',
+            },
         },
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse',
+        'handlers': {
+            'console': {
+                'level': DJANGO_LOG_LEVEL,
+                'class': 'logging.StreamHandler',
+                'formatter': 'verbose'
+            },
+            'filebeat-info': {
+                'level': DJANGO_LOG_LEVEL,
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': '/var/log/finmars/django-info.log',
+                'maxBytes': 1024*1024*15,  # 15MB
+                'backupCount': 10,
+                'formatter': 'verbose'
+            },
+            'filebeat-error': {
+                'level': 'ERROR',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': '/var/log/finmars/django-error.log',
+                'maxBytes': 1024*1024*15,  # 15MB
+                'backupCount': 10,
+                'formatter': 'verbose'
+            }
         },
-    },
-    'handlers': {
-        'console': {
-            'level': DJANGO_LOG_LEVEL,
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose'
-        },
-        'filebeat-info': {
-            'level': DJANGO_LOG_LEVEL,
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': '/var/log/finmars/django-info.log',
-            'maxBytes': 1024*1024*15,  # 15MB
-            'backupCount': 10,
-            'formatter': 'verbose'
-        },
-        'filebeat-error': {
-            'level': 'ERROR',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'filename': '/var/log/finmars/django-error.log',
-            'maxBytes': 1024*1024*15,  # 15MB
-            'backupCount': 10,
-            'formatter': 'verbose'
+        'loggers': {
+            '': {
+                'level': 'ERROR',
+                'handlers': ['filebeat-error'],
+            },
+            'py.warnings': {
+                'handlers': ['console'],
+                'propagate': False,
+            },
+            # 'django': {
+            #     'level': DJANGO_LOG_LEVEL,
+            #     'handlers': ['console'],
+            #     'propagate': False,
+            # },
+            'django.request': {
+                'level': 'ERROR',
+                'handlers': ['console',  'filebeat-error'],
+            },
+            'django_test': {
+                'handlers': ['console'],
+                'level': DJANGO_LOG_LEVEL,
+            },
+            'poms': {
+                'level': DJANGO_LOG_LEVEL,
+                'handlers': ['console', 'filebeat-info'],
+                'propagate': False,
+            },
+            'celery': {
+                'level': 'INFO',
+                'handlers': ['console', 'filebeat-info'],
+            },
+            'suds': {
+                'level': DJANGO_LOG_LEVEL,
+                'handlers': ['console'],
+                'propagate': False,
+            },
+            'kombu': {
+                'level': DJANGO_LOG_LEVEL,
+                'handlers': ['console'],
+                'propagate': False,
+            },
+            'werkzeug': {
+                'level': DJANGO_LOG_LEVEL,
+                'handlers': ['console'],
+                'propagate': False,
+            },
         }
-    },
-    'loggers': {
-        'py.warnings': {
-            'handlers': ['console'],
-            'propagate': False,
-        },
-        # 'django': {
-        #     'level': DJANGO_LOG_LEVEL,
-        #     'handlers': ['console'],
-        #     'propagate': False,
-        # },
-        'django.request': {
-            'level': 'ERROR',
-            'handlers': ['console',  'filebeat-error'],
-        },
-        'django_test': {
-            'handlers': ['console'],
-            'level': DJANGO_LOG_LEVEL,
-        },
-        'poms': {
-            'level': DJANGO_LOG_LEVEL,
-            'handlers': ['console', 'filebeat-info'],
-            'propagate': False,
-        },
-        'celery': {
-            'level': 'INFO',
-            'handlers': ['console', 'filebeat-info'],
-        },
-        'suds': {
-            'level': DJANGO_LOG_LEVEL,
-            'handlers': ['console'],
-            'propagate': False,
-        },
-        'kombu': {
-            'level': DJANGO_LOG_LEVEL,
-            'handlers': ['console'],
-            'propagate': False,
-        },
-        'werkzeug': {
-            'level': DJANGO_LOG_LEVEL,
-            'handlers': ['console'],
-            'propagate': False,
-        },
     }
-}
+
+if SERVER_TYPE == 'production':
+
+    LOGGING = {
+        'version': 1,
+        'formatters': {
+            'verbose': {
+                # 'format': '%(asctime)s %(levelname)s %(process)d/%(thread)d %(module)s - %(message)s'
+                # 'format': '[%(levelname)1.1s %(asctime)s %(process)d:%(thread)d %(name)s %(module)s:%(lineno)d] %(message)s',
+                'format': '[%(levelname)s] [%(asctime)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s',
+            },
+        },
+        'filters': {
+            'require_debug_true': {
+                '()': 'django.utils.log.RequireDebugTrue',
+            },
+            'require_debug_false': {
+                '()': 'django.utils.log.RequireDebugFalse',
+            },
+        },
+        'handlers': {
+            'filebeat-error': {
+                'level': 'ERROR',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': '/var/log/finmars/django-error.log',
+                'maxBytes': 1024*1024*15,  # 15MB
+                'backupCount': 10,
+                'formatter': 'verbose'
+            }
+        },
+        'loggers': {
+            '': {
+                'level': 'ERROR',
+                'handlers': ['filebeat-error'],
+            },
+            'django.request': {
+                'level': 'ERROR',
+                'handlers': ['console',  'filebeat-error'],
+            },
+            'poms': {
+                'level': DJANGO_LOG_LEVEL,
+                'handlers': ['console', 'filebeat-info'],
+                'propagate': False,
+            },
+        }
+    }
+
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'poms.common.pagination.PageNumberPaginationExt',
