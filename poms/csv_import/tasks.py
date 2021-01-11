@@ -236,7 +236,9 @@ def get_item(scheme, result):
             item_result = Model.objects.get(instrument=result['instrument'],
                                             pricing_policy=result['pricing_policy'],
                                             date=result['date'])
-        except Exception:
+        except Exception as e:
+
+            # _l.debug('get_item pricehistory exception %s' % e)
 
             item_result = None
 
@@ -248,7 +250,9 @@ def get_item(scheme, result):
             item_result = Model.objects.get(currency=result['currency'], pricing_policy=result['pricing_policy'],
                                             date=result['date'])
 
-        except Exception:
+        except Exception as e:
+
+            # _l.debug('get_item currencyhistory exception %s' % e)
 
             item_result = None
 
@@ -259,7 +263,9 @@ def get_item(scheme, result):
             if 'user_code' in result:
                 item_result = Model.objects.get(master_user_id=result['master_user'], user_code=result['user_code'])
 
-        except Exception:
+        except Exception as e:
+
+            # _l.debug('get_item entity exception %s' % e)
 
             item_result = None
 
@@ -279,6 +285,7 @@ def process_csv_file(master_user,
                      process_result_handler,
                      member,
                      execution_context=None):
+
     csv_fields = scheme.csv_fields.all()
     entity_fields = scheme.entity_fields.all()
 
@@ -296,283 +303,311 @@ def process_csv_file(master_user,
 
         if row_index != 0:
 
-            instance = {}
-            instance['_row_index'] = row_index
-            instance['_row'] = row
+            try:
 
-            if scheme.content_type.model != 'pricehistory' and scheme.content_type.model != 'currencyhistory':
-                instance['master_user'] = master_user
-                instance['attributes'] = []
+                instance = {}
+                instance['_row_index'] = row_index
+                instance['_row'] = row
 
-            inputs_error = []
-            executed_expressions = []
+                if scheme.content_type.model != 'pricehistory' and scheme.content_type.model != 'currencyhistory':
+                    instance['master_user'] = master_user
+                    instance['attributes'] = []
 
-            csv_row_dict_raw = {}
+                inputs_error = []
+                executed_expressions = []
 
-            error_row = {
-                'level': 'info',
-                'error_message': '',
-                'original_row_index': row_index,
-                'inputs': csv_row_dict_raw,
-                'original_row': row,
-                'error_data': {
-                    'columns': {
-                        'imported_columns': [],
-                        'converted_imported_columns': [],
-                        'data_matching': []
+                csv_row_dict_raw = {}
+
+                error_row = {
+                    'level': 'info',
+                    'error_message': '',
+                    'original_row_index': row_index,
+                    'inputs': csv_row_dict_raw,
+                    'original_row': row,
+                    'error_data': {
+                        'columns': {
+                            'imported_columns': [],
+                            'converted_imported_columns': [],
+                            'data_matching': []
+                        },
+                        'data': {
+                            'imported_columns': [],
+                            'converted_imported_columns': [],
+                            'data_matching': []
+                        }
                     },
-                    'data': {
-                        'imported_columns': [],
-                        'converted_imported_columns': [],
-                        'data_matching': []
-                    }
-                },
-                'error_reaction': 'Success'
-            }
-
-            csv_row_dict_raw = get_row_data(row, csv_fields)
-
-            executed_filter_expression = True
-
-            if scheme.filter_expr:
+                    'error_reaction': 'Success'
+                }
 
                 try:
-                    executed_filter_expression = safe_eval(scheme.filter_expr, names=csv_row_dict_raw, context={})
-                except (ExpressionEvalError, TypeError, Exception, KeyError):
+                    csv_row_dict_raw = get_row_data(row, csv_fields)
+                except Exception as e:
+                    raise Exception("Can't get row data")
 
-                    # _l.debug('Filter expression error')
+                executed_filter_expression = True
 
-                    return
+                if scheme.filter_expr:
 
-            if executed_filter_expression:
+                    try:
+                        executed_filter_expression = safe_eval(scheme.filter_expr, names=csv_row_dict_raw, context={})
+                    except (ExpressionEvalError, TypeError, Exception, KeyError):
+                        raise Exception("Can evaluate filter expression")
 
-                error_row['inputs'] = csv_row_dict_raw
+                if executed_filter_expression:
 
-                for key, value in csv_row_dict_raw.items():
-                    error_row['error_data']['columns']['imported_columns'].append(key)
-                    error_row['error_data']['data']['imported_columns'].append(value)
+                    error_row['inputs'] = csv_row_dict_raw
 
-                conversion_errors = []
+                    for key, value in csv_row_dict_raw.items():
+                        error_row['error_data']['columns']['imported_columns'].append(key)
+                        error_row['error_data']['data']['imported_columns'].append(value)
 
-                csv_row_dict = get_row_data_converted(row, csv_fields, csv_row_dict_raw, {}, conversion_errors)
+                    conversion_errors = []
 
-
-                for key, value in csv_row_dict.items():
-                    error_row['error_data']['columns']['converted_imported_columns'].append(
-                        key + ': Conversion Expression')
-                    error_row['error_data']['data']['converted_imported_columns'].append(value)
-
-                if len(conversion_errors) > 0:
-
-                    inputs_messages = []
-
-                    for input_error in inputs_error:
-                        message = '[{0}] (Imported column conversion expression, value: "{1}")'.format(
-                            input_error['field'].name, input_error['reason'])
-
-                        inputs_messages.append(message)
-
-                    error_row['error_message'] = error_row['error_message'] + '\n' + '\n' + ugettext(
-                        'Can\'t process fields: %(messages)s') % {
-                                                     'messages': ', '.join(str(m) for m in inputs_messages)
-                                                 }
-
-                    if error_handler == 'break':
-                        error_row['error_reaction'] = 'Break import'
-                        error_row['level'] = 'error'
-                        errors.append(error_row)
-
-                        return results, errors
-                    else:
-                        error_row['level'] = 'error'
-                        error_row['error_reaction'] = 'Continue import'
-
-                mapping_map = {
-                    'counterparties': CounterpartyMapping,
-                    'responsibles': ResponsibleMapping,
-                    'accounts': AccountMapping,
-                    'portfolios': PortfolioMapping,
-                    'pricing_policy': PricingPolicyMapping,
-                    'instrument': InstrumentMapping,
-                    'instrument_type': InstrumentTypeMapping,
-                    'type': AccountTypeMapping,
-                    'price_download_scheme': PriceDownloadSchemeMapping,
-                    'daily_pricing_model': DailyPricingModelMapping,
-                    'payment_size_detail': PaymentSizeDetailMapping,
-                    'pricing_condition': PricingConditionMapping,
-                    'currency': CurrencyMapping,
-                    'pricing_currency': CurrencyMapping,
-                    'accrued_currency': CurrencyMapping
-                }
-
-                relation_map = {
-                    'counterparties': Counterparty,
-                    'responsibles': Responsible,
-                    'accounts': Account,
-                    'portfolios': Portfolio,
-                    'pricing_policy': PricingPolicy,
-                    'instrument': Instrument,
-                    'instrument_type': InstrumentType,
-                    'type': AccountType,
-                    'currency': Currency,
-                    'pricing_currency': Currency,
-                    'accrued_currency': Currency
-                }
-
-                classifier_mapping_map = {
-                    'portfolio': PortfolioClassifierMapping,
-                    'instrument': InstrumentClassifierMapping,
-                    'account': AccountClassifierMapping,
-                    'responsible': ResponsibleClassifierMapping,
-                    'counterparty': CounterpartyClassifierMapping
-                }
-
-                instance_property_to_default_ecosystem_property = {
-                    'pricing_currency': 'currency',
-                    'accrued_currency': 'currency',
-                    'type': 'account_type'
-                }
-
-                for entity_field in entity_fields:
-
-                    key = entity_field.system_property_key
-
-                    if entity_field.expression != '':
-
-                        error_row['error_data']['columns']['data_matching'].append(entity_field.name)
-
-                        if get_field_type(entity_field) == 'system_attribute':
-
-                            executed_expression = None
-
-                            try:
-                                # context=self.report.context
-                                executed_expression = safe_eval(entity_field.expression, names=csv_row_dict,
-                                                                context={})
-
-                                executed_expressions.append(executed_expression)
+                    csv_row_dict = get_row_data_converted(row, csv_fields, csv_row_dict_raw, {}, conversion_errors)
 
 
-                                if key in mapping_map:
+                    for key, value in csv_row_dict.items():
+                        error_row['error_data']['columns']['converted_imported_columns'].append(
+                            key + ': Conversion Expression')
+                        error_row['error_data']['data']['converted_imported_columns'].append(value)
 
-                                    try:
+                    if len(conversion_errors) > 0:
 
-                                        instance[key] = mapping_map[key].objects.get(master_user=master_user,
-                                                                                     value=executed_expression).content_object
+                        inputs_messages = []
 
-                                    except (mapping_map[key].DoesNotExist, KeyError):
+                        for input_error in inputs_error:
+                            message = '[{0}] (Imported column conversion expression, value: "{1}")'.format(
+                                input_error['field'].name, input_error['reason'])
+
+                            inputs_messages.append(message)
+
+                        error_row['error_message'] = error_row['error_message'] + '\n' + '\n' + ugettext(
+                            'Can\'t process fields: %(messages)s') % {
+                                                         'messages': ', '.join(str(m) for m in inputs_messages)
+                                                     }
+
+                        if error_handler == 'break':
+                            error_row['error_reaction'] = 'Break import'
+                            error_row['level'] = 'error'
+                            errors.append(error_row)
+
+                            return results, errors
+                        else:
+                            error_row['level'] = 'error'
+                            error_row['error_reaction'] = 'Continue import'
+
+                    mapping_map = {
+                        'counterparties': CounterpartyMapping,
+                        'responsibles': ResponsibleMapping,
+                        'accounts': AccountMapping,
+                        'portfolios': PortfolioMapping,
+                        'pricing_policy': PricingPolicyMapping,
+                        'instrument': InstrumentMapping,
+                        'instrument_type': InstrumentTypeMapping,
+                        'type': AccountTypeMapping,
+                        'price_download_scheme': PriceDownloadSchemeMapping,
+                        'daily_pricing_model': DailyPricingModelMapping,
+                        'payment_size_detail': PaymentSizeDetailMapping,
+                        'pricing_condition': PricingConditionMapping,
+                        'currency': CurrencyMapping,
+                        'pricing_currency': CurrencyMapping,
+                        'accrued_currency': CurrencyMapping
+                    }
+
+                    relation_map = {
+                        'counterparties': Counterparty,
+                        'responsibles': Responsible,
+                        'accounts': Account,
+                        'portfolios': Portfolio,
+                        'pricing_policy': PricingPolicy,
+                        'instrument': Instrument,
+                        'instrument_type': InstrumentType,
+                        'type': AccountType,
+                        'currency': Currency,
+                        'pricing_currency': Currency,
+                        'accrued_currency': Currency
+                    }
+
+                    classifier_mapping_map = {
+                        'portfolio': PortfolioClassifierMapping,
+                        'instrument': InstrumentClassifierMapping,
+                        'account': AccountClassifierMapping,
+                        'responsible': ResponsibleClassifierMapping,
+                        'counterparty': CounterpartyClassifierMapping
+                    }
+
+                    instance_property_to_default_ecosystem_property = {
+                        'pricing_currency': 'currency',
+                        'accrued_currency': 'currency',
+                        'type': 'account_type'
+                    }
+
+                    for entity_field in entity_fields:
+
+                        key = entity_field.system_property_key
+
+                        if entity_field.expression != '':
+
+                            error_row['error_data']['columns']['data_matching'].append(entity_field.name)
+
+                            if get_field_type(entity_field) == 'system_attribute':
+
+                                executed_expression = None
+
+                                try:
+                                    # context=self.report.context
+                                    executed_expression = safe_eval(entity_field.expression, names=csv_row_dict,
+                                                                    context={})
+
+                                    executed_expressions.append(executed_expression)
+
+
+                                    if key in mapping_map:
 
                                         try:
 
-                                            if key == 'price_download_scheme':
-                                                instance[key] = PriceDownloadScheme.objects.get(master_user=master_user,
-                                                                                                scheme_name=executed_expression)
+                                            instance[key] = mapping_map[key].objects.get(master_user=master_user,
+                                                                                         value=executed_expression).content_object
 
-                                            elif key == 'daily_pricing_model':
-                                                instance[key] = DailyPricingModel.objects.get(
-                                                    system_code=executed_expression)
+                                        except (mapping_map[key].DoesNotExist, KeyError):
 
-                                            elif key == 'pricing_condition':
-                                                instance[key] = PricingCondition.objects.get(
-                                                    system_code=executed_expression)
+                                            try:
 
-                                            elif key == 'payment_size_detail':
+                                                if key == 'price_download_scheme':
+                                                    instance[key] = PriceDownloadScheme.objects.get(master_user=master_user,
+                                                                                                    scheme_name=executed_expression)
 
-                                                instance[key] = PaymentSizeDetail.objects.get(
-                                                    system_code=executed_expression)
+                                                elif key == 'daily_pricing_model':
+                                                    instance[key] = DailyPricingModel.objects.get(
+                                                        system_code=executed_expression)
 
-                                            else:
+                                                elif key == 'pricing_condition':
+                                                    instance[key] = PricingCondition.objects.get(
+                                                        system_code=executed_expression)
 
-                                                instance[key] = relation_map[key].objects.get(master_user=master_user,
-                                                                                              user_code=executed_expression)
+                                                elif key == 'payment_size_detail':
 
-                                        except (relation_map[key].DoesNotExist, KeyError):
+                                                    instance[key] = PaymentSizeDetail.objects.get(
+                                                        system_code=executed_expression)
 
-                                            if missing_data_handler == 'set_defaults':
-
-                                                ecosystem_default = EcosystemDefault.objects.get(
-                                                    master_user=master_user)
-
-                                                eco_key = key
-
-                                                if key in instance_property_to_default_ecosystem_property:
-                                                    eco_key = instance_property_to_default_ecosystem_property[key]
-
-                                                if hasattr(ecosystem_default, eco_key):
-                                                    instance[key] = getattr(ecosystem_default, eco_key)
                                                 else:
-                                                    _l.debug("Can't set default value for %s" % key)
+
+                                                    instance[key] = relation_map[key].objects.get(master_user=master_user,
+                                                                                                  user_code=executed_expression)
+
+                                            except (relation_map[key].DoesNotExist, KeyError):
+
+                                                if missing_data_handler == 'set_defaults':
+
+                                                    ecosystem_default = EcosystemDefault.objects.get(
+                                                        master_user=master_user)
+
+                                                    eco_key = key
+
+                                                    if key in instance_property_to_default_ecosystem_property:
+                                                        eco_key = instance_property_to_default_ecosystem_property[key]
+
+                                                    if hasattr(ecosystem_default, eco_key):
+                                                        instance[key] = getattr(ecosystem_default, eco_key)
+                                                    else:
+                                                        _l.debug("Can't set default value for %s" % key)
+                                                else:
+
+                                                    inputs_error.append(
+                                                        {"field": entity_field,
+                                                         "reason": "Relation does not exists"}
+                                                    )
+
+                                                    # inputs_error.append(entity_field)
+
+
+
+                                    else:
+
+                                        # _l.debug('key %s' % key)
+
+                                        if key == 'user_code':
+
+                                            if len(executed_expression) <= 25:
+
+                                                instance[key] = executed_expression
+
                                             else:
 
                                                 inputs_error.append(
                                                     {"field": entity_field,
-                                                     "reason": "Relation does not exists"}
+                                                     "reason": "The imported User Code is too large. It should be limited with 25 symbols."}
                                                 )
-
-                                                # inputs_error.append(entity_field)
-
-
-
-                                else:
-
-                                    # _l.debug('key %s' % key)
-
-                                    if key == 'user_code':
-
-                                        if len(executed_expression) <= 25:
-
-                                            instance[key] = executed_expression
 
                                         else:
 
-                                            inputs_error.append(
-                                                {"field": entity_field,
-                                                 "reason": "The imported User Code is too large. It should be limited with 25 symbols."}
-                                            )
+                                            instance[key] = executed_expression
+
+                                        # _l.debug('date instance[key] %s' % instance[key])
+
+                                        # if key == 'date':
+                                        #
+                                        #     try:
+                                        #
+                                        #         instance[key] = formula._parse_date(instance[key])
+                                        #
+                                        #         _l.debug('date instance[key] %s' % instance[key])
+                                        #
+                                        #     except (ExpressionEvalError, TypeError):
+                                        #
+                                        #         inputs_error.append(
+                                        #             {"field": entity_field,
+                                        #              "reason": "Invalid Expression"}
+                                        #         )
+
+
+                                except (ExpressionEvalError, TypeError, Exception, KeyError):
+
+                                    if missing_data_handler == 'set_defaults':
+
+                                        ecosystem_default = EcosystemDefault.objects.get(
+                                            master_user=master_user)
+
+                                        eco_key = key
+
+                                        if key in instance_property_to_default_ecosystem_property:
+                                            eco_key = instance_property_to_default_ecosystem_property[key]
+
+                                        if hasattr(ecosystem_default, eco_key):
+                                            instance[key] = getattr(ecosystem_default, eco_key)
+                                        else:
+                                            _l.debug("Can't set default value for %s" % key)
 
                                     else:
 
-                                        instance[key] = executed_expression
+                                        _l.debug('ExpressionEvalError Appending Error %s' % ExpressionEvalError)
 
-                                    # _l.debug('date instance[key] %s' % instance[key])
+                                        inputs_error.append(
+                                            {"field": entity_field,
+                                             "reason": "Invalid Expression"}
+                                        )
 
-                                    # if key == 'date':
-                                    #
-                                    #     try:
-                                    #
-                                    #         instance[key] = formula._parse_date(instance[key])
-                                    #
-                                    #         _l.debug('date instance[key] %s' % instance[key])
-                                    #
-                                    #     except (ExpressionEvalError, TypeError):
-                                    #
-                                    #         inputs_error.append(
-                                    #             {"field": entity_field,
-                                    #              "reason": "Invalid Expression"}
-                                    #         )
+                                        executed_expressions.append(ugettext('Invalid expression'))
 
+                                # _l.debug('executed_expression %s' % executed_expression)
 
-                            except (ExpressionEvalError, TypeError, Exception, KeyError):
+                            if get_field_type(entity_field) == 'dynamic_attribute':
 
-                                if missing_data_handler == 'set_defaults':
+                                executed_attr = {}
+                                executed_attr['dynamic_attribute_id'] = entity_field.dynamic_attribute_id
 
-                                    ecosystem_default = EcosystemDefault.objects.get(
-                                        master_user=master_user)
+                                executed_expression = None
 
-                                    eco_key = key
+                                try:
+                                    # context=self.report.context
+                                    executed_expression = safe_eval(entity_field.expression, names=csv_row_dict,
+                                                                    context={})
 
-                                    if key in instance_property_to_default_ecosystem_property:
-                                        eco_key = instance_property_to_default_ecosystem_property[key]
+                                    executed_expressions.append(executed_expression)
 
-                                    if hasattr(ecosystem_default, eco_key):
-                                        instance[key] = getattr(ecosystem_default, eco_key)
-                                    else:
-                                        _l.debug("Can't set default value for %s" % key)
+                                except (ExpressionEvalError, TypeError, Exception, KeyError):
 
-                                else:
-
-                                    _l.debug('ExpressionEvalError Appending Error %s' % ExpressionEvalError)
-
+                                    # inputs_error.append(entity_field)
                                     inputs_error.append(
                                         {"field": entity_field,
                                          "reason": "Invalid Expression"}
@@ -580,149 +615,136 @@ def process_csv_file(master_user,
 
                                     executed_expressions.append(ugettext('Invalid expression'))
 
-                            # _l.debug('executed_expression %s' % executed_expression)
+                                attr_type = GenericAttributeType.objects.get(pk=executed_attr['dynamic_attribute_id'])
 
-                        if get_field_type(entity_field) == 'dynamic_attribute':
+                                if attr_type.value_type == 30:
 
-                            executed_attr = {}
-                            executed_attr['dynamic_attribute_id'] = entity_field.dynamic_attribute_id
-
-                            executed_expression = None
-
-                            try:
-                                # context=self.report.context
-                                executed_expression = safe_eval(entity_field.expression, names=csv_row_dict,
-                                                                context={})
-
-                                executed_expressions.append(executed_expression)
-
-                            except (ExpressionEvalError, TypeError, Exception, KeyError):
-
-                                # inputs_error.append(entity_field)
-                                inputs_error.append(
-                                    {"field": entity_field,
-                                     "reason": "Invalid Expression"}
-                                )
-
-                                executed_expressions.append(ugettext('Invalid expression'))
-
-                            attr_type = GenericAttributeType.objects.get(pk=executed_attr['dynamic_attribute_id'])
-
-                            if attr_type.value_type == 30:
-
-                                if scheme.content_type.model in classifier_mapping_map:
-
-                                    try:
-                                        executed_attr['executed_expression'] = classifier_mapping_map[
-                                            scheme.content_type.model].objects.get(
-                                            master_user=master_user,
-                                            value=executed_expression, attribute_type=attr_type).content_object
-
-                                    except (classifier_mapping_map[scheme.content_type.model].DoesNotExist, KeyError):
+                                    if scheme.content_type.model in classifier_mapping_map:
 
                                         try:
+                                            executed_attr['executed_expression'] = classifier_mapping_map[
+                                                scheme.content_type.model].objects.get(
+                                                master_user=master_user,
+                                                value=executed_expression, attribute_type=attr_type).content_object
 
-                                            # _l.debug('Lookup by name in classifier')
+                                        except (classifier_mapping_map[scheme.content_type.model].DoesNotExist, KeyError):
 
-                                            executed_attr['executed_expression'] = GenericClassifier.objects.get(
-                                                attribute_type=attr_type, name=executed_expression)
+                                            try:
 
-                                        except (GenericClassifier.DoesNotExist, KeyError):
+                                                # _l.debug('Lookup by name in classifier')
 
-                                            if classifier_handler == 'append':
+                                                executed_attr['executed_expression'] = GenericClassifier.objects.get(
+                                                    attribute_type=attr_type, name=executed_expression)
 
-                                                classifier_obj = GenericClassifier.objects.create(
-                                                    attribute_type=attr_type,
-                                                    name=executed_expression)
+                                            except (GenericClassifier.DoesNotExist, KeyError):
 
-                                                executed_attr['executed_expression'] = classifier_obj
+                                                if classifier_handler == 'append':
 
-                                            else:
+                                                    classifier_obj = GenericClassifier.objects.create(
+                                                        attribute_type=attr_type,
+                                                        name=executed_expression)
 
-                                                executed_attr['executed_expression'] = None
+                                                    executed_attr['executed_expression'] = classifier_obj
 
-                                                # inputs_error.append(entity_field)
-                                                #
-                                                # _l.debug('%s classifier mapping  does not exist' % scheme.content_type.model)
-                                                # _l.debug('expresion: %s ' % executed_expression)
+                                                else:
 
-                            else:
+                                                    executed_attr['executed_expression'] = None
 
-                                executed_attr['executed_expression'] = executed_expression
+                                                    # inputs_error.append(entity_field)
+                                                    #
+                                                    # _l.debug('%s classifier mapping  does not exist' % scheme.content_type.model)
+                                                    # _l.debug('expresion: %s ' % executed_expression)
 
-                            instance['attributes'].append(executed_attr)
+                                else:
 
-                error_row['error_data']['data']['data_matching'] = executed_expressions
+                                    executed_attr['executed_expression'] = executed_expression
 
-                if inputs_error:
+                                instance['attributes'].append(executed_attr)
 
-                    inputs_messages = []
+                    error_row['error_data']['data']['data_matching'] = executed_expressions
 
-                    for input_error in inputs_error:
-                        message = '[{0}] ({1})'.format(input_error['field'].name, input_error['reason'])
+                    if inputs_error:
 
-                        inputs_messages.append(message)
+                        inputs_messages = []
 
-                    error_row['level'] = 'error'
-                    error_row['error_message'] = error_row['error_message'] + '\n' + '\n' + ugettext(
-                        'Can\'t process fields: %(inputs)s') % {
-                                                     'inputs': ', '.join(str(m) for m in inputs_messages)}
+                        for input_error in inputs_error:
+                            message = '[{0}] ({1})'.format(input_error['field'].name, input_error['reason'])
 
-                    error_row['error_reaction'] = 'Continue import'
+                            inputs_messages.append(message)
 
-                    if error_handler == 'break':
                         error_row['level'] = 'error'
-                        error_row['error_reaction'] = 'Break import'
+                        error_row['error_message'] = error_row['error_message'] + '\n' + '\n' + ugettext(
+                            'Can\'t process fields: %(inputs)s') % {
+                                                         'inputs': ', '.join(str(m) for m in inputs_messages)}
+
+                        error_row['error_reaction'] = 'Continue import'
+
+                        if error_handler == 'break':
+                            error_row['level'] = 'error'
+                            error_row['error_reaction'] = 'Break import'
+                            errors.append(error_row)
+
+                            return results, errors
+
                         errors.append(error_row)
 
-                        return results, errors
+                    else:
 
-                    errors.append(error_row)
+                        # error_row['error_reaction'] = 'Success'
+
+                        try:
+
+                            instance, error_row = process_result_handler(instance, error_row, scheme, error_handler, mode,
+                                                                         member, master_user)
+
+                            results.append(instance)
+                            errors.append(error_row)
+
+                            if error_handler == 'break' and error_row['level'] == 'error':
+                                error_row['error_reaction'] = 'Break import'
+                                return results, errors
+
+                        except Exception as e:
+
+                            raise Exception("Result processing error")
 
                 else:
 
-                    # error_row['error_reaction'] = 'Success'
-
-                    instance, error_row = process_result_handler(instance, error_row, scheme, error_handler, mode,
-                                                                 member, master_user)
-
-                    results.append(instance)
+                    error_row['level'] = 'info'
+                    error_row['error_message'] = 'Row was skipped'
+                    error_row['error_reaction'] = 'Skipped'
                     errors.append(error_row)
 
-                    if error_handler == 'break' and error_row['level'] == 'error':
-                        error_row['error_reaction'] = 'Break import'
-                        return results, errors
+            except Exception as e:
 
-            else:
+                error_row['error_message'] = error_row['error_message'] + '\n' + '\n' + ugettext(
+                    'Unhandled Error. %s' % e)
 
-                error_row['level'] = 'info'
-                error_row['error_message'] = 'Row was skipped'
-                error_row['error_reaction'] = 'Skipped'
-                errors.append(error_row)
+            finally:
 
-        if row_index != 0: # skip header from counting
-            processed_row_index = processed_row_index + 1
+                if row_index != 0: # skip header from counting
+                    processed_row_index = processed_row_index + 1
 
-        task_instance.processed_rows = processed_row_index
+                task_instance.processed_rows = processed_row_index
 
-        # _l.debug('task_instance.processed_rows: %s', task_instance.processed_rows)
+                # _l.debug('task_instance.processed_rows: %s', task_instance.processed_rows)
 
-        send_websocket_message(data={
-            'type': 'simple_import_status',
-            'payload': {'task_id': task_instance.task_id,
-                        'state': Task.STATUS_PENDING,
-                        'processed_rows': task_instance.processed_rows,
-                        'total_rows': task_instance.total_rows,
-                        'scheme_name': scheme.scheme_name,
-                        'file_name': task_instance.filename}
-        }, level="member",
-            context={"master_user": master_user, "member": member})
+                send_websocket_message(data={
+                    'type': 'simple_import_status',
+                    'payload': {'task_id': task_instance.task_id,
+                                'state': Task.STATUS_PENDING,
+                                'processed_rows': task_instance.processed_rows,
+                                'total_rows': task_instance.total_rows,
+                                'scheme_name': scheme.scheme_name,
+                                'file_name': task_instance.filename}
+                }, level="member",
+                    context={"master_user": master_user, "member": member})
 
-        # Deprecated
-        update_state(task_id=task_instance.task_id, state=Task.STATUS_PENDING,
-                     meta={'processed_rows': task_instance.processed_rows,
-                           'total_rows': task_instance.total_rows, 'scheme_name': scheme.scheme_name,
-                           'file_name': task_instance.filename})
+                # Deprecated
+                update_state(task_id=task_instance.task_id, state=Task.STATUS_PENDING,
+                             meta={'processed_rows': task_instance.processed_rows,
+                                   'total_rows': task_instance.total_rows, 'scheme_name': scheme.scheme_name,
+                                   'file_name': task_instance.filename})
 
     return results, errors
 
