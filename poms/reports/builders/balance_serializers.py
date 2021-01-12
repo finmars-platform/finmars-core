@@ -635,7 +635,7 @@ class ReportSerializer(ReportSerializerWithLogs):
                                             value = formula.safe_eval('str(item)', names={'item': value},
                                                                       context=self.context)
                                         except formula.InvalidExpression:
-                                            value = ugettext('Invalid expression')
+                                            value = ugettext('Invalid expression (Type conversion error)')
                                     else:
                                         value = None
 
@@ -646,7 +646,7 @@ class ReportSerializer(ReportSerializerWithLogs):
                                             value = formula.safe_eval('float(item)', names={'item': value},
                                                                       context=self.context)
                                         except formula.InvalidExpression:
-                                            value = ugettext('Invalid expression')
+                                            value = ugettext('Invalid expression (Type conversion error)')
                                     else:
                                         value = None
                                 elif cf['value_type'] == 40:
@@ -656,7 +656,7 @@ class ReportSerializer(ReportSerializerWithLogs):
                                             value = formula.safe_eval("parse_date(item, '%d/%m/%Y')", names={'item': value},
                                                                       context=self.context)
                                         except formula.InvalidExpression:
-                                            value = ugettext('Invalid expression')
+                                            value = ugettext('Invalid expression (Type conversion error)')
                                     else:
                                         value = None
 
