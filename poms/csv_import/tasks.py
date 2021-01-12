@@ -22,8 +22,8 @@ from django.apps import apps
 from poms.integrations.models import CounterpartyMapping, AccountMapping, ResponsibleMapping, PortfolioMapping, \
     PortfolioClassifierMapping, AccountClassifierMapping, ResponsibleClassifierMapping, CounterpartyClassifierMapping, \
     PricingPolicyMapping, InstrumentMapping, CurrencyMapping, InstrumentTypeMapping, PaymentSizeDetailMapping, \
-    DailyPricingModelMapping, PriceDownloadSchemeMapping, InstrumentClassifierMapping, AccountTypeMapping, \
-    PriceDownloadScheme, Task, PricingConditionMapping
+    DailyPricingModelMapping, InstrumentClassifierMapping, AccountTypeMapping, \
+    Task, PricingConditionMapping
 
 from poms.portfolios.models import Portfolio
 from poms.currencies.models import Currency
@@ -405,7 +405,6 @@ def process_csv_file(master_user,
                         'instrument': InstrumentMapping,
                         'instrument_type': InstrumentTypeMapping,
                         'type': AccountTypeMapping,
-                        'price_download_scheme': PriceDownloadSchemeMapping,
                         'daily_pricing_model': DailyPricingModelMapping,
                         'payment_size_detail': PaymentSizeDetailMapping,
                         'pricing_condition': PricingConditionMapping,
@@ -473,11 +472,7 @@ def process_csv_file(master_user,
 
                                             try:
 
-                                                if key == 'price_download_scheme':
-                                                    instance[key] = PriceDownloadScheme.objects.get(master_user=master_user,
-                                                                                                    scheme_name=executed_expression)
-
-                                                elif key == 'daily_pricing_model':
+                                                if key == 'daily_pricing_model':
                                                     instance[key] = DailyPricingModel.objects.get(
                                                         system_code=executed_expression)
 
