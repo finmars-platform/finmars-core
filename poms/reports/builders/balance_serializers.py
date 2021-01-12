@@ -1000,7 +1000,7 @@ def serialize_report_item_instrument(item):
             "classifier": attribute.classifier_id
         }
 
-        if attribute.classifier:
+        if attribute.classifier_id:
             attr_result["classifier_object"] = {
                 "id": attribute.classifier.id,
                 "name": attribute.classifier.name
@@ -1159,7 +1159,7 @@ def serialize_price_checker_item_instrument(item):
             "classifier": attribute.classifier_id
         }
 
-        if attribute.classifier:
+        if attribute.classifier_id:
             attr_result["classifier_object"] = {
                 "id": attribute.classifier.id,
                 "name": attribute.classifier.name

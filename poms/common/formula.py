@@ -92,6 +92,8 @@ def _int(a):
 def _float(a):
     return float(a)
 
+def _bool(a):
+    return bool(a)
 
 def _round(a, ndigits=None):
     if ndigits is not None:
@@ -1771,6 +1773,7 @@ FUNCTIONS = [
 
     SimpleEval2Def('int', _int),
     SimpleEval2Def('float', _float),
+    SimpleEval2Def('bool', _bool),
     SimpleEval2Def('round', _round),
     SimpleEval2Def('trunc', _trunc),
     SimpleEval2Def('abs', _abs),
@@ -2269,6 +2272,9 @@ def register_fun(name, callback):
 def value_prepare(orig):
     def _dict(data):
         ret = OrderedDict()
+
+        from poms.obj_attrs.models import GenericAttributeType
+
         for k, v in data.items():
             if k in ['user_object_permissions', 'group_object_permissions', 'object_permissions',
                      'granted_permissions']:
@@ -2278,8 +2284,6 @@ def value_prepare(orig):
 
                 if 'attributes' not in ret:
                     ret[k] = {}
-
-                from poms.obj_attrs.models import GenericAttributeType
 
                 # oattrs = _value(v)
                 # nattrs = OrderedDict()
