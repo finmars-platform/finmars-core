@@ -8,6 +8,7 @@ from rest_framework.settings import api_settings
 from django.utils import six
 from django.conf import settings
 
+
 import logging
 _l = logging.getLogger('poms.common')
 
@@ -42,6 +43,7 @@ class PageNumberPaginationExt(PageNumberPagination):
             page_number = paginator.num_pages
 
         _l.debug('post_paginate_queryset page_number %s' % page_number)
+        _l.debug('post_paginate_queryset page_size %s' % page_size)
         _l.debug('post_paginate_queryset django_paginator_class %s' % self.django_paginator_class)
 
         try:
@@ -61,6 +63,7 @@ class PageNumberPaginationExt(PageNumberPagination):
         _l.debug('post_paginate_queryset before list page')
 
         list_page_st = time.perf_counter()
+
         res = list(self.page)
 
         _l.debug('res %s' % len(res))

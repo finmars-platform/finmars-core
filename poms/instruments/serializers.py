@@ -836,6 +836,7 @@ class InstrumentEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttri
 
     class Meta:
         model = Instrument
+
         fields = [
             'id', 'master_user',
 
@@ -850,7 +851,7 @@ class InstrumentEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttri
 
             'pricing_condition', 'pricing_condition_object',
             'payment_size_detail', 'payment_size_detail_object',
-    
+
             'user_text_1', 'user_text_2', 'user_text_3',
 
             'reference_for_pricing',
@@ -859,6 +860,7 @@ class InstrumentEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttri
             'default_price', 'default_accrued'
 
         ]
+
 
     def to_representation(self, instance):
 

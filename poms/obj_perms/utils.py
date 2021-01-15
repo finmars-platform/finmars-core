@@ -433,8 +433,11 @@ def obj_perms_prefetch_one(lookup, model):
         # Prefetch(group_object_permissions, queryset=group_obj_perms_model.objects.select_related(
         #     'group', 'permission', 'permission__content_type')),
 
+        # Prefetch(object_permissions, queryset=GenericObjectPermission.objects.select_related(
+        #     'group', 'member', 'permission', 'permission__content_type')),
+
         Prefetch(object_permissions, queryset=GenericObjectPermission.objects.select_related(
-            'group', 'member', 'permission', 'permission__content_type')),
+            'permission')),
     ]
 
 

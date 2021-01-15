@@ -713,10 +713,10 @@ class InstrumentEvFilterSet(FilterSet):
         model = Instrument
         fields = []
 
+
 # List method for Entity Viewer
 class InstrumentEvViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Instrument.objects.select_related(
-        'master_user',
         'instrument_type',
         'instrument_type__instrument_class',
         'accrued_currency',
