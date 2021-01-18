@@ -237,6 +237,8 @@ class BalanceReportBuilderSql:
                            
                            instrument_id,
                            portfolio_id,
+                           
+                           transaction_class_id,
               
                            strategy1_cash_id,
                            strategy2_cash_id,
@@ -277,6 +279,9 @@ class BalanceReportBuilderSql:
                     
                            instrument_id,
                            portfolio_id,
+                           
+                           transaction_class_id,
+                           
                            strategy1_cash_id,
                            strategy2_cash_id,
                            strategy3_cash_id,
@@ -310,6 +315,9 @@ class BalanceReportBuilderSql:
                     
                            instrument_id,
                            portfolio_id,
+                           
+                           transaction_class_id,
+                           
                            strategy1_cash_id,
                            strategy2_cash_id,
                            strategy3_cash_id,
@@ -1081,8 +1089,10 @@ class BalanceReportBuilderSql:
                               {consolidated_position_columns}
                               instrument_id,
                               SUM(position_size_with_sign) as position_size
-                            from filtered_transactions
-                            where min_date <= '{report_date}' and master_user_id = {master_user_id}
+                            from filtered_transactions 
+                            where min_date <= '{report_date}' 
+                            and master_user_id = {master_user_id}
+                            and transaction_class_id in (1,2)
                             group by
                               {consolidated_position_columns}
                               instrument_id) as t
