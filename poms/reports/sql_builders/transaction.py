@@ -61,6 +61,7 @@ class TransactionReportBuilderSql:
                   tc.code as complex_transaction_code,
                   tc.text as complex_transaction_text,
                   tc.date as complex_transaction_date,
+                  tc.transaction_unique_code as transaction_unique_code,
                   -- complex transaction user fields
                   tc.user_text_1 as complex_transaction_user_text_1,
                   tc.user_text_2 as complex_transaction_user_text_2,
