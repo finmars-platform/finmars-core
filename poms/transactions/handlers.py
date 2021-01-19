@@ -1961,11 +1961,11 @@ class TransactionTypeProcess(object):
 
         self.execute_complex_transaction_main_expressions()
 
-        self.execute_uniqueness_expression()
-
         self.execute_user_fields_expressions()
 
         self.execute_recon_fields_expressions()
+
+        self.execute_uniqueness_expression()
 
         self.complex_transaction.save()  # save executed text and date expression
 
