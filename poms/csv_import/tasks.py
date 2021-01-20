@@ -365,7 +365,6 @@ def process_csv_file(master_user,
 
                     csv_row_dict = get_row_data_converted(row, csv_fields, csv_row_dict_raw, {}, conversion_errors)
 
-
                     for key, value in csv_row_dict.items():
                         error_row['error_data']['columns']['converted_imported_columns'].append(
                             key + ': Conversion Expression')
@@ -398,7 +397,6 @@ def process_csv_file(master_user,
                         'instrument': InstrumentMapping,
                         'instrument_type': InstrumentTypeMapping,
                         'type': AccountTypeMapping,
-                        'daily_pricing_model': DailyPricingModelMapping,
                         'payment_size_detail': PaymentSizeDetailMapping,
                         'pricing_condition': PricingConditionMapping,
                         'currency': CurrencyMapping,
@@ -465,11 +463,7 @@ def process_csv_file(master_user,
 
                                             try:
 
-                                                if key == 'daily_pricing_model':
-                                                    instance[key] = DailyPricingModel.objects.get(
-                                                        system_code=executed_expression)
-
-                                                elif key == 'pricing_condition':
+                                                if key == 'pricing_condition':
                                                     instance[key] = PricingCondition.objects.get(
                                                         system_code=executed_expression)
 
@@ -654,6 +648,8 @@ def process_csv_file(master_user,
 
                         except Exception as e:
 
+                            _l.info('Result processing error %s ' % e)
+
                             raise Exception("Result processing error")
 
                 else:
@@ -664,7 +660,7 @@ def process_csv_file(master_user,
 
             except Exception as e:
 
-                error_row['error_message'] = error_row['error_message'] + '\n' + '\n' + ugettext(
+                error_row['error_message'] = error_row['error_message'] + ugettext(
                     'Unhandled Error. %s' % e)
 
             finally:

@@ -1592,7 +1592,7 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
                 error_rows['level'] = 'error'
 
                 _l.debug('can\'t process rule expression', exc_info=True)
-                error_rows['error_message'] = error_rows['error_message'] + '\n' + '\n' + str(ugettext(
+                error_rows['error_message'] = error_rows['error_message'] + '\n' + str(ugettext(
                     'Can\'t eval rule expression'))
                 instance.error_rows.append(error_rows)
                 if instance.break_on_error:
@@ -1662,7 +1662,7 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
 
                         error_rows['level'] = 'error'
 
-                        error_rows['error_message'] = error_rows['error_message'] + '\n' + '\n' + str(ugettext(
+                        error_rows['error_message'] = error_rows['error_message'] + '\n' + str(ugettext(
                             'Can\'t process fields: %(fields)s') % {
                                                                                                           'fields': ', '.join(
                                                                                                               '[' + f.transaction_type_input.name + '] ' + '( TType: ' + rule_value + ')'
