@@ -386,15 +386,8 @@ def process_csv_file(master_user,
                                                          'messages': ', '.join(str(m) for m in inputs_messages)
                                                      }
 
-                        if error_handler == 'break':
-                            error_row['error_reaction'] = 'Break import'
-                            error_row['level'] = 'error'
-                            errors.append(error_row)
-
-                            return results, errors
-                        else:
-                            error_row['level'] = 'error'
-                            error_row['error_reaction'] = 'Continue import'
+                        error_row['level'] = 'error'
+                        error_row['error_reaction'] = 'Continue import'
 
                     mapping_map = {
                         'counterparties': CounterpartyMapping,
@@ -513,13 +506,7 @@ def process_csv_file(master_user,
                                                          "reason": "Relation does not exists"}
                                                     )
 
-                                                    # inputs_error.append(entity_field)
-
-
-
                                     else:
-
-                                        # _l.debug('key %s' % key)
 
                                         if key == 'user_code':
 
@@ -537,24 +524,6 @@ def process_csv_file(master_user,
                                         else:
 
                                             instance[key] = executed_expression
-
-                                        # _l.debug('date instance[key] %s' % instance[key])
-
-                                        # if key == 'date':
-                                        #
-                                        #     try:
-                                        #
-                                        #         instance[key] = formula._parse_date(instance[key])
-                                        #
-                                        #         _l.debug('date instance[key] %s' % instance[key])
-                                        #
-                                        #     except (ExpressionEvalError, TypeError):
-                                        #
-                                        #         inputs_error.append(
-                                        #             {"field": entity_field,
-                                        #              "reason": "Invalid Expression"}
-                                        #         )
-
 
                                 except (ExpressionEvalError, TypeError, Exception, KeyError):
 
@@ -674,18 +643,7 @@ def process_csv_file(master_user,
 
                         error_row['error_reaction'] = 'Continue import'
 
-                        if error_handler == 'break':
-                            error_row['level'] = 'error'
-                            error_row['error_reaction'] = 'Break import'
-                            errors.append(error_row)
-
-                            return results, errors
-
-                        errors.append(error_row)
-
                     else:
-
-                        # error_row['error_reaction'] = 'Success'
 
                         try:
 
@@ -693,11 +651,6 @@ def process_csv_file(master_user,
                                                                          member, master_user)
 
                             results.append(instance)
-                            errors.append(error_row)
-
-                            if error_handler == 'break' and error_row['level'] == 'error':
-                                error_row['error_reaction'] = 'Break import'
-                                return results, errors
 
                         except Exception as e:
 
@@ -708,7 +661,6 @@ def process_csv_file(master_user,
                     error_row['level'] = 'info'
                     error_row['error_message'] = 'Row was skipped'
                     error_row['error_reaction'] = 'Skipped'
-                    errors.append(error_row)
 
             except Exception as e:
 
@@ -720,9 +672,11 @@ def process_csv_file(master_user,
                 if row_index != 0: # skip header from counting
                     processed_row_index = processed_row_index + 1
 
+                errors.append(error_row)
+
                 task_instance.processed_rows = processed_row_index
 
-                # _l.debug('task_instance.processed_rows: %s', task_instance.processed_rows)
+                _l.debug('task_instance.processed_rows: %s', task_instance.processed_rows)
 
                 send_websocket_message(data={
                     'type': 'simple_import_status',
@@ -740,6 +694,11 @@ def process_csv_file(master_user,
                              meta={'processed_rows': task_instance.processed_rows,
                                    'total_rows': task_instance.total_rows, 'scheme_name': scheme.scheme_name,
                                    'file_name': task_instance.filename})
+
+                if error_handler == 'break' and error_row['level'] == 'error':
+                    error_row['error_reaction'] = 'Break import'
+
+                    return results, errors
 
     return results, errors
 
