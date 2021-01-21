@@ -432,11 +432,13 @@ def process_csv_file(master_user,
                         'type': 'account_type'
                     }
 
+                    excluded_fields = ['price_download_scheme', 'daily_pricing_model']
+
                     for entity_field in entity_fields:
 
                         key = entity_field.system_property_key
 
-                        if entity_field.expression != '':
+                        if entity_field.expression != '' and key not in excluded_fields:
 
                             error_row['error_data']['columns']['data_matching'].append(entity_field.name)
 
