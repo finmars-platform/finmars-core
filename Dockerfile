@@ -23,7 +23,7 @@ RUN curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.
 
 ADD requirements.txt /var/app/
 RUN python3 -m venv /var/app-venv
-RUN /var/app-venv/bin/pip install -U pip wheel
+RUN /var/app-venv/bin/pip install -U pip wheel uwsgitop
 RUN /var/app-venv/bin/pip install -r /var/app/requirements.txt
 
 ADD docker/finmars-run.sh /var/app/docker/finmars-run.sh
