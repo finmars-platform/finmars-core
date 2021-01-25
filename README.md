@@ -40,7 +40,7 @@
 Success!
 
 
-How to compile django app
+How to run django app
 
 1) Activate venv
 
@@ -58,6 +58,12 @@ How to compile django app
 
    `REDIS_HOST=localhost DB_NAME=finmars_dev DB_USER=postgres DB_PASSWORD=postgres DB_HOST=localhost DB_PORT=5434 dist/backend/backend manage.py runserver 8080`
    
+Profile uWSGI server 
+1) Activate venv  
+`source /var/app-venv/bin/activate`
+2) Run Profiler  
+`uwsgitop /tmp/stats.socket`
+
 
 ## Backend Settings
 
@@ -83,6 +89,8 @@ P.S. You also need to specify your nginx config to route correctly.
 `Dokerfile` - тот файл который использует Jenkins для сборки итогового билда
 
 `docker` - набор скриптов которые использует Dokerfile для итогового image
+
+
 
 
 Что можно сделать
