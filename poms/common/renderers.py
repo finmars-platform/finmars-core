@@ -46,10 +46,13 @@ class CustomJSONEncoder(JSONEncoder):
             else:
                 return _repr(o)
 
-            if not allow_nan:
-                raise ValueError(
-                    "Out of range float values are not JSON compliant: " +
-                    repr(o))
+            # Somehow inf get passed and exception throwed
+            # but we converted inf to null
+
+            # if not allow_nan:
+            #     raise ValueError(
+            #         "Out of range float values are not JSON compliant: " +
+            #         repr(o))
 
             return text
 
