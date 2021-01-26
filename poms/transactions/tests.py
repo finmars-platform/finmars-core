@@ -22,10 +22,10 @@ class TransactionTypeGroupApiTestCase(BaseNamedModelTestCase, BaseApiWithPermiss
         self._change_permission = 'change_transactiontypegroup'
 
     def _create_obj(self, name='transaction_type_group'):
-        return self.create_transaction_type_group(name, self._a)
+        return self.create_transaction_type_group(name, self._a_master_user)
 
     def _get_obj(self, name='transaction_type_group'):
-        return self.get_transaction_type_group(name, self._a)
+        return self.get_transaction_type_group(name, self._a_master_user)
 
 
 class TransactionTypeApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase, BaseApiWithTagsTestCase):
@@ -38,18 +38,18 @@ class TransactionTypeApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTe
         self._url_object = '/api/v1/transactions/transaction-type/%s/'
         # self._change_permission = 'change_transactiontype'
 
-        self.group_def = self.create_transaction_type_group('-', self._a)
-        self.assign_perms(self.group_def, self._a, users=[self._a0, self._a1, self._a2], groups=['g1', 'g2'],
-                          perms=get_perms_codename(self.group_def, ['change', 'view']))
+        self.group_def = self.get_transaction_type_group('-', self._a_master_user)
+        # self.assign_perms(self.group_def, self._a, users=[self._a0, self._a1, self._a2], groups=['g1', 'g2'],
+        #                   perms=get_perms_codename(self.group_def, ['change', 'view']))
 
     def _create_obj(self, name='transaction_type'):
-        return self.create_transaction_type(name, self._a, group=self.group_def)
+        return self.create_transaction_type(name, self._a_master_user, group=self.group_def)
 
     def _get_obj(self, name='transaction_type'):
-        return self.get_transaction_type_group(name, self._a)
+        return self.get_transaction_type_group(name, self._a_master_user)
 
     def _make_new_data(self, **kwargs):
-        group = self.get_transaction_type_group(kwargs['group'], self._a) if 'group' in kwargs else self.group_def
+        group = self.get_transaction_type_group(kwargs['group'], self._a_master_user) if 'group' in kwargs else self.group_def
         kwargs['group'] = group.id
 
         if 'display_expr' not in kwargs:
@@ -108,7 +108,7 @@ class TransactionAttributeTypeApiTestCase(BaseAttributeTypeApiTestCase):
 #                                       accrued_currency=accrued_currency)
 #
 #     def _get_obj(self, name='instrument'):
-#         return self.get_instrument(name, self._a)
+#         return self.get_instrument(name, self._a_master_user)
 #
 #     def _make_new_data(self, **kwargs):
 #         instrument_type = self.get_instrument_type(kwargs.get('instrument_type', '-'), self._a)

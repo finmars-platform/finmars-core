@@ -508,8 +508,6 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
 
     def delete_matched_classifier_node_mapping(self, instance, node):
 
-        print('delete node %s' % node)
-
         if instance.content_type.model == 'portfolio':
             PortfolioClassifierMapping.objects.filter(attribute_type=instance,
                                                       value=node.name).delete()
@@ -535,8 +533,6 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
         master_user =  get_master_user_from_context(self.context)
 
         items = instance.content_type.model_class().objects.filter(master_user=master_user)
-
-        print('items len %s' % len(items))
 
         for item in items:
 

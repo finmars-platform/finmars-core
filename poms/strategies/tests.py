@@ -23,10 +23,10 @@ class BaseStrategyGroupApiTestCase(BaseNamedModelTestCase, BaseApiWithPermission
         # self._change_permission = 'change_strategy%s' % self.strategy_code
 
     def _create_obj(self, name='strategy'):
-        return self.create_strategy_group(self.strategy_code, name, self._a)
+        return self.create_strategy_group(self.strategy_code, name, self._a_master_user)
 
     def _get_obj(self, name='strategy'):
-        return self.get_strategy_group(self.strategy_code, name, self._a)
+        return self.get_strategy_group(self.strategy_code, name, self._a_master_user)
 
 
 class BaseStrategySubgroupApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase, BaseApiWithTagsTestCase):
@@ -41,13 +41,13 @@ class BaseStrategySubgroupApiTestCase(BaseNamedModelTestCase, BaseApiWithPermiss
         # self._change_permission = 'change_strategy%s' % self.strategy_code
 
     def _create_obj(self, name='strategy-subgroup'):
-        return self.create_strategy_subgroup(self.strategy_code, name, self._a)
+        return self.create_strategy_subgroup(self.strategy_code, name, self._a_master_user)
 
     def _get_obj(self, name='strategy-subgroup'):
-        return self.get_strategy_subgroup(self.strategy_code, name, self._a)
+        return self.get_strategy_subgroup(self.strategy_code, name, self._a_master_user)
 
     def _make_new_data(self, **kwargs):
-        group = self.get_strategy_group(self.strategy_code, kwargs.get('group', '-'), self._a)
+        group = self.get_strategy_group(self.strategy_code, kwargs.get('group', '-'), self._a_master_user)
         data = super(BaseStrategySubgroupApiTestCase, self)._make_new_data(group=group.id, **kwargs)
         return data
 
@@ -64,13 +64,13 @@ class BaseStrategyApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestC
         # self._change_permission = 'change_strategy%s' % self.strategy_code
 
     def _create_obj(self, name='strategy'):
-        return self.create_strategy(self.strategy_code, name, self._a)
+        return self.create_strategy(self.strategy_code, name, self._a_master_user)
 
     def _get_obj(self, name='strategy'):
-        return self.get_strategy(self.strategy_code, name, self._a)
+        return self.get_strategy(self.strategy_code, name, self._a_master_user)
 
     def _make_new_data(self, **kwargs):
-        subgroup = self.get_strategy_subgroup(self.strategy_code, kwargs.get('subgroup', '-'), self._a)
+        subgroup = self.get_strategy_subgroup(self.strategy_code, kwargs.get('subgroup', '-'), self._a_master_user)
         data = super(BaseStrategyApiTestCase, self)._make_new_data(subgroup=subgroup.id, **kwargs)
         return data
 

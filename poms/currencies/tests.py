@@ -35,19 +35,19 @@ class CurrencyApiTestCase(BaseNamedModelTestCase, BaseApiWithTagsTestCase, BaseA
         self._change_permission = 'change_currency'
 
     def _create_obj(self, name='currency'):
-        return self.create_currency(name, self._a)
+        return self.create_currency(name, self._a_master_user)
 
     def _get_obj(self, name='currency'):
-        return self.get_currency(name, self._a)
+        return self.get_currency(name, self._a_master_user)
 
     def test_list(self):
-        response = self._list(self._a)
+        response = self._list(self._a_admin_user)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_list_ordering(self):
-        self._list_order(self._a, 'user_code', None)
-        self._list_order(self._a, 'name', None)
-        self._list_order(self._a, 'short_name', None)
+        self._list_order(self._a_admin_user, 'user_code', None)
+        self._list_order(self._a_admin_user, 'name', None)
+        self._list_order(self._a_admin_user, 'short_name', None)
 
         # def test_list(self):
         #     self._create_obj('obj1')

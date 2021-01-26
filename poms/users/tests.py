@@ -22,7 +22,7 @@ class LanguageApiTestCase(BaseApiTestCase):
 
     def test_list(self):
         # owner
-        response = self._list(self._a)
+        response = self._list(self._a_admin_user)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_get(self):
@@ -48,7 +48,7 @@ class TimezoneApiTestCase(BaseApiTestCase):
 
     def test_list(self):
         # owner
-        response = self._list(self._a)
+        response = self._list(self._a_admin_user)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_get(self):
@@ -83,7 +83,7 @@ class ExpressionApiTestCase(BaseApiTestCase):
             'is_eval': True,
             'expression': '2 + 2',
         }
-        response = self._add(self._a, data)
+        response = self._add(self._a_admin_user, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         data = {
@@ -93,7 +93,7 @@ class ExpressionApiTestCase(BaseApiTestCase):
                 'a': 1
             },
         }
-        response = self._add(self._a, data)
+        response = self._add(self._a_admin_user, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         data = {
@@ -101,7 +101,7 @@ class ExpressionApiTestCase(BaseApiTestCase):
             'expression': 'a + 2',
             'names2': '{"a": 1}',
         }
-        response = self._add(self._a, data)
+        response = self._add(self._a_admin_user, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_update(self):
@@ -121,10 +121,16 @@ class GroupApiTestCase(BaseApiTestCase):
         self._url_object = '/api/v1/users/group/%s/'
 
     def _create_obj(self, name='name'):
-        return self.create_group(name, self._a)
+        return self.create_group(name, self._a_master_user)
 
     def _get_obj(self, name='name'):
-        return self.get_group(name, self._a)
+        return self.get_group(name, self._a_master_user)
+
+    def test_add(self):
+        data = self._make_new_data()
+        data["permission_table"] = "{}"
+        response = self._add(self._a_admin_user, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 class MemberApiTestCase(BaseApiTestCase):
@@ -138,10 +144,10 @@ class MemberApiTestCase(BaseApiTestCase):
 
     def _create_obj(self, name=None):
         User.objects.get_or_create(username=name, defaults={})
-        return self.create_member(name, self._a)
+        return self.create_member(name, self._a_master_user)
 
     def _get_obj(self, name=None):
-        return self.get_member(name, self._a)
+        return self.get_member(name, self._a_master_user)
 
     # def _make_new_data(self, **kwargs):
     #     kwargs.setdefault('content_type', '%s.%s' % (content_type.app_label, content_type.model,))
@@ -163,7 +169,7 @@ class MasterUserApiTestCase(BaseApiTestCase):
 
     def _create_obj(self, name='name'):
         m = self.create_master_user(name)
-        self.create_member(self._a, m.name, is_admin=True)
+        self.create_member(self._a_admin_user, m.name, is_admin=True)
         return m
 
     def _get_obj(self, name='name'):
@@ -176,12 +182,12 @@ class MasterUserApiTestCase(BaseApiTestCase):
         pass
 
     def test_update(self):
-        obj = self.get_master_user(self._a)
+        obj = self.get_master_user(self._a_master_user)
 
-        response = self._get(self._a, obj.id)
+        response = self._get(self._a_admin_user, obj.id)
         udata = response.data.copy()
 
         # create by owner
         udata['name'] = self.create_name()
-        response = self._update(self._a, obj.id, udata)
+        response = self._update(self._a_admin_user, obj.id, udata)
         self.assertEqual(response.status_code, status.HTTP_200_OK)

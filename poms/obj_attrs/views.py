@@ -171,8 +171,6 @@ class GenericAttributeTypeViewSet(AbstractModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
 
-        print('Create attribute type for %s' % self.target_model)
-
         # attrs = []
         #
         # content_type = ContentType.objects.get_for_model(self.target_model)

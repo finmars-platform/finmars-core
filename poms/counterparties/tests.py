@@ -22,7 +22,7 @@ class CounterpartyAttributeTypeApiTestCase(BaseAttributeTypeApiTestCase):
         self._url_object = '/api/v1/counterparties/counterparty-attribute-type/%s/'
 
 
-class CounterpartyGroupApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase, BaseApiWithTagsTestCase):
+class CounterpartyGroupApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase):
     model = CounterpartyGroup
 
     def setUp(self):
@@ -33,14 +33,13 @@ class CounterpartyGroupApiTestCase(BaseNamedModelTestCase, BaseApiWithPermission
         self._change_permission = 'change_counterpartygroup'
 
     def _create_obj(self, name='counterparty-group'):
-        return self.create_counterparty_group(name, self._a)
+        return self.create_counterparty_group(name, self._a_master_user)
 
     def _get_obj(self, name='counterparty-group'):
-        return self.get_counterparty_group(name, self._a)
+        return self.get_counterparty_group(name, self._a_master_user)
 
 
-class CounterpartyApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase, BaseApiWithTagsTestCase,
-                              BaseApiWithAttributesTestCase):
+class CounterpartyApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase, BaseApiWithAttributesTestCase):
     model = Counterparty
 
     def setUp(self):
@@ -56,13 +55,13 @@ class CounterpartyApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestC
 
 
     def _create_obj(self, name='counterparty'):
-        return self.create_counterparty(name, self._a)
+        return self.create_counterparty(name, self._a_master_user)
 
     def _get_obj(self, name='counterparty'):
-        return self.get_counterparty(name, self._a)
+        return self.get_counterparty(name, self._a_master_user)
 
     def _make_new_data(self, **kwargs):
-        group = self.get_counterparty_group(kwargs.get('group', '-'), self._a)
+        group = self.get_counterparty_group(kwargs.get('group', '-'), self._a_master_user)
         data = super(CounterpartyApiTestCase, self)._make_new_data(group=group.id, **kwargs)
         return data
 
@@ -70,7 +69,7 @@ class CounterpartyApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestC
 # Responsible
 
 class ResponsibleAttributeTypeApiTestCase(BaseAttributeTypeApiTestCase):
-    base_model = Counterparty
+    base_model = Responsible
 
     def setUp(self):
         super(ResponsibleAttributeTypeApiTestCase, self).setUp()
@@ -79,7 +78,7 @@ class ResponsibleAttributeTypeApiTestCase(BaseAttributeTypeApiTestCase):
         self._url_object = '/api/v1/counterparties/responsible-attribute-type/%s/'
 
 
-class ResponsibleGroupApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase, BaseApiWithTagsTestCase):
+class ResponsibleGroupApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase):
     model = ResponsibleGroup
 
     def setUp(self):
@@ -90,14 +89,13 @@ class ResponsibleGroupApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionT
         self._change_permission = 'change_responsiblegroup'
 
     def _create_obj(self, name='responsible-group'):
-        return self.create_responsible_group(name, self._a)
+        return self.create_responsible_group(name, self._a_master_user)
 
     def _get_obj(self, name='responsible-group'):
-        return self.get_responsible_group(name, self._a)
+        return self.get_responsible_group(name, self._a_master_user)
 
 
-class ResponsibleApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase, BaseApiWithTagsTestCase,
-                             BaseApiWithAttributesTestCase):
+class ResponsibleApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase, BaseApiWithAttributesTestCase):
     model = Responsible
 
     def setUp(self):
@@ -108,12 +106,12 @@ class ResponsibleApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCa
         self._change_permission = 'change_responsible'
 
     def _create_obj(self, name='responsible'):
-        return self.create_responsible(name, self._a)
+        return self.create_responsible(name, self._a_master_user)
 
     def _get_obj(self, name='responsible'):
-        return self.get_responsible(name, self._a)
+        return self.get_responsible(name, self._a_master_user)
 
     def _make_new_data(self, **kwargs):
-        group = self.get_responsible_group(kwargs.get('group', '-'), self._a)
+        group = self.get_responsible_group(kwargs.get('group', '-'), self._a_master_user)
         data = super(ResponsibleApiTestCase, self)._make_new_data(group=group.id, **kwargs)
         return data

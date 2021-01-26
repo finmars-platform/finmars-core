@@ -9,8 +9,6 @@ import django.db.models.deletion
 def fix_transactions(apps, schema_editor):
     ComplexTransaction = apps.get_model("transactions", "ComplexTransaction")
 
-    print('work?')
-
     for complexTransaction in ComplexTransaction.objects.all():
         complexTransaction.master_user = complexTransaction.transaction_type.master_user
         print(

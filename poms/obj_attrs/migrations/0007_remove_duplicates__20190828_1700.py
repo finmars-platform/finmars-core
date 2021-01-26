@@ -6,7 +6,6 @@ from django.db import migrations
 
 
 def remove_duplicates(apps, schema_editor):
-    print('remove_duplicates here')
 
     GenericAttribute = apps.get_model("obj_attrs", "GenericAttribute")
 

@@ -36,18 +36,18 @@ class SessionStore(DjangoSessionStore):
         except (ValueError, TypeError):
             master_user_id = None
 
-        print('data %s' % data)
-        print('create_model_instance master_user_id %s' % master_user_id)
+        # print('data %s' % data)
+        # print('create_model_instance master_user_id %s' % master_user_id)
 
         if obj.user:
 
-            print("Trying to take last master user from User Profile")
+            # print("Trying to take last master user from User Profile")
 
             user_profile = UserProfile.objects.get(user=obj.user)
 
             if user_profile.active_master_user:
 
-                print("Master user successfully taken from User Profile")
+                # print("Master user successfully taken from User Profile")
 
                 obj.current_master_user = user_profile.active_master_user
 
@@ -56,7 +56,7 @@ class SessionStore(DjangoSessionStore):
             if master_user_id:
                 from poms.users.models import MasterUser
 
-                print("Trying to take by master user id")
+                # print("Trying to take by master user id")
 
                 obj.current_master_user = MasterUser.objects.get(pk=master_user_id)
 

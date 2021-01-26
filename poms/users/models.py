@@ -816,7 +816,7 @@ class MasterUser(models.Model):
         ccy_usd = None
         for dc in currencies_data.values():
 
-            print('dc %s ' % dc)
+            # print('dc %s ' % dc)
 
             dc_user_code = dc['user_code']
             dc_name = dc.get('name', dc_user_code)
