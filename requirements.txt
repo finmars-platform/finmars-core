@@ -41,7 +41,7 @@ Jinja2==2.9.6
 jmespath==0.9.1
 kombu==4.6.11
 MarkupSafe==1.1.1
-maxminddb==1.2.3
+maxminddb==2.0.3
 mpmath==0.19
 ndg-httpsclient==0.5.1
 numpy==1.12.0
