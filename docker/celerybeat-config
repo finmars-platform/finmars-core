@@ -14,4 +14,4 @@ CELERYBEAT_LOG_LEVEL="INFO"
 CELERYBEAT_CHDIR="/var/app/"
 
 # Extra arguments to celerybeat
-# CELERYBEAT_OPTS="--schedule=/var/run/celery/celerybeat-schedule"
+CELERYBEAT_OPTS="--scheduler django_celery_beat.schedulers:DatabaseScheduler"
