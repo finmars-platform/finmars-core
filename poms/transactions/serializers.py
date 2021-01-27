@@ -1439,7 +1439,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
         cur_inputs = {i.id: i for i in instance.inputs.all()}
         new_inputs = []
 
-        print('save_inputs ')
+        # print('save_inputs ')
 
         # print('instance %s' % instance)
 

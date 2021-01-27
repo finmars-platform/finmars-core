@@ -64,7 +64,7 @@ class BaseApiTestCase(APITestCase):
         if self.__class__ is BaseApiTestCase:
             raise unittest.SkipTest("Base class")
 
-        print('setUp self %s' % self)
+        # print('setUp self %s' % self)
 
         self._url_list = None
         self._url_object = None
