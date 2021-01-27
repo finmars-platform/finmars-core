@@ -613,7 +613,8 @@ if BackendRole.ALL in BACKEND_ROLES or BackendRole.DATA_PROVIDER in BACKEND_ROLE
         # },
         'schedules.process': {
             'task': 'schedules.process',
-            'schedule': crontab(minute='0,10,20,30,40,50,35'),
+            # 'schedule': crontab(minute='0,10,20,30,40,50'),
+            'schedule': crontab(minute='*'),
         },
         'instruments.generate_events_do_not_inform_apply_default': {
             'task': 'instruments.generate_events_do_not_inform_apply_default',
