@@ -13,21 +13,14 @@ echo "set chmod 777 /var/log/finmars/"
 
 chmod 777 /var/log/finmars/
 
-echo "Create django log file /var/log/finmars/django-info.log"
+echo "Create django log file /var/log/finmars/django.log"
 
-touch /var/log/finmars/django-info.log
+touch /var/log/finmars/django.log
 
-echo "set chmod 777 /var/log/finmars/django-info.log"
+echo "set chmod 777 /var/log/finmars/django.log"
 
-chmod 777 /var/log/finmars/django-info.log
+chmod 777 /var/log/finmars/django.log
 
-echo "Create django log file /var/log/finmars/django-error.log"
-
-touch /var/log/finmars/django-error.log
-
-echo "set chmod 777 /var/log/finmars/django-error.log"
-
-chmod 777 /var/log/finmars/django-error.log
 
 echo "Create known_hosts for SFTP"
 

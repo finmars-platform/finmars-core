@@ -69,7 +69,7 @@ def process(self):
             _l.debug('Schedule: master_user=%s, next_run_at=%s. STARTED',
                     master_user.id, s.next_run_at)
 
-            _l.debug('Schedule: count %s' % len(s.procedures.all()))
+            _l.debug('Schedule: schedule procedures count %s' % len(s.procedures.all()))
 
             schedule_instance = ScheduleInstance(schedule=s, master_user=master_user)
             schedule_instance.save()
@@ -79,6 +79,8 @@ def process(self):
             for procedure in s.procedures.all():
 
                 try:
+
+                    _l.debug('Schedule : schedule procedure order %s' % procedure.order)
 
                     if procedure.order == 1:
 
