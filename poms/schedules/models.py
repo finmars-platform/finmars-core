@@ -59,16 +59,16 @@ class Schedule(NamedModel):
         start_time = timezone.localtime(timezone.now())
         cron = croniter(self.cron_expr, start_time)
 
+        _l.info('schedule cron_expr %s ' % self.cron_expr)
+        _l.info('schedule start_time %s ' % start_time)
+
         next_run_at = cron.get_next(datetime)
 
-        min_timedelta = settings.PRICING_AUTO_DOWNLOAD_MIN_TIMEDELTA
-        if min_timedelta is not None:
-            if not isinstance(min_timedelta, timedelta):
-                min_timedelta = timedelta(minutes=min_timedelta)
-            for i in range(100):
-                if (next_run_at - start_time) >= min_timedelta:
-                    break
-                next_run_at = cron.get_next(datetime)
+        _l.info('schedule next_run_at %s ' % next_run_at)
+
+        # next_run_at = cron.get_next(datetime)
+        #
+        # _l.info('schedule next_run_at after %s ' % next_run_at)
 
         self.next_run_at = next_run_at
 

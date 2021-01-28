@@ -13,4 +13,4 @@ SFTP_PASSWORD=97cZgv1pL2pz \
 DJANGO_LOG_LEVEL=DEBUG \
 USE_WEBSOCKETS=True \
 WEBSOCKET_HOST=ws://0.0.0.0:6969 \
-celery worker --app poms_app --beat --loglevel=DEBUG --logfile=/var/log/finmars/celery.log
+celery worker --app poms_app --beat -l INFO --logfile=/var/log/finmars/celery.log
