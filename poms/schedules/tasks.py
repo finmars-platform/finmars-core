@@ -92,7 +92,7 @@ def process(self):
                         schedule_instance.status = ScheduleInstance.STATUS_PENDING
                         schedule_instance.save()
 
-                        send_system_message(master_user=self.master_user,
+                        send_system_message(master_user=master_user,
                                             source="Schedule Service",
                                             text="Schedule %s. Start processing step %s/%s" % (s.name, schedule_instance.current_processing_procedure_number, total_procedures))
 
@@ -107,7 +107,7 @@ def process(self):
                     schedule_instance.status = ScheduleInstance.STATUS_ERROR
                     schedule_instance.save()
 
-                    send_system_message(master_user=self.master_user,
+                    send_system_message(master_user=master_user,
                                         source="Schedule Service",
                                         text="Schedule %s. Error occurred" % s.name)
 
