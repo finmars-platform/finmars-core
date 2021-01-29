@@ -17,7 +17,7 @@ _l = logging.getLogger('poms.schedules')
 @shared_task(name='schedules.process_procedure_async', bind=True, ignore_result=True)
 def process_procedure_async(self, procedure, master_user, schedule_instance):
 
-    _l.debug("Schedule: Subprocess process. Master User: %s. Procedure: %s" % (master_user, procedure))
+    _l.info("Schedule: Subprocess process. Master User: %s. Procedure: %s" % (master_user, procedure))
 
     if procedure.type == 'pricing':
 
@@ -30,7 +30,7 @@ def process_procedure_async(self, procedure, master_user, schedule_instance):
 
         except PricingProcedure.DoesNotExist:
 
-            _l.debug("Can't find Pricing Procedure %s" % procedure.user_code)
+            _l.info("Can't find Pricing Procedure %s" % procedure.user_code)
 
     if procedure.type == 'request_data_file':
 
@@ -43,7 +43,7 @@ def process_procedure_async(self, procedure, master_user, schedule_instance):
 
         except RequestDataFileProcedure.DoesNotExist:
 
-            _l.debug("Can't find Request Data File Procedure %s" % procedure.user_code)
+            _l.info("Can't find Request Data File Procedure %s" % procedure.user_code)
 
 
 @shared_task(name='schedules.process', bind=True, ignore_result=True)
@@ -53,8 +53,10 @@ def process(self):
         is_enabled=True, next_run_at__lte=timezone.now()
     )
 
+    _l.info('schedule_qs test %s' % schedule_qs.count())
+
     if schedule_qs.count():
-        _l.debug('Schedules initialized: %s', schedule_qs.count())
+        _l.info('Schedules initialized: %s', schedule_qs.count())
 
     procedures_count = 0
 
@@ -66,10 +68,10 @@ def process(self):
             next_run_at = timezone.localtime(s.next_run_at)
             s.schedule(save=True)
 
-            _l.debug('Schedule: master_user=%s, next_run_at=%s. STARTED',
+            _l.info('Schedule: master_user=%s, next_run_at=%s. STARTED',
                     master_user.id, s.next_run_at)
 
-            _l.debug('Schedule: schedule procedures count %s' % len(s.procedures.all()))
+            _l.info('Schedule: schedule procedures count %s' % len(s.procedures.all()))
 
             schedule_instance = ScheduleInstance(schedule=s, master_user=master_user)
             schedule_instance.save()
@@ -80,9 +82,11 @@ def process(self):
 
                 try:
 
-                    _l.debug('Schedule : schedule procedure order %s' % procedure.order)
+                    _l.info('Schedule : schedule procedure order %s' % procedure.order)
 
                     if procedure.order == 1:
+
+                        _l.info('Schedule : start processing first procedure')
 
                         schedule_instance.current_processing_procedure_number = 1
                         schedule_instance.status = ScheduleInstance.STATUS_PENDING
@@ -94,7 +98,7 @@ def process(self):
 
                         process_procedure_async.apply_async(kwargs={'procedure': procedure, 'master_user':master_user, 'schedule_instance': schedule_instance})
 
-                        _l.debug('Schedule: Process first procedure master_user=%s, next_run_at=%s', master_user.id, s.next_run_at)
+                        _l.info('Schedule: Process first procedure master_user=%s, next_run_at=%s', master_user.id, s.next_run_at)
 
                         procedures_count = procedures_count + 1
 
@@ -107,10 +111,10 @@ def process(self):
                                         source="Schedule Service",
                                         text="Schedule %s. Error occurred" % s.name)
 
-                    _l.debug('Schedule: master_user=%s, next_run_at=%s. Error',
+                    _l.info('Schedule: master_user=%s, next_run_at=%s. Error',
                             master_user.id, s.next_run_at)
 
-                    _l.debug('Schedule: Error %s' % e)
+                    _l.info('Schedule: Error %s' % e)
 
                     pass
 
@@ -118,4 +122,4 @@ def process(self):
         s.save(update_fields=['last_run_at'])
 
     if procedures_count:
-        _l.debug('Schedules Finished. Procedures initialized: %s' % procedures_count)
+        _l.info('Schedules Finished. Procedures initialized: %s' % procedures_count)
