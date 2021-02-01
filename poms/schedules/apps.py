@@ -17,19 +17,26 @@ class SchedulesConfig(AppConfig):
 
         crontabs = {}
 
-        crontabs['every_30_min'], _ = CrontabSchedule.objects.get_or_create(minute='30',
+        crontabs['every_30_min'], _ = CrontabSchedule.objects.get_or_create(minute='*/30',
                                                          hour='*',
                                                          day_of_week='*',
                                                          day_of_month='*',
                                                          month_of_year='*'
                                                          )
 
+        crontabs['every_5_min'], _ = CrontabSchedule.objects.get_or_create(minute='*/5',
+                                                                            hour='*',
+                                                                            day_of_week='*',
+                                                                            day_of_month='*',
+                                                                            month_of_year='*'
+                                                                            )
+
         periodic_tasks = [
             {
                 "id": 1,
                 "name": "Shedules Process",
                 "task": 'schedules.process',
-                "crontab": crontabs['every_30_min']
+                "crontab": crontabs['every_5_min']
             }
         ]
 

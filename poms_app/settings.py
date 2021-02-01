@@ -600,42 +600,6 @@ except (ValueError, TypeError):
 # CELERY_SEND_EVENTS = True
 # CELERY_TASK_SEND_SENT_EVENT = True
 
-# if BackendRole.ALL in BACKEND_ROLES or BackendRole.DATA_PROVIDER in BACKEND_ROLES:
-#
-#     print("Role: DATA_PROVIDER. CELERY BEAT SCHEDULE INITIALIZED")
-#
-#     CELERY_BEAT_SCHEDULE = {
-#         # 'schedules.auto_process_pricing_procedures_schedules': {
-#         #     'task': 'schedules.auto_process_pricing_procedures_schedules',
-#         #     'schedule': crontab(minute='0,10,20,30,40,50'),
-#         # },
-#         'schedules.process': {
-#             'task': 'schedules.process',
-#             'schedule': crontab(minute='0,10,20,30,40,50'),
-#             # 'schedule': crontab(minute='*'),
-#         },
-#         'instruments.generate_events_do_not_inform_apply_default': {
-#             'task': 'instruments.generate_events_do_not_inform_apply_default',
-#             'schedule': crontab(minute=0, hour=0),
-#         },
-#         'file_reports.clear_old_file_reports': {
-#             'task': 'file_reports.clear_old_file_reports',
-#             'schedule': crontab(minute=0, hour=0)
-#         },
-#         'pricing.set_old_processing_procedure_instances_to_error': {
-#             'task': 'pricing.set_old_processing_procedure_instances_to_error',
-#             'schedule': crontab(minute=0, hour=0)
-#         },
-#         'pricing.clear_old_pricing_procedure_instances': {
-#             'task': 'pricing.clear_old_pricing_procedure_instances',
-#             'schedule': crontab(minute=0, hour=0)
-#         }
-#         # 'instruments.process_events': {
-#         #     'task': 'instruments.process_events',
-#         #     'schedule': crontab(minute='2,32'),
-#         # },
-#     }
-
 # FILE STORAGE ----------------------------------------------
 
 DEFAULT_FILE_STORAGE = 'storages.backends.sftpstorage.SFTPStorage'
