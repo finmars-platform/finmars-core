@@ -443,7 +443,7 @@ class PricingCurrencyHandler(object):
 
                     if can_write:
 
-                        if has_error or fx_rate == 0:
+                        if has_error or price.fx_rate == 0:
                         # if has_error:
 
                             error_prices_count = error_prices_count + 1
@@ -701,7 +701,7 @@ class PricingCurrencyHandler(object):
 
                     if can_write:
 
-                        if has_error or fx_rate == 0:
+                        if has_error or price.fx_rate == 0:
                         # if has_error:
 
                             error_prices_count = error_prices_count + 1

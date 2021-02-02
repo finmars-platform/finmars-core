@@ -573,7 +573,7 @@ class FillPricesBrokerBloombergProcess(object):
 
             if can_write:
 
-                if has_error or fx_rate == 0:
+                if has_error or price.fx_rate == 0:
                 # if has_error:
 
                     error_prices_count = error_prices_count + 1
@@ -658,7 +658,7 @@ class FillPricesBrokerBloombergForwardsProcess(object):
 
                 processing_st = time.perf_counter()
 
-                _l.debug('< get records from db done: %s', (time.perf_counter() - records_st))
+                # _l.debug('< get records from db done: %s', (time.perf_counter() - records_st))
 
                 for record in records:
 
@@ -1349,7 +1349,7 @@ class FillPricesBrokerFixerProcess(object):
 
             if can_write:
 
-                if has_error or fx_rate == 0:
+                if has_error or price.fx_rate == 0:
                 # if has_error:
 
                     error_prices_count = error_prices_count + 1

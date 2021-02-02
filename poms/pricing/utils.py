@@ -180,7 +180,7 @@ def roll_currency_history_for_n_day_forward(item, procedure, last_price, master_
                 price.fx_rate = last_price.fx_rate
 
             # if can_write and price.fx_rate != 0:
-            if can_write:
+            if can_write and price.fx_rate != 0:
 
                 successful_prices_count = successful_prices_count + 1
 

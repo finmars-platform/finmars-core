@@ -74,20 +74,12 @@ class Currency(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTime
         return self.master_user.currency_id == self.id if self.master_user_id else False
 
 
-def validate_zero(value):
-
-    if value == 0:
-        raise ValidationError('FX rate must not be zero')
-
-from django.core.validators import MaxValueValidator, MinValueValidator
-
-
 class CurrencyHistory(CachingMixin, DataTimeStampedModel):
     currency = models.ForeignKey(Currency, related_name='histories', verbose_name=ugettext_lazy('currency'), on_delete=models.CASCADE)
     pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, null=True, blank=True,
                                        verbose_name=ugettext_lazy('pricing policy'))
     date = models.DateField(db_index=True, default=date_now, verbose_name=ugettext_lazy('date'))
-    fx_rate = models.FloatField(default=1, verbose_name=ugettext_lazy('fx rate'), validators=[validate_zero])
+    fx_rate = models.FloatField(default=1, verbose_name=ugettext_lazy('fx rate'))
 
     objects = CachingManager()
 
