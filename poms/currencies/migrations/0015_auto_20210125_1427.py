@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='currencyhistory',
             name='fx_rate',
-            field=models.FloatField(default=1, validators=[poms.currencies.models.validate_zero], verbose_name='fx rate'),
+            field=models.FloatField(default=1, validators=[], verbose_name='fx rate'),
         ),
     ]
