@@ -379,6 +379,10 @@ relative_tenor_map = {
         "days": 2,
         "months": 11
     },
+    "12m": {
+        "days": 2,
+        "months": 12
+    },
     "1y": {
         "days": 2,
         "years": 1
@@ -545,6 +549,10 @@ def get_closest_tenors(maturity_date, date, tenors):
         result.append(tenor_to)
         tenor_to['tenor_clause'] = 'to'
         result.append(tenor_to)
+
+    _l.info('date %s' % date)
+    _l.info('tenor_from %s' % tenor_from)
+    _l.info('tenor_to %s' % tenor_to)
 
     return result
 
