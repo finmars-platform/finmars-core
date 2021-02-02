@@ -28,7 +28,7 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
 
     qs = qs.filter(attributes__attribute_type=attribute_type)
 
-    force_qs_evaluation(qs)
+    # force_qs_evaluation(qs)
 
     # print('get_root_dynamic_attr_group len qs %s' % len(qs))
 
@@ -64,7 +64,7 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
             .annotate(group_name=F('attributes__value_date'), group_identifier=F('attributes__value_date')) \
             .values('group_name', 'group_identifier')
 
-    force_qs_evaluation(qs)
+    # force_qs_evaluation(qs)
 
     if groups_order == 'asc':
         qs = qs.order_by(F('group_name').asc())
@@ -162,7 +162,7 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
 
     # print('get_last_dynamic_attr_group len %s' % len(qs))
 
-    force_qs_evaluation(qs)
+    # force_qs_evaluation(qs)
 
     if attribute_type.value_type == 20:
         qs = qs \
@@ -193,7 +193,7 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
             .annotate(group_name=F('attributes__value_date'), group_identifier=F('attributes__value_date')) \
             .values('group_name', 'group_identifier')
 
-    force_qs_evaluation(qs)
+    # force_qs_evaluation(qs)
 
     if groups_order == 'asc':
         qs = qs.order_by(F('group_name').asc())
@@ -248,7 +248,7 @@ def get_queryset_filters(qs, groups_types, groups_values, original_qs):
 
     # print('get_queryset_filters len %s' % len(qs    ))
 
-    force_qs_evaluation(qs)
+    # force_qs_evaluation(qs)
 
     groups_values_count = len(groups_values)
 
@@ -327,7 +327,7 @@ def get_queryset_filters(qs, groups_types, groups_values, original_qs):
 
                     qs = qs.filter(**params)
 
-        force_qs_evaluation(qs)
+        # force_qs_evaluation(qs)
 
         i = i + 1
 

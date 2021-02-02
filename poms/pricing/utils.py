@@ -4,9 +4,12 @@ from poms.common.utils import date_now
 from poms.currencies.models import CurrencyHistory
 from poms.instruments.models import PriceHistory
 
+from dateutil.relativedelta import relativedelta
+
 import logging
 
 from poms.pricing.models import PriceHistoryError, CurrencyHistoryError
+
 
 _l = logging.getLogger('poms.pricing')
 
@@ -310,6 +313,157 @@ tenor_map = {
     "18m": 2 + 540
 }
 
+relative_tenor_map = {
+    "overnight": {
+        "days": 1
+    },
+    "tomorrow_next": {
+        "days": 2
+    },
+    "spot": {
+        "days": 2
+    },
+    "spot_next": {
+        "days": 3
+    },
+    "1w": {
+        "days": 7
+    },
+    "2w": {
+        "days": 12
+    },
+    "3w": {
+        "days": 17
+    },
+    "1m": {
+        "days": 2,
+        "months": 1
+    },
+    "2m": {
+        "days": 2,
+        "months": 2
+    },
+    "3m": {
+        "days": 2,
+        "months": 3
+    },
+    "4m": {
+        "days": 2,
+        "months": 4
+    },
+    "5m": {
+        "days": 2,
+        "months": 5
+    },
+    "6m": {
+        "days": 2,
+        "months": 6
+    },
+    "7m": {
+        "days": 2,
+        "months": 7
+    },
+    "8m": {
+        "days": 2,
+        "months": 8
+    },
+    "9m": {
+        "days": 2,
+        "months": 9
+    },
+    "10m": {
+        "days": 2,
+        "months": 10
+    },
+    "11m": {
+        "days": 2,
+        "months": 11
+    },
+    "1y": {
+        "days": 2,
+        "years": 1
+    },
+    "15m":{
+        "days": 2,
+        "months": 15
+    },
+    "18m": {
+        "days": 2,
+        "months": 18
+    },
+    "21m": {
+        "days": 2,
+        "months": 21
+    },
+    "2y": {
+        "days": 2,
+        "years": 2
+    },
+    "3y": {
+        "days": 2,
+        "years": 3
+    },
+    "4y": {
+        "days": 2,
+        "years": 4
+    },
+    "5y": {
+        "days": 2,
+        "years": 5
+    },
+    "6y": {
+        "days": 2,
+        "years": 6
+    },
+    "7y": {
+        "days": 2,
+        "years": 7
+    },
+    "8y": {
+        "days": 2,
+        "years": 8
+    },
+    "9y": {
+        "days": 2,
+        "years": 9
+    },
+    "10y": {
+        "days": 2,
+        "years": 10
+    },
+    "15y": {
+        "days": 2,
+        "years": 15
+    },
+    "20y": {
+        "days": 2,
+        "years": 20
+    },
+    "25y": {
+        "days": 2,
+        "years": 25
+    },
+    "30y": {
+        "days": 2,
+        "years": 30
+    },
+}
+
+def find_tenor_date(date, tenor_type):
+
+    result_date = date
+
+    delta = relativedelta(**relative_tenor_map[tenor_type])
+
+    result_date = result_date + delta
+
+    if result_date.weekday == 5: # saturday
+        result_date = result_date + relativedelta(days=2)
+    elif result_date.weekday == 6: # sunday
+            result_date = result_date + relativedelta(days=1)
+  
+    return result_date
+
 def get_closest_tenors(maturity_date, date, tenors):
 
     result = []
@@ -330,7 +484,8 @@ def get_closest_tenors(maturity_date, date, tenors):
         tenor_type = tenor["tenor_type"]
         days = tenor_map[tenor_type]
 
-        current_tenor_from_date = timedelta(days=days) + date
+        # current_tenor_from_date = timedelta(days=days) + date
+        current_tenor_from_date = find_tenor_date(date, tenor_type)
 
         if tenor_from is None:
 
@@ -340,7 +495,8 @@ def get_closest_tenors(maturity_date, date, tenors):
 
         else:
 
-            last_tenor_from_date = timedelta(days=tenor_map[tenor_from["tenor_type"]]) + date
+            # last_tenor_from_date = timedelta(days=tenor_map[tenor_from["tenor_type"]]) + date
+            last_tenor_from_date = find_tenor_date(date, tenor_type)
 
             if current_tenor_from_date > last_tenor_from_date and current_tenor_from_date < maturity_date:
                 tenor_from = tenor
@@ -353,7 +509,8 @@ def get_closest_tenors(maturity_date, date, tenors):
         tenor_type = tenor["tenor_type"]
 
         days = tenor_map[tenor_type]
-        current_tenor_to_date = timedelta(days=days) + date
+        # current_tenor_to_date = timedelta(days=days) + date
+        current_tenor_to_date = find_tenor_date(date, tenor_type)
 
         if tenor_to is None:
 
@@ -363,7 +520,8 @@ def get_closest_tenors(maturity_date, date, tenors):
 
         else:
 
-            last_tenor_to_date = timedelta(days=tenor_map[tenor_to["tenor_type"]]) + date
+            # last_tenor_to_date = timedelta(days=tenor_map[tenor_to["tenor_type"]]) + date
+            last_tenor_to_date = find_tenor_date(date, tenor_type)
 
             if current_tenor_to_date < last_tenor_to_date and current_tenor_to_date > maturity_date:
                 tenor_to = tenor
