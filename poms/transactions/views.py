@@ -244,7 +244,9 @@ class TransactionTypeEvViewSet(AbstractWithObjectPermissionViewSet):
         .prefetch_related(
             'portfolios',
             'instrument_types',
-            get_attributes_prefetch(),
+            # get_attributes_prefetch(),
+            'attributes',
+            'attributes__classifier',
             *get_permissions_prefetch_lookups(
                 (None, TransactionType),
                 ('group', TransactionTypeGroup),

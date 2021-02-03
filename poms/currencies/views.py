@@ -89,7 +89,9 @@ class CurrencyEvViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Currency.objects.select_related(
         'master_user',
     ).prefetch_related(
-        get_attributes_prefetch(),
+        'attributes',
+        'attributes__classifier',
+        # get_attributes_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Currency),
         )

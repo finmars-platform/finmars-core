@@ -251,6 +251,7 @@ class ModelWithAttributesOnlySerializer(serializers.ModelSerializer):
         super(ModelWithAttributesOnlySerializer, self).__init__(*args, **kwargs)
         self.fields['attributes'] = GenericAttributeOnlySerializer(many=True, required=False, allow_null=True)
 
+
 class GenericClassifierRecursiveField(serializers.Serializer):
     def to_representation(self, instance):
         if isinstance(self.parent, ListSerializer):
@@ -654,6 +655,7 @@ class GenericAttributeSerializer(serializers.ModelSerializer):
 
         return super(GenericAttributeSerializer, self).to_representation(instance)
 
+
 class GenericAttributeOnlySerializer(serializers.ModelSerializer):
     attribute_type = GenericAttributeTypeField()
     classifier = GenericClassifierField(required=False, allow_null=True)
@@ -673,17 +675,17 @@ class GenericAttributeOnlySerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
 
-        if instance.classifier_id:
-            # classifiers must be already loaded through prefetch_related()
-            if instance.attribute_type_id not in self._attribute_type_classifiers:
-                l = list(instance.attribute_type.classifiers.all())
-                for c in l:
-                    self._attribute_type_classifiers[c.id] = c
-                get_cached_trees(l)
-
-            # print('_attribute_type_classifiers %s' % self._attribute_type_classifiers)
-
-            instance.classifier = self._attribute_type_classifiers[instance.classifier_id]
+        # if instance.classifier_id:
+        #     # classifiers must be already loaded through prefetch_related()
+        #     if instance.attribute_type_id not in self._attribute_type_classifiers:
+        #         l = list(instance.attribute_type.classifiers.all())
+        #         for c in l:
+        #             self._attribute_type_classifiers[c.id] = c
+        #         get_cached_trees(l)
+        #
+        #     # print('_attribute_type_classifiers %s' % self._attribute_type_classifiers)
+        #
+        #     instance.classifier = self._attribute_type_classifiers[instance.classifier_id]
 
         return super(GenericAttributeOnlySerializer, self).to_representation(instance)
 

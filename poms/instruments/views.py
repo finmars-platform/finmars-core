@@ -288,7 +288,9 @@ class InstrumentTypeEvViewSet(AbstractWithObjectPermissionViewSet):
         'factor_up',
         'factor_down',
     ).prefetch_related(
-        get_attributes_prefetch(),
+        'attributes',
+        'attributes__classifier',
+        # get_attributes_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, InstrumentType),
             ('one_off_event', TransactionType),
@@ -309,6 +311,7 @@ class InstrumentTypeEvViewSet(AbstractWithObjectPermissionViewSet):
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
     ]
+
 
 class InstrumentTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = InstrumentType.objects.select_related(
@@ -724,7 +727,9 @@ class InstrumentEvViewSet(AbstractWithObjectPermissionViewSet):
         'pricing_condition',
         'payment_size_detail'
     ).prefetch_related(
-        get_attributes_prefetch(),
+        'attributes',
+        'attributes__classifier',
+        # get_attributes_prefetch(), # TODO Refactor this method
         *get_permissions_prefetch_lookups(
             (None, Instrument),
             ('instrument_type', InstrumentType)

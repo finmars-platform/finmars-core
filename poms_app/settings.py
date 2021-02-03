@@ -440,6 +440,10 @@ LOGGING = {
         }
     },
     'loggers': {
+        'django.request': {
+            "level": "ERROR",
+            "handlers": ["console", "file"]
+        },
         "django": {
             "handlers": ["file"],
             "level": "INFO",

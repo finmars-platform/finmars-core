@@ -175,7 +175,9 @@ class CounterpartyEvViewSet(AbstractWithObjectPermissionViewSet):
         'master_user',
         'group',
     ).prefetch_related(
-        get_attributes_prefetch(),
+        'attributes',
+        'attributes__classifier',
+        # get_attributes_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Counterparty),
             ('group', CounterpartyGroup),
@@ -408,7 +410,9 @@ class ResponsibleEvViewSet(AbstractWithObjectPermissionViewSet):
         'master_user',
         'group',
     ).prefetch_related(
-        get_attributes_prefetch(),
+        'attributes',
+        'attributes__classifier',
+        # get_attributes_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Responsible),
             ('group', ResponsibleGroup),

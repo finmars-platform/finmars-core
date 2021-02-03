@@ -822,7 +822,7 @@ class InstrumentLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
         return result
 
 
-class InstrumentEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
+class InstrumentEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesOnlySerializer, ModelWithUserCodeSerializer):
 
     master_user = MasterUserField()
 
