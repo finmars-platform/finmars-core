@@ -283,10 +283,11 @@ def _instance_post_init(sender, instance=None, **kwargs):
         return
     if not _is_enabled_for_model(instance):
         return
-    if instance.pk:
-        instance._poms_history_initial_state = _serialize(instance)
-    else:
-        instance._poms_history_initial_state = {'pk': None, 'fields': {}}
+    # TODO discover what happening here
+    # if instance.pk:
+    #     instance._poms_history_initial_state = _serialize(instance)
+    # else:
+    #     instance._poms_history_initial_state = {'pk': None, 'fields': {}}
 
 
 @receiver(post_save, dispatch_uid='poms_history_post_save')

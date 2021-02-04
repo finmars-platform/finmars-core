@@ -34,6 +34,8 @@ from django.contrib.contenttypes.models import ContentType
 from poms.common.grouping_handlers import handle_groups
 import time
 
+from django.db import models
+
 import logging
 _l = logging.getLogger('poms.common')
 
@@ -490,10 +492,6 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                         "results": []
                     })
 
-
-            _l.debug('content_type %s' % content_type_name)
-            _l.debug('key %s' % key)
-
             content_type_pieces = content_type_name.split('.')
 
             try:
@@ -565,7 +563,14 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                     if value_type == 40:
                         results = model.objects.filter(master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
                     if value_type == 'field':
-                        results = model.objects.filter(master_user=master_user).order_by(key + '__user_code').values_list(key + '__user_code', flat=True).distinct(key + '__user_code')
+
+                        if key in ['transaction_class', 'instrument_class', 'pricing_condition']:
+
+                            results = model.objects.filter(master_user=master_user).order_by(key + '__system_code').values_list(key + '__system_code', flat=True).distinct(key + '__system_code')
+
+                        else:
+                            results = model.objects.filter(master_user=master_user).order_by(key + '__user_code').values_list(key + '__user_code', flat=True).distinct(key + '__user_code')
+
 
             _l.debug('model %s' % model)
 

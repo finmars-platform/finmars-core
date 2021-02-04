@@ -667,6 +667,8 @@ def add_filter(qs, filter_config):
 
     elif filter_type == FilterType.SELECTOR and value_type == ValueType.FIELD:
 
+        # TODO HANDLE SYSTEM CODE
+
         if len(filter_config['value']):
             value = filter_config['value'][0]
 
