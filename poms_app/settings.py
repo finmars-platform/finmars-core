@@ -15,7 +15,6 @@ import os
 from celery.schedules import crontab
 from django.utils.translation import ugettext_lazy
 
-import boto3
 import base64
 from botocore.exceptions import ClientError
 
@@ -552,13 +551,14 @@ GEOIP_CITY = "GeoLite2-City.mmdb"
 # MEDIA_ROOT = '/opt/finmars-media'
 # MEDIA_SERVE = True
 
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-AWS_S3_ACCESS_KEY_ID = os.environ.get('AWS_S3_ACCESS_KEY_ID', None)
-AWS_S3_SECRET_ACCESS_KEY = os.environ.get('AWS_S3_SECRET_ACCESS_KEY', None)
-AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', None)
-AWS_DEFAULT_ACL = 'private'
-AWS_BUCKET_ACL = 'private'
-AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', None)
+# DEPRECATED
+# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+# AWS_S3_ACCESS_KEY_ID = os.environ.get('AWS_S3_ACCESS_KEY_ID', None)
+# AWS_S3_SECRET_ACCESS_KEY = os.environ.get('AWS_S3_SECRET_ACCESS_KEY', None)
+# AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', None)
+# AWS_DEFAULT_ACL = 'private'
+# AWS_BUCKET_ACL = 'private'
+# AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', None)
 
 # CELERY ------------------------------------------------
 
@@ -642,65 +642,66 @@ SFTP_KNOWN_HOST_FILE = os.path.join(BASE_DIR, '.ssh/known_hosts')
 # INTEGRATIONS ------------------------------------------------
 
 
-if SERVER_TYPE == 'local':
-
-    IMPORT_CONFIG_STORAGE = {
-        'BACKEND': 'django.core.files.storage.FileSystemStorage',
-        'KWARGS': {
-            # 'location': '/opt/finmars-import/config',
-            'location': '/home/szhitenev/projects/finmars/config',
-            'base_url': '/api/hidden/'
-        }
-    }
-
-    IMPORT_FILE_STORAGE = {
-        'BACKEND': 'django.core.files.storage.FileSystemStorage',
-        'KWARGS': {
-            'location': '/home/szhitenev/projects/finmars/files',
-            'base_url': '/api/import/'
-        }
-    }
-
-    FILE_REPORTS_STORAGE = {
-        'BACKEND': 'django.core.files.storage.FileSystemStorage',
-        'KWARGS': {
-            'location': '/home/szhitenev/projects/finmars/file_reports',
-            'base_url': '/api/file-reports/'
-        }
-    }
-
-else:
-
-    IMPORT_CONFIG_STORAGE = {
-        'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
-        'KWARGS': {
-            'acl': 'private',
-            'bucket': os.environ.get('AWS_STORAGE_CONFIG_BUCKET_NAME', None),
-            'querystring_expire': 10,
-            'custom_domain': None
-        }
-    }
-
-    IMPORT_FILE_STORAGE = {
-        'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
-        'KWARGS': {
-            'acl': 'private',
-            'bucket': os.environ.get('AWS_STORAGE_IMPORT_FILE_BUCKET_NAME', None),
-            'querystring_expire': 10,
-            'custom_domain': None
-        }
-    }
-
-    FILE_REPORTS_STORAGE = {
-        'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
-        'KWARGS': {
-            'acl': 'private',
-            'bucket': os.environ.get('AWS_STORAGE_FILE_REPORTS_BUCKET_NAME', None),
-            'querystring_expire': 10,
-            'custom_domain': None
-        }
-    }
-
+# DEPRECATED
+# if SERVER_TYPE == 'local':
+#
+#     IMPORT_CONFIG_STORAGE = {
+#         'BACKEND': 'django.core.files.storage.FileSystemStorage',
+#         'KWARGS': {
+#             # 'location': '/opt/finmars-import/config',
+#             'location': '/home/szhitenev/projects/finmars/config',
+#             'base_url': '/api/hidden/'
+#         }
+#     }
+#
+#     IMPORT_FILE_STORAGE = {
+#         'BACKEND': 'django.core.files.storage.FileSystemStorage',
+#         'KWARGS': {
+#             'location': '/home/szhitenev/projects/finmars/files',
+#             'base_url': '/api/import/'
+#         }
+#     }
+#
+#     FILE_REPORTS_STORAGE = {
+#         'BACKEND': 'django.core.files.storage.FileSystemStorage',
+#         'KWARGS': {
+#             'location': '/home/szhitenev/projects/finmars/file_reports',
+#             'base_url': '/api/file-reports/'
+#         }
+#     }
+#
+# else:
+#
+#     IMPORT_CONFIG_STORAGE = {
+#         'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
+#         'KWARGS': {
+#             'acl': 'private',
+#             'bucket': os.environ.get('AWS_STORAGE_CONFIG_BUCKET_NAME', None),
+#             'querystring_expire': 10,
+#             'custom_domain': None
+#         }
+#     }
+#
+#     IMPORT_FILE_STORAGE = {
+#         'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
+#         'KWARGS': {
+#             'acl': 'private',
+#             'bucket': os.environ.get('AWS_STORAGE_IMPORT_FILE_BUCKET_NAME', None),
+#             'querystring_expire': 10,
+#             'custom_domain': None
+#         }
+#     }
+#
+#     FILE_REPORTS_STORAGE = {
+#         'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
+#         'KWARGS': {
+#             'acl': 'private',
+#             'bucket': os.environ.get('AWS_STORAGE_FILE_REPORTS_BUCKET_NAME', None),
+#             'querystring_expire': 10,
+#             'custom_domain': None
+#         }
+#     }
+#
 
 BLOOMBERG_WSDL = 'https://service.bloomberg.com/assets/dl/dlws.wsdl'
 BLOOMBERG_RETRY_DELAY = 5

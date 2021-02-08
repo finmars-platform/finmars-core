@@ -66,6 +66,9 @@ RUN useradd -N -M --system -s /bin/bash celery
 RUN groupadd grp_celery && usermod -a -G grp_celery celery && mkdir -p /var/run/celery/ /var/log/celery/
 RUN chown -R celery:grp_celery /var/run/celery/ /var/log/celery/
 
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+
 EXPOSE 8080
 
 CMD ["/bin/bash", "/var/app/docker/finmars-run.sh"]

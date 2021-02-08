@@ -22,9 +22,10 @@ import_file_storage = ImportFileStorage()
 # DEPRECATED, DELETE SOON
 class ImportConfigStorage(LazyObject):
     def _setup(self):
-        clazz = get_storage_class(settings.IMPORT_CONFIG_STORAGE['BACKEND'])
-        kwargs = settings.IMPORT_CONFIG_STORAGE['KWARGS'] or {}
-        self._wrapped = clazz(**kwargs)
+        pass
+        # clazz = get_storage_class(settings.IMPORT_CONFIG_STORAGE['BACKEND'])
+        # kwargs = settings.IMPORT_CONFIG_STORAGE['KWARGS'] or {}
+        # self._wrapped = clazz(**kwargs)
 
     def deconstruct(self):
         return 'poms.integrations.storage.ImportConfigStorage', [], {}
