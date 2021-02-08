@@ -101,7 +101,7 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
             res = AsyncResult(task_id)
 
             try:
-                celery_task = CeleryTask.objects.get(master_user=request.user.master_user, task_id=task_id)
+                celery_task = CeleryTask.objects.get(master_user=request.user.master_user, celery_task_id=task_id)
             except CeleryTask.DoesNotExist:
                 # celery_task = None
                 _l.debug("Cant create Celery Task")
@@ -168,8 +168,7 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
             celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                     member=request.user.member,
-                                                    started_at=datetime_now(),
-                                                    task_type='simple_import', task_id=res.id)
+                                                    type='simple_import', celery_task_id=res.id)
 
             celery_task.save()
 
@@ -209,7 +208,7 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
             res = AsyncResult(task_id)
 
             try:
-                celery_task = CeleryTask.objects.get(master_user=request.user.master_user, task_id=task_id)
+                celery_task = CeleryTask.objects.get(master_user=request.user.master_user, celery_task_id=task_id)
             except CeleryTask.DoesNotExist:
                 celery_task = None
                 _l.debug("Cant create Celery Task")
@@ -274,8 +273,7 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
 
             celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                     member=request.user.member,
-                                                    started_at=datetime_now(),
-                                                    task_type='validate_simple_import', task_id=instance.task_id)
+                                                    type='validate_simple_import', celery_task_id=instance.task_id)
 
             celery_task.save()
 

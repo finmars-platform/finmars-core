@@ -10,7 +10,7 @@ DEBUG=True \
 SFTP_HOST=sftp.finmars.com \
 SFTP_USERNAME=finmars \
 SFTP_PASSWORD=97cZgv1pL2pz \
-DJANGO_LOG_LEVEL=DEBUG \
+DJANGO_LOG_LEVEL=INFO \
 USE_WEBSOCKETS=True \
 WEBSOCKET_HOST=ws://0.0.0.0:6969 \
-celery worker --app=poms_app  --loglevel=INFO --logfile=/var/log/finmars/celery.log
+celery --app=poms_app worker --autoscale=4,2  --loglevel=INFO

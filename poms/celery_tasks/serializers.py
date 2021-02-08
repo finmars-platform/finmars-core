@@ -7,12 +7,20 @@ from poms.users.fields import MasterUserField, MemberField
 class CeleryTaskSerializer(serializers.ModelSerializer):
     master_user = MasterUserField()
     member = MemberField()
-    data = serializers.JSONField(allow_null=False)
+    options_object = serializers.JSONField(allow_null=False)
+    result_object = serializers.JSONField(allow_null=False)
 
     class Meta:
 
         model = CeleryTask
-        fields = ('id', 'master_user', 'task_type', 'task_id', 'task_status', 'data', 'is_system_task', 'member', 'started_at', 'finished_at', 'file_report')
+        fields = ('id',  'member',
+                  'master_user',
+                  'parent', 'children',
+                  'type', 'celery_task_id', 'status',
+                  'options_object', 'result_object',
+                  'is_system_task',
+                  'created', 'modified',
+                  'file_report')
 
 
     def __init__(self, *args, **kwargs):

@@ -446,7 +446,7 @@ LOGGING = {
         },
         "django": {
             "handlers": ["file"],
-            "level": "INFO",
+            "level": "ERROR",
             "propagate": True
         },
         "poms": {
@@ -562,8 +562,9 @@ AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', None)
 
 # CELERY ------------------------------------------------
 
-CELERYD_LOG_LEVEL = "DEBUG"
+# CELERYD_LOG_LEVEL = "DEBUG"
 CELERYD_HIJACK_ROOT_LOGGER = False
+CELERY_EAGER_PROPAGATES = True
 
 CELERY_BROKER_URL = 'redis://%s/1' % REDIS_HOST
 # CELERY_RESULT_BACKEND = 'redis://%s/1' % REDIS_HOST

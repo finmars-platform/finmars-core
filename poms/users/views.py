@@ -296,8 +296,7 @@ class MasterUserCopyViewSet(AbstractAsyncViewSet):
 
             celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                     member=request.user.member,
-                                                    started_at=datetime_now(),
-                                                    task_type='clone_master_user', task_id=res.id)
+                                                    task_type='clone_master_user', celery_task_id=res.id)
 
             celery_task.save()
 

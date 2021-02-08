@@ -42,7 +42,7 @@ from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDo
     BloombergDataProviderCredential, PricingConditionMapping, TransactionFileResult, DataProvider
 from poms.integrations.providers.base import get_provider, ProviderException
 from poms.integrations.storage import import_file_storage
-from poms.integrations.tasks import download_pricing, download_instrument, test_certificate
+from poms.integrations.tasks import download_instrument, test_certificate
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, GenericAttributeTypeSerializer, \
     GenericClassifierSerializer
@@ -1823,29 +1823,6 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
 
     scheme = ComplexTransactionImportSchemeRestField(required=False)
     file = serializers.FileField(required=False, allow_null=True)
-    skip_first_line = serializers.BooleanField(required=False, default=True)
-    delimiter = serializers.CharField(max_length=2, required=False, initial=',', default=',')
-    quotechar = serializers.CharField(max_length=1, required=False, initial='"', default='"')
-    encoding = serializers.CharField(max_length=20, required=False, initial='utf-8', default='utf-8')
-
-    error_handling = serializers.ChoiceField(
-        choices=[('break', 'Break on first error'), ('continue', 'Try continue')],
-        required=False, initial='continue', default='continue'
-    )
-
-    missing_data_handler = serializers.ChoiceField(
-        choices=[('throw_error', 'Treat as Error'), ('set_defaults', 'Replace with Default Value')],
-        required=False, initial='throw_error', default='throw_error'
-    )
-
-    error = serializers.ReadOnlyField()
-    error_message = serializers.ReadOnlyField()
-    error_row_index = serializers.ReadOnlyField()
-    error_rows = serializers.ReadOnlyField()
-    processed_rows = serializers.ReadOnlyField()
-    total_rows = serializers.ReadOnlyField()
-
-    scheme_object = ComplexTransactionImportSchemeSerializer(source='scheme', read_only=True)
 
     stats_file_report = serializers.ReadOnlyField()
 
@@ -1890,6 +1867,84 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
 
     def _get_path(self, master_user, file_name):
         return '%s/transaction_import_files/%s.dat' % (master_user.token, file_name)
+
+
+# class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
+#     task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+#     task_status = serializers.ReadOnlyField()
+#
+#     master_user = MasterUserField()
+#     member = HiddenMemberField()
+#
+#     scheme = ComplexTransactionImportSchemeRestField(required=False)
+#     file = serializers.FileField(required=False, allow_null=True)
+#     skip_first_line = serializers.BooleanField(required=False, default=True)
+#     delimiter = serializers.CharField(max_length=2, required=False, initial=',', default=',')
+#     quotechar = serializers.CharField(max_length=1, required=False, initial='"', default='"')
+#     encoding = serializers.CharField(max_length=20, required=False, initial='utf-8', default='utf-8')
+#
+#     error_handling = serializers.ChoiceField(
+#         choices=[('break', 'Break on first error'), ('continue', 'Try continue')],
+#         required=False, initial='continue', default='continue'
+#     )
+#
+#     missing_data_handler = serializers.ChoiceField(
+#         choices=[('throw_error', 'Treat as Error'), ('set_defaults', 'Replace with Default Value')],
+#         required=False, initial='throw_error', default='throw_error'
+#     )
+#
+#     error = serializers.ReadOnlyField()
+#     error_message = serializers.ReadOnlyField()
+#     error_row_index = serializers.ReadOnlyField()
+#     error_rows = serializers.ReadOnlyField()
+#     processed_rows = serializers.ReadOnlyField()
+#     total_rows = serializers.ReadOnlyField()
+#
+#     scheme_object = ComplexTransactionImportSchemeSerializer(source='scheme', read_only=True)
+#
+#     stats_file_report = serializers.ReadOnlyField()
+#
+#     def create(self, validated_data):
+#
+#         if 'scheme' in validated_data:
+#
+#             validated_data['delimiter'] = validated_data['scheme'].delimiter
+#             validated_data['error_handling'] = validated_data['scheme'].error_handler # Warning - prop is - error_handling
+#             validated_data['missing_data_handler'] = validated_data['scheme'].missing_data_handler
+#             _l.debug('scheme missing data helper %s' % validated_data['scheme'].missing_data_handler)
+#
+#         _l.debug('validated_data %s' % validated_data)
+#
+#         filetmp = file = validated_data.get('file', None)
+#
+#         print('filetmp %s' % filetmp)
+#
+#         filename = None
+#         if filetmp:
+#             filename = filetmp.name
+#
+#             print('filename %s' % filename)
+#
+#             validated_data['filename'] = filename
+#
+#         if validated_data.get('task_id', None):
+#             validated_data.pop('file', None)
+#         else:
+#             file = validated_data.pop('file', None)
+#             if file:
+#                 master_user = validated_data['master_user']
+#                 file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
+#                 file_path = self._get_path(master_user, file_name)
+#
+#                 SFS.save(file_path, file)
+#                 validated_data['file_path'] = file_path
+#             else:
+#                 raise serializers.ValidationError({'file': ugettext('Required field.')})
+#
+#         return ComplexTransactionCsvFileImport(**validated_data)
+#
+#     def _get_path(self, master_user, file_name):
+#         return '%s/transaction_import_files/%s.dat' % (master_user.token, file_name)
 
 
 class TransactionFileResultSerializer(ModelWithTimeStampSerializer):

@@ -11,9 +11,9 @@ from poms.users.filters import OwnerByMasterUserFilter
 
 class CeleryTaskFilterSet(FilterSet):
 
-    task_id = CharFilter()
-    task_status = CharFilter()
-    task_type = CharFilter()
+    celery_task_id = CharFilter()
+    status = CharFilter()
+    type = CharFilter()
 
     class Meta:
         model = CeleryTask

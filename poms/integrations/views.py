@@ -57,7 +57,9 @@ from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer
     ComplexTransactionImportSchemeLightSerializer, BloombergDataProviderCredentialSerializer, \
     PricingConditionMappingSerializer, TransactionFileResultSerializer, DataProviderSerializer, \
     InstrumentDownloadSchemeLightSerializer
-from poms.integrations.tasks import complex_transaction_csv_file_import, complex_transaction_csv_file_import_validate, complex_transaction_csv_file_import_by_procedure
+from poms.integrations.tasks import complex_transaction_csv_file_import, complex_transaction_csv_file_import_validate, \
+    complex_transaction_csv_file_import_by_procedure, complex_transaction_csv_file_import_parallel, \
+    complex_transaction_csv_file_import_validate_parallel
 from poms.csv_import.tasks import data_csv_file_import_by_procedure
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
@@ -794,7 +796,6 @@ class ComplexTransactionImportSchemeLightViewSet(AbstractModelViewSet):
 
 class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
-    celery_task = complex_transaction_csv_file_import
 
     permission_classes = AbstractModelViewSet.permission_classes + [
         PomsFunctionPermission
@@ -805,7 +806,7 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         context['show_object_permissions'] = False
         return context
 
-    def create(self, request, *args, **kwargs):
+    def get_status(self, request, *args, **kwargs):
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -813,15 +814,13 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
 
         task_id = instance.task_id
 
-        # signer = TimestampSigner()
-
         if task_id:
 
             # res = AsyncResult(signer.unsign(task_id))
             res = AsyncResult(task_id)
 
             try:
-                celery_task = CeleryTask.objects.get(master_user=request.user.master_user, task_id=task_id)
+                celery_task = CeleryTask.objects.get(master_user=request.user.master_user, celery_task_id=task_id)
             except CeleryTask.DoesNotExist:
                 celery_task = None
                 raise PermissionDenied()
@@ -884,25 +883,48 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
 
         else:
 
-            res = self.celery_task.apply_async(kwargs={'instance': instance})
-            # instance.task_id = signer.sign('%s' % res.id)
-            instance.task_id = res.id
+            return Response({"message": "Task not found"}, status=status.HTTP_400_BAD_REQUEST)
 
-            celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
-                                                    member=request.user.member,
-                                                    started_at=datetime_now(),
-                                                    task_type='transaction_import', task_id=instance.task_id)
+
+    def create(self, request, *args, **kwargs):
+
+        st = time.perf_counter()
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        # REFACTOR THIS
+
+        options_object = {}
+        options_object['file_path'] = instance.file_path
+        options_object['scheme_id'] = instance.scheme.id
+        options_object['execution_context'] = None
+
+        celery_task = CeleryTask(master_user=request.user.master_user,
+                                 member=request.user.member,
+                                 options_object=options_object,
+                                 type='transaction_import')
+
+        celery_task.save()
+
+        def oncommit():
+
+            res = complex_transaction_csv_file_import_parallel.apply_async(kwargs={'task_id': celery_task.pk})
+
+            celery_task.celery_task_id = res.id
 
             celery_task.save()
 
-            instance.task_status = res.status
-            serializer = self.get_serializer(instance=instance, many=False)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        transaction.on_commit(oncommit)
+
+        _l.info('ComplexTransactionCsvFileImportViewSet done: %s', "{:3.3f}".format(time.perf_counter() - st))
+
+        return Response({"task_id": celery_task.pk, "task_status": celery_task.status}, status=status.HTTP_200_OK)
 
 
 class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
-    celery_task = complex_transaction_csv_file_import_validate
 
     permission_classes = AbstractModelViewSet.permission_classes + [
         PomsFunctionPermission
@@ -913,11 +935,12 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
         context['show_object_permissions'] = False
         return context
 
-    def create(self, request, *args, **kwargs):
+    def get_status(self,  request, *args, **kwargs):
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
+
 
         task_id = instance.task_id
 
@@ -995,22 +1018,42 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
 
         else:
 
-            res = self.celery_task.apply_async(kwargs={'instance': instance})
-            # instance.task_id = signer.sign('%s' % res.id)
-            instance.task_id = res.id
+            return Response({"message": "Task not found"}, status=status.HTTP_400_BAD_REQUEST)
 
-            celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
-                                                    member=request.user.member,
-                                                    started_at=datetime_now(),
-                                                    task_type='validate_transaction_import', task_id=instance.task_id)
+    def create(self, request, *args, **kwargs):
+
+        st = time.perf_counter()
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        # REFACTOR THIS
+
+        options_object = {}
+        options_object['file_path'] = instance.file_path
+        options_object['scheme_id'] = instance.scheme.id
+
+        celery_task = CeleryTask(master_user=request.user.master_user,
+                                                member=request.user.member,
+                                                options_object=options_object,
+                                                type='validate_transaction_import')
+
+        celery_task.save()
+
+        def oncommit():
+
+            res = complex_transaction_csv_file_import_validate_parallel.apply_async(kwargs={'task_id': celery_task.pk})
+
+            celery_task.celery_task_id = res.id
 
             celery_task.save()
 
-            print('CREATE CELERY TASK %s' % res.id)
+        transaction.on_commit(oncommit)
 
-            instance.task_status = res.status
-            serializer = self.get_serializer(instance=instance, many=False)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        _l.info('ComplexTransactionCsvFileImportValidateViewSet done: %s', "{:3.3f}".format(time.perf_counter() - st))
+
+        return Response({"task_id": celery_task.pk, "task_status": celery_task.status}, status=status.HTTP_200_OK)
 
 
 class TransactionFileResultFilterSet(FilterSet):

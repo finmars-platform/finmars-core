@@ -4,46 +4,71 @@ from django.utils.translation import ugettext_lazy
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 
+from poms.common.models import TimeStampedModel
 
-class CeleryTask(models.Model):
+
+class CeleryTask(TimeStampedModel):
+
+    STATUS_INIT = 'I'
+    STATUS_PENDING = 'P'
+    STATUS_DONE = 'D'
+    STATUS_ERROR = 'E'
+    STATUS_TIMEOUT = 'T'
+
+    STATUS_CHOICES = (
+        (STATUS_INIT, 'INIT'),
+        (STATUS_PENDING, 'PENDING'),
+        (STATUS_DONE, 'DONE'),
+        (STATUS_ERROR, 'ERROR'),
+        (STATUS_TIMEOUT, 'TIMEOUT'),
+    )
+
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     member = models.ForeignKey('users.Member', verbose_name=ugettext_lazy('member'), null=True, blank=True, on_delete=models.SET_NULL)
 
-    started_at = models.DateTimeField(blank=True, null=True)
-    finished_at = models.DateTimeField(blank=True, null=True)
-
     is_system_task = models.BooleanField(default=False, verbose_name=ugettext_lazy("is system task"))
 
-    task_id = models.CharField('task_id', max_length=255, unique=True)
-    task_status = models.CharField('task_status', max_length=50, blank=True, null=True)
-    task_type = models.CharField('task_type', max_length=50, blank=True, null=True)
+    celery_task_id = models.CharField(null=True, max_length=255)
+    status = models.CharField(null=True, max_length=1, default=STATUS_INIT, choices=STATUS_CHOICES,
+                              verbose_name='status')
+    type = models.CharField(max_length=50, blank=True, null=True)
 
-    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+    parent = models.ForeignKey('self', null=True, blank=True, related_name='children',
+                               verbose_name=ugettext_lazy('parent'), on_delete=models.SET_NULL)
+
+    options = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('options'))
+    result = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('result'))
 
     file_report = models.ForeignKey('file_reports.FileReport',null=True, blank=True, verbose_name=ugettext_lazy('file report'), on_delete=models.SET_NULL)
 
     class Meta:
-        unique_together = (
-            ('master_user', 'task_id')
-        )
-        ordering = ['-started_at']
+        ordering = ['-created']
 
     def __str__(self):
-        return 'Master_user {0.master_user.id} <Task: {0.task_id} ({0.task_status})>'.format(self)
+        return 'Master_user {0.master_user.id} <Task: {0.pk} ({0.status})>'.format(self)
 
     @property
-    def data(self):
-        if self.json_data:
-            try:
-                return json.loads(self.json_data)
-            except (ValueError, TypeError):
-                return None
-        else:
+    def options_object(self):
+        if self.options is None:
             return None
+        return json.loads(self.options)
 
-    @data.setter
-    def data(self, val):
-        if val:
-            self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+    @options_object.setter
+    def options_object(self, value):
+        if value is None:
+            self.options = None
         else:
-            self.json_data = None
+            self.options = json.dumps(value, cls=DjangoJSONEncoder, sort_keys=True, indent=1)
+
+    @property
+    def result_object(self):
+        if self.result is None:
+            return None
+        return json.loads(self.result)
+
+    @result_object.setter
+    def result_object(self, value):
+        if value is None:
+            self.result = None
+        else:
+            self.result = json.dumps(value, cls=DjangoJSONEncoder, sort_keys=True, indent=1)

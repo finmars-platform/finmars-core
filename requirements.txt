@@ -1,13 +1,10 @@
-amqp==2.6.0
+amqp==5.0.5
 anyjson==0.3.3
 appdirs==1.4.3
 Babel==2.3.4
 bcrypt==3.1.7
 billiard==3.6.3.0
-boto==2.46.1
-boto3==1.9.15
-botocore==1.12.16
-celery==4.4.6
+celery==5.0.5
 cffi==1.9.1
 coreapi==2.3.0
 coreschema==0.0.4
@@ -16,7 +13,7 @@ cryptography==2.8
 Cython==0.29.21
 Django==2.2.5
 django-celery-beat==2.2.0
-django-celery-results==1.0.4
+django-celery-results==2.0.1
 django-cors-headers==3.5.0
 django-crispy-forms==1.7.2
 django-debug-toolbar==2.0

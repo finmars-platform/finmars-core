@@ -757,7 +757,7 @@ class PricingConditionMapping(AbstractMapping):
 
 # -------
 
-
+# DEPRECATED, REFACTOR SOON
 class Task(TimeStampedModel):
     ACTION_INSTRUMENT = 'instrument'
     ACTION_PRICING = 'pricing'

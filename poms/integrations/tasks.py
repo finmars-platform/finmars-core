@@ -5,6 +5,7 @@ import logging
 import time
 import uuid
 import hashlib
+import copy
 from collections import defaultdict
 from datetime import timedelta, date
 from tempfile import NamedTemporaryFile
@@ -60,11 +61,9 @@ from poms.common.utils import date_now, datetime_now
 from .models import ImportConfig
 from ..common.websockets import send_websocket_message
 
+import traceback
+
 _l = logging.getLogger('poms.integrations')
-
-from celery.utils.log import get_task_logger
-
-celery_logger = get_task_logger(__name__)
 
 from storages.backends.sftpstorage import SFTPStorage
 
@@ -454,7 +453,7 @@ def download_currency_pricing_async(self, task_id):
 # DEPRECATED SINCE 22.09.2020 DELETE SOON
 @shared_task(name='integrations.download_pricing_async', bind=True, ignore_result=False)
 def download_pricing_async(self, task_id):
-    celery_logger.info('download pricing async')
+    _l.info('download pricing async')
     task = Task.objects.get(pk=task_id)
     _l.debug('download_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
 
@@ -696,231 +695,231 @@ def download_pricing_async(self, task_id):
 
 
 # DEPRECATED SINCE 22.09.2020 DELETE SOON
-@shared_task(name='integrations.download_pricing_wait', bind=True, ignore_result=False)
-def download_pricing_wait(self, sub_tasks_id, task_id):
-    celery_logger.info('download pricing wait')
-    task = Task.objects.get(pk=task_id)
-    celery_task = CeleryTask.objects.get(task_id=task_id, master_user=task.master_user)
-    _l.debug('download_pricing_wait: master_user_id=%s, task=%s', task.master_user_id, task.info)
-
-    if task.status != Task.STATUS_WAIT_RESPONSE:
-        return
-
-    task.add_celery_task_id(self.request.id)
-
-    pricing_policies = [p for p in PricingPolicy.objects.filter(master_user=task.master_user)]
-
-    options = task.options_object
-    date_from = parse_date_iso(options['date_from'])
-    date_to = parse_date_iso(options['date_to'])
-    is_yesterday = options['is_yesterday']
-    override_existed = options['override_existed']
-    fill_days = options['fill_days']
-    # sub_tasks_id = options['sub_tasks']
-    instrument_task = options['instrument_task']
-    currency_task = options['currency_task']
-
-    result = {}
-    errors = {}
-    instruments_prices = []
-    currencies_prices = []
-
-    _l.debug('instrument_task: %s', instrument_task)
-    _l.debug('currency_task: %s', currency_task)
-
-    instruments_pk = [int(pk) for pk in instrument_task.keys()]
-    _l.debug('instruments_pk: %s', instruments_pk)
-    currencies_pk = [int(pk) for pk in currency_task.keys()]
-    _l.debug('currencies_pk: %s', currencies_pk)
-
-    _l.debug('sub_tasks_id: %s', sub_tasks_id)
-    for sub_task in Task.objects.filter(pk__in=sub_tasks_id):
-        _l.debug('sub_task: %s', sub_task.info)
-        if sub_task.status != Task.STATUS_DONE:
-            continue
-
-        provider = get_provider(task=sub_task)
-
-        sub_task_options = sub_task.options_object
-
-        if 'instruments_pk' in sub_task_options:
-            task_instruments_pk = sub_task_options['instruments_pk']
-            task_instruments = Instrument.objects.filter(pk__in=task_instruments_pk)
-
-            price_download_scheme_id = sub_task_options['price_download_scheme_id']
-            price_download_scheme = PriceDownloadScheme.objects.get(pk=price_download_scheme_id)
-
-            sub_task_instruments_prices, sub_task_errors = provider.create_instrument_pricing(
-                price_download_scheme=price_download_scheme,
-                options=sub_task_options,
-                values=sub_task.result_object,
-                instruments=task_instruments,
-                pricing_policies=pricing_policies
-            )
-
-            instruments_prices += sub_task_instruments_prices
-            errors.update(sub_task_errors)
-
-        elif 'currencies_pk' in sub_task_options:
-            task_currencies_pk = sub_task_options['currencies_pk']
-            task_currencies = Currency.objects.filter(pk__in=task_currencies_pk)
-
-            price_download_scheme_id = sub_task_options['price_download_scheme_id']
-            price_download_scheme = PriceDownloadScheme.objects.get(pk=price_download_scheme_id)
-
-            sub_task_currencies_prices, sub_task_errors = provider.create_currency_pricing(
-                price_download_scheme=price_download_scheme,
-                options=sub_task_options,
-                values=sub_task.result_object,
-                currencies=task_currencies,
-                pricing_policies=pricing_policies
-            )
-
-            currencies_prices += sub_task_currencies_prices
-            errors.update(sub_task_errors)
-
-    instrument_for_manual_price = [int(i_id) for i_id, task_id in instrument_task.items() if task_id is None]
-    _l.debug('instrument_for_manual_price: %s', instrument_for_manual_price)
-    manual_instruments_prices, manual_instruments_errors = _create_instrument_manual_prices(
-        options=options, instruments=instrument_for_manual_price)
-
-    instruments_prices += manual_instruments_prices
-    errors.update(manual_instruments_errors)
-
-    instrument_for_default_price = [int(i_id) for i_id, task_id in instrument_task.items() if
-                                    task_id == 'instrument_default']
-    _l.debug('instrument_for_default_price: %s', instrument_for_default_price)
-
-    default_instruments_prices, default_instruments_errors = _create_instrument_default_prices(
-        options=options, instruments=instrument_for_default_price, pricing_policies=pricing_policies)
-
-    instruments_prices += default_instruments_prices
-    errors.update(default_instruments_errors)
-
-    currencies_for_default_price = [int(i_id) for i_id, task_id in currency_task.items() if
-                                    task_id == 'currency_default']
-    _l.debug('currencies_for_default_price: %s', currencies_for_default_price)
-
-    default_currencies_prices, default_currencies_errors = _create_currency_default_prices(options=options,
-                                                                                           currencies=currencies_for_default_price,
-                                                                                           pricing_policies=pricing_policies)
-
-    currencies_prices += default_currencies_prices
-    errors.update(default_currencies_errors)
-
-    if errors:
-        options['errors'] = errors
-        task.options_object = options
-        task.result_object = result
-        task.status = Task.STATUS_ERROR
-        task.save()
-
-        celery_task.task_status = task.STATUS_ERROR
-        celery_task.save()
-
-    if fill_days > 0:
-        fill_date_from = date_to + timedelta(days=1)
-        instrument_last_price = [p for p in instruments_prices if p.date == date_to]
-        _l.debug('instrument last prices: %s', instrument_last_price)
-        for p in instrument_last_price:
-            instruments_prices + fill_instrument_price(fill_date_from, fill_days, p)
-
-        currency_last_price = [p for p in currencies_prices if p.date == date_to]
-        _l.debug('currency last prices: %s', currency_last_price)
-        for p in currency_last_price:
-            currencies_prices += fill_currency_price(fill_date_from, fill_days, p)
-
-    _l.debug('instruments_prices: %s', instruments_prices)
-    _l.debug('currencies_prices: %s', currencies_prices)
-
-    for p in instruments_prices:
-        # p.calculate_accrued_price(save=False)
-        accrued_price = p.instrument.get_accrued_price(p.date)
-        p.accrued_price = accrued_price if accrued_price is not None else 0.0
-
-    with transaction.atomic():
-        _l.debug('instruments_pk: %s', instruments_pk)
-        existed_instrument_prices = {
-            (p.instrument_id, p.pricing_policy_id, p.date): p
-            for p in PriceHistory.objects.filter(instrument__in=instruments_pk,
-                                                 date__range=(date_from, date_to + timedelta(days=fill_days)))
-        }
-        _l.debug('existed_instrument_prices: %s', existed_instrument_prices)
-        for p in instruments_prices:
-            op = existed_instrument_prices.get((p.instrument_id, p.pricing_policy_id, p.date), None)
-            if op is None:
-                p.save()
-            else:
-                if override_existed:
-                    op.principal_price = p.principal_price
-                    op.accrued_price = p.accrued_price
-                    op.save()
-
-        _l.debug('currencies_pk: %s', currencies_pk)
-        existed_currency_prices = {
-            (p.currency_id, p.pricing_policy_id, p.date): p
-            for p in CurrencyHistory.objects.filter(currency__in=currencies_pk,
-                                                    date__range=(date_from, date_to + timedelta(days=fill_days)))
-        }
-        _l.debug('existed_currency_prices: %s', existed_currency_prices)
-        for p in currencies_prices:
-            op = existed_currency_prices.get((p.currency_id, p.pricing_policy_id, p.date), None)
-
-            if op is None:
-                p.save()
-            else:
-                if override_existed:
-                    op.fx_rate = p.fx_rate
-                    op.save()
-
-        if is_yesterday:
-            instrument_price_real = {(p.instrument_id, p.pricing_policy_id) for p in instruments_prices
-                                     if p.date == date_to}
-            currency_price_real = {(p.currency_id, p.pricing_policy_id) for p in currencies_prices
-                                   if p.date == date_to}
-
-            instrument_price_expected = set()
-            currency_price_expected = set()
-            for pp in pricing_policies:
-                for i_id, task_id in instrument_task.items():
-                    instrument_price_expected.add((int(i_id), pp.id))
-
-                for c_id, task_id in currency_task.items():
-                    currency_price_expected.add((int(c_id), pp.id))
-
-            instrument_price_missed = instrument_price_expected.difference(instrument_price_real)
-            # instrument_price_missed_objects = []
-            # for instrument_id, pricing_policy_id in instrument_price_missed:
-            #     op = existed_instrument_prices.get((instrument_id, pricing_policy_id, date_to), None)
-            #     if op is None:
-            #         op = PriceHistory(instrument_id=instrument_id, pricing_policy_id=pricing_policy_id, date=date_to)
-            #     instrument_price_missed_objects.append(op)
-            # instrument_price_missed = PriceHistorySerializer(instance=instrument_price_missed_objects, many=True,
-            #                                                  context={'member': task.member}).data
-            result['instrument_price_missed'] = list(instrument_price_missed)
-
-            currency_price_missed = currency_price_expected.difference(currency_price_real)
-            # currency_price_missed_objects = []
-            # for currency_id, pricing_policy_id in currency_price_missed:
-            #     op = existed_currency_prices.get((currency_id, pricing_policy_id, date_to), None)
-            #     if op is None:
-            #         op = CurrencyHistory(currency_id=currency_id, pricing_policy_id=pricing_policy_id, date=date_to)
-            #     currency_price_missed_objects.append(op)
-            # currency_price_missed = CurrencyHistorySerializer(instance=currency_price_missed_objects, many=True).data
-            result['currency_price_missed'] = list(currency_price_missed)
-
-            _l.debug('instrument_price_missed: %s', instrument_price_missed)
-            _l.debug('currency_price_missed: %s', currency_price_missed)
-
-        task.options_object = options
-        task.result_object = result
-        task.status = Task.STATUS_DONE
-        task.save()
-
-        celery_task.task_status = Task.STATUS_DONE
-        celery_task.save()
-
-    return task_id
+# @shared_task(name='integrations.download_pricing_wait', bind=True, ignore_result=False)
+# def download_pricing_wait(self, sub_tasks_id, task_id):
+#     _l.info('download pricing wait')
+#     task = Task.objects.get(pk=task_id)
+#     celery_task = CeleryTask.objects.get(task_id=task_id, master_user=task.master_user)
+#     _l.debug('download_pricing_wait: master_user_id=%s, task=%s', task.master_user_id, task.info)
+#
+#     if task.status != Task.STATUS_WAIT_RESPONSE:
+#         return
+#
+#     task.add_celery_task_id(self.request.id)
+#
+#     pricing_policies = [p for p in PricingPolicy.objects.filter(master_user=task.master_user)]
+#
+#     options = task.options_object
+#     date_from = parse_date_iso(options['date_from'])
+#     date_to = parse_date_iso(options['date_to'])
+#     is_yesterday = options['is_yesterday']
+#     override_existed = options['override_existed']
+#     fill_days = options['fill_days']
+#     # sub_tasks_id = options['sub_tasks']
+#     instrument_task = options['instrument_task']
+#     currency_task = options['currency_task']
+#
+#     result = {}
+#     errors = {}
+#     instruments_prices = []
+#     currencies_prices = []
+#
+#     _l.debug('instrument_task: %s', instrument_task)
+#     _l.debug('currency_task: %s', currency_task)
+#
+#     instruments_pk = [int(pk) for pk in instrument_task.keys()]
+#     _l.debug('instruments_pk: %s', instruments_pk)
+#     currencies_pk = [int(pk) for pk in currency_task.keys()]
+#     _l.debug('currencies_pk: %s', currencies_pk)
+#
+#     _l.debug('sub_tasks_id: %s', sub_tasks_id)
+#     for sub_task in Task.objects.filter(pk__in=sub_tasks_id):
+#         _l.debug('sub_task: %s', sub_task.info)
+#         if sub_task.status != Task.STATUS_DONE:
+#             continue
+#
+#         provider = get_provider(task=sub_task)
+#
+#         sub_task_options = sub_task.options_object
+#
+#         if 'instruments_pk' in sub_task_options:
+#             task_instruments_pk = sub_task_options['instruments_pk']
+#             task_instruments = Instrument.objects.filter(pk__in=task_instruments_pk)
+#
+#             price_download_scheme_id = sub_task_options['price_download_scheme_id']
+#             price_download_scheme = PriceDownloadScheme.objects.get(pk=price_download_scheme_id)
+#
+#             sub_task_instruments_prices, sub_task_errors = provider.create_instrument_pricing(
+#                 price_download_scheme=price_download_scheme,
+#                 options=sub_task_options,
+#                 values=sub_task.result_object,
+#                 instruments=task_instruments,
+#                 pricing_policies=pricing_policies
+#             )
+#
+#             instruments_prices += sub_task_instruments_prices
+#             errors.update(sub_task_errors)
+#
+#         elif 'currencies_pk' in sub_task_options:
+#             task_currencies_pk = sub_task_options['currencies_pk']
+#             task_currencies = Currency.objects.filter(pk__in=task_currencies_pk)
+#
+#             price_download_scheme_id = sub_task_options['price_download_scheme_id']
+#             price_download_scheme = PriceDownloadScheme.objects.get(pk=price_download_scheme_id)
+#
+#             sub_task_currencies_prices, sub_task_errors = provider.create_currency_pricing(
+#                 price_download_scheme=price_download_scheme,
+#                 options=sub_task_options,
+#                 values=sub_task.result_object,
+#                 currencies=task_currencies,
+#                 pricing_policies=pricing_policies
+#             )
+#
+#             currencies_prices += sub_task_currencies_prices
+#             errors.update(sub_task_errors)
+#
+#     instrument_for_manual_price = [int(i_id) for i_id, task_id in instrument_task.items() if task_id is None]
+#     _l.debug('instrument_for_manual_price: %s', instrument_for_manual_price)
+#     manual_instruments_prices, manual_instruments_errors = _create_instrument_manual_prices(
+#         options=options, instruments=instrument_for_manual_price)
+#
+#     instruments_prices += manual_instruments_prices
+#     errors.update(manual_instruments_errors)
+#
+#     instrument_for_default_price = [int(i_id) for i_id, task_id in instrument_task.items() if
+#                                     task_id == 'instrument_default']
+#     _l.debug('instrument_for_default_price: %s', instrument_for_default_price)
+#
+#     default_instruments_prices, default_instruments_errors = _create_instrument_default_prices(
+#         options=options, instruments=instrument_for_default_price, pricing_policies=pricing_policies)
+#
+#     instruments_prices += default_instruments_prices
+#     errors.update(default_instruments_errors)
+#
+#     currencies_for_default_price = [int(i_id) for i_id, task_id in currency_task.items() if
+#                                     task_id == 'currency_default']
+#     _l.debug('currencies_for_default_price: %s', currencies_for_default_price)
+#
+#     default_currencies_prices, default_currencies_errors = _create_currency_default_prices(options=options,
+#                                                                                            currencies=currencies_for_default_price,
+#                                                                                            pricing_policies=pricing_policies)
+#
+#     currencies_prices += default_currencies_prices
+#     errors.update(default_currencies_errors)
+#
+#     if errors:
+#         options['errors'] = errors
+#         task.options_object = options
+#         task.result_object = result
+#         task.status = Task.STATUS_ERROR
+#         task.save()
+#
+#         celery_task.task_status = task.STATUS_ERROR
+#         celery_task.save()
+#
+#     if fill_days > 0:
+#         fill_date_from = date_to + timedelta(days=1)
+#         instrument_last_price = [p for p in instruments_prices if p.date == date_to]
+#         _l.debug('instrument last prices: %s', instrument_last_price)
+#         for p in instrument_last_price:
+#             instruments_prices + fill_instrument_price(fill_date_from, fill_days, p)
+#
+#         currency_last_price = [p for p in currencies_prices if p.date == date_to]
+#         _l.debug('currency last prices: %s', currency_last_price)
+#         for p in currency_last_price:
+#             currencies_prices += fill_currency_price(fill_date_from, fill_days, p)
+#
+#     _l.debug('instruments_prices: %s', instruments_prices)
+#     _l.debug('currencies_prices: %s', currencies_prices)
+#
+#     for p in instruments_prices:
+#         # p.calculate_accrued_price(save=False)
+#         accrued_price = p.instrument.get_accrued_price(p.date)
+#         p.accrued_price = accrued_price if accrued_price is not None else 0.0
+#
+#     with transaction.atomic():
+#         _l.debug('instruments_pk: %s', instruments_pk)
+#         existed_instrument_prices = {
+#             (p.instrument_id, p.pricing_policy_id, p.date): p
+#             for p in PriceHistory.objects.filter(instrument__in=instruments_pk,
+#                                                  date__range=(date_from, date_to + timedelta(days=fill_days)))
+#         }
+#         _l.debug('existed_instrument_prices: %s', existed_instrument_prices)
+#         for p in instruments_prices:
+#             op = existed_instrument_prices.get((p.instrument_id, p.pricing_policy_id, p.date), None)
+#             if op is None:
+#                 p.save()
+#             else:
+#                 if override_existed:
+#                     op.principal_price = p.principal_price
+#                     op.accrued_price = p.accrued_price
+#                     op.save()
+#
+#         _l.debug('currencies_pk: %s', currencies_pk)
+#         existed_currency_prices = {
+#             (p.currency_id, p.pricing_policy_id, p.date): p
+#             for p in CurrencyHistory.objects.filter(currency__in=currencies_pk,
+#                                                     date__range=(date_from, date_to + timedelta(days=fill_days)))
+#         }
+#         _l.debug('existed_currency_prices: %s', existed_currency_prices)
+#         for p in currencies_prices:
+#             op = existed_currency_prices.get((p.currency_id, p.pricing_policy_id, p.date), None)
+#
+#             if op is None:
+#                 p.save()
+#             else:
+#                 if override_existed:
+#                     op.fx_rate = p.fx_rate
+#                     op.save()
+#
+#         if is_yesterday:
+#             instrument_price_real = {(p.instrument_id, p.pricing_policy_id) for p in instruments_prices
+#                                      if p.date == date_to}
+#             currency_price_real = {(p.currency_id, p.pricing_policy_id) for p in currencies_prices
+#                                    if p.date == date_to}
+#
+#             instrument_price_expected = set()
+#             currency_price_expected = set()
+#             for pp in pricing_policies:
+#                 for i_id, task_id in instrument_task.items():
+#                     instrument_price_expected.add((int(i_id), pp.id))
+#
+#                 for c_id, task_id in currency_task.items():
+#                     currency_price_expected.add((int(c_id), pp.id))
+#
+#             instrument_price_missed = instrument_price_expected.difference(instrument_price_real)
+#             # instrument_price_missed_objects = []
+#             # for instrument_id, pricing_policy_id in instrument_price_missed:
+#             #     op = existed_instrument_prices.get((instrument_id, pricing_policy_id, date_to), None)
+#             #     if op is None:
+#             #         op = PriceHistory(instrument_id=instrument_id, pricing_policy_id=pricing_policy_id, date=date_to)
+#             #     instrument_price_missed_objects.append(op)
+#             # instrument_price_missed = PriceHistorySerializer(instance=instrument_price_missed_objects, many=True,
+#             #                                                  context={'member': task.member}).data
+#             result['instrument_price_missed'] = list(instrument_price_missed)
+#
+#             currency_price_missed = currency_price_expected.difference(currency_price_real)
+#             # currency_price_missed_objects = []
+#             # for currency_id, pricing_policy_id in currency_price_missed:
+#             #     op = existed_currency_prices.get((currency_id, pricing_policy_id, date_to), None)
+#             #     if op is None:
+#             #         op = CurrencyHistory(currency_id=currency_id, pricing_policy_id=pricing_policy_id, date=date_to)
+#             #     currency_price_missed_objects.append(op)
+#             # currency_price_missed = CurrencyHistorySerializer(instance=currency_price_missed_objects, many=True).data
+#             result['currency_price_missed'] = list(currency_price_missed)
+#
+#             _l.debug('instrument_price_missed: %s', instrument_price_missed)
+#             _l.debug('currency_price_missed: %s', currency_price_missed)
+#
+#         task.options_object = options
+#         task.result_object = result
+#         task.status = Task.STATUS_DONE
+#         task.save()
+#
+#         celery_task.task_status = Task.STATUS_DONE
+#         celery_task.save()
+#
+#     return task_id
 
 
 # DEPRECATED SINCE 22.09.2020 DELETE SOON
@@ -1075,66 +1074,66 @@ def test_certificate(master_user=None, member=None, task=None):
 
 
 # DEPRECATED SINCE 22.09.2020 DELETE SOON
-def download_pricing(master_user=None, member=None, date_from=None, date_to=None, is_yesterday=None, balance_date=None,
-                     fill_days=None, override_existed=None, task=None):
-    celery_logger.info('download pricing')
-
-    _l.debug('download_pricing: master_user_id=%s, task=%s, date_from=%s, date_to=%s, is_yesterday=%s,'
-            ' balance_date=%s, fill_days=%s, override_existed=%s',
-            getattr(master_user, 'id', None), getattr(task, 'info', None), date_from, date_to, is_yesterday,
-            balance_date, fill_days, override_existed)
-    if task is None:
-        with transaction.atomic():
-            options = {
-                'date_from': date_from,
-                'date_to': date_to,
-                'is_yesterday': is_yesterday,
-                'balance_date': balance_date,
-                'fill_days': fill_days,
-                'override_existed': override_existed,
-            }
-            task = Task(
-                master_user=master_user,
-                member=member,
-                provider_id=None,
-                status=Task.STATUS_PENDING,
-                action=Task.ACTION_PRICING
-            )
-            task.options_object = options
-            task.save()
-
-            if member:
-                celery_task = CeleryTask.objects.create(master_user=master_user,
-                                                        member=member,
-                                                        task_status=task.status,
-                                                        started_at=datetime_now(),
-                                                        task_type='user_download_pricing', task_id=task.id)
-            else:
-                celery_task = CeleryTask.objects.create(master_user=master_user,
-                                                        task_status=task.status,
-                                                        started_at=datetime_now(),
-                                                        task_type='automated_download_pricing', task_id=task.id)
-
-            celery_task.save()
-
-            # transaction.on_commit(lambda: download_pricing_async.apply_async(kwargs={'task_id': task.id}, countdown=1))
-            transaction.on_commit(lambda: download_pricing_async.apply_async(kwargs={'task_id': task.id}))
-        return task, False
-    else:
-        if task.status == Task.STATUS_DONE:
-
-            try:
-                celery_task = CeleryTask.objects.get(master_user=master_user, task_id=task.id,
-                                                     task_type='user_download_pricing')
-
-                celery_task.task_status = Task.STATUS_DONE
-                celery_task.save()
-
-            except CeleryTask.DoesNotExist:
-                celery_task = None
-
-            return task, True
-        return task, False
+# def download_pricing(master_user=None, member=None, date_from=None, date_to=None, is_yesterday=None, balance_date=None,
+#                      fill_days=None, override_existed=None, task=None):
+#     _l.info('download pricing')
+#
+#     _l.debug('download_pricing: master_user_id=%s, task=%s, date_from=%s, date_to=%s, is_yesterday=%s,'
+#             ' balance_date=%s, fill_days=%s, override_existed=%s',
+#             getattr(master_user, 'id', None), getattr(task, 'info', None), date_from, date_to, is_yesterday,
+#             balance_date, fill_days, override_existed)
+#     if task is None:
+#         with transaction.atomic():
+#             options = {
+#                 'date_from': date_from,
+#                 'date_to': date_to,
+#                 'is_yesterday': is_yesterday,
+#                 'balance_date': balance_date,
+#                 'fill_days': fill_days,
+#                 'override_existed': override_existed,
+#             }
+#             task = Task(
+#                 master_user=master_user,
+#                 member=member,
+#                 provider_id=None,
+#                 status=Task.STATUS_PENDING,
+#                 action=Task.ACTION_PRICING
+#             )
+#             task.options_object = options
+#             task.save()
+#
+#             if member:
+#                 celery_task = CeleryTask.objects.create(master_user=master_user,
+#                                                         member=member,
+#                                                         task_status=task.status,
+#                                                         started_at=datetime_now(),
+#                                                         task_type='user_download_pricing', task_id=task.id)
+#             else:
+#                 celery_task = CeleryTask.objects.create(master_user=master_user,
+#                                                         task_status=task.status,
+#                                                         started_at=datetime_now(),
+#                                                         task_type='automated_download_pricing', task_id=task.id)
+#
+#             celery_task.save()
+#
+#             # transaction.on_commit(lambda: download_pricing_async.apply_async(kwargs={'task_id': task.id}, countdown=1))
+#             transaction.on_commit(lambda: download_pricing_async.apply_async(kwargs={'task_id': task.id}))
+#         return task, False
+#     else:
+#         if task.status == Task.STATUS_DONE:
+#
+#             try:
+#                 celery_task = CeleryTask.objects.get(master_user=master_user, task_id=task.id,
+#                                                      task_type='user_download_pricing')
+#
+#                 celery_task.task_status = Task.STATUS_DONE
+#                 celery_task.save()
+#
+#             except CeleryTask.DoesNotExist:
+#                 celery_task = None
+#
+#             return task, True
+#         return task, False
 
 
 # @shared_task(name='integrations.file_import_delete', ignore_result=True)
@@ -1152,7 +1151,166 @@ def download_pricing(master_user=None, member=None, date_from=None, date_to=None
 #             _l.debug('schedule_file_import_delete: path=%s, countdown=%s', path, countdown)
 #             file_import_delete_async.apply_async(kwargs={'path': path}, countdown=countdown)
 
-def generate_file_report(instance, master_user, type, name, context=None):
+def generate_file_report(result_object, master_user, scheme, type, name, context=None):
+
+
+    def get_unique_columns(res_object):
+
+        unique_columns = []
+
+        for item in res_object['error_rows']:
+
+            for item_column in item['error_data']['columns']['executed_input_expressions']:
+
+                column = item_column + ':' + item['error_data']['data']['transaction_type_selector'][0]
+
+                if column not in unique_columns:
+                    unique_columns.append(column)
+
+        return unique_columns
+
+    def generate_columns_for_file(res_object):
+
+        columns = ['Row number']
+
+        _l.debug('res_object %s' % res_object)
+
+        if len(res_object['error_rows']):
+
+            columns = columns + res_object['error_rows'][0]['error_data']['columns']['imported_columns']
+            columns = columns + res_object['error_rows'][0]['error_data']['columns']['converted_imported_columns']
+            columns = columns + res_object['error_rows'][0]['error_data']['columns']['calculated_columns']
+            columns = columns + res_object['error_rows'][0]['error_data']['columns']['transaction_type_selector']
+
+            unique_columns = get_unique_columns(res_object)
+
+            for unique_column in unique_columns:
+                columns.append(unique_column)
+
+        columns.append('Error Message')
+        columns.append('Reaction')
+
+        return columns
+
+    def generate_columns_data_for_file(instance, error_row):
+
+        result = []
+        unique_columns = get_unique_columns(instance)
+
+        index = 0
+
+        for unique_column in unique_columns:
+
+            result.append('')  # result[index] = ''
+
+            item_column_index = 0
+
+            for item_column in error_row['error_data']['columns']['executed_input_expressions']:
+
+                column = item_column + ':' + error_row['error_data']['data']['transaction_type_selector'][0]
+
+                if column == unique_column:
+
+                    if error_row['error_data']['data']['executed_input_expressions'][item_column_index]:
+                        result[index] = error_row['error_data']['data']['executed_input_expressions'][item_column_index]
+
+                item_column_index = item_column_index + 1
+
+            index = index + 1
+
+        return result
+
+    _l.info('generate_file_report error_handler %s' % scheme.error_handler)
+    _l.info('generate_file_report missing_data_handler %s' % scheme.missing_data_handler)
+
+    result = []
+    error_rows = []
+
+    for item in result_object['error_rows']:
+        if item['level'] == 'error':
+            error_rows.append(item)
+
+    result.append('Type, ' + name)
+    result.append('Scheme, ' + scheme.scheme_name)
+    result.append('Error handle, ' + scheme.error_handler)
+    # result.append('Filename, ' + instance.file.name)
+    result.append('Import Rules - if object is not found, ' + scheme.missing_data_handler)
+
+    rowsSuccessCount = 0
+
+    if scheme.error_handler == 'break':
+        if result_object['error_row_index']:
+            rowsSuccessCount = result_object['error_row_index'] - 1
+        else:
+            rowsSuccessCount = result_object['total_rows'] - len(error_rows)
+    else:
+        rowsSuccessCount = result_object['total_rows'] - len(error_rows)
+
+    result.append('Rows total, ' + str(result_object['total_rows']))
+    result.append('Rows success import, ' + str(rowsSuccessCount))
+    result.append('Rows fail import, ' + str(len(error_rows)))
+
+    columns = generate_columns_for_file(result_object)
+
+    column_row_list = []
+
+    for item in columns:
+        column_row_list.append('"' + str(item) + '"')
+
+    column_row = ','.join(column_row_list)
+
+    result.append(column_row)
+
+    for error_row in result_object['error_rows']:
+
+        content = []
+
+        content.append(error_row['original_row_index'])
+
+        content = content + error_row['error_data']['data']['imported_columns']
+        content = content + error_row['error_data']['data']['converted_imported_columns']
+        content = content + error_row['error_data']['data']['calculated_columns']
+        content = content + error_row['error_data']['data']['transaction_type_selector']
+        content = content + generate_columns_data_for_file(result_object, error_row)
+
+        content.append(error_row['error_message'])
+        content.append(error_row['error_reaction'])
+
+        content_row_list = []
+
+        for item in content:
+            content_row_list.append('"' + str(item) + '"')
+
+        content_row = ','.join(content_row_list)
+
+        result.append(content_row)
+
+    result = '\n'.join(result)
+
+    current_date_time = now().strftime("%Y-%m-%d-%H-%M")
+
+    file_name = 'file_report_%s.csv' % current_date_time
+
+    file_report = FileReport()
+
+    _l.debug('generate_file_report uploading file ')
+
+    file_report.upload_file(file_name=file_name, text=result, master_user=master_user)
+    file_report.master_user = master_user
+    file_report.name = "%s %s" % (name, current_date_time)
+    file_report.file_name = file_name
+    file_report.type = type
+    file_report.notes = 'System File'
+
+    file_report.save()
+
+    _l.debug('file_report %s' % file_report)
+    _l.debug('file_report %s' % file_report.file_url)
+
+    return file_report.pk
+
+
+def generate_file_report_old(instance, master_user, type, name, context=None):
     def get_unique_columns(instance):
 
         unique_columns = []
@@ -1305,534 +1463,1319 @@ def generate_file_report(instance, master_user, type, name, context=None):
     return file_report.pk
 
 
-@shared_task(name='integrations.complex_transaction_csv_file_import', bind=True)
-def complex_transaction_csv_file_import(self, instance, execution_context=None):
-    from poms.transactions.models import TransactionTypeInput
-
-    setattr(instance, 'task_id', current_task.request.id)
-
-    _l.debug('complex_transaction_file_import: %s', instance)
-    _l.debug('complex_transaction_file_import execution_context: %s', execution_context)
-
-    instance.processed_rows = 0
-
-    scheme = instance.scheme
-    scheme_inputs = list(scheme.inputs.all())
-    scheme_calculated_inputs = list(scheme.calculated_inputs.all())
-
-    master_user = instance.master_user
-    member = instance.member
-
-    rule_scenarios = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields',
-                                                            'fields__transaction_type_input').all()
-
-    _l.debug('scheme %s - inputs=%s, rules=%s', scheme,
-            [(i.name, i.column) for i in scheme_inputs],
-            [(r.transaction_type.user_code) for r in rule_scenarios])
-
-    mapping_map = {
-        Account: AccountMapping,
-        Currency: CurrencyMapping,
-        Instrument: InstrumentMapping,
-        InstrumentType: InstrumentTypeMapping,
-        Counterparty: CounterpartyMapping,
-        Responsible: ResponsibleMapping,
-        Strategy1: Strategy1Mapping,
-        Strategy2: Strategy2Mapping,
-        Strategy3: Strategy3Mapping,
-        DailyPricingModel: DailyPricingModelMapping,
-        PaymentSizeDetail: PaymentSizeDetailMapping,
-        Portfolio: PortfolioMapping,
-        PriceDownloadScheme: PriceDownloadSchemeMapping,
-        Periodicity: PeriodicityMapping,
-        AccrualCalculationModel: AccrualCalculationModelMapping,
-
-    }
-    mapping_cache = {}
-
-    props_map = {
-        Account: 'account',
-        Currency: 'currency',
-        Instrument: 'instrument',
-        InstrumentType: 'instrument_type',
-        Counterparty: 'counterparty',
-        Responsible: 'responsible',
-        Strategy1: 'strategy1',
-        Strategy2: 'strategy2',
-        Strategy3: 'strategy3',
-        DailyPricingModel: 'daily_pricing_model',
-        PaymentSizeDetail: 'payment_size_detail',
-        Portfolio: 'portfolio',
-        PriceDownloadScheme: 'price_download_scheme',
-        Periodicity: 'periodicity',
-        AccrualCalculationModel: 'accrual_calculation_model',
-    }
-
-    def _convert_value(field, value, error_rows):
-        i = field.transaction_type_input
-
-        if i.value_type == TransactionTypeInput.STRING:
-            return str(value)
-
-        elif i.value_type == TransactionTypeInput.NUMBER:
-            return float(value)
-
-        elif i.value_type == TransactionTypeInput.DATE:
-            if not isinstance(value, date):
-                return formula._parse_date(value)
-            else:
-                return value
-
-        elif i.value_type == TransactionTypeInput.RELATION:
-            model_class = i.content_type.model_class()
-            model_map_class = mapping_map[model_class]
-
-            key = props_map[model_class]
-
-            v = None
-
-            try:
-                v = model_map_class.objects.get(master_user=instance.master_user, value=value).content_object
-            except:
-
-                try:
-
-                    # _l.debug('Lookup by user code %s', value)
-
-                    if model_class == PriceDownloadScheme:
-                        v = model_class.objects.get(master_user=instance.master_user, scheme_name=value)
-                    elif model_class == DailyPricingModel or model_class == PaymentSizeDetail or model_class == Periodicity or model_class == AccrualCalculationModel:
-                        v = model_class.objects.get(system_code=value)
-                    else:
-                        v = model_class.objects.get(master_user=instance.master_user, user_code=value)
-
-                except (model_class.DoesNotExist, KeyError):
-
-                    if instance.missing_data_handler == 'set_defaults':
-
-                        ecosystem_default = EcosystemDefault.objects.get(master_user=instance.master_user)
-
-                        if hasattr(ecosystem_default, key):
-                            v = getattr(ecosystem_default, key)
-                        else:
-                            v = model_map_class.objects.get(master_user=instance.master_user, value='-').content_object
-                    else:
-
-                        error_rows['error_message'] = error_rows[
-                                                          'error_message'] + ' Can\'t find relation of ' + \
-                                                      '[' + field.transaction_type_input.name + ']' + '(value:' + \
-                                                      value + ')'
-
-            if not v:
-                raise ValueError('Can\'t find Relation.')
-
-            mapping_cache[key] = v
-
-            return v
-
-    def update_row_with_calculated_data(row, inputs):
-
-        for i in scheme_calculated_inputs:
-
-            try:
-                value = formula.safe_eval(i.name_expr, names=inputs)
-                row.append(value)
-
-            except:
-                _l.debug('can\'t process calculated input: %s|%s', i.name, i.column, exc_info=True)
-                row.append("Invalid Expression")
-
-        return row
-
-    def _process_csv_file(file):
-
-        instance.processed_rows = 0
-
-        delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
-
-        reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
-                            strict=False, skipinitialspace=True)
-
-        for row_index, row in enumerate(reader):
-
-            _l.debug('process row: %s -> %s', row_index, row)
-            if (row_index == 0 and instance.skip_first_line) or not row:
-                _l.debug('skip first row')
-                continue
-
-            inputs_raw = {}
-            inputs = {}
-            inputs_error = []
-            inputs_conversion_error = []
-            calculated_columns_error = []
-
-            error_rows = {
-                'level': 'info',
-                'error_message': '',
-                'inputs': inputs_raw,
-                'original_row_index': row_index,
-                'original_row': row,
-                'error_data': {
-                    'columns': {
-                        'imported_columns': [],
-                        'calculated_columns': [],
-                        'converted_imported_columns': [],
-                        'transaction_type_selector': [],
-                        'executed_input_expressions': []
-                    },
-                    'data': {
-                        'imported_columns': [],
-                        'calculated_columns': [],
-                        'converted_imported_columns': [],
-                        'transaction_type_selector': [],
-                        'executed_input_expressions': []
-                    }
-
-                },
-                'error_reaction': "Success"
-            }
-
-            for i in scheme_inputs:
-
-                error_rows['error_data']['columns']['imported_columns'].append(i.name)
-
-                try:
-                    inputs_raw[i.name] = row[i.column - 1]
-                    error_rows['error_data']['data']['imported_columns'].append(row[i.column - 1])
-                except:
-                    _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
-                    error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
-                    inputs_error.append(i)
-
-            _l.debug('Row %s inputs_raw: %s' % (row_index, inputs_raw))
-
-            original_columns_count = len(row)
-
-            if inputs_error:
-
-                error_rows['level'] = 'error'
-
-                error_rows['error_message'] = error_rows['error_message'] + str(
-                    ugettext('Can\'t process fields: %(inputs)s') % {
-                        'inputs': ', '.join('[' + i.name + '] (Can\'t find input)' for i in inputs_error)
-                    })
-                instance.error_rows.append(error_rows)
-                if instance.break_on_error:
-                    error_rows['error_reaction'] = 'Break'
-                    instance.error_row_index = row_index
-                    instance.error_rows.append(error_rows)
-                    return
-                else:
-                    error_rows['error_reaction'] = 'Continue import'
-                    continue
-
-            for i in scheme_inputs:
-
-                error_rows['error_data']['columns']['converted_imported_columns'].append(
-                    i.name + ': Conversion Expression ' + '(' + i.name_expr + ')')
-
-                try:
-                    inputs[i.name] = formula.safe_eval(i.name_expr, names=inputs_raw)
-                    error_rows['error_data']['data']['converted_imported_columns'].append(row[i.column - 1])
-                except:
-                    _l.debug('can\'t process conversion input: %s|%s', i.name, i.column, exc_info=True)
-                    error_rows['error_data']['data']['converted_imported_columns'].append(
-                        ugettext('Invalid expression'))
-                    inputs_conversion_error.append(i)
-
-            _l.debug('Row %s inputs_conversion: %s' % (row_index, inputs))
-
-            if inputs_conversion_error:
-
-                error_rows['level'] = 'error'
-
-                error_rows['error_message'] = error_rows['error_message'] + str(
-                    ugettext('Can\'t process fields: %(inputs)s') % {
-                        'inputs': ', '.join(
-                            '[' + i.name + '] (Imported column conversion expression, value; "' + i.name_exp + '")' for
-                            i in inputs_conversion_error)
-                    })
-                instance.error_rows.append(error_rows)
-                if instance.break_on_error:
-                    error_rows['error_reaction'] = 'Break'
-                    instance.error_row_index = row_index
-                    instance.error_rows.append(error_rows)
-                    return
-                else:
-                    error_rows['error_reaction'] = 'Continue import'
-                    continue
-
-            row = update_row_with_calculated_data(row, inputs)
-
-            for i in scheme_calculated_inputs:
-
-                error_rows['error_data']['columns']['calculated_columns'].append(i.name)
-
-                try:
-
-                    index = original_columns_count + i.column - 1
-
-                    print('index %s ' % index)
-                    print('i.name %s ' % i.name)
-
-                    inputs[i.name] = row[index]
-
-                    error_rows['error_data']['data']['calculated_columns'].append(row[index])
-                except:
-                    _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
-                    error_rows['error_data']['data']['calculated_columns'].append(ugettext('Invalid expression'))
-                    calculated_columns_error.append(i)
-
-            _l.debug('Row %s inputs_with_calculated: %s' % (row_index, inputs))
-
-            try:
-                rule_value = formula.safe_eval(scheme.rule_expr, names=inputs)
-            except:
-
-                error_rows['level'] = 'error'
-
-                _l.debug('can\'t process rule expression', exc_info=True)
-                error_rows['error_message'] = error_rows['error_message'] + '\n' + str(ugettext(
-                    'Can\'t eval rule expression'))
-                instance.error_rows.append(error_rows)
-                if instance.break_on_error:
-                    instance.error_row_index = row_index
-                    instance.error_rows.append(error_rows)
-                    return
-                else:
-                    continue
-
-            if not rule_value:
-
-                _l.debug('no rule value: %s', rule_value)
-
-                error_rows['level'] = 'error'
-
-                error_rows['error_message'] = error_rows['error_message'] + str(ugettext('Rule expression is invalid'))
-
-                if instance.break_on_error:
-                    instance.error_row_index = row_index
-                    error_rows['error_reaction'] = 'Break'
-                    instance.error_rows.append(error_rows)
-                    return
-                else:
-                    error_rows['error_reaction'] = 'Continue import'
-                    continue
-
-            else:
-                _l.debug('rule value: %s', rule_value)
-
-            matched_selector = False
-            processed_scenarios = 0
-
-            for scheme_rule in rule_scenarios:
-
-                matched_selector = False
-
-                selector_values = scheme_rule.selector_values.all()
-
-                for selector_value in selector_values:
-
-                    if selector_value.value == rule_value:
-                        matched_selector = True
-
-                if matched_selector:
-
-                    processed_scenarios = processed_scenarios + 1
-
-                    rule = scheme_rule
-
-                    fields = {}
-                    fields_error = []
-                    for field in rule.fields.all():
-                        try:
-                            field_value = formula.safe_eval(field.value_expr, names=inputs)
-                            field_value = _convert_value(field, field_value, error_rows)
-                            fields[field.transaction_type_input.name] = field_value
-
-
-
-                        except (ValueError, ExpressionEvalError):
-                            _l.debug('can\'t process field: %s|%s', field.transaction_type_input.name,
-                                    field.transaction_type_input.pk, exc_info=True)
-                            fields_error.append(field)
-                    _l.debug('fields (step 1): error=%s, values=%s', fields_error, fields)
-
-                    if fields_error:
-
-                        error_rows['level'] = 'error'
-
-                        error_rows['error_message'] = error_rows['error_message'] + '\n' + str(ugettext(
-                            'Can\'t process fields: %(fields)s') % {
-                                                                                                          'fields': ', '.join(
-                                                                                                              '[' + f.transaction_type_input.name + '] ' + '( TType: ' + rule_value + ')'
-                                                                                                              for f in
-                                                                                                              fields_error)
-                                                                                                      })
-
-                        if instance.break_on_error:
-                            instance.error_row_index = row_index
-                            error_rows['error_reaction'] = 'Break'
-                            instance.error_rows.append(error_rows)
-                            return
-                        else:
-                            error_rows['error_reaction'] = 'Continue import'
-                            continue
-
-                    with transaction.atomic():
-                        try:
-                            tt_process = TransactionTypeProcess(
-                                transaction_type=rule.transaction_type,
-                                default_values=fields,
-                                context={
-                                    'master_user': instance.master_user,
-                                    'member': instance.member,
-                                },
-                                uniqueness_reaction=instance.scheme.book_uniqueness_settings
-                            )
-                            tt_process.process()
-
-                            _l.debug('tt_process %s' % tt_process)
-
-                            if tt_process.uniqueness_status == 'skip':
-                                error_rows['level'] = 'skip'
-                                error_rows['error_message'] = error_rows['error_message'] + str(
-                                    ugettext('Unique code already exist. Skip'))
-
-                            if tt_process.uniqueness_status == 'error':
-                                error_rows['level'] = 'error'
-                                error_rows['error_message'] = error_rows['error_message'] + str(
-                                    ugettext('Unique code already exist. Error'))
-
-                            instance.processed_rows = instance.processed_rows + 1
-                            # instance.save()
-
-
-
-                            # DEPRECATED
-                            self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                                              meta={'processed_rows': instance.processed_rows,
-                                                    'total_rows': instance.total_rows,
-                                                    'scheme_name': instance.scheme.scheme_name,
-                                                    'file_name': instance.filename})
-
-
-                        except Exception as e:
-
-                            error_rows['level'] = 'error'
-
-                            _l.debug("can't process transaction type", exc_info=True)
-
-                            _l.debug('error %s' % e)
-
-                            transaction.set_rollback(True)
-                            if instance.break_on_error:
-                                instance.error_row_index = row_index
-                                error_rows['error_reaction'] = 'Break'
-                                return
-                            else:
-                                continue
-                        finally:
-                            _l.debug("final")
-                            # if settings.DEBUG:
-                            #     transaction.set_rollback(True)
-
-            if processed_scenarios == 0:
-                error_rows['level'] = 'error'
-
-                if instance.break_on_error:
-                    instance.error_row_index = row_index
-                    error_rows['error_reaction'] = 'Break'
-                    instance.error_rows.append(error_rows)
-                    return
-                else:
-                    error_rows['error_reaction'] = 'Continue import'
-
-            instance.error_rows.append(error_rows)
-
-            instance.processed_rows = instance.processed_rows + 1
-
-            send_websocket_message(data={
-                'type': 'transaction_import_status',
-                'payload': {'task_id': instance.task_id,
-                            'state': Task.STATUS_PENDING,
-                            'processed_rows': instance.processed_rows,
-                            'total_rows': instance.total_rows,
-                            'scheme_name': scheme.scheme_name,
-                            'file_name': instance.filename}
-            }, level="member",
-                context={"master_user": master_user, "member": member})
-
-
-    def _row_count(file):
-
-        delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
-
-        reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
-                            strict=False, skipinitialspace=True)
-
-        row_index = 0
-
-        for row_index, row in enumerate(reader):
-            pass
-        return row_index
-
-    instance.error_rows = []
-
+@shared_task(name="integrations.complex_transaction_csv_file_import_parallel_finish", bind=True)
+def complex_transaction_csv_file_import_parallel_finish(self, task_id):
     try:
-        # with import_file_storage.open(instance.file_path, 'rb') as f:
-        with SFS.open(instance.file_path, 'rb') as f:
-            with NamedTemporaryFile() as tmpf:
+        _l.info('complex_transaction_csv_file_import_parallel_finish task_id %s ' % task_id)
 
-                for chunk in f.chunks():
-                    tmpf.write(chunk)
-                tmpf.flush()
+        celery_task = CeleryTask.objects.get(pk=task_id)
 
-                with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
-                    instance.total_rows = _row_count(cfr)
-                    self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                                      meta={'total_rows': instance.total_rows,
-                                            'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
-                    # instance.save()
-                with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
-                    _process_csv_file(cf)
-    except:
+        scheme = ComplexTransactionImportScheme.objects.get(pk=celery_task.options_object['scheme_id'])
 
-        _l.debug('Can\'t process file', exc_info=True)
-        instance.error_message = ugettext("Invalid file format or file already deleted.")
+        master_user = celery_task.master_user
+        member = celery_task.member
 
-        if execution_context and execution_context["started_by"] == 'procedure':
+        result_object = {
+            'error_rows': [],
+            'total_rows': celery_task.options_object['total_rows'],
+            'processed_rows': 0
 
-            send_system_message(master_user=instance.master_user,
-                                source="Transaction Import Service",
-                                text="Can't process file. Possibly wrong format")
+        }
 
-    finally:
-        # import_file_storage.delete(instance.file_path)
+        _l.info('complex_transaction_csv_file_import_parallel_finish iterating over %s childs' % len(celery_task.children.all()))
 
-        SFS.delete(instance.file_path)
+        for sub_task in celery_task.children.all():
 
-        instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
+            if sub_task.result_object:
 
-        instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.import',
-                                                          'Transaction Import', execution_context)
+                if 'error_rows' in sub_task.result_object:
 
-        _l.debug('complex_transaction_file_import execution_context: %s', execution_context)
+                    result_object['error_rows'] = result_object['error_rows'] + sub_task.result_object['error_rows']
 
-        _l.debug("Reached end instance.stats_file_report: %s " % instance.stats_file_report)
+                if 'processed_rows' in sub_task.result_object:
 
-        if execution_context and execution_context["started_by"] == 'procedure':
+                    result_object['processed_rows'] = result_object['processed_rows'] + sub_task.result_object['processed_rows']
 
-            _l.debug('send final import message')
+        result_object['stats_file_report'] = generate_file_report(result_object, master_user, scheme, 'transaction_import.import',
+                                                          'Transaction Import', celery_task.options_object['execution_context'])
 
-            send_system_message(master_user=instance.master_user,
-                                source="Transaction Import Service",
-                                text="Import Finished",
-                                file_report_id=instance.stats_file_report)
+        # TODO Generate File Report Here
 
         send_websocket_message(data={
             'type': 'transaction_import_status',
-            'payload': {'task_id': instance.task_id,
+            'payload': {'task_id': task_id,
+                        'state': Task.STATUS_DONE,
+                        'error_rows': result_object['error_rows'],
+                        'total_rows': result_object['total_rows'],
+                        'processed_rows': result_object['processed_rows'],
+                        'stats_file_report': result_object['stats_file_report'],
+                        'scheme': scheme.id,
+                        'scheme_object': {
+                            'id': scheme.id,
+                            'scheme_name': scheme.scheme_name,
+                            'delimiter': scheme.delimiter,
+                            'error_handler': scheme.error_handler,
+                            'missing_data_handler': scheme.missing_data_handler
+                        }}
+        }, level="member",
+            context={"master_user": master_user, "member": member})
+
+        celery_task.result_object = result_object
+
+        celery_task.status = CeleryTask.STATUS_DONE
+        celery_task.save()
+
+    except Exception as e:
+
+        _l.info('Exception occurred %s' % e)
+        _l.info(traceback.format_exc())
+
+
+@shared_task(name='integrations.complex_transaction_csv_file_import', bind=True)
+def complex_transaction_csv_file_import(self, task_id):
+
+    try:
+
+        from poms.transactions.models import TransactionTypeInput
+        from poms.integrations.serializers import ComplexTransactionCsvFileImport
+
+        celery_task = CeleryTask.objects.get(pk=task_id)
+
+        celery_task.status = CeleryTask.STATUS_PENDING
+        celery_task.save()
+
+        master_user = celery_task.master_user
+        member = celery_task.member
+
+        instance = ComplexTransactionCsvFileImport(task_id=task_id, master_user=master_user, member=member)
+
+        scheme = ComplexTransactionImportScheme.objects.get(pk=celery_task.options_object['scheme_id'])
+
+        instance.scheme = scheme
+        instance.error_handling = scheme.error_handler
+        instance.file_path = celery_task.options_object['file_path']
+        execution_context = celery_task.options_object['execution_context']
+
+        instance.processed_rows = 0
+
+        scheme = instance.scheme
+        scheme_inputs = list(scheme.inputs.all())
+        scheme_calculated_inputs = list(scheme.calculated_inputs.all())
+
+        master_user = instance.master_user
+        member = instance.member
+
+        rule_scenarios = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields',
+                                                                'fields__transaction_type_input').all()
+
+        _l.debug('scheme %s - inputs=%s, rules=%s', scheme,
+                            [(i.name, i.column) for i in scheme_inputs],
+                            [(r.transaction_type.user_code) for r in rule_scenarios])
+
+        mapping_map = {
+            Account: AccountMapping,
+            Currency: CurrencyMapping,
+            Instrument: InstrumentMapping,
+            InstrumentType: InstrumentTypeMapping,
+            Counterparty: CounterpartyMapping,
+            Responsible: ResponsibleMapping,
+            Strategy1: Strategy1Mapping,
+            Strategy2: Strategy2Mapping,
+            Strategy3: Strategy3Mapping,
+            DailyPricingModel: DailyPricingModelMapping,
+            PaymentSizeDetail: PaymentSizeDetailMapping,
+            Portfolio: PortfolioMapping,
+            PriceDownloadScheme: PriceDownloadSchemeMapping,
+            Periodicity: PeriodicityMapping,
+            AccrualCalculationModel: AccrualCalculationModelMapping,
+
+        }
+        mapping_cache = {}
+
+        props_map = {
+            Account: 'account',
+            Currency: 'currency',
+            Instrument: 'instrument',
+            InstrumentType: 'instrument_type',
+            Counterparty: 'counterparty',
+            Responsible: 'responsible',
+            Strategy1: 'strategy1',
+            Strategy2: 'strategy2',
+            Strategy3: 'strategy3',
+            DailyPricingModel: 'daily_pricing_model',
+            PaymentSizeDetail: 'payment_size_detail',
+            Portfolio: 'portfolio',
+            PriceDownloadScheme: 'price_download_scheme',
+            Periodicity: 'periodicity',
+            AccrualCalculationModel: 'accrual_calculation_model',
+        }
+
+        def _convert_value(field, value, error_rows):
+            i = field.transaction_type_input
+
+            if i.value_type == TransactionTypeInput.STRING:
+                return str(value)
+
+            elif i.value_type == TransactionTypeInput.NUMBER:
+                return float(value)
+
+            elif i.value_type == TransactionTypeInput.DATE:
+                if not isinstance(value, date):
+                    return formula._parse_date(value)
+                else:
+                    return value
+
+            elif i.value_type == TransactionTypeInput.RELATION:
+                model_class = i.content_type.model_class()
+                model_map_class = mapping_map[model_class]
+
+                key = props_map[model_class]
+
+                v = None
+
+                try:
+                    v = model_map_class.objects.get(master_user=instance.master_user, value=value).content_object
+                except:
+
+                    try:
+
+                        # _l.debug('Lookup by user code %s', value)
+
+                        if model_class == PriceDownloadScheme:
+                            v = model_class.objects.get(master_user=instance.master_user, scheme_name=value)
+                        elif model_class == DailyPricingModel or model_class == PaymentSizeDetail or model_class == Periodicity or model_class == AccrualCalculationModel:
+                            v = model_class.objects.get(system_code=value)
+                        else:
+                            v = model_class.objects.get(master_user=instance.master_user, user_code=value)
+
+                    except (model_class.DoesNotExist, KeyError):
+
+                        if instance.missing_data_handler == 'set_defaults':
+
+                            ecosystem_default = EcosystemDefault.objects.get(master_user=instance.master_user)
+
+                            if hasattr(ecosystem_default, key):
+                                v = getattr(ecosystem_default, key)
+                            else:
+                                v = model_map_class.objects.get(master_user=instance.master_user, value='-').content_object
+                        else:
+
+                            error_rows['error_message'] = error_rows[
+                                                              'error_message'] + ' Can\'t find relation of ' + \
+                                                          '[' + field.transaction_type_input.name + ']' + '(value:' + \
+                                                          value + ')'
+
+                if not v:
+                    raise ValueError('Can\'t find Relation.')
+
+                mapping_cache[key] = v
+
+                return v
+
+        def update_row_with_calculated_data(row, inputs):
+
+            for i in scheme_calculated_inputs:
+
+                try:
+                    value = formula.safe_eval(i.name_expr, names=inputs)
+                    row.append(value)
+
+                except:
+                    _l.debug('can\'t process calculated input: %s|%s', i.name, i.column, exc_info=True)
+                    row.append("Invalid Expression")
+
+            return row
+
+        def _process_csv_file(file):
+
+            instance.processed_rows = 0
+
+            delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
+
+            reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
+                                strict=False, skipinitialspace=True)
+
+            for row_index, row in enumerate(reader):
+
+                _l.debug('process row: %s -> %s', row_index, row)
+                if (row_index == 0 and instance.skip_first_line) or not row:
+                    _l.debug('skip first row')
+                    continue
+
+                inputs_raw = {}
+                inputs = {}
+                inputs_error = []
+                inputs_conversion_error = []
+                calculated_columns_error = []
+
+                error_rows = {
+                    'level': 'info',
+                    'error_message': '',
+                    'inputs': inputs_raw,
+                    'original_row_index': row_index,
+                    'original_row': row,
+                    'error_data': {
+                        'columns': {
+                            'imported_columns': [],
+                            'calculated_columns': [],
+                            'converted_imported_columns': [],
+                            'transaction_type_selector': [],
+                            'executed_input_expressions': []
+                        },
+                        'data': {
+                            'imported_columns': [],
+                            'calculated_columns': [],
+                            'converted_imported_columns': [],
+                            'transaction_type_selector': [],
+                            'executed_input_expressions': []
+                        }
+
+                    },
+                    'error_reaction': "Success"
+                }
+
+                for i in scheme_inputs:
+
+                    error_rows['error_data']['columns']['imported_columns'].append(i.name)
+
+                    try:
+                        inputs_raw[i.name] = row[i.column - 1]
+                        error_rows['error_data']['data']['imported_columns'].append(row[i.column - 1])
+                    except:
+                        _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                        error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
+                        inputs_error.append(i)
+
+                _l.debug('Row %s inputs_raw: %s' % (row_index, inputs_raw))
+
+                original_columns_count = len(row)
+
+                if inputs_error:
+
+                    error_rows['level'] = 'error'
+
+                    error_rows['error_message'] = error_rows['error_message'] + str(
+                        ugettext('Can\'t process fields: %(inputs)s') % {
+                            'inputs': ', '.join('[' + i.name + '] (Can\'t find input)' for i in inputs_error)
+                        })
+                    instance.error_rows.append(error_rows)
+                    if instance.break_on_error:
+                        error_rows['error_reaction'] = 'Break'
+                        instance.error_row_index = row_index
+                        instance.error_rows.append(error_rows)
+                        return
+                    else:
+                        error_rows['error_reaction'] = 'Continue import'
+                        continue
+
+                for i in scheme_inputs:
+
+                    error_rows['error_data']['columns']['converted_imported_columns'].append(
+                        i.name + ': Conversion Expression ' + '(' + i.name_expr + ')')
+
+                    try:
+                        inputs[i.name] = formula.safe_eval(i.name_expr, names=inputs_raw)
+                        error_rows['error_data']['data']['converted_imported_columns'].append(row[i.column - 1])
+                    except:
+                        _l.debug('can\'t process conversion input: %s|%s', i.name, i.column, exc_info=True)
+                        error_rows['error_data']['data']['converted_imported_columns'].append(
+                            ugettext('Invalid expression'))
+                        inputs_conversion_error.append(i)
+
+                _l.debug('Row %s inputs_conversion: %s' % (row_index, inputs))
+
+                if inputs_conversion_error:
+
+                    error_rows['level'] = 'error'
+
+                    error_rows['error_message'] = error_rows['error_message'] + str(
+                        ugettext('Can\'t process fields: %(inputs)s') % {
+                            'inputs': ', '.join(
+                                '[' + i.name + '] (Imported column conversion expression, value; "' + i.name_exp + '")' for
+                                i in inputs_conversion_error)
+                        })
+                    instance.error_rows.append(error_rows)
+                    if instance.break_on_error:
+                        error_rows['error_reaction'] = 'Break'
+                        instance.error_row_index = row_index
+                        instance.error_rows.append(error_rows)
+                        return
+                    else:
+                        error_rows['error_reaction'] = 'Continue import'
+                        continue
+
+                row = update_row_with_calculated_data(row, inputs)
+
+                for i in scheme_calculated_inputs:
+
+                    error_rows['error_data']['columns']['calculated_columns'].append(i.name)
+
+                    try:
+
+                        index = original_columns_count + i.column - 1
+
+                        print('index %s ' % index)
+                        print('i.name %s ' % i.name)
+
+                        inputs[i.name] = row[index]
+
+                        error_rows['error_data']['data']['calculated_columns'].append(row[index])
+                    except:
+                        _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                        error_rows['error_data']['data']['calculated_columns'].append(ugettext('Invalid expression'))
+                        calculated_columns_error.append(i)
+
+                _l.debug('Row %s inputs_with_calculated: %s' % (row_index, inputs))
+
+                try:
+                    rule_value = formula.safe_eval(scheme.rule_expr, names=inputs)
+                except:
+
+                    error_rows['level'] = 'error'
+
+                    _l.debug('can\'t process rule expression', exc_info=True)
+                    error_rows['error_message'] = error_rows['error_message'] + '\n' + str(ugettext(
+                        'Can\'t eval rule expression'))
+                    instance.error_rows.append(error_rows)
+                    if instance.break_on_error:
+                        instance.error_row_index = row_index
+                        instance.error_rows.append(error_rows)
+                        return
+                    else:
+                        continue
+
+                if not rule_value:
+
+                    _l.debug('no rule value: %s', rule_value)
+
+                    error_rows['level'] = 'error'
+
+                    error_rows['error_message'] = error_rows['error_message'] + str(ugettext('Rule expression is invalid'))
+
+                    if instance.break_on_error:
+                        instance.error_row_index = row_index
+                        error_rows['error_reaction'] = 'Break'
+                        instance.error_rows.append(error_rows)
+                        return
+                    else:
+                        error_rows['error_reaction'] = 'Continue import'
+                        continue
+
+                else:
+                    _l.debug('rule value: %s', rule_value)
+
+                matched_selector = False
+                processed_scenarios = 0
+
+                for scheme_rule in rule_scenarios:
+
+                    matched_selector = False
+
+                    selector_values = scheme_rule.selector_values.all()
+
+                    for selector_value in selector_values:
+
+                        if selector_value.value == rule_value:
+                            matched_selector = True
+
+                    if matched_selector:
+
+                        processed_scenarios = processed_scenarios + 1
+
+                        rule = scheme_rule
+
+                        fields = {}
+                        fields_error = []
+                        for field in rule.fields.all():
+                            try:
+                                field_value = formula.safe_eval(field.value_expr, names=inputs)
+                                field_value = _convert_value(field, field_value, error_rows)
+                                fields[field.transaction_type_input.name] = field_value
+
+
+
+                            except (ValueError, ExpressionEvalError):
+                                _l.debug('can\'t process field: %s|%s', field.transaction_type_input.name,
+                                                    field.transaction_type_input.pk, exc_info=True)
+                                fields_error.append(field)
+                        _l.debug('fields (step 1): error=%s, values=%s', fields_error, fields)
+
+                        if fields_error:
+
+                            error_rows['level'] = 'error'
+
+                            error_rows['error_message'] = error_rows['error_message'] + '\n' + str(ugettext(
+                                'Can\'t process fields: %(fields)s') % {
+                                                                                                       'fields': ', '.join(
+                                                                                                           '[' + f.transaction_type_input.name + '] ' + '( TType: ' + rule_value + ')'
+                                                                                                           for f in
+                                                                                                           fields_error)
+                                                                                                   })
+
+                            if instance.break_on_error:
+                                instance.error_row_index = row_index
+                                error_rows['error_reaction'] = 'Break'
+                                instance.error_rows.append(error_rows)
+                                return
+                            else:
+                                error_rows['error_reaction'] = 'Continue import'
+                                continue
+
+                        with transaction.atomic():
+                            try:
+                                tt_process = TransactionTypeProcess(
+                                    transaction_type=rule.transaction_type,
+                                    default_values=fields,
+                                    context={
+                                        'master_user': instance.master_user,
+                                        'member': instance.member,
+                                    },
+                                    uniqueness_reaction=instance.scheme.book_uniqueness_settings
+                                )
+                                tt_process.process()
+
+                                _l.debug('tt_process %s' % tt_process)
+
+                                if tt_process.uniqueness_status == 'skip':
+                                    error_rows['level'] = 'skip'
+                                    error_rows['error_message'] = error_rows['error_message'] + str(
+                                        ugettext('Unique code already exist. Skip'))
+
+                                if tt_process.uniqueness_status == 'error':
+                                    error_rows['level'] = 'error'
+                                    error_rows['error_message'] = error_rows['error_message'] + str(
+                                        ugettext('Unique code already exist. Error'))
+
+                                instance.processed_rows = instance.processed_rows + 1
+
+                            except Exception as e:
+
+                                error_rows['level'] = 'error'
+
+                                _l.debug("can't process transaction type", exc_info=True)
+
+                                _l.debug('error %s' % e)
+
+                                transaction.set_rollback(True)
+                                if instance.break_on_error:
+                                    instance.error_row_index = row_index
+                                    error_rows['error_reaction'] = 'Break'
+                                    return
+                                else:
+                                    continue
+                            finally:
+                                _l.debug("final")
+                                # if settings.DEBUG:
+                                #     transaction.set_rollback(True)
+
+                if processed_scenarios == 0:
+                    error_rows['level'] = 'error'
+
+                    if instance.break_on_error:
+                        instance.error_row_index = row_index
+                        error_rows['error_reaction'] = 'Break'
+                        instance.error_rows.append(error_rows)
+                        return
+                    else:
+                        error_rows['error_reaction'] = 'Continue import'
+
+                instance.error_rows.append(error_rows)
+
+                instance.processed_rows = instance.processed_rows + 1
+
+                send_websocket_message(data={
+                    'type': 'transaction_import_status',
+                    'payload': {'task_id': instance.task_id,
+                                'state': Task.STATUS_PENDING,
+                                'processed_rows': instance.processed_rows,
+                                'total_rows': instance.total_rows,
+                                'scheme_name': scheme.scheme_name,
+                                'file_name': instance.filename}
+                }, level="member",
+                    context={"master_user": master_user, "member": member})
+
+        def _row_count(file):
+
+            delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
+
+            reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
+                                strict=False, skipinitialspace=True)
+
+            row_index = 0
+
+            for row_index, row in enumerate(reader):
+                pass
+            return row_index
+
+        instance.error_rows = []
+
+        try:
+            # with import_file_storage.open(instance.file_path, 'rb') as f:
+            with SFS.open(instance.file_path, 'rb') as f:
+                with NamedTemporaryFile() as tmpf:
+
+                    for chunk in f.chunks():
+                        tmpf.write(chunk)
+                    tmpf.flush()
+
+                    with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
+                        instance.total_rows = _row_count(cfr)
+
+                    with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
+                        _process_csv_file(cf)
+        except:
+
+            _l.debug('Can\'t process file', exc_info=True)
+            instance.error_message = ugettext("Invalid file format or file already deleted.")
+
+            if execution_context and execution_context["started_by"] == 'procedure':
+
+                send_system_message(master_user=instance.master_user,
+                                    source="Transaction Import Service",
+                                    text="Can't process file. Possibly wrong format")
+
+        finally:
+            # import_file_storage.delete(instance.file_path)
+
+            SFS.delete(instance.file_path)
+
+            instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
+
+            # instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.import',
+            #                                                   'Transaction Import', execution_context)
+
+            _l.debug('complex_transaction_file_import execution_context: %s', execution_context)
+
+            _l.debug("Reached end instance.stats_file_report: %s " % instance.stats_file_report)
+
+            if execution_context and execution_context["started_by"] == 'procedure':
+
+                _l.debug('send final import message')
+
+                send_system_message(master_user=instance.master_user,
+                                    source="Transaction Import Service",
+                                    text="Import Finished",
+                                    file_report_id=instance.stats_file_report)
+
+            send_websocket_message(data={
+                'type': 'transaction_import_status',
+                'payload': {
+                            'parent_task_id': celery_task.parent_id,
+                            'task_id': instance.task_id,
+                            'state': Task.STATUS_DONE,
+                            'processed_rows': instance.processed_rows,
+                            'total_rows': instance.total_rows,
+                            'file_name': instance.filename,
+                            'error_rows': instance.error_rows,
+                            'stats_file_report': instance.stats_file_report,
+                            'scheme': scheme.id,
+                            'scheme_object': {
+                                'id': scheme.id,
+                                'scheme_name': scheme.scheme_name,
+                                'delimiter': scheme.delimiter,
+                                'error_handler': scheme.error_handler,
+                                'missing_data_handler': scheme.missing_data_handler
+                            }}
+            }, level="member",
+                context={"master_user": master_user, "member": member})
+
+            result_object = {
+                'processed_rows': instance.processed_rows,
+                'total_rows': instance.total_rows,
+                'file_name': instance.filename,
+                'error_rows': instance.error_rows,
+                'stats_file_report': instance.stats_file_report
+            }
+
+            celery_task.result_object = result_object
+            celery_task.status = CeleryTask.STATUS_DONE
+            celery_task.save()
+
+        return instance
+    except Exception as e:
+
+        _l.info('Exception occurred %s' % e)
+        _l.info(traceback.format_exc())
+
+
+@shared_task(name='integrations.complex_transaction_csv_file_import_parallel', bind=True)
+def complex_transaction_csv_file_import_parallel(self, task_id):
+
+    try:
+
+        _l.info('complex_transaction_csv_file_import_parallel: task_id %s' % task_id)
+
+        celery_task = CeleryTask.objects.get(pk=task_id)
+
+        celery_task.status = CeleryTask.STATUS_PENDING
+        celery_task.save()
+
+        options_object = celery_task.options_object
+
+        sub_tasks = []
+
+        lines_per_file = 300
+        header_line = None
+
+        def _get_path(master_user, file_name):
+            return '%s/transaction_import_files/%s.dat' % (master_user.token, file_name)
+
+        chunk = None
+
+
+        with SFS.open(celery_task.options_object['file_path'], 'rb') as f:
+
+            _l.info("Start reading file to split it into chunks")
+
+            for lineno, line in enumerate(f):
+
+                # _l.info('line %s' % lineno)
+
+                if lineno == 0:
+                    header_line = line
+                    # _l.info('set header line %s' % lineno)
+
+                if lineno % lines_per_file == 0:
+
+                    _l.info("chunk %s" % chunk)
+
+                    if chunk is not None:
+                        _l.info("Saving chunk %s" % chunk)
+                        SFS.save(chunk_path, chunk) # save working chunk before creating new one
+
+                    chunk_filename = '%s_chunk_file_%s' % (self.request.id, lineno + lines_per_file)
+                    chunk_path = _get_path(celery_task.master_user, chunk_filename)
+
+                    # _l.info('creating chunk file %s' % chunk_path)
+
+                    chunk = SFS.open(chunk_path, "w")
+                    if lineno != 0:
+                        chunk.write(header_line)
+
+                    # _l.info('creating sub task for %s' % chunk_filename)
+
+                    sub_task = CeleryTask.objects.create(master_user=celery_task.master_user, member=celery_task.member, parent=celery_task)
+
+                    sub_task_options_object = copy.deepcopy(celery_task.options_object)
+                    sub_task_options_object['file_path'] = chunk_path
+
+                    sub_task.options_object = sub_task_options_object
+                    sub_task.save()
+
+                    sub_tasks.append(sub_task)
+
+                chunk.write(line)
+
+            _l.info("Saving last chunk")
+            SFS.save(chunk_path, chunk) # save working chunk before creating new one
+
+        _l.info('sub_tasks created %s' % len(sub_tasks))
+        _l.info('original file total rows %s' % lineno)
+
+        options_object['total_rows'] = lineno
+
+        celery_task.options_object = options_object
+        celery_task.save()
+
+        celery_sub_tasks = []
+
+        for sub_task in sub_tasks:
+
+            _l.info('initializing sub_task %s' % sub_task.options_object['file_path'])
+
+            ct = complex_transaction_csv_file_import.s(task_id=sub_task.id)
+            celery_sub_tasks.append(ct)
+
+        chord(celery_sub_tasks, complex_transaction_csv_file_import_parallel_finish.si(task_id=task_id)).apply_async()
+
+    except Exception as e:
+
+        _l.info('Exception occurred %s' % e)
+        _l.info(traceback.format_exc())
+
+
+@shared_task(name="integrations.complex_transaction_csv_file_import_validate_parallel_finish", bind=True)
+def complex_transaction_csv_file_import_validate_parallel_finish(self, task_id):
+
+    try:
+
+        _l.info('complex_transaction_csv_file_import_validate_parallel_finish task_id %s ' % task_id)
+
+        celery_task = CeleryTask.objects.get(pk=task_id)
+
+        scheme = ComplexTransactionImportScheme.objects.get(pk=celery_task.options_object['scheme_id'])
+
+        master_user = celery_task.master_user
+        member = celery_task.member
+
+        result_object = {
+            'error_rows': [],
+            'total_rows': celery_task.options_object['total_rows'],
+            'processed_rows': 0
+
+        }
+
+        _l.info('complex_transaction_csv_file_import_validate_parallel_finish iterating over %s childs' % len(celery_task.children.all()))
+
+        for sub_task in celery_task.children.all():
+
+            if sub_task.result_object:
+
+                if 'error_rows' in sub_task.result_object:
+
+                    result_object['error_rows'] = result_object['error_rows'] + sub_task.result_object['error_rows']
+
+                if 'processed_rows' in sub_task.result_object:
+
+                    result_object['processed_rows'] = result_object['processed_rows'] + sub_task.result_object['processed_rows']
+
+        result_object['stats_file_report'] = generate_file_report(result_object, master_user, scheme, 'transaction_import.validate',
+                                                            'Transaction Import Validation', False)
+
+        send_websocket_message(data={
+            'type': 'transaction_import_status',
+            'payload': {'task_id': task_id,
+                        'state': Task.STATUS_DONE,
+                        'error_rows': result_object['error_rows'],
+                        'total_rows': result_object['total_rows'],
+                        'processed_rows': result_object['processed_rows'],
+                        'stats_file_report': result_object['stats_file_report'],
+                        'scheme': scheme.id,
+                        'scheme_object': {
+                            'id': scheme.id,
+                            'scheme_name': scheme.scheme_name,
+                            'delimiter': scheme.delimiter,
+                            'error_handler': scheme.error_handler,
+                            'missing_data_handler': scheme.missing_data_handler
+                        }}
+        }, level="member",
+            context={"master_user": master_user, "member": member})
+
+
+        celery_task.result_object = result_object
+
+        celery_task.status = CeleryTask.STATUS_DONE
+        celery_task.save()
+
+    except Exception as e:
+
+        _l.info('Exception occurred %s' % e)
+        _l.info(traceback.format_exc())
+
+
+@shared_task(name='integrations.complex_transaction_csv_file_import_validate', bind=True)
+def complex_transaction_csv_file_import_validate(self, task_id):
+
+    try:
+        from poms.transactions.models import TransactionTypeInput
+        from poms.integrations.serializers import ComplexTransactionCsvFileImport
+
+        celery_task = CeleryTask.objects.get(pk=task_id)
+
+        celery_task.status = CeleryTask.STATUS_PENDING
+        celery_task.save()
+
+        master_user = celery_task.master_user
+        member = celery_task.member
+
+        instance = ComplexTransactionCsvFileImport(task_id=task_id, master_user=master_user, member=member)
+
+        scheme = ComplexTransactionImportScheme.objects.get(pk=celery_task.options_object['scheme_id'])
+
+        instance.scheme = scheme
+        instance.error_handling = scheme.error_handler
+        instance.file_path = celery_task.options_object['file_path']
+
+        _l.info('complex_transaction_csv_file_import_validate %s' % instance.file_path)
+
+        instance.processed_rows = 0
+        _l.info('complex_transaction_file_import: %s', instance)
+        _l.info('complex_transaction_file_import: instance.break_on_error %s', instance.break_on_error)
+
+        scheme_inputs = list(scheme.inputs.all())
+        scheme_calculated_inputs = list(scheme.calculated_inputs.all())
+        rule_scenarios = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields',
+                                                                'fields__transaction_type_input').all()
+
+        _l.info('scheme %s - inputs=%s, rules=%s', scheme,
+                           [(i.name, i.column) for i in scheme_inputs],
+                           [(r.transaction_type.user_code) for r in rule_scenarios])
+
+        master_user = instance.master_user
+        member = instance.member
+
+        mapping_map = {
+            Account: AccountMapping,
+            Currency: CurrencyMapping,
+            Instrument: InstrumentMapping,
+            InstrumentType: InstrumentTypeMapping,
+            Counterparty: CounterpartyMapping,
+            Responsible: ResponsibleMapping,
+            Strategy1: Strategy1Mapping,
+            Strategy2: Strategy2Mapping,
+            Strategy3: Strategy3Mapping,
+            DailyPricingModel: DailyPricingModelMapping,
+            PaymentSizeDetail: PaymentSizeDetailMapping,
+            Portfolio: PortfolioMapping,
+            PriceDownloadScheme: PriceDownloadSchemeMapping,
+            Periodicity: PeriodicityMapping,
+            AccrualCalculationModel: AccrualCalculationModelMapping,
+        }
+
+        props_map = {
+            Account: 'account',
+            Currency: 'currency',
+            Instrument: 'instrument',
+            InstrumentType: 'instrument_type',
+            Counterparty: 'counterparty',
+            Responsible: 'responsible',
+            Strategy1: 'strategy1',
+            Strategy2: 'strategy2',
+            Strategy3: 'strategy3',
+            DailyPricingModel: 'daily_pricing_model',
+            PaymentSizeDetail: 'payment_size_detail',
+            Portfolio: 'portfolio',
+            PriceDownloadScheme: 'price_download_scheme',
+            Periodicity: 'periodicity',
+            AccrualCalculationModel: 'accrual_calculation_model',
+        }
+
+        mapping_cache = {}
+
+        def _convert_value(field, value, error_rows):
+            i = field.transaction_type_input
+
+            if i.value_type == TransactionTypeInput.STRING:
+                return str(value)
+
+            elif i.value_type == TransactionTypeInput.NUMBER:
+                return float(value)
+
+            elif i.value_type == TransactionTypeInput.DATE:
+                if not isinstance(value, date):
+                    return formula._parse_date(value)
+                else:
+                    return value
+
+            elif i.value_type == TransactionTypeInput.RELATION:
+                model_class = i.content_type.model_class()
+                model_map_class = mapping_map[model_class]
+
+                key = props_map[model_class]
+
+                v = None
+
+                try:
+                    v = model_map_class.objects.get(master_user=instance.master_user, value=value).content_object
+                except:
+
+                    try:
+
+                        # _l.info('Lookup by user code %s', value)
+
+                        if model_class == PriceDownloadScheme:
+                            v = model_class.objects.get(master_user=instance.master_user, scheme_name=value)
+                        elif model_class == DailyPricingModel or model_class == PaymentSizeDetail or model_class == Periodicity or model_class == AccrualCalculationModel:
+                            v = model_class.objects.get(system_code=value)
+                        else:
+                            v = model_class.objects.get(master_user=instance.master_user, user_code=value)
+
+                    except (model_class.DoesNotExist, KeyError):
+
+                        if instance.missing_data_handler == 'set_defaults':
+
+                            ecosystem_default = EcosystemDefault.objects.get(master_user=instance.master_user)
+
+                            # _l.info('key %s' % key)
+                            # _l.info('value %s' % value)
+
+                            if hasattr(ecosystem_default, key):
+                                v = getattr(ecosystem_default, key)
+                            else:
+                                v = model_map_class.objects.get(master_user=instance.master_user, value='-').content_object
+                        else:
+                            error_rows['error_message'] = error_rows[
+                                                              'error_message'] + ' Can\'t find relation of ' + \
+                                                          '[' + field.transaction_type_input.name + ']' + ' (Imported column, value: "' + \
+                                                          value + '"). '
+
+                if not v:
+                    raise ValueError('Can\'t find Relation.')
+
+                mapping_cache[key] = v
+
+                return v
+
+        def update_row_with_calculated_data(row, inputs):
+
+            for i in scheme_calculated_inputs:
+
+                _l.info('update_row_with_calculated_data inputs %s' % inputs)
+
+                try:
+                    value = formula.safe_eval(i.name_expr, names=inputs)
+                    row.append(value)
+
+                except:
+                    _l.info('can\'t process calculated input: %s|%s', i.name, i.column, exc_info=True)
+                    row.append(None)
+
+            return row
+
+        def _validate_process_csv_file(file):
+
+            delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
+
+            reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
+                                strict=False, skipinitialspace=True)
+
+            for row_index, row in enumerate(reader):
+
+                _l.info('_validate_process_csv_file row: %s -> %s', row_index, row)
+                if (row_index == 0 and instance.skip_first_line) or not row:
+                    _l.info('skip first row')
+                    continue
+
+                inputs_raw = {}
+                inputs = {}
+                inputs_error = []
+                calculated_columns_error = []
+
+                error_rows = {
+                    'level': 'info',
+                    'error_message': '',
+                    'inputs': inputs_raw,
+                    'original_row_index': row_index,
+                    'original_row': row,
+                    'error_data': {
+                        'columns': {
+                            'imported_columns': [],
+                            'calculated_columns': [],
+                            'converted_imported_columns': [],
+                            'transaction_type_selector': [],
+                            'executed_input_expressions': []
+                        },
+                        'data': {
+                            'imported_columns': [],
+                            'calculated_columns': [],
+                            'converted_imported_columns': [],
+                            'transaction_type_selector': [],
+                            'executed_input_expressions': []
+                        }
+
+                    },
+                    'error_reaction': "Success"
+                }
+
+                for i in scheme_inputs:
+
+                    error_rows['error_data']['columns']['imported_columns'].append(i.name)
+
+                    try:
+                        inputs_raw[i.name] = row[i.column - 1]
+                        error_rows['error_data']['data']['imported_columns'].append(row[i.column - 1])
+                    except:
+                        _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                        error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
+                        inputs_error.append(i)
+
+                _l.info('Row %s inputs_raw: %s' % (row_index, inputs_raw))
+
+                for i in scheme_inputs:
+
+                    error_rows['error_data']['columns']['converted_imported_columns'].append(
+                        i.name + ': Conversion Expression ' + '(' + i.name_expr + ')')
+
+                    try:
+                        inputs[i.name] = formula.safe_eval(i.name_expr, names=inputs_raw)
+                        error_rows['error_data']['data']['converted_imported_columns'].append(row[i.column - 1])
+                    except:
+                        _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                        error_rows['error_data']['data']['converted_imported_columns'].append(
+                            ugettext('Invalid expression'))
+                        inputs_error.append(i)
+
+                _l.info('Row %s inputs_converted: %s' % (row_index, inputs))
+
+                original_columns_count = len(row)
+
+                row = update_row_with_calculated_data(row, inputs)
+
+                _l.info('Row %s inputs_with_calculated: %s' % (row_index, inputs))
+
+                for i in scheme_calculated_inputs:
+
+                    error_rows['error_data']['columns']['calculated_columns'].append(i.name)
+
+                    try:
+
+                        index = original_columns_count + i.column - 1
+
+                        _l.info('original_columns_count %s' % original_columns_count)
+                        _l.info('i.column %s' % i.column)
+                        _l.info('row %s' % row)
+
+                        inputs[i.name] = row[index]
+
+                        error_rows['error_data']['data']['calculated_columns'].append(row[index])
+                    except:
+                        _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                        error_rows['error_data']['data']['calculated_columns'].append(ugettext('Invalid expression'))
+                        calculated_columns_error.append(i)
+
+                if inputs_error:
+
+                    error_rows['level'] = 'error'
+
+                    error_rows['error_message'] = error_rows['error_message'] + str(
+                        ugettext('Can\'t process inputs: %(inputs)s') % {
+                            'inputs': ', '.join('[' + i.name + ']' for i in inputs_error)
+                        })
+                    instance.error_rows.append(error_rows)
+
+                    if instance.break_on_error:
+                        error_rows['error_reaction'] = 'Break'
+                        instance.error_row_index = row_index
+                        instance.error_rows.append(error_rows)
+                        return
+                    else:
+                        error_rows['error_reaction'] = 'Continue import'
+                        continue
+
+                try:
+                    rule_value = formula.safe_eval(scheme.rule_expr, names=inputs)
+                except Exception as e:
+
+                    error_rows['level'] = 'error'
+
+                    _l.info('can\'t process rule expression', exc_info=True)
+                    _l.info('error %s' % e)
+                    error_rows['error_message'] = error_rows['error_message'] + str(ugettext('Can\'t eval rule expression'))
+                    instance.error_rows.append(error_rows)
+                    if instance.break_on_error:
+                        instance.error_row_index = row_index
+                        error_rows['error_reaction'] = 'Break'
+                        instance.error_rows.append(error_rows)
+                        return
+                    else:
+                        error_rows['error_reaction'] = 'Continue import'
+                        continue
+
+                if not rule_value:
+
+                    _l.info('no rule value: %s', rule_value)
+
+                    error_rows['level'] = 'error'
+
+                    error_rows['error_message'] = error_rows['error_message'] + str(ugettext('Rule expression is invalid'))
+
+                    if instance.break_on_error:
+                        instance.error_row_index = row_index
+                        error_rows['error_reaction'] = 'Break'
+                        instance.error_rows.append(error_rows)
+                        return
+                    else:
+                        error_rows['error_reaction'] = 'Continue import'
+                        continue
+
+                else:
+                    _l.info('rule value: %s', rule_value)
+
+                processed_scenarios = 0
+                matched_rule = False
+
+                for scheme_rule in rule_scenarios:
+
+                    matched_selector = False
+
+                    selector_values = scheme_rule.selector_values.all()
+
+                    for selector_value in selector_values:
+
+                        if selector_value.value == rule_value:
+                            matched_selector = True
+
+                    if matched_selector:
+
+                        processed_scenarios = processed_scenarios + 1
+
+                        error_rows['error_data']['columns']['transaction_type_selector'].append('TType Selector')
+
+                        try:
+                            rule = scheme_rule
+
+                            error_rows['error_data']['data']['transaction_type_selector'].append(rule_value)
+
+                        except:
+
+                            error_rows['level'] = 'error'
+
+                            _l.info('rule does not find: %s', rule_value, exc_info=True)
+                            error_rows['error_message'] = error_rows['error_message'] + str(
+                                ugettext('Can\'t find transaction type by "%(value)s"') % {
+                                    'value': rule_value
+                                })
+                            instance.error_rows.append(error_rows)
+
+                            error_rows['error_data']['data']['transaction_type_selector'].append(
+                                ugettext('Invalid expression'))
+
+                            if instance.break_on_error:
+                                instance.error_row_index = row_index
+                                error_rows['error_reaction'] = 'Break'
+                                instance.error_rows.append(error_rows)
+                                return
+                            else:
+                                error_rows['error_reaction'] = 'Continue import'
+                                continue
+
+                        _l.info('founded rule: %s -> %s', rule, rule.transaction_type)
+
+                        fields = {}
+                        fields_error = []
+
+                        for field in rule.fields.all():
+
+                            error_rows['error_data']['columns']['executed_input_expressions'].append(
+                                field.transaction_type_input.name)
+
+                            try:
+                                field_value = formula.safe_eval(field.value_expr, names=inputs)
+
+                                field_value = _convert_value(field, field_value, error_rows)
+
+                                fields[field.transaction_type_input.name] = field_value
+
+                                if hasattr(field_value, 'name'):
+                                    error_rows['error_data']['data']['executed_input_expressions'].append(field_value.name)
+                                else:
+                                    error_rows['error_data']['data']['executed_input_expressions'].append(field_value)
+
+                            except (ValueError, formula.InvalidExpression):
+
+                                _l.info('can\'t process field: %s|%s', field.transaction_type_input.name,
+                                                   field.transaction_type_input.pk, exc_info=True)
+                                fields_error.append(field)
+
+                                error_rows['error_data']['data']['executed_input_expressions'].append(
+                                    ugettext('Invalid expression'))
+
+                        if len(fields_error):
+
+                            _l.info('fields (step 1): error=%s, values=%s', fields_error, fields)
+
+                            _l.info(error_rows['error_message'])
+
+                            inputs_messages = []
+
+                            for field_error in fields_error:
+                                message = '[' + field_error.transaction_type_input.name + '] ' + '( TType Input, TType ' + rule.transaction_type.name + ' [' + rule.transaction_type.user_code + '] )'
+
+                                inputs_messages.append(message)
+
+                            error_rows['error_message'] = error_rows['error_message'] + str(
+                                ugettext('Can\'t process fields: %(messages)s') % {
+                                    'messages': ', '.join(str(m) for m in inputs_messages)
+                                })
+
+                            error_rows['level'] = 'error'
+
+                            if instance.break_on_error:
+                                error_rows['error_reaction'] = 'Break'
+                                instance.error_row_index = row_index
+                                instance.error_rows.append(error_rows)
+                                return
+                            else:
+                                error_rows['error_reaction'] = 'Continue import'
+                                continue
+
+                print('matched_rule %s' % matched_rule)
+
+                if processed_scenarios == 0:
+                    error_rows['level'] = 'error'
+
+                    if instance.break_on_error:
+                        instance.error_row_index = row_index
+                        error_rows['error_reaction'] = 'Break'
+                        instance.error_rows.append(error_rows)
+                        return
+                    else:
+                        error_rows['error_reaction'] = 'Continue import'
+
+                instance.error_rows.append(error_rows)
+
+                # if fields_error:
+                #
+                #     if instance.break_on_error:
+                #         error_rows['error_reaction'] = 'Break'
+                #         instance.error_row_index = row_index
+                #         return
+                #     else:
+                #         error_rows['error_reaction'] = 'Continue import'
+                #         continue
+
+                instance.processed_rows = instance.processed_rows + 1
+                # instance.save()
+
+                send_websocket_message(data={
+                    'type': 'transaction_import_status',
+                    'payload': {'task_id': instance.task_id,
+                                'state': Task.STATUS_PENDING,
+                                'processed_rows': instance.processed_rows,
+                                'total_rows': instance.total_rows,
+                                'scheme_name': scheme.scheme_name,
+                                'file_name': instance.filename}
+                }, level="member",
+                    context={"master_user": master_user, "member": member})
+
+        def _row_count(file):
+
+            delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
+
+            reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
+                                strict=False, skipinitialspace=True)
+
+            row_index = 0
+
+            for row_index, row in enumerate(reader):
+                pass
+            return row_index
+
+        instance.error_rows = []
+
+        try:
+            # with import_file_storage.open(instance.file_path, 'rb') as f:
+
+            _l.info('Trying to open %s' % instance.file_path)
+            with SFS.open(instance.file_path, 'rb') as f:
+                with NamedTemporaryFile() as tmpf:
+                    for chunk in f.chunks():
+                        tmpf.write(chunk)
+                    tmpf.flush()
+                    # with open(tmpf.name, mode='rt', encoding=instance.encoding) as cfr:
+                    with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
+                        instance.total_rows = _row_count(cfr)
+                    with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
+                        _validate_process_csv_file(cf)
+        except:
+            _l.info('Can\'t process file', exc_info=True)
+            instance.error_message = ugettext("Invalid file format or file already deleted.")
+        finally:
+            # import_file_storage.delete(instance.file_path)
+            SFS.delete(instance.file_path)
+
+        _l.info("transaction import validation completed")
+
+        instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
+
+        # instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.validate',
+        #                                                   'Transaction Import Validation')
+
+        send_websocket_message(data={
+            'type': 'transaction_import_status',
+            'payload': {
+                        'parent_task_id': celery_task.parent_id,
+                        'task_id': instance.task_id,
                         'state': Task.STATUS_DONE,
                         'processed_rows': instance.processed_rows,
                         'total_rows': instance.total_rows,
@@ -1850,548 +2793,119 @@ def complex_transaction_csv_file_import(self, instance, execution_context=None):
         }, level="member",
             context={"master_user": master_user, "member": member})
 
-        self.update_state(task_id=instance.task_id, state=Task.STATUS_DONE,
-                          meta={'processed_rows': instance.processed_rows,
-                                'total_rows': instance.total_rows,
-                                'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
+        result_object = {
+            'processed_rows': instance.processed_rows,
+            'total_rows': instance.total_rows,
+            'file_name': instance.filename,
+            'error_rows': instance.error_rows,
+            'stats_file_report': instance.stats_file_report
+        }
 
-    return instance
+        celery_task.result_object = result_object
+        celery_task.status = CeleryTask.STATUS_DONE
+        celery_task.save()
 
+        return instance
 
-@shared_task(name='integrations.complex_transaction_csv_file_import_validate', bind=True)
-def complex_transaction_csv_file_import_validate(self, instance):
-    from poms.transactions.models import TransactionTypeInput
+    except Exception as e:
 
-    setattr(instance, 'task_id', current_task.request.id)
+        _l.info('Exception occurred %s' % e)
+        _l.info(traceback.format_exc())
 
-    instance.processed_rows = 0
-    _l.debug('complex_transaction_file_import: %s', instance)
 
-    scheme = instance.scheme
-    scheme_inputs = list(scheme.inputs.all())
-    scheme_calculated_inputs = list(scheme.calculated_inputs.all())
-    rule_scenarios = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields',
-                                                            'fields__transaction_type_input').all()
-
-    _l.debug('scheme %s - inputs=%s, rules=%s', scheme,
-            [(i.name, i.column) for i in scheme_inputs],
-            [(r.transaction_type.user_code) for r in rule_scenarios])
-
-    master_user = instance.master_user
-    member = instance.member
-
-    mapping_map = {
-        Account: AccountMapping,
-        Currency: CurrencyMapping,
-        Instrument: InstrumentMapping,
-        InstrumentType: InstrumentTypeMapping,
-        Counterparty: CounterpartyMapping,
-        Responsible: ResponsibleMapping,
-        Strategy1: Strategy1Mapping,
-        Strategy2: Strategy2Mapping,
-        Strategy3: Strategy3Mapping,
-        DailyPricingModel: DailyPricingModelMapping,
-        PaymentSizeDetail: PaymentSizeDetailMapping,
-        Portfolio: PortfolioMapping,
-        PriceDownloadScheme: PriceDownloadSchemeMapping,
-        Periodicity: PeriodicityMapping,
-        AccrualCalculationModel: AccrualCalculationModelMapping,
-    }
-
-    props_map = {
-        Account: 'account',
-        Currency: 'currency',
-        Instrument: 'instrument',
-        InstrumentType: 'instrument_type',
-        Counterparty: 'counterparty',
-        Responsible: 'responsible',
-        Strategy1: 'strategy1',
-        Strategy2: 'strategy2',
-        Strategy3: 'strategy3',
-        DailyPricingModel: 'daily_pricing_model',
-        PaymentSizeDetail: 'payment_size_detail',
-        Portfolio: 'portfolio',
-        PriceDownloadScheme: 'price_download_scheme',
-        Periodicity: 'periodicity',
-        AccrualCalculationModel: 'accrual_calculation_model',
-    }
-
-    mapping_cache = {}
-
-    def _convert_value(field, value, error_rows):
-        i = field.transaction_type_input
-
-        if i.value_type == TransactionTypeInput.STRING:
-            return str(value)
-
-        elif i.value_type == TransactionTypeInput.NUMBER:
-            return float(value)
-
-        elif i.value_type == TransactionTypeInput.DATE:
-            if not isinstance(value, date):
-                return formula._parse_date(value)
-            else:
-                return value
-
-        elif i.value_type == TransactionTypeInput.RELATION:
-            model_class = i.content_type.model_class()
-            model_map_class = mapping_map[model_class]
-
-            key = props_map[model_class]
-
-            v = None
-
-            try:
-                v = model_map_class.objects.get(master_user=instance.master_user, value=value).content_object
-            except:
-
-                try:
-
-                    # _l.debug('Lookup by user code %s', value)
-
-                    if model_class == PriceDownloadScheme:
-                        v = model_class.objects.get(master_user=instance.master_user, scheme_name=value)
-                    elif model_class == DailyPricingModel or model_class == PaymentSizeDetail or model_class == Periodicity or model_class == AccrualCalculationModel:
-                        v = model_class.objects.get(system_code=value)
-                    else:
-                        v = model_class.objects.get(master_user=instance.master_user, user_code=value)
-
-                except (model_class.DoesNotExist, KeyError):
-
-                    if instance.missing_data_handler == 'set_defaults':
-
-                        ecosystem_default = EcosystemDefault.objects.get(master_user=instance.master_user)
-
-                        # _l.debug('key %s' % key)
-                        # _l.debug('value %s' % value)
-
-                        if hasattr(ecosystem_default, key):
-                            v = getattr(ecosystem_default, key)
-                        else:
-                            v = model_map_class.objects.get(master_user=instance.master_user, value='-').content_object
-                    else:
-                        error_rows['error_message'] = error_rows[
-                                                          'error_message'] + ' Can\'t find relation of ' + \
-                                                      '[' + field.transaction_type_input.name + ']' + ' (Imported column, value: "' + \
-                                                      value + '"). '
-
-            if not v:
-                raise ValueError('Can\'t find Relation.')
-
-            mapping_cache[key] = v
-
-            return v
-
-    def update_row_with_calculated_data(row, inputs):
-
-        for i in scheme_calculated_inputs:
-
-            _l.debug('update_row_with_calculated_data inputs %s' % inputs)
-
-            try:
-                value = formula.safe_eval(i.name_expr, names=inputs)
-                row.append(value)
-
-            except:
-                _l.debug('can\'t process calculated input: %s|%s', i.name, i.column, exc_info=True)
-                row.append(None)
-
-        return row
-
-    def _validate_process_csv_file(file):
-
-        delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
-
-        reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
-                            strict=False, skipinitialspace=True)
-
-        for row_index, row in enumerate(reader):
-
-            _l.debug('_validate_process_csv_file row: %s -> %s', row_index, row)
-            if (row_index == 0 and instance.skip_first_line) or not row:
-                _l.debug('skip first row')
-                continue
-
-            inputs_raw = {}
-            inputs = {}
-            inputs_error = []
-            calculated_columns_error = []
-
-            error_rows = {
-                'level': 'info',
-                'error_message': '',
-                'inputs': inputs_raw,
-                'original_row_index': row_index,
-                'original_row': row,
-                'error_data': {
-                    'columns': {
-                        'imported_columns': [],
-                        'calculated_columns': [],
-                        'converted_imported_columns': [],
-                        'transaction_type_selector': [],
-                        'executed_input_expressions': []
-                    },
-                    'data': {
-                        'imported_columns': [],
-                        'calculated_columns': [],
-                        'converted_imported_columns': [],
-                        'transaction_type_selector': [],
-                        'executed_input_expressions': []
-                    }
-
-                },
-                'error_reaction': "Success"
-            }
-
-            for i in scheme_inputs:
-
-                error_rows['error_data']['columns']['imported_columns'].append(i.name)
-
-                try:
-                    inputs_raw[i.name] = row[i.column - 1]
-                    error_rows['error_data']['data']['imported_columns'].append(row[i.column - 1])
-                except:
-                    _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
-                    error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
-                    inputs_error.append(i)
-
-            _l.debug('Row %s inputs_raw: %s' % (row_index, inputs_raw))
-
-            for i in scheme_inputs:
-
-                error_rows['error_data']['columns']['converted_imported_columns'].append(
-                    i.name + ': Conversion Expression ' + '(' + i.name_expr + ')')
-
-                try:
-                    inputs[i.name] = formula.safe_eval(i.name_expr, names=inputs_raw)
-                    error_rows['error_data']['data']['converted_imported_columns'].append(row[i.column - 1])
-                except:
-                    _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
-                    error_rows['error_data']['data']['converted_imported_columns'].append(
-                        ugettext('Invalid expression'))
-                    inputs_error.append(i)
-
-            _l.debug('Row %s inputs_converted: %s' % (row_index, inputs))
-
-            original_columns_count = len(row)
-
-            row = update_row_with_calculated_data(row, inputs)
-
-            _l.debug('Row %s inputs_with_calculated: %s' % (row_index, inputs))
-
-            for i in scheme_calculated_inputs:
-
-                error_rows['error_data']['columns']['calculated_columns'].append(i.name)
-
-                try:
-
-                    index = original_columns_count + i.column - 1
-
-                    _l.debug('original_columns_count %s' % original_columns_count)
-                    _l.debug('i.column %s' % i.column)
-                    _l.debug('row %s' % row)
-
-                    inputs[i.name] = row[index]
-
-                    error_rows['error_data']['data']['calculated_columns'].append(row[index])
-                except:
-                    _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
-                    error_rows['error_data']['data']['calculated_columns'].append(ugettext('Invalid expression'))
-                    calculated_columns_error.append(i)
-
-            if inputs_error:
-
-                error_rows['level'] = 'error'
-
-                error_rows['error_message'] = error_rows['error_message'] + str(
-                    ugettext('Can\'t process inputs: %(inputs)s') % {
-                        'inputs': ', '.join('[' + i.name + ']' for i in inputs_error)
-                    })
-                instance.error_rows.append(error_rows)
-
-                if instance.break_on_error:
-                    error_rows['error_reaction'] = 'Break'
-                    instance.error_row_index = row_index
-                    instance.error_rows.append(error_rows)
-                    return
-                else:
-                    error_rows['error_reaction'] = 'Continue import'
-                    continue
-
-            try:
-                rule_value = formula.safe_eval(scheme.rule_expr, names=inputs)
-            except Exception as e:
-
-                error_rows['level'] = 'error'
-
-                _l.debug('can\'t process rule expression', exc_info=True)
-                _l.debug('error %s' % e)
-                error_rows['error_message'] = error_rows['error_message'] + str(ugettext('Can\'t eval rule expression'))
-                instance.error_rows.append(error_rows)
-                if instance.break_on_error:
-                    instance.error_row_index = row_index
-                    error_rows['error_reaction'] = 'Break'
-                    instance.error_rows.append(error_rows)
-                    return
-                else:
-                    error_rows['error_reaction'] = 'Continue import'
-                    continue
-
-            if not rule_value:
-
-                _l.debug('no rule value: %s', rule_value)
-
-                error_rows['level'] = 'error'
-
-                error_rows['error_message'] = error_rows['error_message'] + str(ugettext('Rule expression is invalid'))
-
-                if instance.break_on_error:
-                    instance.error_row_index = row_index
-                    error_rows['error_reaction'] = 'Break'
-                    instance.error_rows.append(error_rows)
-                    return
-                else:
-                    error_rows['error_reaction'] = 'Continue import'
-                    continue
-
-            else:
-                _l.debug('rule value: %s', rule_value)
-
-            processed_scenarios = 0
-            matched_rule = False
-
-            for scheme_rule in rule_scenarios:
-
-                matched_selector = False
-
-                selector_values = scheme_rule.selector_values.all()
-
-                for selector_value in selector_values:
-
-                    if selector_value.value == rule_value:
-                        matched_selector = True
-
-                if matched_selector:
-
-                    processed_scenarios = processed_scenarios + 1
-
-                    error_rows['error_data']['columns']['transaction_type_selector'].append('TType Selector')
-
-                    try:
-                        rule = scheme_rule
-
-                        error_rows['error_data']['data']['transaction_type_selector'].append(rule_value)
-
-                    except:
-
-                        error_rows['level'] = 'error'
-
-                        _l.debug('rule does not find: %s', rule_value, exc_info=True)
-                        error_rows['error_message'] = error_rows['error_message'] + str(
-                            ugettext('Can\'t find transaction type by "%(value)s"') % {
-                                'value': rule_value
-                            })
-                        instance.error_rows.append(error_rows)
-
-                        error_rows['error_data']['data']['transaction_type_selector'].append(
-                            ugettext('Invalid expression'))
-
-                        if instance.break_on_error:
-                            instance.error_row_index = row_index
-                            error_rows['error_reaction'] = 'Break'
-                            instance.error_rows.append(error_rows)
-                            return
-                        else:
-                            error_rows['error_reaction'] = 'Continue import'
-                            continue
-
-                    _l.debug('founded rule: %s -> %s', rule, rule.transaction_type)
-
-                    fields = {}
-                    fields_error = []
-
-                    for field in rule.fields.all():
-
-                        error_rows['error_data']['columns']['executed_input_expressions'].append(
-                            field.transaction_type_input.name)
-
-                        try:
-                            field_value = formula.safe_eval(field.value_expr, names=inputs)
-
-                            field_value = _convert_value(field, field_value, error_rows)
-
-                            fields[field.transaction_type_input.name] = field_value
-
-                            if hasattr(field_value, 'name'):
-                                error_rows['error_data']['data']['executed_input_expressions'].append(field_value.name)
-                            else:
-                                error_rows['error_data']['data']['executed_input_expressions'].append(field_value)
-
-                        except (ValueError, formula.InvalidExpression):
-
-                            _l.debug('can\'t process field: %s|%s', field.transaction_type_input.name,
-                                    field.transaction_type_input.pk, exc_info=True)
-                            fields_error.append(field)
-
-                            error_rows['error_data']['data']['executed_input_expressions'].append(
-                                ugettext('Invalid expression'))
-
-                    if len(fields_error):
-
-                        _l.debug('fields (step 1): error=%s, values=%s', fields_error, fields)
-
-                        _l.debug(error_rows['error_message'])
-
-                        inputs_messages = []
-
-                        for field_error in fields_error:
-                            message = '[' + field_error.transaction_type_input.name + '] ' + '( TType Input, TType ' + rule.transaction_type.name + ' [' + rule.transaction_type.user_code + '] )'
-
-                            inputs_messages.append(message)
-
-                        error_rows['error_message'] = error_rows['error_message'] + str(
-                            ugettext('Can\'t process fields: %(messages)s') % {
-                                'messages': ', '.join(str(m) for m in inputs_messages)
-                            })
-
-                        error_rows['level'] = 'error'
-
-                        if instance.break_on_error:
-                            error_rows['error_reaction'] = 'Break'
-                            instance.error_row_index = row_index
-                            instance.error_rows.append(error_rows)
-                            return
-                        else:
-                            error_rows['error_reaction'] = 'Continue import'
-                            continue
-
-            print('matched_rule %s' % matched_rule)
-
-            if processed_scenarios == 0:
-                error_rows['level'] = 'error'
-
-                if instance.break_on_error:
-                    instance.error_row_index = row_index
-                    error_rows['error_reaction'] = 'Break'
-                    instance.error_rows.append(error_rows)
-                    return
-                else:
-                    error_rows['error_reaction'] = 'Continue import'
-
-            instance.error_rows.append(error_rows)
-
-            # if fields_error:
-            #
-            #     if instance.break_on_error:
-            #         error_rows['error_reaction'] = 'Break'
-            #         instance.error_row_index = row_index
-            #         return
-            #     else:
-            #         error_rows['error_reaction'] = 'Continue import'
-            #         continue
-
-            instance.processed_rows = instance.processed_rows + 1
-            # instance.save()
-
-            send_websocket_message(data={
-                'type': 'transaction_import_status',
-                'payload': {'task_id': instance.task_id,
-                            'state': Task.STATUS_PENDING,
-                            'processed_rows': instance.processed_rows,
-                            'total_rows': instance.total_rows,
-                            'scheme_name': scheme.scheme_name,
-                            'file_name': instance.filename}
-            }, level="member",
-                context={"master_user": master_user, "member": member})
-
-            # DEPRECATED
-            self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                              meta={'processed_rows': instance.processed_rows,
-                                    'total_rows': instance.total_rows,
-                                    'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
-
-            _l.debug('instance', instance)
-
-    def _row_count(file):
-
-        delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
-
-        reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
-                            strict=False, skipinitialspace=True)
-
-        row_index = 0
-
-        for row_index, row in enumerate(reader):
-            pass
-        return row_index
-
-    instance.error_rows = []
+@shared_task(name='integrations.complex_transaction_csv_file_import_validate_parallel', bind=True)
+def complex_transaction_csv_file_import_validate_parallel(self, task_id):
 
     try:
-        # with import_file_storage.open(instance.file_path, 'rb') as f:
-        with SFS.open(instance.file_path, 'rb') as f:
-            with NamedTemporaryFile() as tmpf:
 
-                for chunk in f.chunks():
-                    tmpf.write(chunk)
-                tmpf.flush()
-                # with open(tmpf.name, mode='rt', encoding=instance.encoding) as cfr:
-                with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
-                    instance.total_rows = _row_count(cfr)
-                    # instance.save()
-                    self.update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                                      meta={'total_rows': instance.total_rows,
-                                            'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
+        _l.info('complex_transaction_csv_file_import_validate_parallel: task_id %s' % task_id)
 
-                with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
-                    _validate_process_csv_file(cf)
-    # except csv.Error:
-    #     _l.debug('Can\'t process file', exc_info=True)
-    #     instance.error_message = ugettext("Invalid file format or file already deleted.")
-    # except (FileNotFoundError, IOError):
-    #     _l.debug('Can\'t process file', exc_info=True)
-    #     instance.error_message = ugettext("Invalid file format or file already deleted.")
-    except:
-        _l.debug('Can\'t process file', exc_info=True)
-        instance.error_message = ugettext("Invalid file format or file already deleted.")
-    finally:
-        # import_file_storage.delete(instance.file_path)
-        SFS.delete(instance.file_path)
+        celery_task = CeleryTask.objects.get(pk=task_id)
 
-    _l.debug("ransaction import validation completed")
+        celery_task.status = CeleryTask.STATUS_PENDING
+        celery_task.save()
 
-    instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
+        options_object = celery_task.options_object
 
-    instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.validate',
-                                                      'Transaction Import Validation')
+        sub_tasks = []
 
-    send_websocket_message(data={
-        'type': 'transaction_import_status',
-        'payload': {'task_id': instance.task_id,
-                    'state': Task.STATUS_DONE,
-                    'processed_rows': instance.processed_rows,
-                    'total_rows': instance.total_rows,
-                    'file_name': instance.filename,
-                    'error_rows': instance.error_rows,
-                    'stats_file_report': instance.stats_file_report,
-                    'scheme': scheme.id,
-                    'scheme_object': {
-                        'id': scheme.id,
-                        'scheme_name': scheme.scheme_name,
-                        'delimiter': scheme.delimiter,
-                        'error_handler': scheme.error_handler,
-                        'missing_data_handler': scheme.missing_data_handler
-                    }}
-    }, level="member",
-        context={"master_user": master_user, "member": member})
+        lines_per_file = 300
+        header_line = None
 
-    # DEPRECATED
-    self.update_state(task_id=instance.task_id, state=Task.STATUS_DONE,
-                      meta={'processed_rows': instance.processed_rows,
-                            'total_rows': instance.total_rows,
-                            'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
+        def _get_path(master_user, file_name):
+            return '%s/transaction_import_files/%s.dat' % (master_user.token, file_name)
 
-    return instance
+        chunk = None
+
+        with SFS.open(celery_task.options_object['file_path'], 'rb') as f:
+
+            _l.info("Start reading file to split it into chunks")
+
+            for lineno, line in enumerate(f):
+
+                # _l.info('line %s' % lineno)
+
+                if lineno == 0:
+                    header_line = line
+                    # _l.info('set header line %s' % lineno)
+
+                if lineno % lines_per_file == 0:
+
+                    _l.info("chunk %s" % chunk)
+
+                    if chunk is not None:
+                        _l.info("Saving chunk %s" % chunk)
+                        SFS.save(chunk_path, chunk) # save working chunk before creating new one
+
+                    chunk_filename = '%s_chunk_file_%s' % (self.request.id, lineno + lines_per_file)
+                    chunk_path = _get_path(celery_task.master_user, chunk_filename)
+
+                    # _l.info('creating chunk file %s' % chunk_path)
+
+                    chunk = SFS.open(chunk_path, "w")
+                    if lineno != 0:
+                        chunk.write(header_line)
+
+                    # _l.info('creating sub task for %s' % chunk_filename)
+
+                    sub_task = CeleryTask.objects.create(master_user=celery_task.master_user, member=celery_task.member, parent=celery_task)
+
+                    sub_task_options_object = copy.deepcopy(celery_task.options_object)
+                    sub_task_options_object['file_path'] = chunk_path
+
+                    sub_task.options_object = sub_task_options_object
+                    sub_task.save()
+
+                    sub_tasks.append(sub_task)
+
+                chunk.write(line)
+
+            _l.info("Saving last chunk")
+            SFS.save(chunk_path, chunk) # save working chunk before creating new one
+
+        _l.info('sub_tasks created %s' % len(sub_tasks))
+        _l.info('original file total rows %s' % lineno)
+
+        options_object['total_rows'] = lineno
+
+        celery_task.options_object = options_object
+        celery_task.save()
+
+        celery_sub_tasks = []
+
+        for sub_task in sub_tasks:
+
+            _l.info('initializing sub_task %s' % sub_task.options_object['file_path'])
+
+            ct = complex_transaction_csv_file_import_validate.s(task_id=sub_task.id)
+            celery_sub_tasks.append(ct)
+
+        chord(celery_sub_tasks, complex_transaction_csv_file_import_validate_parallel_finish.si(task_id=task_id)).apply_async()
+
+    except Exception as e:
+
+        _l.info('Exception occurred %s' % e)
+        _l.info(traceback.format_exc())
 
 
 @shared_task(name='integrations.complex_transaction_csv_file_import_by_procedure', bind=True)
