@@ -1541,6 +1541,7 @@ def complex_transaction_csv_file_import(self, task_id):
         from poms.integrations.serializers import ComplexTransactionCsvFileImport
 
         celery_task = CeleryTask.objects.get(pk=task_id)
+        parent_celery_task = celery_task.parent
 
         celery_task.status = CeleryTask.STATUS_PENDING
         celery_task.save()
@@ -1991,6 +1992,7 @@ def complex_transaction_csv_file_import(self, task_id):
                                 'task_id': instance.task_id,
                                 'state': Task.STATUS_PENDING,
                                 'processed_rows': instance.processed_rows,
+                                'parent_total_rows': parent_celery_task.options_object['total_rows'],
                                 'total_rows': instance.total_rows,
                                 'scheme_name': scheme.scheme_name,
                                 'file_name': instance.filename}
@@ -2067,6 +2069,7 @@ def complex_transaction_csv_file_import(self, task_id):
                             'task_id': instance.task_id,
                             'state': Task.STATUS_DONE,
                             'processed_rows': instance.processed_rows,
+                            'parent_total_rows': parent_celery_task.options_object['total_rows'],
                             'total_rows': instance.total_rows,
                             'file_name': instance.filename,
                             'error_rows': instance.error_rows,
@@ -2274,6 +2277,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
         from poms.integrations.serializers import ComplexTransactionCsvFileImport
 
         celery_task = CeleryTask.objects.get(pk=task_id)
+        parent_celery_task = celery_task.parent
 
         celery_task.status = CeleryTask.STATUS_PENDING
         celery_task.save()
@@ -2727,6 +2731,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                                 'task_id': instance.task_id,
                                 'state': Task.STATUS_PENDING,
                                 'processed_rows': instance.processed_rows,
+                                'parent_total_rows': parent_celery_task.options_object['total_rows'],
                                 'total_rows': instance.total_rows,
                                 'scheme_name': scheme.scheme_name,
                                 'file_name': instance.filename}
@@ -2786,6 +2791,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                         'task_id': instance.task_id,
                         'state': Task.STATUS_DONE,
                         'processed_rows': instance.processed_rows,
+                        'parent_total_rows': parent_celery_task.options_object['total_rows'],
                         'total_rows': instance.total_rows,
                         'file_name': instance.filename,
                         'error_rows': instance.error_rows,
