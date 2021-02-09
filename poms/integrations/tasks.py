@@ -1699,7 +1699,7 @@ def complex_transaction_csv_file_import(self, task_id):
 
             for row_index, row in enumerate(reader):
 
-                _l.debug('process row: %s -> %s', row_index, row)
+                # _l.debug('process row: %s -> %s', row_index, row)
                 if (row_index == 0 and instance.skip_first_line) or not row:
                     _l.debug('skip first row')
                     continue
@@ -1863,8 +1863,8 @@ def complex_transaction_csv_file_import(self, task_id):
                         error_rows['error_reaction'] = 'Continue import'
                         continue
 
-                else:
-                    _l.debug('rule value: %s', rule_value)
+                # else:
+                #     _l.debug('rule value: %s', rule_value)
 
                 matched_selector = False
                 processed_scenarios = 0
@@ -2417,7 +2417,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
             for i in scheme_calculated_inputs:
 
-                _l.info('update_row_with_calculated_data inputs %s' % inputs)
+                # _l.info('update_row_with_calculated_data inputs %s' % inputs)
 
                 try:
                     value = formula.safe_eval(i.name_expr, names=inputs)
@@ -2438,7 +2438,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
             for row_index, row in enumerate(reader):
 
-                _l.info('_validate_process_csv_file row: %s -> %s', row_index, row)
+                # _l.info('_validate_process_csv_file row: %s -> %s', row_index, row)
                 if (row_index == 0 and instance.skip_first_line) or not row:
                     _l.info('skip first row')
                     continue
@@ -2585,8 +2585,8 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                         error_rows['error_reaction'] = 'Continue import'
                         continue
 
-                else:
-                    _l.info('rule value: %s', rule_value)
+                # else:
+                #     _l.info('rule value: %s', rule_value)
 
                 processed_scenarios = 0
                 matched_rule = False
