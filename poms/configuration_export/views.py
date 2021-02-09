@@ -844,7 +844,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
                 for key in result_json:
                     if key.endswith('_input') and result_json[key]:
-                        result_json[key] = TransactionTypeInput.objects.get(pk=result_json[key]).name
+                        result_json[key] = TransactionTypeInput.objects.get(pk=result_json[key]).name # TODO user code here?
 
                     if key.endswith('_phantom') and result_json[key]:
                         result_json[key] = TransactionTypeAction.objects.get(pk=result_json[key]).order

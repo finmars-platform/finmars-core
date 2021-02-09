@@ -1789,6 +1789,7 @@ class TransactionTypeProcess(object):
 
                 self.uniqueness_status = 'overwrite'
 
+                self.complex_transaction.transaction_unique_code = exist.transaction_unique_code
                 self.complex_transaction.code = exist.code
 
                 exist.delete()
@@ -1947,6 +1948,7 @@ class TransactionTypeProcess(object):
             self.complex_transaction_errors.append(complex_transaction_errors)
 
         _l.debug("complex_transaction.date %s" % self.complex_transaction.date)
+        _l.debug("complex_transaction.code %s" % self.complex_transaction.code)
 
         self.complex_transaction.save()
 
