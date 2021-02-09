@@ -55,6 +55,7 @@ from poms.system_messages.handlers import send_system_message
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import EventClass
 from poms.users.models import MasterUser, EcosystemDefault
+from io import BytesIO
 
 from poms.common.utils import date_now, datetime_now
 
@@ -1746,7 +1747,7 @@ def complex_transaction_csv_file_import(self, task_id):
                         error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
                         inputs_error.append(i)
 
-                _l.debug('Row %s inputs_raw: %s' % (row_index, inputs_raw))
+                # _l.debug('Row %s inputs_raw: %s' % (row_index, inputs_raw))
 
                 original_columns_count = len(row)
 
@@ -1782,7 +1783,7 @@ def complex_transaction_csv_file_import(self, task_id):
                             ugettext('Invalid expression'))
                         inputs_conversion_error.append(i)
 
-                _l.debug('Row %s inputs_conversion: %s' % (row_index, inputs))
+                # _l.debug('Row %s inputs_conversion: %s' % (row_index, inputs))
 
                 if inputs_conversion_error:
 
@@ -1814,8 +1815,8 @@ def complex_transaction_csv_file_import(self, task_id):
 
                         index = original_columns_count + i.column - 1
 
-                        print('index %s ' % index)
-                        print('i.name %s ' % i.name)
+                        # print('index %s ' % index)
+                        # print('i.name %s ' % i.name)
 
                         inputs[i.name] = row[index]
 
@@ -1825,7 +1826,7 @@ def complex_transaction_csv_file_import(self, task_id):
                         error_rows['error_data']['data']['calculated_columns'].append(ugettext('Invalid expression'))
                         calculated_columns_error.append(i)
 
-                _l.debug('Row %s inputs_with_calculated: %s' % (row_index, inputs))
+                # _l.debug('Row %s inputs_with_calculated: %s' % (row_index, inputs))
 
                 try:
                     rule_value = formula.safe_eval(scheme.rule_expr, names=inputs)
@@ -1985,7 +1986,9 @@ def complex_transaction_csv_file_import(self, task_id):
 
                 send_websocket_message(data={
                     'type': 'transaction_import_status',
-                    'payload': {'task_id': instance.task_id,
+                    'payload': {
+                                'parent_task_id': celery_task.parent_id,
+                                'task_id': instance.task_id,
                                 'state': Task.STATUS_PENDING,
                                 'processed_rows': instance.processed_rows,
                                 'total_rows': instance.total_rows,
@@ -2141,12 +2144,12 @@ def complex_transaction_csv_file_import_parallel(self, task_id):
                         # _l.info("Saving chunk %s" % chunk)
                         SFS.save(chunk_path, chunk) # save working chunk before creating new one
 
-                    chunk_filename = '%s_chunk_file_%s' % (self.request.id, lineno + lines_per_file)
+                    chunk_filename = '%s_chunk_file_%s' % (self.request.id, str(lineno) + '_' + str(lineno + lines_per_file))
                     chunk_path = _get_path(celery_task.master_user, chunk_filename)
 
                     # _l.info('creating chunk file %s' % chunk_path)
 
-                    chunk = SFS.open(chunk_path, "w")
+                    chunk = BytesIO()
                     if lineno != 0:
                         chunk.write(header_line)
 
@@ -2479,7 +2482,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                         error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
                         inputs_error.append(i)
 
-                _l.info('Row %s inputs_raw: %s' % (row_index, inputs_raw))
+                # _l.info('Row %s inputs_raw: %s' % (row_index, inputs_raw))
 
                 for i in scheme_inputs:
 
@@ -2495,13 +2498,13 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                             ugettext('Invalid expression'))
                         inputs_error.append(i)
 
-                _l.info('Row %s inputs_converted: %s' % (row_index, inputs))
+                # _l.info('Row %s inputs_converted: %s' % (row_index, inputs))
 
                 original_columns_count = len(row)
 
                 row = update_row_with_calculated_data(row, inputs)
 
-                _l.info('Row %s inputs_with_calculated: %s' % (row_index, inputs))
+                # _l.info('Row %s inputs_with_calculated: %s' % (row_index, inputs))
 
                 for i in scheme_calculated_inputs:
 
@@ -2511,9 +2514,9 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
                         index = original_columns_count + i.column - 1
 
-                        _l.info('original_columns_count %s' % original_columns_count)
-                        _l.info('i.column %s' % i.column)
-                        _l.info('row %s' % row)
+                        # _l.info('original_columns_count %s' % original_columns_count)
+                        # _l.info('i.column %s' % i.column)
+                        # _l.info('row %s' % row)
 
                         inputs[i.name] = row[index]
 
@@ -2689,7 +2692,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                                 error_rows['error_reaction'] = 'Continue import'
                                 continue
 
-                print('matched_rule %s' % matched_rule)
+                # print('matched_rule %s' % matched_rule)
 
                 if processed_scenarios == 0:
                     error_rows['level'] = 'error'
@@ -2719,7 +2722,9 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
                 send_websocket_message(data={
                     'type': 'transaction_import_status',
-                    'payload': {'task_id': instance.task_id,
+                    'payload': {
+                                'parent_task_id': celery_task.parent_id,
+                                'task_id': instance.task_id,
                                 'state': Task.STATUS_PENDING,
                                 'processed_rows': instance.processed_rows,
                                 'total_rows': instance.total_rows,
@@ -2755,6 +2760,9 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                     # with open(tmpf.name, mode='rt', encoding=instance.encoding) as cfr:
                     with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
                         instance.total_rows = _row_count(cfr)
+
+                        _l.info('Total rows in %s: %s' % (instance.file_path, instance.total_rows))
+                        
                     with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
                         _validate_process_csv_file(cf)
         except:
@@ -2855,12 +2863,12 @@ def complex_transaction_csv_file_import_validate_parallel(self, task_id):
                         # _l.info("Saving chunk %s" % chunk)
                         SFS.save(chunk_path, chunk) # save working chunk before creating new one
 
-                    chunk_filename = '%s_chunk_file_%s' % (self.request.id, lineno + lines_per_file)
+                    chunk_filename = '%s_chunk_file_%s' % (self.request.id, str(lineno) + '_' + str(lineno + lines_per_file))
                     chunk_path = _get_path(celery_task.master_user, chunk_filename)
 
                     # _l.info('creating chunk file %s' % chunk_path)
 
-                    chunk = SFS.open(chunk_path, "w")
+                    chunk = BytesIO()
                     if lineno != 0:
                         chunk.write(header_line)
 
