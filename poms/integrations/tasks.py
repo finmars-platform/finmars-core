@@ -1174,7 +1174,7 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
 
         columns = ['Row number']
 
-        _l.debug('res_object %s' % res_object)
+        # _l.debug('res_object %s' % res_object)
 
         if len(res_object['error_rows']):
 
