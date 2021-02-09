@@ -2138,7 +2138,7 @@ def complex_transaction_csv_file_import_parallel(self, task_id):
                 if lineno % lines_per_file == 0:
 
                     if chunk is not None:
-                        _l.info("Saving chunk %s" % chunk)
+                        # _l.info("Saving chunk %s" % chunk)
                         SFS.save(chunk_path, chunk) # save working chunk before creating new one
 
                     chunk_filename = '%s_chunk_file_%s' % (self.request.id, lineno + lines_per_file)
@@ -2150,7 +2150,7 @@ def complex_transaction_csv_file_import_parallel(self, task_id):
                     if lineno != 0:
                         chunk.write(header_line)
 
-                    _l.info("chunk %s" % chunk)
+                    _l.info("creating chunk %s" % chunk_filename)
 
                     # _l.info('creating sub task for %s' % chunk_filename)
 
@@ -2852,7 +2852,7 @@ def complex_transaction_csv_file_import_validate_parallel(self, task_id):
                 if lineno % lines_per_file == 0:
 
                     if chunk is not None:
-                        _l.info("Saving chunk %s" % chunk)
+                        # _l.info("Saving chunk %s" % chunk)
                         SFS.save(chunk_path, chunk) # save working chunk before creating new one
 
                     chunk_filename = '%s_chunk_file_%s' % (self.request.id, lineno + lines_per_file)
@@ -2864,7 +2864,7 @@ def complex_transaction_csv_file_import_validate_parallel(self, task_id):
                     if lineno != 0:
                         chunk.write(header_line)
 
-                    _l.info("chunk %s" % chunk)
+                    _l.info("creating chunk %s" % chunk_filename)
 
                     # _l.info('creating sub task for %s' % chunk_filename)
 
