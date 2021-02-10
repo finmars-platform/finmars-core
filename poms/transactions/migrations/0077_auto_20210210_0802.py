@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transaction',
             name='complex_transaction',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, related_name='transactions', to='transactions.ComplexTransaction', verbose_name='complex transaction'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='transactions', to='transactions.ComplexTransaction', verbose_name='complex transaction'),
             preserve_default=False,
         ),
     ]
