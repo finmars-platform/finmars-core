@@ -138,17 +138,17 @@ class InstrumentDownloadSchemeAttributeSerializer(serializers.ModelSerializer):
         return attrs
 
 
-class InstrumentDownloadSchemeSerializer(serializers.ModelSerializer):
+class InstrumentDownloadSchemeSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     provider_object = ProviderClassSerializer(source='provider', read_only=True)
 
     inputs = InstrumentDownloadSchemeInputSerializer(many=True, read_only=False)
 
-    user_code = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
-    name = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
-    short_name = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
-    public_name = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
-    notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
+    instrument_user_code = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
+    instrument_name = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
+    instrument_short_name = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
+    instrument_public_name = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
+    instrument_notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
     instrument_type = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
     pricing_currency = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
     price_multiplier = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
@@ -175,8 +175,16 @@ class InstrumentDownloadSchemeSerializer(serializers.ModelSerializer):
     class Meta:
         model = InstrumentDownloadScheme
         fields = [
-            'id', 'master_user', 'scheme_name', 'provider', 'provider_object', 'inputs',
-            'reference_for_pricing', 'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'id', 'master_user',
+            'user_code', 'name', 'short_name', 'public_name', 'notes',
+
+            'provider', 'provider_object', 'inputs',
+            'reference_for_pricing',
+            'instrument_user_code',
+            'instrument_name',
+            'instrument_short_name',
+            'instrument_public_name',
+            'instrument_notes',
             'instrument_type', 'pricing_currency', 'price_multiplier', 'accrued_currency', 'accrued_multiplier',
             'user_text_1', 'user_text_2', 'user_text_3', 'maturity_date', 'maturity_price',
             'payment_size_detail', 'payment_size_detail_object',
@@ -259,7 +267,7 @@ class InstrumentDownloadSchemeLightSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'master_user',
-            'scheme_name', 'provider',
+            'user_code', 'name', 'short_name', 'provider',
             'provider_object',
         ]
 
@@ -1509,7 +1517,7 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
         return ret
 
 
-class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
+class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer):
     master_user = MasterUserField()
     rule_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
 
@@ -1526,7 +1534,9 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
 
     class Meta:
         model = ComplexTransactionImportScheme
-        fields = ['id', 'master_user', 'scheme_name', 'rule_expr',
+        fields = ['id', 'master_user',
+                  'user_code', 'name', 'short_name', 'public_name', 'notes',
+                  'rule_expr',
                   'book_uniqueness_settings',
 
                   'inputs', 'calculated_inputs', 'rule_scenarios', 'selector_values',
@@ -1767,7 +1777,7 @@ class ComplexTransactionImportSchemeLightSerializer(serializers.ModelSerializer)
 
     class Meta:
         model = ComplexTransactionImportScheme
-        fields = ['id', 'master_user', 'scheme_name', 'rule_expr']
+        fields = ['id', 'master_user', 'user_code', 'name', 'rule_expr']
 
 
 class ComplexTransactionCsvFileImport:

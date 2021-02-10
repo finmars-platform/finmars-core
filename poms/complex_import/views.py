@@ -18,7 +18,7 @@ _l = getLogger('poms.csv_import')
 
 class ComplexImportSchemeFilterSet(FilterSet):
     id = NoOpFilter()
-    scheme_name = CharFilter()
+    user_code = CharFilter()
 
     class Meta:
         model = ComplexImportScheme

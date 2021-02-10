@@ -7,7 +7,7 @@ from rest_framework.exceptions import ValidationError
 
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import ModelWithTimeStampSerializer
+from poms.common.serializers import ModelWithTimeStampSerializer, ModelWithUserCodeSerializer
 from poms.users.fields import MasterUserField, HiddenMemberField
 from .models import CsvField, EntityField, CsvDataImport, CsvImportScheme
 from .fields import CsvImportContentTypeField, CsvImportSchemeField
@@ -56,7 +56,7 @@ class CsvDataFileImport:
         self.stats_file_report = stats_file_report
 
     def __str__(self):
-        return '%s:%s' % (getattr(self.master_user, 'name', None), getattr(self.scheme, 'scheme_name', None))
+        return '%s:%s' % (getattr(self.master_user, 'name', None), getattr(self.scheme, 'user_code', None))
 
 
 class CsvFieldSerializer(serializers.ModelSerializer):
@@ -78,7 +78,7 @@ class EntityFieldSerializer(serializers.ModelSerializer):
         }
 
 
-class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
+class CsvImportSchemeSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     csv_fields = CsvFieldSerializer(many=True)
     entity_fields = EntityFieldSerializer(many=True)
@@ -89,9 +89,12 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
     class Meta:
 
         model = CsvImportScheme
-        fields = ('id', 'master_user', 'scheme_name', 'filter_expr', 'content_type', 'csv_fields', 'entity_fields',
+        fields = ('id', 'master_user', 'name', 'user_code', 'short_name', 'public_name', 'notes',
+
+                  'filter_expr', 'content_type', 'csv_fields', 'entity_fields',
 
                   'mode', 'delimiter', 'error_handler', 'missing_data_handler', 'classifier_handler'
+
                   )
 
     def create_entity_fields_if_not_exist(self, scheme):
@@ -243,7 +246,9 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
         csv_fields = validated_data.pop('csv_fields')
         entity_fields = validated_data.pop('entity_fields')
 
-        scheme.scheme_name = validated_data.get('scheme_name', scheme.scheme_name)
+        scheme.user_code = validated_data.get('user_code', scheme.user_code)
+        scheme.name = validated_data.get('name', scheme.name)
+        scheme.short_name = validated_data.get('short_name', scheme.short_name)
         scheme.filter_expr = validated_data.get('filter_expr', scheme.filter_expr)
 
         # 'mode', 'delimiter', 'error_handler', 'missing_data_handler', 'classifier_handler'
@@ -267,14 +272,14 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
         return scheme
 
 
-class CsvImportSchemeLightSerializer(serializers.ModelSerializer):
+class CsvImportSchemeLightSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
     content_type = CsvImportContentTypeField()
 
     class Meta:
 
         model = CsvImportScheme
-        fields = ('id', 'master_user', 'scheme_name', 'filter_expr', 'content_type')
+        fields = ('id', 'master_user', 'user_code', 'filter_expr', 'content_type')
 
 
 class CsvDataImportSerializer(serializers.Serializer):

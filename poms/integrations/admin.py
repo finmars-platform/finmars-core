@@ -76,10 +76,10 @@ class InstrumentDownloadSchemeAttributeInline(admin.TabularInline):
 class InstrumentDownloadSchemeAdmin(AbstractModelAdmin):
     model = InstrumentDownloadScheme
     master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'provider', 'scheme_name', 'fields0']
+    list_display = ['id', 'master_user', 'provider', 'user_code', 'fields0']
     list_select_related = ['master_user', 'provider', ]
     list_filter = ['provider']
-    search_fields = ['id', 'scheme_name', ]
+    search_fields = ['id', 'user_code', ]
     raw_id_fields = ['master_user']
     inlines = [
         InstrumentDownloadSchemeInputInline,
@@ -336,9 +336,9 @@ class ComplexTransactionImportSchemeReconFieldInline(admin.TabularInline):
 class ComplexTransactionImportSchemeAdmin(AbstractModelAdmin):
     model = ComplexTransactionImportScheme
     master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'scheme_name']
+    list_display = ['id', 'master_user', 'user_code', 'name']
     list_select_related = ['master_user', ]
-    search_fields = ['id', 'scheme_name', ]
+    search_fields = ['id', 'user_code', ]
     raw_id_fields = ['master_user']
     save_as = True
     inlines = [
@@ -371,7 +371,7 @@ class ComplexTransactionImportSchemeRuleScenarioAdmin(AbstractModelAdmin):
     master_user_path = 'scheme__master_user'
     list_display = ['id', 'master_user', 'scheme','transaction_type']
     list_select_related = ['scheme', 'scheme__master_user', ]
-    search_fields = ['id', 'scheme__scheme_name', ]
+    search_fields = ['id', 'scheme__user_code', ]
     raw_id_fields = ['scheme', 'transaction_type']
     inlines = [
         ComplexTransactionImportSchemeFieldInline,
@@ -391,7 +391,7 @@ class ComplexTransactionImportSchemeReconScenarioAdmin(AbstractModelAdmin):
     master_user_path = 'scheme__master_user'
     list_display = ['id', 'master_user', 'scheme']
     list_select_related = ['scheme', 'scheme__master_user', ]
-    search_fields = ['id', 'scheme__scheme_name', ]
+    search_fields = ['id', 'scheme__user_code', ]
     raw_id_fields = ['scheme',]
     inlines = [
         ComplexTransactionImportSchemeReconFieldInline

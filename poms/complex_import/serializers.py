@@ -3,7 +3,7 @@ from django.apps import apps
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
-from poms.common.serializers import ModelWithTimeStampSerializer
+from poms.common.serializers import ModelWithTimeStampSerializer, ModelWithUserCodeSerializer
 from poms.complex_import.models import ComplexImportScheme, ComplexImport, ComplexImportSchemeAction, \
     ComplexImportSchemeActionCsvImport, ComplexImportSchemeActionTransactionImport
 from poms.csv_import.fields import CsvImportSchemeField
@@ -47,14 +47,16 @@ class ComplexImportSchemeActionSerializer(serializers.ModelSerializer):
             'id', 'action_notes', 'order', 'skip', 'csv_import_scheme', 'complex_transaction_import_scheme')
 
 
-class ComplexImportSchemeSerializer(ModelWithTimeStampSerializer):
+class ComplexImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
     actions = ComplexImportSchemeActionSerializer(required=False, many=True, read_only=False)
 
     class Meta:
         model = ComplexImportScheme
-        fields = ('id', 'master_user', 'scheme_name', 'actions')
+        fields = ('id', 'master_user',
+                  'user_code', 'name', 'short_name', 'public_name', 'notes',
+                  'actions')
 
     def create(self, validated_data):
         actions = validated_data.pop('actions', None)

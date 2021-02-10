@@ -2019,7 +2019,7 @@ class TransactionTypeProcess(object):
                             if inp.content_type.model == 'pricedownloadscheme':
                                 self.values[name] = Model.objects.get(
                                     master_user=self.transaction_type.master_user,
-                                    scheme_name='-')
+                                    user_code='-')
                             else:
                                 self.values[name] = Model.objects.get(master_user=self.transaction_type.master_user,
                                                                       user_code=res)

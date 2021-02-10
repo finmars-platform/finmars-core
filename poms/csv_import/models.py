@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy
 
-from poms.common.models import DataTimeStampedModel
+from poms.common.models import DataTimeStampedModel, NamedModel
 from poms.users.models import MasterUser
 
 
@@ -34,10 +34,11 @@ CLASSIFIER_HANDLER = [
 
 
 
-class CsvImportScheme(DataTimeStampedModel):
-    scheme_name = models.CharField(max_length=255)
+class CsvImportScheme(NamedModel, DataTimeStampedModel):
+
     content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'), on_delete=models.CASCADE)
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user') , on_delete=models.CASCADE)
+    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
 
     filter_expr = models.CharField(max_length=1000, default='', blank=True, null=True, verbose_name=ugettext_lazy('filter expression'))
 
@@ -49,11 +50,11 @@ class CsvImportScheme(DataTimeStampedModel):
 
     class Meta:
         unique_together = (
-            ('content_type', 'scheme_name', 'master_user', 'filter_expr')
+            ('content_type', 'user_code', 'master_user')
         )
 
     def __str__(self):
-        return self.scheme_name
+        return self.user_code
 
 
 class CsvField(models.Model):

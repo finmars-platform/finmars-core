@@ -1623,8 +1623,8 @@ class ImportManager(object):
                                 try:
 
                                     instance = InstrumentDownloadScheme.objects.get(master_user=self.master_user,
-                                                                                          scheme_name=content_object[
-                                                                                              'scheme_name'])
+                                                                                          user_code=content_object[
+                                                                                              'user_code'])
 
                                     serializer = InstrumentDownloadSchemeSerializer(data=content_object,
                                                                                           instance=instance,
@@ -1638,12 +1638,12 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Instrument Download Scheme for %s' % content_object['scheme_name']
+                                        'message'] = 'Error. Can\'t Overwrite Instrument Download Scheme for %s' % content_object['user_code']
 
                             else:
 
                                 stats['status'] = 'error'
-                                stats['error']['message'] = 'Transaction Instrument Download %s already exists' % content_object['scheme_name']
+                                stats['error']['message'] = 'Transaction Instrument Download %s already exists' % content_object['user_code']
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -1688,9 +1688,9 @@ class ImportManager(object):
                                                                                            user_code=rule[
                                                                                                '___transaction_type__user_code']).pk
                                 except TransactionType.DoesNotExist:
-                                    _l.debug('Cant find Transaction Type form %s for %s' % (rule['___transaction_type__user_code'], content_object['scheme_name']))
+                                    _l.debug('Cant find Transaction Type form %s for %s' % (rule['___transaction_type__user_code'], content_object['user_code']))
                                     stats['status'] = 'error'
-                                    stats['error']['message'] = 'Error. Can\'t Import Transaction Import Scheme for %s. Transaction Type %s is missing ' % (content_object['scheme_name'], rule['___transaction_type__user_code'])
+                                    stats['error']['message'] = 'Error. Can\'t Import Transaction Import Scheme for %s. Transaction Type %s is missing ' % (content_object['user_code'], rule['___transaction_type__user_code'])
                                     continue
 
                                 if rule['transaction_type']:
@@ -1705,7 +1705,7 @@ class ImportManager(object):
                                             _l.debug('Cant find Input %s' % field['___input__name'])
                                             stats['status'] = 'error'
                                             stats['error'][
-                                                'message'] = 'Error. Can\'t Import Transaction Import Scheme for %s. Input %s is missing.' % (content_object['scheme_name'], field['___input__name'])
+                                                'message'] = 'Error. Can\'t Import Transaction Import Scheme for %s. Input %s is missing.' % (content_object['user_code'], field['___input__name'])
                                             continue
 
                         if stats['status'] == 'error':
@@ -1728,8 +1728,8 @@ class ImportManager(object):
                                 try:
 
                                     instance = ComplexTransactionImportScheme.objects.get(master_user=self.master_user,
-                                                                                          scheme_name=content_object[
-                                                                                              'scheme_name'])
+                                                                                          user_code=content_object[
+                                                                                              'user_code'])
 
                                     serializer = ComplexTransactionImportSchemeSerializer(data=content_object,
                                                                                           instance=instance,
@@ -1743,12 +1743,12 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Transaction Import Scheme for %s' % content_object['scheme_name']
+                                        'message'] = 'Error. Can\'t Overwrite Transaction Import Scheme for %s' % content_object['user_code']
 
                             else:
 
                                 stats['status'] = 'error'
-                                stats['error']['message'] = 'Transaction Import Scheme %s already exists' % content_object['scheme_name']
+                                stats['error']['message'] = 'Transaction Import Scheme %s already exists' % content_object['user_code']
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -1817,7 +1817,7 @@ class ImportManager(object):
                                 try:
 
                                     instance = CsvImportScheme.objects.get(master_user=self.master_user,
-                                                                           scheme_name=content_object['scheme_name'])
+                                                                           user_code=content_object['user_code'])
 
                                     serializer = CsvImportSchemeSerializer(data=content_object,
                                                                            instance=instance,
@@ -1829,12 +1829,12 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Simple Import Scheme for %s' % content_object['scheme_name']
+                                        'message'] = 'Error. Can\'t Overwrite Simple Import Scheme for %s' % content_object['user_code']
 
                             else:
 
                                 stats['status'] = 'error'
-                                stats['error']['message'] = 'Simple Import Scheme %s already exists' % content_object['scheme_name']
+                                stats['error']['message'] = 'Simple Import Scheme %s already exists' % content_object['user_code']
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -1862,22 +1862,22 @@ class ImportManager(object):
 
                                 try:
                                     action['csv_import_scheme']['csv_import_scheme'] = CsvImportScheme.objects.get(
-                                        master_user=self.master_user, scheme_name=action['csv_import_scheme'][
-                                            '___csv_import_scheme__scheme_name']).pk
+                                        master_user=self.master_user, user_code=action['csv_import_scheme'][
+                                            '___csv_import_scheme__user_code']).pk
                                 except CsvImportScheme.DoesNotExist:
                                     _l.debug('Scheme %s is not found' % action['csv_import_scheme'][
-                                        '___csv_import_scheme__scheme_name'])
+                                        '___csv_import_scheme__user_code'])
 
                             if action['complex_transaction_import_scheme']:
                                 try:
                                     action['complex_transaction_import_scheme'][
                                         'complex_transaction_import_scheme'] = ComplexTransactionImportScheme.objects.get(
                                         master_user=self.master_user,
-                                        scheme_name=action['complex_transaction_import_scheme'][
-                                            '___complex_transaction_import_scheme__scheme_name']).pk
+                                        user_code=action['complex_transaction_import_scheme'][
+                                            '___complex_transaction_import_scheme__user_code']).pk
                                 except ComplexTransactionImportScheme.DoesNotExist:
                                     _l.debug('Scheme %s is not found' % action['complex_transaction_import_scheme'][
-                                        '___complex_transaction_import_scheme__scheme_name'])
+                                        '___complex_transaction_import_scheme__user_code'])
 
                         serializer = ComplexImportSchemeSerializer(data=content_object,
                                                                    context=self.get_serializer_context())
@@ -1901,7 +1901,7 @@ class ImportManager(object):
                                 try:
 
                                     instance = ComplexImportScheme.objects.get(master_user=self.master_user,
-                                                                               scheme_name=content_object['scheme_name'])
+                                                                               user_code=content_object['user_code'])
 
                                     serializer = ComplexImportSchemeSerializer(data=content_object,
                                                                                instance=instance,
@@ -1913,12 +1913,12 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Complex Import Scheme for %s' % content_object['scheme_name']
+                                        'message'] = 'Error. Can\'t Overwrite Complex Import Scheme for %s' % content_object['user_code']
 
                             else:
 
                                 stats['status'] = 'error'
-                                stats['error']['message'] = 'Complex Import Scheme %s already exists' % content_object['scheme_name']
+                                stats['error']['message'] = 'Complex Import Scheme %s already exists' % content_object['user_code']
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -2843,12 +2843,12 @@ class ImportManager(object):
                                 except map_to_model[entity_object['entity']].DoesNotExist:
                                     error = True
 
-                            if '___scheme_name' in content_object:
+                            if '___user_code' in content_object:
 
                                 try:
                                     content_object['content_object'] = map_to_model[entity_object['entity']].objects.get(
                                         master_user=self.master_user,
-                                        scheme_name__exact=content_object['___scheme_name']).pk
+                                        user_code__exact=content_object['___user_code']).pk
 
                                 except map_to_model[entity_object['entity']].DoesNotExist:
                                     error = True
@@ -2888,8 +2888,8 @@ class ImportManager(object):
                                             if '___user_code' in content_object:
                                                 stats['error']['message'] = 'Error. Can\'t Overwrite  Mapping %s' % content_object['___user_code']
 
-                                            if '___scheme_name' in content_object:
-                                                stats['error']['message'] = 'Error. Can\'t Overwrite  Mapping %s' % content_object['___scheme_name']
+                                            if '___user_code' in content_object:
+                                                stats['error']['message'] = 'Error. Can\'t Overwrite  Mapping %s' % content_object['___user_code']
 
                                     else:
                                         stats['status'] = 'error'
@@ -2897,8 +2897,8 @@ class ImportManager(object):
                                         if '___user_code' in content_object:
                                             stats['error']['message'] = 'Mapping %s already exists' % content_object['___user_code']
 
-                                        if '___scheme_name' in content_object:
-                                            stats['error']['message'] = 'Mapping %s already exists' % content_object['___scheme_name']
+                                        if '___user_code' in content_object:
+                                            stats['error']['message'] = 'Mapping %s already exists' % content_object['___user_code']
 
                             self.instance.stats['mappings'][entity_object['entity']].append(stats)
 

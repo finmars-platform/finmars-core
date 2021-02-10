@@ -497,7 +497,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         if input.content_type.model == 'pricedownloadscheme':
             return {
                 'prop': 'payment_size_detail',
-                'code': 'scheme_name'
+                'code': 'user_code'
             }
         if input.content_type.model == 'pricingpolicy':
             return {
@@ -756,8 +756,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                     json_obj['___%s__user_code' % attr['key']] = obj.user_code
 
 
-                if hasattr(obj, 'scheme_name'):
-                    json_obj['___%s__scheme_name' % attr['key']] = obj.scheme_name
+                if hasattr(obj, 'user_code'):
+                    json_obj['___%s__user_code' % attr['key']] = obj.user_code
 
     def get_transaction_type_actions(self, transaction_type):
         results = []
@@ -1735,12 +1735,12 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
                     if result_json['csv_import_scheme']:
 
-                        result_json['___csv_import_scheme__scheme_name'] = CsvImportScheme.objects.get(
-                            pk=result_json['csv_import_scheme']).scheme_name
+                        result_json['___csv_import_scheme__user_code'] = CsvImportScheme.objects.get(
+                            pk=result_json['csv_import_scheme']).user_code
 
                     else:
 
-                        result_json['___csv_import_scheme__scheme_name'] = '-'
+                        result_json['___csv_import_scheme__user_code'] = '-'
 
                     result_json.pop("csv_import_scheme", None)
 
@@ -1749,11 +1749,11 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                     if result_json['complex_transaction_import_scheme']:
 
                         result_json[
-                            '___complex_transaction_import_scheme__scheme_name'] = ComplexTransactionImportScheme.objects.get(
-                            pk=result_json['complex_transaction_import_scheme']).scheme_name
+                            '___complex_transaction_import_scheme__user_code'] = ComplexTransactionImportScheme.objects.get(
+                            pk=result_json['complex_transaction_import_scheme']).user_code
                     else:
                         result_json[
-                            '___complex_transaction_import_scheme__scheme_name'] = '-'
+                            '___complex_transaction_import_scheme__user_code'] = '-'
 
                     result_json.pop("complex_transaction_import_scheme", None)
 
@@ -1821,8 +1821,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             # result_item["attributes"] = self.get_instrument_download_scheme_attributes(scheme)
             result_item["attributes"] = []
 
-            # result_item["___price_download_scheme__scheme_name"] = PriceDownloadScheme.objects.get(
-            #     pk=result_item["price_download_scheme"]).scheme_name
+            # result_item["___price_download_scheme__user_code"] = PriceDownloadScheme.objects.get(
+            #     pk=result_item["price_download_scheme"]).user_code
 
             clear_none_attrs(result_item)
 
@@ -2815,8 +2815,8 @@ class MappingExportViewSet(AbstractModelViewSet):
             result_item.pop("master_user", None)
             # result_item.pop("provider", None)
 
-            result_item["___scheme_name"] = PriceDownloadScheme.objects.get(
-                pk=result_item["content_object"]).scheme_name
+            result_item["___user_code"] = PriceDownloadScheme.objects.get(
+                pk=result_item["content_object"]).user_code
 
             result_item.pop("content_object", None)
 
@@ -2913,12 +2913,12 @@ class ConfigurationDuplicateCheckViewSet(AbstractModelViewSet):
 
                         # _l.debug('item %s' % item)
 
-                        if 'scheme_name' in item:
+                        if 'user_code' in item:
 
-                            if model.objects.filter(scheme_name=item['scheme_name'], master_user=master_user).exists():
-                                result_item['content'].append({'scheme_name': item['scheme_name'], 'is_duplicate': True})
+                            if model.objects.filter(user_code=item['user_code'], master_user=master_user).exists():
+                                result_item['content'].append({'user_code': item['user_code'], 'is_duplicate': True})
                             else:
-                                result_item['content'].append({'scheme_name': item['scheme_name'], 'is_duplicate': False})
+                                result_item['content'].append({'user_code': item['user_code'], 'is_duplicate': False})
 
                         elif 'user_code' in item:
 

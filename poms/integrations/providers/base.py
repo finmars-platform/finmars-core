@@ -216,6 +216,17 @@ class AbstractProvider(object):
                         setattr(instr, attr, v)
                     else:
                         errors[attr] = [ugettext_lazy('A valid date is required.')]
+
+            elif attr in ('instrument_user_code', 'instrument_name', 'instrument_short_name', 'instrument_public_name', 'instrument_notes'):
+                if self.is_empty_value(v):
+                    pass
+                else:
+                    v = str(v)
+
+                    instr_attr = attr[11:]
+
+                    setattr(instr, instr_attr, v)
+
             else:
                 if self.is_empty_value(v):
                     pass

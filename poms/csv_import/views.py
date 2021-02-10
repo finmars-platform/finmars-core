@@ -32,7 +32,7 @@ _l = getLogger('poms.csv_import')
 
 
 class SchemeFilterSet(FilterSet):
-    scheme_name = CharFilter()
+    user_code = CharFilter()
     content_type = SchemeContentTypeFilter(field_name='content_type')
 
     class Meta:
@@ -137,8 +137,8 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
                         if 'processed_rows' in res.result:
                             celery_task_data["processed_rows"] = res.result['processed_rows']
 
-                        if 'scheme_name' in res.result:
-                            celery_task_data["scheme_name"] = res.result['scheme_name']
+                        if 'user_code' in res.result:
+                            celery_task_data["user_code"] = res.result['user_code']
 
                         if 'file_name' in res.result:
                             celery_task_data["file_name"]  = res.result['file_name']
@@ -242,8 +242,8 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
                         if 'processed_rows' in res.result:
                             celery_task_data["processed_rows"] = res.result['processed_rows']
 
-                        if 'scheme_name' in res.result:
-                            celery_task_data["scheme_name"] = res.result['scheme_name']
+                        if 'user_code' in res.result:
+                            celery_task_data["user_code"] = res.result['user_code']
 
                         if 'file_name' in res.result:
                             celery_task_data["file_name"]  = res.result['file_name']

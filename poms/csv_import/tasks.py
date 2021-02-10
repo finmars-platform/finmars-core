@@ -671,7 +671,7 @@ def process_csv_file(master_user,
                                 'state': Task.STATUS_PENDING,
                                 'processed_rows': task_instance.processed_rows,
                                 'total_rows': task_instance.total_rows,
-                                'scheme_name': scheme.scheme_name,
+                                'user_code': scheme.user_code,
                                 'file_name': task_instance.filename}
                 }, level="member",
                     context={"master_user": master_user, "member": member})
@@ -679,7 +679,7 @@ def process_csv_file(master_user,
                 # Deprecated
                 update_state(task_id=task_instance.task_id, state=Task.STATUS_PENDING,
                              meta={'processed_rows': task_instance.processed_rows,
-                                   'total_rows': task_instance.total_rows, 'scheme_name': scheme.scheme_name,
+                                   'total_rows': task_instance.total_rows, 'user_code': scheme.user_code,
                                    'file_name': task_instance.filename})
 
                 if error_handler == 'break' and error_row['level'] == 'error':
@@ -879,7 +879,7 @@ class ValidateHandler:
                         instance.total_rows = self._row_count(cfr, instance)
                         update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
                                      meta={'total_rows': instance.total_rows,
-                                           'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
+                                           'user_code': instance.scheme.user_code, 'file_name': instance.filename})
 
                     with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
                         context = {}
@@ -920,7 +920,7 @@ class ValidateHandler:
                             'scheme': scheme.id,
                             'scheme_object': {
                                 'id': scheme.id,
-                                'scheme_name': scheme.scheme_name,
+                                'user_code': scheme.user_code,
                                 'classifier_handler': scheme.classifier_handler,
                                 'delimiter': scheme.delimiter,
                                 'error_handler': scheme.error_handler,
@@ -1308,7 +1308,7 @@ class ImportHandler:
                         instance.total_rows = self._row_count(cfr, instance)
                         update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
                                      meta={'total_rows': instance.total_rows,
-                                           'scheme_name': instance.scheme.scheme_name, 'file_name': instance.filename})
+                                           'user_code': instance.scheme.user_code, 'file_name': instance.filename})
 
                     with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
                         context = {}
@@ -1349,7 +1349,7 @@ class ImportHandler:
                             'scheme': scheme.id,
                             'scheme_object': {
                                 'id': scheme.id,
-                                'scheme_name': scheme.scheme_name,
+                                'user_code': scheme.user_code,
                                 'classifier_handler': scheme.classifier_handler,
                                 'delimiter': scheme.delimiter,
                                 'error_handler': scheme.error_handler,
@@ -1395,10 +1395,10 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
         try:
 
             _l.debug(
-                'data_csv_file_import_by_procedure looking for scheme %s ' % procedure_instance.procedure.scheme_name)
+                'data_csv_file_import_by_procedure looking for scheme %s ' % procedure_instance.procedure.user_code)
 
             scheme = CsvImportScheme.objects.get(master_user=procedure_instance.master_user,
-                                                 scheme_name=procedure_instance.procedure.scheme_name)
+                                                 user_code=procedure_instance.procedure.user_code)
 
             text = "Data File Procedure %s. File is received, start data import" % (
                 procedure_instance.procedure.user_code)
@@ -1496,14 +1496,14 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
         except CsvImportScheme.DoesNotExist:
 
             text = "Data File Procedure %s. Can't import file, Import scheme %s is not found" % (
-                procedure_instance.procedure.user_code, procedure_instance.procedure.scheme_name)
+                procedure_instance.procedure.user_code, procedure_instance.procedure.user_code)
 
             send_system_message(master_user=procedure_instance.master_user,
                                 source="Data File Procedure Service",
                                 text=text)
 
             _l.debug(
-                'data_csv_file_import_by_procedure scheme %s not found' % procedure_instance.procedure.scheme_name)
+                'data_csv_file_import_by_procedure scheme %s not found' % procedure_instance.procedure.user_code)
 
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
             procedure_instance.save()

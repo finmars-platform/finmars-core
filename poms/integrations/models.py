@@ -13,7 +13,8 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import ugettext, ugettext_lazy
 
-from poms.common.models import TimeStampedModel, AbstractClassModel, EXPRESSION_FIELD_LENGTH, DataTimeStampedModel
+from poms.common.models import TimeStampedModel, AbstractClassModel, EXPRESSION_FIELD_LENGTH, DataTimeStampedModel, \
+    NamedModel
 from poms.integrations.storage import import_config_storage
 from poms.obj_attrs.models import GenericClassifier, GenericAttributeType
 
@@ -189,27 +190,28 @@ class ImportConfig(models.Model):
         return (self.has_p12cert and self.has_password) or (self.has_cert and self.has_key)
 
 
-class InstrumentDownloadScheme(models.Model):
+class InstrumentDownloadScheme(NamedModel, DataTimeStampedModel):
     BASIC_FIELDS = [
-        'reference_for_pricing', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'instrument_type',
+        'reference_for_pricing', 'instrument_user_code', 'instrument_name', 'instrument_short_name', 'instrument_public_name', 'instrument_notes', 'instrument_type',
         'pricing_currency', 'price_multiplier', 'accrued_currency', 'accrued_multiplier', 'maturity_date',
         'user_text_1', 'user_text_2', 'user_text_3',
     ]
 
+    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
+
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
-    scheme_name = models.CharField(max_length=255, verbose_name=ugettext_lazy('scheme name'))
     provider = models.ForeignKey(ProviderClass, verbose_name=ugettext_lazy('provider'), on_delete=models.PROTECT)
 
     reference_for_pricing = models.CharField(max_length=255, blank=True, default='',
                                              verbose_name=ugettext_lazy('reference for pricing'))
-    user_code = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+    instrument_user_code = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                  verbose_name=ugettext_lazy('user code'))
-    name = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('name'))
-    short_name = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+    instrument_name = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('name'))
+    instrument_short_name = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                   verbose_name=ugettext_lazy('short name'))
-    public_name = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+    instrument_public_name = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                    verbose_name=ugettext_lazy('public name'))
-    notes = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+    instrument_notes = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                              verbose_name=ugettext_lazy('notes'))
     instrument_type = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                        verbose_name=ugettext_lazy('instrument type'))
@@ -248,20 +250,10 @@ class InstrumentDownloadScheme(models.Model):
     class Meta:
         verbose_name = ugettext_lazy('instrument download scheme')
         verbose_name_plural = ugettext_lazy('instrument download schemes')
-        index_together = (
-            ('master_user', 'scheme_name')
-        )
-        unique_together = (
-            ('master_user', 'scheme_name')
-        )
-        ordering = ['scheme_name', ]
-        # permissions = [
-        #     ('view_instrumentdownloadscheme', 'Can view instrument download scheme'),
-        #     ('manage_instrumentdownloadscheme', 'Can manage instrument download scheme'),
-        # ]
+
 
     def __str__(self):
-        return self.scheme_name
+        return self.user_code
 
     @property
     def fields(self):
@@ -987,7 +979,7 @@ MISSING_DATA_CHOICES = [
     ['set_defaults', 'Replace with Default Value'],
 ]
 
-class ComplexTransactionImportScheme(DataTimeStampedModel):
+class ComplexTransactionImportScheme(NamedModel, DataTimeStampedModel):
 
     SKIP = 1
     BOOK_WITHOUT_UNIQUE_CODE = 2
@@ -1001,11 +993,12 @@ class ComplexTransactionImportScheme(DataTimeStampedModel):
         (TREAT_AS_ERROR, ugettext_lazy('Treat as error')),
     )
 
+    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
+
     book_uniqueness_settings = models.PositiveSmallIntegerField(default=SKIP, choices=BOOK_UNIQUENESS_CHOICES,
                                                          verbose_name=ugettext_lazy('book uniqueness settings'))
 
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
-    scheme_name = models.CharField(max_length=255, verbose_name=ugettext_lazy('scheme name'))
     rule_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('rule expressions'))
 
     recon_layout_json = models.TextField(null=True, blank=True,
@@ -1030,11 +1023,11 @@ class ComplexTransactionImportScheme(DataTimeStampedModel):
         verbose_name = ugettext_lazy('complex transaction import scheme')
         verbose_name_plural = ugettext_lazy('complex transaction import schemes')
         unique_together = [
-            ['master_user', 'scheme_name'],
+            ['master_user', 'user_code'],
         ]
 
     def __str__(self):
-        return self.scheme_name
+        return self.user_code
 
 
 class ComplexTransactionImportSchemeInput(models.Model):

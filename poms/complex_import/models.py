@@ -2,21 +2,20 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import ugettext_lazy
 
-from poms.common.models import DataTimeStampedModel
+from poms.common.models import DataTimeStampedModel, NamedModel
 from poms.users.models import MasterUser
 
 
-class ComplexImportScheme(DataTimeStampedModel):
-    scheme_name = models.CharField(max_length=255)
+class ComplexImportScheme(NamedModel, DataTimeStampedModel):
+
+    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     class Meta:
         unique_together = (
-            ('scheme_name', 'master_user')
+            ('user_code', 'master_user')
         )
 
-    def __str__(self):
-        return self.scheme_name
 
 
 MISSING_DATA_CHOICES = [
