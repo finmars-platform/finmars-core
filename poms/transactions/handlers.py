@@ -283,6 +283,13 @@ class TransactionTypeProcess(object):
                     if i.value:
                         errors = {}
                         try:
+                            # i.value = _if_null(effective_date)
+                            # names = {
+                            #   'effective_date': 2020-02-10
+                            #
+                            # }
+
+
                             value = formula.safe_eval(i.value, names=self.values, now=self._now, context=self._context)
 
                             _l.debug("Set from default. input %s value %s" % (i.name, i.value))
@@ -2013,9 +2020,6 @@ class TransactionTypeProcess(object):
                                 self.values[name] = Model.objects.get(
                                     master_user=self.transaction_type.master_user,
                                     scheme_name='-')
-                            elif inp.content_type.model == 'dailypricingmodel' or inp.content_type.model == 'paymentsizedetail' or inp.content_type.model == 'accrualcalculationmodel' or inp.content_type.model == 'periodicity':
-                                # self.values[name] = Model.objects.get(system_code='-')
-                                self.values[name] = Model.objects.get(system_code=res)
                             else:
                                 self.values[name] = Model.objects.get(master_user=self.transaction_type.master_user,
                                                                       user_code=res)

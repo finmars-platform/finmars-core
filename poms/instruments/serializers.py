@@ -43,7 +43,7 @@ class InstrumentClassSerializer(PomsClassSerializer):
 class InstrumentClassViewSerializer(PomsClassSerializer):
     class Meta:
         model = InstrumentClass
-        fields = ['id', 'system_code', 'name']
+        fields = ['id', 'user_code', 'name']
 
 
 class DailyPricingModelSerializer(PomsClassSerializer):
@@ -59,13 +59,13 @@ class PricingConditionSerializer(PomsClassSerializer):
 class DailyPricingModelViewSerializer(PomsClassSerializer):
     class Meta:
         model = DailyPricingModel
-        fields = ['id', 'system_code', 'name']
+        fields = ['id', 'user_code', 'name']
 
 
 class PricingConditionViewSerializer(PomsClassSerializer):
     class Meta:
         model = PricingCondition
-        fields = ['id', 'system_code', 'name']
+        fields = ['id', 'user_code', 'name']
 
 
 class AccrualCalculationModelSerializer(PomsClassSerializer):
@@ -76,7 +76,7 @@ class AccrualCalculationModelSerializer(PomsClassSerializer):
 class AccrualCalculationModelViewSerializer(PomsClassSerializer):
     class Meta:
         model = AccrualCalculationModel
-        fields = ['id', 'system_code', 'name']
+        fields = ['id', 'user_code', 'name']
 
 
 class PaymentSizeDetailSerializer(PomsClassSerializer):
@@ -92,7 +92,7 @@ class PricingConditionSerializer(PomsClassSerializer):
 class PaymentSizeDetailViewSerializer(PomsClassSerializer):
     class Meta:
         model = PaymentSizeDetail
-        fields = ['id', 'system_code', 'name']
+        fields = ['id', 'user_code', 'name']
 
 
 class PeriodicitySerializer(PomsClassSerializer):
@@ -103,7 +103,7 @@ class PeriodicitySerializer(PomsClassSerializer):
 class PeriodicityViewSerializer(PomsClassSerializer):
     class Meta:
         model = Periodicity
-        fields = ['id', 'system_code', 'name']
+        fields = ['id', 'user_code', 'name']
 
 
 class CostMethodSerializer(PomsClassSerializer):
@@ -114,7 +114,7 @@ class CostMethodSerializer(PomsClassSerializer):
 class CostMethodViewSerializer(PomsClassSerializer):
     class Meta:
         model = CostMethod
-        fields = ['id', 'system_code', 'name']
+        fields = ['id', 'user_code', 'name']
 
 
 def set_currency_pricing_scheme_parameters(pricing_policy, parameters):

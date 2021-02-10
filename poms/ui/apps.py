@@ -19,7 +19,7 @@ class UiConfig(AppConfig):
         from django.db import IntegrityError, ProgrammingError
 
         try:
-            exists = set(PortalInterfaceAccessModel.objects.using(using).values_list('system_code', flat=True))
+            exists = set(PortalInterfaceAccessModel.objects.using(using).values_list('user_code', flat=True))
         except ProgrammingError as e:
 
             print(e)
@@ -30,7 +30,7 @@ class UiConfig(AppConfig):
 
             if code not in exists:
                 try:
-                    PortalInterfaceAccessModel.objects.using(using).create(id=id, system_code=code,
+                    PortalInterfaceAccessModel.objects.using(using).create(id=id, user_code=code,
                                                                            name=name, description=name, value=value)
                 except (IntegrityError, ProgrammingError) as e:
 
@@ -38,7 +38,7 @@ class UiConfig(AppConfig):
 
                     pass
             else:
-                obj = PortalInterfaceAccessModel.objects.using(using).get(system_code=code)
+                obj = PortalInterfaceAccessModel.objects.using(using).get(user_code=code)
                 obj.value = value
                 if not obj.name:
                     obj.name = name

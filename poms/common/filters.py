@@ -275,7 +275,7 @@ class GroupsAttributeFilter(BaseFilterBackend):
                             if is_relation(res_attr):
                                 res_attr = res_attr + '__user_code'
                             elif is_system_relation(attr):
-                                res_attr = res_attr + '__system_code'
+                                res_attr = res_attr + '__user_code'
                             elif is_scheme(attr):
                                 res_attr = res_attr + '__scheme_name'
 
@@ -286,7 +286,7 @@ class GroupsAttributeFilter(BaseFilterBackend):
                             if is_relation(attr):
                                 params[attr + '__user_code'] = groups_values[i]
                             elif is_system_relation(attr):
-                                params[attr + '__system_code'] = groups_values[i]
+                                params[attr + '__user_code'] = groups_values[i]
                             elif is_scheme(attr):
                                 params[attr + '__scheme_name'] = groups_values[i]
                             else:
@@ -410,7 +410,7 @@ class AttributeFilter(BaseFilterBackend):
                             if is_relation(res_attr):
                                 res_attr = res_attr + '__user_code'
                             elif is_system_relation(attr):
-                                res_attr = res_attr + '__system_code'
+                                res_attr = res_attr + '__user_code'
                             elif is_scheme(attr):
                                 res_attr = res_attr + '__scheme_name'
 
@@ -420,7 +420,7 @@ class AttributeFilter(BaseFilterBackend):
                             if is_relation(attr):
                                 params[attr + '__user_code'] = groups_values[i]
                             elif is_system_relation(attr):
-                                params[attr + '__system_code'] = groups_values[i]
+                                params[attr + '__user_code'] = groups_values[i]
                             elif is_scheme(attr):
                                 params[attr + '__scheme_name'] = groups_values[i]
                             else:

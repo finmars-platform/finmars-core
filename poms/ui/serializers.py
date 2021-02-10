@@ -19,7 +19,7 @@ class PortalInterfaceAccessModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = PortalInterfaceAccessModel
         fields = [
-           'id', 'value', 'system_code', 'name'
+           'id', 'value', 'user_code', 'name'
         ]
 
 

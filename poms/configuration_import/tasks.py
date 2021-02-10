@@ -333,15 +333,15 @@ class ImportManager(object):
 
         if item_object['daily_pricing_model']:
             try:
-                item_object['daily_pricing_model'] = DailyPricingModel.objects.get(system_code=item_object[
-                    '___daily_pricing_model__system_code']).pk
+                item_object['daily_pricing_model'] = DailyPricingModel.objects.get(user_code=item_object[
+                    '___daily_pricing_model__user_code']).pk
             except DailyPricingModel.DoesNotExist:
                 item_object['daily_pricing_model'] = self.ecosystem_default.daily_pricing_model.pk
 
         if item_object['payment_size_detail']:
             try:
-                item_object['payment_size_detail'] = PaymentSizeDetail.objects.get(system_code=item_object[
-                    '___payment_size_detail__system_code']).pk
+                item_object['payment_size_detail'] = PaymentSizeDetail.objects.get(user_code=item_object[
+                    '___payment_size_detail__user_code']).pk
             except PaymentSizeDetail.DoesNotExist:
                 item_object['payment_size_detail'] = self.ecosystem_default.payment_size_detail.pk
 
@@ -464,11 +464,11 @@ class ImportManager(object):
         if item_object['transaction_class']:
             try:
                 item_object['transaction_class'] = TransactionClass.objects.get(
-                    system_code=item_object[
-                        '___transaction_class__system_code']).pk
+                    user_code=item_object[
+                        '___transaction_class__user_code']).pk
             except TransactionClass.DoesNotExist:
                 item_object['transaction_class'] = TransactionClass.objects.get(
-                    system_code='-').pk
+                    user_code='-').pk
 
         if item_object['strategy1_cash']:
             try:
@@ -2834,10 +2834,6 @@ class ImportManager(object):
 
                             error = False
 
-                            if '___system_code' in content_object:
-                                content_object['content_object'] = map_to_model[entity_object['entity']].objects.get(
-                                    system_code=content_object['___system_code']).pk
-
                             if '___user_code' in content_object:
 
                                 try:
@@ -2889,9 +2885,6 @@ class ImportManager(object):
 
                                             stats['status'] = 'error'
 
-                                            if '___system_code' in content_object:
-                                                stats['error']['message'] = 'Error. Can\'t Overwrite Mapping %s' % content_object['___system_code']
-
                                             if '___user_code' in content_object:
                                                 stats['error']['message'] = 'Error. Can\'t Overwrite  Mapping %s' % content_object['___user_code']
 
@@ -2900,9 +2893,6 @@ class ImportManager(object):
 
                                     else:
                                         stats['status'] = 'error'
-
-                                        if '___system_code' in content_object:
-                                            stats['error']['message'] = 'Mapping %s already exists' % content_object['___system_code']
 
                                         if '___user_code' in content_object:
                                             stats['error']['message'] = 'Mapping %s already exists' % content_object['___user_code']

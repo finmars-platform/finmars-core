@@ -121,7 +121,7 @@ def get_root_system_attr_group(qs, root_group, groups_order):
             .values('group_name', 'group_identifier')
     elif is_system_relation(root_group):
         qs = qs.values(root_group) \
-            .annotate(group_identifier=F(root_group + '__system_code')) \
+            .annotate(group_identifier=F(root_group + '__user_code')) \
             .distinct() \
             .annotate(group_name=F(root_group + '__name')) \
             .values('group_name', 'group_identifier')
@@ -217,7 +217,7 @@ def get_last_system_attr_group(qs, last_group, groups_order):
 
     elif is_system_relation(last_group):
         qs = qs.values(last_group) \
-            .annotate(group_identifier=F(last_group + '__system_code')) \
+            .annotate(group_identifier=F(last_group + '__user_code')) \
             .distinct() \
             .annotate(group_name=F(last_group + '__name')) \
             .values('group_name', 'group_identifier')
@@ -309,7 +309,7 @@ def get_queryset_filters(qs, groups_types, groups_values, original_qs):
                     if is_relation(res_attr):
                         res_attr = res_attr + '__user_code'
                     elif is_system_relation(attr):
-                        res_attr = res_attr + '__system_code'
+                        res_attr = res_attr + '__user_code'
                     elif is_scheme(attr):
                         res_attr = res_attr + '__scheme_name'
 
@@ -319,7 +319,7 @@ def get_queryset_filters(qs, groups_types, groups_values, original_qs):
                     if is_relation(attr):
                         params[attr + '__user_code'] = groups_values[i]
                     elif is_system_relation(attr):
-                        params[attr + '__system_code'] = groups_values[i]
+                        params[attr + '__user_code'] = groups_values[i]
                     elif is_scheme(attr):
                         params[attr + '__scheme_name'] = groups_values[i]
                     else:

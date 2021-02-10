@@ -465,18 +465,7 @@ def process_csv_file(master_user,
 
                                             try:
 
-                                                if key == 'pricing_condition':
-                                                    instance[key] = PricingCondition.objects.get(
-                                                        system_code=executed_expression)
-
-                                                elif key == 'payment_size_detail':
-
-                                                    instance[key] = PaymentSizeDetail.objects.get(
-                                                        system_code=executed_expression)
-
-                                                else:
-
-                                                    instance[key] = relation_map[key].objects.get(master_user=master_user,
+                                                instance[key] = relation_map[key].objects.get(master_user=master_user,
                                                                                                   user_code=executed_expression)
 
                                             except (relation_map[key].DoesNotExist, KeyError):

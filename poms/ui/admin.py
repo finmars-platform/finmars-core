@@ -9,8 +9,8 @@ from poms.ui.models import ListLayout, EditLayout, Bookmark, \
 
 class PortalInterfaceAccessModelAdmin(AbstractModelAdmin):
     model = PortalInterfaceAccessModel
-    list_display = ['id', 'system_code', 'name', 'value']
-    search_fields = ['id', 'system_code', 'name', 'value']
+    list_display = ['id', 'user_code', 'name', 'value']
+    search_fields = ['id', 'user_code', 'name', 'value']
 
 
 admin.site.register(PortalInterfaceAccessModel, PortalInterfaceAccessModelAdmin)

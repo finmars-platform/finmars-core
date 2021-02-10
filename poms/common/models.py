@@ -64,7 +64,7 @@ class TimeStampedModel(models.Model):
 
 class AbstractClassModel(models.Model):
     id = models.PositiveSmallIntegerField(primary_key=True, verbose_name=ugettext_lazy('ID'))
-    system_code = models.CharField(max_length=255, unique=True, verbose_name=ugettext_lazy('system code'))
+    user_code = models.CharField(max_length=255, unique=True, verbose_name=ugettext_lazy('user code'))
     name = models.CharField(max_length=255, blank=True, default='', verbose_name=ugettext_lazy('name'))
     description = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('description'))
 

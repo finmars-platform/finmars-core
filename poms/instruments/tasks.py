@@ -680,7 +680,7 @@ def process_events_do_not_inform_apply_default0(master_user):
             ' effective_date_notified=%s,'
             ' is_apply_default_on_notification_date=%s,'
             ' is_apply_default_on_effective_date=%s,',
-            gevent.event_schedule.notification_class.system_code,
+            gevent.event_schedule.notification_class.user_code,
             gevent.notification_date,
             gevent.notification_date_notified,
             gevent.effective_date,
@@ -759,7 +759,7 @@ def process_events0(master_user):
             ' is_apply_default_on_effective_date=%s,'
             ' is_need_reaction_on_notification_date=%s,'
             ' is_need_reaction_on_effective_date=%s',
-            gevent.event_schedule.notification_class.system_code,
+            gevent.event_schedule.notification_class.user_code,
             gevent.notification_date,
             gevent.notification_date_notified,
             gevent.effective_date,

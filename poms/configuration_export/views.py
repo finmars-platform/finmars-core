@@ -487,12 +487,12 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         if input.content_type.model == 'dailypricingmodel':
             return {
                 'prop': 'daily_pricing_model',
-                'code': 'system_code'
+                'code': 'user_code'
             }
         if input.content_type.model == 'paymentsizedetail':
             return {
                 'prop': 'payment_size_detail',
-                'code': 'system_code'
+                'code': 'user_code'
             }
         if input.content_type.model == 'pricedownloadscheme':
             return {
@@ -507,22 +507,22 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         if input.content_type.model == 'periodicity':
             return {
                 'prop': 'periodicity',
-                'code': 'system_code'
+                'code': 'user_code'
             }
         if input.content_type.model == 'accrualcalculationmodel':
             return {
                 'prop': 'accrual_calculation_model',
-                'code': 'system_code'
+                'code': 'user_code'
             }
         if input.content_type.model == 'eventclass':
             return {
                 'prop': 'event_class',
-                'code': 'system_code'
+                'code': 'user_code'
             }
         if input.content_type.model == 'notificationclass':
             return {
                 'prop': 'notification_class',
-                'code': 'system_code'
+                'code': 'user_code'
             }
 
     def get_transaction_type_inputs(self, transaction_type):
@@ -755,8 +755,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 if hasattr(obj, 'user_code'):
                     json_obj['___%s__user_code' % attr['key']] = obj.user_code
 
-                if hasattr(obj, 'system_code'):
-                    json_obj['___%s__system_code' % attr['key']] = obj.system_code
 
                 if hasattr(obj, 'scheme_name'):
                     json_obj['___%s__scheme_name' % attr['key']] = obj.scheme_name
@@ -2628,7 +2626,7 @@ class MappingExportViewSet(AbstractModelViewSet):
             result_item.pop("master_user", None)
             # result_item.pop("provider", None)
 
-            result_item["___system_code"] = Periodicity.objects.get(pk=result_item["content_object"]).system_code
+            result_item["___user_code"] = Periodicity.objects.get(pk=result_item["content_object"]).user_code
 
             result_item.pop("content_object", None)
 
@@ -2690,7 +2688,7 @@ class MappingExportViewSet(AbstractModelViewSet):
             result_item.pop("master_user", None)
             # result_item.pop("provider", None)
 
-            result_item["___system_code"] = DailyPricingModel.objects.get(pk=result_item["content_object"]).system_code
+            result_item["___user_code"] = DailyPricingModel.objects.get(pk=result_item["content_object"]).user_code
 
             result_item.pop("content_object", None)
 
@@ -2722,7 +2720,7 @@ class MappingExportViewSet(AbstractModelViewSet):
             result_item.pop("master_user", None)
             # result_item.pop("provider", None)
 
-            result_item["___system_code"] = PricingCondition.objects.get(pk=result_item["content_object"]).system_code
+            result_item["___user_code"] = PricingCondition.objects.get(pk=result_item["content_object"]).user_code
 
             result_item.pop("content_object", None)
 
@@ -2753,7 +2751,7 @@ class MappingExportViewSet(AbstractModelViewSet):
             result_item.pop("master_user", None)
             # result_item.pop("provider", None)
 
-            result_item["___system_code"] = PaymentSizeDetail.objects.get(pk=result_item["content_object"]).system_code
+            result_item["___user_code"] = PaymentSizeDetail.objects.get(pk=result_item["content_object"]).user_code
 
             result_item.pop("content_object", None)
 
@@ -2784,8 +2782,8 @@ class MappingExportViewSet(AbstractModelViewSet):
             result_item.pop("master_user", None)
             # result_item.pop("provider", None)
 
-            result_item["___system_code"] = AccrualCalculationModel.objects.get(
-                pk=result_item["content_object"]).system_code
+            result_item["___user_code"] = AccrualCalculationModel.objects.get(
+                pk=result_item["content_object"]).user_code
 
             result_item.pop("content_object", None)
 

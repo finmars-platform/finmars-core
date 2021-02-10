@@ -358,7 +358,7 @@ class AbstractReadOnlyModelViewSet(AbstractApiView, HistoricalModelMixin, ReadOn
 
 class AbstractClassModelViewSet(AbstractReadOnlyModelViewSet):
     ordering_fields = ['name']
-    filter_fields = ['system_code', 'name']
+    filter_fields = ['user_code', 'name']
     pagination_class = None
 
 
@@ -564,12 +564,7 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                         results = model.objects.filter(master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
                     if value_type == 'field':
 
-                        if key in ['transaction_class', 'instrument_class', 'pricing_condition']:
-
-                            results = model.objects.filter(master_user=master_user).order_by(key + '__system_code').values_list(key + '__system_code', flat=True).distinct(key + '__system_code')
-
-                        else:
-                            results = model.objects.filter(master_user=master_user).order_by(key + '__user_code').values_list(key + '__user_code', flat=True).distinct(key + '__user_code')
+                        results = model.objects.filter(master_user=master_user).order_by(key + '__user_code').values_list(key + '__user_code', flat=True).distinct(key + '__user_code')
 
 
             _l.debug('model %s' % model)

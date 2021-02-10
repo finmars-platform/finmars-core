@@ -12,7 +12,7 @@ from poms.users.filters import OwnerByMasterUserFilter
 
 class PomsClassSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ['id', 'system_code', 'name', 'description', ]
+        fields = ['id', 'user_code', 'name', 'description', ]
 
 
 class ModelWithTimeStampSerializer(serializers.ModelSerializer):

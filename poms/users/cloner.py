@@ -270,11 +270,11 @@ class FullDataCloner(object):
                 print('attr %s' % attr)
 
                 try:
-                    prop = field.remote_field.model._meta.get_field('system_code')
+                    prop = field.remote_field.model._meta.get_field('user_code')
 
-                    code = attr.system_code
+                    code = attr.user_code
 
-                    value = field.remote_field.model.objects.get(system_code=code)
+                    value = field.remote_field.model.objects.get(user_code=code)
 
                     setattr(target_ecosystem_default, field.name, value)
 

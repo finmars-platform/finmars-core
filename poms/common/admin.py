@@ -24,9 +24,9 @@ class TreeModelAdmin(MPTTModelAdmin):
 
 
 class ClassModelAdmin(TranslationAdmin):
-    list_display = ['id', 'system_code', 'name']
+    list_display = ['id', 'user_code', 'name']
     ordering = ['id']
-    search_fields = ['id', 'system_code', 'name']
+    search_fields = ['id', 'user_code', 'name']
 
 
 class PomsChangeList(ChangeList):
