@@ -209,6 +209,7 @@ class EditLayoutSerializer(ModelWithTimeStampSerializer):
         model = EditLayout
         fields = ['id', 'member', 'content_type',
                   'name', 'user_code',
+                  'is_default', 'is_active',
                   'data', 'origin_for_global_layout', 'sourced_from_global_layout']
 
 
