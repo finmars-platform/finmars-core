@@ -66,7 +66,7 @@ class InstrumentPricingScheme(NamedModel, DataTimeStampedModel):
 
     class Meta:
         unique_together = (
-            ('name', 'master_user')
+            ('user_code', 'master_user')
         )
 
     def __str__(self):
@@ -210,7 +210,7 @@ class CurrencyPricingScheme(NamedModel, DataTimeStampedModel):
 
     class Meta:
         unique_together = (
-            ('name', 'master_user')
+            ('user_code', 'master_user')
         )
 
     def __str__(self):

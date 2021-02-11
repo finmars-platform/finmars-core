@@ -129,7 +129,7 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
             celery_task.save()
 
 
-            _l.debug('celery_task.task_status %s ' % celery_task.task_status)
+            _l.debug('celery_task.task_status %s ' % celery_task.status)
 
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)

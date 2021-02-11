@@ -29,7 +29,7 @@ admin.site.register(CurrencyPricingSchemeType, CurrencyPricingSchemeTypeAdmin)
 
 class InstrumentPricingSchemeAdmin(admin.ModelAdmin):
     model = InstrumentPricingScheme
-    list_display = ['id', 'name', 'master_user', 'notes', 'notes_for_users', 'error_handler']
+    list_display = ['id', 'name', 'user_code', 'master_user', 'notes', 'notes_for_users', 'error_handler']
 
 
 admin.site.register(InstrumentPricingScheme, InstrumentPricingSchemeAdmin)
@@ -37,7 +37,7 @@ admin.site.register(InstrumentPricingScheme, InstrumentPricingSchemeAdmin)
 
 class CurrencyPricingSchemeAdmin(admin.ModelAdmin):
     model = CurrencyPricingScheme
-    list_display = ['id', 'name', 'master_user', 'notes', 'notes_for_users', 'error_handler']
+    list_display = ['id', 'name', 'user_code', 'master_user', 'notes', 'notes_for_users', 'error_handler']
 
 
 admin.site.register(CurrencyPricingScheme, CurrencyPricingSchemeAdmin)
