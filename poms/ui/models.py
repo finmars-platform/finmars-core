@@ -430,11 +430,35 @@ class EditLayout(BaseLayout, TimeStampedModel):
     name = models.CharField(max_length=255, db_index=True, verbose_name=ugettext_lazy('name'))
     user_code = models.CharField(max_length=25, verbose_name=ugettext_lazy('user code'))
 
+    is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
+    is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('is active'))
+
     class Meta(BaseLayout.Meta):
         unique_together = [
             ['member', 'content_type', 'user_code'],
         ]
         ordering = ['name']
+
+    def save(self, *args, **kwargs):
+
+        if not self.user_code:
+            self.user_code = Truncator(self.name).chars(25, truncate='')
+
+        if self.is_default:
+            qs = EditLayout.objects.filter(member=self.member, is_default=True)
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            qs.update(is_default=False)
+
+            qs = EditLayout.objects.filter(member=self.member, is_active=True)
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            qs.update(is_active=False)
+
+        return super(EditLayout, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
 
 
 class Bookmark(BaseUIModel, MPTTModel):
