@@ -1180,7 +1180,7 @@ class TransactionFileResult(DataTimeStampedModel):
 
     provider = models.ForeignKey(DataProvider, verbose_name=ugettext_lazy('provider'), on_delete=models.CASCADE)
 
-    scheme_name = models.CharField(max_length=255)
+    scheme_user_code = models.CharField(max_length=255)
 
     file_path = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('File Path'))
     file_name = models.CharField(max_length=255, blank=True, default='')

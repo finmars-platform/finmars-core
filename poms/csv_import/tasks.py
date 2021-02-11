@@ -1395,10 +1395,10 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
         try:
 
             _l.debug(
-                'data_csv_file_import_by_procedure looking for scheme %s ' % procedure_instance.procedure.user_code)
+                'data_csv_file_import_by_procedure looking for scheme_user_code %s ' % procedure_instance.procedure.scheme_user_code)
 
             scheme = CsvImportScheme.objects.get(master_user=procedure_instance.master_user,
-                                                 user_code=procedure_instance.procedure.user_code)
+                                                 user_code=procedure_instance.procedure.scheme_user_code)
 
             text = "Data File Procedure %s. File is received, start data import" % (
                 procedure_instance.procedure.user_code)

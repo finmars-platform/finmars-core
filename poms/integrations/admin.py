@@ -437,7 +437,7 @@ admin.site.register(DataProvider, DataProviderAdmin)
 
 class TransactionFileResultAdmin(admin.ModelAdmin):
     model = TransactionFileResult
-    list_display = ['id', 'master_user',  'provider', 'scheme_name']
+    list_display = ['id', 'master_user',  'provider', 'scheme_user_code']
     raw_id_fields = ['master_user', 'provider']
 
 

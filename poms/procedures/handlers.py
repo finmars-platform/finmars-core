@@ -89,13 +89,13 @@ class RequestDataFileProcedureProcess(object):
 
                 _l.debug("RequestDataFileProcedureInstance procedure_instance created id: %s" % procedure_instance.id)
 
-            _l.debug("RequestDataFileProcedureProcess: Request_transaction_file. Master User: %s. Provider: %s, Scheme name: %s" % (self.master_user, self.procedure.provider, self.procedure.scheme_name) )
+            _l.debug("RequestDataFileProcedureProcess: Request_transaction_file. Master User: %s. Provider: %s, Scheme name: %s" % (self.master_user, self.procedure.provider, self.procedure.scheme_user_code) )
 
             item = TransactionFileResult.objects.create(
                 procedure_instance=procedure_instance,
                 master_user=self.master_user,
                 provider=self.procedure.provider,
-                scheme_name=self.procedure.scheme_name,
+                scheme_user_code=self.procedure.scheme_user_code,
             )
 
             item.save()
@@ -196,7 +196,7 @@ class RequestDataFileProcedureProcess(object):
                 # "date_from": self.procedure.date_from,
                 # "date_to": self.procedure.date_to,
                 "provider": self.procedure.provider.user_code,
-                "scheme_name": self.procedure.scheme_name,
+                "scheme_name": self.procedure.scheme_user_code,
                 "scheme_type": self.procedure.scheme_type,
 
                 "files": [],

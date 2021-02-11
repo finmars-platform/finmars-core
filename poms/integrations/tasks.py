@@ -1232,7 +1232,7 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
             error_rows.append(item)
 
     result.append('Type, ' + name)
-    result.append('Scheme, ' + scheme.scheme_name)
+    result.append('Scheme, ' + scheme.user_code)
     result.append('Error handle, ' + scheme.error_handler)
     # result.append('Filename, ' + instance.file.name)
     result.append('Import Rules - if object is not found, ' + scheme.missing_data_handler)
@@ -1513,7 +1513,7 @@ def complex_transaction_csv_file_import_parallel_finish(self, task_id):
                         'scheme': scheme.id,
                         'scheme_object': {
                             'id': scheme.id,
-                            'scheme_name': scheme.scheme_name,
+                            'scheme_name': scheme.user_code,
                             'delimiter': scheme.delimiter,
                             'error_handler': scheme.error_handler,
                             'missing_data_handler': scheme.missing_data_handler
@@ -1641,12 +1641,7 @@ def complex_transaction_csv_file_import(self, task_id):
 
                     try:
 
-                        # _l.debug('Lookup by user code %s', value)
-
-                        if model_class == PriceDownloadScheme:
-                            v = model_class.objects.get(master_user=instance.master_user, scheme_name=value)
-                        else:
-                            v = model_class.objects.get(master_user=instance.master_user, user_code=value)
+                        v = model_class.objects.get(master_user=instance.master_user, user_code=value)
 
                     except (model_class.DoesNotExist, KeyError):
 
@@ -1992,7 +1987,7 @@ def complex_transaction_csv_file_import(self, task_id):
                                 'processed_rows': instance.processed_rows,
                                 'parent_total_rows': parent_celery_task.options_object['total_rows'],
                                 'total_rows': instance.total_rows,
-                                'scheme_name': scheme.scheme_name,
+                                'scheme_name': scheme.user_code,
                                 'file_name': instance.filename}
                 }, level="member",
                     context={"master_user": master_user, "member": member})
@@ -2075,7 +2070,7 @@ def complex_transaction_csv_file_import(self, task_id):
                             'scheme': scheme.id,
                             'scheme_object': {
                                 'id': scheme.id,
-                                'scheme_name': scheme.scheme_name,
+                                'scheme_name': scheme.user_code,
                                 'delimiter': scheme.delimiter,
                                 'error_handler': scheme.error_handler,
                                 'missing_data_handler': scheme.missing_data_handler
@@ -2247,7 +2242,7 @@ def complex_transaction_csv_file_import_validate_parallel_finish(self, task_id):
                         'scheme': scheme.id,
                         'scheme_object': {
                             'id': scheme.id,
-                            'scheme_name': scheme.scheme_name,
+                            'scheme_name': scheme.user_code,
                             'delimiter': scheme.delimiter,
                             'error_handler': scheme.error_handler,
                             'missing_data_handler': scheme.missing_data_handler
@@ -2376,12 +2371,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
                     try:
 
-                        # _l.info('Lookup by user code %s', value)
-
-                        if model_class == PriceDownloadScheme:
-                            v = model_class.objects.get(master_user=instance.master_user, scheme_name=value)
-                        else:
-                            v = model_class.objects.get(master_user=instance.master_user, user_code=value)
+                        v = model_class.objects.get(master_user=instance.master_user, user_code=value)
 
                     except (model_class.DoesNotExist, KeyError):
 
@@ -2729,7 +2719,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                                 'processed_rows': instance.processed_rows,
                                 'parent_total_rows': parent_celery_task.options_object['total_rows'],
                                 'total_rows': instance.total_rows,
-                                'scheme_name': scheme.scheme_name,
+                                'scheme_name': scheme.user_code,
                                 'file_name': instance.filename}
                 }, level="member",
                     context={"master_user": master_user, "member": member})
@@ -2795,7 +2785,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                         'scheme': scheme.id,
                         'scheme_object': {
                             'id': scheme.id,
-                            'scheme_name': scheme.scheme_name,
+                            'scheme_name': scheme.user_code,
                             'delimiter': scheme.delimiter,
                             'error_handler': scheme.error_handler,
                             'missing_data_handler': scheme.missing_data_handler
@@ -2928,10 +2918,10 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
         try:
 
             _l.debug(
-                'complex_transaction_csv_file_import_by_procedure looking for scheme %s ' % procedure_instance.procedure.scheme_name)
+                'complex_transaction_csv_file_import_by_procedure looking for scheme %s ' % procedure_instance.procedure.scheme_user_code)
 
             scheme = ComplexTransactionImportScheme.objects.get(master_user=procedure_instance.master_user,
-                                                                scheme_name=procedure_instance.procedure.scheme_name)
+                                                                user_code=procedure_instance.procedure.scheme_user_code)
 
             text = "Data File Procedure %s. File is received. Decrypting file" % (
                 procedure_instance.procedure.user_code)

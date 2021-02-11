@@ -1057,7 +1057,7 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
 
 
 class TransactionFileResultFilterSet(FilterSet):
-    scheme_name = CharFilter()
+    scheme_user_code = CharFilter()
 
     class Meta:
         model = TransactionFileResult
