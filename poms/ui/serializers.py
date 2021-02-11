@@ -207,7 +207,9 @@ class EditLayoutSerializer(ModelWithTimeStampSerializer):
 
     class Meta:
         model = EditLayout
-        fields = ['id', 'member', 'content_type', 'data', 'origin_for_global_layout', 'sourced_from_global_layout']
+        fields = ['id', 'member', 'content_type',
+                  'name', 'user_code',
+                  'data', 'origin_for_global_layout', 'sourced_from_global_layout']
 
 
 class BookmarkRecursiveField(serializers.Serializer):

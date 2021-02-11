@@ -427,11 +427,14 @@ class EditLayout(BaseLayout, TimeStampedModel):
     member = models.ForeignKey(Member, related_name='edit_layouts', verbose_name=ugettext_lazy('member'),
                                on_delete=models.CASCADE)
 
+    name = models.CharField(max_length=255, db_index=True, verbose_name=ugettext_lazy('name'))
+    user_code = models.CharField(max_length=25, verbose_name=ugettext_lazy('user code'))
+
     class Meta(BaseLayout.Meta):
         unique_together = [
-            ['member', 'content_type'],
+            ['member', 'content_type', 'user_code'],
         ]
-        ordering = ['content_type']
+        ordering = ['name']
 
 
 class Bookmark(BaseUIModel, MPTTModel):
