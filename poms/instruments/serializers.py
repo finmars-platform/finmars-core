@@ -265,20 +265,21 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
     factor_down = TransactionTypeField(allow_null=True, required=False)
     factor_down_object = serializers.PrimaryKeyRelatedField(source='factor_down', read_only=True)
 
-    # tags = TagField(many=True, required=False, allow_null=True)
-    # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
 
     class Meta:
         model = InstrumentType
         fields = [
-            'id', 'master_user', 'instrument_class', 'instrument_class_object',
-            'user_code', 'name', 'short_name', 'public_name',
-            'notes', 'is_default', 'is_deleted', 'one_off_event', 'one_off_event_object',
+            'id', 'master_user',
+            'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'is_default', 'is_deleted',
+            'instrument_form_layouts',
+            'instrument_class', 'instrument_class_object',
+
+            'one_off_event', 'one_off_event_object',
             'regular_event', 'regular_event_object', 'factor_same', 'factor_same_object',
             'factor_up', 'factor_up_object', 'factor_down', 'factor_down_object',
             'is_enabled', 'pricing_policies',
             'has_second_exposure_currency'
-            # 'tags', 'tags_object',
         ]
 
     def __init__(self, *args, **kwargs):

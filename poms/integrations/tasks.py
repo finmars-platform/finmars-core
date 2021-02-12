@@ -1549,7 +1549,7 @@ def complex_transaction_csv_file_import(self, task_id):
         master_user = celery_task.master_user
         member = celery_task.member
 
-        instance = ComplexTransactionCsvFileImport(task_id=task_id, master_user=master_user, member=member)
+        instance = ComplexTransactionCsvFileImport(task_id=task_id, master_user=master_user, member=member, skip_first_line=True)
 
         scheme = ComplexTransactionImportScheme.objects.get(pk=celery_task.options_object['scheme_id'])
 
@@ -2278,7 +2278,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
         master_user = celery_task.master_user
         member = celery_task.member
 
-        instance = ComplexTransactionCsvFileImport(task_id=task_id, master_user=master_user, member=member)
+        instance = ComplexTransactionCsvFileImport(task_id=task_id, master_user=master_user, member=member, skip_first_line=True)
 
         scheme = ComplexTransactionImportScheme.objects.get(pk=celery_task.options_object['scheme_id'])
 

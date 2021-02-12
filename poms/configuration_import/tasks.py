@@ -1120,7 +1120,15 @@ class ImportManager(object):
 
                                 try:
 
-                                    instance = EditLayout.objects.get(member=self.member, content_type=content_type)
+                                    if 'user_code' in content_object:
+
+                                        instance = EditLayout.objects.get(member=self.member, user_code=content_object['user_code'],
+                                                                        content_type=content_type)
+
+                                    else:
+
+                                        instance = EditLayout.objects.get(member=self.member, name=content_object['name'],
+                                                                        content_type=content_type)
 
                                     serializer = EditLayoutSerializer(data=content_object,
                                                                       instance=instance,

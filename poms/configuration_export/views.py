@@ -277,7 +277,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         csv_import_schemes = self.get_csv_import_schemes()
         complex_import_schemes = self.get_complex_import_schemes()
         instrument_download_schemes = self.get_instrument_download_schemes()
-        # price_download_schemes = self.get_price_download_schemes()
         complex_transaction_import_scheme = self.get_complex_transaction_import_scheme()
 
         _l.debug('ConfigurationExportViewSet createConfiguration got schemes done: %s',
@@ -1153,32 +1152,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
-    def get_pricing_automated_schedule(self):
-        schedules = to_json_objects(
-            PricingAutomatedSchedule.objects.filter(master_user=self._master_user))
-        results = []
-
-        for schedule in schedules:
-            result_item = schedule["fields"]
-
-            result_item["pk"] = schedule["pk"]
-
-            result_item.pop("master_user", None)
-
-            clear_none_attrs(result_item)
-
-            results.append(result_item)
-
-        delete_prop(results, 'pk')
-
-        result = {
-            "entity": "integrations.pricingautomatedschedule",
-            "count": len(results),
-            "content": results
-        }
-
-        return result
-
     def get_edit_layouts(self):
         results = to_json_objects(EditLayout.objects.filter(member=self._member))
 
@@ -1836,28 +1809,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
-    # DEPRECATED
-    def get_price_download_schemes(self):
-        schemes = to_json_objects(PriceDownloadScheme.objects.filter(master_user=self._master_user))
-
-        results = []
-
-        for scheme in schemes:
-            result_item = scheme["fields"]
-
-            clear_none_attrs(result_item)
-
-            result_item.pop("master_user", None)
-
-            results.append(result_item)
-
-        result = {
-            "entity": "integrations.pricedownloadscheme",
-            "count": len(results),
-            "content": results
-        }
-
-        return result
 
     def get_complex_transaction_import_scheme_rule_fields(self, rule_scenario):
 

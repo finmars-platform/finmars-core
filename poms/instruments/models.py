@@ -401,7 +401,8 @@ class InstrumentType(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, Da
     has_second_exposure_currency = models.BooleanField(default=False, verbose_name=ugettext_lazy('has second exposure currency'))
 
     object_permissions = GenericRelation(GenericObjectPermission)
-    tags = GenericRelation(TagLink)
+
+    instrument_form_layouts = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('instrument form layouts'))
 
     objects = CachingManager()
 
