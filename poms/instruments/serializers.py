@@ -483,7 +483,7 @@ class InstrumentTypeViewSerializer(ModelWithObjectPermissionSerializer, ModelWit
         model = InstrumentType
         fields = [
             'id', 'instrument_class', 'instrument_class_object', 'user_code', 'name', 'short_name',
-            'public_name',
+            'public_name', 'instrument_form_layouts'
         ]
 
 
