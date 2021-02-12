@@ -154,7 +154,7 @@ class InstrumentDownloadSchemeSerializer(ModelWithUserCodeSerializer, ModelWithT
     price_multiplier = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
     accrued_currency = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
     accrued_multiplier = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True)
-    # daily_pricing_model = ExpressionField(allow_blank=True)
+
     # payment_size_detail = ExpressionField(allow_blank=True)
     # default_price = ExpressionField(allow_blank=True)
     # default_accrued = ExpressionField(allow_blank=True)
@@ -197,7 +197,7 @@ class InstrumentDownloadSchemeSerializer(ModelWithUserCodeSerializer, ModelWithT
     def __init__(self, *args, **kwargs):
         super(InstrumentDownloadSchemeSerializer, self).__init__(*args, **kwargs)
 
-        from poms.instruments.serializers import PaymentSizeDetailSerializer, DailyPricingModelSerializer
+        from poms.instruments.serializers import PaymentSizeDetailSerializer
         self.fields['payment_size_detail_object'] = PaymentSizeDetailSerializer(source='payment_size_detail',
                                                                                 read_only=True)
         self.fields['factor_schedule_method_object'] = FactorScheduleDownloadMethodSerializer(
@@ -925,16 +925,12 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObj
     accrued_currency = CurrencyField(default=CurrencyDefault())
     accrued_currency_object = serializers.PrimaryKeyRelatedField(source='accrued_currency', read_only=True)
     payment_size_detail_object = serializers.PrimaryKeyRelatedField(source='payment_size_detail', read_only=True)
-    daily_pricing_model_object = serializers.PrimaryKeyRelatedField(source='daily_pricing_model', read_only=True)
 
     accrual_calculation_schedules = serializers.SerializerMethodField()
     factor_schedules = serializers.SerializerMethodField()
     event_schedules = serializers.PrimaryKeyRelatedField(read_only=True, many=True)
 
     # attributes = serializers.SerializerMethodField()
-
-    # tags = TagField(many=True, required=False, allow_null=True)
-    # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
 
     class Meta:
         model = Instrument
@@ -950,7 +946,7 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObj
             # 'manual_pricing_formulas',
             'accrual_calculation_schedules', 'factor_schedules', 'event_schedules',
             # 'attributes',
-            # 'tags', 'tags_object'
+
         ]
 
     def __init__(self, *args, **kwargs):
@@ -961,7 +957,7 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObj
         self.fields['accrued_currency_object'] = CurrencyViewSerializer(source='accrued_currency', read_only=True)
 
         from poms.instruments.serializers import InstrumentTypeViewSerializer, PaymentSizeDetailSerializer, \
-            DailyPricingModelSerializer, EventScheduleSerializer
+             EventScheduleSerializer
         self.fields['instrument_type_object'] = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
         self.fields['payment_size_detail_object'] = PaymentSizeDetailSerializer(source='payment_size_detail',
                                                                                 read_only=True)

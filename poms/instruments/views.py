@@ -54,7 +54,6 @@ from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy1Group, Strategy2, Strategy2Subgroup, \
     Strategy2Group, Strategy3, Strategy3Subgroup, Strategy3Group
 from poms.tags.filters import TagFilter
-from poms.tags.utils import get_tag_prefetch
 from poms.transactions.models import TransactionType, TransactionTypeGroup, NotificationClass
 from poms.transactions.serializers import TransactionTypeProcessSerializer
 from poms.users.filters import OwnerByMasterUserFilter
@@ -200,7 +199,6 @@ class InstrumentTypeViewSet(AbstractWithObjectPermissionViewSet):
         'factor_down',
         'factor_down__group',
     ).prefetch_related(
-        get_tag_prefetch(),
         get_attributes_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, InstrumentType),
@@ -328,7 +326,6 @@ class InstrumentTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, C
         'factor_down',
         'factor_down__group',
     ).prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, InstrumentType),
             ('one_off_event', TransactionType),
@@ -499,7 +496,6 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
                 ),
             )),
         get_attributes_prefetch(),
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Instrument),
             ('instrument_type', InstrumentType),
@@ -704,6 +700,7 @@ class InstrumentLightViewSet(AbstractWithObjectPermissionViewSet):
         'user_code', 'name', 'short_name', 'public_name',
     ]
 
+
 class InstrumentEvFilterSet(FilterSet):
     id = NoOpFilter()
     is_deleted = django_filters.BooleanFilter()
@@ -790,7 +787,6 @@ class InstrumentEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Custo
                 ),
             )),
         get_attributes_prefetch(),
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Instrument),
             ('instrument_type', InstrumentType),
