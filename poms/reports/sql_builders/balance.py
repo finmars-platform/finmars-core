@@ -1279,137 +1279,141 @@ class BalanceReportBuilderSql:
 
                 item["exposure_currency_id"] = item["exposure_currency_1_id"]
 
-                updated_result.append(item)
+                item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
 
-                if ITEM_TYPE_INSTRUMENT == 1:
+                if item['position_size']:
 
-                    if item['has_second_exposure_currency'] and self.instance.show_balance_exposure_details:
+                    updated_result.append(item)
 
-                        new_exposure_item = {
-                            "name": item["name"],
-                            "user_code": item["user_code"],
-                            "short_name": item["short_name"],
-                            "pricing_currency_id": item["pricing_currency_id"],
-                            "currency_id": item["currency_id"],
-                            "instrument_id": item["instrument_id"],
-                            "portfolio_id": item["portfolio_id"],
+                    if ITEM_TYPE_INSTRUMENT == 1:
+
+                        if item['has_second_exposure_currency'] and self.instance.show_balance_exposure_details:
+
+                            new_exposure_item = {
+                                "name": item["name"],
+                                "user_code": item["user_code"],
+                                "short_name": item["short_name"],
+                                "pricing_currency_id": item["pricing_currency_id"],
+                                "currency_id": item["currency_id"],
+                                "instrument_id": item["instrument_id"],
+                                "portfolio_id": item["portfolio_id"],
 
 
-                            "account_cash_id": item["account_cash_id"],
-                            "strategy1_cash_id": item["strategy1_cash_id"],
-                            "strategy2_cash_id": item["strategy2_cash_id"],
-                            "strategy3_cash_id": item["strategy3_cash_id"],
+                                "account_cash_id": item["account_cash_id"],
+                                "strategy1_cash_id": item["strategy1_cash_id"],
+                                "strategy2_cash_id": item["strategy2_cash_id"],
+                                "strategy3_cash_id": item["strategy3_cash_id"],
 
-                            "account_position_id": item["account_position_id"],
-                            "strategy1_position_id": item["strategy1_position_id"],
-                            "strategy2_position_id": item["strategy2_position_id"],
-                            "strategy3_position_id": item["strategy3_position_id"],
+                                "account_position_id": item["account_position_id"],
+                                "strategy1_position_id": item["strategy1_position_id"],
+                                "strategy2_position_id": item["strategy2_position_id"],
+                                "strategy3_position_id": item["strategy3_position_id"],
 
-                            "instrument_pricing_currency_fx_rate": None,
-                            "instrument_accrued_currency_fx_rate": None,
-                            "instrument_principal_price": None,
-                            "instrument_accrued_price": None,
+                                "instrument_pricing_currency_fx_rate": None,
+                                "instrument_accrued_currency_fx_rate": None,
+                                "instrument_principal_price": None,
+                                "instrument_accrued_price": None,
 
-                            "market_value": None,
-                            "market_value_loc": None,
+                                "market_value": None,
+                                "market_value_loc": None,
 
-                            "item_type": 7,
-                            "item_type_name": "Exposure",
-                            "exposure": item["exposure_2"],
-                            "exposure_loc": item["exposure_2_loc"],
-                            "exposure_currency_id": item["exposure_currency_2_id"]
-                        }
+                                "item_type": 7,
+                                "item_type_name": "Exposure",
+                                "exposure": item["exposure_2"],
+                                "exposure_loc": item["exposure_2_loc"],
+                                "exposure_currency_id": item["exposure_currency_2_id"]
+                            }
 
-                        new_exposure_item["position_size"] = None
-                        new_exposure_item["ytm"] = None
-                        new_exposure_item["ytm_at_cost"] = None
-                        new_exposure_item["modified_duration"] = None
-                        new_exposure_item["return_annually"] = None
+                            new_exposure_item["position_size"] = None
+                            new_exposure_item["ytm"] = None
+                            new_exposure_item["ytm_at_cost"] = None
+                            new_exposure_item["modified_duration"] = None
+                            new_exposure_item["return_annually"] = None
 
-                        new_exposure_item["position_return"] = None
-                        new_exposure_item["net_position_return"] = None
+                            new_exposure_item["position_return"] = None
+                            new_exposure_item["net_position_return"] = None
 
-                        new_exposure_item["net_cost_price"] = None
-                        new_exposure_item["net_cost_price_loc"] = None
-                        new_exposure_item["gross_cost_price"] = None
-                        new_exposure_item["gross_cost_price_loc"] = None
+                            new_exposure_item["net_cost_price"] = None
+                            new_exposure_item["net_cost_price_loc"] = None
+                            new_exposure_item["gross_cost_price"] = None
+                            new_exposure_item["gross_cost_price_loc"] = None
 
-                        new_exposure_item["principal_invested"] = None
-                        new_exposure_item["principal_invested_loc"] = None
+                            new_exposure_item["principal_invested"] = None
+                            new_exposure_item["principal_invested_loc"] = None
 
-                        new_exposure_item["amount_invested"] = None
-                        new_exposure_item["amount_invested_loc"] = None
+                            new_exposure_item["amount_invested"] = None
+                            new_exposure_item["amount_invested_loc"] = None
 
-                        new_exposure_item["time_invested"] = None
-                        new_exposure_item["return_annually"] = None
+                            new_exposure_item["time_invested"] = None
+                            new_exposure_item["return_annually"] = None
 
-                        # performance
+                            # performance
 
-                        new_exposure_item["principal_opened"] = None
-                        new_exposure_item["carry_opened"] = None
-                        new_exposure_item["overheads_opened"] = None
-                        new_exposure_item["total_opened"] = None
+                            new_exposure_item["principal_opened"] = None
+                            new_exposure_item["carry_opened"] = None
+                            new_exposure_item["overheads_opened"] = None
+                            new_exposure_item["total_opened"] = None
 
-                        new_exposure_item["principal_fx_opened"] = None
-                        new_exposure_item["carry_fx_opened"] = None
-                        new_exposure_item["overheads_fx_opened"] = None
-                        new_exposure_item["total_fx_opened"] = None
+                            new_exposure_item["principal_fx_opened"] = None
+                            new_exposure_item["carry_fx_opened"] = None
+                            new_exposure_item["overheads_fx_opened"] = None
+                            new_exposure_item["total_fx_opened"] = None
 
-                        new_exposure_item["principal_fixed_opened"] = None
-                        new_exposure_item["carry_fixed_opened"] = None
-                        new_exposure_item["overheads_fixed_opened"] = None
-                        new_exposure_item["total_fixed_opened"] = None
+                            new_exposure_item["principal_fixed_opened"] = None
+                            new_exposure_item["carry_fixed_opened"] = None
+                            new_exposure_item["overheads_fixed_opened"] = None
+                            new_exposure_item["total_fixed_opened"] = None
 
-                        # loc started
+                            # loc started
 
-                        new_exposure_item["principal_opened_loc"] = None
-                        new_exposure_item["carry_opened_loc"] = None
-                        new_exposure_item["overheads_opened_loc"] = None
-                        new_exposure_item["total_opened_loc"] = None
+                            new_exposure_item["principal_opened_loc"] = None
+                            new_exposure_item["carry_opened_loc"] = None
+                            new_exposure_item["overheads_opened_loc"] = None
+                            new_exposure_item["total_opened_loc"] = None
 
-                        new_exposure_item["principal_fx_opened_loc"] = None
-                        new_exposure_item["carry_fx_opened_loc"] = None
-                        new_exposure_item["overheads_fx_opened_loc"] = None
-                        new_exposure_item["total_fx_opened_loc"] = None
+                            new_exposure_item["principal_fx_opened_loc"] = None
+                            new_exposure_item["carry_fx_opened_loc"] = None
+                            new_exposure_item["overheads_fx_opened_loc"] = None
+                            new_exposure_item["total_fx_opened_loc"] = None
 
-                        new_exposure_item["principal_fixed_opened_loc"] = None
-                        new_exposure_item["carry_fixed_opened_loc"] = None
-                        new_exposure_item["overheads_fixed_opened_loc"] = None
-                        new_exposure_item["total_fixed_opened_loc"] = None
+                            new_exposure_item["principal_fixed_opened_loc"] = None
+                            new_exposure_item["carry_fixed_opened_loc"] = None
+                            new_exposure_item["overheads_fixed_opened_loc"] = None
+                            new_exposure_item["total_fixed_opened_loc"] = None
 
-                        new_exposure_item["principal_closed"] = None
-                        new_exposure_item["carry_closed"] = None
-                        new_exposure_item["overheads_closed"] = None
-                        new_exposure_item["total_closed"] = None
+                            new_exposure_item["principal_closed"] = None
+                            new_exposure_item["carry_closed"] = None
+                            new_exposure_item["overheads_closed"] = None
+                            new_exposure_item["total_closed"] = None
 
-                        new_exposure_item["principal_fx_closed"] = None
-                        new_exposure_item["carry_fx_closed"] = None
-                        new_exposure_item["overheads_fx_closed"] = None
-                        new_exposure_item["total_fx_closed"] = None
+                            new_exposure_item["principal_fx_closed"] = None
+                            new_exposure_item["carry_fx_closed"] = None
+                            new_exposure_item["overheads_fx_closed"] = None
+                            new_exposure_item["total_fx_closed"] = None
 
-                        new_exposure_item["principal_fixed_closed"] = None
-                        new_exposure_item["carry_fixed_closed"] = None
-                        new_exposure_item["overheads_fixed_closed"] = None
-                        new_exposure_item["total_fixed_closed"] = None
+                            new_exposure_item["principal_fixed_closed"] = None
+                            new_exposure_item["carry_fixed_closed"] = None
+                            new_exposure_item["overheads_fixed_closed"] = None
+                            new_exposure_item["total_fixed_closed"] = None
 
-                        # loc started
+                            # loc started
 
-                        new_exposure_item["principal_closed_loc"] = None
-                        new_exposure_item["carry_closed_loc"] = None
-                        new_exposure_item["overheads_closed_loc"] = None
-                        new_exposure_item["total_closed_loc"] = None
+                            new_exposure_item["principal_closed_loc"] = None
+                            new_exposure_item["carry_closed_loc"] = None
+                            new_exposure_item["overheads_closed_loc"] = None
+                            new_exposure_item["total_closed_loc"] = None
 
-                        new_exposure_item["principal_fx_closed_loc"] = None
-                        new_exposure_item["carry_fx_closed_loc"] = None
-                        new_exposure_item["overheads_fx_closed_loc"] = None
-                        new_exposure_item["total_fx_closed_loc"] = None
+                            new_exposure_item["principal_fx_closed_loc"] = None
+                            new_exposure_item["carry_fx_closed_loc"] = None
+                            new_exposure_item["overheads_fx_closed_loc"] = None
+                            new_exposure_item["total_fx_closed_loc"] = None
 
-                        new_exposure_item["principal_fixed_closed_loc"] = None
-                        new_exposure_item["carry_fixed_closed_loc"] = None
-                        new_exposure_item["overheads_fixed_closed_loc"] = None
-                        new_exposure_item["total_fixed_closed_loc"] = None
+                            new_exposure_item["principal_fixed_closed_loc"] = None
+                            new_exposure_item["carry_fixed_closed_loc"] = None
+                            new_exposure_item["overheads_fixed_closed_loc"] = None
+                            new_exposure_item["total_fixed_closed_loc"] = None
 
-                        updated_result.append(new_exposure_item)
+                            updated_result.append(new_exposure_item)
 
             _l.debug('build cash result %s ' % len(result))
 

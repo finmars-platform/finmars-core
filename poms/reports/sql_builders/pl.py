@@ -2939,8 +2939,18 @@ class PLReportBuilderSql:
                 with open('/tmp/query_result.txt', 'w') as the_file:
                     the_file.write(query_str)
 
-            result_tmp = dictfetchall(cursor)
+            result_tmp_raw = dictfetchall(cursor)
+            result_tmp = []
             result = []
+
+
+
+            for item in result_tmp_raw:
+
+                item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
+
+                if item['position_size']:
+                    result_tmp.append(item)
 
             ITEM_TYPE_INSTRUMENT = 1
             ITEM_TYPE_FX_VARIATIONS = 3
