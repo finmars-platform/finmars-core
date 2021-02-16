@@ -406,6 +406,14 @@ class InstrumentType(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, Da
 
     instrument_form_layouts = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('instrument form layouts'))
 
+
+    accrued_currency = models.ForeignKey('currencies.Currency', null=True, blank=True, related_name='instrument_types_accrued',
+                                         on_delete=models.PROTECT, verbose_name=ugettext_lazy('accrued currency'))
+    accrued_multiplier = models.FloatField(default=1.0, verbose_name=ugettext_lazy('accrued multiplier'))
+
+    default_accrued = models.FloatField(default=0.0, verbose_name=ugettext_lazy('default accrued'))
+
+
     objects = CachingManager()
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):

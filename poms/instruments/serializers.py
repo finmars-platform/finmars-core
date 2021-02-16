@@ -285,6 +285,9 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
     accruals = InstrumentTypeAccrualSerializer(required=False, many=True, read_only=False)
     events = InstrumentTypeEventSerializer(required=False, many=True, read_only=False)
 
+    accrued_currency = CurrencyField(default=CurrencyDefault())
+    accrued_currency_object = serializers.PrimaryKeyRelatedField(source='accrued_currency', read_only=True)
+
 
     class Meta:
         model = InstrumentType
@@ -301,7 +304,9 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
             'is_enabled', 'pricing_policies',
             'has_second_exposure_currency',
 
-            'accruals', 'events'
+            'accruals', 'events',
+
+            'accrued_currency', 'accrued_currency_object', 'accrued_multiplier', 'default_accrued'
         ]
 
     def __init__(self, *args, **kwargs):
