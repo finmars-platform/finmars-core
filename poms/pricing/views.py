@@ -122,15 +122,15 @@ class PricingBrokerBloombergHandler(APIView):
 
             procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
 
+            procedure.error_code = request.data['error_code']
+            procedure.error_message = request.data['error_message']
+
             if not request.data['error_code']:
 
                 instance = FillPricesBrokerBloombergProcess(instance=request.data, master_user=procedure.master_user)
                 instance.process()
 
             else:
-
-                procedure.error_code = request.data['error_code']
-                procedure.error_message = request.data['error_message']
 
                 procedure.status = PricingProcedureInstance.STATUS_ERROR
                 procedure.save()
@@ -159,6 +159,8 @@ class PricingBrokerBloombergForwardsHandler(APIView):
         try:
 
             procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
+            procedure.error_code = request.data['error_code']
+            procedure.error_message = request.data['error_message']
 
             if not request.data['error_code']:
 
@@ -166,9 +168,6 @@ class PricingBrokerBloombergForwardsHandler(APIView):
                 instance.process()
 
             else:
-
-                procedure.error_code = request.data['error_code']
-                procedure.error_message = request.data['error_message']
 
                 procedure.status = PricingProcedureInstance.STATUS_ERROR
                 procedure.save()
@@ -198,15 +197,15 @@ class PricingBrokerWtradeHandler(APIView):
 
             procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
 
+            procedure.error_code = request.data['error_code']
+            procedure.error_message = request.data['error_message']
+
             if not request.data['error_code']:
 
                 instance = FillPricesBrokerWtradeProcess(instance=request.data, master_user=procedure.master_user)
                 instance.process()
 
             else:
-
-                procedure.error_code = request.data['error_code']
-                procedure.error_message = request.data['error_message']
 
                 procedure.status = PricingProcedureInstance.STATUS_ERROR
                 procedure.save()
@@ -236,15 +235,15 @@ class PricingBrokerFixerHandler(APIView):
 
             procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
 
+            procedure.error_code = request.data['error_code']
+            procedure.error_message = request.data['error_message']
+
             if not request.data['error_code']:
 
                 instance = FillPricesBrokerFixerProcess(instance=request.data, master_user=procedure.master_user)
                 instance.process()
 
             else:
-
-                procedure.error_code = request.data['error_code']
-                procedure.error_message = request.data['error_message']
 
                 procedure.status = PricingProcedureInstance.STATUS_ERROR
                 procedure.save()
@@ -274,15 +273,15 @@ class PricingBrokerAlphavHandler(APIView):
 
             procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
 
+            procedure.error_code = request.data['error_code']
+            procedure.error_message = request.data['error_message']
+
             if not request.data['error_code']:
 
                 instance = FillPricesBrokerAlphavProcess(instance=request.data, master_user=procedure.master_user)
                 instance.process()
 
             else:
-
-                procedure.error_code = request.data['error_code']
-                procedure.error_message = request.data['error_message']
 
                 procedure.status = PricingProcedureInstance.STATUS_ERROR
                 procedure.save()

@@ -381,8 +381,8 @@ class BalanceReportBuilderSql:
                     
                     position_size,
                     
-                    exposure_currency_1_id,
-                    exposure_currency_2_id,
+                    co_directional_exposure_currency_id,
+                    counter_directional_exposure_currency_id,
                 
                     has_second_exposure_currency,
                     
@@ -502,8 +502,8 @@ class BalanceReportBuilderSql:
                         (0) as instrument_principal_price,
                         (0) as instrument_accrued_price,
                         
-                        (-1) as exposure_currency_1_id,
-                        (-1) as exposure_currency_2_id,
+                        (c.id) as co_directional_exposure_currency_id,
+                        (-1) as counter_directional_exposure_currency_id,
                     
                         (false) as has_second_exposure_currency,
                             
@@ -711,8 +711,8 @@ class BalanceReportBuilderSql:
                     
                     position_size,
                     
-                    exposure_currency_1_id,
-                    exposure_currency_2_id,
+                    co_directional_exposure_currency_id,
+                    counter_directional_exposure_currency_id,
                 
                     has_second_exposure_currency,
                     
@@ -831,8 +831,8 @@ class BalanceReportBuilderSql:
                         
                         position_size,
                         
-                        exposure_currency_1_id,
-                        exposure_currency_2_id,
+                        co_directional_exposure_currency_id,
+                        counter_directional_exposure_currency_id,
             
                         has_second_exposure_currency,
                         
@@ -957,8 +957,8 @@ class BalanceReportBuilderSql:
                         (ach_fx_rate) as instrument_accrued_currency_fx_rate,
                         
                         instrument_class_id,
-                        exposure_currency_1_id,
-                        exposure_currency_2_id,
+                        co_directional_exposure_currency_id,
+                        counter_directional_exposure_currency_id,
 
                         has_second_exposure_currency,
     
@@ -996,33 +996,33 @@ class BalanceReportBuilderSql:
                             i.price_multiplier,
                             i.accrued_multiplier,
                             
-                            i.exposure_currency_1_id,
-                            i.exposure_currency_2_id,
+                            i.co_directional_exposure_currency_id,
+                            i.counter_directional_exposure_currency_id,
                             it.instrument_class_id,
 
                             it.has_second_exposure_currency,
                             
-                            case when i.exposure_currency_1_id = {report_currency_id}
+                            case when i.co_directional_exposure_currency_id = {report_currency_id}
                                         then 1
                                     else
                                         (select
                                              fx_rate
                                          from currencies_currencyhistory
                                          where
-                                                 currency_id = i.exposure_currency_1_id and
+                                                 currency_id = i.co_directional_exposure_currency_id and
                                                  date = '2019-12-31' and
                                                  pricing_policy_id = 843
                                         )
                                    end as ec1_fx_rate,
 
-                               case when i.exposure_currency_2_id = {report_currency_id}
+                               case when i.counter_directional_exposure_currency_id = {report_currency_id}
                                         then 1
                                     else
                                         (select
                                              fx_rate
                                          from currencies_currencyhistory
                                          where
-                                                 currency_id = i.exposure_currency_2_id and
+                                                 currency_id = i.counter_directional_exposure_currency_id and
                                                  date = '2019-12-31' and
                                                  pricing_policy_id = 843
                                         )
@@ -1277,7 +1277,7 @@ class BalanceReportBuilderSql:
                 if "strategy3_position_id" not in item:
                     item["strategy3_position_id"] = self.ecosystem_defaults.strategy3_id
 
-                item["exposure_currency_id"] = item["exposure_currency_1_id"]
+                item["exposure_currency_id"] = item["co_directional_exposure_currency_id"]
 
                 item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
 
@@ -1321,7 +1321,7 @@ class BalanceReportBuilderSql:
                                 "item_type_name": "Exposure",
                                 "exposure": item["exposure_2"],
                                 "exposure_loc": item["exposure_2_loc"],
-                                "exposure_currency_id": item["exposure_currency_2_id"]
+                                "exposure_currency_id": item["counter_directional_exposure_currency_id"]
                             }
 
                             new_exposure_item["position_size"] = None

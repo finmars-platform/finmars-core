@@ -473,10 +473,10 @@ class Instrument(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTi
 
     objects = CachingManager()
 
-    exposure_currency_1 = models.ForeignKey('currencies.Currency', related_name='exposure_currency_1', on_delete=models.SET_NULL, null=True, blank=True,
+    co_directional_exposure_currency = models.ForeignKey('currencies.Currency', related_name='co_directional_exposure_currency', on_delete=models.SET_NULL, null=True, blank=True,
                                          verbose_name=ugettext_lazy('exposure currency 1'))
 
-    exposure_currency_2 = models.ForeignKey('currencies.Currency', related_name='exposure_currency_2', on_delete=models.SET_NULL, null=True, blank=True,
+    counter_directional_exposure_currency = models.ForeignKey('currencies.Currency', related_name='counter_directional_exposure_currency', on_delete=models.SET_NULL, null=True, blank=True,
                                          verbose_name=ugettext_lazy('exposure currency 2'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
