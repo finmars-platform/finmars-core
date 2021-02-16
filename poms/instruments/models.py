@@ -426,7 +426,7 @@ class InstrumentType(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, Da
         return self.master_user.instrument_type_id == self.id if self.master_user_id else False
 
 
-class InstrumentTypeAccrual(models.model):
+class InstrumentTypeAccrual(models.Model):
 
     instrument_type = models.ForeignKey(InstrumentType, on_delete=models.CASCADE,
                                         related_name='accruals',
@@ -456,7 +456,7 @@ class InstrumentTypeAccrual(models.model):
             self.json_data = None
 
 
-class InstrumentTypeEvent(models.model):
+class InstrumentTypeEvent(models.Model):
 
     instrument_type = models.ForeignKey(InstrumentType, on_delete=models.CASCADE,
                                         related_name='events',
