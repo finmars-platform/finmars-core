@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import json
 import logging
 from datetime import date, timedelta
 
@@ -8,6 +9,7 @@ from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core import serializers
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -422,6 +424,66 @@ class InstrumentType(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, Da
     @property
     def is_default(self):
         return self.master_user.instrument_type_id == self.id if self.master_user_id else False
+
+
+class InstrumentTypeAccrual(models.model):
+
+    instrument_type = models.ForeignKey(InstrumentType, on_delete=models.CASCADE,
+                                        related_name='accruals',
+                                        verbose_name=ugettext_lazy('instrument type'))
+
+    order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
+
+    autogenerate = models.BooleanField(default=True, verbose_name=ugettext_lazy('autogenerate'))
+
+    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+
+    @property
+    def data(self):
+        if self.json_data:
+            try:
+                return json.loads(self.json_data)
+            except (ValueError, TypeError):
+                return None
+        else:
+            return None
+
+    @data.setter
+    def data(self, val):
+        if val:
+            self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+        else:
+            self.json_data = None
+
+
+class InstrumentTypeEvent(models.model):
+
+    instrument_type = models.ForeignKey(InstrumentType, on_delete=models.CASCADE,
+                                        related_name='events',
+                                        verbose_name=ugettext_lazy('instrument type'))
+
+    order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
+
+    autogenerate = models.BooleanField(default=True, verbose_name=ugettext_lazy('autogenerate'))
+
+    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+
+    @property
+    def data(self):
+        if self.json_data:
+            try:
+                return json.loads(self.json_data)
+            except (ValueError, TypeError):
+                return None
+        else:
+            return None
+
+    @data.setter
+    def data(self, val):
+        if val:
+            self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+        else:
+            self.json_data = None
 
 
 class Instrument(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):

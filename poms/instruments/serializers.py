@@ -18,7 +18,8 @@ from poms.instruments.fields import InstrumentField, InstrumentTypeField, Pricin
 from poms.instruments.models import Instrument, PriceHistory, InstrumentClass, DailyPricingModel, \
     AccrualCalculationModel, PaymentSizeDetail, Periodicity, CostMethod, InstrumentType, \
     ManualPricingFormula, AccrualCalculationSchedule, InstrumentFactorSchedule, EventSchedule, \
-    PricingPolicy, EventScheduleAction, EventScheduleConfig, GeneratedEvent, PricingCondition
+    PricingPolicy, EventScheduleAction, EventScheduleConfig, GeneratedEvent, PricingCondition, InstrumentTypeAccrual, \
+    InstrumentTypeEvent
 from poms.integrations.fields import PriceDownloadSchemeField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, ModelWithAttributesOnlySerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
@@ -248,6 +249,22 @@ class PricingPolicyViewSerializer(ModelWithUserCodeSerializer):
         fields = ['id', 'user_code', 'name', 'short_name', 'notes', 'expr']
 
 
+class InstrumentTypeAccrualSerializer(serializers.ModelSerializer):
+
+    data = serializers.JSONField(allow_null=False)
+
+    class Meta:
+        model = InstrumentTypeAccrual
+        fields = ['id', 'order', 'autogenerate', 'data']
+
+
+class InstrumentTypeEventSerializer(serializers.ModelSerializer):
+
+    data = serializers.JSONField(allow_null=False)
+
+    class Meta:
+        model = InstrumentTypeEvent
+        fields = ['id', 'order', 'autogenerate', 'data']
 
 
 class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
@@ -265,6 +282,9 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
     factor_down = TransactionTypeField(allow_null=True, required=False)
     factor_down_object = serializers.PrimaryKeyRelatedField(source='factor_down', read_only=True)
 
+    accruals = InstrumentTypeAccrualSerializer(required=False, many=True, read_only=False)
+    events = InstrumentTypeEventSerializer(required=False, many=True, read_only=False)
+
 
     class Meta:
         model = InstrumentType
@@ -279,7 +299,9 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
             'regular_event', 'regular_event_object', 'factor_same', 'factor_same_object',
             'factor_up', 'factor_up_object', 'factor_down', 'factor_down_object',
             'is_enabled', 'pricing_policies',
-            'has_second_exposure_currency'
+            'has_second_exposure_currency',
+
+            'accruals', 'events'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -313,22 +335,134 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
     def create(self, validated_data):
 
         pricing_policies = validated_data.pop('pricing_policies', [])
+        accruals = validated_data.pop('accruals', [])
+        events = validated_data.pop('events', [])
 
         instance = super(InstrumentTypeSerializer, self).create(validated_data)
 
         self.save_pricing_policies(instance, pricing_policies)
+        self.save_accruals(instance, accruals)
+        self.save_events(instance, events)
 
         return instance
 
     def update(self, instance, validated_data):
 
         pricing_policies = validated_data.pop('pricing_policies', [])
+        accruals = validated_data.pop('accruals', [])
+        events = validated_data.pop('events', [])
 
         instance = super(InstrumentTypeSerializer, self).update(instance, validated_data)
 
         self.save_pricing_policies(instance, pricing_policies)
+        self.save_accruals(instance, accruals)
+        self.save_events(instance, events)
 
         return instance
+
+    def save_accruals(self, instance, accruals):
+
+        ids = set()
+
+        if accruals:
+
+            for item in accruals:
+
+                try:
+
+                    oid = item.get('id', None)
+
+                    ids.add(oid)
+
+                    o = InstrumentTypeAccrual.objects.get(instrument_type=instance, id=oid)
+
+                    o.order = item['order']
+                    o.autogenerate = item['autogenerate']
+
+                    if 'data' in item:
+                        o.data = item['data']
+                    else:
+                        o.data = None
+
+                    o.save()
+
+                except InstrumentTypeAccrual.DoesNotExist as e:
+
+                    try:
+
+                        o = InstrumentTypeAccrual.objects.create(instrument_type=instance)
+
+                        o.order = item['order']
+                        o.autogenerate = item['autogenerate']
+
+                        if 'data' in item:
+                            o.data = item['data']
+                        else:
+                            o.data = None
+
+                        o.save()
+
+                        ids.add(o.id)
+
+                    except Exception as e:
+
+                        print("Can't Create Instrument Type Accrual %s" % e)
+
+        if len(ids):
+            InstrumentTypeAccrual.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
+
+
+    def save_events(self, instance, events):
+
+        ids = set()
+
+        if events:
+
+            for item in events:
+
+                try:
+
+                    oid = item.get('id', None)
+
+                    ids.add(oid)
+
+                    o = InstrumentTypeEvent.objects.get(instrument_type=instance, id=oid)
+
+                    o.order = item['order']
+                    o.autogenerate = item['autogenerate']
+
+                    if 'data' in item:
+                        o.data = item['data']
+                    else:
+                        o.data = None
+
+                    o.save()
+
+                except InstrumentTypeEvent.DoesNotExist as e:
+
+                    try:
+
+                        o = InstrumentTypeEvent.objects.create(instrument_type=instance)
+
+                        o.order = item['order']
+                        o.autogenerate = item['autogenerate']
+
+                        if 'data' in item:
+                            o.data = item['data']
+                        else:
+                            o.data = None
+
+                        o.save()
+
+                        ids.add(o.id)
+
+                    except Exception as e:
+
+                        print("Can't Create Instrument Type Event %s" % e)
+
+        if len(ids):
+            InstrumentTypeEvent.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
+
 
     def save_pricing_policies(self, instance, pricing_policies):
 
@@ -434,6 +568,7 @@ class TransactionTypeSimpleViewSerializer(ModelWithObjectPermissionSerializer):
             'id', 'user_code', 'name', 'short_name', 'public_name',
             'is_deleted'
         ]
+
 
 class InstrumentTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
 
