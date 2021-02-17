@@ -23,8 +23,11 @@ class InstrumentTypeApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTes
         self._url_object = '/api/v1/instruments/instrument-type/%s/'
         self._change_permission = 'change_instrumenttype'
 
-    def _create_obj(self, name='instrument_type'):
-        return self.create_instrument_type(name, self._a_master_user)
+    def _create_obj(self, name='instrument_type', accrued_currency=None):
+
+        accrued_currency = accrued_currency or self.get_currency('USD', self._a_master_user)
+
+        return self.create_instrument_type(name, self._a_master_user, accrued_currency=accrued_currency)
 
     def _get_obj(self, name='instrument_type'):
         return self.get_instrument_type(name, self._a_master_user)

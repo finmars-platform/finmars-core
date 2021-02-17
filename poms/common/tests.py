@@ -251,11 +251,14 @@ class BaseApiTestCase(APITestCase):
     def get_portfolio(self, name, master_user):
         return Portfolio.objects.get(name=name, master_user__name=master_user)
 
-    def create_instrument_type(self, name, master_user, instrument_class=None):
+    def create_instrument_type(self, name, master_user, instrument_class=None,accrued_currency=None):
         master_user = self.get_master_user(master_user)
+
+        accrued_currency = self.get_currency(accrued_currency, master_user)
+
         instrument_class = instrument_class or InstrumentClass.objects.get(pk=InstrumentClass.GENERAL)
         instrument_type = InstrumentType.objects.create(master_user=master_user, instrument_class=instrument_class,
-                                                        name=name)
+                                                        name=name, accrued_currency=accrued_currency)
         return instrument_type
 
     def get_instrument_type(self, name, master_user):
@@ -566,6 +569,7 @@ class BaseApiTestCase(APITestCase):
         # create by admin
         udata['name'] = self.create_name()
         response = self._update(self._a_admin_user, obj.id, udata)
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_delete(self):
