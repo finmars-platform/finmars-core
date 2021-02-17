@@ -550,9 +550,6 @@ class ReportSerializer(ReportSerializerWithLogs):
                                 names['%s_object' % pk_attr] = objs[pk]
                             except KeyError:
                                 pass
-                                # _l.debug('pk %s' % pk)
-                                # _l.debug('pk_attr %s' % pk_attr)
-                            # names[pk_attr] = objs[pk]
 
                 for item in items:
 
@@ -569,6 +566,7 @@ class ReportSerializer(ReportSerializerWithLogs):
                     _set_object(names, 'instrument', item_instruments)
                     _set_object(names, 'currency', item_currencies)
                     _set_object(names, 'pricing_currency', item_currencies)
+                    _set_object(names, 'exposure_currency', item_currencies)
                     _set_object(names, 'allocation', item_instruments)
                     _set_object(names, 'mismatch_portfolio', item_portfolios)
                     _set_object(names, 'mismatch_account', item_accounts)
