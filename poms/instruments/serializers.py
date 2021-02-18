@@ -413,8 +413,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
                         print("Can't Create Instrument Type Accrual %s" % e)
 
-        if len(ids):
-            InstrumentTypeAccrual.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
+        InstrumentTypeAccrual.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
 
 
     def save_events(self, instance, events):
@@ -465,8 +464,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
                         print("Can't Create Instrument Type Event %s" % e)
 
-        if len(ids):
-            InstrumentTypeEvent.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
+        InstrumentTypeEvent.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
 
 
     def save_pricing_policies(self, instance, pricing_policies):
