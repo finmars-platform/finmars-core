@@ -377,7 +377,8 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
                     oid = item.get('id', None)
 
-                    ids.add(oid)
+                    if oid:
+                        ids.add(oid)
 
                     o = InstrumentTypeAccrual.objects.get(instrument_type=instance, id=oid)
 
@@ -428,7 +429,8 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
                     oid = item.get('id', None)
 
-                    ids.add(oid)
+                    if oid:
+                        ids.add(oid)
 
                     o = InstrumentTypeEvent.objects.get(instrument_type=instance, id=oid)
 
@@ -464,7 +466,9 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
                         print("Can't Create Instrument Type Event %s" % e)
 
+
         InstrumentTypeEvent.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
+
 
 
     def save_pricing_policies(self, instance, pricing_policies):
