@@ -406,6 +406,8 @@ class InstrumentType(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, Da
 
     instrument_form_layouts = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('instrument form layouts'))
 
+    payment_size_detail = models.ForeignKey(PaymentSizeDetail, on_delete=models.PROTECT, null=True, blank=True,
+                                            verbose_name=ugettext_lazy('payment size detail'))
 
     accrued_currency = models.ForeignKey('currencies.Currency', null=True, blank=True, related_name='instrument_types_accrued',
                                          on_delete=models.PROTECT, verbose_name=ugettext_lazy('accrued currency'))

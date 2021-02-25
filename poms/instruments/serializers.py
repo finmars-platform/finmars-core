@@ -288,6 +288,8 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
     accrued_currency = CurrencyField(default=CurrencyDefault())
     accrued_currency_object = serializers.PrimaryKeyRelatedField(source='accrued_currency', read_only=True)
 
+    payment_size_detail_object = PaymentSizeDetailSerializer(source='payment_size_detail', read_only=True)
+
 
     class Meta:
         model = InstrumentType
@@ -306,7 +308,9 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
             'accruals', 'events',
 
-            'accrued_currency', 'accrued_currency_object', 'accrued_multiplier', 'default_accrued'
+            'payment_size_detail', 'payment_size_detail_object',
+            'accrued_currency', 'accrued_currency_object',
+            'accrued_multiplier', 'default_accrued'
         ]
 
     def __init__(self, *args, **kwargs):
