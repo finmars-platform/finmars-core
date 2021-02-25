@@ -3017,10 +3017,25 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                                         text=text,
                                         file_report_id=file_report.id)
 
+                    options_object = {}
+                    options_object['file_path'] = instance.file_path
+                    options_object['scheme_id'] = instance.scheme.id
+                    options_object['execution_context'] =  {'started_by': 'procedure'}
 
+
+                    celery_task = CeleryTask(master_user=procedure_instance.master_user,
+                                             member=procedure_instance.member,
+                                             options_object=options_object,
+                                             type='transaction_import')
+
+                    celery_task.save()
+
+
+                    # transaction.on_commit(
+                    #     lambda: complex_transaction_csv_file_import.apply_async(kwargs={'instance': instance, 'execution_context': {'started_by': 'procedure'}}))
 
                     transaction.on_commit(
-                        lambda: complex_transaction_csv_file_import.apply_async(kwargs={'instance': instance, 'execution_context': {'started_by': 'procedure'}}))
+                        lambda: complex_transaction_csv_file_import.apply_async(kwargs={'task_id': celery_task.pk}))
 
                 except Exception as e:
 
