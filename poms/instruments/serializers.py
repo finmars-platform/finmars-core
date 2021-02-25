@@ -255,7 +255,7 @@ class InstrumentTypeAccrualSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = InstrumentTypeAccrual
-        fields = ['id', 'order', 'autogenerate', 'data']
+        fields = ['id', 'name', 'order', 'autogenerate', 'data']
 
 
 class InstrumentTypeEventSerializer(serializers.ModelSerializer):
@@ -264,7 +264,7 @@ class InstrumentTypeEventSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = InstrumentTypeEvent
-        fields = ['id', 'order', 'autogenerate', 'data']
+        fields = ['id', 'name', 'order', 'autogenerate', 'data']
 
 
 class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
@@ -382,6 +382,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
                     o = InstrumentTypeAccrual.objects.get(instrument_type=instance, id=oid)
 
+                    o.name = item['name']
                     o.order = item['order']
                     o.autogenerate = item['autogenerate']
 
@@ -398,6 +399,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
                         o = InstrumentTypeAccrual.objects.create(instrument_type=instance)
 
+                        o.name = item['name']
                         o.order = item['order']
                         o.autogenerate = item['autogenerate']
 
@@ -434,6 +436,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
                     o = InstrumentTypeEvent.objects.get(instrument_type=instance, id=oid)
 
+                    o.name = item['name']
                     o.order = item['order']
                     o.autogenerate = item['autogenerate']
 
@@ -450,6 +453,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
                         o = InstrumentTypeEvent.objects.create(instrument_type=instance)
 
+                        o.name = item['name']
                         o.order = item['order']
                         o.autogenerate = item['autogenerate']
 
@@ -465,6 +469,9 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
                     except Exception as e:
 
                         print("Can't Create Instrument Type Event %s" % e)
+
+
+        print('events create ids %s ' % ids)
 
 
         InstrumentTypeEvent.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()

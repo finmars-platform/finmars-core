@@ -440,6 +440,8 @@ class InstrumentTypeAccrual(models.Model):
                                         related_name='accruals',
                                         verbose_name=ugettext_lazy('instrument type'))
 
+    name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'))
+
     order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
 
     autogenerate = models.BooleanField(default=True, verbose_name=ugettext_lazy('autogenerate'))
@@ -469,6 +471,8 @@ class InstrumentTypeEvent(models.Model):
     instrument_type = models.ForeignKey(InstrumentType, on_delete=models.CASCADE,
                                         related_name='events',
                                         verbose_name=ugettext_lazy('instrument type'))
+
+    name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'))
 
     order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
 
