@@ -2949,8 +2949,7 @@ class PLReportBuilderSql:
 
                 item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
 
-                if item['position_size']:
-                    result_tmp.append(item)
+                result_tmp.append(item)
 
             ITEM_TYPE_INSTRUMENT = 1
             ITEM_TYPE_FX_VARIATIONS = 3
