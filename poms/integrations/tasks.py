@@ -3022,6 +3022,19 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                     options_object['scheme_id'] = instance.scheme.id
                     options_object['execution_context'] =  {'started_by': 'procedure'}
 
+                    total_rows = 0
+
+                    with SFS.open(options_object['file_path'], 'rb') as f1:
+
+                        _l.info("Start reading file to split it into chunks")
+
+                        for lineno, line in enumerate(f1):
+
+                            total_rows = lineno
+
+                    options_object['total_rows'] = total_rows
+
+                    _l.debug('complex_transaction_csv_file_import_by_procedure total_rows %s' %  options_object['total_rows'])
 
                     celery_task = CeleryTask(master_user=procedure_instance.master_user,
                                              member=procedure_instance.member,
