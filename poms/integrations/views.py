@@ -908,9 +908,12 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
 
         celery_task.save()
 
+        # Creating subtask
+        sub_task = CeleryTask.objects.create(master_user=celery_task.master_user, member=celery_task.member, parent=celery_task)
+
         def oncommit():
 
-            res = complex_transaction_csv_file_import_parallel.apply_async(kwargs={'task_id': celery_task.pk})
+            res = complex_transaction_csv_file_import_parallel.apply_async(kwargs={'task_id': sub_task.pk})
 
             celery_task.celery_task_id = res.id
 
