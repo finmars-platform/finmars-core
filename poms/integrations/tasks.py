@@ -3030,12 +3030,20 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
 
                     celery_task.save()
 
+                    # Creating subtask
+                    sub_task = CeleryTask.objects.create(master_user=celery_task.master_user, member=celery_task.member, parent=celery_task)
+
+                    sub_task_options_object = copy.deepcopy(celery_task.options_object)
+
+                    sub_task.options_object = sub_task_options_object
+
+                    sub_task.save()
 
                     # transaction.on_commit(
                     #     lambda: complex_transaction_csv_file_import.apply_async(kwargs={'instance': instance, 'execution_context': {'started_by': 'procedure'}}))
 
                     transaction.on_commit(
-                        lambda: complex_transaction_csv_file_import.apply_async(kwargs={'task_id': celery_task.pk}))
+                        lambda: complex_transaction_csv_file_import.apply_async(kwargs={'task_id': sub_task.pk}))
 
                 except Exception as e:
 
