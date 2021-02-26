@@ -35,6 +35,7 @@ class ModelWithUserCodeSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(ModelWithUserCodeSerializer, self).__init__(*args, **kwargs)
         self.fields['user_code'] = UserCodeField()
+        self.fields['deleted_user_code'] = UserCodeField()
 
     def to_internal_value(self, data):
         ret = super(ModelWithUserCodeSerializer, self).to_internal_value(data)
