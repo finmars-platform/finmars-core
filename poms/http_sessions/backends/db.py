@@ -14,7 +14,7 @@ class SessionStore(DjangoSessionStore):
 
     def create_model_instance(self, data):
 
-        from poms.users.models import UserProfile
+        from poms.users.models import UserProfile, MasterUser, Member
 
         obj = super(SessionStore, self).create_model_instance(data)
 
@@ -36,28 +36,43 @@ class SessionStore(DjangoSessionStore):
         except (ValueError, TypeError):
             master_user_id = None
 
+        try:
+            member_id = int(data.get('current_member', None))
+        except (ValueError, TypeError):
+            member_id = None
+
         # print('data %s' % data)
         # print('create_model_instance master_user_id %s' % master_user_id)
 
-        if obj.user:
+        # Deprecated
+        # if obj.user:
+        #
+        #     # print("Trying to take last master user from User Profile")
+        #
+        #     user_profile = UserProfile.objects.get(user=obj.user)
+        #
+        #     if user_profile.active_master_user:
+        #
+        #         # print("Master user successfully taken from User Profile")
+        #
+        #         obj.current_master_user = user_profile.active_master_user
 
-            # print("Trying to take last master user from User Profile")
+        try:
 
-            user_profile = UserProfile.objects.get(user=obj.user)
+            if not obj.current_master_user:
 
-            if user_profile.active_master_user:
+                if master_user_id:
 
-                # print("Master user successfully taken from User Profile")
+                    obj.current_master_user = MasterUser.objects.get(pk=master_user_id)
 
-                obj.current_master_user = user_profile.active_master_user
+            if not obj.current_member:
 
-        if not obj.current_master_user:
+                if member_id:
 
-            if master_user_id:
-                from poms.users.models import MasterUser
+                    obj.current_member = Member.objects.get(pk=member_id)
 
-                # print("Trying to take by master user id")
+        except Exception as e:
 
-                obj.current_master_user = MasterUser.objects.get(pk=master_user_id)
+            print("Session error %s" % e)
 
         return obj

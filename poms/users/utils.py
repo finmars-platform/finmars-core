@@ -57,45 +57,28 @@ def set_master_user(request, master_user):
 
 
 def get_master_user_and_member(request):
-    user = request.user
-    if not user.is_authenticated:
-        raise PermissionDenied()
 
-    # master_user_id = request.query_params.get('master_user_id', None)
-    # if master_user_id is None:
-    #     master_user_id = request.session.get('master_user_id', None)
+    if not request.user.is_authenticated:
+        raise PermissionDenied()
 
     try:
         session = Session.objects.get(session_key=request.session.session_key)
 
         master_user_id = session.current_master_user_id
+        member_id = session.current_member_id
 
-        # print('request.session.get master_user_id %s' % master_user_id)
-
-        if master_user_id is None:
-            master_user_id = request.query_params.get('master_user_id', None)
-
-        member_qs = Member.objects.prefetch_related('groups').filter(user=user, is_deleted=False)
-
-        # print('get_master_user_and_member.master_user_id %s' % master_user_id)
+        member = None
+        master_user = None
 
         if master_user_id is not None:
 
             master_user = MasterUser.objects.get(id=master_user_id)
 
-            try:
-                member = member_qs.get(master_user=master_user_id)
+        if member_id is not None:
 
-                return member, master_user
-            except ObjectDoesNotExist:
-                pass
+            member = Member.objects.get(user=request.user, master_user=master_user_id)
 
-        member = member_qs.first()
-        if member:
-            session.current_master_user = member.master_user
-            session.save()
-            # request.session['master_user_id'] = member.master_user.id
-            return member, member.master_user
+        return member, master_user
 
     except Session.DoesNotExist:
 

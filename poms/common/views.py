@@ -41,15 +41,15 @@ _l = logging.getLogger('poms.common')
 
 
 class AbstractApiView(APIView):
+
     def perform_authentication(self, request):
+
         super(AbstractApiView, self).perform_authentication(request)
         if request.user.is_authenticated:
             try:
                 request.user.member, request.user.master_user = get_master_user_and_member(request)
             except Exception as e:
-
-                print('e %s ' % e)
-                print("No master user and member created")
+                _l.debug("perform_authentication exception %s" % e)
 
     def initial(self, request, *args, **kwargs):
         super(AbstractApiView, self).initial(request, *args, **kwargs)
