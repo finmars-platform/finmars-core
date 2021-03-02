@@ -19,33 +19,40 @@ def set_master_user(request, master_user):
 
         session = Session.objects.get(session_key=request.session.session_key)
 
-        master_user_id = master_user.id
-        old_master_user_id = session.current_master_user.id
-
-        sessions = Session.objects.filter(user=request.user.id)
         user = User.objects.get(id=request.user.id)
-        user_profile = UserProfile.objects.get(user=user)
+        member = Member.objects(user=user, master_user = master_user)
 
-        if old_master_user_id != master_user_id:
-            if master_user_id is None:
-                del request.session['current_master_user']
+        session.current_master_user = master_user
+        session.current_member = member
 
-                for session in sessions:
-                    session.current_master_user = None
-
-                    session.save()
-
-            else:
-                request.session['current_master_user'] = master_user_id
-
-                for session in sessions:
-                    session.current_master_user = MasterUser.objects.get(id=master_user_id)
-
-                    user_profile.active_master_user = session.current_master_user
-                    print("Set active Master user to User Profile")
-                    user_profile.save()
-
-                    session.save()
+        # DEPRECATED
+        # master_user_id = master_user.id
+        # old_master_user_id = session.current_master_user.id
+        #
+        # sessions = Session.objects.filter(user=request.user.id)
+        # user = User.objects.get(id=request.user.id)
+        # user_profile = UserProfile.objects.get(user=user)
+        #
+        # if old_master_user_id != master_user_id:
+        #     if master_user_id is None:
+        #         del request.session['current_master_user']
+        #
+        #         for session in sessions:
+        #             session.current_master_user = None
+        #
+        #             session.save()
+        #
+        #     else:
+        #         request.session['current_master_user'] = master_user_id
+        #
+        #         for session in sessions:
+        #             session.current_master_user = MasterUser.objects.get(id=master_user_id)
+        #
+        #             user_profile.active_master_user = session.current_master_user
+        #             print("Set active Master user to User Profile")
+        #             user_profile.save()
+        #
+        #             session.save()
 
         _l.debug('set_master_user done: %s' % (time.perf_counter() - set_st))
 
