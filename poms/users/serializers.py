@@ -406,7 +406,11 @@ class MasterUserSerializer(serializers.ModelSerializer):
 
     def get_is_current(self, obj):
         master_user = get_master_user_from_context(self.context)
-        return obj.id == master_user.id
+
+        if master_user:
+            return obj.id == master_user.id
+        return False
+
 
     def get_is_admin(self, obj):
 
@@ -470,8 +474,12 @@ class MasterUserLightSerializer(serializers.ModelSerializer):
         return ret
 
     def get_is_current(self, obj):
+
         master_user = get_master_user_from_context(self.context)
-        return obj.id == master_user.id
+
+        if master_user:
+            return obj.id == master_user.id
+        return False
 
     def get_is_admin(self, obj):
 
