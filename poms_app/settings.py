@@ -275,7 +275,7 @@ USE_L10N = True
 USE_TZ = True
 USE_ETAGS = True
 
-ENV_CSRF_COOKIE_DOMAIN = os.environ.get('ENV_CSRF_COOKIE_DOMAIN', 'https://finmars.com')
+ENV_CSRF_COOKIE_DOMAIN = os.environ.get('ENV_CSRF_COOKIE_DOMAIN', '.finmars.com')
 ENV_CSRF_TRUSTED_ORIGINS = os.environ.get('ENV_CSRF_TRUSTED_ORIGINS', 'https://finmars.com')
 
 
