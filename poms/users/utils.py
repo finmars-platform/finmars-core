@@ -25,9 +25,6 @@ def set_master_user(request, master_user):
         session.current_master_user = master_user
         session.current_member = member
 
-        request.user.member = member
-        request.user.master_user = master_user
-
         # DEPRECATED
         # master_user_id = master_user.id
         # old_master_user_id = session.current_master_user.id
