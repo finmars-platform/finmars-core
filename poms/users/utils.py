@@ -20,7 +20,7 @@ def set_master_user(request, master_user):
         session = Session.objects.get(session_key=request.session.session_key)
 
         user = User.objects.get(id=request.user.id)
-        member = Member.objects(user=user, master_user = master_user)
+        member = Member.objects.get(user=user, master_user = master_user)
 
         session.current_master_user = master_user
         session.current_member = member
