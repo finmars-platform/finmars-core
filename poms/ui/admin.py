@@ -4,7 +4,7 @@ from poms.common.admin import AbstractModelAdmin
 from poms.ui.filters import LayoutContentTypeFilter
 from poms.ui.models import ListLayout, EditLayout, Bookmark, \
     TransactionUserFieldModel, PortalInterfaceAccessModel, DashboardLayout, ContextMenuLayout, TemplateLayout, \
-    EntityTooltip, ColorPalette, ColorPaletteColor
+    EntityTooltip, ColorPalette, ColorPaletteColor, CrossEntityAttributeExtension
 
 
 class PortalInterfaceAccessModelAdmin(AbstractModelAdmin):
@@ -62,6 +62,19 @@ class EntityTooltipAdmin(BaseLayoutAdmin):
 
 
 admin.site.register(EntityTooltip, EntityTooltipAdmin)
+
+
+class CrossEntityAttributeExtensionAdmin(BaseLayoutAdmin):
+    model = CrossEntityAttributeExtension
+    master_user_path = 'master_user'
+    list_display = ['id', 'master_user', 'context_content_type', 'content_type_from', 'content_type_to', 'key_from', 'key_to', 'value_to']
+    list_select_related = ['master_user']
+    search_fields = ['id', 'key_from', 'key_to', 'value_to']
+    raw_id_fields = ['master_user']
+
+
+admin.site.register(CrossEntityAttributeExtension, CrossEntityAttributeExtensionAdmin)
+
 
 
 class TransactionUserFieldModelAdmin(BaseLayoutAdmin):

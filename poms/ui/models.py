@@ -188,6 +188,26 @@ class EntityTooltip(models.Model):
         ]
 
 
+class CrossEntityAttributeExtension(models.Model):
+    master_user = models.ForeignKey(MasterUser,
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+
+    context_content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('context content type'), on_delete=models.CASCADE, related_name="cross_entity_attribute_extensions_by_context")
+
+    content_type_from = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type from'), on_delete=models.CASCADE, related_name="cross_entity_attribute_extensions_by_from")
+
+    content_type_to = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type to'), on_delete=models.CASCADE, related_name="cross_entity_attribute_extensions_by_to")
+
+    key_from = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('key from'))
+    key_to = models.CharField(null=True, max_length=255, default='', blank=True, verbose_name=ugettext_lazy('key to'))
+    value_to = models.CharField(null=True, max_length=255, default='', blank=True, verbose_name=ugettext_lazy('value to'))
+
+    class Meta:
+        unique_together = [
+            ['master_user', 'context_content_type', 'content_type_from', 'key_from'],
+        ]
+
+
 class ColorPalette(NamedModel):
     master_user = models.ForeignKey(MasterUser, verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     name = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('name'))

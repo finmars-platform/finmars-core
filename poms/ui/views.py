@@ -6,12 +6,13 @@ from poms.common.filters import NoOpFilter, CharFilter
 from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet
 from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
     ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
-    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette
+    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, CrossEntityAttributeExtension
 from poms.ui.serializers import ListLayoutSerializer, \
     EditLayoutSerializer, BookmarkSerializer, ConfigurationSerializer, ConfigurationExportLayoutSerializer, \
     TransactionUserFieldSerializer, InstrumentUserFieldSerializer, PortalInterfaceAccessModelSerializer, \
     DashboardLayoutSerializer, TemplateLayoutSerializer, ContextMenuLayoutSerializer, EntityTooltipSerializer, \
-    ColorPaletteSerializer, ListLayoutLightSerializer, DashboardLayoutLightSerializer
+    ColorPaletteSerializer, ListLayoutLightSerializer, DashboardLayoutLightSerializer, \
+    CrossEntityAttributeExtensionSerializer
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 from poms.users.permissions import SuperUserOnly
 from rest_framework.decorators import action
@@ -103,6 +104,27 @@ class EntityTooltipViewSet(AbstractModelViewSet):
     )
     serializer_class = EntityTooltipSerializer
     filter_class = EntityTooltipFilterSet
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+
+
+class CrossEntityAttributeExtensionFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    content_type = LayoutContentTypeFilter()
+
+    class Meta:
+        model = CrossEntityAttributeExtension
+        fields = []
+
+
+class CrossEntityAttributeExtensionViewSet(AbstractModelViewSet):
+    queryset = CrossEntityAttributeExtension.objects.select_related(
+        'master_user',
+    )
+    serializer_class = CrossEntityAttributeExtensionSerializer
+    filter_class = CrossEntityAttributeExtensionFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]

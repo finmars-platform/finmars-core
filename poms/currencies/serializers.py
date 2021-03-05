@@ -8,7 +8,7 @@ from poms.currencies.fields import CurrencyField
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.fields import PricingPolicyField
 from poms.instruments.models import PricingPolicy
-from poms.obj_attrs.serializers import ModelWithAttributesSerializer
+from poms.obj_attrs.serializers import ModelWithAttributesSerializer, ModelWithAttributesOnlySerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.pricing.models import CurrencyPricingPolicy
 from poms.pricing.serializers import CurrencyPricingPolicySerializer
@@ -179,7 +179,7 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
             CurrencyPricingPolicy.objects.filter(currency=instance).exclude(id__in=ids).delete()
 
 
-class CurrencyEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
+class CurrencyEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesOnlySerializer, ModelWithUserCodeSerializer):
 
     master_user = MasterUserField()
 

@@ -743,7 +743,7 @@ def serialize_balance_report_item(item):
     result['id'] = ','.join(ids)
 
     # result["pricing_currency"] = item["pricing_currency_id"]
-    result["currency"] = None
+    # result["currency"] = None
 
 
     result["position_size"] = item["position_size"]
@@ -865,6 +865,13 @@ def serialize_pl_report_item(item):
         result["instrument"] = None
     else:
         result["instrument"] = item["instrument_id"]
+
+
+    if item["currency_id"] == -1:
+        result["currency"] = None
+    else:
+        result["currency"] = item["currency_id"]
+
 
     if item["pricing_currency_id"] == -1:
             result["pricing_currency"] = None

@@ -11,7 +11,8 @@ from poms.layout_recovery.utils import recursive_dict_fix
 from poms.ui.fields import LayoutContentTypeField, ListLayoutField
 from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
     ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
-    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPaletteColor, ColorPalette
+    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPaletteColor, ColorPalette, \
+    CrossEntityAttributeExtension
 from poms.users.fields import MasterUserField, HiddenMemberField
 
 
@@ -98,6 +99,22 @@ class EntityTooltipSerializer(serializers.ModelSerializer):
     class Meta:
         model = EntityTooltip
         fields = ['id', 'master_user', 'content_type', 'name', 'key', 'text']
+
+
+class CrossEntityAttributeExtensionSerializer(serializers.ModelSerializer):
+
+    master_user = MasterUserField()
+
+    context_content_type = LayoutContentTypeField()
+    content_type_from = LayoutContentTypeField()
+    content_type_to = LayoutContentTypeField()
+
+    class Meta:
+        model = CrossEntityAttributeExtension
+        fields = ['id', 'master_user',
+                  'context_content_type', 'content_type_from', 'content_type_to',
+
+                  'key_from', 'key_to', 'value_to']
 
 
 class InstrumentUserFieldSerializer(serializers.ModelSerializer):
