@@ -6,13 +6,14 @@ from poms.common.filters import NoOpFilter, CharFilter
 from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet
 from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
     ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
-    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, CrossEntityAttributeExtension
+    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, CrossEntityAttributeExtension, \
+    ColumnSortData
 from poms.ui.serializers import ListLayoutSerializer, \
     EditLayoutSerializer, BookmarkSerializer, ConfigurationSerializer, ConfigurationExportLayoutSerializer, \
     TransactionUserFieldSerializer, InstrumentUserFieldSerializer, PortalInterfaceAccessModelSerializer, \
     DashboardLayoutSerializer, TemplateLayoutSerializer, ContextMenuLayoutSerializer, EntityTooltipSerializer, \
     ColorPaletteSerializer, ListLayoutLightSerializer, DashboardLayoutLightSerializer, \
-    CrossEntityAttributeExtensionSerializer
+    CrossEntityAttributeExtensionSerializer, ColumnSortDataSerializer
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 from poms.users.permissions import SuperUserOnly
 from rest_framework.decorators import action
@@ -125,6 +126,28 @@ class CrossEntityAttributeExtensionViewSet(AbstractModelViewSet):
     )
     serializer_class = CrossEntityAttributeExtensionSerializer
     filter_class = CrossEntityAttributeExtensionFilterSet
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+
+
+class ColumnSortDataFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    name = CharFilter()
+    user_code = CharFilter()
+
+    class Meta:
+        model = ColumnSortData
+        fields = []
+
+
+class ColumnSortDataViewSet(AbstractModelViewSet):
+    queryset = ColumnSortData.objects.select_related(
+        'master_user',
+    )
+    serializer_class = ColumnSortDataSerializer
+    filter_class = ColumnSortDataFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]

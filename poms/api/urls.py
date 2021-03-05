@@ -296,6 +296,7 @@ router.register(r'ui/entity-tooltip', ui.EntityTooltipViewSet)
 router.register(r'ui/context-menu-layout', ui.ContextMenuLayoutViewSet)
 router.register(r'ui/color-palette', ui.ColorPaletteViewSet)
 router.register(r'ui/cross-entity-attribute-extension', ui.CrossEntityAttributeExtensionViewSet)
+router.register(r'ui/column-sort-data', ui.ColumnSortDataViewSet)
 
 router.register(r'reports/report', reports.BalanceReportViewSet, "report")
 # router.register(r'reports/balance-report', reports.BalanceReportViewSet, "balance-report")

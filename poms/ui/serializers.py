@@ -12,7 +12,7 @@ from poms.ui.fields import LayoutContentTypeField, ListLayoutField
 from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
     ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPaletteColor, ColorPalette, \
-    CrossEntityAttributeExtension
+    CrossEntityAttributeExtension, ColumnSortData
 from poms.users.fields import MasterUserField, HiddenMemberField
 
 
@@ -115,6 +115,16 @@ class CrossEntityAttributeExtensionSerializer(serializers.ModelSerializer):
                   'context_content_type', 'content_type_from', 'content_type_to',
 
                   'key_from', 'key_to', 'value_to']
+
+
+class ColumnSortDataSerializer(serializers.ModelSerializer):
+
+    member = HiddenMemberField()
+    data = serializers.JSONField(allow_null=False)
+
+    class Meta:
+        model = ColumnSortData
+        fields = ['id', 'member', 'name', 'user_code', 'column_key', 'data']
 
 
 class InstrumentUserFieldSerializer(serializers.ModelSerializer):

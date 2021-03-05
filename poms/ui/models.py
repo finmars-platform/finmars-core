@@ -254,6 +254,38 @@ class InstrumentUserFieldModel(models.Model):
     name = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('name'))
 
 
+class ColumnSortData(models.Model):
+
+    member = models.ForeignKey(Member, related_name='column_sort_data',
+                               verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
+
+    name = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('name'))
+    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
+
+    column_key = models.CharField(max_length=255, null=True,  default='', blank=True, verbose_name=ugettext_lazy('column key'))
+
+    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+
+
+    @property
+    def data(self):
+        if self.json_data:
+            try:
+                return json.loads(self.json_data)
+            except (ValueError, TypeError):
+                return None
+        else:
+            return None
+
+    @data.setter
+    def data(self, val):
+        if val:
+            self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+        else:
+            self.json_data = None
+
+
+
 class BaseUIModel(models.Model):
     json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
 

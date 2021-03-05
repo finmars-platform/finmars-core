@@ -866,13 +866,6 @@ def serialize_pl_report_item(item):
     else:
         result["instrument"] = item["instrument_id"]
 
-
-    if item["currency_id"] == -1:
-        result["currency"] = None
-    else:
-        result["currency"] = item["currency_id"]
-
-
     if item["pricing_currency_id"] == -1:
             result["pricing_currency"] = None
     else:
