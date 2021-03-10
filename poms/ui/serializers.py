@@ -124,7 +124,7 @@ class ColumnSortDataSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ColumnSortData
-        fields = ['id', 'member', 'name', 'user_code', 'column_key', 'data']
+        fields = ['id', 'member', 'name', 'user_code', 'column_key', 'is_common', 'data']
 
 
 class InstrumentUserFieldSerializer(serializers.ModelSerializer):

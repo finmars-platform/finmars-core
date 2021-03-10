@@ -264,6 +264,8 @@ class ColumnSortData(models.Model):
 
     column_key = models.CharField(max_length=255, null=True,  default='', blank=True, verbose_name=ugettext_lazy('column key'))
 
+    is_common = models.BooleanField(default=False, verbose_name=ugettext_lazy('is common'))
+
     json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
 
 

@@ -66,7 +66,7 @@ import time
 
 from poms.transactions.serializers import TransactionTypeSerializer
 from poms.ui.models import EditLayout, ListLayout, Bookmark, TransactionUserFieldModel, InstrumentUserFieldModel, \
-    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, ColorPaletteColor
+    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, ColorPaletteColor, ColumnSortData
 
 from django.forms.models import model_to_dict
 
@@ -268,6 +268,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         report_layouts = self.get_report_layouts()
         bookmarks = self.get_bookmarks()
         reference_tables = self.get_reference_tables()
+        column_sort_data = self.get_column_sort_data()
 
         _l.debug('ConfigurationExportViewSet createConfiguration got ui entities done: %s',
                  "{:3.3f}".format(time.perf_counter() - ui_st))
@@ -357,6 +358,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             configuration["body"].append(dashboard_layouts)
             configuration["body"].append(report_layouts)
             configuration["body"].append(bookmarks)
+
+            configuration["body"].append(column_sort_data)
 
             if self.access_table['csv_import.csvimportscheme']:
                 configuration["body"].append(csv_import_schemes)
@@ -1379,6 +1382,33 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         }
 
         return result
+
+
+    def get_column_sort_data(self):
+
+        results = to_json_objects(ColumnSortData.objects.filter(member=self._member))
+
+
+        for item_json in results:
+            item_json["fields"]["data"] = ColumnSortData.objects.get(pk=item_json["pk"]).data
+
+        results = unwrap_items(results)
+
+        delete_prop(results, 'json_data')
+
+        delete_prop(results, 'member')
+
+        for item in results:
+            clear_system_date_attrs(item)
+
+        result = {
+            "entity": "ui.columnsortdata",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
 
     def get_transaction_user_fields(self):
 

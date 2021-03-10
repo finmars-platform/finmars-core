@@ -136,6 +136,9 @@ class ColumnSortDataFilterSet(FilterSet):
 
     name = CharFilter()
     user_code = CharFilter()
+    column_key = CharFilter()
+
+    is_common = django_filters.BooleanFilter()
 
     class Meta:
         model = ColumnSortData
@@ -144,12 +147,12 @@ class ColumnSortDataFilterSet(FilterSet):
 
 class ColumnSortDataViewSet(AbstractModelViewSet):
     queryset = ColumnSortData.objects.select_related(
-        'master_user',
+        'member',
     )
     serializer_class = ColumnSortDataSerializer
     filter_class = ColumnSortDataFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
+        OwnerByMemberFilter,
     ]
 
 

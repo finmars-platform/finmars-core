@@ -45,10 +45,10 @@ from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import TransactionClass, TransactionTypeGroup, TransactionType, TransactionTypeInput
 from poms.transactions.serializers import TransactionTypeGroupSerializer, TransactionTypeSerializer
 from poms.ui.models import ListLayout, InstrumentUserFieldModel, TransactionUserFieldModel, DashboardLayout, EditLayout, \
-    ContextMenuLayout, TemplateLayout, EntityTooltip, ColorPalette
+    ContextMenuLayout, TemplateLayout, EntityTooltip, ColorPalette, ColumnSortData
 from poms.ui.serializers import EditLayoutSerializer, ListLayoutSerializer, DashboardLayoutSerializer, \
     InstrumentUserFieldSerializer, TransactionUserFieldSerializer, ContextMenuLayoutSerializer, \
-    TemplateLayoutSerializer, EntityTooltipSerializer, ColorPaletteSerializer
+    TemplateLayoutSerializer, EntityTooltipSerializer, ColorPaletteSerializer, ColumnSortDataSerializer
 from poms.users.models import EcosystemDefault
 
 import traceback
@@ -1593,6 +1593,73 @@ class ImportManager(object):
 
         _l.debug('Import Configuration Dashboard Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
+    def import_column_sort_data(self, configuration_section):
+
+        st = time.perf_counter()
+
+        for item in configuration_section['items']:
+
+            if 'ui.columnsortdata' in item['entity']:
+
+                self.instance.stats['configuration'][item['entity']] = []
+
+                if 'content' in item:
+
+                    for content_object in item['content']:
+
+                        content_object['member'] = self.member.pk
+
+
+                        serializer = ColumnSortDataSerializer(data=content_object,
+                                                                 context=self.get_serializer_context())
+
+                        stats = {
+                            'content_type': item['entity'],
+                            'mode': self.instance.mode,
+                            'item': content_object,
+                            'error': {
+                                'message': None
+                            },
+                            'status': 'info'
+                        }
+
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+
+                            # _l.debug('Layout import name %s ' % content_object['name'])
+
+                            serializer.save()
+                        except ValidationError:
+
+                            if self.instance.mode == 'overwrite':
+
+                                try:
+
+
+                                    layout = ColumnSortData.objects.get(member=self.member, user_code=content_object['user_code'],
+                                                                               type=content_object['type'])
+
+
+                                    layout.data = content_object['data']
+
+                                    layout.save()
+
+                                except Exception as error:
+                                    stats['status'] = 'error'
+                                    stats['error'][
+                                        'message'] = 'Error. Can\'t Overwrite Column Sort Data Layout for %s' % content_object['user_code']
+                            else:
+
+                                stats['status'] = 'error'
+                                stats['error']['message'] = 'Column Sort Data Layout %s already exists' % content_object['user_code']
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
+
+                        self.update_progress()
+
+        _l.debug('Import Configuration Column Sort Data done %s' % "{:3.3f}".format(time.perf_counter() - st))
+
     def import_download_instrument_schemes(self, configuration_section):
 
         st = time.perf_counter()
@@ -2773,6 +2840,7 @@ class ImportManager(object):
             self.import_context_menu_layouts(configuration_section)
             self.import_reference_tables(configuration_section)
             self.import_dashboard_layouts(configuration_section)
+            self.import_column_sort_data(configuration_section)
 
         _l.debug('Import Configuration done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
