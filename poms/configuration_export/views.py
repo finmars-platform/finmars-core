@@ -66,7 +66,8 @@ import time
 
 from poms.transactions.serializers import TransactionTypeSerializer
 from poms.ui.models import EditLayout, ListLayout, Bookmark, TransactionUserFieldModel, InstrumentUserFieldModel, \
-    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, ColorPaletteColor, ColumnSortData
+    DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, ColorPaletteColor, ColumnSortData, \
+    CrossEntityAttributeExtension
 
 from django.forms.models import model_to_dict
 
@@ -269,6 +270,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         bookmarks = self.get_bookmarks()
         reference_tables = self.get_reference_tables()
         column_sort_data = self.get_column_sort_data()
+        cross_entity_attribute_extension = self.get_cross_entity_attribute_extension()
 
         _l.debug('ConfigurationExportViewSet createConfiguration got ui entities done: %s',
                  "{:3.3f}".format(time.perf_counter() - ui_st))
@@ -360,6 +362,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             configuration["body"].append(bookmarks)
 
             configuration["body"].append(column_sort_data)
+            configuration["body"].append(cross_entity_attribute_extension)
 
             if self.access_table['csv_import.csvimportscheme']:
                 configuration["body"].append(csv_import_schemes)
@@ -1409,6 +1412,28 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
+    def get_cross_entity_attribute_extension(self):
+
+        results = to_json_objects(CrossEntityAttributeExtension.objects.filter(member=self._master_user))
+
+
+        for item_json in results:
+            item_json["fields"]["data"] = CrossEntityAttributeExtension.objects.get(pk=item_json["pk"]).data
+
+        results = unwrap_items(results)
+
+        delete_prop(results, 'master_user')
+
+        for item in results:
+            clear_system_date_attrs(item)
+
+        result = {
+            "entity": "ui.crossentityattributeextension",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
 
     def get_transaction_user_fields(self):
 

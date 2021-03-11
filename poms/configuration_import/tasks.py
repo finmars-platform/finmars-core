@@ -45,10 +45,11 @@ from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import TransactionClass, TransactionTypeGroup, TransactionType, TransactionTypeInput
 from poms.transactions.serializers import TransactionTypeGroupSerializer, TransactionTypeSerializer
 from poms.ui.models import ListLayout, InstrumentUserFieldModel, TransactionUserFieldModel, DashboardLayout, EditLayout, \
-    ContextMenuLayout, TemplateLayout, EntityTooltip, ColorPalette, ColumnSortData
+    ContextMenuLayout, TemplateLayout, EntityTooltip, ColorPalette, ColumnSortData, CrossEntityAttributeExtension
 from poms.ui.serializers import EditLayoutSerializer, ListLayoutSerializer, DashboardLayoutSerializer, \
     InstrumentUserFieldSerializer, TransactionUserFieldSerializer, ContextMenuLayoutSerializer, \
-    TemplateLayoutSerializer, EntityTooltipSerializer, ColorPaletteSerializer, ColumnSortDataSerializer
+    TemplateLayoutSerializer, EntityTooltipSerializer, ColorPaletteSerializer, ColumnSortDataSerializer, \
+    CrossEntityAttributeExtensionSerializer
 from poms.users.models import EcosystemDefault
 
 import traceback
@@ -1659,6 +1660,80 @@ class ImportManager(object):
                         self.update_progress()
 
         _l.debug('Import Configuration Column Sort Data done %s' % "{:3.3f}".format(time.perf_counter() - st))
+
+
+    def import_cross_entity_attribute_extension(self, configuration_section):
+
+        st = time.perf_counter()
+
+        for item in configuration_section['items']:
+
+            if 'ui.crossentityattributeextension' in item['entity']:
+
+                self.instance.stats['configuration'][item['entity']] = []
+
+                if 'content' in item:
+
+                    for content_object in item['content']:
+
+
+                        serializer = CrossEntityAttributeExtensionSerializer(data=content_object,
+                                                              context=self.get_serializer_context())
+
+                        stats = {
+                            'content_type': item['entity'],
+                            'mode': self.instance.mode,
+                            'item': content_object,
+                            'error': {
+                                'message': None
+                            },
+                            'status': 'info'
+                        }
+
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+
+                            # _l.debug('Layout import name %s ' % content_object['name'])
+
+                            serializer.save()
+                        except ValidationError:
+
+                            if self.instance.mode == 'overwrite':
+
+                                try:
+
+
+                                    instance = CrossEntityAttributeExtension.objects.get(master_user=self.master_user,
+                                                                                         context_content_type=content_object[
+                                                                                             'context_content_type'],
+                                                                                         content_type_from=content_object[
+                                                                                            'content_type_from'],
+                                                                                         key_from=content_object[
+                                                                                             'key_from'],
+                                                                                         )
+
+                                    serializer = CrossEntityAttributeExtensionSerializer(data=content_object,
+                                                                                        instance=instance,
+                                                                                        context=self.get_serializer_context())
+                                    serializer.is_valid(raise_exception=True)
+                                    serializer.save()
+
+                                except Exception as error:
+                                    stats['status'] = 'error'
+                                    stats['error'][
+                                        'message'] = 'Error. Can\'t Overwrite Cross Entity Attribute Extension Layout for %s' % content_object['user_code']
+                            else:
+
+                                stats['status'] = 'error'
+                                stats['error']['message'] = 'Cross Entity Attribute Extension Layout %s already exists' % content_object['user_code']
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
+
+                        self.update_progress()
+
+        _l.debug('Import Configuration Cross Entity Attribute Extension done %s' % "{:3.3f}".format(time.perf_counter() - st))
+
 
     def import_download_instrument_schemes(self, configuration_section):
 

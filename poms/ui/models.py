@@ -189,6 +189,18 @@ class EntityTooltip(models.Model):
 
 
 class CrossEntityAttributeExtension(models.Model):
+
+    NULL = 'NULL'
+    CONSTANT = 'CONSTANT'
+    ATTRIBUTE = 'ATTRIBUTE'
+
+    VALUE_TYPES = (
+        (NULL, ugettext_lazy('Null')),
+        (CONSTANT, ugettext_lazy('Constant')),
+        (ATTRIBUTE, ugettext_lazy('Attribute'))
+    )
+
+
     master_user = models.ForeignKey(MasterUser,
                                     verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
@@ -201,6 +213,8 @@ class CrossEntityAttributeExtension(models.Model):
     key_from = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('key from'))
     key_to = models.CharField(null=True, max_length=255, default='', blank=True, verbose_name=ugettext_lazy('key to'))
     value_to = models.CharField(null=True, max_length=255, default='', blank=True, verbose_name=ugettext_lazy('value to'))
+
+    extension_type = models.CharField(null=True, max_length=255, blank=True, choices=VALUE_TYPES, default=NULL, verbose_name=ugettext_lazy('value type'))
 
     class Meta:
         unique_together = [

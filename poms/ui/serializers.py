@@ -114,6 +114,8 @@ class CrossEntityAttributeExtensionSerializer(serializers.ModelSerializer):
         fields = ['id', 'master_user',
                   'context_content_type', 'content_type_from', 'content_type_to',
 
+                  'extension_type',
+
                   'key_from', 'key_to', 'value_to']
 
 
