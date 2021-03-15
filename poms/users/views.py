@@ -43,13 +43,13 @@ from poms.transactions.models import TransactionType, TransactionTypeInput, Tran
 from poms.users.filters import OwnerByMasterUserFilter, MasterUserFilter, OwnerByUserFilter, InviteToMasterUserFilter, \
     IsMemberFilterBackend, MasterUserBackupsForOwnerOnlyFilter
 from poms.users.models import MasterUser, Member, Group, ResetPasswordToken, InviteToMasterUser, EcosystemDefault, \
-    OtpToken
+    OtpToken, UsercodePrefix
 from poms.users.permissions import SuperUserOrReadOnly, IsCurrentMasterUser, IsCurrentUser
 from poms.users.serializers import GroupSerializer, UserSerializer, MasterUserSerializer, MemberSerializer, \
     PingSerializer, UserSetPasswordSerializer, MasterUserSetCurrentSerializer, UserUnsubscribeSerializer, \
     UserRegisterSerializer, MasterUserCreateSerializer, EmailSerializer, PasswordTokenSerializer, \
     InviteToMasterUserSerializer, InviteCreateSerializer, EcosystemDefaultSerializer, MasterUserLightSerializer, \
-    OtpTokenSerializer, MasterUserCopySerializer
+    OtpTokenSerializer, MasterUserCopySerializer, UsercodePrefixSerializer
 from poms.users.tasks import clone_master_user
 from poms.users.utils import set_master_user
 
@@ -100,6 +100,8 @@ class PingViewSet(AbstractApiView, ViewSet):
             'message': 'pong',
             'version': request.version,
             'is_authenticated': request.user.is_authenticated,
+            'current_master_user_id': request.user.master_user.id,
+            'current_member_id': request.user.member.id,
             'is_anonymous': request.user.is_anonymous,
             'now': timezone.template_localtime(timezone.now()),
         })
@@ -852,6 +854,29 @@ class MemberViewSet(AbstractModelViewSet):
             raise PermissionDenied()
 
         return super(MemberViewSet, self).perform_destroy(instance)
+
+class UsercodePrefixFilterSet(FilterSet):
+    id = NoOpFilter()
+    value = CharFilter()
+
+    class Meta:
+        model = UsercodePrefix
+        fields = []
+
+
+class UsercodePrefixViewSet(AbstractModelViewSet):
+    queryset = UsercodePrefix.objects.select_related(
+        'master_user'
+    )
+    serializer_class = UsercodePrefixSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = UsercodePrefixFilterSet
+    ordering_fields = [
+        'value',
+    ]
+    pagination_class = BigPagination
 
 
 class GroupFilterSet(FilterSet):

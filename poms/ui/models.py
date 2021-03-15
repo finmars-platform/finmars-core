@@ -341,7 +341,7 @@ class TemplateLayout(BaseUIModel):
                                verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
     type = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('type'))
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
-    user_code = models.CharField(max_length=25, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
+    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
     is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
 
     class Meta(BaseUIModel.Meta):
@@ -368,7 +368,7 @@ class ContextMenuLayout(BaseUIModel, TimeStampedModel):
     member = models.ForeignKey(Member, related_name='context_menu_layouts', verbose_name=ugettext_lazy('member'),
                                on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
-    user_code = models.CharField(max_length=25, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
+    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
     type = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('type'))
 
     class Meta(BaseUIModel.Meta):
@@ -395,7 +395,7 @@ class ListLayout(BaseLayout, TimeStampedModel):
     member = models.ForeignKey(Member, related_name='template_list_layouts', verbose_name=ugettext_lazy('member'),
                                on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
-    user_code = models.CharField(max_length=25, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
+    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
     is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
     is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('is active'))
 
@@ -435,7 +435,7 @@ class DashboardLayout(BaseUIModel, TimeStampedModel):
     member = models.ForeignKey(Member, related_name='dashboard_layouts', verbose_name=ugettext_lazy('member'),
                                on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
-    user_code = models.CharField(max_length=25, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
+    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
     is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
     is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('is active'))
 
@@ -496,7 +496,7 @@ class EditLayout(BaseLayout, TimeStampedModel):
                                on_delete=models.CASCADE)
 
     name = models.CharField(max_length=255, db_index=True, verbose_name=ugettext_lazy('name'))
-    user_code = models.CharField(max_length=25, verbose_name=ugettext_lazy('user code'))
+    user_code = models.CharField(max_length=255, verbose_name=ugettext_lazy('user code'))
 
     is_default = models.BooleanField(default=False, verbose_name=ugettext_lazy('is default'))
     is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('is active'))

@@ -1164,7 +1164,7 @@ class ComplexTransactionImportSchemeReconField(models.Model):
 class DataProvider(models.Model):
 
     name = models.CharField(max_length=255)
-    user_code = models.CharField(max_length=25, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
+    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
     notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
 
     def __str__(self):

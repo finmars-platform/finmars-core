@@ -1274,6 +1274,13 @@ class UserProfile(models.Model):
         return self.user.username
 
 
+class UsercodePrefix(models.Model):
+
+    master_user = models.ForeignKey(MasterUser, verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE )
+    value = models.CharField(max_length=80, verbose_name=ugettext_lazy('prefix'))
+    notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
+
+
 class Group(models.Model):
 
     ADMIN = 1

@@ -27,7 +27,7 @@ from poms.transactions.fields import TransactionTypeField
 from poms.ui.models import ListLayout, EditLayout
 from poms.users.fields import MasterUserField, MemberField, GroupField, HiddenMemberField
 from poms.users.models import MasterUser, UserProfile, Group, Member, TIMEZONE_CHOICES, InviteToMasterUser, \
-    EcosystemDefault, OtpToken
+    EcosystemDefault, OtpToken, UsercodePrefix
 from poms.users.utils import get_user_from_context, get_master_user_from_context, get_member_from_context
 
 from django.core.mail import send_mail
@@ -42,6 +42,8 @@ _l = getLogger('poms.users')
 class PingSerializer(serializers.Serializer):
     message = serializers.CharField(read_only=True)
     version = serializers.CharField(read_only=True)
+    current_master_user_id = serializers.IntegerField(required=False, allow_null=True)
+    current_member_id = serializers.IntegerField(required=False, allow_null=True)
     is_authenticated = serializers.BooleanField(read_only=True)
     is_anonymous = serializers.BooleanField(read_only=True)
     now = serializers.DateTimeField(read_only=True)
@@ -756,6 +758,15 @@ class MemberViewSerializer(serializers.ModelSerializer):
     def get_is_current(self, obj):
         member = get_member_from_context(self.context)
         return obj.id == member.id
+
+
+class UsercodePrefixSerializer(serializers.ModelSerializer):
+
+    master_user = MasterUserField()
+
+    class Meta:
+        model = UsercodePrefix
+        fields = ['id', 'master_user', 'name', 'notes']
 
 
 class GroupSerializer(serializers.ModelSerializer):

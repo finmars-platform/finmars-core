@@ -57,6 +57,7 @@ class GeneratedEventPermissionFilter(BaseFilterBackend):
 
         member = request.user.member
         master_user = request.user.master_user
+
         if member.is_superuser:
             return queryset
         # instrument_qs = obj_perms_filter_objects_for_view(member, Instrument.objects.filter(master_user=master_user))

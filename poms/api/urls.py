@@ -79,6 +79,7 @@ router.register(r'users/group', users.GroupViewSet)
 router.register(r'users/language', api.LanguageViewSet, 'language')
 router.register(r'users/timezone', api.TimezoneViewSet, 'timezone')
 router.register(r'users/ecosystem-default', users.EcosystemDefaultViewSet, 'ecosystemdefault')
+router.register(r'users/usercode-prefix', users.UsercodePrefixViewSet, 'usercodeprefix')
 
 router.register(r'accounts/account-type-ev-group', accounts.AccountTypeEvGroupViewSet)
 router.register(r'accounts/account-type', accounts.AccountTypeViewSet)
