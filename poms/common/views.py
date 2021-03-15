@@ -50,6 +50,8 @@ class AbstractApiView(APIView):
             try:
                 request.user.member, request.user.master_user = get_master_user_and_member(request)
             except Exception as e:
+
+                request.user.member, request.user.master_user = None, None
                 _l.debug("perform_authentication exception %s" % e)
 
     def initial(self, request, *args, **kwargs):

@@ -100,8 +100,8 @@ class PingViewSet(AbstractApiView, ViewSet):
             'message': 'pong',
             'version': request.version,
             'is_authenticated': request.user.is_authenticated,
-            'current_master_user_id': request.user.master_user.id,
-            'current_member_id': request.user.member.id,
+            'current_master_user_id': getattr(request.user.master_user, 'id', None),
+            'current_member_id': getattr(request.user.member, 'id', None),
             'is_anonymous': request.user.is_anonymous,
             'now': timezone.template_localtime(timezone.now()),
         })

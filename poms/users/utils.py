@@ -85,7 +85,10 @@ def get_master_user_and_member(request):
 
         if member_id is not None:
 
-            member = Member.objects.get(user=request.user, master_user=master_user_id)
+            try:
+                member = Member.objects.get(user=request.user, master_user=master_user_id)
+            except Member.DoesNotExist:
+                return None, master_user
 
         return member, master_user
 
