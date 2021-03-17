@@ -99,11 +99,14 @@ class PingViewSet(AbstractApiView, ViewSet):
         current_master_user_id = None
         current_member_id = None
 
-        if hasattr(request.user, 'master_user'):
-            current_master_user_id = request.user.master_user.id
+        if hasattr(request.user, 'master_user'): # check if Anon user
+
+            if request.user.master_user:  # check if not None
+                current_master_user_id = request.user.master_user.id
 
         if hasattr(request.user, 'member'):
-            current_member_id = request.user.member.id
+            if request.user.member:  # check if not None
+                current_member_id = request.user.member.id
 
         serializer = PingSerializer(instance={
             'message': 'pong',
