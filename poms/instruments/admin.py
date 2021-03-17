@@ -197,7 +197,6 @@ class EventScheduleAdmin(AbstractModelAdmin):
     list_select_related = ['instrument', 'instrument__master_user', 'event_class', 'notification_class', 'periodicity',
                            'accrual_calculation_schedule', 'factor_schedule']
     list_filter = ['effective_date', 'event_class', 'notification_class', 'periodicity']
-    date_hierarchy = 'effective_date'
     search_fields = ['instrument__id', 'instrument__user_code', 'instrument__name']
     raw_id_fields = ['instrument', 'accrual_calculation_schedule']
     save_as = True

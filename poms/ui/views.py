@@ -357,6 +357,8 @@ class ConfigurationExportLayoutViewSet(AbstractModelViewSet):
 class EditLayoutFilterSet(FilterSet):
     id = NoOpFilter()
     content_type = LayoutContentTypeFilter()
+    name = CharFilter()
+    user_code = CharFilter()
 
     class Meta:
         model = EditLayout

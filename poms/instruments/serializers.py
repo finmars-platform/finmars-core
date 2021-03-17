@@ -1067,7 +1067,7 @@ class ManualPricingFormulaSerializer(serializers.ModelSerializer):
 
 class AccrualCalculationScheduleSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
-    periodicity_n = serializers.IntegerField(required=False, default=0, initial=0, min_value=0, max_value=10 * 365)
+    # periodicity_n = serializers.IntegerField(required=False, default=0, initial=0, min_value=0, max_value=10 * 365)
     accrual_calculation_model_object = AccrualCalculationModelSerializer(source='accrual_calculation_model',
                                                                          read_only=True)
     periodicity_object = PeriodicitySerializer(source='periodicity', read_only=True)
@@ -1075,23 +1075,29 @@ class AccrualCalculationScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccrualCalculationSchedule
         fields = [
-            'id', 'accrual_start_date', 'first_payment_date', 'accrual_size', 'accrual_calculation_model',
-            'accrual_calculation_model_object', 'periodicity', 'periodicity_object', 'periodicity_n', 'notes']
+            'id',
+            'accrual_start_date', 'accrual_start_date_value_type',
+            'first_payment_date', 'first_payment_date_value_type',
+            'accrual_size', 'accrual_size_value_type',
+            'periodicity_n', 'periodicity_n_value_type',
+            'accrual_calculation_model',
+            'accrual_calculation_model_object', 'periodicity', 'periodicity_object',  'notes']
 
     def validate(self, attrs):
-        periodicity = attrs['periodicity']
-        if periodicity:
-            periodicity_n = attrs.get('periodicity_n', 0)
-            try:
-                periodicity.to_timedelta(n=periodicity_n)
-            except ValueError:
-                v = serializers.MinValueValidator(1)
-                try:
-                    v(periodicity_n)
-                except serializers.ValidationError as e:
-                    raise ValidationError({'periodicity_n': [str(e)]})
-                except serializers.DjangoValidationError as e:
-                    raise ValidationError({'periodicity_n': e.messages})
+        # TODO check it later
+        # periodicity = attrs['periodicity']
+        # if periodicity:
+        #     periodicity_n = attrs.get('periodicity_n', 0)
+        #     try:
+        #         periodicity.to_timedelta(n=periodicity_n)
+        #     except ValueError:
+        #         v = serializers.MinValueValidator(1)
+        #         try:
+        #             v(periodicity_n)
+        #         except serializers.ValidationError as e:
+        #             raise ValidationError({'periodicity_n': [str(e)]})
+        #         except serializers.DjangoValidationError as e:
+        #             raise ValidationError({'periodicity_n': e.messages})
         return attrs
 
 
@@ -1133,7 +1139,6 @@ class EventScheduleActionSerializer(serializers.ModelSerializer):
 
 class EventScheduleSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
-    periodicity_n = serializers.IntegerField(required=False, default=0, initial=0, min_value=0, max_value=10 * 365)
     actions = EventScheduleActionSerializer(many=True, required=False, allow_null=True)
     event_class_object = serializers.PrimaryKeyRelatedField(source='event_class', read_only=True)
     notification_class_object = serializers.PrimaryKeyRelatedField(source='notification_class', read_only=True)
@@ -1148,8 +1153,11 @@ class EventScheduleSerializer(serializers.ModelSerializer):
         model = EventSchedule
         fields = [
             'id', 'name', 'description', 'event_class', 'event_class_object', 'notification_class',
-            'notification_class_object', 'effective_date', 'notify_in_n_days', 'periodicity', 'periodicity_object',
-            'periodicity_n', 'final_date', 'is_auto_generated',
+            'notification_class_object', 'notify_in_n_days', 'periodicity', 'periodicity_object',
+            'effective_date', 'effective_date_value_type',
+            'periodicity_n', 'periodicity_n_value_type',
+            'final_date', 'final_date_value_type',
+            'is_auto_generated',
             'display_name', 'display_description',
             'actions',
         ]
@@ -1164,19 +1172,20 @@ class EventScheduleSerializer(serializers.ModelSerializer):
                                                                                read_only=True)
 
     def validate(self, attrs):
-        periodicity = attrs['periodicity']
-        if periodicity:
-            periodicity_n = attrs.get('periodicity_n', 0)
-            try:
-                periodicity.to_timedelta(n=periodicity_n)
-            except ValueError:
-                v = serializers.MinValueValidator(1)
-                try:
-                    v(periodicity_n)
-                except serializers.ValidationError as e:
-                    raise ValidationError({'periodicity_n': [str(e)]})
-                except serializers.DjangoValidationError as e:
-                    raise ValidationError({'periodicity_n': e.messages})
+        # TODO check it later
+        # periodicity = attrs['periodicity']
+        # if periodicity:
+        #     periodicity_n = attrs.get('periodicity_n', 0)
+        #     try:
+        #         periodicity.to_timedelta(n=periodicity_n)
+        #     except ValueError:
+        #         v = serializers.MinValueValidator(1)
+        #         try:
+        #             v(periodicity_n)
+        #         except serializers.ValidationError as e:
+        #             raise ValidationError({'periodicity_n': [str(e)]})
+        #         except serializers.DjangoValidationError as e:
+        #             raise ValidationError({'periodicity_n': e.messages})
         return attrs
 
     def get_display_name(self, obj):

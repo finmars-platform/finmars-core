@@ -18,6 +18,7 @@ from mptt.models import MPTTModel
 
 from poms.cache_machine.base import CachingManager, CachingMixin
 from poms.common import formula
+from poms.common.constants import SYSTEM_VALUE_TYPES, SystemValueType
 from poms.common.formula_accruals import get_coupon, f_duration, f_xirr
 from poms.common.models import NamedModel, AbstractClassModel, FakeDeletableModel, EXPRESSION_FIELD_LENGTH, \
     DataTimeStampedModel
@@ -1004,18 +1005,29 @@ class ManualPricingFormula(models.Model):
 
 
 class AccrualCalculationSchedule(CachingMixin, models.Model):
+
     instrument = models.ForeignKey(Instrument, related_name='accrual_calculation_schedules',
                                    verbose_name=ugettext_lazy('instrument'), on_delete=models.CASCADE)
-    accrual_start_date = models.DateField(default=date_now, verbose_name=ugettext_lazy('accrual start date'))
+    accrual_start_date = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('accrual start date'))
+    accrual_start_date_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
+                                                                     verbose_name=ugettext_lazy('accrual start date value type'))
     accrual_end_date = None  # excluded date
-    first_payment_date = models.DateField(default=date_now, verbose_name=ugettext_lazy('first payment date'))
+    first_payment_date = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('first payment date'))
+    first_payment_date_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
+                                                                     verbose_name=ugettext_lazy('first payment date value type'))
     # TODO: is %
-    accrual_size = models.FloatField(default=0.0, verbose_name=ugettext_lazy('accrual size'))
+    accrual_size = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('accrual size'))
+    accrual_size_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.NUMBER,
+                                                                     verbose_name=ugettext_lazy('accrual size value type'))
+
     accrual_calculation_model = models.ForeignKey(AccrualCalculationModel, on_delete=models.PROTECT,
                                                   verbose_name=ugettext_lazy('accrual calculation model'))
     periodicity = models.ForeignKey(Periodicity, on_delete=models.PROTECT, null=True, blank=True,
                                     verbose_name=ugettext_lazy('periodicity'))
-    periodicity_n = models.IntegerField(default=0, verbose_name=ugettext_lazy('periodicity n'))
+    periodicity_n = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('periodicity n'))
+    periodicity_n_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.NUMBER,
+                                                               verbose_name=ugettext_lazy('periodicity n value type'))
+
     notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
 
     objects = CachingManager()
@@ -1247,14 +1259,21 @@ class EventSchedule(models.Model):
 
     # TODO: is first_payment_date for regular
     # TODO: is instrument.maturity for one-off
-    effective_date = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('effective date'))
+    effective_date = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('effective date'))
+    effective_date_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
+                                                                     verbose_name=ugettext_lazy('effective date value type'))
+
     notify_in_n_days = models.PositiveIntegerField(default=0, verbose_name=ugettext_lazy('notify in N days'))
 
     periodicity = models.ForeignKey(Periodicity, null=True, blank=True, on_delete=models.PROTECT,
                                     verbose_name=ugettext_lazy('periodicity'))
-    periodicity_n = models.IntegerField(default=0, verbose_name=ugettext_lazy('N'))
+    periodicity_n = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('periodicity n'))
+    periodicity_n_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.NUMBER,
+                                                             verbose_name=ugettext_lazy('periodicity n value type'))
     # TODO: =see next accrual_calculation_schedule.accrual_start_date or instrument.maturity_date (if last)
-    final_date = models.DateField(default=date.max, verbose_name=ugettext_lazy('final date'))  # excluded date
+    final_date = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('final date'))  # excluded date
+    final_date_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
+                                                                 verbose_name=ugettext_lazy('final_date value type'))
 
     is_auto_generated = models.BooleanField(default=False, verbose_name=ugettext_lazy('is auto generated'))
     accrual_calculation_schedule = models.ForeignKey(AccrualCalculationSchedule, null=True, blank=True, editable=False,
