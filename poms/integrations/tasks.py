@@ -1500,6 +1500,15 @@ def complex_transaction_csv_file_import_parallel_finish(self, task_id):
         result_object['stats_file_report'] = generate_file_report(result_object, master_user, scheme, 'transaction_import.import',
                                                           'Transaction Import', celery_task.options_object['execution_context'])
 
+        if celery_task.options_object['execution_context'] and celery_task.options_object['execution_context']["started_by"] == 'procedure':
+
+            _l.info('complex_transaction_csv_file_import_parallel_finish send final import message')
+
+            send_system_message(master_user=celery_task.master_user,
+                                source="Transaction Import Service",
+                                text="Import Finished",
+                                file_report_id=result_object['stats_file_report'])
+
         # TODO Generate File Report Here
 
         send_websocket_message(data={
@@ -1738,6 +1747,7 @@ def complex_transaction_csv_file_import(self, task_id):
                         error_rows['error_data']['data']['imported_columns'].append(row[i.column - 1])
                     except:
                         _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                        _l.debug('can\'t process inputs_raw: %s|%s', inputs_raw)
                         error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
                         inputs_error.append(i)
 
@@ -2044,16 +2054,16 @@ def complex_transaction_csv_file_import(self, task_id):
 
             _l.debug('complex_transaction_file_import execution_context: %s', execution_context)
 
-            _l.debug("Reached end instance.stats_file_report: %s " % instance.stats_file_report)
+            # _l.debug("Reached end instance.stats_file_report: %s " % instance.stats_file_report)
 
-            if execution_context and execution_context["started_by"] == 'procedure':
-
-                _l.debug('send final import message')
-
-                send_system_message(master_user=instance.master_user,
-                                    source="Transaction Import Service",
-                                    text="Import Finished",
-                                    file_report_id=instance.stats_file_report)
+            # if execution_context and execution_context["started_by"] == 'procedure':
+            #
+            #     _l.debug('send final import message')
+            #
+            #     send_system_message(master_user=instance.master_user,
+            #                         source="Transaction Import Service",
+            #                         text="Import Finished",
+            #                         file_report_id=instance.stats_file_report)
 
             send_websocket_message(data={
                 'type': 'transaction_import_status',
