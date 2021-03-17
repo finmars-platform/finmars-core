@@ -96,12 +96,21 @@ class PingViewSet(AbstractApiView, ViewSet):
     @method_decorator(ensure_csrf_cookie)
     def list(self, request, *args, **kwargs):
 
+        current_master_user_id = None
+        current_member_id = None
+
+        if request.user.master_user:
+            current_master_user_id = request.user.master_user.id
+
+        if request.user.master_user:
+            current_member_id = request.user.member.id
+
         serializer = PingSerializer(instance={
             'message': 'pong',
             'version': request.version,
             'is_authenticated': request.user.is_authenticated,
-            'current_master_user_id': getattr(request.user.master_user, 'id', None),
-            'current_member_id': getattr(request.user.member, 'id', None),
+            'current_master_user_id': current_master_user_id,
+            'current_member_id': current_member_id,
             'is_anonymous': request.user.is_anonymous,
             'now': timezone.template_localtime(timezone.now()),
         })
