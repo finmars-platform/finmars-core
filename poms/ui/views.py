@@ -357,6 +357,8 @@ class ConfigurationExportLayoutViewSet(AbstractModelViewSet):
 class EditLayoutFilterSet(FilterSet):
     id = NoOpFilter()
     content_type = LayoutContentTypeFilter()
+    is_default = django_filters.BooleanFilter()
+    is_active = django_filters.BooleanFilter()
     name = CharFilter()
     user_code = CharFilter()
 
