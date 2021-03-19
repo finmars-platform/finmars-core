@@ -766,7 +766,7 @@ class UsercodePrefixSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UsercodePrefix
-        fields = ['id', 'master_user', 'name', 'notes']
+        fields = ['id', 'master_user', 'value', 'notes']
 
 
 class GroupSerializer(serializers.ModelSerializer):

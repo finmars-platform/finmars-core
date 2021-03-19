@@ -54,7 +54,8 @@ class SlugRelatedFilteredField(SlugRelatedField):
 
 class UserCodeField(CharField):
     def __init__(self, *args, **kwargs):
-        kwargs['max_length'] = 25
+        # kwargs['max_length'] = 25
+        kwargs['max_length'] = 255
         kwargs['required'] = False
         kwargs['allow_null'] = True
         kwargs['allow_blank'] = True
