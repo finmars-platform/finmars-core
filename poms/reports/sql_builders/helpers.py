@@ -51,7 +51,7 @@ def get_transaction_filter_sql_string(instance):
         for strategy in instance.strategies3:
             strategies3_ids.append(str(strategy.id))
 
-        filter_sql_list.append('strategy2_position_id in (' + ', '.join(strategies2_ids) + ')')
+        filter_sql_list.append('strategy3_position_id in (' + ', '.join(strategies3_ids) + ')')
 
     if len(filter_sql_list):
         result_string = result_string + 'where '
@@ -116,7 +116,7 @@ def get_fx_trades_and_fx_variations_transaction_filter_sql_string(instance):
         for strategy in instance.strategies3:
             strategies3_ids.append(str(strategy.id))
 
-        filter_sql_list.append('strategy2_position_id in (' + ', '.join(strategies2_ids) + ')')
+        filter_sql_list.append('strategy3_position_id in (' + ', '.join(strategies3_ids) + ')')
 
     if len(filter_sql_list):
         result_string = result_string + ' and '

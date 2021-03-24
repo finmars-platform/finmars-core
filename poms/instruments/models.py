@@ -115,6 +115,89 @@ class PricingCondition(CachingMixin, AbstractClassModel):
         base_manager_name = 'objects'
 
 
+class ExposureCalculationModel(CachingMixin, AbstractClassModel):
+
+    MARKET_VALUE = 1
+    PRICE_EXPOSURE = 2
+    DELTA_ADJUSTED_PRICE_EXPOSURE = 3
+    UNDERLYING_LONG_SHORT_EXPOSURE_NET = 4
+    UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT = 5
+
+    CLASSES = (
+        (MARKET_VALUE, 'MARKET_VALUE', ugettext_lazy("Market value")),
+        (PRICE_EXPOSURE, 'PRICE_EXPOSURE', ugettext_lazy("Price exposure")),
+        (DELTA_ADJUSTED_PRICE_EXPOSURE, 'DELTA_ADJUSTED_PRICE_EXPOSURE', ugettext_lazy("Delta adjusted price exposure")),
+        (UNDERLYING_LONG_SHORT_EXPOSURE_NET, 'UNDERLYING_LONG_SHORT_EXPOSURE_NET', ugettext_lazy("Underlying long short exposure net")),
+        (UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT, 'UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT', ugettext_lazy("Underlying long short exposure split"))
+    )
+
+    objects = CachingManager()
+
+    class Meta(AbstractClassModel.Meta):
+        verbose_name = ugettext_lazy('Exposure calculation model')
+        verbose_name_plural = ugettext_lazy('Exposure calculation models ')
+
+        base_manager_name = 'objects'
+
+
+# <select id="u948_input" class="u948_input">
+#           <option class="u948_input_option" value="Zero">Zero</option>
+#           <option class="u948_input_option" value="Long Underlying Instrument Price Exposure">Long Underlying Instrument Price Exposure</option>
+#           <option class="u948_input_option" value="Long Underlying Instrument Price Delta-adjusted Exposure">Long Underlying Instrument Price Delta-adjusted Exposure</option>
+#           <option class="u948_input_option" value="Long Underlying Currency FX Rate Exposure">Long Underlying Currency FX Rate Exposure</option>
+#           <option class="u948_input_option" value="Long Underlying Currency FX Rate Delta-adjusted Exposure">Long Underlying Currency FX Rate Delta-adjusted Exposure</option>
+#         </select>
+
+class LongUnderlyingExposure(CachingMixin, AbstractClassModel):
+
+    ZERO = 1
+    LONG_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE = 2
+    LONG_UNDERLYING_INSTRUMENT_PRICE_DELTA = 3
+    LONG_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE = 4
+    LONG_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE = 5
+
+    CLASSES = (
+        (ZERO, 'ZERO', ugettext_lazy("Zero")),
+        (LONG_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE, 'LONG_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE', ugettext_lazy("Long Underlying Instrument Price Exposure")),
+        (LONG_UNDERLYING_INSTRUMENT_PRICE_DELTA, 'LONG_UNDERLYING_INSTRUMENT_PRICE_DELTA', ugettext_lazy("Long Underlying Instrument Price Delta")),
+        (LONG_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE, 'LONG_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE', ugettext_lazy("Long Underlying Currency FX Rate Exposure")),
+        (LONG_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE, 'LONG_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE', ugettext_lazy("Long Underlying Currency FX Rate Delta-adjusted Exposure"))
+    )
+
+    objects = CachingManager()
+
+    class Meta(AbstractClassModel.Meta):
+        verbose_name = ugettext_lazy('Long underlying exposure')
+        verbose_name_plural = ugettext_lazy('Long underlying exposure ')
+
+        base_manager_name = 'objects'
+
+
+class ShortUnderlyingExposure(CachingMixin, AbstractClassModel):
+
+    ZERO = 1
+    SHORT_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE = 2
+    SHORT_UNDERLYING_INSTRUMENT_PRICE_DELTA = 3
+    SHORT_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE = 4
+    SHORT_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE = 5
+
+    CLASSES = (
+        (ZERO, 'ZERO', ugettext_lazy("Zero")),
+        (SHORT_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE, 'SHORT_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE', ugettext_lazy("Short Underlying Instrument Price Exposure")),
+        (SHORT_UNDERLYING_INSTRUMENT_PRICE_DELTA, 'SHORT_UNDERLYING_INSTRUMENT_PRICE_DELTA', ugettext_lazy("Short Underlying Instrument Price Delta")),
+        (SHORT_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE, 'SHORT_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE', ugettext_lazy("Short Underlying Currency FX Rate Exposure")),
+        (SHORT_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE, 'SHORT_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE', ugettext_lazy("Short Underlying Currency FX Rate Delta-adjusted Exposure"))
+    )
+
+    objects = CachingManager()
+
+    class Meta(AbstractClassModel.Meta):
+        verbose_name = ugettext_lazy('Short underlying exposure')
+        verbose_name_plural = ugettext_lazy('Short underlying exposure ')
+
+        base_manager_name = 'objects'
+
+
 class AccrualCalculationModel(CachingMixin, AbstractClassModel):
     NONE = 1
     ACT_ACT = 2
@@ -508,6 +591,7 @@ class Instrument(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTi
 
     instrument_type = models.ForeignKey(InstrumentType, on_delete=models.PROTECT,
                                         verbose_name=ugettext_lazy('instrument type'))
+
     is_active = models.BooleanField(default=True, verbose_name=ugettext_lazy('is active'))
     pricing_currency = models.ForeignKey('currencies.Currency', on_delete=models.PROTECT,
                                          verbose_name=ugettext_lazy('pricing currency'))
@@ -539,6 +623,35 @@ class Instrument(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTi
                                           verbose_name=ugettext_lazy('pricing condition'),
                                           on_delete=models.SET_NULL)
 
+    exposure_calculation_model = models.ForeignKey(ExposureCalculationModel, null=True, blank=True,
+                                          verbose_name=ugettext_lazy('exposure calculation model'),
+                                          on_delete=models.SET_NULL)
+
+    long_underlying_instrument = models.ForeignKey('self', null=True, blank=True,
+                                                   related_name="long_underlying_instruments",
+                                                   verbose_name=ugettext_lazy('long underlying instrument'),
+                                                   on_delete=models.SET_NULL)
+
+    underlying_long_multiplier = models.FloatField(default=1.0, verbose_name=ugettext_lazy('underlying long multiplier'))
+
+    short_underlying_instrument = models.ForeignKey('self', null=True, blank=True,
+                                                    related_name="short_underlying_instruments",
+                                                    verbose_name=ugettext_lazy('short underlying instrument'),
+                                                    on_delete=models.SET_NULL)
+
+    underlying_short_multiplier = models.FloatField(default=1.0, verbose_name=ugettext_lazy('underlying short multiplier'))
+
+
+    long_underlying_exposure = models.ForeignKey(LongUnderlyingExposure, null=True, blank=True,
+                                                   related_name="long_instruments",
+                                                   verbose_name=ugettext_lazy('long underlying exposure'),
+                                                   on_delete=models.SET_NULL)
+
+    short_underlying_exposure = models.ForeignKey(ShortUnderlyingExposure, null=True, blank=True,
+                                                  related_name="short_instruments",
+                                                 verbose_name=ugettext_lazy('short underlying exposure'),
+                                                 on_delete=models.SET_NULL)
+
     price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.PROTECT, null=True,
                                               blank=True, verbose_name=ugettext_lazy('price download scheme'))
     maturity_date = models.DateField(default=date.max, verbose_name=ugettext_lazy('maturity date'))
@@ -555,6 +668,8 @@ class Instrument(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTi
 
     counter_directional_exposure_currency = models.ForeignKey('currencies.Currency', related_name='counter_directional_exposure_currency', on_delete=models.SET_NULL, null=True, blank=True,
                                          verbose_name=ugettext_lazy('counter directional exposure currency'))
+
+
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = ugettext_lazy('instrument')
@@ -1051,6 +1166,9 @@ class PriceHistory(CachingMixin, DataTimeStampedModel):
     date = models.DateField(db_index=True, default=date_now, verbose_name=ugettext_lazy('date'))
     principal_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('principal price'))
     accrued_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('accrued price'))
+
+    long_delta = models.FloatField(default=0.0, verbose_name=ugettext_lazy('long delta'))
+    short_delta = models.FloatField(default=0.0, verbose_name=ugettext_lazy('short delta'))
 
     objects = CachingManager()
 

@@ -254,7 +254,7 @@ admin.site.register(EventScheduleAction, EventScheduleActionAdmin)
 class PriceHistoryAdmin(AbstractModelAdmin):
     model = PriceHistory
     master_user_path = 'instrument__master_user'
-    list_display = ['id', 'master_user', 'instrument', 'pricing_policy', 'date', 'principal_price', 'accrued_price']
+    list_display = ['id', 'master_user', 'instrument', 'pricing_policy', 'date', 'principal_price', 'accrued_price', 'long_delta', 'short_delta']
     list_select_related = ['instrument', 'instrument__master_user', 'pricing_policy']
     search_fields = ['instrument__id', 'instrument__user_code', 'instrument__name']
     list_filter = ['date']

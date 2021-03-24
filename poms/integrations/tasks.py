@@ -1240,7 +1240,7 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
     rowsSuccessCount = 0
 
     if scheme.error_handler == 'break':
-        if result_object['error_row_index']:
+        if 'error_row_index' in result_object and result_object['error_row_index']:
             rowsSuccessCount = result_object['error_row_index'] - 1
         else:
             rowsSuccessCount = result_object['total_rows'] - len(error_rows)
@@ -2091,6 +2091,7 @@ def complex_transaction_csv_file_import(self, task_id):
             result_object = {
                 'processed_rows': instance.processed_rows,
                 'total_rows': instance.total_rows,
+                'error_row_index': instance.error_row_index,
                 'file_name': instance.filename,
                 'error_rows': instance.error_rows,
                 'stats_file_report': instance.stats_file_report
@@ -2477,7 +2478,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                     try:
                         inputs_raw[i.name] = row[i.column - 1]
                         error_rows['error_data']['data']['imported_columns'].append(row[i.column - 1])
-                    except:
+                    except Exception:
                         _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                         error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
                         inputs_error.append(i)

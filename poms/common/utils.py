@@ -33,16 +33,16 @@ def db_class_check_data(model, verbosity, using):
                 print('create %s class -> %s:%s' % (model._meta.verbose_name, id, name))
             try:
                 model.objects.using(using).create(pk=id, user_code=code,
-                                                  name_en=name, description_en=name)
+                                                  name=name, description=name)
             except (IntegrityError, ProgrammingError):
                 pass
         else:
             obj = model.objects.using(using).get(pk=id)
             obj.user_code = code
-            if not obj.name_en:
-                obj.name_en = name
-            if not obj.description_en:
-                obj.description_en = name
+            if not obj.name:
+                obj.name = name
+            if not obj.description:
+                obj.description = name
             obj.save()
 
 

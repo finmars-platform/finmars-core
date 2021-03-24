@@ -643,19 +643,16 @@ class InstrumentTypeViewSerializer(ModelWithObjectPermissionSerializer, ModelWit
 class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermissionSerializer,
                            ModelWithUserCodeSerializer, ModelWithTagSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
-    instrument_type = InstrumentTypeField(default=InstrumentTypeDefault())
+
     instrument_type_object = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
-    pricing_currency = CurrencyField(default=CurrencyDefault())
     pricing_currency_object = serializers.PrimaryKeyRelatedField(source='pricing_currency', read_only=True)
-    accrued_currency = CurrencyField(default=CurrencyDefault())
     accrued_currency_object = serializers.PrimaryKeyRelatedField(source='accrued_currency', read_only=True)
-
-    co_directional_exposure_currency = CurrencyField(default=CurrencyDefault())
     co_directional_exposure_currency_object = serializers.PrimaryKeyRelatedField(source='co_directional_exposure_currency', read_only=True)
-
-    counter_directional_exposure_currency = CurrencyField(default=CurrencyDefault())
     counter_directional_exposure_currency_object = serializers.PrimaryKeyRelatedField(source='counter_directional_exposure_currency', read_only=True)
 
+
+    long_underlying_instrument_object = serializers.PrimaryKeyRelatedField(source='long_underlying_instrument', read_only=True)
+    short_underlying_instrument_object = serializers.PrimaryKeyRelatedField(source='short_underlying_instrument', read_only=True)
 
     payment_size_detail_object = PaymentSizeDetailSerializer(source='payment_size_detail', read_only=True)
     daily_pricing_model_object = DailyPricingModelSerializer(source='daily_pricing_model', read_only=True)
@@ -685,8 +682,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
             'pricing_currency', 'pricing_currency_object', 'price_multiplier',
             'accrued_currency', 'accrued_currency_object', 'accrued_multiplier',
 
-            'co_directional_exposure_currency', 'counter_directional_exposure_currency',
-            'co_directional_exposure_currency_object', 'counter_directional_exposure_currency_object',
+
 
             'payment_size_detail', 'payment_size_detail_object', 'default_price', 'default_accrued',
             'user_text_1', 'user_text_2', 'user_text_3',
@@ -696,7 +692,20 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
             'price_download_scheme', 'price_download_scheme_object',
             'maturity_date', 'maturity_price',
             'manual_pricing_formulas', 'accrual_calculation_schedules', 'factor_schedules', 'event_schedules',
-            'is_enabled', 'pricing_policies'
+            'is_enabled', 'pricing_policies',
+
+            'exposure_calculation_model',
+
+            'co_directional_exposure_currency', 'counter_directional_exposure_currency',
+            'co_directional_exposure_currency_object', 'counter_directional_exposure_currency_object',
+
+            'long_underlying_instrument', 'short_underlying_instrument',
+            'long_underlying_instrument_object', 'short_underlying_instrument_object',
+
+            'underlying_long_multiplier', 'underlying_short_multiplier',
+
+            'long_underlying_exposure', 'short_underlying_exposure',
+
             # 'attributes',
             # 'tags', 'tags_object'
         ]
@@ -707,6 +716,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
         from poms.currencies.serializers import CurrencyViewSerializer
         self.fields['pricing_currency_object'] = CurrencyViewSerializer(source='pricing_currency', read_only=True)
         self.fields['accrued_currency_object'] = CurrencyViewSerializer(source='accrued_currency', read_only=True)
+
 
         from poms.integrations.serializers import PriceDownloadSchemeViewSerializer
         self.fields['price_download_scheme_object'] = PriceDownloadSchemeViewSerializer(source='price_download_scheme',
@@ -1229,7 +1239,10 @@ class PriceHistorySerializer(serializers.ModelSerializer):
         model = PriceHistory
         fields = [
             'id', 'instrument', 'instrument_object', 'pricing_policy', 'pricing_policy_object',
-            'date', 'principal_price', 'accrued_price'
+            'date', 'principal_price', 'accrued_price',
+
+            'long_delta',
+            'short_delta'
         ]
 
     def __init__(self, *args, **kwargs):

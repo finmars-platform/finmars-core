@@ -5,7 +5,8 @@ from django.db import connection
 
 from poms.accounts.models import Account
 from poms.currencies.models import Currency
-from poms.instruments.models import Instrument, InstrumentType
+from poms.instruments.models import Instrument, InstrumentType, LongUnderlyingExposure, ShortUnderlyingExposure, \
+    ExposureCalculationModel
 from poms.portfolios.models import Portfolio
 from poms.reports.builders.balance_item import Report
 from poms.reports.builders.base_builder import BaseReportBuilder
@@ -383,6 +384,10 @@ class BalanceReportBuilderSql:
                     
                     co_directional_exposure_currency_id,
                     counter_directional_exposure_currency_id,
+                    
+                    exposure_calculation_model_id,
+                    long_underlying_exposure_id,
+                    short_underlying_exposure_id,
                 
                     has_second_exposure_currency,
                     
@@ -391,6 +396,19 @@ class BalanceReportBuilderSql:
                     
                     exposure,
                     exposure_loc,
+                    
+                    exposure_delta_adjusted,
+                    exposure_long_underlying_zero,
+                    exposure_long_underlying_price,
+                    exposure_long_underlying_price_delta,
+                    exposure_long_underlying_fx_rate,
+                    exposure_long_underlying_fx_rate_delta,
+                    
+                    exposure_short_underlying_zero,
+                    exposure_short_underlying_price,
+                    exposure_short_underlying_price_delta,
+                    exposure_short_underlying_fx_rate,
+                    exposure_short_underlying_fx_rate_delta,
                     
                     exposure_2,
                     exposure_2_loc,
@@ -504,6 +522,10 @@ class BalanceReportBuilderSql:
                         
                         (c.id) as co_directional_exposure_currency_id,
                         (-1) as counter_directional_exposure_currency_id,
+                        
+                        (-1) as exposure_calculation_model_id,
+                        (-1) as long_underlying_exposure_id,
+                        (-1) as short_underlying_exposure_id,
                     
                         (false) as has_second_exposure_currency,
                             
@@ -512,6 +534,19 @@ class BalanceReportBuilderSql:
                         
                         exposure,
                         exposure_loc,
+                        
+                        (0) as exposure_delta_adjusted,
+                        (0) as exposure_long_underlying_zero,
+                        (0) as exposure_long_underlying_price,
+                        (0) as exposure_long_underlying_price_delta,
+                        (0) as exposure_long_underlying_fx_rate,
+                        (0) as exposure_long_underlying_fx_rate_delta,
+                        
+                        (0) as exposure_short_underlying_zero,
+                        (0) as exposure_short_underlying_price,
+                        (0) as exposure_short_underlying_price_delta,
+                        (0) as exposure_short_underlying_fx_rate,
+                        (0) as exposure_short_underlying_fx_rate_delta,
                         
                         (0) as exposure_2,
                         (0) as exposure_2_loc,
@@ -713,6 +748,10 @@ class BalanceReportBuilderSql:
                     
                     co_directional_exposure_currency_id,
                     counter_directional_exposure_currency_id,
+                    
+                    exposure_calculation_model_id,
+                    long_underlying_exposure_id,
+                    short_underlying_exposure_id,
                 
                     has_second_exposure_currency,
                     
@@ -721,6 +760,19 @@ class BalanceReportBuilderSql:
                     
                     exposure,
                     exposure_loc,
+                    
+                    exposure_delta_adjusted,
+                    exposure_long_underlying_zero,
+                    exposure_long_underlying_price,
+                    exposure_long_underlying_price_delta,
+                    exposure_long_underlying_fx_rate,
+                    exposure_long_underlying_fx_rate_delta,
+                    
+                    exposure_short_underlying_zero,
+                    exposure_short_underlying_price,
+                    exposure_short_underlying_price_delta,
+                    exposure_short_underlying_fx_rate,
+                    exposure_short_underlying_fx_rate_delta,
                     
                     exposure_2,
                     exposure_2_loc,
@@ -831,8 +883,12 @@ class BalanceReportBuilderSql:
                         
                         position_size,
                         
+                        exposure_calculation_model_id,
                         co_directional_exposure_currency_id,
                         counter_directional_exposure_currency_id,
+                        
+                        long_underlying_exposure_id,
+                        short_underlying_exposure_id,
             
                         has_second_exposure_currency,
                         
@@ -850,9 +906,25 @@ class BalanceReportBuilderSql:
             
                         (exposure / rep_cur_fx) as exposure,
                         (exposure_2 / rep_cur_fx) as exposure_2,
-            
+                        (exposure_delta_adjusted / rep_cur_fx) as exposure_delta_adjusted,
+                        
+                        exposure_long_underlying_zero,
+                        exposure_long_underlying_price,
+                        exposure_long_underlying_price_delta,
+                        exposure_long_underlying_fx_rate,
+                        exposure_long_underlying_fx_rate_delta,
+                        
+                        exposure_short_underlying_zero,
+                        exposure_short_underlying_price,
+                        exposure_short_underlying_price_delta,
+                        exposure_short_underlying_fx_rate,
+                        exposure_short_underlying_fx_rate_delta,
+                        
                         (exposure / ec1_fx_rate) as exposure_loc,
                         (exposure_2 / ec2_fx_rate) as exposure_2_loc,
+                        
+                        /* instrument_long_delta */
+                        /* instrument_short_delta */
                         
                         net_cost_price,
                         net_cost_price_loc,
@@ -959,6 +1031,10 @@ class BalanceReportBuilderSql:
                         instrument_class_id,
                         co_directional_exposure_currency_id,
                         counter_directional_exposure_currency_id,
+                        
+                        exposure_calculation_model_id,
+                        long_underlying_exposure_id,
+                        short_underlying_exposure_id,
 
                         has_second_exposure_currency,
     
@@ -970,11 +1046,48 @@ class BalanceReportBuilderSql:
     
                         (principal_price) as instrument_principal_price,
                         (accrued_price) as instrument_accrued_price,
+                        
+                        (long_delta) as instrument_long_delta,
+                        (short_delta) as instrument_short_delta,
     
                         (position_size * principal_price * price_multiplier * pch_fx_rate + (position_size * accrued_price * ach_fx_rate * 1 * accrued_multiplier)) as market_value,
                         (position_size * principal_price * price_multiplier * pch_fx_rate + (position_size * accrued_price * ach_fx_rate * 1 * accrued_multiplier)) as exposure,
 
                         -(position_size * principal_price * price_multiplier * pch_fx_rate + (position_size * accrued_price * ach_fx_rate * 1 * accrued_multiplier)) as exposure_2,
+                        
+                        /* Position * (Price * Multiplier * Long Delta * Pricing to Exposure FX Rate + Accrued * Multiplier * Accrued to Exposure FX Rate) */
+                        (position_size * principal_price * price_multiplier * pch_fx_rate * long_delta + (position_size * accrued_price * ach_fx_rate * 1 * accrued_multiplier)) as exposure_delta_adjusted,
+                        
+                        (0) as exposure_long_underlying_zero,
+                        (underlying_long_multiplier * lui_principal_price * lui_price_multiplier + underlying_long_multiplier * lui_accrued_price * lui_accrued_multiplier) as exposure_long_underlying_price,
+                        (underlying_long_multiplier * long_delta * lui_principal_price * lui_price_multiplier + underlying_long_multiplier * lui_accrued_price * lui_accrued_multiplier) as exposure_long_underlying_price_delta,
+                        (underlying_long_multiplier * ec1_fx_rate) as exposure_long_underlying_fx_rate,
+                        (underlying_long_multiplier * long_delta * ec1_fx_rate) as exposure_long_underlying_fx_rate_delta,
+                        
+                        /*Market Value Long Underlying Exposure
+                        1) "Zero":
+                        =0
+                        
+                        2) "Long Underlying Instrument Price Exposure":
+                         Long Underlying Multiplier* [Long Underlying Instrument].[Price] * [Long Underlying Instrument].[Price Multiplier] + Long Underlying Multiplier * [Long Underlying Instrument].[Accrued] * [Long Underlying Instrument].[Accrued Multiplier]
+
+                        
+                        3) "Long Underlying Instrument Price Delta-adjusted Exposure":
+                        Long Underlying Multiplier * Long Delta * [Long Underlying Instrument].[Price] * [Long Underlying Instrument].[Price Multiplier] + Long Underlying Multiplier * [Long Underlying Instrument].[Accrued] * [Long Underlying Instrument].[Accrued Multiplier]
+
+                        4) "Long Underlying Currency FX Rate Exposure": 
+                         Long Underlying Multiplier * [Long Underlying Currency].[FX Rate]
+                        
+                        5) "Long Underlying Currency FX Rate Delta-adjusted Exposure": 
+                        Long Underlying Multiplier * Long Delta * [Long Underlying Currency].[FX Rate]
+                        
+                        */
+                        
+                        (0) as exposure_short_underlying_zero,
+                        (underlying_short_multiplier * sui_principal_price * sui_price_multiplier + underlying_short_multiplier * sui_accrued_price * sui_accrued_multiplier) as exposure_short_underlying_price,
+                        (underlying_short_multiplier * short_delta * sui_principal_price * sui_price_multiplier + underlying_short_multiplier * sui_accrued_price * sui_accrued_multiplier) as exposure_short_underlying_price_delta,
+                        (underlying_short_multiplier * ec1_fx_rate) as exposure_short_underlying_fx_rate,
+                        (underlying_short_multiplier * short_delta * ec1_fx_rate) as exposure_short_underlying_fx_rate_delta,
                         
                         price_multiplier,
                         pch_fx_rate,
@@ -996,11 +1109,62 @@ class BalanceReportBuilderSql:
                             i.price_multiplier,
                             i.accrued_multiplier,
                             
+                            i.exposure_calculation_model_id,
+                            i.underlying_long_multiplier,
+                            i.underlying_short_multiplier,
+                            
                             i.co_directional_exposure_currency_id,
                             i.counter_directional_exposure_currency_id,
+                            
+                            i.long_underlying_exposure_id,
+                            i.short_underlying_exposure_id,
+                            
                             it.instrument_class_id,
 
                             it.has_second_exposure_currency,
+                            
+                            
+                            (lui.price_multiplier) as lui_price_multiplier,
+                            (lui.accrued_multiplier) as lui_accrued_multiplier,
+                            
+                            (sui.price_multiplier) as sui_price_multiplier,
+                            (sui.accrued_multiplier) as sui_accrued_multiplier,
+                            
+                            (select 
+                                principal_price
+                            from instruments_pricehistory
+                            where 
+                                instrument_id=lui.id and 
+                                date = '{report_date}' and
+                                pricing_policy_id = {pricing_policy_id})
+                            as lui_principal_price,
+                            
+                            (select 
+                                accrued_price
+                            from instruments_pricehistory
+                            where 
+                                instrument_id=lui.id and 
+                                date = '{report_date}' and
+                                pricing_policy_id = {pricing_policy_id})
+                            as lui_accrued_price,
+                            
+                            (select 
+                                principal_price
+                            from instruments_pricehistory
+                            where 
+                                instrument_id=sui.id and 
+                                date = '{report_date}' and
+                                pricing_policy_id = {pricing_policy_id})
+                            as sui_principal_price,
+                            
+                            (select 
+                                accrued_price
+                            from instruments_pricehistory
+                            where 
+                                instrument_id=sui.id and 
+                                date = '{report_date}' and
+                                pricing_policy_id = {pricing_policy_id})
+                            as sui_accrued_price,
                             
                             case when i.co_directional_exposure_currency_id = {report_currency_id}
                                         then 1
@@ -1010,8 +1174,8 @@ class BalanceReportBuilderSql:
                                          from currencies_currencyhistory
                                          where
                                                  currency_id = i.co_directional_exposure_currency_id and
-                                                 date = '2019-12-31' and
-                                                 pricing_policy_id = 843
+                                                 date = '{report_date}' and
+                                                 pricing_policy_id = {pricing_policy_id}
                                         )
                                    end as ec1_fx_rate,
 
@@ -1023,8 +1187,8 @@ class BalanceReportBuilderSql:
                                          from currencies_currencyhistory
                                          where
                                                  currency_id = i.counter_directional_exposure_currency_id and
-                                                 date = '2019-12-31' and
-                                                 pricing_policy_id = 843
+                                                 date = '{report_date}' and
+                                                 pricing_policy_id = {pricing_policy_id}
                                         )
                                 end as ec2_fx_rate,
                             
@@ -1082,7 +1246,25 @@ class BalanceReportBuilderSql:
                                 instrument_id=i.id and 
                                 date = '{report_date}' and
                                 pricing_policy_id = {pricing_policy_id} )
-                            as accrued_price
+                            as accrued_price,
+                            
+                            (select 
+                                long_delta
+                            from instruments_pricehistory
+                            where 
+                                instrument_id=i.id and 
+                                date = '{report_date}' and
+                                pricing_policy_id = {pricing_policy_id})
+                            as long_delta,
+                            
+                            (select 
+                                short_delta
+                            from instruments_pricehistory
+                            where 
+                                instrument_id=i.id and 
+                                date = '{report_date}' and
+                                pricing_policy_id = {pricing_policy_id})
+                            as short_delta
                             
                         from
                             (select
@@ -1098,8 +1280,12 @@ class BalanceReportBuilderSql:
                               instrument_id) as t
                         left join instruments_instrument as i
                         ON instrument_id = i.id
+                        left join instruments_instrument as lui
+                        ON i.long_underlying_instrument_id = lui.id
+                        left join instruments_instrument as sui
+                        ON i.short_underlying_instrument_id = sui.id
                         left join instruments_instrumenttype as it
-                        ON instrument_type_id = it.id
+                        ON i.instrument_type_id = it.id
                         ) as grouped
                     where position_size != 0
                     ) as balance_q
@@ -1281,6 +1467,47 @@ class BalanceReportBuilderSql:
 
                 item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
 
+                # Position * ( Long Underlying Exposure - Short Underlying Exposure)
+                # "Underlying Long/Short Exposure - Split":
+                # Position * Long Underlying Exposure
+                # -Position * Short Underlying Exposure
+
+                long = 0
+                short = 0
+
+                if item["long_underlying_exposure_id"] == LongUnderlyingExposure.ZERO:
+                    long = item["exposure_long_underlying_zero"]
+                if item["long_underlying_exposure_id"] == LongUnderlyingExposure.LONG_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE:
+                    long = item["exposure_short_underlying_price"]
+                if item["long_underlying_exposure_id"] == LongUnderlyingExposure.LONG_UNDERLYING_INSTRUMENT_PRICE_DELTA:
+                    long = item["exposure_long_underlying_price_delta"]
+                if item["long_underlying_exposure_id"] == LongUnderlyingExposure.LONG_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE:
+                    long = item["exposure_long_underlying_fx_rate"]
+                if item["long_underlying_exposure_id"] == LongUnderlyingExposure.LONG_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE:
+                    long = item["exposure_long_underlying_fx_rate_delta"]
+
+                if item["short_underlying_exposure_id"] == ShortUnderlyingExposure.ZERO:
+                    short = item["exposure_short_underlying_zero"]
+                if item["short_underlying_exposure_id"] == ShortUnderlyingExposure.SHORT_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE:
+                    short = item["exposure_short_underlying_price"]
+                if item["short_underlying_exposure_id"] == ShortUnderlyingExposure.SHORT_UNDERLYING_INSTRUMENT_PRICE_DELTA:
+                    short = item["exposure_short_underlying_price_delta"]
+                if item["short_underlying_exposure_id"] == ShortUnderlyingExposure.SHORT_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE:
+                    short = item["exposure_short_underlying_fx_rate"]
+                if item["short_underlying_exposure_id"] == ShortUnderlyingExposure.SHORT_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE:
+                    short = item["exposure_short_underlying_fx_rate_delta"]
+
+                if item["exposure_calculation_model_id"] == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_NET:
+                    item["exposure"] = item["position_size"] * (long - short)
+
+                # (i )   Position * Long Underlying Exposure
+                # (ii)  -Position * Short Underlying Exposure
+
+                if item["exposure_calculation_model_id"] == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT:
+                    item["exposure"] = item["position_size"] * long
+
+
+
                 if item['position_size']:
 
                     updated_result.append(item)
@@ -1323,6 +1550,9 @@ class BalanceReportBuilderSql:
                                 "exposure_loc": item["exposure_2_loc"],
                                 "exposure_currency_id": item["counter_directional_exposure_currency_id"]
                             }
+
+                            if item["exposure_calculation_model_id"] == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT:
+                                new_exposure_item["exposure"] = -item["position_size"] * short
 
                             new_exposure_item["position_size"] = None
                             new_exposure_item["ytm"] = None
