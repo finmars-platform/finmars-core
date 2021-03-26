@@ -156,7 +156,7 @@ def download_instrument_async(self, task_id=None):
 
     try:
         provider = get_provider(task.master_user, task.provider_id)
-    except:
+    except Exception:
         _l.debug('provider load error', exc_info=True)
         task.status = Task.STATUS_ERROR
         task.save()
@@ -260,7 +260,7 @@ def download_instrument_pricing_async(self, task_id):
 
     try:
         provider = get_provider(task.master_user, task.provider_id)
-    except:
+    except Exception:
         _l.debug('provider load error', exc_info=True)
         task.status = Task.STATUS_ERROR
         task.save()
@@ -280,7 +280,7 @@ def download_instrument_pricing_async(self, task_id):
 
     try:
         result, is_ready = provider.download_instrument_pricing(options)
-    except:
+    except Exception:
         _l.warn("provider processing error", exc_info=True)
         task.status = Task.STATUS_ERROR
     else:
@@ -319,7 +319,7 @@ def test_certificate_async(self, task_id):
 
     try:
         provider = get_provider(task.master_user, task.provider_id)
-    except:
+    except Exception:
         _l.debug('provider load error', exc_info=True)
         task.status = Task.STATUS_ERROR
         task.save()
@@ -339,7 +339,7 @@ def test_certificate_async(self, task_id):
 
     try:
         result = provider.test_certificate(options)
-    except:
+    except Exception:
         _l.warn("provider processing error", exc_info=True)
         task.status = Task.STATUS_ERROR
         return
@@ -400,7 +400,7 @@ def download_currency_pricing_async(self, task_id):
 
     try:
         provider = get_provider(task.master_user, task.provider_id)
-    except:
+    except Exception:
         _l.debug('provider load error', exc_info=True)
         task.status = Task.STATUS_ERROR
         task.save()
@@ -420,7 +420,7 @@ def download_currency_pricing_async(self, task_id):
 
     try:
         result, is_ready = provider.download_currency_pricing(options)
-    except:
+    except Exception:
         _l.warn("provider processing error", exc_info=True)
         task.status = Task.STATUS_ERROR
     else:
@@ -1646,7 +1646,7 @@ def complex_transaction_csv_file_import(self, task_id):
 
                 try:
                     v = model_map_class.objects.get(master_user=instance.master_user, value=value).content_object
-                except:
+                except Exception:
 
                     try:
 
@@ -1684,7 +1684,7 @@ def complex_transaction_csv_file_import(self, task_id):
                     value = formula.safe_eval(i.name_expr, names=inputs)
                     row.append(value)
 
-                except:
+                except Exception:
                     _l.debug('can\'t process calculated input: %s|%s', i.name, i.column, exc_info=True)
                     row.append("Invalid Expression")
 
@@ -1745,7 +1745,7 @@ def complex_transaction_csv_file_import(self, task_id):
                     try:
                         inputs_raw[i.name] = row[i.column - 1]
                         error_rows['error_data']['data']['imported_columns'].append(row[i.column - 1])
-                    except:
+                    except Exception:
                         _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                         _l.debug('can\'t process inputs_raw: %s|%s', inputs_raw)
                         error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
@@ -1781,7 +1781,7 @@ def complex_transaction_csv_file_import(self, task_id):
                     try:
                         inputs[i.name] = formula.safe_eval(i.name_expr, names=inputs_raw)
                         error_rows['error_data']['data']['converted_imported_columns'].append(row[i.column - 1])
-                    except:
+                    except Exception:
                         _l.debug('can\'t process conversion input: %s|%s', i.name, i.column, exc_info=True)
                         error_rows['error_data']['data']['converted_imported_columns'].append(
                             ugettext('Invalid expression'))
@@ -1825,7 +1825,7 @@ def complex_transaction_csv_file_import(self, task_id):
                         inputs[i.name] = row[index]
 
                         error_rows['error_data']['data']['calculated_columns'].append(row[index])
-                    except:
+                    except Exception:
                         _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                         error_rows['error_data']['data']['calculated_columns'].append(ugettext('Invalid expression'))
                         calculated_columns_error.append(i)
@@ -1834,7 +1834,7 @@ def complex_transaction_csv_file_import(self, task_id):
 
                 try:
                     rule_value = formula.safe_eval(scheme.rule_expr, names=inputs)
-                except:
+                except Exception:
 
                     error_rows['level'] = 'error'
 
@@ -2031,7 +2031,7 @@ def complex_transaction_csv_file_import(self, task_id):
 
                     with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
                         _process_csv_file(cf)
-        except:
+        except Exception:
 
             _l.debug('Can\'t process file', exc_info=True)
             instance.error_message = ugettext("Invalid file format or file already deleted.")
@@ -2378,7 +2378,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
                 try:
                     v = model_map_class.objects.get(master_user=instance.master_user, value=value).content_object
-                except:
+                except Exception:
 
                     try:
 
@@ -2420,7 +2420,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                     value = formula.safe_eval(i.name_expr, names=inputs)
                     row.append(value)
 
-                except:
+                except Exception:
                     _l.info('can\'t process calculated input: %s|%s', i.name, i.column, exc_info=True)
                     row.append(None)
 
@@ -2493,7 +2493,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                     try:
                         inputs[i.name] = formula.safe_eval(i.name_expr, names=inputs_raw)
                         error_rows['error_data']['data']['converted_imported_columns'].append(row[i.column - 1])
-                    except:
+                    except Exception:
                         _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                         error_rows['error_data']['data']['converted_imported_columns'].append(
                             ugettext('Invalid expression'))
@@ -2522,7 +2522,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                         inputs[i.name] = row[index]
 
                         error_rows['error_data']['data']['calculated_columns'].append(row[index])
-                    except:
+                    except Exception:
                         _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                         error_rows['error_data']['data']['calculated_columns'].append(ugettext('Invalid expression'))
                         calculated_columns_error.append(i)
@@ -2610,7 +2610,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
                             error_rows['error_data']['data']['transaction_type_selector'].append(rule_value)
 
-                        except:
+                        except Exception:
 
                             error_rows['level'] = 'error'
 
@@ -2767,7 +2767,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                         
                     with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
                         _validate_process_csv_file(cf)
-        except:
+        except Exception:
             _l.info('Can\'t process file', exc_info=True)
             instance.error_message = ugettext("Invalid file format or file already deleted.")
         finally:
