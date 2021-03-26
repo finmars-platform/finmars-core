@@ -372,6 +372,7 @@ class FillPricesBrokerBloombergProcess(object):
                         error.error_text = 'Invalid Error Text Expression'
 
             can_write = True
+            exist = False
 
             try:
 
@@ -380,6 +381,8 @@ class FillPricesBrokerBloombergProcess(object):
                     pricing_policy=record.pricing_policy,
                     date=record.date
                 )
+
+                exist = True
 
                 if not self.procedure.price_overwrite_principal_prices and not self.procedure.price_overwrite_accrued_prices:
                     can_write = False
@@ -438,7 +441,7 @@ class FillPricesBrokerBloombergProcess(object):
 
                     price.save()
 
-            else:
+            if not can_write and exist:
 
                 error_prices_count = error_prices_count + 1
 
@@ -540,6 +543,7 @@ class FillPricesBrokerBloombergProcess(object):
             _l.debug('pricing_policy %s' % record.pricing_policy.user_code)
 
             can_write = True
+            exist = False
 
             try:
 
@@ -548,6 +552,8 @@ class FillPricesBrokerBloombergProcess(object):
                     pricing_policy=record.pricing_policy,
                     date=record.date
                 )
+
+                exist = True
 
                 if not self.procedure.price_overwrite_fx_rates:
                     can_write = False
@@ -585,7 +591,7 @@ class FillPricesBrokerBloombergProcess(object):
 
                     price.save()
 
-            else:
+            if not can_write and exist:
 
                 error_prices_count = error_prices_count + 1
 
@@ -790,6 +796,7 @@ class FillPricesBrokerBloombergForwardsProcess(object):
                         error.error_text = 'Invalid Error Text Expression'
 
             can_write = True
+            exist = False
 
             try:
 
@@ -798,6 +805,8 @@ class FillPricesBrokerBloombergForwardsProcess(object):
                     pricing_policy=record.pricing_policy,
                     date=record.date
                 )
+
+                exist = True
 
                 if not self.procedure.price_overwrite_principal_prices and not self.procedure.price_overwrite_accrued_prices:
                     can_write = False
@@ -856,7 +865,7 @@ class FillPricesBrokerBloombergForwardsProcess(object):
 
                     price.save()
 
-            else:
+            if not can_write and exist:
 
                 error_prices_count = error_prices_count + 1
 
@@ -1089,6 +1098,7 @@ class FillPricesBrokerWtradeProcess(object):
                         error.error_text = 'Invalid Error Text Expression'
 
             can_write = True
+            exist = False
 
             try:
 
@@ -1097,6 +1107,8 @@ class FillPricesBrokerWtradeProcess(object):
                     pricing_policy=record.pricing_policy,
                     date=record.date
                 )
+
+                exist = True
 
                 if not self.procedure.price_overwrite_principal_prices and not self.procedure.price_overwrite_accrued_prices:
                     can_write = False
@@ -1155,7 +1167,7 @@ class FillPricesBrokerWtradeProcess(object):
 
                     price.save()
 
-            else:
+            if not can_write and exist:
 
                 error_prices_count = error_prices_count + 1
 
@@ -1317,6 +1329,7 @@ class FillPricesBrokerFixerProcess(object):
             _l.debug('pricing_policy %s' % record.pricing_policy.user_code)
 
             can_write = True
+            exist = False
 
             try:
 
@@ -1325,6 +1338,8 @@ class FillPricesBrokerFixerProcess(object):
                     pricing_policy=record.pricing_policy,
                     date=record.date
                 )
+
+                exist = True
 
                 if not self.procedure.price_overwrite_fx_rates:
                     can_write = False
@@ -1362,7 +1377,7 @@ class FillPricesBrokerFixerProcess(object):
 
                     price.save()
 
-            else:
+            if not can_write and exist:
 
                 error_prices_count = error_prices_count + 1
 
@@ -1565,6 +1580,7 @@ class FillPricesBrokerAlphavProcess(object):
                         error.error_text = 'Invalid Error Text Expression'
 
             can_write = True
+            exist = False
 
             try:
 
@@ -1573,6 +1589,8 @@ class FillPricesBrokerAlphavProcess(object):
                     pricing_policy=record.pricing_policy,
                     date=record.date
                 )
+
+                exist = True
 
                 if not self.procedure.price_overwrite_principal_prices and not self.procedure.price_overwrite_accrued_prices:
                     can_write = False
@@ -1631,7 +1649,7 @@ class FillPricesBrokerAlphavProcess(object):
 
                     price.save()
 
-            else:
+            if not can_write and exist:
 
                 error_prices_count = error_prices_count + 1
 
