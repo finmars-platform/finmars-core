@@ -1564,6 +1564,7 @@ def complex_transaction_csv_file_import(self, task_id):
 
         instance.scheme = scheme
         instance.error_handling = scheme.error_handler
+        instance.delimiter = scheme.delimiter
         instance.file_path = celery_task.options_object['file_path']
         execution_context = celery_task.options_object['execution_context']
 
@@ -2295,6 +2296,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
         instance.scheme = scheme
         instance.error_handling = scheme.error_handler
+        instance.delimiter = scheme.delimiter
         instance.file_path = celery_task.options_object['file_path']
 
         _l.info('complex_transaction_csv_file_import_validate %s' % instance.file_path)
