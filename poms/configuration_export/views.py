@@ -1414,11 +1414,25 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
     def get_cross_entity_attribute_extension(self):
 
-        results = to_json_objects(CrossEntityAttributeExtension.objects.filter(member=self._master_user))
+        results = to_json_objects(CrossEntityAttributeExtension.objects.filter(master_user=self._master_user))
 
+        for item_model in CrossEntityAttributeExtension.objects.filter(master_user=self._master_user):
 
-        for item_json in results:
-            item_json["fields"]["data"] = CrossEntityAttributeExtension.objects.get(pk=item_json["pk"]).data
+            for item_json in results:
+
+                if item_model.pk == item_json['pk']:
+
+                    if item_model.context_content_type:
+                        item_json["fields"]["context_content_type"] = '%s.%s' % (
+                            item_model.context_content_type.app_label, item_model.context_content_type.model)
+
+                    if item_model.content_type_from:
+                        item_json["fields"]["content_type_from"] = '%s.%s' % (
+                            item_model.content_type_from.app_label, item_model.content_type_from.model)
+
+                    if item_model.content_type_to:
+                        item_json["fields"]["content_type_to"] = '%s.%s' % (
+                            item_model.content_type_to.app_label, item_model.content_type_to.model)
 
         results = unwrap_items(results)
 
