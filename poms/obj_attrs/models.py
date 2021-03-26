@@ -30,6 +30,8 @@ class GenericAttributeType(NamedModel):
 
     tooltip = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('tooltip'))
 
+    prefix = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('prefix'))
+
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True, verbose_name=ugettext_lazy('expression'))
 
     can_recalculate = models.BooleanField(default=False, verbose_name=ugettext_lazy("can recalculate"))

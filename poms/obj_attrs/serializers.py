@@ -357,6 +357,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
     class Meta:
         model = GenericAttributeType
         fields = ['id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes',
+                  'prefix',
                   'expr', 'can_recalculate',
                   'tooltip',
                   'value_type', 'order', 'is_hidden', 'classifiers', 'classifiers_flat']
