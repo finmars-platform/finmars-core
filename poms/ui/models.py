@@ -513,12 +513,12 @@ class EditLayout(BaseLayout, TimeStampedModel):
             self.user_code = Truncator(self.name).chars(25, truncate='')
 
         if self.is_default:
-            qs = EditLayout.objects.filter(member=self.member, is_default=True)
+            qs = EditLayout.objects.filter(member=self.member, content_type=self.content_type, is_default=True)
             if self.pk:
                 qs = qs.exclude(pk=self.pk)
             qs.update(is_default=False)
 
-            qs = EditLayout.objects.filter(member=self.member, is_active=True)
+            qs = EditLayout.objects.filter(member=self.member, content_type=self.content_type, is_active=True)
             if self.pk:
                 qs = qs.exclude(pk=self.pk)
             qs.update(is_active=False)
