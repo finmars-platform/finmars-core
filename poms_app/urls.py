@@ -26,8 +26,8 @@ if settings.DEBUG:
 if 'django.contrib.admin' in settings.INSTALLED_APPS:
     if settings.DEBUG:
         urlpatterns += [
-            url(r'^'+ settings.BASE_API_URL + '/admin/doc/', include('django.contrib.admindocs.urls')),
-            url(r'^'+ settings.BASE_API_URL + '/admin/', admin.site.urls),
+            url(r'^'+ settings.BASE_API_URL + '/django-admin/doc/', include('django.contrib.admindocs.urls')),
+            url(r'^'+ settings.BASE_API_URL + '/django-admin/', admin.site.urls),
         ]
     else:
         if settings.DEBUG:
