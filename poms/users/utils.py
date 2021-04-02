@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.exceptions import NotFound, PermissionDenied
 
+from poms.auth_tokens.models import AuthToken
 from poms.http_sessions.models import Session
 from poms.users.models import Member, MasterUser, UserProfile
 
@@ -65,7 +66,7 @@ def set_master_user(request, master_user):
         raise NotFound()
 
 
-def get_master_user_and_member(request):
+def get_master_user_and_member_old(request):
 
     if not request.user.is_authenticated:
         raise PermissionDenied()
@@ -95,6 +96,40 @@ def get_master_user_and_member(request):
     except Session.DoesNotExist:
 
         _l.debug('get_master_user_and_member: session not found')
+
+        raise NotFound()
+
+
+def get_master_user_and_member(request):
+
+    if not request.user.is_authenticated:
+        raise PermissionDenied()
+
+    try:
+        token = AuthToken.objects.get(key=request.auth.key)
+
+        master_user_id = token.current_master_user_id
+        member_id = token.current_member_id
+
+        member = None
+        master_user = None
+
+        if master_user_id is not None:
+
+            master_user = MasterUser.objects.get(id=master_user_id)
+
+        if member_id is not None:
+
+            try:
+                member = Member.objects.get(user=request.user, master_user=master_user_id)
+            except Member.DoesNotExist:
+                return None, master_user
+
+        return member, master_user
+
+    except AuthToken.DoesNotExist:
+
+        _l.debug('get_master_user_and_member: token not found')
 
         raise NotFound()
 

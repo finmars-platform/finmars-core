@@ -19,4 +19,5 @@ DJANGO_LOG_LEVEL=DEBUG \
 SERVER_TYPE=local \
 USE_WEBSOCKETS=True \
 WEBSOCKET_HOST=ws://0.0.0.0:6969 \
+SECRET_KEY=mv83o5mq \
 BACKEND_ROLES="ALL" python manage.py runserver

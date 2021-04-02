@@ -24,3 +24,11 @@ class SessionSerializer(serializers.ModelSerializer):
     def get_user_location(self, instance):
         loc = get_city_by_ip(instance.user_ip)
         return loc
+
+
+class SetSessionSerializer(serializers.Serializer):
+    def create(self, validated_data):
+        return validated_data
+
+    def update(self, instance, validated_data):
+        return self.create(validated_data)

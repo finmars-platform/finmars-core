@@ -707,6 +707,7 @@ class OtpTokenViewSet(AbstractModelViewSet):
 
         return Response({'match': result, "id": id})
 
+
 class EcosystemDefaultViewSet(AbstractModelViewSet):
     queryset = EcosystemDefault.objects.select_related(
         'currency',

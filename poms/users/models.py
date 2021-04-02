@@ -101,6 +101,7 @@ class MasterUserManager(models.Manager):
 
         return obj
 
+
 class MasterUser(models.Model):
 
     STATUS_ONLINE = 1
@@ -212,6 +213,8 @@ class MasterUser(models.Model):
     user_code_counters = ArrayField(models.IntegerField(null=True, blank=True), null=True, blank=True)
 
     token = models.CharField(unique=True, max_length=32, null=True, blank=True, verbose_name=ugettext_lazy('token'))
+
+    unique_id = models.UUIDField(null=True, blank=True, default=uuid.uuid4)
 
     objects = MasterUserManager()
 
@@ -1208,6 +1211,7 @@ class Member(FakeDeletableModel):
         else:
             return self.username
 
+
 class OtpToken(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
@@ -1265,6 +1269,8 @@ class UserProfile(models.Model):
     two_factor_verification = models.BooleanField(default=False, verbose_name=ugettext_lazy('two factor verification'))
 
     active_master_user = models.ForeignKey(MasterUser, null=True, blank=True, verbose_name=ugettext_lazy('master user'), on_delete=models.SET_NULL)
+
+    user_unique_id = models.UUIDField(null=True, blank=True, default=uuid.uuid4)
 
     class Meta:
         verbose_name = ugettext_lazy('profile')

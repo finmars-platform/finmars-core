@@ -3068,8 +3068,18 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                     # transaction.on_commit(
                     #     lambda: complex_transaction_csv_file_import.apply_async(kwargs={'instance': instance, 'execution_context': {'started_by': 'procedure'}}))
 
+                    # transaction.on_commit(
+                    #     lambda: complex_transaction_csv_file_import.apply_async(kwargs={'task_id': sub_task.pk}))
+
+                    celery_sub_tasks = []
+
+                    ct = complex_transaction_csv_file_import.s(task_id=sub_task.id)
+                    celery_sub_tasks.append(ct)
+
+                    # chord(celery_sub_tasks, complex_transaction_csv_file_import_parallel_finish.si(task_id=celery_task.pk)).apply_async()
+
                     transaction.on_commit(
-                        lambda: complex_transaction_csv_file_import.apply_async(kwargs={'task_id': sub_task.pk}))
+                        lambda:  chord(celery_sub_tasks, complex_transaction_csv_file_import_parallel_finish.si(task_id=celery_task.pk)).apply_async())
 
                 except Exception as e:
 

@@ -10,6 +10,8 @@ from __future__ import unicode_literals
 import json
 import logging
 import os
+import datetime
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from celery.schedules import crontab
@@ -36,12 +38,17 @@ class BackendRole:
     DATA_PROVIDER = 'DATA_PROVIDER'
 
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'jrixf-%65l5&#@hbmq()sa-pzy@e)=zpdr6g0cg8a!i_&w-c!)'
+SECRET_KEY =  os.environ.get('SECRET_KEY', None)
 
 SERVER_TYPE = os.environ.get('SERVER_TYPE', 'local')
 
 print('SERVER_TYPE %s' % SERVER_TYPE)
+
+BASE_API_URL = os.environ.get('BASE_API_URL', 'main')
+
+
+print('BASE_API_URL %s' % BASE_API_URL)
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -122,6 +129,8 @@ INSTALLED_APPS = [
 
     'poms.layout_recovery',
 
+    'poms.auth_tokens',
+
     'django.contrib.admin',
     'django.contrib.admindocs',
 
@@ -147,30 +156,35 @@ if SERVER_TYPE == 'local':
 
 # MIDDLEWARE_CLASSES = [
 MIDDLEWARE = [
-    'poms.common.middleware.CommonMiddleware',
-    # 'django.middleware.cache.UpdateCacheMiddleware',
+
     'django.middleware.gzip.GZipMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.http.ConditionalGetMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    # 'poms.common.middleware.NoCacheMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'poms.http_sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'corsheaders.middleware.CorsPostCsrfMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 'django.middleware.cache.UpdateCacheMiddleware',
     # 'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     # 'django_otp.middleware.OTPMiddleware',
+    # 'django.middleware.cache.FetchFromCacheMiddleware',
+
+
+    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsPostCsrfMiddleware',
+    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
+
+
+    'poms.http_sessions.middleware.SessionMiddleware',
+    'poms.common.middleware.CommonMiddleware'
     # 'poms.users.middleware.AuthenticationMiddleware',
     # 'poms.users.middleware.TimezoneMiddleware',
     # 'poms.users.middleware.LocaleMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # 'poms.notifications.middleware.NotificationMiddleware',
-    # 'django.middleware.cache.FetchFromCacheMiddleware',
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
+    # 'poms.common.middleware.NoCacheMiddleware',
 
 
 ]
@@ -309,11 +323,8 @@ if SERVER_TYPE == "development":
 
 if SERVER_TYPE == "local":
 
-    CORS_URLS_REGEX = r'^/api/.*$'
+    CORS_ORIGIN_ALLOW_ALL = True
     CORS_ALLOW_CREDENTIALS = True
-    CORS_ALLOWED_ORIGINS = ENV_CSRF_TRUSTED_ORIGINS.split(',')
-    CORS_ORIGIN_WHITELIST = ENV_CSRF_TRUSTED_ORIGINS.split(',')
-    CSRF_TRUSTED_ORIGINS = ENV_CSRF_TRUSTED_ORIGINS.split(',')
 
 
 # Static files (CSS, JavaScript, Images)
@@ -462,9 +473,10 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'poms.common.pagination.PageNumberPaginationExt',
     'PAGE_SIZE': 40,
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.SessionAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',
         # 'rest_framework.authentication.BasicAuthentication',
         # 'rest_framework.authentication.TokenAuthentication',
+        "poms.auth_tokens.authentication.ExpiringTokenAuthentication",
     ),
     'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
     'DEFAULT_PERMISSION_CLASSES': (
@@ -778,3 +790,6 @@ if DEBUG:
         "SHOW_TOOLBAR_CALLBACK": show_toolbar,
         'RESULTS_STORE_SIZE': 100,
     }
+
+
+TOKEN_TTL = datetime.timedelta(days=15)

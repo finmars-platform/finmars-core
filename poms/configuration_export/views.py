@@ -37,7 +37,7 @@ from poms.obj_attrs.serializers import GenericClassifierViewSerializer, GenericC
     GenericAttributeTypeSerializer
 from poms.obj_perms.utils import obj_perms_filter_objects
 from poms.portfolios.models import Portfolio
-from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme,  CurrencyPricingPolicy, \
+from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, CurrencyPricingPolicy, \
     InstrumentTypePricingPolicy
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
     CurrencyPricingPolicySerializer, InstrumentTypePricingPolicySerializer
@@ -55,8 +55,6 @@ from poms.transactions.models import TransactionType, TransactionTypeInput, Tran
     TransactionTypeActionInstrumentEventScheduleAction, TransactionTypeActionInstrumentFactorSchedule, \
     TransactionTypeActionInstrumentManualPricingFormula, NotificationClass, EventClass, TransactionClass, \
     TransactionTypeInputSettings
-
-
 
 from rest_framework.exceptions import ValidationError
 
@@ -97,8 +95,8 @@ def clear_none_attrs(item):
         if value is None:
             del item[key]
 
-def clear_system_date_attrs(item):
 
+def clear_system_date_attrs(item):
     if 'created' in item:
         del item['created']
     if 'modified' in item:
@@ -119,7 +117,6 @@ codename_set = ['view_%(model_name)s', 'change_%(model_name)s', 'manage_%(model_
 
 
 def get_current_version():
-
     version_path = os.path.join(settings.BASE_DIR, 'data', 'version.txt')
 
     version = None
@@ -138,7 +135,6 @@ def get_current_version():
 
 
 def check_configuration_section(access_table):
-
     result = True
 
     for key, value in access_table.items():
@@ -147,6 +143,7 @@ def check_configuration_section(access_table):
             result = False
 
     return result
+
 
 def get_codename_set(model_cls):
     kwargs = {
@@ -162,7 +159,6 @@ def permission_filter(queryset, member):
 
 
 def get_access_table(member):
-
     result = {
         'obj_attrs.attributetype': False,
         'reference_tables.referencetable': False,
@@ -204,6 +200,7 @@ def get_access_table(member):
                                 result[perm_config['content_type']] = True
 
     return result
+
 
 class ConfigurationExportViewSet(AbstractModelViewSet):
 
@@ -249,13 +246,19 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         _l.debug('ConfigurationExportViewSet createConfiguration got transaction types done: %s',
                  "{:3.3f}".format(time.perf_counter() - transaction_type_st))
 
-        entity_types_st = time.perf_counter()
+        account_type_st = time.perf_counter()
 
         account_types = self.get_account_types()
+
+        _l.debug('ConfigurationExportViewSet createConfiguration got account types done: %s',
+                 "{:3.3f}".format(time.perf_counter() - account_type_st))
+
+        instrument_type_st = time.perf_counter()
+
         instrument_types = self.get_instrument_types()
 
-        _l.debug('ConfigurationExportViewSet createConfiguration got entity types done: %s',
-                 "{:3.3f}".format(time.perf_counter() - entity_types_st))
+        _l.debug('ConfigurationExportViewSet createConfiguration got instrument types done: %s',
+                 "{:3.3f}".format(time.perf_counter() - instrument_type_st))
 
         ui_st = time.perf_counter()
 
@@ -275,15 +278,33 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         _l.debug('ConfigurationExportViewSet createConfiguration got ui entities done: %s',
                  "{:3.3f}".format(time.perf_counter() - ui_st))
 
-        schemes_st = time.perf_counter()
+        csv_schemes_st = time.perf_counter()
 
         csv_import_schemes = self.get_csv_import_schemes()
+
+        _l.debug('ConfigurationExportViewSet createConfiguration got csv_schemes_st done: %s',
+                 "{:3.3f}".format(time.perf_counter() - csv_schemes_st))
+
+        complex_import_schemes_st = time.perf_counter()
+
         complex_import_schemes = self.get_complex_import_schemes()
+
+        _l.debug('ConfigurationExportViewSet createConfiguration got complex_import_schemes_st done: %s',
+                 "{:3.3f}".format(time.perf_counter() - complex_import_schemes_st))
+
+        instrument_download_schemes_st = time.perf_counter()
+
         instrument_download_schemes = self.get_instrument_download_schemes()
+
+        _l.debug('ConfigurationExportViewSet createConfiguration got instrument_download_schemes done: %s',
+                 "{:3.3f}".format(time.perf_counter() - instrument_download_schemes_st))
+
+        complex_transaction_st = time.perf_counter()
+
         complex_transaction_import_scheme = self.get_complex_transaction_import_scheme()
 
-        _l.debug('ConfigurationExportViewSet createConfiguration got schemes done: %s',
-                 "{:3.3f}".format(time.perf_counter() - schemes_st))
+        _l.debug('ConfigurationExportViewSet createConfiguration got complex_transaction_import_scheme done: %s',
+                 "{:3.3f}".format(time.perf_counter() - complex_transaction_st))
 
         currencies_st = time.perf_counter()
 
@@ -303,7 +324,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         currency_attribute_types = self.get_entity_attribute_types('currencies', 'currency')
         account_attribute_types = self.get_entity_attribute_types('accounts', 'account')
         account_type_attribute_types = self.get_entity_attribute_types('accounts', 'accounttype')
-
 
         responsible_attribute_types = self.get_entity_attribute_types('counterparties', 'responsible')
         counterparty_attribute_types = self.get_entity_attribute_types('counterparties', 'counterparty')
@@ -344,7 +364,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         _l.debug('ConfigurationExportViewSet createConfiguration got pricing done: %s',
                  "{:3.3f}".format(time.perf_counter() - pricing_st))
-
 
         if can_export:
 
@@ -413,7 +432,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             configuration["body"].append(entity_tooltips)
             configuration["body"].append(color_palettes)
 
-
             # pricing
 
             configuration["body"].append(instrument_pricing_schemes)
@@ -433,7 +451,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             configuration["body"].append(dashboard_layouts)
             configuration["body"].append(report_layouts)
             configuration["body"].append(bookmarks)
-
 
         return configuration
 
@@ -535,44 +552,43 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         inputs_json = to_json_objects(
             TransactionTypeInput.objects.select_related('settings').filter(transaction_type__id=transaction_type["pk"]))
 
-        for input_model in TransactionTypeInput.objects.select_related('settings').filter(transaction_type__id=transaction_type["pk"]):
+        for input_model in TransactionTypeInput.objects.select_related('settings').filter(
+                transaction_type__id=transaction_type["pk"]):
 
-                for input_json in inputs_json:
+            for input_json in inputs_json:
 
-                    if input_model.pk == input_json['pk']:
+                if input_model.pk == input_json['pk']:
 
-                        if input_model.content_type:
+                    if input_model.content_type:
 
-                            input_json["fields"]["content_type"] = '%s.%s' % (
-                                input_model.content_type.app_label, input_model.content_type.model)
+                        input_json["fields"]["content_type"] = '%s.%s' % (
+                            input_model.content_type.app_label, input_model.content_type.model)
 
-                            if input_model.value_type == 100:
+                        if input_model.value_type == 100:
 
-                                input_prop = self.get_input_prop_by_content_type(input_model)
+                            input_prop = self.get_input_prop_by_content_type(input_model)
 
-                                if input_json["fields"][input_prop['prop']]:
-                                    model = apps.get_model(app_label=input_model.content_type.app_label,
-                                                           model_name=input_model.content_type.model)
+                            if input_json["fields"][input_prop['prop']]:
+                                model = apps.get_model(app_label=input_model.content_type.app_label,
+                                                       model_name=input_model.content_type.model)
 
-                                    key = '___{}__{}'
-                                    key = key.format(input_prop['prop'], input_prop['code'])
+                                key = '___{}__{}'
+                                key = key.format(input_prop['prop'], input_prop['code'])
 
-                                    try:
+                                try:
 
-                                        obj = model.objects.get(
-                                            pk=getattr(input_model, input_model.content_type.model).pk)
+                                    obj = model.objects.get(
+                                        pk=getattr(input_model, input_model.content_type.model).pk)
 
-                                        input_json["fields"][key] = getattr(obj, input_prop['code'])
+                                    input_json["fields"][key] = getattr(obj, input_prop['code'])
 
-                                    except AttributeError:
-                                        input_json["fields"][key] = None
+                                except AttributeError:
+                                    input_json["fields"][key] = None
 
-                        if input_model.settings:
-
-                            input_json["fields"]["settings"] = {
-                                "linked_inputs_names": input_model.settings.linked_inputs_names
+                    if input_model.settings:
+                        input_json["fields"]["settings"] = {
+                            "linked_inputs_names": input_model.settings.linked_inputs_names
                         }
-
 
         results = unwrap_items(inputs_json)
 
@@ -592,7 +608,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         delete_prop(results, 'transaction_type')
 
         return results
-
 
     def add_user_code_to_relation(self, json_obj, transaction_type_action_key):
 
@@ -760,7 +775,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 if hasattr(obj, 'user_code'):
                     json_obj['___%s__user_code' % attr['key']] = obj.user_code
 
-
                 if hasattr(obj, 'user_code'):
                     json_obj['___%s__user_code' % attr['key']] = obj.user_code
 
@@ -847,7 +861,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
                 for key in result_json:
                     if key.endswith('_input') and result_json[key]:
-                        result_json[key] = TransactionTypeInput.objects.get(pk=result_json[key]).name # TODO user code here?
+                        result_json[key] = TransactionTypeInput.objects.get(
+                            pk=result_json[key]).name  # TODO user code here?
 
                     if key.endswith('_phantom') and result_json[key]:
                         result_json[key] = TransactionTypeAction.objects.get(pk=result_json[key]).order
@@ -862,7 +877,10 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
     def get_transaction_types(self):
 
-        qs = TransactionType.objects.filter(master_user=self._master_user, is_deleted=False).exclude(user_code='-')
+        qs = TransactionType.objects \
+            .filter(master_user=self._master_user, is_deleted=False) \
+            .exclude(user_code='-') \
+            .prefetch_related('inputs')
 
         qs = permission_filter(qs, self._member)
 
@@ -974,13 +992,11 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
-    def get_currency_pricing_policies(self, currency_pk):
-
-        items = CurrencyPricingPolicy.objects.filter(currency=currency_pk)
+    def get_currency_pricing_policies(self, currency):
 
         results = []
 
-        for item in items:
+        for item in currency.pricing_policies.all():
 
             result_item = CurrencyPricingPolicySerializer(instance=item).data
 
@@ -1002,24 +1018,37 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         return results
 
     def get_currencies(self):
-        currencies = to_json_objects(
-            Currency.objects.filter(master_user=self._master_user, is_deleted=False).exclude(user_code='-'))
+
+        items = Currency.objects.filter(master_user=self._master_user, is_deleted=False)\
+            .exclude(user_code='-')\
+            .prefetch_related(
+            "pricing_policies",
+            "pricing_policies__pricing_policy",
+            "pricing_policies__pricing_scheme"
+            "pricing_policies__pricing_scheme__type"
+        )
+
+        json_items = to_json_objects(items)
         results = []
 
-        for currency in currencies:
-            result_item = currency["fields"]
+        for item in items:
 
-            result_item["pk"] = currency["pk"]
+            for json_item in json_items:
 
-            result_item.pop("master_user", None)
-            result_item.pop("is_deleted", None)
+                if item.pk == json_item["pk"]:
+                    result_item = json_item["fields"]
 
-            result_item['pricing_policies'] = self.get_currency_pricing_policies(currency["pk"])
+                    result_item["pk"] = json_item["pk"]
 
-            clear_none_attrs(result_item)
-            clear_system_date_attrs(result_item)
+                    result_item.pop("master_user", None)
+                    result_item.pop("is_deleted", None)
 
-            results.append(result_item)
+                    result_item['pricing_policies'] = self.get_currency_pricing_policies(item)
+
+                    clear_none_attrs(result_item)
+                    clear_system_date_attrs(result_item)
+
+                    results.append(result_item)
 
         delete_prop(results, 'pk')
 
@@ -1096,7 +1125,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             result_item.pop("pricing_scheme_object", None)
 
             results.append(result_item)
-
 
         return results
 
@@ -1295,7 +1323,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         content_types = ContentType.objects.all()
 
-        results = to_json_objects(EntityTooltip.objects.filter(master_user=self._master_user, content_type__in=content_types))
+        results = to_json_objects(
+            EntityTooltip.objects.filter(master_user=self._master_user, content_type__in=content_types))
 
         for item_model in EntityTooltip.objects.filter(master_user=self._master_user, content_type__in=content_types):
 
@@ -1386,11 +1415,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
-
     def get_column_sort_data(self):
 
         results = to_json_objects(ColumnSortData.objects.filter(member=self._member))
-
 
         for item_json in results:
             item_json["fields"]["data"] = ColumnSortData.objects.get(pk=item_json["pk"]).data
@@ -1809,7 +1836,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         schemes = to_json_objects(ComplexImportScheme.objects.filter(master_user=self._master_user))
         results = []
 
-
         for scheme in schemes:
             result_item = scheme["fields"]
             result_item["pk"] = scheme["pk"]
@@ -1878,15 +1904,24 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
-
     def get_complex_transaction_import_scheme_rule_fields(self, rule_scenario):
 
-        fields = to_json_objects(ComplexTransactionImportSchemeField.objects.filter(rule_scenario=rule_scenario["pk"]))
+        # fields = to_json_objects(ComplexTransactionImportSchemeField.objects.filter(rule_scenario=rule_scenario["pk"]))
+        items = rule_scenario.fields.all()
+        items_json = to_json_objects(items)
 
-        results = unwrap_items(fields)
+        results = []
+        for item in items:
 
-        for item in results:
-            item["___input__name"] = TransactionTypeInput.objects.get(pk=item["transaction_type_input"]).name
+            for item_json in items_json:
+
+                if item.pk == item_json["pk"]:
+
+                    result_item = item_json["fields"]
+
+                    result_item["___input__name"] = item.transaction_type_input.name
+
+                    results.append(result_item)
 
         delete_prop(results, 'transaction_type_input')
         delete_prop(results, 'rule_scenario')
@@ -1895,7 +1930,10 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
     def get_complex_transaction_import_scheme_recon_fields(self, recon_scenario):
 
-        fields = to_json_objects(ComplexTransactionImportSchemeReconField.objects.filter(recon_scenario=recon_scenario["pk"]))
+        # fields = to_json_objects(
+        #     ComplexTransactionImportSchemeReconField.objects.filter(recon_scenario=recon_scenario["pk"]))
+
+        fields = to_json_objects(recon_scenario.fields.all())
 
         results = unwrap_items(fields)
 
@@ -1905,29 +1943,31 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
     def get_complex_transaction_import_scheme_recon_selector_values(self, recon_scenario):
 
-        instance = ComplexTransactionImportSchemeReconScenario.objects.get(id=recon_scenario['pk'])
+        # instance = ComplexTransactionImportSchemeReconScenario.objects.get(id=recon_scenario['pk'])
 
         result = []
 
-        for item in instance.selector_values.all():
+        for item in recon_scenario.selector_values.all():
             result.append(item.value)
 
         return result
 
     def get_complex_transaction_import_scheme_rule_selector_values(self, rule_scenario):
 
-        instance = ComplexTransactionImportSchemeRuleScenario.objects.get(id=rule_scenario['pk'])
+        # instance = ComplexTransactionImportSchemeRuleScenario.objects.get(id=rule_scenario['pk'])
 
         result = []
 
-        for item in instance.selector_values.all():
+        for item in rule_scenario.selector_values.all():
             result.append(item.value)
 
         return result
 
     def get_complex_transaction_import_scheme_selector_values(self, scheme):
 
-        fields = to_json_objects(ComplexTransactionImportSchemeSelectorValue.objects.filter(scheme=scheme["pk"]))
+        # fields = to_json_objects(ComplexTransactionImportSchemeSelectorValue.objects.filter(scheme=scheme["pk"]))
+
+        fields = to_json_objects(scheme.selector_values.all())
 
         results = unwrap_items(fields)
 
@@ -1937,7 +1977,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
     def get_complex_transaction_import_scheme_calculated_inputs(self, scheme):
 
-        fields = to_json_objects(ComplexTransactionImportSchemeCalculatedInput.objects.filter(scheme=scheme["pk"]))
+        # fields = to_json_objects(ComplexTransactionImportSchemeCalculatedInput.objects.filter(scheme=scheme["pk"]))
+
+        fields = to_json_objects(scheme.calculated_inputs.all())
 
         results = unwrap_items(fields)
 
@@ -1947,7 +1989,9 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
     def get_complex_transaction_import_scheme_inputs(self, scheme):
 
-        fields = to_json_objects(ComplexTransactionImportSchemeInput.objects.filter(scheme=scheme["pk"]))
+        # fields = to_json_objects(ComplexTransactionImportSchemeInput.objects.filter(scheme=scheme["pk"]))
+
+        fields = to_json_objects(scheme.inputs.all())
 
         results = unwrap_items(fields)
 
@@ -1957,23 +2001,31 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
     def get_complex_transaction_import_scheme_rule_scenarios(self, scheme):
 
-        rules = to_json_objects(ComplexTransactionImportSchemeRuleScenario.objects.filter(scheme=scheme["pk"]))
+        # rules = to_json_objects(ComplexTransactionImportSchemeRuleScenario.objects.filter(scheme=scheme["pk"]))
+
+        items = scheme.rule_scenarios.all()
+        items_json = to_json_objects(items)
+
+
 
         # results = unwrap_items(rules)
 
         results = []
+        for item in items:
 
-        for rule in rules:
-            result_item = rule["fields"]
+            for item_json in items_json:
 
-            result_item["fields"] = self.get_complex_transaction_import_scheme_rule_fields(rule)
-            result_item["selector_values"] =  self.get_complex_transaction_import_scheme_rule_selector_values(rule)
+                if item.pk == item_json["pk"]:
 
-            result_item["___transaction_type__user_code"] = TransactionType.objects.get(
-                pk=rule["fields"]["transaction_type"]).user_code
-            result_item.pop("transaction_type", None)
+                    result_item = item_json["fields"]
 
-            results.append(result_item)
+                    result_item["fields"] = self.get_complex_transaction_import_scheme_rule_fields(item)
+                    result_item["selector_values"] = self.get_complex_transaction_import_scheme_rule_selector_values(item)
+
+                    result_item["___transaction_type__user_code"] = item.transaction_type.user_code
+                    result_item.pop("transaction_type", None)
+
+                    results.append(result_item)
 
         delete_prop(results, 'scheme')
 
@@ -1981,20 +2033,27 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
     def get_complex_transaction_import_scheme_recon_scenarios(self, scheme):
 
-        recon_scenarios = to_json_objects(ComplexTransactionImportSchemeReconScenario.objects.filter(scheme=scheme["pk"]))
+        # recon_scenarios = to_json_objects(ComplexTransactionImportSchemeReconScenario.objects.filter(scheme=scheme["pk"]))
+
+        items = scheme.recon_scenarios.all()
+        items_json = to_json_objects(scheme.recon_scenarios.all())
 
         # results = unwrap_items(rules)
 
         results = []
 
-        for recon_scenario in recon_scenarios:
-            result_item = recon_scenario["fields"]
+        for item in items:
+            for item_json in items_json:
 
-            result_item["fields"] = self.get_complex_transaction_import_scheme_recon_fields(recon_scenario)
+                if item.pk == item_json["pk"]:
+                    result_item = item_json["fields"]
 
-            result_item["selector_values"] =  self.get_complex_transaction_import_scheme_recon_selector_values(recon_scenario)
+                    result_item["fields"] = self.get_complex_transaction_import_scheme_recon_fields(item)
 
-            results.append(result_item)
+                    result_item["selector_values"] = self.get_complex_transaction_import_scheme_recon_selector_values(
+                        item)
+
+                    results.append(result_item)
 
         delete_prop(results, 'scheme')
 
@@ -2002,24 +2061,44 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
     def get_complex_transaction_import_scheme(self):
 
-        schemes = to_json_objects(ComplexTransactionImportScheme.objects.filter(master_user=self._master_user))
+        items = ComplexTransactionImportScheme.objects.filter(master_user=self._master_user) \
+            .prefetch_related("inputs",
+                              "calculated_inputs",
+                              "rule_scenarios",
+                              "rule_scenarios__transaction_type",
+                              "rule_scenarios__transaction_type__inputs",
+                              "rule_scenarios__fields",
+                              "rule_scenarios__fields__transaction_type_input",
+                              "rule_scenarios__selector_values",
+                              "recon_scenarios",
+                              "recon_scenarios__fields",
+                              "recon_scenarios__selector_values",
+                              "selector_values"
+                              )
+
+        items_json = to_json_objects(items)
 
         results = []
 
-        for scheme in schemes:
-            result_item = scheme["fields"]
+        for item_json in items_json:
 
-            clear_none_attrs(result_item)
+            for item in items:
 
-            result_item.pop("master_user", None)
+                if item_json['pk'] == item.pk:
+                    result_item = item_json["fields"]
 
-            result_item["calculated_inputs"] = self.get_complex_transaction_import_scheme_calculated_inputs(scheme)
-            result_item["inputs"] = self.get_complex_transaction_import_scheme_inputs(scheme)
-            result_item["selector_values"] = self.get_complex_transaction_import_scheme_selector_values(scheme)
-            result_item["rule_scenarios"] = self.get_complex_transaction_import_scheme_rule_scenarios(scheme)
-            result_item["recon_scenarios"] = self.get_complex_transaction_import_scheme_recon_scenarios(scheme)
+                    clear_none_attrs(result_item)
 
-            results.append(result_item)
+                    result_item.pop("master_user", None)
+
+                    result_item["calculated_inputs"] = self.get_complex_transaction_import_scheme_calculated_inputs(
+                        item)
+                    result_item["inputs"] = self.get_complex_transaction_import_scheme_inputs(item)
+                    result_item["selector_values"] = self.get_complex_transaction_import_scheme_selector_values(item)
+                    result_item["rule_scenarios"] = self.get_complex_transaction_import_scheme_rule_scenarios(item)
+                    result_item["recon_scenarios"] = self.get_complex_transaction_import_scheme_recon_scenarios(item)
+
+                    results.append(result_item)
 
         result = {
             "entity": "integrations.complextransactionimportscheme",
@@ -2093,7 +2172,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
-
     def get_instrument_pricing_schemes(self):
 
         schemes = InstrumentPricingScheme.objects.filter(master_user=self._master_user)
@@ -2118,7 +2196,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         }
 
         return result
-
 
     def get_currency_pricing_schemes(self):
 
@@ -2193,14 +2270,12 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         return result
 
-
     def get_schedules(self):
 
         schedules = Schedule.objects.filter(master_user=self._master_user)
         results = []
 
         for schedule in schedules:
-
             result_item = ScheduleSerializer(instance=schedule).data
 
             result_item.pop("id", None)
@@ -2250,11 +2325,9 @@ class MappingExportViewSet(AbstractModelViewSet):
 
         can_export = check_configuration_section(self.access_table)
 
-
         if can_export:
 
             if self.access_table['integrations.mappingtable']:
-
                 portfolio_mapping = self.get_portfolio_mapping()
                 currency_mapping = self.get_currency_mapping()
                 instrument_type_mapping = self.get_instrument_type_mapping()
@@ -2873,7 +2946,6 @@ class ConfigurationDuplicateCheckViewSet(AbstractModelViewSet):
         sections = file_content['body']
 
         results = []
-
 
         configuration_section = None
 
