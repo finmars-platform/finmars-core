@@ -330,7 +330,7 @@ if SERVER_TYPE == "local":
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
 
-STATIC_URL = '/api/static/'
+STATIC_URL = BASE_API_URL + '/api/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 USE_WEBSOCKETS = False
