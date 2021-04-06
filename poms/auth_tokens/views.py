@@ -233,7 +233,7 @@ class CreateMasterUser(APIView):
             user=user,
             language=translation.get_language(), name=name)
 
-        member = Member.objects.create(user=request.user, master_user=master_user, is_owner=True, is_admin=True)
+        member = Member.objects.create(user=user, master_user=master_user, is_owner=True, is_admin=True)
         member.save()
 
         admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
