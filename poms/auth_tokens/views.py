@@ -185,6 +185,7 @@ class CreateUser(APIView):
         password = generate_random_string(10)
 
         user = User.objects.create(email=email, username=username, password=password)
+        user.save()
 
         UserProfile.objects.create(userid=user.pk, user_unique_id=user_unique_id)
 
