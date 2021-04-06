@@ -190,7 +190,7 @@ class CreateUser(APIView):
                 user = User.objects.create(email=email, username=username, password=password)
                 user.save()
 
-                user_profile = UserProfile.objects.get_or_create(user_id=user.pk)
+                user_profile, created = UserProfile.objects.get_or_create(user_id=user.pk)
 
                 user_profile.user_unique_id = user_unique_id
                 user_profile.save()
