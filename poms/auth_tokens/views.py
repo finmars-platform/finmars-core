@@ -187,7 +187,7 @@ class CreateUser(APIView):
         user = User.objects.create(email=email, username=username, password=password)
         user.save()
 
-        UserProfile.objects.create(userid=user.pk, user_unique_id=user_unique_id)
+        UserProfile.objects.create(user_id=user.pk, user_unique_id=user_unique_id)
 
         return Response({'status': 'ok'})
 
