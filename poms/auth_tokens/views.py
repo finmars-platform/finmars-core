@@ -17,7 +17,6 @@ from poms.auth_tokens.utils import generate_random_string
 from poms.users.models import MasterUser, Member, UserProfile, Group
 from django.utils import translation
 
-
 _l = logging.getLogger('poms.auth_tokens')
 
 
@@ -135,7 +134,6 @@ class SetAuthToken(APIView):
 
         member = Member.objects.get(master_user=master_user, user=user)
 
-
         # ======================= Generating/Updating Token
 
         token = None
@@ -177,7 +175,6 @@ class CreateUser(APIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-
         username = serializer.validated_data['username']
         email = serializer.validated_data['email']
         user_unique_id = serializer.validated_data['user_unique_id']
@@ -193,7 +190,10 @@ class CreateUser(APIView):
                 user = User.objects.create(email=email, username=username, password=password)
                 user.save()
 
-                UserProfile.objects.create(user_id=user.pk, user_unique_id=user_unique_id)
+                user_profile = UserProfile.objects.get_or_create(user_id=user.pk)
+
+                user_profile.user_unique_id = user_unique_id
+                user_profile.save()
 
             except Exception as e:
                 _l.info("Create user error %s" % e)
@@ -223,8 +223,6 @@ class CreateMasterUser(APIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-
-
         name = serializer.validated_data['name']
         user_unique_id = serializer.validated_data['user_unique_id']
 
@@ -242,6 +240,4 @@ class CreateMasterUser(APIView):
         admin_group.members.add(member.id)
         admin_group.save()
 
-
         return Response({'status': 'ok'})
-
