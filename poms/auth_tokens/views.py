@@ -184,9 +184,9 @@ class CreateUser(APIView):
 
         password = generate_random_string(10)
 
-        user = User.objects.get_or_create(email=email, username=username, password=password)
+        user = User.objects.create(email=email, username=username, password=password)
 
-        UserProfile.objects.create(user=user, user_unique_id=user_unique_id)
+        UserProfile.objects.create(userid=user.pk, user_unique_id=user_unique_id)
 
         return Response({'status': 'ok'})
 
