@@ -224,6 +224,7 @@ class CreateMasterUser(APIView):
         serializer.is_valid(raise_exception=True)
 
         name = serializer.validated_data['name']
+        unique_id = serializer.validated_data['unique_id']
         user_unique_id = serializer.validated_data['user_unique_id']
 
         user_profile = UserProfile.objects.get(user_unique_id=user_unique_id)
@@ -232,6 +233,10 @@ class CreateMasterUser(APIView):
         master_user = MasterUser.objects.create_master_user(
             user=user,
             language=translation.get_language(), name=name)
+
+        master_user.unique_id = unique_id
+
+        master_user.save()
 
         member = Member.objects.create(user=user, master_user=master_user, is_owner=True, is_admin=True)
         member.save()
