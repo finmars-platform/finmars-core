@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from rest_framework import parsers, renderers
 
 from rest_framework.authtoken.serializers import AuthTokenSerializer
@@ -11,8 +12,11 @@ from poms.auth_tokens.models import AuthToken
 
 import logging
 
-from poms.auth_tokens.serializers import SetAuthTokenSerializer
-from poms.users.models import MasterUser, Member
+from poms.auth_tokens.serializers import SetAuthTokenSerializer, CreateUserSerializer, CreateMasterUserSerializer
+from poms.auth_tokens.utils import generate_random_string
+from poms.users.models import MasterUser, Member, UserProfile, Group
+from django.utils import translation
+
 
 _l = logging.getLogger('poms.auth_tokens')
 
@@ -149,3 +153,86 @@ class SetAuthToken(APIView):
         _l.info("Auth Token is successfully set")
 
         return Response({'token': token.key})
+
+
+class CreateUser(APIView):
+    throttle_classes = ()
+    permission_classes = ()
+    parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)
+    renderer_classes = (renderers.JSONRenderer,)
+    serializer_class = CreateUserSerializer
+
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'format': self.format_kwarg,
+            'view': self
+        }
+
+    def get_serializer(self, *args, **kwargs):
+        kwargs['context'] = self.get_serializer_context()
+        return self.serializer_class(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+
+        username = serializer.validated_data['username']
+        email = serializer.validated_data['email']
+        user_unique_id = serializer.validated_data['user_unique_id']
+
+        password = generate_random_string(10)
+
+        user = User.objects.get_or_create(email=email, username=username, password=password)
+
+        UserProfile.objects.create(user=user, user_unique_id=user_unique_id)
+
+        return Response({'status': 'ok'})
+
+
+class CreateMasterUser(APIView):
+    throttle_classes = ()
+    permission_classes = ()
+    parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)
+    renderer_classes = (renderers.JSONRenderer,)
+    serializer_class = CreateMasterUserSerializer
+
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'format': self.format_kwarg,
+            'view': self
+        }
+
+    def get_serializer(self, *args, **kwargs):
+        kwargs['context'] = self.get_serializer_context()
+        return self.serializer_class(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+
+
+        name = serializer.validated_data['name']
+        description = serializer.validated_data['description']
+        user_unique_id = serializer.validated_data['user_unique_id']
+
+        user_profile = UserProfile.objects.get(user_unique_id=user_unique_id)
+        user = User.objects.get(id=user_profile.user_id)
+
+        master_user = MasterUser.objects.create_master_user(
+            user=user,
+            language=translation.get_language(), name=name, description=description)
+
+        member = Member.objects.create(user=request.user, master_user=master_user, is_owner=True, is_admin=True)
+        member.save()
+
+        admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
+        admin_group.members.add(member.id)
+        admin_group.save()
+
+
+        return Response({'status': 'ok'})
+

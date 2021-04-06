@@ -13,3 +13,15 @@ class SetAuthTokenSerializer(serializers.Serializer):
 
     current_master_user_id = serializers.CharField(label=_("Current master user id"))
     current_master_user_legacy_id = serializers.IntegerField(required=False, label=_("Current master user legacy id"))
+
+
+class CreateUserSerializer(serializers.Serializer):
+    username = serializers.CharField(label=_("Username"))
+    user_unique_id = serializers.CharField(label=_("User Unique id"))
+
+
+class CreateMasterUserSerializer(serializers.Serializer):
+    name = serializers.CharField(label=_("name"))
+    description = serializers.CharField(label=_("description"))
+    unique_id = serializers.CharField(label=_("Unique id"))
+    user_id = serializers.CharField(label=_("User id"))

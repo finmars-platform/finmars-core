@@ -1565,6 +1565,7 @@ def complex_transaction_csv_file_import(self, task_id):
         instance.scheme = scheme
         instance.error_handling = scheme.error_handler
         instance.delimiter = scheme.delimiter
+        instance.missing_data_handler = scheme.missing_data_handler
         instance.file_path = celery_task.options_object['file_path']
         execution_context = celery_task.options_object['execution_context']
 
@@ -1622,6 +1623,29 @@ def complex_transaction_csv_file_import(self, task_id):
             AccrualCalculationModel: 'accrual_calculation_model',
         }
 
+        def _get_default_relation(field):
+
+            i = field.transaction_type_input
+
+            model_class = i.content_type.model_class()
+            model_map_class = mapping_map[model_class]
+
+            key = props_map[model_class]
+
+            v = None
+
+            ecosystem_default = EcosystemDefault.objects.get(master_user=instance.master_user)
+
+            # _l.info('key %s' % key)
+            # _l.info('value %s' % value)
+
+            if hasattr(ecosystem_default, key):
+                v = getattr(ecosystem_default, key)
+            else:
+                v = model_map_class.objects.get(master_user=instance.master_user, value='-').content_object
+
+            return v
+
         def _convert_value(field, value, error_rows):
             i = field.transaction_type_input
 
@@ -1657,12 +1681,8 @@ def complex_transaction_csv_file_import(self, task_id):
 
                         if instance.missing_data_handler == 'set_defaults':
 
-                            ecosystem_default = EcosystemDefault.objects.get(master_user=instance.master_user)
+                            v = _get_default_relation(field)
 
-                            if hasattr(ecosystem_default, key):
-                                v = getattr(ecosystem_default, key)
-                            else:
-                                v = model_map_class.objects.get(master_user=instance.master_user, value='-').content_object
                         else:
 
                             error_rows['error_message'] = error_rows[
@@ -1671,7 +1691,12 @@ def complex_transaction_csv_file_import(self, task_id):
                                                           value + ')'
 
                 if not v:
-                    raise ValueError('Can\'t find Relation.')
+
+                    if instance.missing_data_handler == 'set_defaults':
+
+                        v = _get_default_relation(field)
+
+                    # raise ValueError('Can\'t find Relation.')
 
                 mapping_cache[key] = v
 
@@ -2297,6 +2322,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
         instance.scheme = scheme
         instance.error_handling = scheme.error_handler
         instance.delimiter = scheme.delimiter
+        instance.missing_data_handler = scheme.missing_data_handler
         instance.file_path = celery_task.options_object['file_path']
 
         _l.info('complex_transaction_csv_file_import_validate %s' % instance.file_path)
@@ -2355,6 +2381,29 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
         mapping_cache = {}
 
+        def _get_default_relation(field):
+
+            i = field.transaction_type_input
+
+            model_class = i.content_type.model_class()
+            model_map_class = mapping_map[model_class]
+
+            key = props_map[model_class]
+
+            v = None
+
+            ecosystem_default = EcosystemDefault.objects.get(master_user=instance.master_user)
+
+            # _l.info('key %s' % key)
+            # _l.info('value %s' % value)
+
+            if hasattr(ecosystem_default, key):
+                v = getattr(ecosystem_default, key)
+            else:
+                v = model_map_class.objects.get(master_user=instance.master_user, value='-').content_object
+
+            return v
+
         def _convert_value(field, value, error_rows):
             i = field.transaction_type_input
 
@@ -2390,15 +2439,8 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
                         if instance.missing_data_handler == 'set_defaults':
 
-                            ecosystem_default = EcosystemDefault.objects.get(master_user=instance.master_user)
+                            v = _get_default_relation(field)
 
-                            # _l.info('key %s' % key)
-                            # _l.info('value %s' % value)
-
-                            if hasattr(ecosystem_default, key):
-                                v = getattr(ecosystem_default, key)
-                            else:
-                                v = model_map_class.objects.get(master_user=instance.master_user, value='-').content_object
                         else:
                             error_rows['error_message'] = error_rows[
                                                               'error_message'] + ' Can\'t find relation of ' + \
@@ -2406,7 +2448,12 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                                                           value + '"). '
 
                 if not v:
-                    raise ValueError('Can\'t find Relation.')
+
+                    if instance.missing_data_handler == 'set_defaults':
+
+                        v = _get_default_relation(field)
+
+                    # raise ValueError('Can\'t find Relation.')
 
                 mapping_cache[key] = v
 
