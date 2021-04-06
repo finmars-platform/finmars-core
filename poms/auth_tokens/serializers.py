@@ -23,6 +23,5 @@ class CreateUserSerializer(serializers.Serializer):
 
 class CreateMasterUserSerializer(serializers.Serializer):
     name = serializers.CharField(label=_("name"))
-    description = serializers.CharField(label=_("description"), default='')
     unique_id = serializers.CharField(label=_("Unique id"))
     user_unique_id = serializers.CharField(label=_("User Unique id"))

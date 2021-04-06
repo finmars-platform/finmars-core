@@ -216,7 +216,6 @@ class CreateMasterUser(APIView):
 
 
         name = serializer.validated_data['name']
-        description = serializer.validated_data['description']
         user_unique_id = serializer.validated_data['user_unique_id']
 
         user_profile = UserProfile.objects.get(user_unique_id=user_unique_id)
