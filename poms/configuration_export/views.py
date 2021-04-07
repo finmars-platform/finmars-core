@@ -1024,7 +1024,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             .prefetch_related(
             "pricing_policies",
             "pricing_policies__pricing_policy",
-            "pricing_policies__pricing_scheme"
+            "pricing_policies__pricing_scheme",
             "pricing_policies__pricing_scheme__type"
         )
 
