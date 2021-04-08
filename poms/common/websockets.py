@@ -83,7 +83,7 @@ def send_websocket_message(data,  level='system', context=None):
 
             message['master_user'] = {
                 "id": master_user.id,
-                "unique_id": master_user.unique_id,
+                "unique_id": str(master_user.unique_id),
                 "token": master_user.token
             }
 
