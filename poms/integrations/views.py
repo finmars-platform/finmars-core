@@ -901,12 +901,12 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         options_object['scheme_id'] = instance.scheme.id
         options_object['execution_context'] = None
 
-        celery_task = CeleryTask(master_user=request.user.master_user,
+        celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                  member=request.user.member,
                                  options_object=options_object,
                                  type='transaction_import')
 
-        celery_task.save()
+        # celery_task.save()
 
         complex_transaction_csv_file_import_parallel(task_id=celery_task.pk)
 
@@ -1040,12 +1040,12 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
         options_object['file_path'] = instance.file_path
         options_object['scheme_id'] = instance.scheme.id
 
-        celery_task = CeleryTask(master_user=request.user.master_user,
+        celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,
                                                 options_object=options_object,
                                                 type='validate_transaction_import')
 
-        celery_task.save()
+        # celery_task.save()
 
         complex_transaction_csv_file_import_validate_parallel(task_id=celery_task.pk)
 
