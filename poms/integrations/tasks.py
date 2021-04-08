@@ -2963,9 +2963,7 @@ def complex_transaction_csv_file_import_validate_parallel(self, task_id):
         _l.info('celery_sub_tasks len %s' % len(celery_sub_tasks))
         _l.info('celery_sub_tasks %s' % celery_sub_tasks)
 
-        res = chord(celery_sub_tasks, complex_transaction_csv_file_import_validate_parallel_finish.si(task_id=task_id)).apply_async()
-
-        _l.info('chord res %s' % res)
+        chord(celery_sub_tasks, complex_transaction_csv_file_import_validate_parallel_finish.si(task_id=task_id)).apply_async()
 
     except Exception as e:
 
