@@ -912,7 +912,7 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
 
             res = complex_transaction_csv_file_import_parallel.apply_async(kwargs={'task_id': celery_task.pk})
 
-            _l.info('ComplexTransactionCsvFileImportViewSet complex_transaction_csv_file_import_parallel' % res.id)
+            _l.info('ComplexTransactionCsvFileImportViewSet complex_transaction_csv_file_import_parallel %' % res.id)
 
             celery_task.celery_task_id = res.id
 
@@ -1047,7 +1047,7 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
 
             res = complex_transaction_csv_file_import_validate_parallel.apply_async(kwargs={'task_id': celery_task.pk})
 
-            _l.info('ComplexTransactionCsvFileImportViewSet complex_transaction_csv_file_import_validate_parallel' % res.id)
+            _l.info('ComplexTransactionCsvFileImportViewSet complex_transaction_csv_file_import_validate_parallel %' % res.id)
 
             celery_task.celery_task_id = res.id
 
