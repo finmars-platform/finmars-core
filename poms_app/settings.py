@@ -580,7 +580,7 @@ GEOIP_CITY = "GeoLite2-City.mmdb"
 # CELERY ------------------------------------------------
 
 # CELERYD_LOG_LEVEL = "DEBUG"
-CELERYD_HIJACK_ROOT_LOGGER = False
+# CELERYD_HIJACK_ROOT_LOGGER = False
 CELERY_EAGER_PROPAGATES = True
 
 # CELERY_BROKER_URL = 'redis://%s/1' % REDIS_HOST
@@ -600,9 +600,9 @@ CELERY_RESULT_SERIALIZER = 'pickle'
 # CELERY_TASK_SERIALIZER = 'pickle-signed'
 # CELERY_RESULT_SERIALIZER = 'pickle-signed'
 
-CELERYD_CONCURRENCY = 4  # Defaults to the number of available CPUs, but I prefer doubling it.
-CELERYD_TASK_SOFT_TIME_LIMIT = 60 * 20
-CELERYD_TASK_TIME_LIMIT = 60 * 30  # The worker processing the task will be killed and replaced with a new one when this is exceeded.
+# CELERYD_CONCURRENCY = 4  # Defaults to the number of available CPUs, but I prefer doubling it.
+# CELERYD_TASK_SOFT_TIME_LIMIT = 60 * 20
+# CELERYD_TASK_TIME_LIMIT = 60 * 30  # The worker processing the task will be killed and replaced with a new one when this is exceeded.
 CELERY_SEND_TASK_SENT_EVENT = True
 
 if CELERY_RESULT_BACKEND in ['django-db', ]:
