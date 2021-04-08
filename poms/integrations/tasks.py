@@ -2177,7 +2177,7 @@ def complex_transaction_csv_file_import_parallel(self, task_id):
                         # _l.info("Saving chunk %s" % chunk)
                         SFS.save(chunk_path, chunk) # save working chunk before creating new one
 
-                    chunk_filename = '%s_chunk_file_%s' % (self.request.id, str(lineno) + '_' + str(lineno + lines_per_file))
+                    chunk_filename = '%s_chunk_file_%s' % (celery_task.id, str(lineno) + '_' + str(lineno + lines_per_file))
                     chunk_path = _get_path(celery_task.master_user, chunk_filename)
 
                     # _l.info('creating chunk file %s' % chunk_path)
@@ -2916,7 +2916,7 @@ def complex_transaction_csv_file_import_validate_parallel(self, task_id):
                         # _l.info("Saving chunk %s" % chunk)
                         SFS.save(chunk_path, chunk) # save working chunk before creating new one
 
-                    chunk_filename = '%s_chunk_file_%s' % (self.request.id, str(lineno) + '_' + str(lineno + lines_per_file))
+                    chunk_filename = '%s_chunk_file_%s' % (celery_task.id, str(lineno) + '_' + str(lineno + lines_per_file))
                     chunk_path = _get_path(celery_task.master_user, chunk_filename)
 
                     # _l.info('creating chunk file %s' % chunk_path)
