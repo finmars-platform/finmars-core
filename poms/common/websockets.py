@@ -92,7 +92,7 @@ def send_websocket_message(data,  level='system', context=None):
                 "username": member.username
             }
 
-            _l.info('message %s' % message)
+            # _l.info('message %s' % message)
 
             json_message = json.dumps(message, default = jsonconverter)
             # json_message = json.dumps(message)
