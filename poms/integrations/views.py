@@ -908,17 +908,21 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
 
         celery_task.save()
 
-        def oncommit():
+        complex_transaction_csv_file_import_parallel(task_id=celery_task.pk)
 
-            res = complex_transaction_csv_file_import_parallel.apply_async(kwargs={'task_id': celery_task.pk})
 
-            _l.info('ComplexTransactionCsvFileImportViewSet complex_transaction_csv_file_import_parallel %' % res.id)
-
-            celery_task.celery_task_id = res.id
-
-            celery_task.save()
-
-        transaction.on_commit(oncommit)
+        # def oncommit():
+        #
+        #     # res = complex_transaction_csv_file_import_parallel.apply_async(kwargs={'task_id': celery_task.pk})
+        #     complex_transaction_csv_file_import_parallel(task_id=celery_task.pk)
+        #
+        #     _l.info('ComplexTransactionCsvFileImportViewSet complex_transaction_csv_file_import_parallel' )
+        #
+        #     # celery_task.celery_task_id = res.id
+        #
+        #     celery_task.save()
+        #
+        # transaction.on_commit(oncommit)
 
         _l.info('ComplexTransactionCsvFileImportViewSet done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
@@ -1043,17 +1047,19 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
 
         celery_task.save()
 
-        def oncommit():
+        complex_transaction_csv_file_import_validate_parallel(task_id=celery_task.pk)
 
-            res = complex_transaction_csv_file_import_validate_parallel.apply_async(kwargs={'task_id': celery_task.pk})
-
-            _l.info('ComplexTransactionCsvFileImportViewSet complex_transaction_csv_file_import_validate_parallel %' % res.id)
-
-            celery_task.celery_task_id = res.id
-
-            celery_task.save()
-
-        transaction.on_commit(oncommit)
+        # def oncommit():
+        # 
+        #     res = complex_transaction_csv_file_import_validate_parallel.apply_async(kwargs={'task_id': celery_task.pk})
+        # 
+        #     _l.info('ComplexTransactionCsvFileImportViewSet complex_transaction_csv_file_import_validate_parallel %' % res.id)
+        # 
+        #     celery_task.celery_task_id = res.id
+        # 
+        #     celery_task.save()
+        # 
+        # transaction.on_commit(oncommit)
 
         _l.info('ComplexTransactionCsvFileImportValidateViewSet done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
