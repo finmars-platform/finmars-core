@@ -54,9 +54,7 @@ then
 
     export DJANGO_SETTINGS_MODULE=poms_app.settings
 
-#    /etc/init.d/celeryd start
-
-    /var/app-venv/bin/celery --app=poms_app worker --autoscale=4,2  --loglevel=INFO --detach
+    /etc/init.d/celeryd start
 
     echo "Start celerybeat"
 
