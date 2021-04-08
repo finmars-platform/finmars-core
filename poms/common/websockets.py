@@ -52,7 +52,7 @@ def send_websocket_message(data,  level='system', context=None):
 
         try:
 
-            _l.debug('send_websocket_message %s' % data)
+            # _l.debug('send_websocket_message %s' % data)
 
             message = {
                 "level": level,
@@ -91,6 +91,8 @@ def send_websocket_message(data,  level='system', context=None):
                 "id": member.id,
                 "username": member.username
             }
+
+            _l.info('message %s' % message)
 
             json_message = json.dumps(message, default = jsonconverter)
             # json_message = json.dumps(message)
