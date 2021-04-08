@@ -52,7 +52,7 @@ def send_websocket_message(data,  level='system', context=None):
 
         try:
 
-            # _l.debug('send_websocket_message %s' % data)
+            _l.debug('send_websocket_message %s' % data)
 
             message = {
                 "level": level,
