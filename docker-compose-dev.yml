@@ -16,3 +16,9 @@ services:
       - "6379:6379"
     stdin_open: true
     tty: true
+  rabbitmq:
+    image: rabbitmq
+    ports:
+      - "5672:5672"
+    stdin_open: true
+    tty: true
