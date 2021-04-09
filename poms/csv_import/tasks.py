@@ -753,7 +753,7 @@ class ValidateHandler:
                 error_row['level'] = 'error'
                 error_row['error_message'] = error_row['error_message'] + ugettext(
                     'Validation error %(error)s ') % {
-                                                 'error': e
+                                                 'error': 'Cannot create attribute'
                                          },
 
     def instance_full_clean(self, scheme, result, error_handler, error_row):
@@ -776,7 +776,7 @@ class ValidateHandler:
             error_row['level'] = 'error'
             error_row['error_message'] = error_row['error_message'] + ugettext(
                 'Validation error %(error)s ') % {
-                                             'error': e
+                                             'error': 'Cannot create instance'
                                          },
 
     def instance_overwrite_full_clean(self, scheme, result, item, error_handler, error_row):
