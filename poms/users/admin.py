@@ -238,7 +238,7 @@ class UserProfileForm(forms.ModelForm):
 
     class Meta:
         model = UserProfile
-        fields = ['language', 'timezone', 'two_factor_verification', 'active_master_user']
+        fields = ['language', 'timezone', 'two_factor_verification', 'active_master_user', 'user_unique_id']
 
 
 class UserProfileInline(admin.StackedInline):
