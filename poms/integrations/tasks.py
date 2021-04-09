@@ -2135,7 +2135,7 @@ def complex_transaction_csv_file_import(self, task_id):
 
 
 # @shared_task(name='integrations.complex_transaction_csv_file_import_parallel', bind=True)
-def complex_transaction_csv_file_import_parallel(self, task_id):
+def complex_transaction_csv_file_import_parallel(task_id):
 
     try:
 
@@ -2874,8 +2874,8 @@ def complex_transaction_csv_file_import_validate(self, task_id):
         _l.info(traceback.format_exc())
 
 
-@shared_task(name='integrations.complex_transaction_csv_file_import_validate_parallel', bind=True)
-def complex_transaction_csv_file_import_validate_parallel(self, task_id):
+# @shared_task(name='integrations.complex_transaction_csv_file_import_validate_parallel', bind=True)
+def complex_transaction_csv_file_import_validate_parallel(task_id):
 
     try:
 
