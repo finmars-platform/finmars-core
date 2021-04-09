@@ -18,7 +18,7 @@ from poms.integrations.models import Task, ImportConfig, ProviderClass, Currency
     CounterpartyClassifierMapping, ResponsibleClassifierMapping, InstrumentClassifierMapping, \
     ComplexTransactionImportSchemeRuleScenario, ComplexTransactionImportSchemeReconScenario, \
     ComplexTransactionImportSchemeReconField, BloombergDataProviderCredential, DataProvider, \
-    TransactionFileResult
+    TransactionFileResult, PricingConditionMapping
 
 admin.site.register(ProviderClass, ClassModelAdmin)
 admin.site.register(FactorScheduleDownloadMethod, ClassModelAdmin)
@@ -183,6 +183,7 @@ admin.site.register(Strategy3Mapping, AbstractMappingAdmin)
 admin.site.register(DailyPricingModelMapping, AbstractMappingAdmin)
 admin.site.register(PaymentSizeDetailMapping, AbstractMappingAdmin)
 admin.site.register(PriceDownloadSchemeMapping, AbstractMappingAdmin)
+admin.site.register(PricingConditionMapping, AbstractMappingAdmin)
 
 
 # class CurrencyMappingAdmin(AbstractModelAdmin):

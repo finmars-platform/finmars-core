@@ -214,7 +214,7 @@ class MasterUser(models.Model):
 
     token = models.CharField(unique=True, max_length=32, null=True, blank=True, verbose_name=ugettext_lazy('token'))
 
-    unique_id = models.UUIDField(null=True, blank=True, default=uuid.uuid4)
+    unique_id = models.UUIDField(null=True, blank=True)
 
     objects = MasterUserManager()
 
@@ -1270,7 +1270,7 @@ class UserProfile(models.Model):
 
     active_master_user = models.ForeignKey(MasterUser, null=True, blank=True, verbose_name=ugettext_lazy('master user'), on_delete=models.SET_NULL)
 
-    user_unique_id = models.UUIDField(null=True, blank=True, default=uuid.uuid4)
+    user_unique_id = models.UUIDField(null=True, blank=True)
 
     class Meta:
         verbose_name = ugettext_lazy('profile')
