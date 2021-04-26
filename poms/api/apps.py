@@ -22,7 +22,6 @@ class ApiConfig(AppConfig):
     verbose_name = ugettext_lazy('Rest API')
 
     def ready(self):
-        pass
 
         post_migrate.connect(self.add_view_and_manage_permissions, sender=self)
 
