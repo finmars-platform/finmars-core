@@ -516,6 +516,12 @@ if DEBUG:
         'rest_framework.renderers.AdminRenderer',
     )
 
+if SERVER_TYPE == 'development':
+    REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] += (
+        'rest_framework.authentication.SessionAuthentication',
+    )
+
+
 # CURRENCY_CODE = 'USD'
 
 AUTHENTICATION_BACKENDS = (
