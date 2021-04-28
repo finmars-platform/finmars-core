@@ -24,6 +24,7 @@ from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
 from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import Transaction
+from poms_app import settings
 
 _l = logging.getLogger('poms.pricing')
 
@@ -928,7 +929,8 @@ class PricingCurrencyHandler(object):
         body['provider'] = procedure_instance.provider
 
         body['user'] = {
-            'token': self.master_user.id
+            'token': self.master_user.id,
+            'base_api_url': settings.BASE_API_URL
         }
 
         body['error_code'] = None
