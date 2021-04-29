@@ -46,6 +46,8 @@ from logging import getLogger
 
 from ..common.websockets import send_websocket_message
 
+import traceback
+
 _l = getLogger('poms.csv_import')
 
 from datetime import date, datetime
@@ -251,6 +253,8 @@ def get_item(scheme, result):
                                             date=result['date'])
 
         except Exception as e:
+
+            traceback.print_exc()
 
             # _l.debug('get_item currencyhistory exception %s' % e)
 
@@ -641,6 +645,8 @@ def process_csv_file(master_user,
 
                             _l.info('Result processing error %s ' % e)
 
+                            traceback.print_exc()
+
                             raise Exception("Result processing error")
 
                 else:
@@ -650,6 +656,8 @@ def process_csv_file(master_user,
                     error_row['error_reaction'] = 'Skipped'
 
             except Exception as e:
+
+
 
                 error_row['error_message'] = error_row['error_message'] + ugettext(
                     'Unhandled Error. %s' % e)
@@ -733,7 +741,7 @@ class ValidateHandler:
                     if attr_type.value_type == 10:
                         attribute.value_string = str(result_attr['executed_expression'])
                     elif attr_type.value_type == 20:
-                        attribute.value_float = float(result_attr['executed_expression'])
+                        attribute.value_float = float(result_attr['executed_expression']) 
                     elif attr_type.value_type == 30:
 
                         attribute.classifier = result_attr['executed_expression']
@@ -754,7 +762,7 @@ class ValidateHandler:
                 error_row['error_message'] = error_row['error_message'] + ugettext(
                     'Validation error %(error)s ') % {
                                                  'error': 'Cannot create attribute'
-                                         },
+                                         }
 
     def instance_full_clean(self, scheme, result, error_handler, error_row):
 
@@ -777,7 +785,7 @@ class ValidateHandler:
             error_row['error_message'] = error_row['error_message'] + ugettext(
                 'Validation error %(error)s ') % {
                                              'error': 'Cannot create instance'
-                                         },
+                                         }
 
     def instance_overwrite_full_clean(self, scheme, result, item, error_handler, error_row):
 
@@ -1490,6 +1498,8 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
                                 kwargs={'instance': instance, 'execution_context': {'started_by': 'procedure'}}))
 
                 except Exception as e:
+
+                    traceback.print_exc()
 
                     _l.debug('data_csv_file_import_by_procedure decryption error %s' % e)
 
