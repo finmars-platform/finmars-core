@@ -119,10 +119,11 @@ class TransactionReportBuilderSql:
                   -- complex transaction transaction type group fields
                   tt2.name as transaction_type_group_name
                 FROM transactions_transaction as t
-                LEFT JOIN transactions_complextransaction tc on t.complex_transaction_id = tc.id
-                LEFT JOIN transactions_transactiontype tt on tc.transaction_type_id = tt.id
-                LEFT JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id
+                INNER JOIN transactions_complextransaction tc on t.complex_transaction_id = tc.id
+                INNER JOIN transactions_transactiontype tt on tc.transaction_type_id = tt.id
+                INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id
                 WHERE t.transaction_date >= %s AND t.transaction_date <= %s AND t.master_user_id = %s
+                
                 
             """
 
