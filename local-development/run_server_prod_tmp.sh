@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 . ../venv/bin/activate
+SECRET_KEY=mv83o5mq \
 REGISTER_ACCESS_KEY=B5A9ZCHA \
 REDIS_HOST=0.0.0.0:6379 \
 DB_NAME=finmars_db \

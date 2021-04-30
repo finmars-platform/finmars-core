@@ -47,7 +47,15 @@ def execute_nav_sql(instance, cursor, ecosystem_defaults):
                 settlement_currency_id,
                 
                 position_size_with_sign,
-                cash_consideration
+                cash_consideration,
+                
+                strategy1_cash_id,
+                strategy2_cash_id,
+                strategy3_cash_id,
+               
+                strategy1_position_id,
+                strategy2_position_id,
+                strategy3_position_id
                 
             from pl_transactions_with_ttype
             
@@ -73,7 +81,15 @@ def execute_nav_sql(instance, cursor, ecosystem_defaults):
                 settlement_currency_id,
                 
                 (0) as position_size_with_sign,
-                cash_consideration
+                cash_consideration,
+                
+                strategy1_cash_id,
+                strategy2_cash_id,
+                strategy3_cash_id,
+               
+                strategy1_position_id,
+                strategy2_position_id,
+                strategy3_position_id
                 
             from pl_cash_fx_trades_transactions_with_ttype
             
@@ -99,7 +115,15 @@ def execute_nav_sql(instance, cursor, ecosystem_defaults):
                 settlement_currency_id,
                 
                 position_size_with_sign,
-                cash_consideration
+                cash_consideration,
+                
+                strategy1_cash_id,
+                strategy2_cash_id,
+                strategy3_cash_id,
+               
+                strategy1_position_id,
+                strategy2_position_id,
+                strategy3_position_id
                 
             from pl_cash_fx_variations_transactions_with_ttype
             
@@ -119,6 +143,14 @@ def execute_nav_sql(instance, cursor, ecosystem_defaults):
                    --strategy1_cash_id,
                    --strategy2_cash_id,
                    --strategy2_cash_id,
+                   
+                   strategy1_cash_id,
+                   strategy2_cash_id,
+                   strategy3_cash_id,
+                   
+                   strategy1_position_id,
+                   strategy2_position_id,
+                   strategy3_position_id,
                    
                    position_size_with_sign,
                    /* не нужны для БАЛАНСА
@@ -155,6 +187,14 @@ def execute_nav_sql(instance, cursor, ecosystem_defaults):
             
                    instrument_id,
                    portfolio_id,
+                   
+                   strategy1_cash_id,
+                   strategy2_cash_id,
+                   strategy3_cash_id,
+                   
+                   strategy1_position_id,
+                   strategy2_position_id,
+                   strategy3_position_id,
                    -- account_cash_id,
                    -- TODO add consolidation columns
                    -- modification
@@ -187,6 +227,14 @@ def execute_nav_sql(instance, cursor, ecosystem_defaults):
             
                    instrument_id,
                    portfolio_id,
+                   
+                   strategy1_cash_id,
+                   strategy2_cash_id,
+                   strategy3_cash_id,
+                   
+                   strategy1_position_id,
+                   strategy2_position_id,
+                   strategy3_position_id,
                    -- account_cash_id,
                    -- TODO add consolidation columns
             
@@ -458,6 +506,13 @@ def execute_transaction_prices_sql(instance, cursor, ecosystem_defaults):
                    
                    reference_fx_rate,
                    
+                   case 
+                        when cash_date < accounting_date
+                        then cash_date
+                        else accounting_date
+                   end
+                   as min_date,
+                   
                    case
                        when
                            transaction_currency_id = {default_currency_id}
@@ -515,6 +570,7 @@ def execute_transaction_prices_sql(instance, cursor, ecosystem_defaults):
                 
             from transactions_hist
             where trn_hist_fx ISNULL and not transaction_class_id in (8,9)
+            and  min_date <= '{report_date}'
             
             UNION 
             
@@ -527,6 +583,7 @@ def execute_transaction_prices_sql(instance, cursor, ecosystem_defaults):
                 transaction_currency_user_code
             from transactions_hist
             where rep_hist_fx ISNULL and not transaction_class_id in (8,9)
+            and  min_date <= '{report_date}'
             
             -- optional end
             
@@ -543,6 +600,7 @@ def execute_transaction_prices_sql(instance, cursor, ecosystem_defaults):
                 transaction_currency_user_code
             from transactions_hist
             where stl_cur_fx ISNULL 
+            and  min_date <= '{report_date}'
             
             UNION 
             
@@ -555,6 +613,7 @@ def execute_transaction_prices_sql(instance, cursor, ecosystem_defaults):
                 transaction_currency_user_code
             from transactions_hist
             where trn_hist_fx ISNULL and transaction_class_id in (8,9)
+            and  min_date <= '{report_date}'
             
             UNION 
             
@@ -566,6 +625,7 @@ def execute_transaction_prices_sql(instance, cursor, ecosystem_defaults):
                 transaction_currency_user_code
             from transactions_hist
             where rep_hist_fx ISNULL and transaction_class_id in (8,9)
+            and  min_date <= '{report_date}'
             
             -- required end
             
@@ -592,12 +652,16 @@ def execute_transaction_prices_sql(instance, cursor, ecosystem_defaults):
                          transaction_filter_sql_string=transaction_filter_sql_string
                          )
 
+    if settings.SERVER_TYPE == 'local':
+        with open('/tmp/price_check_query_raw.txt', 'w') as the_file:
+            the_file.write(query)
+
     cursor.execute(query)
 
     query_str = str(cursor.query, 'utf-8')
 
     if settings.SERVER_TYPE == 'local':
-        with open('/tmp/query_result.txt', 'w') as the_file:
+        with open('/tmp/price_check_query_result.txt', 'w') as the_file:
             the_file.write(query_str)
 
     result = dictfetchall(cursor)

@@ -134,7 +134,11 @@ class BalanceReportBuilderSql:
                         
                         strategy1_cash_id,
                         strategy2_cash_id,
-                        strategy3_cash_id
+                        strategy3_cash_id,
+                        
+                        strategy1_position_id,
+                        strategy2_position_id,
+                        strategy3_position_id
                         
                     from pl_transactions_with_ttype
                     
@@ -164,7 +168,11 @@ class BalanceReportBuilderSql:
                         
                         strategy1_cash_id,
                         strategy2_cash_id,
-                        strategy3_cash_id
+                        strategy3_cash_id,
+                        
+                        strategy1_position_id,
+                        strategy2_position_id,
+                        strategy3_position_id
                         
                     from pl_cash_fx_trades_transactions_with_ttype
                     
@@ -194,7 +202,11 @@ class BalanceReportBuilderSql:
                         
                         strategy1_cash_id,
                         strategy2_cash_id,
-                        strategy3_cash_id
+                        strategy3_cash_id,
+                        
+                        strategy1_position_id,
+                        strategy2_position_id,
+                        strategy3_position_id
                         
                     from pl_cash_fx_variations_transactions_with_ttype
                     
@@ -224,7 +236,11 @@ class BalanceReportBuilderSql:
                         
                         strategy1_cash_id,
                         strategy2_cash_id,
-                        strategy3_cash_id
+                        strategy3_cash_id,
+                        
+                        strategy1_position_id,
+                        strategy2_position_id,
+                        strategy3_position_id
                         
                     from pl_cash_transaction_pl_transactions_with_ttype
                   
@@ -244,6 +260,11 @@ class BalanceReportBuilderSql:
                            strategy1_cash_id,
                            strategy2_cash_id,
                            strategy3_cash_id,
+                           
+                           
+                           strategy1_position_id,
+                           strategy2_position_id,
+                           strategy3_position_id,
                            
                            position_size_with_sign,
                            /* не нужны для БАЛАНСА
@@ -286,6 +307,12 @@ class BalanceReportBuilderSql:
                            strategy1_cash_id,
                            strategy2_cash_id,
                            strategy3_cash_id,
+                           
+                           strategy1_position_id,
+                           strategy2_position_id,
+                           strategy3_position_id,
+                           
+                           
                            -- modification
                            0 as position_size_with_sign,
                            (-cash_consideration) as cash_consideration,
@@ -322,6 +349,10 @@ class BalanceReportBuilderSql:
                            strategy1_cash_id,
                            strategy2_cash_id,
                            strategy3_cash_id,
+                           
+                           strategy1_position_id,
+                           strategy2_position_id,
+                           strategy3_position_id,
                     
                            position_size_with_sign,
                            cash_consideration,
@@ -1409,6 +1440,11 @@ class BalanceReportBuilderSql:
                                  pl_left_join_consolidation=pl_left_join_consolidation,
                                  fx_trades_and_fx_variations_filter_sql_string= fx_trades_and_fx_variations_filter_sql_string
                                  )
+
+
+            if settings.SERVER_TYPE == 'local':
+                with open('/tmp/query_raw.txt', 'w') as the_file:
+                    the_file.write(query)
 
             cursor.execute(query)
 
