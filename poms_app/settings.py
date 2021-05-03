@@ -516,7 +516,7 @@ if DEBUG:
         'rest_framework.renderers.AdminRenderer',
     )
 
-if SERVER_TYPE == 'development':
+if SERVER_TYPE == 'development' or SERVER_TYPE == 'local':
     REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] += (
         'rest_framework.authentication.SessionAuthentication',
     )

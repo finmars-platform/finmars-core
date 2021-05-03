@@ -12,7 +12,8 @@ from poms.auth_tokens.models import AuthToken
 
 import logging
 
-from poms.auth_tokens.serializers import SetAuthTokenSerializer, CreateUserSerializer, CreateMasterUserSerializer
+from poms.auth_tokens.serializers import SetAuthTokenSerializer, CreateUserSerializer, CreateMasterUserSerializer, \
+    CreateMemberSerializer
 from poms.auth_tokens.utils import generate_random_string
 from poms.users.models import MasterUser, Member, UserProfile, Group
 from django.utils import translation
@@ -246,3 +247,49 @@ class CreateMasterUser(APIView):
         admin_group.save()
 
         return Response({'status': 'ok'})
+
+
+class CreateMember(APIView):
+    throttle_classes = ()
+    permission_classes = ()
+    parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)
+    renderer_classes = (renderers.JSONRenderer,)
+    serializer_class = CreateMemberSerializer
+
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'format': self.format_kwarg,
+            'view': self
+        }
+
+    def get_serializer(self, *args, **kwargs):
+        kwargs['context'] = self.get_serializer_context()
+        return self.serializer_class(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+
+        user_id = serializer.validated_data['user_id']
+        user_legacy_id = serializer.validated_data['user_legacy_id']
+
+        master_user_id = serializer.validated_data['master_user_id']
+        user_legacy_id = serializer.validated_data['master_user_legacy_id']
+
+        user_profile = UserProfile.objects.get(user_unique_id=user_id)
+        user = User.objects.get(id=user_profile.user_id)
+
+        master_user = MasterUser.objects.get(unique_id=master_user_id)
+
+        member = Member.objects.create(user=user, master_user=master_user)
+        member.save()
+
+        admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
+        admin_group.members.add(member.id)
+        admin_group.save()
+
+        return Response({'status': 'ok'})
+
+

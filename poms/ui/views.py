@@ -218,7 +218,8 @@ class ContextMenuLayoutViewSet(AbstractModelViewSet):
 
         return Response({
             "id": layout.id,
-            "modified": layout.modified
+            "modified": layout.modified,
+            "is_default": layout.is_default
         })
 
 
@@ -256,7 +257,8 @@ class ListLayoutViewSet(AbstractModelViewSet):
 
         return Response({
             "id": layout.id,
-            "modified": layout.modified
+            "modified": layout.modified,
+            "is_default": layout.is_default
         })
 
 
@@ -304,7 +306,8 @@ class DashboardLayoutViewSet(AbstractModelViewSet):
 
         return Response({
             "id": layout.id,
-            "modified": layout.modified
+            "modified": layout.modified,
+            "is_default": layout.is_default
         })
 
 
@@ -350,7 +353,8 @@ class ConfigurationExportLayoutViewSet(AbstractModelViewSet):
 
         return Response({
             "id": layout.id,
-            "modified": layout.modified
+            "modified": layout.modified,
+            "is_default": layout.is_default
         })
 
 
@@ -388,7 +392,8 @@ class EditLayoutViewSet(AbstractModelViewSet):
 
         return Response({
             "id": layout.id,
-            "modified": layout.modified
+            "modified": layout.modified,
+            "is_default": layout.is_default
         })
 
 

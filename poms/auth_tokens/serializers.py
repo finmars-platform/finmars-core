@@ -25,3 +25,12 @@ class CreateMasterUserSerializer(serializers.Serializer):
     name = serializers.CharField(label=_("name"))
     unique_id = serializers.CharField(label=_("Unique id"))
     user_unique_id = serializers.CharField(label=_("User Unique id"))
+
+
+
+class CreateMemberSerializer(serializers.Serializer):
+    user_id = serializers.CharField(label=_("User Id"))
+    user_legacy_id = serializers.IntegerField(required=False, label=_("User legacy id"))
+    member_id = serializers.CharField(label=_("Member id"))
+    master_user_id = serializers.CharField(label=_("Master User id"))
+    master_user_legacy_id = serializers.IntegerField(required=False, label=_("Current master user legacy id"))

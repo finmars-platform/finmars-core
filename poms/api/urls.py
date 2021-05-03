@@ -45,7 +45,7 @@ import poms.system_messages.views as system_messages
 import poms.layout_recovery.views as layout_recovery
 
 import poms.common.views as common
-from poms.auth_tokens.views import ObtainAuthToken, SetAuthToken, CreateUser, CreateMasterUser
+from poms.auth_tokens.views import ObtainAuthToken, SetAuthToken, CreateUser, CreateMasterUser, CreateMember
 
 router = routers.DefaultRouter()
 
@@ -474,7 +474,8 @@ urlpatterns = [
     url(r'^authorizer/token-auth/', ObtainAuthToken.as_view(), name='api-token-auth'),
     url(r'^authorizer/set-token-auth/', SetAuthToken.as_view(), name='set-token-auth'),
     url(r'^authorizer/create-user/', CreateUser.as_view(), name='create-user'),
-    url(r'^authorizer/create-master-user/', CreateMasterUser.as_view(), name='create-master-user')
+    url(r'^authorizer/create-master-user/', CreateMasterUser.as_view(), name='create-master-user'),
+    url(r'^authorizer/create-member/', CreateMember.as_view(), name='create-member')
 ]
 
 if 'rest_framework_swagger' in settings.INSTALLED_APPS:
