@@ -283,12 +283,16 @@ class CreateMember(APIView):
 
         master_user = MasterUser.objects.get(unique_id=master_user_id)
 
-        member = Member.objects.create(user=user, master_user=master_user)
-        member.save()
+        try:
+            member = Member.objects.create(user=user, master_user=master_user)
+            member.save()
 
-        admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
-        admin_group.members.add(member.id)
-        admin_group.save()
+            admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
+            admin_group.members.add(member.id)
+            admin_group.save()
+
+        except Exception as e:
+            _l.info("Could not create member Error %s" % e)
 
         return Response({'status': 'ok'})
 
