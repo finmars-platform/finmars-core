@@ -272,6 +272,8 @@ class CreateMember(APIView):
         serializer.is_valid(raise_exception=True)
 
 
+        groups = serializer.validated_data['groups']
+
         user_id = serializer.validated_data['user_id']
         user_legacy_id = serializer.validated_data['user_legacy_id']
 
@@ -291,8 +293,24 @@ class CreateMember(APIView):
             admin_group.members.add(member.id)
             admin_group.save()
 
+            if groups:
+
+                groups_list = groups.split(',')
+
+                for group in groups_list:
+
+                    if group != 'Administrators':
+
+                        group = Group.objects.get(master_user=master_user, role=Group.USER, name=group)
+                        group.members.add(member.id)
+                        group.save()
+
+
+
         except Exception as e:
             _l.info("Could not create member Error %s" % e)
+
+
 
         return Response({'status': 'ok'})
 
