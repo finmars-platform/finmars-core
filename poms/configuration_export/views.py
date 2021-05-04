@@ -587,7 +587,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
                     if input_model.settings:
                         input_json["fields"]["settings"] = {
-                            "linked_inputs_names": input_model.settings.linked_inputs_names
+                            "linked_inputs_names": input_model.settings.linked_inputs_names,
+                            "recalc_on_change_linked_inputs": input_model.settings.recalc_on_change_linked_inputs
                         }
 
         results = unwrap_items(inputs_json)
