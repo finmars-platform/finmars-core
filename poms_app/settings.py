@@ -516,10 +516,10 @@ if DEBUG:
         'rest_framework.renderers.AdminRenderer',
     )
 
-if SERVER_TYPE == 'development' or SERVER_TYPE == 'local':
-    REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] += (
-        'rest_framework.authentication.SessionAuthentication',
-    )
+# if SERVER_TYPE == 'development' or SERVER_TYPE == 'local':
+#     REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] += (
+#         'rest_framework.authentication.SessionAuthentication',
+#     )
 
 
 # CURRENCY_CODE = 'USD'
