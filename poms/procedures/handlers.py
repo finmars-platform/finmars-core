@@ -1,5 +1,4 @@
 
-from django.conf import settings
 
 from poms.common import formula
 from poms.common.crypto.RSACipher import RSACipher
@@ -17,6 +16,7 @@ from django.db import transaction
 
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import Member
+from poms_app import settings
 
 _l = logging.getLogger('poms.procedures')
 
@@ -189,6 +189,7 @@ class RequestDataFileProcedureProcess(object):
                 "id": procedure_instance.id,
                 "user": {
                     "token": self.master_user.token,
+                    "base_api_url": settings.BASE_API_URL,
                     "credentials": {},
                     "params": params
                 },
