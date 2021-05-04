@@ -185,11 +185,13 @@ class RequestDataFileProcedureProcess(object):
                                         source="Data File Procedure Service",
                                         text="Revolut rovider Procedure is not configured")
 
+            callback_url = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/api/internal/data/transactions/callback/'
+
             data = {
                 "id": procedure_instance.id,
                 "user": {
                     "token": self.master_user.token,
-                    "base_api_url": settings.BASE_API_URL,
+                    # "base_api_url": settings.BASE_API_URL,
                     "credentials": {},
                     "params": params
                 },
@@ -202,8 +204,12 @@ class RequestDataFileProcedureProcess(object):
 
                 "files": [],
                 "error_status": 0,
-                "error_message": ""
+                "error_message": "",
+                
+                "callbackURL": callback_url
             }
+
+            _l.info('callback_url %s' % callback_url)
 
             # internal/data/transactions/callback
 

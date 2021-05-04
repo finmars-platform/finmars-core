@@ -52,7 +52,7 @@ def send_websocket_message(data,  level='system', context=None):
 
         try:
 
-            # _l.debug('send_websocket_message %s' % data)
+
 
             message = {
                 "level": level,
@@ -92,6 +92,8 @@ def send_websocket_message(data,  level='system', context=None):
                 "username": member.username
             }
 
+            # _l.debug('send_websocket_message %s' % data)
+
             # _l.info('message %s' % message)
 
             json_message = json.dumps(message, default = jsonconverter)
@@ -100,4 +102,6 @@ def send_websocket_message(data,  level='system', context=None):
             event_loop.run_until_complete(send_message(json_message))
 
         except Exception as error:
+
+
             _l.info("Websocket error %s" % error)
