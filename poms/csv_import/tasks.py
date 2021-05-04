@@ -533,7 +533,9 @@ def process_csv_file(master_user,
 
                                     else:
 
-                                        _l.debug('ExpressionEvalError Appending Error %s' % ExpressionEvalError)
+                                        _l.debug('ExpressionEvalError Appending Error %s key %s' % (ExpressionEvalError, key))
+
+                                        instance[key] = None
 
                                         inputs_error.append(
                                             {"field": entity_field,
