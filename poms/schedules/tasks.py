@@ -17,7 +17,7 @@ _l = logging.getLogger('poms.schedules')
 @shared_task(name='schedules.process_procedure_async', bind=True, ignore_result=True)
 def process_procedure_async(self, procedure, master_user, schedule_instance):
 
-    _l.info("Schedule: Subprocess process. Master User: %s. Procedure: %s" % (master_user, procedure))
+    _l.info("Schedule: Subprocess process. Master User: %s. Procedure: %s" % (master_user, procedure.type))
 
     if procedure.type == 'pricing':
 
@@ -32,7 +32,7 @@ def process_procedure_async(self, procedure, master_user, schedule_instance):
 
             _l.info("Can't find Pricing Procedure %s" % procedure.user_code)
 
-    if procedure.type == 'request_data_file':
+    if procedure.type == 'data_provider':
 
         try:
 
