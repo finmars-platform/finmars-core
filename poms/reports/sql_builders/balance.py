@@ -1539,6 +1539,9 @@ class BalanceReportBuilderSql:
                 # (i )   Position * Long Underlying Exposure
                 # (ii)  -Position * Short Underlying Exposure
 
+                if long is None:
+                    long = 0
+
                 if item["exposure_calculation_model_id"] == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT:
                     item["exposure"] = item["position_size"] * long
 
