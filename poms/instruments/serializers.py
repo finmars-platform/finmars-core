@@ -315,7 +315,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
             'is_enabled', 'pricing_policies',
             'has_second_exposure_currency',
 
-            'accruals', 'events',
+            'accruals', 'events', 'instrument_attributes',
 
             'payment_size_detail', 'payment_size_detail_object',
             'accrued_currency', 'accrued_currency_object',
