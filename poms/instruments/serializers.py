@@ -19,7 +19,7 @@ from poms.instruments.models import Instrument, PriceHistory, InstrumentClass, D
     AccrualCalculationModel, PaymentSizeDetail, Periodicity, CostMethod, InstrumentType, \
     ManualPricingFormula, AccrualCalculationSchedule, InstrumentFactorSchedule, EventSchedule, \
     PricingPolicy, EventScheduleAction, EventScheduleConfig, GeneratedEvent, PricingCondition, InstrumentTypeAccrual, \
-    InstrumentTypeEvent
+    InstrumentTypeEvent, InstrumentTypeInstrumentAttribute
 from poms.integrations.fields import PriceDownloadSchemeField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, ModelWithAttributesOnlySerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
@@ -258,6 +258,13 @@ class InstrumentTypeAccrualSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'order', 'autogenerate', 'data']
 
 
+class InstrumentTypeInstrumentAttributeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = InstrumentTypeInstrumentAttribute
+        fields = ['id', 'attribute_type_user_code', 'value_type', 'value_string', 'value_float', 'value_date', 'value_classifier']
+
+
 class InstrumentTypeEventSerializer(serializers.ModelSerializer):
 
     data = serializers.JSONField(allow_null=False)
@@ -281,6 +288,8 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
     factor_up_object = serializers.PrimaryKeyRelatedField(source='factor_up', read_only=True)
     factor_down = TransactionTypeField(allow_null=True, required=False)
     factor_down_object = serializers.PrimaryKeyRelatedField(source='factor_down', read_only=True)
+
+    instrument_attributes = InstrumentTypeInstrumentAttributeSerializer(required=False, many=True, read_only=False)
 
     accruals = InstrumentTypeAccrualSerializer(required=False, many=True, read_only=False)
     events = InstrumentTypeEventSerializer(required=False, many=True, read_only=False)
@@ -346,12 +355,14 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
         pricing_policies = validated_data.pop('pricing_policies', [])
         accruals = validated_data.pop('accruals', [])
         events = validated_data.pop('events', [])
+        instrument_attributes = validated_data.pop('instrument_attributes', [])
 
         instance = super(InstrumentTypeSerializer, self).create(validated_data)
 
         self.save_pricing_policies(instance, pricing_policies)
         self.save_accruals(instance, accruals)
         self.save_events(instance, events)
+        self.save_instrument_attributes(instance, instrument_attributes)
 
         return instance
 
@@ -360,12 +371,14 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
         pricing_policies = validated_data.pop('pricing_policies', [])
         accruals = validated_data.pop('accruals', [])
         events = validated_data.pop('events', [])
+        instrument_attributes = validated_data.pop('instrument_attributes', [])
 
         instance = super(InstrumentTypeSerializer, self).update(instance, validated_data)
 
         self.save_pricing_policies(instance, pricing_policies)
         self.save_accruals(instance, accruals)
         self.save_events(instance, events)
+        self.save_instrument_attributes(instance, instrument_attributes)
 
         return instance
 
@@ -480,6 +493,61 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
         InstrumentTypeEvent.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
 
+
+    def save_instrument_attributes(self, instance, events):
+
+        ids = set()
+
+        if events:
+
+            for item in events:
+
+                try:
+
+                    oid = item.get('id', None)
+
+                    if oid:
+                        ids.add(oid)
+
+                    o = InstrumentTypeInstrumentAttribute.objects.get(instrument_type=instance, id=oid)
+
+                    o.attribute_type_user_code = item['attribute_type_user_code']
+                    o.value_type = item['value_type']
+                    o.autogenerate = item['autogenerate']
+                    o.value_string = item['value_string']
+                    o.value_float = item['value_float']
+                    o.value_date = item['value_date']
+                    o.value_classifier = item['value_classifier']
+
+                    o.save()
+
+                except InstrumentTypeInstrumentAttribute.DoesNotExist as e:
+
+                    try:
+
+                        o = InstrumentTypeInstrumentAttribute.objects.create(instrument_type=instance)
+
+                        o.attribute_type_user_code = item['attribute_type_user_code']
+                        o.value_type = item['value_type']
+                        o.autogenerate = item['autogenerate']
+                        o.value_string = item['value_string']
+                        o.value_float = item['value_float']
+                        o.value_date = item['value_date']
+                        o.value_classifier = item['value_classifier']
+
+                        o.save()
+
+                        ids.add(o.id)
+
+                    except Exception as e:
+
+                        print("Can't Create Instrument Type Instrument Attribute %s" % e)
+
+
+        print('instrument attribute create ids %s ' % ids)
+
+
+        InstrumentTypeInstrumentAttribute.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
 
 
     def save_pricing_policies(self, instance, pricing_policies):

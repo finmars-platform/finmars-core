@@ -584,6 +584,39 @@ class InstrumentTypeEvent(models.Model):
             self.json_data = None
 
 
+class InstrumentTypeInstrumentAttribute(models.Model):
+
+    STRING = 10
+    NUMBER = 20
+    CLASSIFIER = 30
+    DATE = 40
+
+    VALUE_TYPES = (
+        (NUMBER, ugettext_lazy('Number')),
+        (STRING, ugettext_lazy('String')),
+        (DATE, ugettext_lazy('Date')),
+        (CLASSIFIER, ugettext_lazy('Classifier')),
+    )
+
+
+    instrument_type = models.ForeignKey(InstrumentType, on_delete=models.CASCADE,
+                                        related_name='instrument_attributes',
+                                        verbose_name=ugettext_lazy('instrument attributes'))
+
+    attribute_type_user_code = models.CharField(max_length=255, verbose_name=ugettext_lazy('attribute type user code'))
+
+    value_type = models.PositiveSmallIntegerField(choices=VALUE_TYPES, default=STRING,
+                                                  verbose_name=ugettext_lazy('value type'))
+
+    value_string = models.CharField(db_index=True, max_length=255, null=True, blank=True,
+                                    verbose_name=ugettext_lazy('value (String)'))
+    value_float = models.FloatField(db_index=True, null=True, blank=True, verbose_name=ugettext_lazy('value (Float)'))
+    value_date = models.DateField(db_index=True, null=True, blank=True, verbose_name=ugettext_lazy('value (Date)'))
+    value_classifier = models.CharField(db_index=True, max_length=255, null=True, blank=True,
+                                    verbose_name=ugettext_lazy('value (Classifier)'))
+
+
+
 class Instrument(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     # class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='instruments', verbose_name=ugettext_lazy('master user'),
