@@ -696,6 +696,7 @@ class PriceHistoryCheckerSql:
 
             self.instance.items = self.instance.items + transactions
 
+
         self.add_data_items()
 
 
@@ -743,7 +744,15 @@ class PriceHistoryCheckerSql:
         instrument_ids = []
         currencies_ids = []
 
+        dash_currency = Currency.objects.get(user_code='-', master_user=self.instance.master_user)
+
+        items_without_dash_currency = []
+
+        print('dash_currency %s' % dash_currency.id)
+
         for item in self.instance.items:
+
+            is_not_dash = True
 
             if item['type'] == 'missing_principal_pricing_history':
                 instrument_ids.append(item['id'])
@@ -751,8 +760,19 @@ class PriceHistoryCheckerSql:
             if item['type'] == 'missing_instrument_currency_fx_rate':
                 currencies_ids.append(item['id'])
 
+                if item['id'] == dash_currency.id:
+                    is_not_dash = False
+
             if item['type'] == 'fixed_calc':
                 currencies_ids.append(item['transaction_currency_id'])
+
+                if item['transaction_currency_id'] == dash_currency.id:
+                    is_not_dash = False
+
+            if is_not_dash:
+                items_without_dash_currency.append(item)
+
+        self.instance.items = items_without_dash_currency
 
         _l.debug('len instrument_ids %s' % len(instrument_ids))
 
