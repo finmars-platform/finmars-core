@@ -4,43 +4,16 @@ from django.apps import AppConfig
 from django.db import DEFAULT_DB_ALIAS
 from django.db.models.signals import post_migrate
 from django.utils.translation import ugettext_lazy
-from celery import shared_task, chord, current_task
 
 import requests
 import json
-import time
+
 
 import logging
 
 from poms_app import settings
 
 _l = logging.getLogger('poms.api')
-
-@shared_task(name='api.register_master_user',  bind=True)
-def register_master_user():
-
-    try:
-        _l.info("register_at_authorizer_service processing sleep" )
-
-        time.sleep(2 * 60)
-
-        _l.info("register_at_authorizer_service processing continue" )
-
-        headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
-
-        data = {
-            "base_api_url": settings.BASE_API_URL,
-        }
-
-        url = settings.AUTHORIZER_URL + '/backend-is-ready/'
-
-        response = requests.post(url=url, data=json.dumps(data), headers=headers)
-
-        _l.info("register_at_authorizer_service processing response.status_code %s" % response.status_code)
-        _l.info("register_at_authorizer_service processing response.text %s" % response.text)
-
-    except Exception as e:
-            _l.info("register_at_authorizer_service error %s" % e)
 
 
 class ApiConfig(AppConfig):
@@ -62,6 +35,21 @@ class ApiConfig(AppConfig):
 
     def register_at_authorizer_service(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
 
-        _l.info('register_at_authorizer_service start async')
+        try:
+            _l.info("register_at_authorizer_service processing")
 
-        register_master_user.apply_async()
+            headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+
+            data = {
+                "base_api_url": settings.BASE_API_URL,
+            }
+
+            url = settings.AUTHORIZER_URL + '/backend-is-ready/'
+
+            response = requests.post(url=url, data=json.dumps(data), headers=headers)
+
+            _l.info("register_at_authorizer_service processing response.status_code %s" % response.status_code)
+            _l.info("register_at_authorizer_service processing response.text %s" % response.text)
+
+        except Exception as e:
+                _l.info("register_at_authorizer_service error %s" % e)
