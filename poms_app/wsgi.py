@@ -23,35 +23,3 @@ application = get_wsgi_application()
 
 
 # application = StaticFilesHandler(application)
-
-
-def register_at_authorizer_service():
-
-    try:
-        print("register_at_authorizer_service processing")
-
-        headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
-
-        from poms_app import settings
-        data = {
-            "base_api_url": settings.BASE_API_URL,
-        }
-
-        url = settings.AUTHORIZER_URL + '/backend-is-ready/'
-
-        import json
-        import requests
-        response = requests.post(url=url, data=json.dumps(data), headers=headers)
-
-        print("register_at_authorizer_service processing response.status_code %s" % response.status_code)
-        print("register_at_authorizer_service processing response.text %s" % response.text)
-
-    except Exception as e:
-        print("register_at_authorizer_service error %s" % e)
-
-def on_startup():
-    from poms_app import settings
-    if 'SIMPLE' in settings.BACKEND_ROLES:
-        register_at_authorizer_service()
-
-on_startup()
