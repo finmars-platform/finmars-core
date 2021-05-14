@@ -28,11 +28,13 @@ def register_at_authorizer_service():
 
     import requests
     import json
+    from poms_app import settings
 
     try:
         print("register_at_authorizer_service processing")
 
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+
 
         data = {
             "base_api_url": settings.BASE_API_URL,
@@ -52,7 +54,7 @@ def one_time_startup():
 
     print("On startup methods")
 
-    from django.conf import settings
+    from poms_app import settings
     if 'SIMPLE' in settings.BACKEND_ROLES:
         register_at_authorizer_service()
 
