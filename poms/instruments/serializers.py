@@ -19,7 +19,7 @@ from poms.instruments.models import Instrument, PriceHistory, InstrumentClass, D
     AccrualCalculationModel, PaymentSizeDetail, Periodicity, CostMethod, InstrumentType, \
     ManualPricingFormula, AccrualCalculationSchedule, InstrumentFactorSchedule, EventSchedule, \
     PricingPolicy, EventScheduleAction, EventScheduleConfig, GeneratedEvent, PricingCondition, InstrumentTypeAccrual, \
-    InstrumentTypeEvent, InstrumentTypeInstrumentAttribute
+    InstrumentTypeEvent, InstrumentTypeInstrumentAttribute, InstrumentTypeInstrumentFactorSchedule
 from poms.integrations.fields import PriceDownloadSchemeField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, ModelWithAttributesOnlySerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
@@ -265,6 +265,20 @@ class InstrumentTypeInstrumentAttributeSerializer(serializers.ModelSerializer):
         fields = ['id', 'attribute_type_user_code', 'value_type', 'value_string', 'value_float', 'value_date', 'value_classifier']
 
 
+class InstrumentTypeInstrumentFactorScheduleSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = InstrumentTypeInstrumentFactorSchedule
+        fields = ['id',
+
+                  'effective_date', 'effective_date_value_type',
+                  'position_factor_value', 'position_factor_value_value_type',
+                  'factor_value1', 'factor_value1_value_type',
+                  'factor_value2', 'factor_value2_value_type',
+                  'factor_value3', 'factor_value3_value_type'
+                  ]
+
+
 class InstrumentTypeEventSerializer(serializers.ModelSerializer):
 
     data = serializers.JSONField(allow_null=False)
@@ -290,6 +304,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
     factor_down_object = serializers.PrimaryKeyRelatedField(source='factor_down', read_only=True)
 
     instrument_attributes = InstrumentTypeInstrumentAttributeSerializer(required=False, many=True, read_only=False)
+    instrument_factor_schedules = InstrumentTypeInstrumentFactorScheduleSerializer(required=False, many=True, read_only=False)
 
     accruals = InstrumentTypeAccrualSerializer(required=False, many=True, read_only=False)
     events = InstrumentTypeEventSerializer(required=False, many=True, read_only=False)
@@ -315,7 +330,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
             'is_enabled', 'pricing_policies',
             'has_second_exposure_currency',
 
-            'accruals', 'events', 'instrument_attributes',
+            'accruals', 'events', 'instrument_attributes', 'instrument_factor_schedules',
 
             'payment_size_detail', 'payment_size_detail_object',
             'accrued_currency', 'accrued_currency_object',
@@ -356,6 +371,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
         accruals = validated_data.pop('accruals', [])
         events = validated_data.pop('events', [])
         instrument_attributes = validated_data.pop('instrument_attributes', [])
+        instrument_factor_schedules = validated_data.pop('instrument_factor_schedules', [])
 
         instance = super(InstrumentTypeSerializer, self).create(validated_data)
 
@@ -363,6 +379,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
         self.save_accruals(instance, accruals)
         self.save_events(instance, events)
         self.save_instrument_attributes(instance, instrument_attributes)
+        self.save_instrument_factor_schedules(instance, instrument_factor_schedules)
 
         return instance
 
@@ -372,6 +389,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
         accruals = validated_data.pop('accruals', [])
         events = validated_data.pop('events', [])
         instrument_attributes = validated_data.pop('instrument_attributes', [])
+        instrument_factor_schedules = validated_data.pop('instrument_factor_schedules', [])
 
         instance = super(InstrumentTypeSerializer, self).update(instance, validated_data)
 
@@ -379,6 +397,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
         self.save_accruals(instance, accruals)
         self.save_events(instance, events)
         self.save_instrument_attributes(instance, instrument_attributes)
+        self.save_instrument_factor_schedules(instance, instrument_factor_schedules)
 
         return instance
 
@@ -548,6 +567,67 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
 
         InstrumentTypeInstrumentAttribute.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
+
+
+    def save_instrument_factor_schedules(self, instance, events):
+
+        ids = set()
+
+        if events:
+
+            for item in events:
+
+                try:
+
+                    oid = item.get('id', None)
+
+                    if oid:
+                        ids.add(oid)
+
+                    o = InstrumentTypeInstrumentFactorSchedule.objects.get(instrument_type=instance, id=oid)
+
+                    o.effective_date = item['effective_date']
+                    o.effective_date_value_type = item['effective_date_value_type']
+                    o.position_factor_value = item['position_factor_value']
+                    o.position_factor_value_value_type = item['position_factor_value_value_type']
+                    o.factor_value1 = item['factor_value1']
+                    o.factor_value1_value_type = item['factor_value1_value_type']
+                    o.factor_value2 = item['factor_value2']
+                    o.factor_value2_value_type = item['factor_value2_value_type']
+                    o.factor_value3 = item['factor_value3']
+                    o.factor_value3_value_type = item['factor_value3_value_type']
+
+                    o.save()
+
+                except InstrumentTypeInstrumentFactorSchedule.DoesNotExist as e:
+
+                    try:
+
+                        o = InstrumentTypeInstrumentFactorSchedule.objects.create(instrument_type=instance)
+
+                        o.effective_date = item['effective_date']
+                        o.effective_date_value_type = item['effective_date_value_type']
+                        o.position_factor_value = item['position_factor_value']
+                        o.position_factor_value_value_type = item['position_factor_value_value_type']
+                        o.factor_value1 = item['factor_value1']
+                        o.factor_value1_value_type = item['factor_value1_value_type']
+                        o.factor_value2 = item['factor_value2']
+                        o.factor_value2_value_type = item['factor_value2_value_type']
+                        o.factor_value3 = item['factor_value3']
+                        o.factor_value3_value_type = item['factor_value3_value_type']
+                        o.save()
+
+                        ids.add(o.id)
+
+                    except Exception as e:
+
+                        print("Can't Create Instrument Type Instrument Factor Schedule %s" % e)
+
+
+        print('instrument Factor Schedule create ids %s ' % ids)
+
+
+        InstrumentTypeInstrumentFactorSchedule.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
 
 
     def save_pricing_policies(self, instance, pricing_policies):

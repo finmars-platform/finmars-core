@@ -499,6 +499,24 @@ class InstrumentType(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, Da
 
     default_accrued = models.FloatField(default=0.0, verbose_name=ugettext_lazy('default accrued'))
 
+    instrument_factor_schedule_json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('instrument factor schedule json data'))
+
+    @property
+    def instrument_factor_schedule_data(self):
+        if self.instrument_factor_schedule_json_data:
+            try:
+                return json.loads(self.instrument_factor_schedule_json_data)
+            except (ValueError, TypeError):
+                return None
+        else:
+            return None
+
+    @instrument_factor_schedule_data.setter
+    def instrument_factor_schedule_data(self, val):
+        if val:
+            self.instrument_factor_schedule_json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+        else:
+            self.instrument_factor_schedule_json_data = None
 
     objects = CachingManager()
 
@@ -615,6 +633,40 @@ class InstrumentTypeInstrumentAttribute(models.Model):
     value_classifier = models.CharField(db_index=True, max_length=255, null=True, blank=True,
                                     verbose_name=ugettext_lazy('value (Classifier)'))
 
+
+class InstrumentTypeInstrumentFactorSchedule(models.Model):
+
+    instrument_type = models.ForeignKey(InstrumentType, on_delete=models.CASCADE,
+                                        related_name='instrument_factor_schedules',
+                                        verbose_name=ugettext_lazy('instrument attributes'))
+
+    effective_date =  models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('effective date'))
+    effective_date_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
+                                                                     verbose_name=ugettext_lazy('effective date'))
+
+    position_factor_value = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('position factor value'))
+    position_factor_value_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
+                                                                 verbose_name=ugettext_lazy('position factor value value type'))
+
+    factor_value1 = models.FloatField(default=0., verbose_name=ugettext_lazy('factor value 1'))
+    factor_value1_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
+                                                                        verbose_name=ugettext_lazy('factor value1 value type'))
+
+    factor_value2 = models.FloatField(default=0., verbose_name=ugettext_lazy('factor value 2'))
+    factor_value2_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
+                                                                verbose_name=ugettext_lazy('factor value2 value type'))
+
+    factor_value3 = models.FloatField(default=0., verbose_name=ugettext_lazy('factor value 3 '))
+    factor_value3_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
+                                                                verbose_name=ugettext_lazy('factor value3 value type'))
+
+
+    class Meta:
+        verbose_name = ugettext_lazy('instrument type instrument factor schedule')
+        verbose_name_plural = ugettext_lazy('instrument type  instrument factor schedules')
+
+    def __str__(self):
+        return '%s' % self.effective_date
 
 
 class Instrument(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
