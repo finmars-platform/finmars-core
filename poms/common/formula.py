@@ -15,6 +15,10 @@ from django.utils.functional import Promise, SimpleLazyObject
 
 from poms.common.utils import date_now, isclose
 
+
+from pandas.tseries.offsets import BMonthEnd, BYearEnd, BQuarterEnd, BDay
+from datetime import date
+
 _l = logging.getLogger('poms.formula')
 
 MAX_STR_LEN = 2000
@@ -242,6 +246,38 @@ def _parse_date(date_string, format=None):
     else:
         format = str(format)
     return datetime.datetime.strptime(date_string, format).date()
+
+
+def _get_date_last_week_end_business(date):
+    date = _parse_date(date)
+
+    offset = BDay()
+
+    return offset.rollback(date)
+
+
+def _get_date_last_month_end_business(date):
+    date = _parse_date(date)
+
+    offset = BMonthEnd()
+
+    return offset.rollback(date)
+
+
+def _get_date_last_quarter_end_business(date):
+    date = _parse_date(date)
+
+    offset = BQuarterEnd()
+
+    return offset.rollback(date)
+
+
+def _get_date_last_year_end_business(date):
+    date = _parse_date(date)
+
+    offset = BYearEnd()
+
+    return offset.rollback(date)
 
 
 def _format_date2(date, format=None, locale=None):
@@ -1801,6 +1837,9 @@ FUNCTIONS = [
 
     SimpleEval2Def('format_date', _format_date),
     SimpleEval2Def('parse_date', _parse_date),
+    SimpleEval2Def('get_date_last_month_end_business', _get_date_last_month_end_business),
+    SimpleEval2Def('get_date_last_quarter_end_business', _get_date_last_quarter_end_business),
+    SimpleEval2Def('get_date_last_year_end_business', _get_date_last_year_end_business),
     # SimpleEval2Def('format_date2', _format_date2),
     # SimpleEval2Def('parse_date2', _parse_date2),
 
