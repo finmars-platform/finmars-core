@@ -77,3 +77,4 @@ echo "Run uwsgi"
 
 /usr/bin/uwsgi /etc/uwsgi/apps-enabled/finmars.ini
 
+echo "Initialized"
