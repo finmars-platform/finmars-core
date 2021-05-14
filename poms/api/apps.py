@@ -25,8 +25,8 @@ class ApiConfig(AppConfig):
 
         post_migrate.connect(self.add_view_and_manage_permissions, sender=self)
 
-        if 'SIMPLE' in settings.BACKEND_ROLES:
-            post_migrate.connect(self.register_at_authorizer_service, sender=self)
+        # if 'SIMPLE' in settings.BACKEND_ROLES:
+        #     post_migrate.connect(self.register_at_authorizer_service, sender=self)
 
     def add_view_and_manage_permissions(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
         from poms.common.utils import add_view_and_manage_permissions
