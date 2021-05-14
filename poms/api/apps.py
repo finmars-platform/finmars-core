@@ -16,8 +16,9 @@ from poms_app import settings
 
 _l = logging.getLogger('poms.api')
 
-@shared_task(name='api.register_master_user', ignore_result=True)
+@shared_task(name='api.register_master_user',  bind=True)
 def register_master_user():
+
     try:
         _l.info("register_at_authorizer_service processing sleep" )
 
@@ -39,7 +40,7 @@ def register_master_user():
         _l.info("register_at_authorizer_service processing response.text %s" % response.text)
 
     except Exception as e:
-        _l.info("register_at_authorizer_service error %s" % e)
+            _l.info("register_at_authorizer_service error %s" % e)
 
 
 class ApiConfig(AppConfig):
@@ -60,5 +61,7 @@ class ApiConfig(AppConfig):
 
 
     def register_at_authorizer_service(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
+
+        _l.info('register_at_authorizer_service start async')
 
         register_master_user.apply_async()
