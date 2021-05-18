@@ -84,4 +84,4 @@ websockets==8.1
 asyncio==3.4.3
 django-debug-toolbar-request-history==0.1.3
 coverage==5.4
-pandas==1.2.4
+pandas==1.1.5
