@@ -168,6 +168,12 @@ class CharFilter(django_filters.CharFilter):
         super(CharFilter, self).__init__(*args, **kwargs)
 
 
+class CharExactFilter(django_filters.CharFilter):
+    def __init__(self, *args, **kwargs):
+        kwargs['lookup_expr'] = 'exact'
+        super(CharExactFilter, self).__init__(*args, **kwargs)
+
+
 class GroupsAttributeFilter(BaseFilterBackend):
 
     def format_groups(self, group_type, master_user, content_type):

@@ -2,7 +2,7 @@ import django_filters
 from django_filters.fields import Lookup
 from django_filters.rest_framework import FilterSet
 
-from poms.common.filters import NoOpFilter, CharFilter
+from poms.common.filters import NoOpFilter, CharFilter, CharExactFilter
 from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet
 from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
     ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
@@ -228,7 +228,8 @@ class ListLayoutFilterSet(FilterSet):
     is_default = django_filters.BooleanFilter()
     is_active = django_filters.BooleanFilter()
     name = CharFilter()
-    user_code = CharFilter()
+    # user_code = CharFilter()
+    user_code = CharExactFilter()
     content_type = LayoutContentTypeFilter()
 
     class Meta:
