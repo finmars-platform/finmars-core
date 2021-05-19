@@ -17,7 +17,7 @@ class SetAuthTokenSerializer(serializers.Serializer):
 
 class CreateUserSerializer(serializers.Serializer):
     username = serializers.CharField(label=_("Username"))
-    email = serializers.CharField(label=_("Email"), required=False)
+    email = serializers.CharField(label=_("Email"), required=False, allow_blank=True)
     user_unique_id = serializers.CharField(label=_("User Unique id"))
 
 
