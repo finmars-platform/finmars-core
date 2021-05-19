@@ -180,24 +180,30 @@ class CreateUser(APIView):
         email = serializer.validated_data['email']
         user_unique_id = serializer.validated_data['user_unique_id']
 
+        _l.info('Create user validated data %s' % serializer.validated_data)
+
         password = generate_random_string(10)
 
-        users = User.objects.filter(username=username)
+        user = None
 
-        if len(list(users)) == 0:
+        try:
+            user = User.objects.get(username=username)
+
+        except User.DoesNotExist:
 
             try:
 
                 user = User.objects.create(email=email, username=username, password=password)
                 user.save()
 
-                user_profile, created = UserProfile.objects.get_or_create(user_id=user.pk)
-
-                user_profile.user_unique_id = user_unique_id
-                user_profile.save()
-
             except Exception as e:
                 _l.info("Create user error %s" % e)
+
+        if user:
+            user_profile, created = UserProfile.objects.get_or_create(user_id=user.pk)
+
+            user_profile.user_unique_id = user_unique_id
+            user_profile.save()
 
         return Response({'status': 'ok'})
 
@@ -271,7 +277,6 @@ class CreateMember(APIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-
         groups = serializer.validated_data['groups']
 
         user_id = serializer.validated_data['user_id']
@@ -300,7 +305,6 @@ class CreateMember(APIView):
                 for group in groups_list:
 
                     if group != 'Administrators':
-
                         group = Group.objects.get(master_user=master_user, role=Group.USER, name=group)
                         group.members.add(member.id)
                         group.save()
@@ -310,8 +314,4 @@ class CreateMember(APIView):
         except Exception as e:
             _l.info("Could not create member Error %s" % e)
 
-
-
         return Response({'status': 'ok'})
-
-

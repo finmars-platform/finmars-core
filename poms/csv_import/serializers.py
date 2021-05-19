@@ -2,6 +2,9 @@ import uuid
 
 from django.contrib.contenttypes.models import ContentType
 from django.apps import apps
+from django.core.validators import RegexValidator
+from django.core.exceptions import ObjectDoesNotExist
+
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -9,7 +12,7 @@ from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import ModelWithTimeStampSerializer, ModelWithUserCodeSerializer
 from poms.users.fields import MasterUserField, HiddenMemberField
-from .models import CsvField, EntityField, CsvDataImport, CsvImportScheme
+from .models import CsvField, EntityField, CsvDataImport, CsvImportScheme, CsvImportSchemeCalculatedInput
 from .fields import CsvImportContentTypeField, CsvImportSchemeField
 
 
@@ -78,11 +81,27 @@ class EntityFieldSerializer(serializers.ModelSerializer):
         }
 
 
+class CsvImportSchemeCalculatedInputSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
+    name = serializers.CharField(max_length=255, allow_null=False, allow_blank=False,
+                                 validators=[
+                                     RegexValidator(regex='\A[a-zA-Z_][a-zA-Z0-9_]*\Z'),
+                                 ])
+
+    name_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
+
+    class Meta:
+        model = CsvImportSchemeCalculatedInput
+        fields = ['id', 'name', 'column', 'name_expr']
+
+
+
 class CsvImportSchemeSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     csv_fields = CsvFieldSerializer(many=True)
     entity_fields = EntityFieldSerializer(many=True)
     content_type = CsvImportContentTypeField()
+    calculated_inputs = CsvImportSchemeCalculatedInputSerializer(many=True, read_only=False, required=False)
 
     delimiter = serializers.CharField(max_length=3, required=False, initial=',', default=',')
 
@@ -227,14 +246,35 @@ class CsvImportSchemeSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampS
                                            name=entity_field.get('name'),
                                            expression=entity_field.get('expression'))
 
+    def save_calculated_inputs(self, scheme, inputs):
+        pk_set = set()
+        for input_values in inputs:
+            input_id = input_values.pop('id', None)
+            input0 = None
+            if input_id:
+                try:
+                    input0 = scheme.inputs.get(pk=input_id)
+                except ObjectDoesNotExist:
+                    pass
+            if input0 is None:
+                input0 = CsvImportSchemeCalculatedInput(scheme=scheme)
+            for name, value in input_values.items():
+                setattr(input0, name, value)
+            input0.save()
+            pk_set.add(input0.id)
+        scheme.calculated_inputs.exclude(pk__in=pk_set).delete()
+
+
     def create(self, validated_data):
 
         csv_fields = validated_data.pop('csv_fields')
         entity_fields = validated_data.pop('entity_fields')
+        calculated_inputs = validated_data.pop('calculated_inputs')
         scheme = CsvImportScheme.objects.create(**validated_data)
 
         self.set_entity_fields_mapping(scheme=scheme, entity_fields=entity_fields)
         self.set_dynamic_attributes_mapping(scheme=scheme, entity_fields=entity_fields)
+        self.save_calculated_inputs(scheme=scheme, inputs=calculated_inputs)
 
         for csv_field in csv_fields:
             CsvField.objects.create(scheme=scheme, **csv_field)
@@ -245,6 +285,7 @@ class CsvImportSchemeSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampS
 
         csv_fields = validated_data.pop('csv_fields')
         entity_fields = validated_data.pop('entity_fields')
+        calculated_inputs = validated_data.pop('calculated_inputs')
 
         scheme.user_code = validated_data.get('user_code', scheme.user_code)
         scheme.name = validated_data.get('name', scheme.name)
@@ -261,6 +302,7 @@ class CsvImportSchemeSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampS
 
         self.set_entity_fields_mapping(scheme=scheme, entity_fields=entity_fields)
         self.set_dynamic_attributes_mapping(scheme=scheme, entity_fields=entity_fields)
+        self.save_calculated_inputs(scheme=scheme, inputs=calculated_inputs)
 
         CsvField.objects.filter(scheme=scheme).delete()
 

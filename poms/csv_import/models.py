@@ -57,6 +57,25 @@ class CsvImportScheme(NamedModel, DataTimeStampedModel):
         return self.user_code
 
 
+class CsvImportSchemeCalculatedInput(models.Model):
+    scheme = models.ForeignKey(CsvImportScheme, related_name='calculated_inputs',
+                               verbose_name=ugettext_lazy('scheme'), on_delete=models.CASCADE)
+    # order = models.SmallIntegerField(default=0)
+    name = models.CharField(max_length=255)
+    column = models.SmallIntegerField()
+
+    name_expr = models.CharField(max_length=1000, default='', verbose_name=ugettext_lazy('name expression'))
+
+    class Meta:
+        verbose_name = ugettext_lazy('csv import scheme calculated input')
+        verbose_name_plural = ugettext_lazy('csv import scheme calculated inputs')
+        # ordering = ['order']
+        order_with_respect_to = 'scheme'
+
+    def __str__(self):
+        return self.name
+
+
 class CsvField(models.Model):
     column = models.IntegerField(default=0)
     name = models.CharField(max_length=255, blank=True, default='')
