@@ -3110,7 +3110,7 @@ def configuration_import_as_json(self, instance):
     except Exception as e:
 
         _l.debug("Error occurred %s" % e)
-        traceback.print_exc()
+        _l.debug(traceback.print_exc())
 
     return instance
 
