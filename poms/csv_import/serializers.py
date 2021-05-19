@@ -110,7 +110,7 @@ class CsvImportSchemeSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampS
         model = CsvImportScheme
         fields = ('id', 'master_user', 'name', 'user_code', 'short_name', 'public_name', 'notes',
 
-                  'filter_expr', 'content_type', 'csv_fields', 'entity_fields',
+                  'filter_expr', 'content_type', 'csv_fields', 'entity_fields', 'calculated_inputs',
 
                   'mode', 'delimiter', 'error_handler', 'missing_data_handler', 'classifier_handler'
 
