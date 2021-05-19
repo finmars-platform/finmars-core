@@ -253,7 +253,7 @@ class CsvImportSchemeSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampS
             input0 = None
             if input_id:
                 try:
-                    input0 = scheme.inputs.get(pk=input_id)
+                    input0 = scheme.calculated_inputs.get(pk=input_id)
                 except ObjectDoesNotExist:
                     pass
             if input0 is None:

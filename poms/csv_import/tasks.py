@@ -276,6 +276,20 @@ def get_item(scheme, result):
     return item_result
 
 
+def update_row_with_calculated_data(row, inputs, calculated_inputs):
+
+    for i in calculated_inputs:
+
+        try:
+            value = formula.safe_eval(i.name_expr, names=inputs)
+            row.append(value)
+
+        except Exception:
+            _l.debug('can\'t process calculated input: %s|%s', i.name, i.column, exc_info=True)
+            row.append("Invalid Expression")
+
+    return row
+
 def process_csv_file(master_user,
                      scheme,
                      file,
@@ -292,6 +306,7 @@ def process_csv_file(master_user,
 
     csv_fields = scheme.csv_fields.all()
     entity_fields = scheme.entity_fields.all()
+    calculated_inputs = list(scheme.calculated_inputs.all())
 
     errors = []
     results = []
@@ -368,6 +383,8 @@ def process_csv_file(master_user,
                     conversion_errors = []
 
                     csv_row_dict = get_row_data_converted(row, csv_fields, csv_row_dict_raw, {}, conversion_errors)
+
+                    csv_row_dict = update_row_with_calculated_data(row, csv_fields, calculated_inputs)
 
                     for key, value in csv_row_dict.items():
                         error_row['error_data']['columns']['converted_imported_columns'].append(
