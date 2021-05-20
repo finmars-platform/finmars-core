@@ -16,7 +16,6 @@ from django.utils.functional import cached_property
 from django.utils.translation import ugettext, ugettext_lazy
 from mptt.models import MPTTModel
 
-from poms.cache_machine.base import CachingManager, CachingMixin
 from poms.common import formula
 from poms.common.constants import SYSTEM_VALUE_TYPES, SystemValueType
 from poms.common.formula_accruals import get_coupon, f_duration, f_xirr
@@ -36,7 +35,7 @@ from math import isnan, copysign
 _l = logging.getLogger('poms.instruments')
 
 
-class InstrumentClass(CachingMixin, AbstractClassModel):
+class InstrumentClass(AbstractClassModel):
     GENERAL = 1
     EVENT_AT_MATURITY = 2
     REGULAR_EVENT_AT_MATURITY = 3
@@ -53,13 +52,9 @@ class InstrumentClass(CachingMixin, AbstractClassModel):
         (DEFAULT, '-', ugettext_lazy("Default"))
     )
 
-    objects = CachingManager()
-
     class Meta(AbstractClassModel.Meta):
         verbose_name = ugettext_lazy('instrument class')
         verbose_name_plural = ugettext_lazy('instrument classes')
-
-        base_manager_name = 'objects'
 
     @property
     def has_one_off_event(self):
@@ -95,7 +90,7 @@ class DailyPricingModel(AbstractClassModel):
         verbose_name_plural = ugettext_lazy('daily pricing models')
 
 
-class PricingCondition(CachingMixin, AbstractClassModel):
+class PricingCondition(AbstractClassModel):
     NO_VALUATION = 1
     RUN_VALUATION_IF_NON_ZERO = 2
     RUN_VALUATION_ALWAYS = 3
@@ -106,8 +101,6 @@ class PricingCondition(CachingMixin, AbstractClassModel):
         (RUN_VALUATION_ALWAYS, 'RUN_VALUATION_ALWAYS', ugettext_lazy("Run Valuation: always"))
     )
 
-    objects = CachingManager()
-
     class Meta(AbstractClassModel.Meta):
         verbose_name = ugettext_lazy('pricing condition')
         verbose_name_plural = ugettext_lazy('pricing conditions ')
@@ -115,7 +108,7 @@ class PricingCondition(CachingMixin, AbstractClassModel):
         base_manager_name = 'objects'
 
 
-class ExposureCalculationModel(CachingMixin, AbstractClassModel):
+class ExposureCalculationModel(AbstractClassModel):
 
     MARKET_VALUE = 1
     PRICE_EXPOSURE = 2
@@ -131,13 +124,9 @@ class ExposureCalculationModel(CachingMixin, AbstractClassModel):
         (UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT, 'UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT', ugettext_lazy("Underlying long short exposure split"))
     )
 
-    objects = CachingManager()
-
     class Meta(AbstractClassModel.Meta):
         verbose_name = ugettext_lazy('Exposure calculation model')
         verbose_name_plural = ugettext_lazy('Exposure calculation models ')
-
-        base_manager_name = 'objects'
 
 
 # <select id="u948_input" class="u948_input">
@@ -148,7 +137,7 @@ class ExposureCalculationModel(CachingMixin, AbstractClassModel):
 #           <option class="u948_input_option" value="Long Underlying Currency FX Rate Delta-adjusted Exposure">Long Underlying Currency FX Rate Delta-adjusted Exposure</option>
 #         </select>
 
-class LongUnderlyingExposure(CachingMixin, AbstractClassModel):
+class LongUnderlyingExposure(AbstractClassModel):
 
     ZERO = 1
     LONG_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE = 2
@@ -164,16 +153,12 @@ class LongUnderlyingExposure(CachingMixin, AbstractClassModel):
         (LONG_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE, 'LONG_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE', ugettext_lazy("Long Underlying Currency FX Rate Delta-adjusted Exposure"))
     )
 
-    objects = CachingManager()
-
     class Meta(AbstractClassModel.Meta):
         verbose_name = ugettext_lazy('Long underlying exposure')
         verbose_name_plural = ugettext_lazy('Long underlying exposure ')
 
-        base_manager_name = 'objects'
 
-
-class ShortUnderlyingExposure(CachingMixin, AbstractClassModel):
+class ShortUnderlyingExposure(AbstractClassModel):
 
     ZERO = 1
     SHORT_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE = 2
@@ -189,16 +174,13 @@ class ShortUnderlyingExposure(CachingMixin, AbstractClassModel):
         (SHORT_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE, 'SHORT_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE', ugettext_lazy("Short Underlying Currency FX Rate Delta-adjusted Exposure"))
     )
 
-    objects = CachingManager()
 
     class Meta(AbstractClassModel.Meta):
         verbose_name = ugettext_lazy('Short underlying exposure')
         verbose_name_plural = ugettext_lazy('Short underlying exposure ')
 
-        base_manager_name = 'objects'
 
-
-class AccrualCalculationModel(CachingMixin, AbstractClassModel):
+class AccrualCalculationModel(AbstractClassModel):
     NONE = 1
     ACT_ACT = 2
     ACT_ACT_ISDA = 3
@@ -254,16 +236,13 @@ class AccrualCalculationModel(CachingMixin, AbstractClassModel):
         (DEFAULT, '-', ugettext_lazy('Default'))
     )
 
-    objects = CachingManager()
 
     class Meta(AbstractClassModel.Meta):
         verbose_name = ugettext_lazy('accrual calculation model')
         verbose_name_plural = ugettext_lazy('accrual calculation models')
 
-        base_manager_name = 'objects'
 
-
-class PaymentSizeDetail(CachingMixin, AbstractClassModel):
+class PaymentSizeDetail(AbstractClassModel):
     PERCENT = 1
     PER_ANNUM = 2
     PER_QUARTER = 3
@@ -281,16 +260,12 @@ class PaymentSizeDetail(CachingMixin, AbstractClassModel):
         (DEFAULT, '-', ugettext_lazy("Default")),
     )
 
-    objects = CachingManager()
-
     class Meta(AbstractClassModel.Meta):
         verbose_name = ugettext_lazy('payment size detail')
         verbose_name_plural = ugettext_lazy('payment size details')
 
-        base_manager_name = 'objects'
 
-
-class Periodicity(CachingMixin, AbstractClassModel):
+class Periodicity(AbstractClassModel):
     N_DAY = 1
     N_WEEK_EOBW = 2
     N_MONTH_EOM = 3
@@ -325,13 +300,9 @@ class Periodicity(CachingMixin, AbstractClassModel):
         (DEFAULT, '-', ugettext_lazy('-')),
     )
 
-    objects = CachingManager()
-
     class Meta(AbstractClassModel.Meta):
         verbose_name = ugettext_lazy('periodicity')
         verbose_name_plural = ugettext_lazy('periodicities')
-
-        base_manager_name = 'objects'
 
     def to_timedelta(self, n=1, i=1, same_date=None):
         if self.id == Periodicity.N_DAY:
@@ -400,7 +371,7 @@ class Periodicity(CachingMixin, AbstractClassModel):
         return 0
 
 
-class CostMethod(CachingMixin, AbstractClassModel):
+class CostMethod(AbstractClassModel):
     AVCO = 1
     FIFO = 2
     LIFO = 3
@@ -410,16 +381,13 @@ class CostMethod(CachingMixin, AbstractClassModel):
         # (LIFO, ugettext_lazy('LIFO')),
     )
 
-    objects = CachingManager()
-
     class Meta(AbstractClassModel.Meta):
         verbose_name = ugettext_lazy('cost method')
         verbose_name_plural = ugettext_lazy('cost methods')
 
-        base_manager_name = 'objects'
 
 
-class PricingPolicy(CachingMixin, NamedModel, DataTimeStampedModel):
+class PricingPolicy(NamedModel, DataTimeStampedModel):
     # DISABLED = 0
     # BLOOMBERG = 1
     # TYPES = (
@@ -443,8 +411,6 @@ class PricingPolicy(CachingMixin, NamedModel, DataTimeStampedModel):
                                                         verbose_name=ugettext_lazy('default currency pricing scheme'),
                                                         on_delete=models.SET_NULL)
 
-    objects = CachingManager()
-
     class Meta(AbstractClassModel.Meta):
         verbose_name = ugettext_lazy('pricing policy')
         verbose_name_plural = ugettext_lazy('pricing policies')
@@ -464,7 +430,7 @@ class PricingPolicy(CachingMixin, NamedModel, DataTimeStampedModel):
     #     super(PricingPolicy, self).delete(*args, **kwargs)
 
 
-class InstrumentType(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class InstrumentType( NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='instrument_types',
                                     verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     instrument_class = models.ForeignKey(InstrumentClass, related_name='instrument_types', on_delete=models.PROTECT,
@@ -561,8 +527,6 @@ class InstrumentType(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, Da
         else:
             self.instrument_factor_schedule_json_data = None
 
-    objects = CachingManager()
-
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = ugettext_lazy('instrument type')
         verbose_name_plural = ugettext_lazy('instrument types')
@@ -571,7 +535,6 @@ class InstrumentType(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, Da
             ('manage_instrumenttype', 'Can manage instrument type'),
         ]
 
-        base_manager_name = 'objects'
 
     def __str__(self):
         return self.user_code
@@ -712,7 +675,7 @@ class InstrumentTypeInstrumentFactorSchedule(models.Model):
         return '%s' % self.effective_date
 
 
-class Instrument(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     # class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='instruments', verbose_name=ugettext_lazy('master user'),
                                     on_delete=models.CASCADE)
@@ -789,8 +752,6 @@ class Instrument(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTi
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
 
-    objects = CachingManager()
-
     co_directional_exposure_currency = models.ForeignKey('currencies.Currency', related_name='co_directional_exposure_currency', on_delete=models.SET_NULL, null=True, blank=True,
                                          verbose_name=ugettext_lazy('co directional exposure currency'))
 
@@ -819,8 +780,6 @@ class Instrument(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTi
             ('manage_instrument', 'Can manage instrument'),
         ]
         ordering = ['user_code']
-
-        base_manager_name = 'objects'
 
     @property
     def is_default(self):
@@ -1259,7 +1218,7 @@ class ManualPricingFormula(models.Model):
         return self.expr
 
 
-class AccrualCalculationSchedule(CachingMixin, models.Model):
+class AccrualCalculationSchedule(models.Model):
 
     instrument = models.ForeignKey(Instrument, related_name='accrual_calculation_schedules',
                                    verbose_name=ugettext_lazy('instrument'), on_delete=models.CASCADE)
@@ -1285,20 +1244,16 @@ class AccrualCalculationSchedule(CachingMixin, models.Model):
 
     notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
 
-    objects = CachingManager()
-
     class Meta:
         verbose_name = ugettext_lazy('accrual calculation schedule')
         verbose_name_plural = ugettext_lazy('accrual calculation schedules')
         ordering = ['accrual_start_date']
 
-        base_manager_name = 'objects'
-
     def __str__(self):
         return '%s' % self.accrual_start_date
 
 
-class PriceHistory(CachingMixin, DataTimeStampedModel):
+class PriceHistory(DataTimeStampedModel):
     instrument = models.ForeignKey(Instrument, related_name='prices', verbose_name=ugettext_lazy('instrument'),
                                    on_delete=models.CASCADE)
     pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE, null=True, blank=True,
@@ -1310,8 +1265,6 @@ class PriceHistory(CachingMixin, DataTimeStampedModel):
     long_delta = models.FloatField(default=0.0, verbose_name=ugettext_lazy('long delta'))
     short_delta = models.FloatField(default=0.0, verbose_name=ugettext_lazy('short delta'))
 
-    objects = CachingManager()
-
     ytm = models.FloatField(default=0.0, verbose_name=ugettext_lazy('ytm'))
     modified_duration = models.FloatField(default=0.0, verbose_name=ugettext_lazy('modified duration'))
 
@@ -1322,8 +1275,6 @@ class PriceHistory(CachingMixin, DataTimeStampedModel):
             ('instrument', 'pricing_policy', 'date',)
         )
         ordering = ['date']
-
-        base_manager_name = 'objects'
 
     def __str__(self):
         # return '%s:%s:%s:%s:%s' % (
@@ -1479,20 +1430,18 @@ class PriceHistory(CachingMixin, DataTimeStampedModel):
         super(PriceHistory, self).save(*args, **kwargs)
 
 
-class InstrumentFactorSchedule(CachingMixin, models.Model):
+class InstrumentFactorSchedule(models.Model):
     instrument = models.ForeignKey(Instrument, related_name='factor_schedules',
                                    verbose_name=ugettext_lazy('instrument'), on_delete=models.CASCADE)
     effective_date = models.DateField(default=date_now, verbose_name=ugettext_lazy('effective date'))
     factor_value = models.FloatField(default=0., verbose_name=ugettext_lazy('factor value'))
 
-    objects = CachingManager()
 
     class Meta:
         verbose_name = ugettext_lazy('instrument factor schedule')
         verbose_name_plural = ugettext_lazy('instrument factor schedules')
         ordering = ['effective_date']
 
-        base_manager_name = 'objects'
 
     def __str__(self):
         return '%s' % self.effective_date

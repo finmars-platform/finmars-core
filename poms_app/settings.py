@@ -89,7 +89,7 @@ INSTALLED_APPS = [
     'poms.system',
     'poms.http_sessions',
 
-    'poms.cache_machine',
+    # 'poms.cache_machine',
 
     'poms.users',
     'poms.audit',
@@ -343,92 +343,90 @@ WEBSOCKET_APP_TOKEN = os.environ.get('WEBSOCKET_APP_TOKEN', '943821230')
 
 print('WEBSOCKET_HOST %s' % WEBSOCKET_HOST)
 
-REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost:6379')
-print('REDIS_HOST %s' % REDIS_HOST)
+# REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost:6379')
+# print('REDIS_HOST %s' % REDIS_HOST)
 
 RABBITMQ_HOST = os.environ.get('RABBITMQ_HOST', 'localhost:5672')
 print('RABBITMQ_HOST %s' % RABBITMQ_HOST)
 
-
-
-CACHE_VERSION = 1
-# CACHE_SERIALIZER = "django_redis.serializers.json.JSONSerializer"
-CACHE_SERIALIZER = "django_redis.serializers.pickle.PickleSerializer"
-CACHE_COMPRESSOR = 'django_redis.compressors.identity.IdentityCompressor'
-# CACHE_COMPRESSOR = 'django_redis.compressors.zlib.ZlibCompressor'
-CACHE_SOCKET_CONNECT_TIMEOUT = 1
-CACHE_SOCKET_TIMEOUT = 1
-
-# 1 -> celery
-# 2 -> default
-# 3 -> http_cache, http_session
-# 4 -> all "poms"
 CACHES = {
     'default': {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://%s/2" % REDIS_HOST,
-        'KEY_PREFIX': 'default',
-        'TIMEOUT': 300,
-        'VERSION': CACHE_VERSION,
-        'OPTIONS': {
-            'SERIALIZER': CACHE_SERIALIZER,
-            'COMPRESSOR': CACHE_COMPRESSOR,
-            "SOCKET_CONNECT_TIMEOUT": CACHE_SOCKET_CONNECT_TIMEOUT,
-            "SOCKET_TIMEOUT": CACHE_SOCKET_TIMEOUT,
-            "PICKLE_VERSION": 2
-        }
-    },
-    # 'http_cache': {
-    #     "BACKEND": "django_redis.cache.RedisCache",
-    #     "LOCATION": "redis://%s/3" % REDIS_HOST,
-    #     'KEY_PREFIX': 'http_cache',
-    #     'TIMEOUT': 3600,
-    #     'OPTIONS': {
-    #         'SERIALIZER': CACHE_SERIALIZER,
-    #         'COMPRESSOR': CACHE_COMPRESSOR,
-    #         "SOCKET_CONNECT_TIMEOUT": CACHE_SOCKET_CONNECT_TIMEOUT,
-    #         "SOCKET_TIMEOUT": CACHE_SOCKET_TIMEOUT,
-    #     }
-    # },
-    'http_session': {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://%s/3" % REDIS_HOST,
-        'KEY_PREFIX': 'http_session',
-        'TIMEOUT': 3600,
-        'VERSION': CACHE_VERSION,
-        'OPTIONS': {
-            'SERIALIZER': CACHE_SERIALIZER,
-            'COMPRESSOR': CACHE_COMPRESSOR,
-            "SOCKET_CONNECT_TIMEOUT": CACHE_SOCKET_CONNECT_TIMEOUT,
-            "SOCKET_TIMEOUT": CACHE_SOCKET_TIMEOUT,
-        }
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     },
     'throttling': {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://%s/4" % REDIS_HOST,
-        'KEY_PREFIX': 'throttling',
-        'TIMEOUT': 300,
-        'VERSION': CACHE_VERSION,
-        'OPTIONS': {
-            'SERIALIZER': CACHE_SERIALIZER,
-            'COMPRESSOR': CACHE_COMPRESSOR,
-            "SOCKET_CONNECT_TIMEOUT": CACHE_SOCKET_CONNECT_TIMEOUT,
-            "SOCKET_TIMEOUT": CACHE_SOCKET_TIMEOUT,
-        }
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     },
-    # 'bloomberg': {
-    #     "BACKEND": "django_redis.cache.RedisCache",
-    #     "LOCATION": "redis://%s/4" % REDIS_HOST,
-    #     'KEY_PREFIX': 'bloomberg',
-    #     'TIMEOUT': 3600,
-    #     'OPTIONS': {
-    #         'SERIALIZER': CACHE_SERIALIZER,
-    #         'COMPRESSOR': CACHE_COMPRESSOR,
-    #         "SOCKET_CONNECT_TIMEOUT": CACHE_SOCKET_CONNECT_TIMEOUT,
-    #         "SOCKET_TIMEOUT": CACHE_SOCKET_TIMEOUT,
-    #     }
-    # },
+    'http_session': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
 }
+
+# CACHE_VERSION = 1
+# # CACHE_SERIALIZER = "django_redis.serializers.json.JSONSerializer"
+# CACHE_SERIALIZER = "django_redis.serializers.pickle.PickleSerializer"
+# CACHE_COMPRESSOR = 'django_redis.compressors.identity.IdentityCompressor'
+# # CACHE_COMPRESSOR = 'django_redis.compressors.zlib.ZlibCompressor'
+# CACHE_SOCKET_CONNECT_TIMEOUT = 1
+# CACHE_SOCKET_TIMEOUT = 1
+#
+# # 1 -> celery
+# # 2 -> default
+# # 3 -> http_cache, http_session
+# # 4 -> all "poms"
+# CACHES = {
+#     'default': {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": "redis://%s/2" % REDIS_HOST,
+#         'KEY_PREFIX': 'default',
+#         'TIMEOUT': 300,
+#         'VERSION': CACHE_VERSION,
+#         'OPTIONS': {
+#             'SERIALIZER': CACHE_SERIALIZER,
+#             'COMPRESSOR': CACHE_COMPRESSOR,
+#             "SOCKET_CONNECT_TIMEOUT": CACHE_SOCKET_CONNECT_TIMEOUT,
+#             "SOCKET_TIMEOUT": CACHE_SOCKET_TIMEOUT,
+#             "PICKLE_VERSION": 2
+#         }
+#     },
+#     'http_session': {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": "redis://%s/3" % REDIS_HOST,
+#         'KEY_PREFIX': 'http_session',
+#         'TIMEOUT': 3600,
+#         'VERSION': CACHE_VERSION,
+#         'OPTIONS': {
+#             'SERIALIZER': CACHE_SERIALIZER,
+#             'COMPRESSOR': CACHE_COMPRESSOR,
+#             "SOCKET_CONNECT_TIMEOUT": CACHE_SOCKET_CONNECT_TIMEOUT,
+#             "SOCKET_TIMEOUT": CACHE_SOCKET_TIMEOUT,
+#         }
+#     },
+#     'throttling': {
+#         "BACKEND": "django_redis.cache.RedisCache",
+#         "LOCATION": "redis://%s/4" % REDIS_HOST,
+#         'KEY_PREFIX': 'throttling',
+#         'TIMEOUT': 300,
+#         'VERSION': CACHE_VERSION,
+#         'OPTIONS': {
+#             'SERIALIZER': CACHE_SERIALIZER,
+#             'COMPRESSOR': CACHE_COMPRESSOR,
+#             "SOCKET_CONNECT_TIMEOUT": CACHE_SOCKET_CONNECT_TIMEOUT,
+#             "SOCKET_TIMEOUT": CACHE_SOCKET_TIMEOUT,
+#         }
+#     },
+#     # 'bloomberg': {
+#     #     "BACKEND": "django_redis.cache.RedisCache",
+#     #     "LOCATION": "redis://%s/4" % REDIS_HOST,
+#     #     'KEY_PREFIX': 'bloomberg',
+#     #     'TIMEOUT': 3600,
+#     #     'OPTIONS': {
+#     #         'SERIALIZER': CACHE_SERIALIZER,
+#     #         'COMPRESSOR': CACHE_COMPRESSOR,
+#     #         "SOCKET_CONNECT_TIMEOUT": CACHE_SOCKET_CONNECT_TIMEOUT,
+#     #         "SOCKET_TIMEOUT": CACHE_SOCKET_TIMEOUT,
+#     #     }
+#     # },
+# }
 
 # SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 SESSION_ENGINE = "poms.http_sessions.backends.cached_db"

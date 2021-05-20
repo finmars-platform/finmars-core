@@ -10,7 +10,6 @@ from django.db import models
 from django.utils.functional import SimpleLazyObject
 from django.utils.translation import ugettext_lazy
 
-from poms.cache_machine.base import CachingManager, CachingMixin
 from poms.common.models import NamedModel, FakeDeletableModel, DataTimeStampedModel
 from poms.common.utils import date_now
 from poms.common.wrapper_models import NamedModelAutoMapping
@@ -33,7 +32,7 @@ def _load_currencies_data():
 currencies_data = SimpleLazyObject(_load_currencies_data)
 
 
-class Currency(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='currencies', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     reference_for_pricing = models.CharField(max_length=100, blank=True, default='',
                                              verbose_name=ugettext_lazy('reference for pricing'))
@@ -53,7 +52,6 @@ class Currency(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTime
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
 
-    objects = CachingManager()
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = ugettext_lazy('currency')
@@ -63,7 +61,6 @@ class Currency(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTime
             ('manage_currency', 'Can manage currency'),
         ]
 
-        base_manager_name = 'objects'
 
     @property
     def is_system(self):
@@ -74,14 +71,12 @@ class Currency(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTime
         return self.master_user.currency_id == self.id if self.master_user_id else False
 
 
-class CurrencyHistory(CachingMixin, DataTimeStampedModel):
+class CurrencyHistory(DataTimeStampedModel):
     currency = models.ForeignKey(Currency, related_name='histories', verbose_name=ugettext_lazy('currency'), on_delete=models.CASCADE)
     pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, null=True, blank=True,
                                        verbose_name=ugettext_lazy('pricing policy'))
     date = models.DateField(db_index=True, default=date_now, verbose_name=ugettext_lazy('date'))
     fx_rate = models.FloatField(default=1, verbose_name=ugettext_lazy('fx rate'))
-
-    objects = CachingManager()
 
     class Meta:
         verbose_name = ugettext_lazy('currency history')
@@ -91,7 +86,6 @@ class CurrencyHistory(CachingMixin, DataTimeStampedModel):
         )
         ordering = ['date']
 
-        base_manager_name = 'objects'
 
     def save(self, *args, **kwargs):
 

@@ -5,7 +5,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy
 from mptt.models import MPTTModel
 
-from poms.cache_machine.base import CachingMixin, CachingManager
+
 from poms.common.models import NamedModel, FakeDeletableModel, EXPRESSION_FIELD_LENGTH, DataTimeStampedModel
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.currencies.models import Currency
@@ -15,7 +15,7 @@ from poms.tags.models import TagLink
 from poms.users.models import MasterUser, Member
 
 
-class AccountType(CachingMixin, NamedModel, FakeDeletableModel, DataTimeStampedModel):
+class AccountType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='account_types', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     show_transaction_details = models.BooleanField(default=False,
                                                    verbose_name=ugettext_lazy('show transaction details'))
@@ -27,8 +27,6 @@ class AccountType(CachingMixin, NamedModel, FakeDeletableModel, DataTimeStampedM
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
 
-    objects = CachingManager()
-
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = ugettext_lazy('account type')
         verbose_name_plural = ugettext_lazy('account types')
@@ -37,14 +35,12 @@ class AccountType(CachingMixin, NamedModel, FakeDeletableModel, DataTimeStampedM
             ('manage_accounttype', 'Can manage account type'),
         ]
 
-        base_manager_name = 'objects'
-
     @property
     def is_default(self):
         return self.master_user.account_type_id == self.id if self.master_user_id else False
 
 
-class Account(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class Account(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='accounts', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     type = models.ForeignKey(AccountType, on_delete=models.PROTECT, null=True, blank=True,
                              verbose_name=ugettext_lazy('account type'))
@@ -55,8 +51,6 @@ class Account(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTimeS
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
 
-    objects = CachingManager()
-
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = ugettext_lazy('account')
         verbose_name_plural = ugettext_lazy('accounts')
@@ -64,8 +58,6 @@ class Account(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTimeS
             # ('view_account', 'Can view account'),
             ('manage_account', 'Can manage account'),
         ]
-
-        base_manager_name = 'objects'
 
 
     @property

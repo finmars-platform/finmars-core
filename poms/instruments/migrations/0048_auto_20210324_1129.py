@@ -2,7 +2,7 @@
 
 from django.db import migrations, models
 import django.db.models.deletion
-import poms.cache_machine.base
+# import poms.cache_machine.base
 
 
 class Migration(migrations.Migration):
@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
                 'abstract': False,
                 'base_manager_name': 'objects',
             },
-            bases=(poms.cache_machine.base.CachingMixin, models.Model),
+            # bases=(poms.cache_machine.base.CachingMixin, models.Model),
         ),
         migrations.CreateModel(
             name='ShortUnderlyingExposure',
@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
                 'abstract': False,
                 'base_manager_name': 'objects',
             },
-            bases=(poms.cache_machine.base.CachingMixin, models.Model),
+            # bases=(poms.cache_machine.base.CachingMixin, models.Model),
         ),
         migrations.AddField(
             model_name='instrument',
