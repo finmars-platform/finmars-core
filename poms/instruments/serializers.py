@@ -563,7 +563,6 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
                     o.attribute_type_user_code = item['attribute_type_user_code']
                     o.value_type = item['value_type']
-                    o.autogenerate = item['autogenerate']
                     o.value_string = item['value_string']
                     o.value_float = item['value_float']
                     o.value_date = item['value_date']
@@ -579,7 +578,6 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
                         o.attribute_type_user_code = item['attribute_type_user_code']
                         o.value_type = item['value_type']
-                        o.autogenerate = item['autogenerate']
                         o.value_string = item['value_string']
                         o.value_float = item['value_float']
                         o.value_date = item['value_date']
