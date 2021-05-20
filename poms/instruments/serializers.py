@@ -19,7 +19,8 @@ from poms.instruments.models import Instrument, PriceHistory, InstrumentClass, D
     AccrualCalculationModel, PaymentSizeDetail, Periodicity, CostMethod, InstrumentType, \
     ManualPricingFormula, AccrualCalculationSchedule, InstrumentFactorSchedule, EventSchedule, \
     PricingPolicy, EventScheduleAction, EventScheduleConfig, GeneratedEvent, PricingCondition, InstrumentTypeAccrual, \
-    InstrumentTypeEvent, InstrumentTypeInstrumentAttribute, InstrumentTypeInstrumentFactorSchedule
+    InstrumentTypeEvent, InstrumentTypeInstrumentAttribute, InstrumentTypeInstrumentFactorSchedule, \
+    ExposureCalculationModel, LongUnderlyingExposure, ShortUnderlyingExposure
 from poms.integrations.fields import PriceDownloadSchemeField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, ModelWithAttributesOnlySerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
@@ -88,6 +89,21 @@ class PaymentSizeDetailSerializer(PomsClassSerializer):
 class PricingConditionSerializer(PomsClassSerializer):
     class Meta(PomsClassSerializer.Meta):
         model = PricingCondition
+
+
+class ExposureCalculationModelSerializer(PomsClassSerializer):
+    class Meta(PomsClassSerializer.Meta):
+        model = ExposureCalculationModel
+
+
+class LongUnderlyingExposureSerializer(PomsClassSerializer):
+    class Meta(PomsClassSerializer.Meta):
+        model = LongUnderlyingExposure
+
+
+class ShortUnderlyingExposureSerializer(PomsClassSerializer):
+    class Meta(PomsClassSerializer.Meta):
+        model = ShortUnderlyingExposure
 
 
 class PaymentSizeDetailViewSerializer(PomsClassSerializer):

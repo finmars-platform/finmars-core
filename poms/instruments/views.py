@@ -31,13 +31,15 @@ from poms.instruments.handlers import GeneratedEventProcess
 from poms.instruments.models import Instrument, PriceHistory, InstrumentClass, DailyPricingModel, \
     AccrualCalculationModel, PaymentSizeDetail, Periodicity, CostMethod, InstrumentType, PricingPolicy, \
     EventScheduleConfig, ManualPricingFormula, \
-    AccrualCalculationSchedule, EventSchedule, EventScheduleAction, GeneratedEvent, PricingCondition
+    AccrualCalculationSchedule, EventSchedule, EventScheduleAction, GeneratedEvent, PricingCondition, \
+    ExposureCalculationModel, LongUnderlyingExposure, ShortUnderlyingExposure
 from poms.instruments.serializers import InstrumentSerializer, PriceHistorySerializer, \
     InstrumentClassSerializer, DailyPricingModelSerializer, AccrualCalculationModelSerializer, \
     PaymentSizeDetailSerializer, PeriodicitySerializer, CostMethodSerializer, InstrumentTypeSerializer, \
     PricingPolicySerializer, EventScheduleConfigSerializer, InstrumentCalculatePricesAccruedPriceSerializer, \
     GeneratedEventSerializer, EventScheduleActionSerializer, InstrumentTypeLightSerializer, InstrumentLightSerializer, \
-    PricingPolicyLightSerializer, PricingConditionSerializer, InstrumentEvSerializer, InstrumentTypeEvSerializer
+    PricingPolicyLightSerializer, PricingConditionSerializer, InstrumentEvSerializer, InstrumentTypeEvSerializer, \
+    ExposureCalculationModelSerializer, LongUnderlyingExposureSerializer, ShortUnderlyingExposureSerializer
 from poms.instruments.tasks import calculate_prices_accrued_price, generate_events, process_events, \
     only_generate_events_at_date, generate_events_do_not_inform_apply_default0, \
     generate_events_do_not_inform_apply_default, only_generate_events_at_date_for_single_instrument
@@ -85,6 +87,21 @@ class PaymentSizeDetailViewSet(AbstractClassModelViewSet):
 class PricingConditionViewSet(AbstractClassModelViewSet):
     queryset = PricingCondition.objects
     serializer_class = PricingConditionSerializer
+
+
+class ExposureCalculationModelViewSet(AbstractClassModelViewSet):
+    queryset = ExposureCalculationModel.objects
+    serializer_class = ExposureCalculationModelSerializer
+
+
+class LongUnderlyingExposureViewSet(AbstractClassModelViewSet):
+    queryset = LongUnderlyingExposure.objects
+    serializer_class = LongUnderlyingExposureSerializer
+
+
+class ShortUnderlyingExposureViewSet(AbstractClassModelViewSet):
+    queryset = ShortUnderlyingExposure.objects
+    serializer_class = ShortUnderlyingExposureSerializer
 
 
 class PeriodicityViewSet(AbstractClassModelViewSet):
