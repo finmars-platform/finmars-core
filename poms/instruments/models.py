@@ -501,6 +501,49 @@ class InstrumentType(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, Da
 
     instrument_factor_schedule_json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('instrument factor schedule json data'))
 
+    exposure_calculation_model = models.ForeignKey(ExposureCalculationModel, null=True, blank=True,
+                                                   verbose_name=ugettext_lazy('exposure calculation model'),
+                                                   on_delete=models.SET_NULL)
+
+    long_underlying_instrument = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('long underlying instrument'))
+
+    underlying_long_multiplier = models.FloatField(default=1.0, verbose_name=ugettext_lazy('underlying long multiplier'))
+
+    short_underlying_instrument = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('short underlying instrument'))
+
+    underlying_short_multiplier = models.FloatField(default=1.0, verbose_name=ugettext_lazy('underlying short multiplier'))
+
+    long_underlying_exposure = models.ForeignKey(LongUnderlyingExposure, null=True, blank=True,
+                                                 related_name="instrument_type_long_instruments",
+                                                 verbose_name=ugettext_lazy('long underlying exposure'),
+                                                 on_delete=models.SET_NULL)
+
+    short_underlying_exposure = models.ForeignKey(ShortUnderlyingExposure, null=True, blank=True,
+                                                  related_name="instrument_type_short_instruments",
+                                                  verbose_name=ugettext_lazy('short underlying exposure'),
+                                                  on_delete=models.SET_NULL)
+
+    co_directional_exposure_currency = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('co directional exposure currency'))
+    co_directional_exposure_currency_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
+                                                                 verbose_name=ugettext_lazy('co directional exposure currency value type'))
+
+    counter_directional_exposure_currency =  models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('counter directional exposure currency'))
+    counter_directional_exposure_currency_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
+                                                                                   verbose_name=ugettext_lazy('counter directional exposure currency value type'))
+
+    DIRECT_POSITION = 1
+    FACTOR_ADJUSTED_POSITION = 2
+    DO_NOT_SHOW = 3
+
+    VALUE_TYPES = (
+        (DIRECT_POSITION, ugettext_lazy('Direct Position')),
+        (FACTOR_ADJUSTED_POSITION, ugettext_lazy('Factor Adjusted Position')),
+        (DO_NOT_SHOW, ugettext_lazy('Do not show')),
+    )
+
+    position_reporting = models.PositiveSmallIntegerField(choices=VALUE_TYPES, default=DIRECT_POSITION,
+                                                  verbose_name=ugettext_lazy('position reporting'))
+
     @property
     def instrument_factor_schedule_data(self):
         if self.instrument_factor_schedule_json_data:
@@ -754,6 +797,18 @@ class Instrument(CachingMixin, NamedModelAutoMapping, FakeDeletableModel, DataTi
     counter_directional_exposure_currency = models.ForeignKey('currencies.Currency', related_name='counter_directional_exposure_currency', on_delete=models.SET_NULL, null=True, blank=True,
                                          verbose_name=ugettext_lazy('counter directional exposure currency'))
 
+    DIRECT_POSITION = 1
+    FACTOR_ADJUSTED_POSITION = 2
+    DO_NOT_SHOW = 3
+
+    VALUE_TYPES = (
+        (DIRECT_POSITION, ugettext_lazy('Direct Position')),
+        (FACTOR_ADJUSTED_POSITION, ugettext_lazy('Factor Adjusted Position')),
+        (DO_NOT_SHOW, ugettext_lazy('Do not show')),
+    )
+
+    position_reporting = models.PositiveSmallIntegerField(choices=VALUE_TYPES, default=DIRECT_POSITION,
+                                                          verbose_name=ugettext_lazy('position reporting'))
 
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):

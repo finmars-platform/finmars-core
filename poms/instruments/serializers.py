@@ -334,7 +334,22 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
             'payment_size_detail', 'payment_size_detail_object',
             'accrued_currency', 'accrued_currency_object',
-            'accrued_multiplier', 'default_accrued'
+            'accrued_multiplier', 'default_accrued',
+
+
+            'exposure_calculation_model',
+
+            'co_directional_exposure_currency', 'counter_directional_exposure_currency',
+            'co_directional_exposure_currency_value_type', 'counter_directional_exposure_currency_value_type',
+
+            'long_underlying_instrument', 'short_underlying_instrument',
+
+            'underlying_long_multiplier', 'underlying_short_multiplier',
+
+            'long_underlying_exposure', 'short_underlying_exposure',
+
+            'position_reporting'
+
         ]
 
     def __init__(self, *args, **kwargs):
@@ -853,6 +868,8 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
             'underlying_long_multiplier', 'underlying_short_multiplier',
 
             'long_underlying_exposure', 'short_underlying_exposure',
+
+            'position_reporting'
 
             # 'attributes',
             # 'tags', 'tags_object'
