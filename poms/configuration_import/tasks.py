@@ -854,7 +854,7 @@ class ImportManager(object):
 
                             if self.instance.mode == 'overwrite':
 
-                                _l.info("Overwrite transaction type")
+                                _l.info("Overwrite transaction type %s" % content_object['user_code'])
 
                                 instance = TransactionType.objects.get(master_user=self.master_user,
                                                                        user_code=content_object['user_code'])
@@ -1502,7 +1502,7 @@ class ImportManager(object):
                             member=self.member, content_type=content_type,
                             name__exact=component_type['settings']['layout_name']).pk
                     except ListLayout.DoesNotExist:
-                        _l.info("layout is not found")
+                        _l.info("layout is not found %s" % component_type['settings']['layout_name'])
 
                     self.update_progress()
 
@@ -1756,7 +1756,7 @@ class ImportManager(object):
 
                     for content_object in item['content']:
 
-                        _l.info('content_object %s '  % content_object )
+                        # _l.info('content_object %s '  % content_object )
 
                         serializer = InstrumentDownloadSchemeSerializer(data=content_object,
                                                                               context=self.get_serializer_context())
@@ -1983,6 +1983,8 @@ class ImportManager(object):
                                     serializer.save()
 
                                 except Exception as error:
+
+                                    _l.info('Overwrite Simple Import Scheme Error %s' % error)
 
                                     stats['status'] = 'error'
                                     stats['error'][
