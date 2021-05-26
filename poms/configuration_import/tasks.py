@@ -61,7 +61,7 @@ _l = getLogger('poms.configuration_import')
 
 def dump(obj):
     for attr in dir(obj):
-        _l.debug("obj.%s = %r" % (attr, getattr(obj, attr)))
+        _l.info("obj.%s = %r" % (attr, getattr(obj, attr)))
 
 
 
@@ -174,8 +174,8 @@ class ImportManager(object):
 
     def __init__(self, instance, update_state):
 
-        # _l.debug('master_user %s ' % instance.master_user)
-        # _l.debug('class instance %s' % instance.master_user.__class__.__name__)
+        # _l.info('master_user %s ' % instance.master_user)
+        # _l.info('class instance %s' % instance.master_user.__class__.__name__)
 
         self.master_user = instance.master_user
         self.member = instance.member
@@ -191,13 +191,13 @@ class ImportManager(object):
         self.data_access_table = get_data_access_table(self.member)
         self.configuration_access_table = get_configuration_access_table(self.member)
 
-        _l.debug('self.access_table %s' % self.data_access_table)
-        _l.debug('self.configuration_access_table %s' % self.configuration_access_table)
+        _l.info('self.access_table %s' % self.data_access_table)
+        _l.info('self.configuration_access_table %s' % self.configuration_access_table)
 
         self.configuration_recovery_handler = ConfigurationRecoveryHandler(master_user=self.master_user)
 
-        _l.debug('self.master_user %s ' % self.master_user)
-        # _l.debug('self.class instance %s' % self.master_user.__class__.__name__)
+        _l.info('self.master_user %s ' % self.master_user)
+        # _l.info('self.class instance %s' % self.master_user.__class__.__name__)
 
     def count_progress_total(self):
 
@@ -252,14 +252,14 @@ class ImportManager(object):
             'request': proxy_request
         }
 
-        # _l.debug('user %s ' % context['request'].user)
-        # _l.debug('user class instance %s' % context['request'].user.__class__.__name__)
+        # _l.info('user %s ' % context['request'].user)
+        # _l.info('user class instance %s' % context['request'].user.__class__.__name__)
         # 
-        # _l.debug('master_user %s ' % context['request'].user.master_user)
-        # _l.debug('master_user class instance %s' % context['request'].user.master_user.__class__.__name__)
+        # _l.info('master_user %s ' % context['request'].user.master_user)
+        # _l.info('master_user class instance %s' % context['request'].user.master_user.__class__.__name__)
         # 
-        # _l.debug('member %s ' % context['request'].user.member)
-        # _l.debug('member class instance %s' % context['request'].user.member.__class__.__name__)
+        # _l.info('member %s ' % context['request'].user.member)
+        # _l.info('member class instance %s' % context['request'].user.member.__class__.__name__)
 
         return context
 
@@ -598,7 +598,7 @@ class ImportManager(object):
                                 serializer.save()
 
                             else:
-                                _l.debug('error %s' % error)
+                                _l.info('error %s' % error)
                                 stats['status'] = 'error'
                                 # stats['message'] = error
 
@@ -606,7 +606,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Attribute Types done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Attribute Types done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_instrument_types(self, configuration_section):
 
@@ -687,14 +687,14 @@ class ImportManager(object):
 
                             else:
 
-                                _l.debug('error %s' % error)
+                                _l.info('error %s' % error)
                                 stats['status'] = 'error'
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Instrument Types done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Instrument Types done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_account_types(self, configuration_section):
 
@@ -739,14 +739,14 @@ class ImportManager(object):
                                 serializer.save()
 
                             else:
-                                _l.debug('error %s' % error)
+                                _l.info('error %s' % error)
                                 stats['status'] = 'error'
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Account Types done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Account Types done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_transaction_types_groups(self, configuration_section):
 
@@ -791,14 +791,14 @@ class ImportManager(object):
                                 serializer.save()
 
                             else:
-                                _l.debug('error %s' % error)
+                                _l.info('error %s' % error)
                                 stats['status'] = 'error'
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Transaction Types Groups done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Transaction Types Groups done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_transaction_types(self, configuration_section):
 
@@ -847,7 +847,7 @@ class ImportManager(object):
 
                             if self.instance.mode == 'overwrite':
 
-                                _l.debug("Overwrite transaction type")
+                                _l.info("Overwrite transaction type")
 
                                 instance = TransactionType.objects.get(master_user=self.master_user,
                                                                        user_code=content_object['user_code'])
@@ -859,14 +859,14 @@ class ImportManager(object):
                                 serializer.save()
 
                             else:
-                                _l.debug('error %s' % error)
+                                _l.info('error %s' % error)
                                 stats['status'] = 'error'
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Transaction Types done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Transaction Types done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def overwrite_instrument_types(self, configuration_section):
 
@@ -920,7 +920,7 @@ class ImportManager(object):
 
                         instrument_type.save()
 
-        _l.debug('Import Configuration Overwrite Instrument Types done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Overwrite Instrument Types done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_custom_columns_balance_report(self, configuration_section):
 
@@ -966,14 +966,14 @@ class ImportManager(object):
 
                             else:
 
-                                _l.debug('error %s' % error)
+                                _l.info('error %s' % error)
                                 stats['status'] = 'error'
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Custom Columns Balance Report done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Custom Columns Balance Report done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_custom_columns_pl_report(self, configuration_section):
 
@@ -1019,14 +1019,14 @@ class ImportManager(object):
 
                             else:
 
-                                _l.debug('error %s' % error)
+                                _l.info('error %s' % error)
                                 stats['status'] = 'error'
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Custom Columns PL Report done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Custom Columns PL Report done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_custom_columns_transaction_report(self, configuration_section):
 
@@ -1073,14 +1073,14 @@ class ImportManager(object):
 
                             else:
 
-                                _l.debug('error %s' % error)
+                                _l.info('error %s' % error)
                                 stats['status'] = 'error'
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Custom Columns Transaction Report done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Custom Columns Transaction Report done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_edit_layouts(self, configuration_section):
 
@@ -1145,7 +1145,7 @@ class ImportManager(object):
 
                             else:
 
-                                _l.debug('error %s' % error)
+                                _l.info('error %s' % error)
                                 stats['status'] = 'error'
                                 stats['error']['message'] = 'Edit Layout for %s already exists' % content_type.model
 
@@ -1153,7 +1153,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Edit Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Edit Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_list_layouts(self, configuration_section):
 
@@ -1225,7 +1225,7 @@ class ImportManager(object):
                         try:
                             serializer.is_valid(raise_exception=True)
 
-                            # _l.debug('Layout import name %s ' % content_object['name'])
+                            # _l.info('Layout import name %s ' % content_object['name'])
 
                             serializer.save()
                         except ValidationError:
@@ -1236,8 +1236,8 @@ class ImportManager(object):
 
                                     content_type = get_content_type_by_name(content_object['content_type'])
 
-                                    # _l.debug('Layout overwrite content_type %s ' % content_type)
-                                    # _l.debug('Layout import name %s ' % content_object['name'])
+                                    # _l.info('Layout overwrite content_type %s ' % content_type)
+                                    # _l.info('Layout import name %s ' % content_object['name'])
 
                                     if 'user_code' in content_object:  # TODO Remove Later (will be set to '' in recovery as default)
 
@@ -1266,7 +1266,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration List Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration List Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_context_menu_layouts(self, configuration_section):
 
@@ -1302,7 +1302,7 @@ class ImportManager(object):
                         try:
                             serializer.is_valid(raise_exception=True)
 
-                            # _l.debug('Layout import name %s ' % content_object['name'])
+                            # _l.info('Layout import name %s ' % content_object['name'])
 
                             serializer.save()
                         except ValidationError:
@@ -1337,7 +1337,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration List Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration List Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_reference_tables(self, configuration_section):
 
@@ -1370,7 +1370,7 @@ class ImportManager(object):
                         try:
                             serializer.is_valid(raise_exception=True)
 
-                            # _l.debug('Layout import name %s ' % content_object['name'])
+                            # _l.info('Layout import name %s ' % content_object['name'])
 
                             serializer.save()
                         except ValidationError:
@@ -1401,7 +1401,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Reference Table done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Reference Table done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_template_layouts(self, configuration_section):
 
@@ -1436,7 +1436,7 @@ class ImportManager(object):
                         try:
                             serializer.is_valid(raise_exception=True)
 
-                            # _l.debug('Layout import name %s ' % content_object['name'])
+                            # _l.info('Layout import name %s ' % content_object['name'])
 
                             serializer.save()
                         except ValidationError:
@@ -1473,7 +1473,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration List Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration List Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def sync_dashboard_layout_component_type_settings(self, component_type):
 
@@ -1488,14 +1488,14 @@ class ImportManager(object):
 
                     try:
 
-                        # _l.debug('layout content_type %s' % content_type)
-                        # _l.debug('layout name %s' % component_type['settings']['layout_name'])
+                        # _l.info('layout content_type %s' % content_type)
+                        # _l.info('layout name %s' % component_type['settings']['layout_name'])
 
                         component_type['settings']['layout'] = ListLayout.objects.get(
                             member=self.member, content_type=content_type,
                             name__exact=component_type['settings']['layout_name']).pk
                     except ListLayout.DoesNotExist:
-                        _l.debug("layout is not found")
+                        _l.info("layout is not found")
 
                     self.update_progress()
 
@@ -1513,7 +1513,7 @@ class ImportManager(object):
 
                     for content_object in item['content']:
 
-                        # _l.debug('Dashboard layout name %s' % content_object['name'])
+                        # _l.info('Dashboard layout name %s' % content_object['name'])
 
                         content_object['member'] = self.member.pk
 
@@ -1592,7 +1592,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Dashboard Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Dashboard Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_column_sort_data(self, configuration_section):
 
@@ -1628,7 +1628,7 @@ class ImportManager(object):
                         try:
                             serializer.is_valid(raise_exception=True)
 
-                            # _l.debug('Layout import name %s ' % content_object['name'])
+                            # _l.info('Layout import name %s ' % content_object['name'])
 
                             serializer.save()
                         except ValidationError:
@@ -1659,7 +1659,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Column Sort Data done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Column Sort Data done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
 
     def import_cross_entity_attribute_extension(self, configuration_section):
@@ -1694,7 +1694,7 @@ class ImportManager(object):
                         try:
                             serializer.is_valid(raise_exception=True)
 
-                            # _l.debug('Layout import name %s ' % content_object['name'])
+                            # _l.info('Layout import name %s ' % content_object['name'])
 
                             serializer.save()
                         except ValidationError:
@@ -1732,7 +1732,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Cross Entity Attribute Extension done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Cross Entity Attribute Extension done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
 
     def import_download_instrument_schemes(self, configuration_section):
@@ -1749,7 +1749,7 @@ class ImportManager(object):
 
                     for content_object in item['content']:
 
-                        _l.debug('content_object %s '  % content_object )
+                        _l.info('content_object %s '  % content_object )
 
                         serializer = InstrumentDownloadSchemeSerializer(data=content_object,
                                                                               context=self.get_serializer_context())
@@ -1784,7 +1784,7 @@ class ImportManager(object):
 
                                 except Exception as error:
 
-                                    _l.debug('Overwrite Error: Instrument Download Scheme - %s' % error)
+                                    _l.info('Overwrite Error: Instrument Download Scheme - %s' % error)
 
                                     stats['status'] = 'error'
                                     stats['error'][
@@ -1799,7 +1799,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Instrument Download Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Instrument Download Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_transaction_import_schemes(self, configuration_section):
 
@@ -1812,7 +1812,7 @@ class ImportManager(object):
 
                 self.instance.stats['configuration'][item['entity']] = []
 
-                _l.debug('Importing Transaction import Schemes %s' % len(item['content']))
+                _l.info('Importing Transaction import Schemes %s' % len(item['content']))
 
                 if 'content' in item:
 
@@ -1838,7 +1838,7 @@ class ImportManager(object):
                                                                                            user_code=rule[
                                                                                                '___transaction_type__user_code']).pk
                                 except TransactionType.DoesNotExist:
-                                    _l.debug('Cant find Transaction Type form %s for %s' % (rule['___transaction_type__user_code'], content_object['user_code']))
+                                    _l.info('Cant find Transaction Type form %s for %s' % (rule['___transaction_type__user_code'], content_object['user_code']))
                                     stats['status'] = 'error'
                                     stats['error']['message'] = 'Error. Can\'t Import Transaction Import Scheme for %s. Transaction Type %s is missing ' % (content_object['user_code'], rule['___transaction_type__user_code'])
                                     continue
@@ -1852,7 +1852,7 @@ class ImportManager(object):
                                                 transaction_type=rule['transaction_type'],
                                                 name=field['___input__name']).pk
                                         except TransactionTypeInput.DoesNotExist:
-                                            _l.debug('Cant find Input %s' % field['___input__name'])
+                                            _l.info('Cant find Input %s' % field['___input__name'])
                                             stats['status'] = 'error'
                                             stats['error'][
                                                 'message'] = 'Error. Can\'t Import Transaction Import Scheme for %s. Input %s is missing.' % (content_object['user_code'], field['___input__name'])
@@ -1871,7 +1871,7 @@ class ImportManager(object):
                             serializer.save()
                         except Exception as error:
 
-                            _l.debug("Error? %s" % error)
+                            _l.info("Error? %s" % error)
 
                             if self.instance.mode == 'overwrite':
 
@@ -1889,7 +1889,7 @@ class ImportManager(object):
 
                                 except Exception as error:
 
-                                    _l.debug('Overwrite Error: Transaction Import Scheme - %s' % error)
+                                    _l.info('Overwrite Error: Transaction Import Scheme - %s' % error)
 
                                     stats['status'] = 'error'
                                     stats['error'][
@@ -1904,7 +1904,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Transaction Import Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Transaction Import Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_simple_import_schemes(self, configuration_section):
 
@@ -1939,7 +1939,7 @@ class ImportManager(object):
 
                                 except GenericAttributeType.DoesNotExist:
 
-                                    _l.debug(
+                                    _l.info(
                                         'Cant find attribute %s' % entity_field['___dynamic_attribute_id__user_code'])
 
                                     entity_field['dynamic_attribute_id'] = None
@@ -1990,7 +1990,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Simple Import Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Simple Import Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_complex_import_schemes(self, configuration_section):
 
@@ -2015,7 +2015,7 @@ class ImportManager(object):
                                         master_user=self.master_user, user_code=action['csv_import_scheme'][
                                             '___csv_import_scheme__user_code']).pk
                                 except CsvImportScheme.DoesNotExist:
-                                    _l.debug('Scheme %s is not found' % action['csv_import_scheme'][
+                                    _l.info('Scheme %s is not found' % action['csv_import_scheme'][
                                         '___csv_import_scheme__user_code'])
 
                             if action['complex_transaction_import_scheme']:
@@ -2026,7 +2026,7 @@ class ImportManager(object):
                                         user_code=action['complex_transaction_import_scheme'][
                                             '___complex_transaction_import_scheme__user_code']).pk
                                 except ComplexTransactionImportScheme.DoesNotExist:
-                                    _l.debug('Scheme %s is not found' % action['complex_transaction_import_scheme'][
+                                    _l.info('Scheme %s is not found' % action['complex_transaction_import_scheme'][
                                         '___complex_transaction_import_scheme__user_code'])
 
                         serializer = ComplexImportSchemeSerializer(data=content_object,
@@ -2074,7 +2074,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Complex Import Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Complex Import Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_currencies(self, configuration_section):
 
@@ -2121,7 +2121,7 @@ class ImportManager(object):
                                         #     master_user=self.master_user,
                                         #     user_code='-').pk  # TODO Add to EcosystemDefaults
 
-                        _l.debug('content_object %s' % content_object)
+                        _l.info('content_object %s' % content_object)
 
 
 
@@ -2143,7 +2143,7 @@ class ImportManager(object):
                             serializer.save()
                         except Exception as error:
 
-                            _l.debug("Currency error %s" % error)
+                            _l.info("Currency error %s" % error)
 
                             if self.instance.mode == 'overwrite':
 
@@ -2158,11 +2158,11 @@ class ImportManager(object):
                                     serializer.is_valid(raise_exception=True)
                                     serializer.save()
 
-                                    _l.debug("Currency Overwritten %s" % instance)
+                                    _l.info("Currency Overwritten %s" % instance)
 
                                 except Exception as error:
 
-                                    _l.debug("Currency Error overwrite %s" % error)
+                                    _l.info("Currency Error overwrite %s" % error)
 
                                     stats['status'] = 'error'
                                     stats['error'][
@@ -2177,7 +2177,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Currency done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Currency done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_pricing_policies(self, configuration_section):
 
@@ -2203,7 +2203,7 @@ class ImportManager(object):
                                     user_code=content_object['__default_instrument_pricing_scheme__user_code']).pk
 
                             except Exception as e:
-                                _l.debug("Cant map default instrument pricing scheme. Error: %s" % e)
+                                _l.info("Cant map default instrument pricing scheme. Error: %s" % e)
 
                         if '__default_currency_pricing_scheme__user_code' in content_object:
 
@@ -2214,7 +2214,7 @@ class ImportManager(object):
                                     user_code=content_object['__default_currency_pricing_scheme__user_code']).pk
 
                             except Exception as e:
-                                _l.debug("Cant map default currency pricing scheme. Error: %s" % e)
+                                _l.info("Cant map default currency pricing scheme. Error: %s" % e)
 
 
                         serializer = PricingPolicySerializer(data=content_object,
@@ -2265,7 +2265,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Pricing Policy done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Pricing Policy done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_entity_tooltips(self, configuration_section):
 
@@ -2316,7 +2316,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Entity Tooltips done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Entity Tooltips done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_color_palettes(self, configuration_section):
 
@@ -2384,7 +2384,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Color Palettes done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Color Palettes done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_instrument_user_fields(self, configuration_section):
         st = time.perf_counter()
@@ -2443,7 +2443,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Instrument User Fields done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Instrument User Fields done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_transaction_user_fields(self, configuration_section):
 
@@ -2491,7 +2491,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Transaction User Fields done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Transaction User Fields done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_instrument_pricing_schemes(self, configuration_section):
 
@@ -2540,7 +2540,7 @@ class ImportManager(object):
 
                                 except Exception as error:
 
-                                    _l.debug('erro %s' % error )
+                                    _l.info('erro %s' % error )
 
                                     stats['status'] = 'error'
                                     stats['error'][
@@ -2555,7 +2555,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Instrument Pricing Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Instrument Pricing Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_currency_pricing_schemes(self, configuration_section):
 
@@ -2617,7 +2617,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Currency Pricing Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Currency Pricing Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_schedules(self, configuration_section):
 
@@ -2679,7 +2679,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Schedules done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Schedules done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_pricing_procedures(self, configuration_section):
 
@@ -2741,7 +2741,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Pricing Procedure done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Pricing Procedure done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_data_procedures(self, configuration_section):
 
@@ -2803,7 +2803,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.debug('Import Configuration Pricing Procedure done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Pricing Procedure done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     # Configuration import logic end
 
@@ -2811,7 +2811,7 @@ class ImportManager(object):
 
         for item in configuration_section['items']:
 
-            _l.debug("In file: %s" % item['entity'])
+            _l.info("In file: %s" % item['entity'])
 
     def import_configuration(self, configuration_section):
 
@@ -2860,34 +2860,34 @@ class ImportManager(object):
             if self.data_access_table['currencies.currency']:
                 self.import_currencies(configuration_section)  # data section
             else:
-                _l.debug("Permission Error: Currencies")
+                _l.info("Permission Error: Currencies")
 
             if can_import:
                 self.import_attribute_types(configuration_section)  # configuration section
             else:
-                _l.debug("Permission Error: Attributes types")
+                _l.info("Permission Error: Attributes types")
 
             if self.data_access_table['accounts.accounttype']:
                 self.import_account_types(configuration_section)  # data section
             else:
-                _l.debug("Permission Error: Account Type")
+                _l.info("Permission Error: Account Type")
 
             if self.data_access_table['instruments.instrumenttype']:
                 self.import_instrument_types(configuration_section)  # data section
             else:
-                _l.debug("Permission Error: Instrument Type")
+                _l.info("Permission Error: Instrument Type")
 
             self.import_transaction_types_groups(configuration_section)  # unknown
 
             if self.data_access_table['transactions.transactiontype']:
                 self.import_transaction_types(configuration_section)  # data section
             else:
-                _l.debug("Permission Error: Transaction Type")
+                _l.info("Permission Error: Transaction Type")
 
             if self.data_access_table['instruments.instrumenttype']:
                 self.overwrite_instrument_types(configuration_section)  # data section
             else:
-                _l.debug("Permission Error: Instrument Type")
+                _l.info("Permission Error: Instrument Type")
 
             # Configuration section
 
@@ -2917,11 +2917,11 @@ class ImportManager(object):
             self.import_dashboard_layouts(configuration_section)
             self.import_column_sort_data(configuration_section)
 
-        _l.debug('Import Configuration done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
         # except Exception as error:
         #
-        #     _l.debug('Import Configuration Error %s' % error)
+        #     _l.info('Import Configuration Error %s' % error)
 
     def import_mappings(self, mappings_section):
 
@@ -3032,7 +3032,7 @@ class ImportManager(object):
 
                                         except Exception as error:
 
-                                            _l.debug('error %s' % error)
+                                            _l.info('error %s' % error)
 
                                             stats['status'] = 'error'
 
@@ -3055,22 +3055,22 @@ class ImportManager(object):
 
                             self.update_progress()
             else:
-                _l.debug('Permission Error: Mappings')
+                _l.info('Permission Error: Mappings')
 
-            _l.debug('Import Mappings done %s' % "{:3.3f}".format(time.perf_counter() - st))
+            _l.info('Import Mappings done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
         except Exception as error:
 
-            _l.debug('Import Mappings Error %s' % error)
+            _l.info('Import Mappings Error %s' % error)
 
 @shared_task(name='configuration_import.configuration_import_as_json', bind=True)
 def configuration_import_as_json(self, instance):
 
     try:
 
-        _l.debug('instance %s' % instance)
-        _l.debug('instance.mode %s' % instance.mode)
-        # _l.debug('instance.data %s' % instance.data)
+        _l.info('instance %s' % instance)
+        _l.info('instance.mode %s' % instance.mode)
+        # _l.info('instance.data %s' % instance.data)
 
         import_manager = ImportManager(instance, self.update_state)
 
@@ -3083,7 +3083,7 @@ def configuration_import_as_json(self, instance):
 
             for section in instance.data['body']:
 
-                _l.debug('section_name %s' % section['section_name'])
+                _l.info('section_name %s' % section['section_name'])
 
                 if section['section_name'] == 'configuration':
                     configuration_section = section
@@ -3095,22 +3095,22 @@ def configuration_import_as_json(self, instance):
 
         if configuration_section:
 
-            _l.debug('Importing configuration')
+            _l.info('Importing configuration')
 
             import_manager.import_configuration(configuration_section)
 
         if mappings_section:
 
-            _l.debug('Importing mappings')
+            _l.info('Importing mappings')
 
             import_manager.import_mappings(mappings_section)
 
-        _l.debug('Import done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     except Exception as e:
 
-        _l.debug("Error occurred %s" % e)
-        _l.debug(traceback.print_exc())
+        _l.info("Error occurred %s" % e)
+        _l.info(traceback.print_exc())
 
     return instance
 
@@ -3118,7 +3118,7 @@ def configuration_import_as_json(self, instance):
 @shared_task(name='configuration_import.generate_configuration_entity_archetype', bind=True)
 def generate_configuration_entity_archetype(self, instance):
 
-    _l.debug('generate_configuration_entity_archetype init')
+    _l.info('generate_configuration_entity_archetype init')
 
     handler = ConfigurationEntityArchetypeGenerateHandler()
     handler.process()
