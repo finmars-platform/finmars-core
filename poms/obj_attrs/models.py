@@ -45,7 +45,7 @@ class GenericAttributeType(NamedModel):
         verbose_name_plural = ugettext_lazy('attribute types')
         ordering = ['name']
         unique_together = [
-            ['master_user', 'content_type', 'name']
+            ['master_user', 'content_type', 'user_code']
         ]
 
     def get_value_atr(self):

@@ -587,15 +587,22 @@ class ImportManager(object):
 
                             if self.instance.mode == 'overwrite':
 
-                                instance = GenericAttributeType.objects.get(master_user=self.master_user,
-                                                                            user_code=content_object['user_code'],
-                                                                            content_type=content_type)
+                                try:
 
-                                serializer = GenericAttributeTypeSerializer(data=content_object,
-                                                                            instance=instance,
-                                                                            context=self.get_serializer_context())
-                                serializer.is_valid(raise_exception=True)
-                                serializer.save()
+                                    instance = GenericAttributeType.objects.get(master_user=self.master_user,
+                                                                                user_code=content_object['user_code'],
+                                                                                content_type=content_type)
+
+                                    serializer = GenericAttributeTypeSerializer(data=content_object,
+                                                                                instance=instance,
+                                                                                context=self.get_serializer_context())
+                                    serializer.is_valid(raise_exception=True)
+                                    serializer.save()
+
+                                except Exception as error:
+                                    _l.info('import_attribute_types overwrite error %s' % error)
+                                    stats['status'] = 'error'
+                                    # stats['message'] = error
 
                             else:
                                 _l.info('error %s' % error)
@@ -1937,7 +1944,7 @@ class ImportManager(object):
                                         user_code=entity_field['___dynamic_attribute_id__user_code'],
                                         content_type=content_type).pk
 
-                                except GenericAttributeType.DoesNotExist:
+                                except Exception as e:
 
                                     _l.info(
                                         'Cant find attribute %s' % entity_field['___dynamic_attribute_id__user_code'])
@@ -2121,7 +2128,7 @@ class ImportManager(object):
                                         #     master_user=self.master_user,
                                         #     user_code='-').pk  # TODO Add to EcosystemDefaults
 
-                        _l.info('content_object %s' % content_object)
+                        # _l.info('content_object %s' % content_object)
 
 
 
@@ -2143,7 +2150,7 @@ class ImportManager(object):
                             serializer.save()
                         except Exception as error:
 
-                            _l.info("Currency error %s" % error)
+                            # _l.info("Currency error %s" % error)
 
                             if self.instance.mode == 'overwrite':
 
