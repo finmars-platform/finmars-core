@@ -303,6 +303,8 @@ class CreateMember(APIView):
             admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
             admin_group.members.add(member.id)
             admin_group.save()
+            member.is_admin = True
+            member.save()
 
             if groups:
 
