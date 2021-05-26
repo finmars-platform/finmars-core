@@ -280,10 +280,16 @@ class CreateMember(APIView):
         groups = serializer.validated_data['groups']
 
         user_id = serializer.validated_data['user_id']
-        user_legacy_id = serializer.validated_data['user_legacy_id']
+
+        user_legacy_id = None
+        if 'user_legacy_id' in serializer.validated_data:
+            user_legacy_id = serializer.validated_data['user_legacy_id']
 
         master_user_id = serializer.validated_data['master_user_id']
-        user_legacy_id = serializer.validated_data['master_user_legacy_id']
+
+        user_legacy_id = None
+        if 'master_user_legacy_id' in serializer.validated_data:
+            user_legacy_id = serializer.validated_data['master_user_legacy_id']
 
         user_profile = UserProfile.objects.get(user_unique_id=user_id)
         user = User.objects.get(id=user_profile.user_id)
