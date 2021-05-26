@@ -102,6 +102,14 @@ class RequestDataFileProcedureProcess(object):
 
             params = {}
 
+
+            if self.procedure.provider.user_code == 'cim_bank':
+
+                if self.procedure.data:
+
+                    if 'filenamemask' in self.procedure.data and self.procedure.data['filenamemask']:
+                        params['filenamemask'] = self.procedure.data['filenamemask']
+
             if self.procedure.provider.user_code == 'email_provider':
 
                 if self.procedure.data:
@@ -205,7 +213,7 @@ class RequestDataFileProcedureProcess(object):
                 "files": [],
                 "error_status": 0,
                 "error_message": "",
-                
+
                 "callbackURL": callback_url
             }
 
