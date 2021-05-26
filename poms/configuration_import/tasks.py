@@ -1969,6 +1969,8 @@ class ImportManager(object):
                             serializer.save()
                         except Exception as error:
 
+                            _l.info('Create Simple Import Scheme Error %s' % error)
+
                             if self.instance.mode == 'overwrite':
 
                                 try:
