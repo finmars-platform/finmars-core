@@ -269,7 +269,11 @@ class CsvImportSchemeSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampS
 
         csv_fields = validated_data.pop('csv_fields')
         entity_fields = validated_data.pop('entity_fields')
-        calculated_inputs = validated_data.pop('calculated_inputs')
+        calculated_inputs = []
+
+        if 'calculated_inputs' in validated_data:
+            calculated_inputs = validated_data.pop('calculated_inputs')
+
         scheme = CsvImportScheme.objects.create(**validated_data)
 
         self.set_entity_fields_mapping(scheme=scheme, entity_fields=entity_fields)
@@ -285,7 +289,10 @@ class CsvImportSchemeSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampS
 
         csv_fields = validated_data.pop('csv_fields')
         entity_fields = validated_data.pop('entity_fields')
-        calculated_inputs = validated_data.pop('calculated_inputs')
+        calculated_inputs = []
+
+        if 'calculated_inputs' in validated_data:
+            calculated_inputs = validated_data.pop('calculated_inputs')
 
         scheme.user_code = validated_data.get('user_code', scheme.user_code)
         scheme.name = validated_data.get('name', scheme.name)
