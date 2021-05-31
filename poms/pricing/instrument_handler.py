@@ -1258,6 +1258,7 @@ class PricingInstrumentHandler(object):
 
         body['user'] = {
             'token': self.master_user.token,
+            'base_api_url': settings.BASE_API_URL,
             'credentials': {
                 'p12cert': str(config.p12cert),
                 'password': config.password
