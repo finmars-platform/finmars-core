@@ -776,6 +776,8 @@ class ValidateHandler:
 
             except Exception as e:
 
+                _l.info("e %s" % e )
+
                 error_row['error_reaction'] = 'Continue import'
                 error_row['level'] = 'error'
                 error_row['error_message'] = error_row['error_message'] + ugettext(
