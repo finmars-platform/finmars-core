@@ -133,25 +133,29 @@ class SetAuthToken(APIView):
                 _l.info("Could not find Master User by Legacy id")
                 raise Exception("Master User does not exist")
 
-        member = Member.objects.get(master_user=master_user, user=user)
+        if master_user and user:
 
-        # ======================= Generating/Updating Token
+            member = Member.objects.get(master_user=master_user, user=user)
 
-        token = None
+            # ======================= Generating/Updating Token
 
-        try:
-            token = AuthToken.objects.get(key=serializer.validated_data['key'], user=user)
-        except AuthToken.DoesNotExist:
-            token = AuthToken.objects.create(key=serializer.validated_data['key'], user=user)
+            token = None
 
-        token.current_master_user = master_user
-        token.current_member = member
+            try:
+                token = AuthToken.objects.get(key=serializer.validated_data['key'], user=user)
+            except AuthToken.DoesNotExist:
+                token = AuthToken.objects.create(key=serializer.validated_data['key'], user=user)
 
-        token.save()
+            token.current_master_user = master_user
+            token.current_member = member
 
-        _l.info("Auth Token is successfully set")
+            token.save()
 
-        return Response({'token': token.key})
+            _l.info("Auth Token is successfully set")
+
+            return Response({'token': token.key})
+        else:
+            return Response({'token': None})
 
 
 class CreateUser(APIView):

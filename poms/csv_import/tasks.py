@@ -824,9 +824,10 @@ class ValidateHandler:
                     if key not in many_to_many_fields and key not in system_fields:
                         setattr(item, key, value)
 
+            # TODO import attribute validation later
             # self.fill_with_relation_attributes(item, result)
-            if scheme.content_type.model != 'pricehistory' and scheme.content_type.model != 'currencyhistory':
-                self.attributes_full_clean(item, result['attributes'], error_handler, error_row)
+            # if scheme.content_type.model != 'pricehistory' and scheme.content_type.model != 'currencyhistory':
+            #     self.attributes_full_clean(item, result['attributes'], error_handler, error_row)
 
             item.full_clean()
 
