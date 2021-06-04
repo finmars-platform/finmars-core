@@ -138,6 +138,7 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
             })
 
         start_time = time.time()
+        master_user = request.user.master_user
 
         qs = self.get_queryset()
 
@@ -145,7 +146,11 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
 
         filtered_qs = self.get_queryset()
 
+
+
         filtered_qs = filtered_qs.filter(id__in=qs)
+
+        filtered_qs = filtered_qs.filter(master_user=master_user)
 
         content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
 

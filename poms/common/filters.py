@@ -280,10 +280,6 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
                             if is_relation(res_attr):
                                 res_attr = res_attr + '__user_code'
-                            elif is_system_relation(attr):
-                                res_attr = res_attr + '__user_code'
-                            elif is_scheme(attr):
-                                res_attr = res_attr + '__scheme_name'
 
                             queryset = queryset.filter(Q(**{res_attr + '__isnull': True}) | Q(**{res_attr: '-'}))
 
@@ -291,10 +287,6 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
                             if is_relation(attr):
                                 params[attr + '__user_code'] = groups_values[i]
-                            elif is_system_relation(attr):
-                                params[attr + '__user_code'] = groups_values[i]
-                            elif is_scheme(attr):
-                                params[attr + '__scheme_name'] = groups_values[i]
                             else:
                                 params[attr] = groups_values[i]
 
@@ -415,20 +407,12 @@ class AttributeFilter(BaseFilterBackend):
 
                             if is_relation(res_attr):
                                 res_attr = res_attr + '__user_code'
-                            elif is_system_relation(attr):
-                                res_attr = res_attr + '__user_code'
-                            elif is_scheme(attr):
-                                res_attr = res_attr + '__scheme_name'
 
                             queryset = queryset.filter(Q(**{res_attr + '__isnull': True}) | Q(**{res_attr: '-'}))
 
                         else:
                             if is_relation(attr):
                                 params[attr + '__user_code'] = groups_values[i]
-                            elif is_system_relation(attr):
-                                params[attr + '__user_code'] = groups_values[i]
-                            elif is_scheme(attr):
-                                params[attr + '__scheme_name'] = groups_values[i]
                             else:
                                 params[attr] = groups_values[i]
 

@@ -195,6 +195,7 @@ class ContextMenuLayoutFilterSet(FilterSet):
     id = NoOpFilter()
     name = CharFilter()
     user_code = CharFilter()
+    type = CharFilter()
 
     class Meta:
         model = ContextMenuLayout

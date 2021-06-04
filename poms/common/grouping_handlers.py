@@ -96,40 +96,27 @@ def is_relation(item):
                     'allocation_balance', 'allocation_pl',
                     'linked_instrument',
 
-                    'subgroup'
+                    'subgroup',
+
+                    'instrument_class',
+                    'transaction_class',
+                    'daily_pricing_model',
+                    'payment_size_detail'
 
                     ]
 
 
-def is_system_relation(item):
-    return item in ['instrument_class',
-                    'transaction_class',
-                    'daily_pricing_model',
-                    'payment_size_detail']
-
-
-def is_scheme(item):
-    return item in ['price_download_scheme']
-
-
 def get_root_system_attr_group(qs, root_group, groups_order):
+
     if is_relation(root_group):
+
+        print("pricing currency?")
+
+
         qs = qs.values(root_group) \
             .annotate(group_identifier=F(root_group + '__user_code')) \
             .distinct() \
             .annotate(group_name=F(root_group + '__short_name')) \
-            .values('group_name', 'group_identifier')
-    elif is_system_relation(root_group):
-        qs = qs.values(root_group) \
-            .annotate(group_identifier=F(root_group + '__user_code')) \
-            .distinct() \
-            .annotate(group_name=F(root_group + '__name')) \
-            .values('group_name', 'group_identifier')
-    elif is_scheme(root_group):
-        qs = qs.values(root_group) \
-            .annotate(group_identifier=F(root_group + '__scheme_name')) \
-            .distinct() \
-            .annotate(group_name=F(root_group + '__scheme_name')) \
             .values('group_name', 'group_identifier')
     else:
         qs = qs.distinct(root_group) \
@@ -212,25 +199,12 @@ def get_last_system_attr_group(qs, last_group, groups_order):
         qs = qs.values(last_group) \
             .annotate(group_identifier=F(last_group + '__user_code')) \
             .distinct() \
-            .annotate(group_name=F(last_group + '__short_name')) \
-            .values('group_name', 'group_identifier')
-
-    elif is_system_relation(last_group):
-        qs = qs.values(last_group) \
-            .annotate(group_identifier=F(last_group + '__user_code')) \
-            .distinct() \
-            .annotate(group_name=F(last_group + '__name')) \
-            .values('group_name', 'group_identifier')
-    elif is_scheme(last_group):
-        qs = qs.values(last_group) \
-            .annotate(group_identifier=F(last_group + '__scheme_name')) \
-            .distinct() \
-            .annotate(group_name=F(last_group + '__scheme_name')) \
+            .annotate(group_name=F(last_group + '__short_name'),  items_count=Count(last_group + '__short_name')) \
             .values('group_name', 'group_identifier')
     else:
 
         qs = qs.distinct(last_group) \
-            .annotate(group_name=F(last_group), group_identifier=F(last_group)) \
+            .annotate(group_name=F(last_group), group_identifier=F(last_group), items_count=Count(last_group)) \
             .values('group_name', 'group_identifier')
 
     if groups_order == 'desc':
@@ -308,20 +282,12 @@ def get_queryset_filters(qs, groups_types, groups_values, original_qs):
 
                     if is_relation(res_attr):
                         res_attr = res_attr + '__user_code'
-                    elif is_system_relation(attr):
-                        res_attr = res_attr + '__user_code'
-                    elif is_scheme(attr):
-                        res_attr = res_attr + '__scheme_name'
 
                     qs = qs.filter(Q(**{res_attr + '__isnull': True}) | Q(**{res_attr: '-'}))
 
                 else:
                     if is_relation(attr):
                         params[attr + '__user_code'] = groups_values[i]
-                    elif is_system_relation(attr):
-                        params[attr + '__user_code'] = groups_values[i]
-                    elif is_scheme(attr):
-                        params[attr + '__scheme_name'] = groups_values[i]
                     else:
                         params[attr] = groups_values[i]
 
