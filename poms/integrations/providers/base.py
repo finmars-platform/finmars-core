@@ -250,64 +250,67 @@ class AbstractProvider(object):
         master_user = instrument_download_scheme.master_user
         provider = instrument_download_scheme.provider
         for attr in instrument_download_scheme.attributes.select_related('attribute_type').all():
-            tattr = attr.attribute_type
 
-            iattr = GenericAttribute(content_object=instrument, attribute_type=tattr)
-            iattrs.append(iattr)
+            if attr.attribute_type:
 
-            err_name = 'attribute_type_%s' % attr.attribute_type.id
+                tattr = attr.attribute_type
 
-            if attr.value:
-                try:
-                    v = formula.safe_eval(attr.value, names=values)
-                except formula.InvalidExpression:
-                    _l.debug('Invalid instrument dynamic attribute expression: id=%s, attr=%s, expr="%s", values=%s',
-                             instrument_download_scheme.id, attr.id, attr.value, values)
-                    errors[err_name] = [ugettext_lazy('Invalid expression.')]
-                    continue
-                # if not self.is_empty_value(v):
-                #     attr_mapped_values = self.get_instrument_attribute_value(master_user, provider, tattr, v)
-                # else:
-                #     attr_mapped_values = None
-                attr_mapped_values = self.get_instrument_attribute_value(master_user, provider, tattr, v)
-                if attr_mapped_values is not None:
-                    iattr.value_string, iattr.value_float, iattr.value_date, iattr.classifier = attr_mapped_values
+                iattr = GenericAttribute(content_object=instrument, attribute_type=tattr)
+                iattrs.append(iattr)
+
+                err_name = 'attribute_type_%s' % attr.attribute_type.id
+
+                if attr.value:
+                    try:
+                        v = formula.safe_eval(attr.value, names=values)
+                    except formula.InvalidExpression:
+                        _l.debug('Invalid instrument dynamic attribute expression: id=%s, attr=%s, expr="%s", values=%s',
+                                 instrument_download_scheme.id, attr.id, attr.value, values)
+                        errors[err_name] = [ugettext_lazy('Invalid expression.')]
+                        continue
+                    # if not self.is_empty_value(v):
+                    #     attr_mapped_values = self.get_instrument_attribute_value(master_user, provider, tattr, v)
+                    # else:
+                    #     attr_mapped_values = None
+                    attr_mapped_values = self.get_instrument_attribute_value(master_user, provider, tattr, v)
+                    if attr_mapped_values is not None:
+                        iattr.value_string, iattr.value_float, iattr.value_date, iattr.classifier = attr_mapped_values
+                    else:
+                        if tattr.value_type == GenericAttributeType.STRING:
+                            if self.is_empty_value(v):
+                                pass
+                            else:
+                                iattr.value_string = str(v)
+                        elif tattr.value_type == GenericAttributeType.NUMBER:
+                            if self.is_empty_value(v):
+                                pass
+                            else:
+                                try:
+                                    iattr.value_float = float(v)
+                                except (ValueError, TypeError):
+                                    errors[err_name] = [ugettext_lazy('A valid number is required.')]
+                        elif tattr.value_type == GenericAttributeType.DATE:
+                            if self.is_empty_value(v):
+                                pass
+                            else:
+                                if isinstance(v, datetime):
+                                    v = v.date()
+                                if isinstance(v, date):
+                                    iattr.value_date = v
+                                else:
+                                    errors[err_name] = [ugettext_lazy('A valid date is required.')]
+                        elif tattr.value_type == GenericAttributeType.CLASSIFIER:
+                            if self.is_empty_value(v):
+                                pass
+                            else:
+                                v = str(v)
+                                v = tattr.classifiers.filter(name=v).first()
+                                if v:
+                                    iattr.classifier = v
+                                else:
+                                    errors[err_name] = [ugettext_lazy('This field is required.')]
                 else:
-                    if tattr.value_type == GenericAttributeType.STRING:
-                        if self.is_empty_value(v):
-                            pass
-                        else:
-                            iattr.value_string = str(v)
-                    elif tattr.value_type == GenericAttributeType.NUMBER:
-                        if self.is_empty_value(v):
-                            pass
-                        else:
-                            try:
-                                iattr.value_float = float(v)
-                            except (ValueError, TypeError):
-                                errors[err_name] = [ugettext_lazy('A valid number is required.')]
-                    elif tattr.value_type == GenericAttributeType.DATE:
-                        if self.is_empty_value(v):
-                            pass
-                        else:
-                            if isinstance(v, datetime):
-                                v = v.date()
-                            if isinstance(v, date):
-                                iattr.value_date = v
-                            else:
-                                errors[err_name] = [ugettext_lazy('A valid date is required.')]
-                    elif tattr.value_type == GenericAttributeType.CLASSIFIER:
-                        if self.is_empty_value(v):
-                            pass
-                        else:
-                            v = str(v)
-                            v = tattr.classifiers.filter(name=v).first()
-                            if v:
-                                iattr.classifier = v
-                            else:
-                                errors[err_name] = [ugettext_lazy('This field is required.')]
-            else:
-                errors[err_name] = [ugettext_lazy('Expression required')]
+                    errors[err_name] = [ugettext_lazy('Expression required')]
         return iattrs
 
     def create_accrual_calculation_schedules(self, instrument_download_scheme, instrument, values):
