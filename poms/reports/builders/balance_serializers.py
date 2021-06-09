@@ -558,6 +558,15 @@ class ReportSerializer(ReportSerializerWithLogs):
                     for key, value in item.items():
                         names[key] = value
 
+                    names['report_currency'] = data['report_currency']
+                    # _set_object(names, 'report_currency', item_currencies)
+                    names['report_date'] = data['report_date']
+                    names['pl_first_date'] = data['pl_first_date']
+                    names['cost_method'] = data['cost_method']
+                    names['pricing_policy'] = data['pricing_policy']
+                    names['portfolio_mode'] = data['portfolio_mode']
+                    names['account_mode'] = data['account_mode']
+
                     _set_object(names, 'portfolio', item_portfolios)
                     _set_object(names, 'account', item_accounts)
                     _set_object(names, 'strategy1', item_strategies1)

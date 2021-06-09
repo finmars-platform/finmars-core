@@ -190,6 +190,12 @@ class TransactionReportSerializer(serializers.Serializer):
                 for key, value in item.items():
                     names[key] = value
 
+                names['report_currency'] = data['report_currency']
+                # _set_object(names, 'report_currency', item_currencies)
+                names['report_date'] = data['report_date']
+                names['begin_date'] = data['begin_date']
+                names['end_date'] = data['end_date']
+
                 _set_object(names, 'complex_transaction', item_complex_transactions)
                 _set_object(names, 'transaction_class', item_transaction_classes)
                 _set_object(names, 'instrument', item_instruments)
