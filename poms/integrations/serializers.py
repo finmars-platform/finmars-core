@@ -176,6 +176,7 @@ class InstrumentDownloadSchemeSerializer(ModelWithUserCodeSerializer, ModelWithT
         model = InstrumentDownloadScheme
         fields = [
             'id', 'master_user',
+            'mode',
             'user_code', 'name', 'short_name', 'public_name', 'notes',
 
             'provider', 'provider_object', 'inputs',

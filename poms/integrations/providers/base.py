@@ -138,20 +138,26 @@ class AbstractProvider(object):
             return None
         return obj.content_object
 
+    def set_instrument_attr(self, instrument_download_scheme, instr, attr, v):
+
+        if instrument_download_scheme.mode == 'overwrite':
+            setattr(instr, attr, v)
+
+        if instrument_download_scheme == 'overwrite_empty_values':
+
+            if not getattr(instr, attr):
+                setattr(instr, attr, v)
+
+        if instrument_download_scheme == 'skip':
+
+            if not getattr(instr, attr):
+                setattr(instr, attr, v)
+
+
     def create_instrument(self, instrument_download_scheme, values):
         errors = {}
         master_user = instrument_download_scheme.master_user
         provider = instrument_download_scheme.provider
-
-        instr = Instrument(master_user=master_user)
-
-        # instr.instrument_type = master_user.instrument_type
-        # instr.pricing_currency = master_user.currency
-        # instr.accrued_currency = master_user.currency
-
-        instr.payment_size_detail = instrument_download_scheme.payment_size_detail
-        instr.default_price = instrument_download_scheme.default_price
-        instr.default_accrued = instrument_download_scheme.default_accrued
 
         values_converted = {}
 
@@ -167,6 +173,27 @@ class AbstractProvider(object):
                         errors[input] = [ugettext_lazy('Invalid expression.')]
                         continue
 
+        try:
+            user_code = formula.safe_eval(instrument_download_scheme.instrument_user_code, names=values_converted)
+        except formula.InvalidExpression:
+            _l.debug('Invalid instrument attribute expression: id=%s, attr=%s, expr=%s, values=%s',
+                     instrument_download_scheme.id, 'instrument_user_code', instrument_download_scheme.instrument_user_code, values)
+            errors['instrument_user_code'] = [ugettext_lazy('Invalid expression.')]
+            instr = Instrument(master_user=master_user)
+            return instr, errors
+
+        try:
+            instr = Instrument.objects.get(master_user=master_user, user_code=user_code)
+        except Instrument.DoesNotExist:
+            instr = Instrument(master_user=master_user)
+
+        # instr.instrument_type = master_user.instrument_type
+        # instr.pricing_currency = master_user.currency
+        # instr.accrued_currency = master_user.currency
+
+        instr.payment_size_detail = instrument_download_scheme.payment_size_detail
+        instr.default_price = instrument_download_scheme.default_price
+        instr.default_accrued = instrument_download_scheme.default_accrued
 
         for attr in InstrumentDownloadScheme.BASIC_FIELDS:
             expr = getattr(instrument_download_scheme, attr)
@@ -185,7 +212,9 @@ class AbstractProvider(object):
                 # else:
                 v = self.get_currency(master_user, provider, v)
                 if v:
-                    setattr(instr, attr, v)
+                    # setattr(instr, attr, v)
+                    self.set_instrument_attr(instrument_download_scheme, instr, attr, v)
+
                 else:
                     errors[attr] = [ugettext_lazy('This field is required.')]
             elif attr in ('instrument_type',):
@@ -194,7 +223,8 @@ class AbstractProvider(object):
                 # else:
                 v = self.get_instrument_type(master_user, provider, v)
                 if v:
-                    setattr(instr, attr, v)
+                    # setattr(instr, attr, v)
+                    self.set_instrument_attr(instrument_download_scheme, instr, attr, v)
                 else:
                     errors[attr] = [ugettext_lazy('This field is required.')]
             elif attr in ('price_multiplier', 'accrued_multiplier', 'default_price', 'default_accrued',
@@ -213,7 +243,8 @@ class AbstractProvider(object):
                     if isinstance(v, datetime):
                         v = v.date()
                     if isinstance(v, date):
-                        setattr(instr, attr, v)
+                        # setattr(instr, attr, v)
+                        self.set_instrument_attr(instrument_download_scheme, instr, attr, v)
                     else:
                         errors[attr] = [ugettext_lazy('A valid date is required.')]
 
@@ -223,16 +254,18 @@ class AbstractProvider(object):
                 else:
                     v = str(v)
 
-                    instr_attr = attr[11:]
+                    instr_attr = attr[11:] # substring "instrument_" prefix
 
-                    setattr(instr, instr_attr, v)
+                    # setattr(instr, instr_attr, v)
+                    self.set_instrument_attr(instrument_download_scheme, instr, attr, v)
 
             else:
                 if self.is_empty_value(v):
                     pass
                 else:
                     v = str(v)
-                    setattr(instr, attr, v)
+                    # setattr(instr, attr, v)
+                    self.set_instrument_attr(instrument_download_scheme, instr, attr, v)
 
         instr._attributes = self.create_instrument_attributes(
             instrument_download_scheme=instrument_download_scheme, instrument=instr, values=values, errors=errors)

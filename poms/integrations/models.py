@@ -190,12 +190,24 @@ class ImportConfig(models.Model):
         return (self.has_p12cert and self.has_password) or (self.has_cert and self.has_key)
 
 
+
+
+
 class InstrumentDownloadScheme(NamedModel, DataTimeStampedModel):
+
+    MODE_CHOICES = [
+        ['skip', 'Skip if exists'],
+        ['overwrite_empty_values', 'Overwrite only empty values'],
+        ['overwrite', 'Overwrite'],
+    ]
+
     BASIC_FIELDS = [
         'reference_for_pricing', 'instrument_user_code', 'instrument_name', 'instrument_short_name', 'instrument_public_name', 'instrument_notes', 'instrument_type',
         'pricing_currency', 'price_multiplier', 'accrued_currency', 'accrued_multiplier', 'maturity_date',
         'user_text_1', 'user_text_2', 'user_text_3',
     ]
+
+    mode = models.CharField(max_length=255, choices=MODE_CHOICES, default='skip')
 
     user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
 
