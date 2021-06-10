@@ -1230,9 +1230,13 @@ class PLReportBuilderSql:
                                 
                                 SUM(time_invested)                                                      as time_invested_sum,
                                 
-                                SUM(principal_with_sign_invested * stlch.fx_rate * trnch.fx_rate )      as principal_with_sign_invested,
-                                SUM(carry_with_sign_invested * stlch.fx_rate * trnch.fx_rate )          as carry_with_sign_invested,
-                                SUM(overheads_with_sign_invested * stlch.fx_rate * trnch.fx_rate )      as overheads_with_sign_invested,
+                                --SUM(principal_with_sign_invested * stlch.fx_rate * trnch.fx_rate )      as principal_with_sign_invested,
+                                --SUM(carry_with_sign_invested * stlch.fx_rate * trnch.fx_rate )          as carry_with_sign_invested,
+                                --SUM(overheads_with_sign_invested * stlch.fx_rate * trnch.fx_rate )      as overheads_with_sign_invested,
+                                
+                                SUM(principal_with_sign_invested * stl_cur_fx * trn_cur_fx )      as principal_with_sign_invested,
+                                SUM(carry_with_sign_invested * stl_cur_fx * trn_cur_fx )          as carry_with_sign_invested,
+                                SUM(overheads_with_sign_invested * stl_cur_fx * trn_cur_fx )      as overheads_with_sign_invested,
                                 
                                 SUM(principal_fixed_opened)                                             as principal_fixed_opened,
                                 SUM(carry_fixed_opened)                                                 as carry_fixed_opened,
@@ -1265,6 +1269,20 @@ class PLReportBuilderSql:
                                             limit 1)
                                     end as stl_cur_fx,
                                     
+                                    
+                                    case
+                                       when
+                                           tut.transaction_currency_id = {default_currency_id}
+                                           then 1
+                                       else
+                                           (select fx_rate
+                                            from currencies_currencyhistory c_ch
+                                            where date = '{report_date}'
+                                              and c_ch.currency_id = tut.transaction_currency_id
+                                              and c_ch.pricing_policy_id = {pricing_policy_id}
+                                            limit 1)
+                                    end as trn_cur_fx,
+                                    
                                     case
                                        when /* reporting ccy = system ccy*/ {report_currency_id} = {default_currency_id}
                                            then 1
@@ -1276,6 +1294,12 @@ class PLReportBuilderSql:
                                               and c_ch.pricing_policy_id = {pricing_policy_id}
                                             limit 1)
                                     end as rep_cur_fx,
+                                    
+                                    
+                                    
+                                    
+                                    
+                                    
                            
                                     SUM(position_size_with_sign)                                as position_size,
                                     SUM(position_size_with_sign * (1 - multiplier))             as position_size_opened,
@@ -1319,12 +1343,12 @@ class PLReportBuilderSql:
                                 group by 
                                     {consolidation_columns} instrument_id, transaction_currency_id, settlement_currency_id
                             ) as tt_without_fx_rates
-                            left join (
+                            /*left join (
                                 select 
                                     currency_id,
                             
                                     case
-                                        when currency_id = '{default_currency_id}'::int
+                                        when currency_id = {default_currency_id}
                                         then 1
                                         else fx_rate
                                     end as fx_rate
@@ -1342,7 +1366,7 @@ class PLReportBuilderSql:
                                     currency_id,
                             
                                     case
-                                        when currency_id = '{default_currency_id}'::int
+                                        when currency_id = {default_currency_id}
                                         then 1
                                         else fx_rate
                                     end as fx_rate
@@ -1352,7 +1376,7 @@ class PLReportBuilderSql:
                                     date = '{report_date}'
                             ) as stlch
                             on 
-                                settlement_currency_id = stlch.currency_id
+                                settlement_currency_id = stlch.currency_id */
                             group by 
                                 {consolidation_columns} instrument_id
                         ) as tt_final_calculations
