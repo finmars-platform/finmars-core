@@ -457,7 +457,9 @@ class BalanceReportBuilderSql:
                     amount_invested_loc,
                     
                     position_return,
+                    position_return_loc,
                     net_position_return,
+                    net_position_return_loc,
                     time_invested,
                     
                     ytm,
@@ -595,7 +597,9 @@ class BalanceReportBuilderSql:
                         (0) as amount_invested_loc,
                             
                         (0) as position_return,
+                        (0) as position_return_loc,
                         (0) as net_position_return,
+                        (0) as net_position_return_loc,
                         (0) as time_invested,
                         
                         (0) as ytm,
@@ -821,7 +825,9 @@ class BalanceReportBuilderSql:
                     amount_invested_loc,
                     
                     position_return,
+                    position_return_loc,
                     net_position_return,
+                    net_position_return_loc,
                     time_invested,
                     
                     ytm,
@@ -970,7 +976,9 @@ class BalanceReportBuilderSql:
                         amount_invested_loc,
                         
                         position_return,
+                        position_return_loc,
                         net_position_return,
+                        net_position_return_loc,
                         time_invested,
                         
                         ytm,
@@ -1338,7 +1346,9 @@ class BalanceReportBuilderSql:
                                 amount_invested_loc,
                                 
                                 position_return,
+                                position_return_loc,
                                 net_position_return,
+                                net_position_return_loc,
                                 time_invested,
                                 
                                 ytm,
@@ -1600,7 +1610,9 @@ class BalanceReportBuilderSql:
                             new_exposure_item["return_annually"] = None
 
                             new_exposure_item["position_return"] = None
+                            new_exposure_item["position_return_loc"] = None
                             new_exposure_item["net_position_return"] = None
+                            new_exposure_item["net_position_return_loc"] = None
 
                             new_exposure_item["net_cost_price"] = None
                             new_exposure_item["net_cost_price_loc"] = None

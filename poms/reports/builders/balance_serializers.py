@@ -768,7 +768,9 @@ def serialize_balance_report_item(item):
     result["return_annually"] = item["return_annually"]
 
     result["position_return"] = item["position_return"]
+    result["position_return_loc"] = item["position_return_loc"]
     result["net_position_return"] = item["net_position_return"]
+    result["net_position_return_loc"] = item["net_position_return_loc"]
 
     result["net_cost_price"] = item["net_cost_price"]
     result["net_cost_price_loc"] = item["net_cost_price_loc"]
@@ -926,7 +928,9 @@ def serialize_pl_report_item(item):
     result["position_size"] = item["position_size"]
 
     result["position_return"] = item["position_return"]
+    result["position_return_loc"] = item["position_return_loc"]
     result["net_position_return"] = item["net_position_return"]
+    result["net_position_return_loc"] = item["net_position_return_loc"]
 
     result["net_cost_price"] = item["net_cost_price"]
     result["net_cost_price_loc"] = item["net_cost_price_loc"]
