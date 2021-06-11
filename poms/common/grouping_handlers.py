@@ -34,35 +34,59 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
 
     # print('attribute_type.value_type %s' % attribute_type.value_type)
 
+    # if attribute_type.value_type == 20:
+    #     qs = qs \
+    #         .distinct('attributes__value_float') \
+    #         .order_by('-attributes__value_float') \
+    #         .annotate(group_name=F('attributes__value_float'), group_identifier=F('attributes__value_float'), items_count=Count('attributes__value_float')) \
+    #         .values('group_name', 'group_identifier', 'items_count') \
+    #         .order_by()
+
     if attribute_type.value_type == 20:
         qs = qs \
-            .distinct('attributes__value_float') \
-            .order_by('-attributes__value_float') \
-            .annotate(group_name=F('attributes__value_float'), group_identifier=F('attributes__value_float')) \
-            .values('group_name', 'group_identifier')
+            .values(attr=F('attributes__value_float')) \
+            .distinct() \
+            .annotate(group_identifier=F('attr'), group_name=F('attr'), items_count=Count('pk')) \
+            .values('group_name', 'group_identifier', 'items_count') \
+            .order_by()
 
     if attribute_type.value_type == 10:
+        # qs = qs \
+        #     .order_by('attributes__value_string') \
+        #     .distinct('attributes__value_string') \
+        #     .order_by('-attributes__value_string') \
+        #     .annotate(group_name=F('attributes__value_string'), group_identifier=F('attributes__value_string'), items_count=Count('attributes__value_string')) \
+        #     .values('group_name', 'group_identifier', 'items_count') \
+        #     .order_by()
         qs = qs \
-            .order_by('attributes__value_string') \
-            .distinct('attributes__value_string') \
-            .order_by('-attributes__value_string') \
-            .annotate(group_name=F('attributes__value_string'), group_identifier=F('attributes__value_string')) \
-            .values('group_name', 'group_identifier')
+            .values(attr=F('attributes__value_string')) \
+            .distinct() \
+            .annotate(group_identifier=F('attr'), group_name=F('attr'), items_count=Count('pk')) \
+            .values('group_name', 'group_identifier', 'items_count') \
+            .order_by()
 
     if attribute_type.value_type == 30:
         qs = qs \
             .values('attributes__classifier') \
             .annotate(group_identifier=F('attributes__classifier')) \
             .distinct() \
-            .annotate(group_name=F('attributes__classifier__name'), group_identifier=F('attributes__classifier')) \
-            .values('group_name', 'group_identifier')
+            .annotate(group_name=F('attributes__classifier__name'), group_identifier=F('attributes__classifier'), items_count=Count('pk')) \
+            .values('group_name', 'group_identifier', 'items_count') \
+            .order_by()
 
     if attribute_type.value_type == 40:
+        # qs = qs \
+        #     .distinct('attributes__value_date') \
+        #     .order_by('-attributes__value_date') \
+        #     .annotate(group_name=F('attributes__value_date'), group_identifier=F('attributes__value_date'), items_count=Count('attributes__value_date')) \
+        #     .values('group_name', 'group_identifier', 'items_count') \
+        #     .order_by()
         qs = qs \
-            .distinct('attributes__value_date') \
-            .order_by('-attributes__value_date') \
-            .annotate(group_name=F('attributes__value_date'), group_identifier=F('attributes__value_date')) \
-            .values('group_name', 'group_identifier')
+            .values(attr=F('attributes__value_date')) \
+            .distinct() \
+            .annotate(group_identifier=F('attr'), group_name=F('attr'), items_count=Count('pk')) \
+            .values('group_name', 'group_identifier', 'items_count') \
+            .order_by()
 
     # force_qs_evaluation(qs)
 
@@ -111,17 +135,16 @@ def get_root_system_attr_group(qs, root_group, groups_order):
     if is_relation(root_group):
 
         print("pricing currency?")
-
-
         qs = qs.values(root_group) \
             .annotate(group_identifier=F(root_group + '__user_code')) \
             .distinct() \
-            .annotate(group_name=F(root_group + '__short_name')) \
-            .values('group_name', 'group_identifier')
+            .annotate(group_name=F(root_group + '__short_name'), items_count=Count(root_group + '__short_name')) \
+            .values('group_name', 'group_identifier', 'items_count') \
+            .order_by()
     else:
         qs = qs.distinct(root_group) \
-            .annotate(group_name=F(root_group), group_identifier=F(root_group)) \
-            .values('group_name', 'group_identifier') \
+            .annotate(group_name=F(root_group), group_identifier=F(root_group), items_count=Count(root_group)) \
+            .values('group_name', 'group_identifier', 'items_count') \
             .order_by(root_group)
 
     if groups_order == 'asc':
@@ -152,33 +175,58 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
     # force_qs_evaluation(qs)
 
     if attribute_type.value_type == 20:
+        # .distinct('attributes__value_float') \
+        # qs = qs \
+        #     .distinct('attributes__value_float') \
+        #     .order_by('-attributes__value_float') \
+        #     .annotate(group_name=F('attributes__value_float'), group_identifier=F('attributes__value_float'), items_count=Count('attributes__value_float')) \
+        #     .values('group_name', 'group_identifier', 'items_count') \
+        #     .order_by()
+
         qs = qs \
-            .distinct('attributes__value_float') \
-            .order_by('-attributes__value_float') \
-            .annotate(group_name=F('attributes__value_float'), group_identifier=F('attributes__value_float')) \
-            .values('group_name', 'group_identifier')
+            .values(attr=F('attributes__value_float')) \
+            .distinct() \
+            .annotate(group_identifier=F('attr'), group_name=F('attr'), items_count=Count('pk')) \
+            .values('group_name', 'group_identifier', 'items_count') \
+            .order_by()
 
     if attribute_type.value_type == 10:
+        # .distinct('attributes__value_string') \
+        # qs = qs \
+        #     .distinct() \
+        #     .order_by('-attributes__value_string') \
+        #     .annotate(group_name=F('attributes__value_string'), group_identifier=F('attributes__value_string'), items_count=Count('attributes__value_string')) \
+        #     .values('group_name', 'group_identifier', 'items_count') \
+        #     .order_by()
         qs = qs \
-            .distinct('attributes__value_string') \
-            .order_by('-attributes__value_string') \
-            .annotate(group_name=F('attributes__value_string'), group_identifier=F('attributes__value_string')) \
-            .values('group_name', 'group_identifier')
+            .values(attr=F('attributes__value_string')) \
+            .distinct() \
+            .annotate(group_identifier=F('attr'), group_name=F('attr'), items_count=Count('pk')) \
+            .values('group_name', 'group_identifier', 'items_count') \
+            .order_by()
 
     if attribute_type.value_type == 30:
         qs = qs \
             .values('attributes__classifier') \
             .annotate(group_identifier=F('attributes__classifier')) \
             .distinct() \
-            .annotate(group_name=F('attributes__classifier__name')) \
-            .values('group_name', 'group_identifier')
+            .annotate(group_name=F('attributes__classifier__name'), items_count=Count('pk')) \
+            .values('group_name', 'group_identifier', 'items_count') \
+            .order_by()
 
     if attribute_type.value_type == 40:
+        # qs = qs \
+        #     .distinct('attributes__value_date') \
+        #     .order_by('-attributes__value_date') \
+        #     .annotate(group_name=F('attributes__value_date'), group_identifier=F('attributes__value_date'), items_count=Count('attributes__value_date')) \
+        #     .values('group_name', 'group_identifier', 'items_count') \
+        #     .order_by()
         qs = qs \
-            .distinct('attributes__value_date') \
-            .order_by('-attributes__value_date') \
-            .annotate(group_name=F('attributes__value_date'), group_identifier=F('attributes__value_date')) \
-            .values('group_name', 'group_identifier')
+            .values(attr=F('attributes__value_date')) \
+            .distinct() \
+            .annotate(group_identifier=F('attr'), group_name=F('attr'), items_count=Count('pk')) \
+            .values('group_name', 'group_identifier', 'items_count') \
+            .order_by()
 
     # force_qs_evaluation(qs)
 
@@ -200,12 +248,14 @@ def get_last_system_attr_group(qs, last_group, groups_order):
             .annotate(group_identifier=F(last_group + '__user_code')) \
             .distinct() \
             .annotate(group_name=F(last_group + '__short_name'),  items_count=Count(last_group + '__short_name')) \
-            .values('group_name', 'group_identifier')
+            .values('group_name', 'group_identifier', 'items_count') \
+            .order_by()
     else:
 
         qs = qs.distinct(last_group) \
             .annotate(group_name=F(last_group), group_identifier=F(last_group), items_count=Count(last_group)) \
-            .values('group_name', 'group_identifier')
+            .values('group_name', 'group_identifier', 'items_count') \
+            .order_by()
 
     if groups_order == 'desc':
         qs = qs.order_by(F('group_name').desc())

@@ -128,6 +128,7 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
         OrderingPostFilter
     ]
 
+    # DEPRECATED
     def list(self, request):
 
         if len(request.query_params.getlist('groups_types')) == 0:
