@@ -1465,7 +1465,7 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
 
     class Meta:
         model = ComplexTransactionImportSchemeRuleScenario
-        fields = ['id', 'name', 'selector_values', 'transaction_type', 'fields']
+        fields = ['id', 'is_default_rule_scenario', 'name', 'selector_values', 'transaction_type', 'fields']
 
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionImportSchemeRuleScenarioSerializer, self).__init__(*args, **kwargs)
@@ -1840,7 +1840,8 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
             validated_data['delimiter'] = validated_data['scheme'].delimiter
             validated_data['error_handling'] = validated_data['scheme'].error_handler # Warning - prop is - error_handling
             validated_data['missing_data_handler'] = validated_data['scheme'].missing_data_handler
-            _l.debug('scheme missing data helper %s' % validated_data['scheme'].missing_data_handler)
+
+            _l.debug('scheme missing data helper:  %s' % validated_data['scheme'].missing_data_handler)
 
         _l.debug('validated_data %s' % validated_data)
 

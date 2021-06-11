@@ -1574,6 +1574,7 @@ def complex_transaction_csv_file_import(self, task_id):
         scheme = instance.scheme
         scheme_inputs = list(scheme.inputs.all())
         scheme_calculated_inputs = list(scheme.calculated_inputs.all())
+        scheme_selector_values = list(scheme.selector_values.all())
 
         master_user = instance.master_user
         member = instance.member
@@ -1584,6 +1585,12 @@ def complex_transaction_csv_file_import(self, task_id):
         _l.debug('scheme %s - inputs=%s, rules=%s', scheme,
                             [(i.name, i.column) for i in scheme_inputs],
                             [(r.transaction_type.user_code) for r in rule_scenarios])
+
+        default_rule_scenario = None
+
+        for scenario in rule_scenarios:
+            if scenario.is_default_rule_scenario:
+                default_rule_scenario = scenario
 
         mapping_map = {
             Account: AccountMapping,
@@ -1715,6 +1722,108 @@ def complex_transaction_csv_file_import(self, task_id):
                     row.append("Invalid Expression")
 
             return row
+
+        def _process_rule_scenario(processed_scenarios, scheme_rule, inputs, error_rows, row_index):
+
+            _l.info('_process_rule_scenario %s %s ' % (row_index, scheme_rule))
+
+            result = None
+
+            processed_scenarios = processed_scenarios + 1
+
+            rule = scheme_rule
+
+            fields = {}
+            fields_error = []
+            for field in rule.fields.all():
+                try:
+                    field_value = formula.safe_eval(field.value_expr, names=inputs)
+                    field_value = _convert_value(field, field_value, error_rows)
+                    fields[field.transaction_type_input.name] = field_value
+
+
+
+                except (ValueError, ExpressionEvalError):
+                    _l.debug('can\'t process field: %s|%s', field.transaction_type_input.name,
+                             field.transaction_type_input.pk, exc_info=True)
+                    fields_error.append(field)
+            _l.debug('fields (step 1): error=%s, values=%s', fields_error, fields)
+
+            if fields_error:
+
+                error_rows['level'] = 'error'
+
+                error_rows['error_message'] = error_rows['error_message'] + '\n' + str(ugettext(
+                    'Can\'t process fields: %(fields)s') % {
+                                                                                           'fields': ', '.join(
+                                                                                               '[' + f.transaction_type_input.name + '] ' + '( TType: ' + rule_value + ')'
+                                                                                               for f in
+                                                                                               fields_error)
+                                                                                       })
+
+                if instance.break_on_error:
+                    instance.error_row_index = row_index
+                    error_rows['error_reaction'] = 'Break'
+                    instance.error_rows.append(error_rows)
+
+                    result = 'break'
+
+                    return result
+                else:
+                    error_rows['error_reaction'] = 'Continue import'
+
+                    result = 'continue'
+
+                    return result
+
+            with transaction.atomic():
+                try:
+                    tt_process = TransactionTypeProcess(
+                        transaction_type=rule.transaction_type,
+                        default_values=fields,
+                        context={
+                            'master_user': instance.master_user,
+                            'member': instance.member,
+                        },
+                        uniqueness_reaction=instance.scheme.book_uniqueness_settings
+                    )
+                    tt_process.process()
+
+                    _l.debug('tt_process %s' % tt_process)
+
+                    if tt_process.uniqueness_status == 'skip':
+                        error_rows['level'] = 'skip'
+                        error_rows['error_message'] = error_rows['error_message'] + str(
+                            ugettext('Unique code already exist. Skip'))
+
+                    if tt_process.uniqueness_status == 'error':
+                        error_rows['level'] = 'error'
+                        error_rows['error_message'] = error_rows['error_message'] + str(
+                            ugettext('Unique code already exist. Error'))
+
+                    instance.processed_rows = instance.processed_rows + 1
+
+                except Exception as e:
+
+                    error_rows['level'] = 'error'
+
+                    _l.debug("can't process transaction type", exc_info=True)
+
+                    _l.debug('error %s' % e)
+
+                    transaction.set_rollback(True)
+                    if instance.break_on_error:
+                        instance.error_row_index = row_index
+                        error_rows['error_reaction'] = 'Break'
+                        result = 'break'
+                        return result
+                    else:
+                        result = 'continue'
+                        return result
+                finally:
+                    _l.debug("final")
+                    # if settings.DEBUG:
+                    #     transaction.set_rollback(True)
 
         def _process_csv_file(file):
 
@@ -1898,106 +2007,44 @@ def complex_transaction_csv_file_import(self, task_id):
                 matched_selector = False
                 processed_scenarios = 0
 
-                for scheme_rule in rule_scenarios:
+                unknown_rule = True
 
-                    matched_selector = False
+                for selector in scheme_selector_values:
+                    if selector.value == rule_value:
+                        unknown_rule = False
 
-                    selector_values = scheme_rule.selector_values.all()
+                if unknown_rule and default_rule_scenario:
+                    _l.info("Process rule %s with default rule scenario "  % (rule_value))
+                    res = _process_rule_scenario(processed_scenarios, default_rule_scenario, inputs, error_rows, row_index)
 
-                    for selector_value in selector_values:
+                    # TODO refactor soon
+                    if res == 'break':
+                        return
+                    elif res == 'continue':
+                        continue
 
-                        if selector_value.value == rule_value:
-                            matched_selector = True
+                else:
 
-                    if matched_selector:
+                    for scheme_rule in rule_scenarios:
 
-                        processed_scenarios = processed_scenarios + 1
+                        matched_selector = False
 
-                        rule = scheme_rule
+                        selector_values = scheme_rule.selector_values.all()
 
-                        fields = {}
-                        fields_error = []
-                        for field in rule.fields.all():
-                            try:
-                                field_value = formula.safe_eval(field.value_expr, names=inputs)
-                                field_value = _convert_value(field, field_value, error_rows)
-                                fields[field.transaction_type_input.name] = field_value
+                        for selector_value in selector_values:
 
+                            if selector_value.value == rule_value:
+                                matched_selector = True
 
+                        if matched_selector:
 
-                            except (ValueError, ExpressionEvalError):
-                                _l.debug('can\'t process field: %s|%s', field.transaction_type_input.name,
-                                                    field.transaction_type_input.pk, exc_info=True)
-                                fields_error.append(field)
-                        _l.debug('fields (step 1): error=%s, values=%s', fields_error, fields)
+                            res = _process_rule_scenario(processed_scenarios, scheme_rule, inputs, error_rows, row_index)
 
-                        if fields_error:
-
-                            error_rows['level'] = 'error'
-
-                            error_rows['error_message'] = error_rows['error_message'] + '\n' + str(ugettext(
-                                'Can\'t process fields: %(fields)s') % {
-                                                                                                       'fields': ', '.join(
-                                                                                                           '[' + f.transaction_type_input.name + '] ' + '( TType: ' + rule_value + ')'
-                                                                                                           for f in
-                                                                                                           fields_error)
-                                                                                                   })
-
-                            if instance.break_on_error:
-                                instance.error_row_index = row_index
-                                error_rows['error_reaction'] = 'Break'
-                                instance.error_rows.append(error_rows)
+                            # TODO refactor soon
+                            if res == 'break':
                                 return
-                            else:
-                                error_rows['error_reaction'] = 'Continue import'
+                            elif res == 'continue':
                                 continue
-
-                        with transaction.atomic():
-                            try:
-                                tt_process = TransactionTypeProcess(
-                                    transaction_type=rule.transaction_type,
-                                    default_values=fields,
-                                    context={
-                                        'master_user': instance.master_user,
-                                        'member': instance.member,
-                                    },
-                                    uniqueness_reaction=instance.scheme.book_uniqueness_settings
-                                )
-                                tt_process.process()
-
-                                _l.debug('tt_process %s' % tt_process)
-
-                                if tt_process.uniqueness_status == 'skip':
-                                    error_rows['level'] = 'skip'
-                                    error_rows['error_message'] = error_rows['error_message'] + str(
-                                        ugettext('Unique code already exist. Skip'))
-
-                                if tt_process.uniqueness_status == 'error':
-                                    error_rows['level'] = 'error'
-                                    error_rows['error_message'] = error_rows['error_message'] + str(
-                                        ugettext('Unique code already exist. Error'))
-
-                                instance.processed_rows = instance.processed_rows + 1
-
-                            except Exception as e:
-
-                                error_rows['level'] = 'error'
-
-                                _l.debug("can't process transaction type", exc_info=True)
-
-                                _l.debug('error %s' % e)
-
-                                transaction.set_rollback(True)
-                                if instance.break_on_error:
-                                    instance.error_row_index = row_index
-                                    error_rows['error_reaction'] = 'Break'
-                                    return
-                                else:
-                                    continue
-                            finally:
-                                _l.debug("final")
-                                # if settings.DEBUG:
-                                #     transaction.set_rollback(True)
 
                 if processed_scenarios == 0:
                     error_rows['level'] = 'error'
