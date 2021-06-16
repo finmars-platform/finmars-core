@@ -84,11 +84,11 @@ def process(self):
 
                     _l.info('Schedule : schedule procedure order %s' % procedure.order)
 
-                    if procedure.order == 1:
+                    if procedure.order == 0:
 
                         _l.info('Schedule : start processing first procedure')
 
-                        schedule_instance.current_processing_procedure_number = 1
+                        schedule_instance.current_processing_procedure_number = 0
                         schedule_instance.status = ScheduleInstance.STATUS_PENDING
                         schedule_instance.save()
 

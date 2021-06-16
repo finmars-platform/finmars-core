@@ -71,9 +71,9 @@ class ScheduleViewSet(AbstractModelViewSet):
 
                 try:
 
-                    if procedure.order == 1:
+                    if procedure.order == 0:
 
-                        schedule_instance.current_processing_procedure_number = 1
+                        schedule_instance.current_processing_procedure_number = 0
                         schedule_instance.status = ScheduleInstance.STATUS_PENDING
                         schedule_instance.save()
 
