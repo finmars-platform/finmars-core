@@ -1661,7 +1661,7 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer, Mod
             if rule0 is None:
                 rule0 = ComplexTransactionImportSchemeRuleScenario(scheme=instance)
 
-            fields = rule_values.pop('fields', empty) or []
+            fields = rule_values.pop('fields', []) or []
             selector_values = rule_values.pop('selector_values', []) or []
             for name, value in rule_values.items():
                 setattr(rule0, name, value)
@@ -1745,26 +1745,30 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer, Mod
 
     def save_fields(self, rule_scenario, fields):
         pk_set = set()
-        for field_values in fields:
-            field_id = field_values.pop('id', None)
-            field0 = None
-            if field_id:
-                try:
-                    field0 = rule_scenario.fields.get(pk=field_id)
-                except ObjectDoesNotExist:
-                    pass
-            if field0 is None:
-                field0 = ComplexTransactionImportSchemeField(rule_scenario=rule_scenario)
-            for name, value in field_values.items():
-                setattr(field0, name, value)
+        
+        # print('save_fie fields %s' % fields)
+        
+        if fields:
+            for field_values in fields:
+                field_id = field_values.pop('id', None)
+                field0 = None
+                if field_id:
+                    try:
+                        field0 = rule_scenario.fields.get(pk=field_id)
+                    except ObjectDoesNotExist:
+                        pass
+                if field0 is None:
+                    field0 = ComplexTransactionImportSchemeField(rule_scenario=rule_scenario)
+                for name, value in field_values.items():
+                    setattr(field0, name, value)
 
-            # TODO check why is that?
-            # if field0.transaction_type_input.transaction_type_id != rule.transaction_type_id:
-            #     raise serializers.ValidationError(ugettext('Invalid transaction type input. (Hacker has detected!)'))
+                # TODO check why is that?
+                # if field0.transaction_type_input.transaction_type_id != rule.transaction_type_id:
+                #     raise serializers.ValidationError(ugettext('Invalid transaction type input. (Hacker has detected!)'))
 
-            field0.save()
-            pk_set.add(field0.id)
-
+                field0.save()
+                pk_set.add(field0.id)
+    
         rule_scenario.fields.exclude(pk__in=pk_set).delete()
 
 
