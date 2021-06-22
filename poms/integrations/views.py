@@ -908,6 +908,10 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
 
         # celery_task.save()
 
+        send_system_message(master_user=request.master_user,
+                            source="Transaction Import Service",
+                            text='Member %s started Transaction Import (scheme %s)' % (request.user.member.username, instance.scheme.name))
+
         complex_transaction_csv_file_import_parallel(task_id=celery_task.pk)
 
 

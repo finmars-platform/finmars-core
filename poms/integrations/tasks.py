@@ -1508,6 +1508,12 @@ def complex_transaction_csv_file_import_parallel_finish(self, task_id):
                                 source="Transaction Import Service",
                                 text="Import Finished",
                                 file_report_id=result_object['stats_file_report'])
+        else:
+
+            send_system_message(master_user=celery_task.master_user,
+                                source="Transaction Import Service",
+                                text="User %s Transaction Import Finished" % celery_task.member.username,
+                                file_report_id=result_object['stats_file_report'])
 
         # TODO Generate File Report Here
 

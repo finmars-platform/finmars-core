@@ -1400,6 +1400,11 @@ class ImportHandler:
                                     source="Simple Import Service",
                                     text="Import Finished",
                                     file_report_id=instance.stats_file_report)
+            else:
+                send_system_message(master_user=instance.master_user,
+                                        source="Simple Import Service",
+                                        text="User %s Import Finished" % member.username,
+                                        file_report_id=instance.stats_file_report)
 
         return instance
 

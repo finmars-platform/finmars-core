@@ -28,6 +28,8 @@ import time
 
 from logging import getLogger
 
+from ..system_messages.handlers import send_system_message
+
 _l = getLogger('poms.csv_import')
 
 
@@ -171,6 +173,10 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
                                                     type='simple_import', celery_task_id=res.id)
 
             celery_task.save()
+
+            send_system_message(master_user=request.master_user,
+                                source="Simple Import Service",
+                                text='Member %s started Data Import (scheme %s)' % (request.user.member.username, instance.scheme.name))
 
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)
