@@ -1610,7 +1610,6 @@ def complex_transaction_csv_file_import(self, task_id):
             AccrualCalculationModel: AccrualCalculationModelMapping,
 
         }
-        mapping_cache = {}
 
         props_map = {
             Account: 'account',
@@ -1672,8 +1671,6 @@ def complex_transaction_csv_file_import(self, task_id):
                 model_class = i.content_type.model_class()
                 model_map_class = mapping_map[model_class]
 
-                key = props_map[model_class]
-
                 v = None
 
                 try:
@@ -1685,17 +1682,9 @@ def complex_transaction_csv_file_import(self, task_id):
                         v = model_class.objects.get(master_user=instance.master_user, user_code=value)
 
                     except (model_class.DoesNotExist, KeyError):
+                        v = None
 
-                        if instance.missing_data_handler == 'set_defaults':
-
-                            v = _get_default_relation(field)
-
-                        else:
-
-                            error_rows['error_message'] = error_rows[
-                                                              'error_message'] + ' Can\'t find relation of ' + \
-                                                          '[' + field.transaction_type_input.name + ']' + '(value:' + \
-                                                          value + ')'
+                        _l.info("User code %s not found for %s " % (value, field.transaction_type_input.name))
 
                 if not v:
 
@@ -1703,9 +1692,11 @@ def complex_transaction_csv_file_import(self, task_id):
 
                         v = _get_default_relation(field)
 
-                    # raise ValueError('Can\'t find Relation.')
-
-                mapping_cache[key] = v
+                    else:
+                        error_rows['error_message'] = error_rows[
+                                                          'error_message'] + ' Can\'t find relation of ' + \
+                                                      '[' + field.transaction_type_input.name + ']' + '(value:' + \
+                                                      value + ')'
 
                 return v
 
@@ -2471,8 +2462,6 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                 model_class = i.content_type.model_class()
                 model_map_class = mapping_map[model_class]
 
-                key = props_map[model_class]
-
                 v = None
 
                 try:
@@ -2484,16 +2473,9 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                         v = model_class.objects.get(master_user=instance.master_user, user_code=value)
 
                     except (model_class.DoesNotExist, KeyError):
+                        v = None
 
-                        if instance.missing_data_handler == 'set_defaults':
-
-                            v = _get_default_relation(field)
-
-                        else:
-                            error_rows['error_message'] = error_rows[
-                                                              'error_message'] + ' Can\'t find relation of ' + \
-                                                          '[' + field.transaction_type_input.name + ']' + ' (Imported column, value: "' + \
-                                                          value + '"). '
+                        _l.info("User code %s not found for %s " % (value, field.transaction_type_input.name))
 
                 if not v:
 
@@ -2501,9 +2483,11 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
                         v = _get_default_relation(field)
 
-                    # raise ValueError('Can\'t find Relation.')
-
-                mapping_cache[key] = v
+                    else:
+                        error_rows['error_message'] = error_rows[
+                                                          'error_message'] + ' Can\'t find relation of ' + \
+                                                      '[' + field.transaction_type_input.name + ']' + '(value:' + \
+                                                      value + ')'
 
                 return v
 

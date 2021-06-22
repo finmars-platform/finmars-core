@@ -631,6 +631,10 @@ except (ValueError, TypeError):
 
 DEFAULT_FILE_STORAGE = 'storages.backends.sftpstorage.SFTPStorage'
 
+if SERVER_TYPE == 'local':
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
+
 SFTP_HOST = os.environ.get('SFTP_HOST', None)
 if SFTP_HOST:
     SFTP_HOST = SFTP_HOST.strip()
