@@ -174,7 +174,7 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
             celery_task.save()
 
-            send_system_message(master_user=request.master_user,
+            send_system_message(master_user=request.user.master_user,
                                 source="Simple Import Service",
                                 text='Member %s started Data Import (scheme %s)' % (request.user.member.username, instance.scheme.name))
 
