@@ -1765,13 +1765,13 @@ def complex_transaction_csv_file_import(self, task_id):
 
                     result = 'break'
 
-                    return result
+                    return result, processed_scenarios
                 else:
                     error_rows['error_reaction'] = 'Continue import'
 
                     result = 'continue'
 
-                    return result
+                    return result, processed_scenarios
 
             with transaction.atomic():
                 try:
@@ -1798,7 +1798,7 @@ def complex_transaction_csv_file_import(self, task_id):
                         error_rows['error_message'] = error_rows['error_message'] + str(
                             ugettext('Unique code already exist. Error'))
 
-                    instance.processed_rows = instance.processed_rows + 1
+                    processed_scenarios = processed_scenarios + 1
 
                 except Exception as e:
 
@@ -1813,10 +1813,10 @@ def complex_transaction_csv_file_import(self, task_id):
                         instance.error_row_index = row_index
                         error_rows['error_reaction'] = 'Break'
                         result = 'break'
-                        return result
+                        return result, processed_scenarios
                     else:
                         result = 'continue'
-                        return result
+                        return result, processed_scenarios
                 finally:
                     _l.debug("final")
                     # if settings.DEBUG:
@@ -2012,7 +2012,7 @@ def complex_transaction_csv_file_import(self, task_id):
 
                 if unknown_rule and default_rule_scenario:
                     _l.info("Process rule %s with default rule scenario "  % (rule_value))
-                    res = _process_rule_scenario(processed_scenarios, default_rule_scenario, inputs, error_rows, row_index)
+                    res, processed_scenarios = _process_rule_scenario(processed_scenarios, default_rule_scenario, inputs, error_rows, row_index)
 
                     # TODO refactor soon
                     if res == 'break':
@@ -2035,7 +2035,7 @@ def complex_transaction_csv_file_import(self, task_id):
 
                         if matched_selector:
 
-                            res = _process_rule_scenario(processed_scenarios, scheme_rule, inputs, error_rows, row_index)
+                            res, processed_scenarios = _process_rule_scenario(processed_scenarios, scheme_rule, inputs, error_rows, row_index)
 
                             # TODO refactor soon
                             if res == 'break':
