@@ -2259,6 +2259,16 @@ def complex_transaction_csv_file_import_parallel(task_id):
 
         celery_sub_tasks = []
 
+        # for sub_task in sub_tasks:
+        #
+        #     _l.info('initializing sub_task %s' % sub_task.options_object['file_path'])
+        #
+        #     ct = complex_transaction_csv_file_import.s(task_id=sub_task.id)
+        #     celery_sub_tasks.append(ct)
+        #
+        # # chord(celery_sub_tasks, complex_transaction_csv_file_import_parallel_finish.si(task_id=task_id)).apply_async()
+        # chord(celery_sub_tasks)(complex_transaction_csv_file_import_parallel_finish.si(task_id=task_id))
+
         for sub_task in sub_tasks:
 
             _l.info('initializing sub_task %s' % sub_task.options_object['file_path'])
@@ -2266,8 +2276,14 @@ def complex_transaction_csv_file_import_parallel(task_id):
             ct = complex_transaction_csv_file_import.s(task_id=sub_task.id)
             celery_sub_tasks.append(ct)
 
-        # chord(celery_sub_tasks, complex_transaction_csv_file_import_parallel_finish.si(task_id=task_id)).apply_async()
-        chord(celery_sub_tasks)(complex_transaction_csv_file_import_parallel_finish.si(task_id=task_id))
+        _l.info('celery_sub_tasks len %s' % len(celery_sub_tasks))
+        _l.info('celery_sub_tasks %s' % celery_sub_tasks)
+
+        # chord(celery_sub_tasks, complex_transaction_csv_file_import_validate_parallel_finish.si(task_id=task_id)).apply_async()
+        # chord(celery_sub_tasks)(complex_transaction_csv_file_import_parallel_finish.si(task_id=task_id))
+
+        transaction.on_commit(
+            lambda:  chord(celery_sub_tasks, complex_transaction_csv_file_import_parallel_finish.si(task_id=task_id)).apply_async())
 
     except Exception as e:
 
