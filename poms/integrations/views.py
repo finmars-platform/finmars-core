@@ -906,6 +906,8 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
                                  options_object=options_object,
                                  type='transaction_import')
 
+        _l.info('celery_task %s created ' % celery_task.pk)
+
         # celery_task.save()
 
         send_system_message(master_user=request.user.master_user,

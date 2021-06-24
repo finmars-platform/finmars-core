@@ -654,15 +654,15 @@ class InstrumentTypeInstrumentFactorSchedule(models.Model):
     position_factor_value_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
                                                                  verbose_name=ugettext_lazy('position factor value value type'))
 
-    factor_value1 = models.FloatField(default=0., verbose_name=ugettext_lazy('factor value 1'))
+    factor_value1 = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('factor value 1'))
     factor_value1_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
                                                                         verbose_name=ugettext_lazy('factor value1 value type'))
 
-    factor_value2 = models.FloatField(default=0., verbose_name=ugettext_lazy('factor value 2'))
+    factor_value2 = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('factor value 2'))
     factor_value2_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
                                                                 verbose_name=ugettext_lazy('factor value2 value type'))
 
-    factor_value3 = models.FloatField(default=0., verbose_name=ugettext_lazy('factor value 3 '))
+    factor_value3 = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('factor value 3 '))
     factor_value3_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
                                                                 verbose_name=ugettext_lazy('factor value3 value type'))
 

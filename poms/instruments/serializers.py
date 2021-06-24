@@ -330,6 +330,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
     payment_size_detail_object = PaymentSizeDetailSerializer(source='payment_size_detail', read_only=True)
 
+    instrument_factor_schedule_data = serializers.JSONField(allow_null=False)
 
     class Meta:
         model = InstrumentType
@@ -364,7 +365,9 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
             'long_underlying_exposure', 'short_underlying_exposure',
 
-            'position_reporting'
+            'position_reporting',
+
+            'instrument_factor_schedule_data'
 
         ]
 
