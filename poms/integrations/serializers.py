@@ -56,6 +56,8 @@ from poms.users.fields import MasterUserField, MemberField, HiddenMemberField
 
 from django.core.validators import RegexValidator
 
+from poms.users.models import EcosystemDefault
+
 _l = getLogger('poms.integrations')
 
 from storages.backends.sftpstorage import SFTPStorage
@@ -1648,7 +1650,17 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer, Mod
 
     def save_rule_scenarios(self, instance, rules):
         pk_set = set()
+
+        default_transaction_type = EcosystemDefault.objects.get(master_user=instance.master_user).transaction_type
+
         for rule_values in rules:
+
+            if rule_values['is_default_rule_scenario']:
+
+                if 'transaction_type' not in rule_values:
+
+                    _l.info("Set default transaction type to default scenario")
+                    rule_values['transaction_type'] = default_transaction_type
 
 
             rule_id = rule_values.pop('id', None)
@@ -1684,6 +1696,7 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer, Mod
             self.save_fields(rule0, fields)
             # self.save_rule_selector_values(rule0, selector_values)
             pk_set.add(rule0.id)
+
         instance.rule_scenarios.exclude(pk__in=pk_set).delete()
 
     def save_recon_scenarios(self, instance, recons):

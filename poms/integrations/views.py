@@ -6,21 +6,25 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.signing import TimestampSigner
 from django.db.models import Prefetch
-from django_filters.rest_framework import FilterSet
+from django_filters.rest_framework import FilterSet, DjangoFilterBackend
 from rest_framework.exceptions import MethodNotAllowed
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.filters import OrderingFilter
 
 from django.db import transaction
+from rest_framework.viewsets import ModelViewSet
 
+from poms.common.mixins import UpdateModelMixinExt
 from poms.common.utils import date_now, datetime_now
 
 from poms.accounts.models import Account, AccountType
 from poms.celery_tasks.models import CeleryTask
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
-    ModelExtMultipleChoiceFilter
+    ModelExtMultipleChoiceFilter, ByIdFilterBackend
 from poms.common.views import AbstractViewSet, AbstractModelViewSet, AbstractReadOnlyModelViewSet, \
-    AbstractClassModelViewSet, AbstractAsyncViewSet
+    AbstractClassModelViewSet, AbstractAsyncViewSet, AbstractApiView
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
 from poms.instruments.models import InstrumentType, AccrualCalculationModel, Periodicity, Instrument, PaymentSizeDetail, \
@@ -762,20 +766,27 @@ class ComplexTransactionImportSchemeFilterSet(FilterSet):
         fields = []
 
 
-class ComplexTransactionImportSchemeViewSet(AbstractModelViewSet):
+class ComplexTransactionImportSchemeViewSet(AbstractApiView, UpdateModelMixinExt, ModelViewSet):
+
+    permission_classes = [
+        IsAuthenticated,
+        PomsConfigurationPermission
+    ]
+    filter_backends = [
+        ByIdFilterBackend,
+        DjangoFilterBackend,
+        OrderingFilter,
+        OwnerByMasterUserFilter,
+    ]
     queryset = ComplexTransactionImportScheme.objects
 
     serializer_class = ComplexTransactionImportSchemeSerializer
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-    ]
+
     filter_class = ComplexTransactionImportSchemeFilterSet
     ordering_fields = [
         'scheme_name',
     ]
-    permission_classes = AbstractModelViewSet.permission_classes + [
-        PomsConfigurationPermission
-    ]
+
 
 
 class ComplexTransactionImportSchemeLightViewSet(AbstractModelViewSet):
