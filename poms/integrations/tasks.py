@@ -1822,6 +1822,8 @@ def complex_transaction_csv_file_import(self, task_id):
                     # if settings.DEBUG:
                     #     transaction.set_rollback(True)
 
+            return result, processed_scenarios
+
         def _process_csv_file(file):
 
             instance.processed_rows = 0
