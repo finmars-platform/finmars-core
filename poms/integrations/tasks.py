@@ -2048,6 +2048,8 @@ def complex_transaction_csv_file_import(self, task_id):
                 if processed_scenarios == 0:
                     error_rows['level'] = 'error'
 
+                    error_rows['error_message'] = error_rows['error_message'] + str('Selector does not match')
+
                     if instance.break_on_error:
                         instance.error_row_index = row_index
                         error_rows['error_reaction'] = 'Break'
@@ -2802,6 +2804,8 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
                 if processed_scenarios == 0:
                     error_rows['level'] = 'error'
+
+                    error_rows['error_message'] = error_rows['error_message'] + str('Selector does not match')
 
                     if instance.break_on_error:
                         instance.error_row_index = row_index

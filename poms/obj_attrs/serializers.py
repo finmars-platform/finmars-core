@@ -652,7 +652,8 @@ class GenericAttributeSerializer(serializers.ModelSerializer):
 
             # print('_attribute_type_classifiers %s' % self._attribute_type_classifiers)
 
-            instance.classifier = self._attribute_type_classifiers[instance.classifier_id]
+            if instance.classifier_id in self._attribute_type_classifiers:
+                instance.classifier = self._attribute_type_classifiers[instance.classifier_id]
 
         return super(GenericAttributeSerializer, self).to_representation(instance)
 
