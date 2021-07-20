@@ -1266,6 +1266,7 @@ class PriceHistory(DataTimeStampedModel):
     short_delta = models.FloatField(default=0.0, verbose_name=ugettext_lazy('short delta'))
 
     ytm = models.FloatField(default=0.0, verbose_name=ugettext_lazy('ytm'))
+    nav = models.FloatField(default=0.0, verbose_name=ugettext_lazy('nav'))
     modified_duration = models.FloatField(default=0.0, verbose_name=ugettext_lazy('modified duration'))
 
     class Meta:

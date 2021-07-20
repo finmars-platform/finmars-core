@@ -7,7 +7,7 @@ from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeSt
 from poms.counterparties.fields import ResponsibleField, CounterpartyField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
-from poms.portfolios.models import Portfolio
+from poms.portfolios.models import Portfolio, PortfolioRegister
 from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeField
 from poms.users.fields import MasterUserField
@@ -78,3 +78,36 @@ class PortfolioViewSerializer(ModelWithObjectPermissionSerializer):
 
 class PortfolioGroupSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=256)
+
+
+class PortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
+                          ModelWithUserCodeSerializer, ModelWithTagSerializer, ModelWithTimeStampSerializer):
+
+    master_user = MasterUserField()
+
+
+    class Meta:
+        model = Portfolio
+        fields = [
+            'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'is_deleted', 'portfolio', 'linked_instrument', 'valuation_pricing_policy', 'valuation_currency',
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(PortfolioRegisterSerializer, self).__init__(*args, **kwargs)
+
+
+
+class PortfolioRegisterEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = PortfolioRegister
+        fields = [
+            'id', 'master_user',
+            'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'is_default', 'is_deleted', 'is_enabled',
+            'portfolio', 'linked_instrument', 'valuation_pricing_policy', 'valuation_currency',
+        ]
+
+

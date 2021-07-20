@@ -8,7 +8,6 @@ from django.utils.translation import ugettext_lazy
 import requests
 import json
 
-
 import logging
 
 from poms_app import settings
@@ -32,24 +31,27 @@ class ApiConfig(AppConfig):
         from poms.common.utils import add_view_and_manage_permissions
         add_view_and_manage_permissions()
 
-
     def register_at_authorizer_service(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
 
-        try:
-            _l.info("register_at_authorizer_service processing")
+        if settings.AUTHORIZER_URL:
 
-            headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+            try:
+                _l.info("register_at_authorizer_service processing")
 
-            data = {
-                "base_api_url": settings.BASE_API_URL,
-            }
+                headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
-            url = settings.AUTHORIZER_URL + '/backend-is-ready/'
+                data = {
+                    "base_api_url": settings.BASE_API_URL,
+                }
 
-            response = requests.post(url=url, data=json.dumps(data), headers=headers)
+                url = settings.AUTHORIZER_URL + '/backend-is-ready/'
 
-            _l.info("register_at_authorizer_service processing response.status_code %s" % response.status_code)
-            _l.info("register_at_authorizer_service processing response.text %s" % response.text)
+                response = requests.post(url=url, data=json.dumps(data), headers=headers)
 
-        except Exception as e:
+                _l.info("register_at_authorizer_service processing response.status_code %s" % response.status_code)
+                _l.info("register_at_authorizer_service processing response.text %s" % response.text)
+
+            except Exception as e:
                 _l.info("register_at_authorizer_service error %s" % e)
+            else:
+                _l.info('settings.AUTHORIZER_URL is not set')

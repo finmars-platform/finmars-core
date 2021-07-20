@@ -7,6 +7,7 @@ from django.contrib.postgres.fields import JSONField
 
 from poms.common.models import NamedModel, FakeDeletableModel, DataTimeStampedModel
 from poms.common.wrapper_models import NamedModelAutoMapping
+from poms.instruments.models import PricingPolicy, Instrument
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
 from poms.tags.models import TagLink
@@ -41,3 +42,27 @@ class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
     @property
     def is_default(self):
         return self.master_user.portfolio_id == self.id if self.master_user_id else False
+
+
+class PortfolioRegister(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+
+    master_user = models.ForeignKey(MasterUser, related_name='portfolio_registers', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+
+    portfolio = models.ForeignKey(Portfolio,
+                                          verbose_name=ugettext_lazy('portfolio'), on_delete=models.CASCADE)
+
+    linked_instrument = models.ForeignKey(Instrument,
+                                   verbose_name=ugettext_lazy('linked instrument'), on_delete=models.CASCADE)
+
+    valuation_pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE, null=True, blank=True,
+                                       verbose_name=ugettext_lazy('pricing policy'))
+
+    valuation_currency = models.ForeignKey('currencies.Currency',
+                                         on_delete=models.PROTECT, verbose_name=ugettext_lazy('valuation currency'))
+
+    attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
+    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
+
+    class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
+        verbose_name = ugettext_lazy('portfolio register')
+        verbose_name_plural = ugettext_lazy('portfolio registers')

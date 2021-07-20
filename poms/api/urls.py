@@ -188,6 +188,12 @@ router.register(r'portfolios/portfolio-ev', portfolios.PortfolioEvViewSet)
 router.register(r'portfolios/portfolio', portfolios.PortfolioViewSet)
 router.register(r'portfolios/portfolio-light', portfolios.PortfolioLightViewSet)
 
+
+router.register(r'portfolios/portfolio-register', portfolios.PortfolioRegisterViewSet)
+router.register(r'portfolios/portfolio-register-ev', portfolios.PortfolioRegisterEvViewSet)
+router.register(r'portfolios/portfolio-register-ev-group', portfolios.PortfolioRegisterEvGroupViewSet)
+
+
 router.register(r'strategies/1/group-ev-group', strategies.Strategy1GroupEvGroupViewSet, 'strategy1groupevgroup')
 router.register(r'strategies/1/group', strategies.Strategy1GroupViewSet)
 

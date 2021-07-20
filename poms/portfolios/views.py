@@ -19,8 +19,9 @@ from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissio
 from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
-from poms.portfolios.models import Portfolio
-from poms.portfolios.serializers import PortfolioSerializer, PortfolioLightSerializer, PortfolioEvSerializer
+from poms.portfolios.models import Portfolio, PortfolioRegister
+from poms.portfolios.serializers import PortfolioSerializer, PortfolioLightSerializer, PortfolioEvSerializer, \
+    PortfolioRegisterSerializer, PortfolioRegisterEvSerializer
 from poms.tags.filters import TagFilter
 from poms.tags.utils import get_tag_prefetch
 from poms.transactions.models import TransactionType, TransactionTypeGroup
@@ -113,6 +114,7 @@ class PortfolioLightFilterSet(FilterSet):
         model = Portfolio
         fields = []
 
+
 class PortfolioEvFilterSet(FilterSet):
     id = NoOpFilter()
     is_deleted = django_filters.BooleanFilter()
@@ -188,6 +190,92 @@ class PortfolioEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Custom
     serializer_class = PortfolioSerializer
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
     filter_class = PortfolioFilterSet
+
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter
+    ]
+
+
+class PortfolioRegisterFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+    public_name = CharFilter()
+
+
+    class Meta:
+        model = PortfolioRegister
+        fields = []
+
+
+class PortfolioRegisterEvFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    short_name = CharFilter()
+    public_name = CharFilter()
+
+    class Meta:
+        model = PortfolioRegister
+        fields = []
+
+
+
+class PortfolioRegisterViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = PortfolioRegister.objects.select_related(
+        'master_user',
+    ).prefetch_related(
+
+        get_attributes_prefetch(),
+
+    )
+    serializer_class = PortfolioRegisterSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+        EntitySpecificFilter
+    ]
+    filter_class = PortfolioRegisterFilterSet
+    ordering_fields = [
+        'user_code', 'name', 'short_name', 'public_name',
+    ]
+
+
+class PortfolioRegisterEvViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = PortfolioRegister.objects.select_related(
+        'master_user',
+    ).prefetch_related(
+        'attributes',
+        'attributes__classifier',
+    )
+    serializer_class = PortfolioRegisterEvSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+        EntitySpecificFilter
+    ]
+    filter_class = PortfolioRegisterEvFilterSet
+    ordering_fields = [
+        'user_code', 'name', 'short_name', 'public_name',
+    ]
+
+
+class PortfolioRegisterEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
+    queryset = PortfolioRegister.objects.select_related(
+        'master_user',
+    ).prefetch_related(
+        get_attributes_prefetch()
+    )
+
+    serializer_class = PortfolioRegisterSerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = PortfolioRegisterFilterSet
 
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
