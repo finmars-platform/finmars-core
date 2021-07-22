@@ -858,7 +858,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
         model = Instrument
         fields = [
             'id', 'master_user', 'instrument_type', 'instrument_type_object', 'user_code', 'name', 'short_name',
-            'public_name', 'notes', 'is_active', 'is_deleted',
+            'public_name', 'notes', 'is_active', 'is_deleted', 'has_linked_with_portfolio',
             'pricing_currency', 'pricing_currency_object', 'price_multiplier',
             'accrued_currency', 'accrued_currency_object', 'accrued_multiplier',
 
@@ -1154,7 +1154,7 @@ class InstrumentLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
         model = Instrument
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name',
-            'public_name', 'is_active', 'is_deleted', 'is_enabled'
+            'public_name', 'is_active', 'is_deleted', 'is_enabled', 'has_linked_with_portfolio'
         ]
 
     def to_representation(self, instance):
@@ -1188,7 +1188,7 @@ class InstrumentEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttri
 
             'user_code', 'name', 'short_name', 'public_name', 'notes',
 
-            'is_active', 'is_deleted', 'is_enabled',
+            'is_active', 'is_deleted', 'is_enabled', 'has_linked_with_portfolio',
 
             'instrument_type', 'instrument_type_object',
 
@@ -1230,7 +1230,7 @@ class InstrumentViewSerializer(ModelWithObjectPermissionSerializer):
         model = Instrument
         fields = [
             'id', 'instrument_type', 'instrument_type_object', 'user_code', 'name', 'short_name',
-            'public_name', 'notes', 'is_active', 'is_deleted',
+            'public_name', 'notes', 'is_active', 'is_deleted', 'has_linked_with_portfolio',
             # 'pricing_currency', 'pricing_currency_object', 'price_multiplier',
             # 'accrued_currency', 'accrued_currency_object', 'accrued_multiplier',
             # 'payment_size_detail', 'payment_size_detail_object', 'default_price', 'default_accrued',

@@ -16,7 +16,7 @@ from rest_framework.filters import OrderingFilter
 from django.db import transaction
 from rest_framework.viewsets import ModelViewSet
 
-from poms.common.mixins import UpdateModelMixinExt
+from poms.common.mixins import UpdateModelMixinExt, DestroyModelFakeMixin, BulkModelMixin
 from poms.common.utils import date_now, datetime_now
 
 from poms.accounts.models import Account, AccountType
@@ -102,7 +102,8 @@ class AccrualScheduleDownloadMethodViewSet(AbstractClassModelViewSet):
 
 
 
-class BloombergDataProviderCredentialViewSet(AbstractModelViewSet):
+class BloombergDataProviderCredentialViewSet(AbstractApiView,  UpdateModelMixinExt, DestroyModelFakeMixin,
+                                             BulkModelMixin, ModelViewSet):
     queryset = BloombergDataProviderCredential.objects
     serializer_class = BloombergDataProviderCredentialSerializer
     permission_classes = AbstractModelViewSet.permission_classes + [

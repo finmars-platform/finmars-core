@@ -7,7 +7,7 @@ from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeSt
 from poms.counterparties.fields import ResponsibleField, CounterpartyField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
-from poms.portfolios.models import Portfolio, PortfolioRegister
+from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord
 from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeField
 from poms.users.fields import MasterUserField
@@ -87,7 +87,7 @@ class PortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWith
 
 
     class Meta:
-        model = Portfolio
+        model = PortfolioRegister
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes',
             'is_deleted', 'portfolio', 'linked_instrument', 'valuation_pricing_policy', 'valuation_currency',
@@ -106,8 +106,50 @@ class PortfolioRegisterEvSerializer(ModelWithObjectPermissionSerializer, ModelWi
         fields = [
             'id', 'master_user',
             'user_code', 'name', 'short_name', 'public_name', 'notes',
-            'is_default', 'is_deleted', 'is_enabled',
+         'is_deleted', 'is_enabled',
             'portfolio', 'linked_instrument', 'valuation_pricing_policy', 'valuation_currency',
         ]
 
+
+class PortfolioRegisterRecordSerializer(ModelWithObjectPermissionSerializer):
+
+    master_user = MasterUserField()
+
+
+    class Meta:
+        model = PortfolioRegisterRecord
+        fields = [
+            'id', 'master_user',
+
+            'portfolio', 'instrument', 'transaction_type', 'transaction_code', 'transaction_date', 'cash_amount', 'cash_currency',
+            'fx_rate', 'cash_amount_valuation_currency', 'valuation_currency', 'nav_previous_day_valuation_currency',
+
+            'n_shares_previous_day', 'n_shares_added',
+
+            'dealing_price_valuation_currency', 'n_shares_end_of_the_day',
+            'transaction', 'complex_transaction', 'portfolio_register'
+
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(PortfolioRegisterRecordSerializer, self).__init__(*args, **kwargs)
+
+
+
+class PortfolioRegisterRecordEvSerializer(ModelWithObjectPermissionSerializer):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = PortfolioRegisterRecord
+        fields = [
+            'id', 'master_user',
+
+            'portfolio', 'instrument', 'transaction_type', 'transaction_code', 'transaction_date', 'cash_amount', 'cash_currency',
+            'fx_rate', 'cash_amount_valuation_currency', 'valuation_currency', 'nav_previous_day_valuation_currency',
+
+            'n_shares_previous_day', 'n_shares_added',
+
+            'dealing_price_valuation_currency', 'n_shares_end_of_the_day',
+            'transaction', 'complex_transaction', 'portfolio_register'
+        ]
 
