@@ -67,7 +67,11 @@ def group_items_by_provider(items, groups):
 
     for item in items:
         if item.policy.pricing_scheme:
-            result[item.policy.pricing_scheme.type.id].append(item)
+
+            if item.has_linked_with_portfolio:
+                result['has_linked_with_portfolio'].append(item)
+            else:
+                result[item.policy.pricing_scheme.type.id].append(item)
         else:
             _l.debug('Pricing scheme is not set in policy %s' % item.policy.id)
 

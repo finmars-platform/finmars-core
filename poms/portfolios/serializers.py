@@ -5,11 +5,14 @@ from rest_framework import serializers
 from poms.accounts.fields import AccountField
 from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
 from poms.counterparties.fields import ResponsibleField, CounterpartyField
+from poms.currencies.serializers import CurrencyViewSerializer
+from poms.instruments.serializers import InstrumentViewSerializer
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord
 from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeField
+
 from poms.users.fields import MasterUserField
 
 
@@ -81,7 +84,7 @@ class PortfolioGroupSerializer(serializers.Serializer):
 
 
 class PortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
-                          ModelWithUserCodeSerializer, ModelWithTagSerializer, ModelWithTimeStampSerializer):
+                          ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
 
     master_user = MasterUserField()
 
@@ -152,4 +155,20 @@ class PortfolioRegisterRecordEvSerializer(ModelWithObjectPermissionSerializer):
             'dealing_price_valuation_currency', 'n_shares_end_of_the_day',
             'transaction', 'complex_transaction', 'portfolio_register'
         ]
+
+    def __init__(self, *args, **kwargs):
+        super(PortfolioRegisterRecordEvSerializer, self).__init__(*args, **kwargs)
+
+        # from poms.transactions.serializers import TransactionTypeViewSerializer
+        # self.fields['transaction_type_object'] = TransactionTypeViewSerializer(
+        #     source='transaction_type', read_only=True)
+        self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
+        self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
+
+        self.fields['cash_currency_object'] = CurrencyViewSerializer(source='cash_currency', read_only=True)
+        self.fields['valuation_currency_object'] = CurrencyViewSerializer(source='valuation_currency', read_only=True)
+
+class CalculateRecordsSerializer(serializers.Serializer):
+
+    portfolio_register_ids = serializers.CharField(allow_blank=False)
 

@@ -10,6 +10,7 @@ from poms.common.utils import isclose, date_now
 from poms.instruments.models import Instrument, DailyPricingModel, PriceHistory, PricingCondition
 from poms.integrations.models import ProviderClass, BloombergDataProviderCredential
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
+from poms.portfolios.models import PortfolioRegister, PortfolioRegisterRecord
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
 from poms.pricing.models import InstrumentPricingSchemeType, \
     PricingProcedureBloombergInstrumentResult, PricingProcedureWtradeInstrumentResult, PriceHistoryError, \
@@ -24,9 +25,9 @@ from poms.reports.builders.balance_pl import ReportBuilder
 
 from datetime import date
 
-
 import logging
 
+from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import Transaction
 from poms_app import settings
@@ -156,7 +157,6 @@ class PricingInstrumentHandler(object):
         # self.broker_bloomberg = BrokerBloomberg()
         self.transport = PricingTransport()
 
-
     def process(self):
 
         _l.debug("Pricing Instrument Handler: Process")
@@ -200,6 +200,9 @@ class PricingInstrumentHandler(object):
                 if provider_id == 8:
                     self.process_to_bloomberg_forwards_provider(items)
 
+                if provider_id == 'has_linked_with_portfolio':
+                    self.process_to_linked_with_portfolio_provider(items)
+
     def get_instruments(self):
 
         result = []
@@ -212,14 +215,14 @@ class PricingInstrumentHandler(object):
         instruments_opened = set()
         instruments_always = set()
 
-
         if self.procedure.type == PricingProcedure.CREATED_BY_USER:
 
             # User configured pricing condition filters
             active_pricing_conditions = []
 
             if self.procedure.instrument_pricing_condition_filters:
-                active_pricing_conditions = list(map(int, self.procedure.instrument_pricing_condition_filters.split(",")))
+                active_pricing_conditions = list(
+                    map(int, self.procedure.instrument_pricing_condition_filters.split(",")))
 
             # Add RUN_VALUATION_ALWAYS currencies only if pricing condition is enabled
             if PricingCondition.RUN_VALUATION_ALWAYS in active_pricing_conditions:
@@ -247,16 +250,18 @@ class PricingInstrumentHandler(object):
 
                 base_transactions_a = Transaction.objects.filter(master_user=self.procedure.master_user)
 
-                base_transactions_a = base_transactions_a.filter(Q(accounting_date__lte=self.procedure.price_date_from) | Q(cash_date__lte=self.procedure.price_date_from))
+                base_transactions_a = base_transactions_a.filter(
+                    Q(accounting_date__lte=self.procedure.price_date_from) | Q(
+                        cash_date__lte=self.procedure.price_date_from))
 
                 if self.procedure.portfolio_filters:
-
                     portfolio_user_codes = self.procedure.portfolio_filters.split(",")
 
                     base_transactions_a = base_transactions_a.filter(portfolio__user_code__in=portfolio_user_codes)
 
                 _l.debug('< get_instruments base transactions (step a) len %s', len(base_transactions_a))
-                _l.debug('< get_instruments base transactions (step a) done in %s', (time.perf_counter() - processing_st_a))
+                _l.debug('< get_instruments base transactions (step a) done in %s',
+                         (time.perf_counter() - processing_st_a))
 
                 if len(list(base_transactions_a)):
 
@@ -267,14 +272,14 @@ class PricingInstrumentHandler(object):
                         if trn.instrument_id:
 
                             if trn.instrument_id in instruments_positions:
-                                instruments_positions[trn.instrument_id] = instruments_positions[trn.instrument_id] + trn.position_size_with_sign
+                                instruments_positions[trn.instrument_id] = instruments_positions[
+                                                                               trn.instrument_id] + trn.position_size_with_sign
                             else:
 
                                 instruments_positions[trn.instrument_id] = trn.position_size_with_sign
 
                     for id, pos in instruments_positions.items():
                         if not isclose(pos, 0.0):
-
                             instruments_opened.add(id)
 
                 _l.debug('< get_instruments instruments_opened (step a) len %s' % len(instruments_opened))
@@ -287,22 +292,25 @@ class PricingInstrumentHandler(object):
 
                 base_transactions_b = Transaction.objects.filter(master_user=self.procedure.master_user)
 
-                base_transactions_b = base_transactions_b.filter(Q(accounting_date__gt=self.procedure.price_date_from) | Q(cash_date__gt=self.procedure.price_date_from))
-                base_transactions_b = base_transactions_b.filter(Q(accounting_date__lte=self.procedure.price_date_to) | Q(cash_date__lte=self.procedure.price_date_to))
+                base_transactions_b = base_transactions_b.filter(
+                    Q(accounting_date__gt=self.procedure.price_date_from) | Q(
+                        cash_date__gt=self.procedure.price_date_from))
+                base_transactions_b = base_transactions_b.filter(
+                    Q(accounting_date__lte=self.procedure.price_date_to) | Q(
+                        cash_date__lte=self.procedure.price_date_to))
 
                 if self.procedure.portfolio_filters:
-
                     portfolio_user_codes = self.procedure.portfolio_filters.split(",")
 
                     base_transactions_b = base_transactions_b.filter(portfolio__user_code__in=portfolio_user_codes)
 
                 _l.debug('< get_instruments base transactions (step b) len %s', len(base_transactions_b))
-                _l.debug('< get_instruments base transactions (step b) done in %s', (time.perf_counter() - processing_st_b))
+                _l.debug('< get_instruments base transactions (step b) done in %s',
+                         (time.perf_counter() - processing_st_b))
 
                 for trn in base_transactions_b:
 
                     if trn.instrument_id:
-
                         instruments_opened.add(trn.instrument_id)
 
                 _l.debug('< get_instruments instruments_opened (step b) len %s' % len(instruments_opened))
@@ -362,12 +370,159 @@ class PricingInstrumentHandler(object):
                             allowed_policy = False
 
                     if allowed_policy:
-
                         item = InstrumentItem(instrument, policy, policy.pricing_scheme)
 
                         result.append(item)
 
         return result
+
+    def calculate_simple_balance_report(self, master_user, report_date, report_currency, portfolio_register):
+
+        instance = Report(master_user=master_user)
+
+        instance.master_user = master_user
+        instance.report_date = report_date
+        instance.pricing_policy = portfolio_register.valuation_pricing_policy
+        instance.report_currency = report_currency
+        instance.portfolios = [portfolio_register.portfolio]
+
+        builder = BalanceReportBuilderSql(instance=instance)
+        instance = builder.build_balance()
+
+        return instance
+
+    def process_to_linked_with_portfolio_provider(self, items):
+
+        _l.debug("Pricing Instrument Handler - Single parameters Formula: len %s" % len(items))
+
+        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
+                                                    date_to=self.procedure.price_date_to)
+
+        successful_prices_count = 0
+        error_prices_count = 0
+
+        procedure_instance = PricingProcedureInstance(procedure=self.procedure,
+                                                      parent_procedure_instance=self.parent_procedure,
+                                                      master_user=self.master_user,
+                                                      status=PricingProcedureInstance.STATUS_PENDING,
+                                                      action='linked_with_portfolio_instrument_prices',
+                                                      provider='finmars',
+
+                                                      action_verbose='Get Instrument Prices from Linked With Portfolio',
+                                                      provider_verbose='Finmars'
+
+                                                      )
+
+        if self.member:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
+            procedure_instance.member = self.member
+
+        if self.schedule_instance:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_SCHEDULE
+            procedure_instance.schedule_instance = self.schedule_instance
+
+        procedure_instance.save()
+
+        for item in items:
+
+            last_price = None
+
+            for date in dates:
+
+                principal_price = None
+                accrued_price = None
+
+                try:
+
+                    portfolio_register = PortfolioRegister.objects.get(master_user=self.master_user,
+                                                                       instrument=item.instrument)
+                    portfolio_register_record = PortfolioRegisterRecord.objects.get(master_user=self.master_user,
+                                                                                    instrument=item.instrument,
+                                                                                    transaction_date=date)
+
+                    balance_report = self.calculate_simple_balance_report(self.master_user, date,
+                                                                          portfolio_register.valuation_currency,
+                                                                          portfolio_register)
+
+                    nav = 0
+
+                    for item in balance_report.items:
+
+                        if item['market_value']:
+                            nav = nav + item['market_value']
+
+                    principal_price = nav / portfolio_register_record.n_shares_end_of_the_day
+
+
+                    try:
+
+                        price = PriceHistory.objects.get(
+                            instrument=item.instrument,
+                            pricing_policy=item.policy.pricing_policy,
+                            date=date
+                        )
+
+                        if not self.procedure.price_overwrite_principal_prices and not self.procedure.price_overwrite_accrued_prices:
+                            can_write = False
+                            _l.debug('Skip %s' % price)
+                        else:
+                            _l.debug('Overwrite existing %s' % price)
+
+                    except PriceHistory.DoesNotExist:
+
+                        price = PriceHistory(
+                            instrument=item.instrument,
+                            pricing_policy=item.policy.pricing_policy,
+                            date=date
+                        )
+
+                        _l.debug('Create new %s' % price)
+
+                    price.principal_price = 0
+                    price.accrued_price = 0
+
+                    if principal_price is not None:
+
+                        if price.id:
+                            if self.procedure.price_overwrite_principal_prices:
+                                price.principal_price = principal_price
+                        else:
+                            price.principal_price = principal_price
+
+                    if accrued_price is not None:
+
+                        if price.id:
+                            if self.procedure.price_overwrite_accrued_prices:
+                                price.accrued_price = accrued_price
+                        else:
+                            price.accrued_price = accrued_price
+
+                    _l.debug('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write))
+
+                    price.nav = nav
+
+                    price.save()
+
+                    last_price = price
+
+                except (PortfolioRegister.DoesNotExist, PortfolioRegisterRecord.DoesNotExist):
+                    _l.debug("Portfolio register or PortfolioRegisterRecord is not found")
+
+            successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user,
+                                                                     procedure_instance)
+
+            successful_prices_count = successful_prices_count + successes
+            error_prices_count = error_prices_count + errors
+
+        procedure_instance.successful_prices_count = successful_prices_count
+        procedure_instance.error_prices_count = error_prices_count
+
+        procedure_instance.status = PricingProcedureInstance.STATUS_DONE
+
+        procedure_instance.save()
+
+        if procedure_instance.schedule_instance:
+            procedure_instance.schedule_instance.run_next_procedure()
 
     def process_to_single_parameter_formula(self, items):
 
@@ -593,7 +748,7 @@ class PricingInstrumentHandler(object):
                     if can_write:
 
                         if has_error:
-                        # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+                            # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
 
                             error_prices_count = error_prices_count + 1
 
@@ -609,14 +764,16 @@ class PricingInstrumentHandler(object):
 
                         error_prices_count = error_prices_count + 1
 
-                        error.error_text = "Prices already exists. Principal Price: " + str(principal_price) + "; Accrued: " + str(accrued_price) + "."
+                        error.error_text = "Prices already exists. Principal Price: " + str(
+                            principal_price) + "; Accrued: " + str(accrued_price) + "."
 
                         error.status = PriceHistoryError.STATUS_SKIP
                         error.save()
 
                     last_price = price
 
-            successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user, procedure_instance)
+            successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user,
+                                                                     procedure_instance)
 
             successful_prices_count = successful_prices_count + successes
             error_prices_count = error_prices_count + errors
@@ -915,18 +1072,19 @@ class PricingInstrumentHandler(object):
 
                         error_prices_count = error_prices_count + 1
 
-                        error.error_text = "Prices already exists. Principal Price: " + str(principal_price) + "; Accrued: " + str(accrued_price) + "."
+                        error.error_text = "Prices already exists. Principal Price: " + str(
+                            principal_price) + "; Accrued: " + str(accrued_price) + "."
 
                         error.status = PriceHistoryError.STATUS_SKIP
                         error.save()
 
                     last_price = price
 
-            successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user, procedure_instance)
+            successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user,
+                                                                     procedure_instance)
 
             successful_prices_count = successful_prices_count + successes
             error_prices_count = error_prices_count + errors
-
 
         procedure_instance.successful_prices_count = successful_prices_count
         procedure_instance.error_prices_count = error_prices_count
@@ -952,8 +1110,6 @@ class PricingInstrumentHandler(object):
     def process_to_bloomberg_provider(self, items):
 
         _l.debug("Pricing Instrument Handler - Bloomberg Provider: len %s" % len(items))
-
-
 
         procedure_instance = PricingProcedureInstance(procedure=self.procedure,
                                                       parent_procedure_instance=self.parent_procedure,
@@ -991,7 +1147,6 @@ class PricingInstrumentHandler(object):
         except Exception as e:
 
             config = self.master_user.import_configs.get(provider=ProviderClass.BLOOMBERG)
-
 
         body['user'] = {
             'token': self.master_user.token,
@@ -1255,7 +1410,6 @@ class PricingInstrumentHandler(object):
 
             config = self.master_user.import_configs.get(provider=ProviderClass.BLOOMBERG)
 
-
         body['user'] = {
             'token': self.master_user.token,
             'base_api_url': settings.BASE_API_URL,
@@ -1278,7 +1432,6 @@ class PricingInstrumentHandler(object):
 
         dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
                                                     date_to=self.procedure.price_date_to)
-
 
         _l.debug('procedure id %s' % body['procedure'])
 
@@ -1309,50 +1462,49 @@ class PricingInstrumentHandler(object):
 
                         if pricing_scheme_parameters.data and maturity_date:
 
-                            if "tenors" in pricing_scheme_parameters.data and len(pricing_scheme_parameters.data["tenors"]):
-
-                                matched_tenors = get_closest_tenors(maturity_date, date, pricing_scheme_parameters.data["tenors"])
-
+                            if "tenors" in pricing_scheme_parameters.data and len(
+                                    pricing_scheme_parameters.data["tenors"]):
+                                matched_tenors = get_closest_tenors(maturity_date, date,
+                                                                    pricing_scheme_parameters.data["tenors"])
 
                         for matched_tenor in matched_tenors:
 
-                                record = PricingProcedureBloombergForwardInstrumentResult(master_user=self.master_user,
-                                                                                   procedure=procedure_instance,
-                                                                                   instrument=item.instrument,
-                                                                                   instrument_parameters=None,
-                                                                                   pricing_policy=item.policy.pricing_policy,
-                                                                                   pricing_scheme=item.pricing_scheme,
-                                                                                   reference=matched_tenor['price_ticker'],
-                                                                                   tenor_type=matched_tenor['tenor_type'],
-                                                                                   tenor_clause=matched_tenor['tenor_clause'],
-                                                                                   date=date)
+                            record = PricingProcedureBloombergForwardInstrumentResult(master_user=self.master_user,
+                                                                                      procedure=procedure_instance,
+                                                                                      instrument=item.instrument,
+                                                                                      instrument_parameters=None,
+                                                                                      pricing_policy=item.policy.pricing_policy,
+                                                                                      pricing_scheme=item.pricing_scheme,
+                                                                                      reference=matched_tenor[
+                                                                                          'price_ticker'],
+                                                                                      tenor_type=matched_tenor[
+                                                                                          'tenor_type'],
+                                                                                      tenor_clause=matched_tenor[
+                                                                                          'tenor_clause'],
+                                                                                      date=date)
 
+                            record.price_code_parameters = pricing_scheme_parameters.price_code
 
+                            record.save()
 
-                                record.price_code_parameters = pricing_scheme_parameters.price_code
+                            item_obj = {
+                                'reference': matched_tenor['price_ticker'],
+                                'parameters': [],
+                                'fields': []
+                            }
 
-                                record.save()
-
-                                item_obj = {
-                                    'reference': matched_tenor['price_ticker'],
+                            if pricing_scheme_parameters.price_code:
+                                item_obj['fields'].append({
+                                    'code': pricing_scheme_parameters.price_code,
                                     'parameters': [],
-                                    'fields': []
-                                }
+                                    'values': empty_values
+                                })
 
-                                if pricing_scheme_parameters.price_code:
-                                    item_obj['fields'].append({
-                                        'code': pricing_scheme_parameters.price_code,
-                                        'parameters': [],
-                                        'values': empty_values
-                                    })
-
-
-                                full_items.append(item_obj)
+                            full_items.append(item_obj)
 
 
                     except Exception as e:
                         _l.debug("Cant create Result Record %s" % e)
-
 
         _l.debug('full_items len: %s' % len(full_items))
 
@@ -1538,7 +1690,6 @@ class PricingInstrumentHandler(object):
                                 source="Pricing Procedure Service",
                                 text="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
 
-
     def process_to_alphav_provider(self, items):
 
         _l.debug("Pricing Instrument Handler - Alphav Provider: len %s" % len(items))
@@ -1670,7 +1821,6 @@ class PricingInstrumentHandler(object):
             send_system_message(master_user=self.master_user,
                                 source="Pricing Procedure Service",
                                 text="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
-
 
     def print_grouped_instruments(self):
 

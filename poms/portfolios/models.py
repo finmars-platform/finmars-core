@@ -46,7 +46,7 @@ class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
         return self.master_user.portfolio_id == self.id if self.master_user_id else False
 
 
-class PortfolioRegister(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='portfolio_registers',
                                     verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 

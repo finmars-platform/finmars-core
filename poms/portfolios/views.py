@@ -22,14 +22,24 @@ from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEv
 from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord
 from poms.portfolios.serializers import PortfolioSerializer, PortfolioLightSerializer, PortfolioEvSerializer, \
     PortfolioRegisterSerializer, PortfolioRegisterEvSerializer, PortfolioRegisterRecordSerializer, \
-    PortfolioRegisterRecordEvSerializer
+    PortfolioRegisterRecordEvSerializer, CalculateRecordsSerializer
 from poms.tags.filters import TagFilter
 from poms.tags.utils import get_tag_prefetch
 from poms.transactions.models import TransactionType, TransactionTypeGroup
 from poms.users.filters import OwnerByMasterUserFilter
+from rest_framework.decorators import action
+
+from poms.portfolios.tasks import calculate_portfolio_register_record
 
 
 from rest_framework.settings import api_settings
+from rest_framework.response import Response
+
+from logging import getLogger
+
+_l = getLogger('poms.portfolios')
+
+
 
 
 class PortfolioAttributeTypeViewSet(GenericAttributeTypeViewSet):
@@ -258,6 +268,21 @@ class PortfolioRegisterViewSet(AbstractWithObjectPermissionViewSet):
         'user_code', 'name', 'short_name', 'public_name',
     ]
 
+    @action(detail=False, methods=['post'], url_path='calculate-records')
+    def calculate_records(self, request):
+
+
+        _l.debug("Run Calculate Portfolio Registry Records data %s" % request.data)
+
+        portfolio_register_ids = request.data['portfolio_register_ids']
+
+        master_user = request.user.master_user
+
+        calculate_portfolio_register_record.apply_async(kwargs={'portfolio_register_ids': portfolio_register_ids, 'master_user_id':master_user.id})
+
+        return Response({'status': 'ok'})
+
+
 
 class PortfolioRegisterEvViewSet(AbstractWithObjectPermissionViewSet):
     queryset = PortfolioRegister.objects.select_related(
@@ -320,12 +345,13 @@ class PortfolioRegisterRecordViewSet(AbstractWithObjectPermissionViewSet):
     )
     serializer_class = PortfolioRegisterRecordSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-        EntitySpecificFilter
+        OwnerByMasterUserFilter
     ]
     filter_class = PortfolioRegisterRecordFilterSet
     ordering_fields = [
     ]
+
+
 
 
 class PortfolioRegisterRecordEvViewSet(AbstractWithObjectPermissionViewSet):
@@ -334,9 +360,7 @@ class PortfolioRegisterRecordEvViewSet(AbstractWithObjectPermissionViewSet):
     )
     serializer_class = PortfolioRegisterRecordEvSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-
-        EntitySpecificFilter
+        OwnerByMasterUserFilter
     ]
     filter_class = PortfolioRegisterRecordEvFilterSet
     ordering_fields = [
