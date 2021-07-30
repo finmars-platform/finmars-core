@@ -142,10 +142,17 @@ def get_root_system_attr_group(qs, root_group, groups_order):
             .values('group_name', 'group_identifier', 'items_count') \
             .order_by()
     else:
-        qs = qs.distinct(root_group) \
-            .annotate(group_name=F(root_group), group_identifier=F(root_group), items_count=Count(root_group)) \
-            .values('group_name', 'group_identifier', 'items_count') \
-            .order_by(root_group)
+
+        if root_group == 'date':
+
+            qs = qs.annotate(group_name=F(root_group), group_identifier=F(root_group), items_count=Count(root_group)) \
+                .values('group_name', 'group_identifier', 'items_count') \
+                .order_by(root_group)
+        else:
+            qs = qs.distinct(root_group) \
+                .annotate(group_name=F(root_group), group_identifier=F(root_group), items_count=Count(root_group)) \
+                .values('group_name', 'group_identifier', 'items_count') \
+                .order_by(root_group)
 
     if groups_order == 'asc':
         qs = qs.order_by(F('group_name').asc())

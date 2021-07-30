@@ -30,6 +30,8 @@ class GenericAttributeType(NamedModel):
 
     tooltip = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('tooltip'))
 
+    favorites = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('favorites'))
+
     prefix = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('prefix'))
 
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True, verbose_name=ugettext_lazy('expression'))
