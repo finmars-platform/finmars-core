@@ -937,6 +937,27 @@ class TransactionTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWith
     user_text_20 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                    allow_null=True, default='')
 
+    user_text_21 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_22 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_23 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_24 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_25 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_26 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_27 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_28 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_29 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_30 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+
     user_number_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                     allow_null=True, default='')
     user_number_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
@@ -1021,6 +1042,9 @@ class TransactionTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWith
             'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
             'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
 
+            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
+            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
+
             'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
             'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
 
@@ -1087,6 +1111,27 @@ class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelW
     user_text_19 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                    allow_null=True, default='')
     user_text_20 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+
+    user_text_21 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_22 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_23 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_24 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_25 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_26 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_27 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_28 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_29 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_30 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                    allow_null=True, default='')
 
     user_number_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
@@ -1172,6 +1217,9 @@ class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelW
             'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
             'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
 
+            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
+            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
+
             'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
             'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
 
@@ -1203,6 +1251,9 @@ class TransactionTypeLightSerializerWithInputs(TransactionTypeLightSerializer):
 
             'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
             'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
+
+            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
+            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
 
             'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
             'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
@@ -1271,6 +1322,27 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
     user_text_19 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                    allow_null=True, default='')
     user_text_20 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+
+    user_text_21 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_22 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_23 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_24 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_25 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_26 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_27 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_28 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_29 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
+                                   allow_null=True, default='')
+    user_text_30 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                    allow_null=True, default='')
 
     user_number_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
@@ -1371,6 +1443,9 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
 
             'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
             'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
+
+            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
+            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
 
             'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
             'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
@@ -1927,6 +2002,9 @@ class TransactionTypeViewSerializer(ModelWithObjectPermissionSerializer):
             'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
             'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
 
+            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
+            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
+
             'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
             'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
 
@@ -2343,6 +2421,9 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
             'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
             'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
 
+            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
+            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
+
             'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
             'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
 
@@ -2400,6 +2481,16 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
             data.pop('user_text_18')
             data.pop('user_text_19')
             data.pop('user_text_20')
+            data.pop('user_text_21')
+            data.pop('user_text_22')
+            data.pop('user_text_23')
+            data.pop('user_text_24')
+            data.pop('user_text_25')
+            data.pop('user_text_26')
+            data.pop('user_text_27')
+            data.pop('user_text_28')
+            data.pop('user_text_29')
+            data.pop('user_text_30')
 
             data.pop('user_number_1')
             data.pop('user_number_2')
@@ -2610,6 +2701,9 @@ class ComplexTransactionEvSerializer(ModelWithObjectPermissionSerializer, ModelW
             'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
             'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
 
+            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
+            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
+
             'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
             'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
 
@@ -2668,6 +2762,16 @@ class ComplexTransactionEvSerializer(ModelWithObjectPermissionSerializer, ModelW
             data.pop('user_text_18')
             data.pop('user_text_19')
             data.pop('user_text_20')
+            data.pop('user_text_21')
+            data.pop('user_text_22')
+            data.pop('user_text_23')
+            data.pop('user_text_24')
+            data.pop('user_text_25')
+            data.pop('user_text_26')
+            data.pop('user_text_27')
+            data.pop('user_text_28')
+            data.pop('user_text_29')
+            data.pop('user_text_30')
 
             data.pop('user_number_1')
             data.pop('user_number_2')
@@ -2725,6 +2829,9 @@ class ComplexTransactionLightSerializer(ModelWithObjectPermissionSerializer, Mod
             'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
             'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
 
+            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
+            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
+
             'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
             'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
 
@@ -2781,6 +2888,16 @@ class ComplexTransactionLightSerializer(ModelWithObjectPermissionSerializer, Mod
             data.pop('user_text_18')
             data.pop('user_text_19')
             data.pop('user_text_20')
+            data.pop('user_text_21')
+            data.pop('user_text_22')
+            data.pop('user_text_23')
+            data.pop('user_text_24')
+            data.pop('user_text_25')
+            data.pop('user_text_26')
+            data.pop('user_text_27')
+            data.pop('user_text_28')
+            data.pop('user_text_29')
+            data.pop('user_text_30')
 
             data.pop('user_number_1')
             data.pop('user_number_2')
@@ -3031,6 +3148,9 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
             'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
             'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
 
+            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
+            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
+
             'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
             'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
 
@@ -3092,6 +3212,16 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
             data.pop('user_text_18')
             data.pop('user_text_19')
             data.pop('user_text_20')
+            data.pop('user_text_21')
+            data.pop('user_text_22')
+            data.pop('user_text_23')
+            data.pop('user_text_24')
+            data.pop('user_text_25')
+            data.pop('user_text_26')
+            data.pop('user_text_27')
+            data.pop('user_text_28')
+            data.pop('user_text_29')
+            data.pop('user_text_30')
 
             data.pop('user_number_1')
             data.pop('user_number_2')

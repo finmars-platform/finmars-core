@@ -407,6 +407,36 @@ class TransactionType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     user_text_20 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                     verbose_name=ugettext_lazy('user text 20'))
 
+    user_text_21 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                    verbose_name=ugettext_lazy('user text 21'))
+
+    user_text_22 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                    verbose_name=ugettext_lazy('user text 22'))
+
+    user_text_23 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                    verbose_name=ugettext_lazy('user text 23'))
+
+    user_text_24 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                    verbose_name=ugettext_lazy('user text 24'))
+
+    user_text_25 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                    verbose_name=ugettext_lazy('user text 25'))
+
+    user_text_26 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                    verbose_name=ugettext_lazy('user text 26'))
+
+    user_text_27 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                    verbose_name=ugettext_lazy('user text 27'))
+
+    user_text_28 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                    verbose_name=ugettext_lazy('user text 28'))
+
+    user_text_29 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                    verbose_name=ugettext_lazy('user text 29'))
+
+    user_text_30 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                    verbose_name=ugettext_lazy('user text 30'))
+
     user_number_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                      verbose_name=ugettext_lazy('user number 1'))
 
@@ -1299,6 +1329,26 @@ class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
     user_text_19 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 19'))
 
     user_text_20 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 20'))
+
+    user_text_21 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 21'))
+
+    user_text_22 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 22'))
+
+    user_text_23 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 23'))
+
+    user_text_24 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 24'))
+
+    user_text_25 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 25'))
+
+    user_text_26 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 26'))
+
+    user_text_27 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 27'))
+
+    user_text_28 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 28'))
+
+    user_text_29 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 29'))
+
+    user_text_30 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 30'))
 
     user_number_1 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 1'))
 
