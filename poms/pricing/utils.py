@@ -58,7 +58,7 @@ def get_list_of_dates_between_two_dates(date_from, date_to):
     return result
 
 
-def group_items_by_provider(items, groups):
+def group_instrument_items_by_provider(items, groups):
 
     result = {}
 
@@ -78,6 +78,25 @@ def group_items_by_provider(items, groups):
             _l.debug('Pricing scheme is not set in policy %s' % item.policy.id)
 
     return result
+
+
+
+def group_currency_items_by_provider(items, groups):
+
+    result = {}
+
+    for item in groups:
+        result[item.type.id] = []
+
+
+    for item in items:
+        if item.policy.pricing_scheme:
+            result[item.policy.pricing_scheme.type.id].append(item)
+        else:
+            _l.debug('Pricing scheme is not set in policy %s' % item.policy.id)
+
+    return result
+
 
 
 def get_is_yesterday(date_from, date_to):

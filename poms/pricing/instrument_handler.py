@@ -16,9 +16,9 @@ from poms.pricing.models import InstrumentPricingSchemeType, \
     PricingProcedureBloombergInstrumentResult, PricingProcedureWtradeInstrumentResult, PriceHistoryError, \
     PricingProcedureAlphavInstrumentResult, PricingProcedureBloombergForwardInstrumentResult
 from poms.pricing.transport.transport import PricingTransport
-from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_between_two_dates, group_items_by_provider, \
+from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_between_two_dates, \
     get_is_yesterday, optimize_items, roll_price_history_for_n_day_forward, get_empty_values_for_dates, \
-    get_closest_tenors
+    get_closest_tenors, group_instrument_items_by_provider
 from poms.procedures.models import PricingProcedure, PricingProcedureInstance, BaseProcedureInstance
 from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
@@ -171,7 +171,7 @@ class PricingInstrumentHandler(object):
 
         _l.debug('instrument_items len %s' % len(self.instrument_items))
 
-        self.instrument_items_grouped = group_items_by_provider(items=self.instrument_items,
+        self.instrument_items_grouped = group_instrument_items_by_provider(items=self.instrument_items,
                                                                 groups=self.instrument_pricing_schemes)
 
         _l.debug('instrument_items_grouped len %s' % len(self.instrument_items_grouped))

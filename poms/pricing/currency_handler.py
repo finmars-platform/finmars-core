@@ -14,8 +14,9 @@ from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
 from poms.pricing.models import PricingProcedureInstance, PricingProcedureBloombergCurrencyResult, \
     CurrencyPricingSchemeType, CurrencyHistoryError, PricingProcedureFixerCurrencyResult
 from poms.pricing.transport.transport import PricingTransport
-from poms.pricing.utils import get_unique_pricing_schemes, group_items_by_provider, get_list_of_dates_between_two_dates, \
-    get_is_yesterday, optimize_items, roll_currency_history_for_n_day_forward, get_empty_values_for_dates
+from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_between_two_dates, \
+    get_is_yesterday, optimize_items, roll_currency_history_for_n_day_forward, get_empty_values_for_dates, \
+    group_currency_items_by_provider
 
 import logging
 
@@ -146,7 +147,7 @@ class PricingCurrencyHandler(object):
 
         _l.debug('currency_items len %s' % len(self.currency_items))
 
-        self.currency_items_grouped = group_items_by_provider(items=self.currency_items,
+        self.currency_items_grouped = group_currency_items_by_provider(items=self.currency_items,
                                                                    groups=self.currencies_pricing_schemes)
 
         _l.debug('currency_items_grouped len %s' % len(self.currency_items_grouped))
