@@ -16,9 +16,8 @@ RUN apt-get update && \
         libgeoip-dev geoip-bin geoip-database \
         uwsgi uwsgi-plugin-python3 uwsgi-plugin-asyncio-python3 uwsgi-plugin-router-access \
         supervisor && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.6.2-amd64.deb && \
+    rm -rf /var/lib/apt/lists/*  && \
+    curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.6.2-amd64.deb && \
     dpkg -i filebeat-7.6.2-amd64.deb
 
 ADD requirements.txt /var/app/
@@ -53,18 +52,18 @@ COPY docker/uwsgi-www.ini /etc/uwsgi/apps-enabled/finmars.ini
 
 COPY docker/filebeat-config /etc/filebeat/filebeat.yml
 
-RUN chmod +x /var/app/docker/finmars-run.sh
-RUN chmod +x /etc/init.d/celeryd
-RUN chmod +x /etc/init.d/celerybeat
+RUN chmod +x /var/app/docker/finmars-run.sh  && \
+    chmod +x /etc/init.d/celeryd  && \
+    chmod +x /etc/init.d/celerybeat  && \
 
-RUN chmod 640 /etc/default/celeryd
-RUN chmod 640 /etc/default/celerybeat
+    chmod 640 /etc/default/celeryd  && \
+    chmod 640 /etc/default/celerybeat
 
 # create celery user
-RUN useradd -N -M --system -s /bin/bash celery
+RUN useradd -N -M --system -s /bin/bash celery  && \
 # celery perms
-RUN groupadd grp_celery && usermod -a -G grp_celery celery && mkdir -p /var/run/celery/ /var/log/celery/
-RUN chown -R celery:grp_celery /var/run/celery/ /var/log/celery/
+    groupadd grp_celery && usermod -a -G grp_celery celery && mkdir -p /var/run/celery/ /var/log/celery/  && \
+    chown -R celery:grp_celery /var/run/celery/ /var/log/celery/
 
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
