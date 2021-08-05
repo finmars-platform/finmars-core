@@ -20,18 +20,19 @@ RUN apt-get update && \
     curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.6.2-amd64.deb && \
     dpkg -i filebeat-7.6.2-amd64.deb
 
-ADD requirements.txt /var/app/
+
+RUN rm -rf /var/app
+COPY requirements.txt /var/app/requirements.txt
 RUN python3 -m venv /var/app-venv
 RUN /var/app-venv/bin/pip install -U pip wheel uwsgitop
 RUN /var/app-venv/bin/pip install -r /var/app/requirements.txt
 
-ADD docker/finmars-run.sh /var/app/docker/finmars-run.sh
-ADD data/ /var/app/data/
-ADD poms/ /var/app/poms/
-ADD healthcheck/ /var/app/healthcheck/
-ADD poms_app/ /var/app/poms_app/
-ADD manage.py /var/app/manage.py
-ADD requirements.txt /var/app/requirements.txt
+COPY docker/finmars-run.sh /var/app/docker/finmars-run.sh
+COPY data/ /var/app/data/
+COPY poms/ /var/app/poms/
+COPY healthcheck/ /var/app/healthcheck/
+COPY poms_app/ /var/app/poms_app/
+COPY manage.py /var/app/manage.py
 
 RUN mkdir -p /var/app-data/
 RUN mkdir -p /var/app-data/media/

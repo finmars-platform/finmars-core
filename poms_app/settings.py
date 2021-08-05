@@ -18,7 +18,7 @@ from celery.schedules import crontab
 from django.utils.translation import ugettext_lazy
 
 import base64
-from botocore.exceptions import ClientError
+# from botocore.exceptions import ClientError
 
 from io import StringIO
 
