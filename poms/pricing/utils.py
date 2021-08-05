@@ -65,6 +65,8 @@ def group_items_by_provider(items, groups):
     for item in groups:
         result[item.type.id] = []
 
+    result['has_linked_with_portfolio'] = []
+
     for item in items:
         if item.policy.pricing_scheme:
 
