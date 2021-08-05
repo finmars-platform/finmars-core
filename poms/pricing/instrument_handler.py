@@ -1832,8 +1832,8 @@ class PricingInstrumentHandler(object):
             5: 'Bloomberg',
             6: 'Wtrade',
             7: 'Alphav',
-            8: 'Bloomberg Forwards'
-
+            8: 'Bloomberg Forwards',
+            'has_linked_with_portfolio': "Has Linked with Portfolio"
         }
 
         for provider_id, items in self.instrument_items_grouped.items():
