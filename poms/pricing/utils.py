@@ -68,7 +68,7 @@ def group_items_by_provider(items, groups):
     for item in items:
         if item.policy.pricing_scheme:
 
-            if item.has_linked_with_portfolio:
+            if item.instrument.has_linked_with_portfolio:
                 result['has_linked_with_portfolio'].append(item)
             else:
                 result[item.policy.pricing_scheme.type.id].append(item)
