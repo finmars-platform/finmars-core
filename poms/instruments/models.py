@@ -684,7 +684,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                                         verbose_name=ugettext_lazy('instrument type'))
 
     is_active = models.BooleanField(default=True, verbose_name=ugettext_lazy('is active'))
-    has_linked_with_portfolio = models.BooleanField(default=True, verbose_name=ugettext_lazy('has linked with portfolio'))
+    has_linked_with_portfolio = models.BooleanField(default=False, verbose_name=ugettext_lazy('has linked with portfolio'))
     pricing_currency = models.ForeignKey('currencies.Currency', on_delete=models.PROTECT,
                                          verbose_name=ugettext_lazy('pricing currency'))
     price_multiplier = models.FloatField(default=1.0, verbose_name=ugettext_lazy('price multiplier'))
