@@ -696,6 +696,8 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
 # Not for getting List
 class InstrumentExternalAPIViewSet(APIView):
 
+    permission_classes = []
+
     def post(self, request):
 
 

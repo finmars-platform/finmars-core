@@ -48,6 +48,8 @@ from ..common.websockets import send_websocket_message
 
 import traceback
 
+from ..instruments.serializers import InstrumentExternalApiSerializer, InstrumentSerializer
+
 _l = getLogger('poms.csv_import')
 
 from datetime import date, datetime
@@ -1409,6 +1411,8 @@ class ImportHandler:
         return instance
 
 
+
+
 @shared_task(name='csv_import.data_csv_file_import', bind=True)
 def data_csv_file_import(self, instance, execution_context=None):
     handler = ImportHandler()
@@ -1544,3 +1548,175 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
 
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
             procedure_instance.save()
+
+
+
+class UnifiedImportHandler():
+
+    def __init__(self, instance, update_state, execution_context):
+        self.instance = instance
+        self.update_state = update_state
+        self.execution_context = execution_context
+
+    def get_row_data(self, row, first_row):
+        csv_row_dict = {}
+
+        index = 0
+        for col in first_row:
+
+            col = col.lower().replace(" ", "_")
+
+            csv_row_dict[col] = row[index]
+
+            index = index + 1
+
+        return csv_row_dict
+
+    def _row_count(self, file, instance):
+
+        delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
+
+        reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
+                            strict=False, skipinitialspace=True)
+
+        row_index = 0
+
+        for row_index, row in enumerate(reader):
+            pass
+
+        # return plain index, -1 row because of ignoring csv header row
+
+        return row_index
+
+    def unified_process_csv_file(self, file):
+
+        errors = []
+        results = []
+
+        delimiter = self.instance.delimiter.encode('utf-8').decode('unicode_escape')
+
+        reader = csv.reader(file, delimiter=delimiter, quotechar=self.instance.quotechar,
+                            strict=False, skipinitialspace=True)
+
+        first_row = None
+
+        context = {'master_user': self.instance.master_user}
+
+        items = []
+
+        for row_index, row in enumerate(reader):
+
+            item = {}
+
+            if row_index == 0:
+                first_row = row
+            else:
+
+                row_as_dict = self.get_row_data(row, first_row)
+
+                row_data = {}
+                row_data = row_as_dict # tmp
+
+
+
+                serializer = InstrumentSerializer(data=row_data, context=context)
+
+                is_valid = serializer.is_valid()
+
+                if is_valid:
+                    serializer.save()
+                else:
+                    item['error_message'] = serializer.errors
+
+            items.append(item)
+
+        return items
+
+    def process(self):
+
+        _l.debug('UnifiedImportHandler.process: initialized')
+
+        mode = self.instance.mode
+        master_user = self.instance.master_user
+        member = self.instance.member
+
+        _l.debug('UnifiedImportHandler.mode %s' % mode)
+
+        try:
+            with SFS.open(self.instance.file_path, 'rb') as f:
+                with NamedTemporaryFile() as tmpf:
+
+                    for chunk in f.chunks():
+                        tmpf.write(chunk)
+                    tmpf.flush()
+
+                    with open(tmpf.name, mode='rt', encoding=self.instance.encoding, errors='ignore') as cfr:
+                        self.instance.total_rows = self._row_count(cfr, self.instance)
+                        self.update_state(task_id=self.instance.task_id, state=Task.STATUS_PENDING,
+                                     meta={'total_rows': self.instance.total_rows,
+                                           'user_code': self.instance.scheme.user_code, 'file_name': self.instance.filename})
+
+                    with open(tmpf.name, mode='rt', encoding=self.instance.encoding, errors='ignore') as cf:
+                        context = {}
+
+                        results, process_errors = self.unified_process_csv_file(cf)
+
+                        _l.debug('UnifiedImportHandler.process_csv_file: finished')
+                        _l.debug('UnifiedImportHandler.process_csv_file process_errors %s: ' % len(process_errors))
+
+                        self.instance.imported = len(results)
+                        self.instance.stats = process_errors
+        except Exception as e:
+
+            _l.debug(e)
+            _l.debug('Can\'t process file', exc_info=True)
+            self.instance.error_message = ugettext("Invalid file format or file already deleted.")
+        finally:
+            # import_file_storage.delete(instance.file_path)
+            SFS.delete(self.instance.file_path)
+
+        if self.instance.stats and len(self.instance.stats):
+
+
+            send_websocket_message(data={
+                'type': 'simple_import_status',
+                'payload': {'task_id': self.instance.task_id,
+                            'state': Task.STATUS_DONE,
+                            'processed_rows': self.instance.processed_rows,
+                            'total_rows': self.instance.total_rows,
+                            'file_name': self.instance.filename,
+                            'stats': self.instance.stats,
+                            'stats_file_report': self.instance.stats_file_report
+                            }
+            }, level="member",
+                context={"master_user": master_user, "member": member})
+
+            send_websocket_message(data={'type': "simple_message",
+                                         'payload': {
+                                             'message': "Member %s imported data with Simple Import Service" % member.username
+                                         }
+                                         }, level="master_user", context={"master_user": master_user, "member": member})
+
+            if self.execution_context and self.execution_context["started_by"] == 'procedure':
+                send_system_message(master_user=self.instance.master_user,
+                                    source="Unified Simple Import Service",
+                                    text="Import Finished",
+                                    file_report_id=self.instance.stats_file_report)
+            else:
+                send_system_message(master_user=self.instance.master_user,
+                                    source="Unified  Simple Import Service",
+                                    text="User %s Import Finished" % member.username,
+                                    file_report_id=self.instance.stats_file_report)
+
+        return self.instance
+
+@shared_task(name='csv_import.unified_data_csv_file_import', bind=True)
+def unified_data_csv_file_import(self, instance, execution_context=None):
+    handler = UnifiedImportHandler(instance, self.update_state, execution_context)
+
+    setattr(instance, 'task_id', current_task.request.id)
+
+    handler.process()
+
+    return instance
+
