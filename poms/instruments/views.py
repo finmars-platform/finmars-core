@@ -14,6 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
+from rest_framework.views import APIView
 
 from poms.accounts.models import Account
 from poms.accounts.models import AccountType
@@ -39,7 +40,8 @@ from poms.instruments.serializers import InstrumentSerializer, PriceHistorySeria
     PricingPolicySerializer, EventScheduleConfigSerializer, InstrumentCalculatePricesAccruedPriceSerializer, \
     GeneratedEventSerializer, EventScheduleActionSerializer, InstrumentTypeLightSerializer, InstrumentLightSerializer, \
     PricingPolicyLightSerializer, PricingConditionSerializer, InstrumentEvSerializer, InstrumentTypeEvSerializer, \
-    ExposureCalculationModelSerializer, LongUnderlyingExposureSerializer, ShortUnderlyingExposureSerializer
+    ExposureCalculationModelSerializer, LongUnderlyingExposureSerializer, ShortUnderlyingExposureSerializer, \
+    InstrumentExternalApiSerializer
 from poms.instruments.tasks import calculate_prices_accrued_price, generate_events, process_events, \
     only_generate_events_at_date, generate_events_do_not_inform_apply_default0, \
     generate_events_do_not_inform_apply_default, only_generate_events_at_date_for_single_instrument
@@ -59,9 +61,14 @@ from poms.tags.filters import TagFilter
 from poms.transactions.models import TransactionType, TransactionTypeGroup, NotificationClass
 from poms.transactions.serializers import TransactionTypeProcessSerializer
 from poms.users.filters import OwnerByMasterUserFilter
+from poms.users.models import MasterUser
 from poms.users.permissions import SuperUserOrReadOnly
 
 import datetime
+
+import logging
+_l = logging.getLogger('poms.instruments')
+
 
 
 class InstrumentClassViewSet(AbstractClassModelViewSet):
@@ -683,6 +690,40 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
         # ).wait()
 
         return Response(serializer.data)
+
+
+
+# Not for getting List
+class InstrumentExternalAPIViewSet(APIView):
+
+    def post(self, request):
+
+
+        token = request.data["token"]
+
+        master_user = MasterUser.objects.get(token=token)
+
+        context = {'request': request, 'master_user': master_user}
+
+
+        request.data.update({"master_user": master_user.id})
+
+        _l.info(request.data)
+
+        serializer = InstrumentExternalApiSerializer(data=request.data, context=context)
+        is_valid = serializer.is_valid()
+
+        if not is_valid:
+            return Response(serializer.errors, status=400)
+
+        _l.info('is valid %s' % is_valid)
+
+
+        serializer.save()
+
+        _l.info("Instrument created")
+
+        return Response({'ok'})
 
 
 class InstrumentLightFilterSet(FilterSet):

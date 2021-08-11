@@ -171,6 +171,8 @@ router.register(r'instruments/instrument', instruments.InstrumentViewSet)
 router.register(r'instruments/instrument-ev', instruments.InstrumentEvViewSet)
 router.register(r'instruments/instrument-light', instruments.InstrumentLightViewSet)
 
+
+
 router.register(r'instruments/price-history-ev-group', instruments.PriceHistoryEvGroupViewSet, 'instrumentevgroup')
 router.register(r'instruments/price-history-ev', instruments.PriceHistoryViewSet)
 router.register(r'instruments/price-history', instruments.PriceHistoryViewSet)
@@ -487,6 +489,7 @@ urlpatterns = [
     url(r'internal/brokers/fixer/callback', csrf_exempt(pricing.PricingBrokerFixerHandler.as_view())),
     url(r'internal/brokers/alphav/callback', csrf_exempt(pricing.PricingBrokerAlphavHandler.as_view())),
     url(r'internal/data/transactions/callback', csrf_exempt(integrations.TransactionFileResultUploadHandler.as_view())),
+    url(r'instruments/instrument-external-api', csrf_exempt(instruments.InstrumentExternalAPIViewSet.as_view())),
 
     url(r'^authorizer/token-auth/', ObtainAuthToken.as_view(), name='api-token-auth'),
     url(r'^authorizer/set-token-auth/', SetAuthToken.as_view(), name='set-token-auth'),
