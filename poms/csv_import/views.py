@@ -393,7 +393,7 @@ class UnifiedCsvDataImportViewSet(AbstractAsyncViewSet):
 
             send_system_message(master_user=request.user.master_user,
                                 source="Simple Import Service",
-                                text='Member %s started Unified Data Import (scheme %s)' % (request.user.member.username, instance.scheme.name))
+                                text='Member %s started Unified Data Import' % (request.user.member.username))
 
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)

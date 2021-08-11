@@ -411,6 +411,7 @@ router.register(r'utils/expression', api.ExpressionViewSet, 'expression')
 router.register(r'import/csv/scheme', csv_import.SchemeViewSet, 'import_csv_scheme')
 router.register(r'import/csv/scheme-light', csv_import.SchemeLightViewSet, 'import_csv_scheme_light')
 router.register(r'import/csv', csv_import.CsvDataImportViewSet, 'import_csv')
+router.register(r'import/unified_csv', csv_import.UnifiedCsvDataImportViewSet, 'unified_csv')
 
 router.register(r'import/csv-validate', csv_import.CsvDataImportValidateViewSet, 'import_csv-validate')
 

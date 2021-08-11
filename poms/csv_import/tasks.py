@@ -1617,9 +1617,7 @@ class UnifiedImportHandler():
                 row_data = {}
                 row_data = row_as_dict # tmp
 
-
-
-                serializer = InstrumentSerializer(data=row_data, context=context)
+                serializer = InstrumentExternalApiSerializer(data=row_data, context=context)
 
                 is_valid = serializer.is_valid()
 
@@ -1654,18 +1652,16 @@ class UnifiedImportHandler():
                         self.instance.total_rows = self._row_count(cfr, self.instance)
                         self.update_state(task_id=self.instance.task_id, state=Task.STATUS_PENDING,
                                      meta={'total_rows': self.instance.total_rows,
-                                           'user_code': self.instance.scheme.user_code, 'file_name': self.instance.filename})
+                                           'file_name': self.instance.filename})
 
                     with open(tmpf.name, mode='rt', encoding=self.instance.encoding, errors='ignore') as cf:
                         context = {}
 
-                        results, process_errors = self.unified_process_csv_file(cf)
+                        items = self.unified_process_csv_file(cf)
 
                         _l.debug('UnifiedImportHandler.process_csv_file: finished')
-                        _l.debug('UnifiedImportHandler.process_csv_file process_errors %s: ' % len(process_errors))
 
-                        self.instance.imported = len(results)
-                        self.instance.stats = process_errors
+                        self.instance.stats = items
         except Exception as e:
 
             _l.debug(e)
