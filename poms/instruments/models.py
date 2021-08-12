@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 import json
 import logging
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 
 from dateutil import relativedelta, rrule
 from django.conf import settings
@@ -1513,6 +1513,9 @@ class EventSchedule(models.Model):
         # sdate = self.effective_date
         # edate = self.final_date
 
+        edate = datetime.date(datetime.strptime(self.effective_date, '%Y-%m-%d'))
+        fdate = datetime.date(datetime.strptime(self.final_date, '%Y-%m-%d'))
+
         dates = []
 
         def add_date(edate):
@@ -1526,23 +1529,23 @@ class EventSchedule(models.Model):
             # notification_date = effective_date - notify_in_n_days
             # if self.effective_date <= notification_date <= self.final_date or self.effective_date <= effective_date <= self.final_date:
             #     dates.append((effective_date, notification_date))
-            add_date(self.effective_date)
+            add_date(edate)
 
         elif self.event_class_id == EventClass.REGULAR:
             for i in range(0, 3652058):
                 stop = False
                 try:
-                    effective_date = self.effective_date + self.periodicity.to_timedelta(
-                        n=self.periodicity_n, i=i, same_date=self.effective_date)
+                    effective_date = edate + self.periodicity.to_timedelta(
+                        n=self.periodicity_n, i=i, same_date=edate)
                 except (OverflowError, ValueError):  # year is out of range
                     # effective_date = date.max
                     # stop = True
                     break
 
                 if self.accrual_calculation_schedule_id is not None:
-                    if effective_date >= self.final_date:
+                    if effective_date >= fdate:
                         # magic date
-                        effective_date = self.final_date - timedelta(days=1)
+                        effective_date = fdate - timedelta(days=1)
                         stop = True
 
                 # notification_date = effective_date - notify_in_n_days
@@ -1550,7 +1553,7 @@ class EventSchedule(models.Model):
                 #     dates.append((effective_date, notification_date))
                 add_date(effective_date)
 
-                if stop or effective_date >= self.final_date:
+                if stop or effective_date >= fdate:
                     break
 
         return dates
