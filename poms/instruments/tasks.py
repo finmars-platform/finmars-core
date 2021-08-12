@@ -214,8 +214,8 @@ def only_generate_events_at_date_for_single_instrument(master_user, date, instru
 
         for event_schedule in event_schedule_qs:
 
-            final_date = datetime.strptime(event_schedule.final_date, 'YYYY-MM-DD')
-            effective_date = datetime.strptime(event_schedule.effective_date, 'YYYY-MM-DD')
+            final_date = datetime.strptime(event_schedule.final_date, '%Y-%m-%d')
+            effective_date = datetime.strptime(event_schedule.effective_date, '%Y-%m-%d')
 
             if final_date >= date and effective_date - timedelta(days=event_schedule.notify_in_n_days):
                 result.append(event_schedule)
