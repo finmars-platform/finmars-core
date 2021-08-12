@@ -15,6 +15,9 @@ from poms.reports.builders.balance_pl import ReportBuilder
 from poms.transactions.models import NotificationClass
 from poms.users.models import MasterUser
 
+import traceback
+
+
 _l = logging.getLogger('poms.instruments')
 
 
@@ -46,796 +49,861 @@ def calculate_prices_accrued_price_async(master_user=None, begin_date=None, end_
 
 @shared_task(name='instruments.only_generate_events_at_date', ignore_result=True)
 def only_generate_events_at_date(master_user, date):
-    _l.info('generate_events0: master_user=%s', master_user.id)
 
-    opened_instrument_items = []
+    try:
+        _l.info('generate_events0: master_user=%s', master_user.id)
 
-    report = Report(
-        master_user=master_user,
-        report_date=date,
-        allocation_mode=Report.MODE_IGNORE,
-    )
-    builder = ReportBuilder(instance=report)
-    builder.build_position_only()
+        opened_instrument_items = []
 
-    for i in report.items:
-        if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
-            opened_instrument_items.append(i)
+        report = Report(
+            master_user=master_user,
+            report_date=date,
+            allocation_mode=Report.MODE_IGNORE,
+        )
+        builder = ReportBuilder(instance=report)
+        builder.build_position_only()
 
-    _l.info('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
-    if not opened_instrument_items:
-        return
+        for i in report.items:
+            if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
+                opened_instrument_items.append(i)
 
-    event_schedule_qs = EventSchedule.objects.prefetch_related(
-        'instrument',
-        'event_class',
-        'notification_class',
-        'periodicity',
-        'actions',
-        'actions__transaction_type'
-    ).filter(
-        effective_date__lte=(date - F("notify_in_n_days")),
-        final_date__gte=date,
-        instrument__in={i.instr.id for i in opened_instrument_items}
-    ).order_by(
-        'instrument__master_user__id',
-        'instrument__id'
-    )
+        _l.info('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
+        if not opened_instrument_items:
+            return
+
+        event_schedule_qs = EventSchedule.objects.prefetch_related(
+            'instrument',
+            'event_class',
+            'notification_class',
+            'periodicity',
+            'actions',
+            'actions__transaction_type'
+        ).filter(
+            effective_date__lte=(date - F("notify_in_n_days")),
+            final_date__gte=date,
+            instrument__in={i.instr.id for i in opened_instrument_items}
+        ).order_by(
+            'instrument__master_user__id',
+            'instrument__id'
+        )
 
 
-    if not event_schedule_qs.exists():
-        _l.info('event schedules not found. Date %s' % date)
-        return
+        if not event_schedule_qs.exists():
+            _l.info('event schedules not found. Date %s' % date)
+            return
 
-    event_schedules_cache = defaultdict(list)
-    for event_schedule in event_schedule_qs:
-        event_schedules_cache[event_schedule.instrument_id].append(event_schedule)
+        event_schedules_cache = defaultdict(list)
+        for event_schedule in event_schedule_qs:
+            event_schedules_cache[event_schedule.instrument_id].append(event_schedule)
 
-    for item in opened_instrument_items:
-        portfolio = item.prtfl
-        account = item.acc
-        strategy1 = item.str1
-        strategy2 = item.str2
-        strategy3 = item.str3
-        instrument = item.instr
-        position = item.pos_size
+        for item in opened_instrument_items:
+            portfolio = item.prtfl
+            account = item.acc
+            strategy1 = item.str1
+            strategy2 = item.str2
+            strategy3 = item.str3
+            instrument = item.instr
+            position = item.pos_size
 
-        event_schedules = event_schedules_cache.get(instrument.id, None)
-        _l.info('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
-                 'instrument=%s, position=%s, event_schedules=%s',
-                 portfolio.id, account.id, strategy1.id, strategy2.id, strategy3.id,
-                 instrument.id, position, [e.id for e in event_schedules] if event_schedules else [])
+            event_schedules = event_schedules_cache.get(instrument.id, None)
+            _l.info('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
+                     'instrument=%s, position=%s, event_schedules=%s',
+                     portfolio.id, account.id, strategy1.id, strategy2.id, strategy3.id,
+                     instrument.id, position, [e.id for e in event_schedules] if event_schedules else [])
 
-        if not event_schedules:
-            continue
+            if not event_schedules:
+                continue
 
-        for event_schedule in event_schedules:
-            _l.info('event_schedule=%s, event_class=%s, notification_class=%s, periodicity=%s, n=%s',
-                     event_schedule.id, event_schedule.event_class, event_schedule.notification_class,
-                     event_schedule.periodicity, event_schedule.periodicity_n)
+            for event_schedule in event_schedules:
+                _l.info('event_schedule=%s, event_class=%s, notification_class=%s, periodicity=%s, n=%s',
+                         event_schedule.id, event_schedule.event_class, event_schedule.notification_class,
+                         event_schedule.periodicity, event_schedule.periodicity_n)
 
-            is_complies, effective_date, notification_date = event_schedule.check_date(date)
+                is_complies, effective_date, notification_date = event_schedule.check_date(date)
 
-            _l.info('is_complies=%s', is_complies)
-            if is_complies:
-                ge_dup_qs = GeneratedEvent.objects.filter(
-                    master_user=master_user,
-                    event_schedule=event_schedule,
-                    effective_date=effective_date,
-                    # notification_date=notification_date,
-                    instrument=instrument,
-                    portfolio=portfolio,
-                    account=account,
-                    strategy1=strategy1,
-                    strategy2=strategy2,
-                    strategy3=strategy3,
-                    position=position
-                )
-                if ge_dup_qs.exists():
-                    _l.info('generated event already exist')
-                    continue
+                _l.info('is_complies=%s', is_complies)
+                if is_complies:
+                    ge_dup_qs = GeneratedEvent.objects.filter(
+                        master_user=master_user,
+                        event_schedule=event_schedule,
+                        effective_date=effective_date,
+                        # notification_date=notification_date,
+                        instrument=instrument,
+                        portfolio=portfolio,
+                        account=account,
+                        strategy1=strategy1,
+                        strategy2=strategy2,
+                        strategy3=strategy3,
+                        position=position
+                    )
+                    if ge_dup_qs.exists():
+                        _l.info('generated event already exist')
+                        continue
 
-                _l.info('event_schedule %s' % event_schedule)
+                    _l.info('event_schedule %s' % event_schedule)
 
-                generated_event = GeneratedEvent()
-                generated_event.master_user = master_user
-                generated_event.event_schedule = event_schedule
-                generated_event.status = GeneratedEvent.NEW
-                generated_event.status_modified = timezone.now()
-                generated_event.effective_date = effective_date
-                generated_event.notification_date = notification_date
-                generated_event.instrument = instrument
-                generated_event.portfolio = portfolio
-                generated_event.account = account
-                generated_event.strategy1 = strategy1
-                generated_event.strategy2 = strategy2
-                generated_event.strategy3 = strategy3
-                generated_event.position = position
-                generated_event.save()
+                    generated_event = GeneratedEvent()
+                    generated_event.master_user = master_user
+                    generated_event.event_schedule = event_schedule
+                    generated_event.status = GeneratedEvent.NEW
+                    generated_event.status_modified = timezone.now()
+                    generated_event.effective_date = effective_date
+                    generated_event.notification_date = notification_date
+                    generated_event.instrument = instrument
+                    generated_event.portfolio = portfolio
+                    generated_event.account = account
+                    generated_event.strategy1 = strategy1
+                    generated_event.strategy2 = strategy2
+                    generated_event.strategy3 = strategy3
+                    generated_event.position = position
+                    generated_event.save()
 
+    except Exception as e:
+
+        _l.info('only_generate_events_at_date exception occurred %s' % e)
+        _l.info(traceback.format_exc())
 
 @shared_task(name='instruments.only_generate_events_at_date_for_single_instrument', ignore_result=True)
 def only_generate_events_at_date_for_single_instrument(master_user, date, instrument):
-    _l.debug('only_generate_events_at_date_for_single_instrument: master_user=%s, instrument=%s', (master_user.id, instrument))
 
-    opened_instrument_items = []
+    try:
+        _l.debug('only_generate_events_at_date_for_single_instrument: master_user=%s, instrument=%s', (master_user.id, instrument))
 
-    report = Report(
-        master_user=master_user,
-        report_date=date,
-        allocation_mode=Report.MODE_IGNORE,
-    )
-    builder = ReportBuilder(instance=report)
-    builder.build_position_only()
+        opened_instrument_items = []
 
-    for i in report.items:
-        if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
+        report = Report(
+            master_user=master_user,
+            report_date=date,
+            allocation_mode=Report.MODE_IGNORE,
+        )
+        builder = ReportBuilder(instance=report)
+        builder.build_position_only()
 
-            if i.instr:
-                if i.instr.id == instrument.id:
-                    opened_instrument_items.append(i)
+        for i in report.items:
+            if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
 
-    _l.debug('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
-    if not opened_instrument_items:
-        return
+                if i.instr:
+                    if i.instr.id == instrument.id:
+                        opened_instrument_items.append(i)
 
-    event_schedule_qs = EventSchedule.objects.prefetch_related(
-        'instrument',
-        'event_class',
-        'notification_class',
-        'periodicity',
-        'actions',
-        'actions__transaction_type'
-    ).filter(
-        effective_date__lte=(date - F("notify_in_n_days")),
-        final_date__gte=date,
-        instrument__in={i.instr.id for i in opened_instrument_items}
-    ).order_by(
-        'instrument__master_user__id',
-        'instrument__id'
-    )
+        _l.debug('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
+        if not opened_instrument_items:
+            return
 
-    if not event_schedule_qs.exists():
-        _l.debug('event schedules not found. Date %s' % date)
-        return
+        event_schedule_qs = EventSchedule.objects.prefetch_related(
+            'instrument',
+            'event_class',
+            'notification_class',
+            'periodicity',
+            'actions',
+            'actions__transaction_type'
+        ).filter(
+            effective_date__lte=(date - F("notify_in_n_days")),
+            final_date__gte=date,
+            instrument__in={i.instr.id for i in opened_instrument_items}
+        ).order_by(
+            'instrument__master_user__id',
+            'instrument__id'
+        )
 
-    event_schedules_cache = defaultdict(list)
-    for event_schedule in event_schedule_qs:
-        event_schedules_cache[event_schedule.instrument_id].append(event_schedule)
+        if not event_schedule_qs.exists():
+            _l.debug('event schedules not found. Date %s' % date)
+            return
 
-    for item in opened_instrument_items:
-        portfolio = item.prtfl
-        account = item.acc
-        strategy1 = item.str1
-        strategy2 = item.str2
-        strategy3 = item.str3
-        instr = item.instr
-        position = item.pos_size
+        event_schedules_cache = defaultdict(list)
+        for event_schedule in event_schedule_qs:
+            event_schedules_cache[event_schedule.instrument_id].append(event_schedule)
 
-        event_schedules = event_schedules_cache.get(instr.id, None)
-        _l.debug('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
-                 'instrument=%s, position=%s, event_schedules=%s',
-                 portfolio.id, account.id, strategy1.id, strategy2.id, strategy3.id,
-                 instr.id, position, [e.id for e in event_schedules] if event_schedules else [])
+        for item in opened_instrument_items:
+            portfolio = item.prtfl
+            account = item.acc
+            strategy1 = item.str1
+            strategy2 = item.str2
+            strategy3 = item.str3
+            instr = item.instr
+            position = item.pos_size
 
-        if not event_schedules:
-            continue
+            event_schedules = event_schedules_cache.get(instr.id, None)
+            _l.debug('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
+                     'instrument=%s, position=%s, event_schedules=%s',
+                     portfolio.id, account.id, strategy1.id, strategy2.id, strategy3.id,
+                     instr.id, position, [e.id for e in event_schedules] if event_schedules else [])
 
-        for event_schedule in event_schedules:
-            _l.debug('event_schedule=%s, event_class=%s, notification_class=%s, periodicity=%s, n=%s',
-                     event_schedule.id, event_schedule.event_class, event_schedule.notification_class,
-                     event_schedule.periodicity, event_schedule.periodicity_n)
+            if not event_schedules:
+                continue
 
-            is_complies, effective_date, notification_date = event_schedule.check_date(date)
+            for event_schedule in event_schedules:
+                _l.debug('event_schedule=%s, event_class=%s, notification_class=%s, periodicity=%s, n=%s',
+                         event_schedule.id, event_schedule.event_class, event_schedule.notification_class,
+                         event_schedule.periodicity, event_schedule.periodicity_n)
 
-            _l.debug('is_complies=%s', is_complies)
-            if is_complies:
-                ge_dup_qs = GeneratedEvent.objects.filter(
-                    master_user=master_user,
-                    event_schedule=event_schedule,
-                    effective_date=effective_date,
-                    # notification_date=notification_date,
-                    instrument=instr,
-                    portfolio=portfolio,
-                    account=account,
-                    strategy1=strategy1,
-                    strategy2=strategy2,
-                    strategy3=strategy3,
-                    position=position
-                )
-                if ge_dup_qs.exists():
-                    _l.debug('generated event already exist')
-                    continue
+                is_complies, effective_date, notification_date = event_schedule.check_date(date)
 
-                print('event_schedule %s' % event_schedule)
+                _l.debug('is_complies=%s', is_complies)
+                if is_complies:
+                    ge_dup_qs = GeneratedEvent.objects.filter(
+                        master_user=master_user,
+                        event_schedule=event_schedule,
+                        effective_date=effective_date,
+                        # notification_date=notification_date,
+                        instrument=instr,
+                        portfolio=portfolio,
+                        account=account,
+                        strategy1=strategy1,
+                        strategy2=strategy2,
+                        strategy3=strategy3,
+                        position=position
+                    )
+                    if ge_dup_qs.exists():
+                        _l.debug('generated event already exist')
+                        continue
 
-                generated_event = GeneratedEvent()
-                generated_event.master_user = master_user
-                generated_event.event_schedule = event_schedule
-                generated_event.status = GeneratedEvent.NEW
-                generated_event.status_modified = timezone.now()
-                generated_event.effective_date = effective_date
-                generated_event.notification_date = notification_date
-                generated_event.instrument = instr
-                generated_event.portfolio = portfolio
-                generated_event.account = account
-                generated_event.strategy1 = strategy1
-                generated_event.strategy2 = strategy2
-                generated_event.strategy3 = strategy3
-                generated_event.position = position
-                generated_event.save()
+                    print('event_schedule %s' % event_schedule)
+
+                    generated_event = GeneratedEvent()
+                    generated_event.master_user = master_user
+                    generated_event.event_schedule = event_schedule
+                    generated_event.status = GeneratedEvent.NEW
+                    generated_event.status_modified = timezone.now()
+                    generated_event.effective_date = effective_date
+                    generated_event.notification_date = notification_date
+                    generated_event.instrument = instr
+                    generated_event.portfolio = portfolio
+                    generated_event.account = account
+                    generated_event.strategy1 = strategy1
+                    generated_event.strategy2 = strategy2
+                    generated_event.strategy3 = strategy3
+                    generated_event.position = position
+                    generated_event.save()
+
+    except Exception as e:
+
+        _l.info('only_generate_events_at_date_for_single_instrument exception occurred %s' % e)
+        _l.info(traceback.format_exc())
 
 
 @shared_task(name='instruments.generate_events0', ignore_result=True)
 def generate_events0(master_user):
-    _l.debug('generate_events0: master_user=%s', master_user.id)
 
-    opened_instrument_items = []
+    try:
+        _l.debug('generate_events0: master_user=%s', master_user.id)
 
-    now = date_now()
+        opened_instrument_items = []
 
-    report = Report(
-        master_user=master_user,
-        report_date=now,
-        allocation_mode=Report.MODE_IGNORE,
-    )
-    builder = ReportBuilder(instance=report)
-    builder.build_position_only()
+        now = date_now()
 
-    for i in report.items:
-        if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
-            opened_instrument_items.append(i)
+        report = Report(
+            master_user=master_user,
+            report_date=now,
+            allocation_mode=Report.MODE_IGNORE,
+        )
+        builder = ReportBuilder(instance=report)
+        builder.build_position_only()
 
-    _l.debug('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
-    if not opened_instrument_items:
-        return
+        for i in report.items:
+            if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
+                opened_instrument_items.append(i)
 
-    event_schedule_qs = EventSchedule.objects.prefetch_related(
-        'instrument',
-        'event_class',
-        'notification_class',
-        'periodicity',
-        'actions',
-        'actions__transaction_type'
-    ).filter(
-        effective_date__lte=(now - F("notify_in_n_days")),
-        final_date__gte=now,
-        instrument__in={i.instr.id for i in opened_instrument_items}
-    ).order_by(
-        'instrument__master_user__id',
-        'instrument__id'
-    )
+        _l.debug('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
+        if not opened_instrument_items:
+            return
 
-    if not event_schedule_qs.exists():
-        _l.debug('event schedules not found')
-        return
+        event_schedule_qs = EventSchedule.objects.prefetch_related(
+            'instrument',
+            'event_class',
+            'notification_class',
+            'periodicity',
+            'actions',
+            'actions__transaction_type'
+        ).filter(
+            effective_date__lte=(now - F("notify_in_n_days")),
+            final_date__gte=now,
+            instrument__in={i.instr.id for i in opened_instrument_items}
+        ).order_by(
+            'instrument__master_user__id',
+            'instrument__id'
+        )
 
-    event_schedules_cache = defaultdict(list)
-    for event_schedule in event_schedule_qs:
-        event_schedules_cache[event_schedule.instrument_id].append(event_schedule)
+        if not event_schedule_qs.exists():
+            _l.debug('event schedules not found')
+            return
 
-    for item in opened_instrument_items:
-        portfolio = item.prtfl
-        account = item.acc
-        strategy1 = item.str1
-        strategy2 = item.str2
-        strategy3 = item.str3
-        instrument = item.instr
-        position = item.pos_size
+        event_schedules_cache = defaultdict(list)
+        for event_schedule in event_schedule_qs:
+            event_schedules_cache[event_schedule.instrument_id].append(event_schedule)
 
-        event_schedules = event_schedules_cache.get(instrument.id, None)
-        _l.debug('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
-                 'instrument=%s, position=%s, event_schedules=%s',
-                 portfolio.id, account.id, strategy1.id, strategy2.id, strategy3.id,
-                 instrument.id, position, [e.id for e in event_schedules] if event_schedules else [])
+        for item in opened_instrument_items:
+            portfolio = item.prtfl
+            account = item.acc
+            strategy1 = item.str1
+            strategy2 = item.str2
+            strategy3 = item.str3
+            instrument = item.instr
+            position = item.pos_size
 
-        if not event_schedules:
-            continue
+            event_schedules = event_schedules_cache.get(instrument.id, None)
+            _l.debug('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
+                     'instrument=%s, position=%s, event_schedules=%s',
+                     portfolio.id, account.id, strategy1.id, strategy2.id, strategy3.id,
+                     instrument.id, position, [e.id for e in event_schedules] if event_schedules else [])
 
-        for event_schedule in event_schedules:
-            _l.debug('event_schedule=%s, event_class=%s, notification_class=%s, periodicity=%s, n=%s',
-                     event_schedule.id, event_schedule.event_class, event_schedule.notification_class,
-                     event_schedule.periodicity, event_schedule.periodicity_n)
+            if not event_schedules:
+                continue
 
-            is_complies, effective_date, notification_date = event_schedule.check_date(now)
+            for event_schedule in event_schedules:
+                _l.debug('event_schedule=%s, event_class=%s, notification_class=%s, periodicity=%s, n=%s',
+                         event_schedule.id, event_schedule.event_class, event_schedule.notification_class,
+                         event_schedule.periodicity, event_schedule.periodicity_n)
 
-            _l.debug('is_complies=%s', is_complies)
-            if is_complies:
-                ge_dup_qs = GeneratedEvent.objects.filter(
-                    master_user=master_user,
-                    event_schedule=event_schedule,
-                    effective_date=effective_date,
-                    # notification_date=notification_date,
-                    instrument=instrument,
-                    portfolio=portfolio,
-                    account=account,
-                    strategy1=strategy1,
-                    strategy2=strategy2,
-                    strategy3=strategy3,
-                    position=position
-                )
-                if ge_dup_qs.exists():
-                    _l.debug('generated event already exist')
-                    continue
+                is_complies, effective_date, notification_date = event_schedule.check_date(now)
 
-                print('event_schedule %s' % event_schedule)
+                _l.debug('is_complies=%s', is_complies)
+                if is_complies:
+                    ge_dup_qs = GeneratedEvent.objects.filter(
+                        master_user=master_user,
+                        event_schedule=event_schedule,
+                        effective_date=effective_date,
+                        # notification_date=notification_date,
+                        instrument=instrument,
+                        portfolio=portfolio,
+                        account=account,
+                        strategy1=strategy1,
+                        strategy2=strategy2,
+                        strategy3=strategy3,
+                        position=position
+                    )
+                    if ge_dup_qs.exists():
+                        _l.debug('generated event already exist')
+                        continue
 
-                generated_event = GeneratedEvent()
-                generated_event.master_user = master_user
-                generated_event.event_schedule = event_schedule
-                generated_event.status = GeneratedEvent.NEW
-                generated_event.status_modified = timezone.now()
-                generated_event.effective_date = effective_date
-                generated_event.notification_date = notification_date
-                generated_event.instrument = instrument
-                generated_event.portfolio = portfolio
-                generated_event.account = account
-                generated_event.strategy1 = strategy1
-                generated_event.strategy2 = strategy2
-                generated_event.strategy3 = strategy3
-                generated_event.position = position
-                generated_event.save()
+                    print('event_schedule %s' % event_schedule)
 
-    process_events0.apply_async(kwargs={'master_user': master_user})
+                    generated_event = GeneratedEvent()
+                    generated_event.master_user = master_user
+                    generated_event.event_schedule = event_schedule
+                    generated_event.status = GeneratedEvent.NEW
+                    generated_event.status_modified = timezone.now()
+                    generated_event.effective_date = effective_date
+                    generated_event.notification_date = notification_date
+                    generated_event.instrument = instrument
+                    generated_event.portfolio = portfolio
+                    generated_event.account = account
+                    generated_event.strategy1 = strategy1
+                    generated_event.strategy2 = strategy2
+                    generated_event.strategy3 = strategy3
+                    generated_event.position = position
+                    generated_event.save()
+
+        process_events0.apply_async(kwargs={'master_user': master_user})
+
+    except Exception as e:
+
+        _l.info('generate_events0 exception occurred %s' % e)
+        _l.info(traceback.format_exc())
+
 
 
 @shared_task(name='instruments.generate_events', ignore_result=True)
 def generate_events(master_users=None):
-    _l.debug('generate_events: master_users=%s', master_users)
 
-    # now = date_now()
+    try:
+        _l.debug('generate_events: master_users=%s', master_users)
 
-    master_user_qs = MasterUser.objects.all()
-    if master_users:
-        master_user_qs = master_user_qs.filter(pk__in=master_users)
+        # now = date_now()
 
-    for master_user in master_user_qs:
-        # _l.debug('generate_events: master_user=%s', master_user.id)
-        #
-        # opened_instrument_items = []
-        # # instruments_pk = set()
-        #
-        # report = Report(
-        #     master_user=master_user,
-        #     report_date=now,
-        #     allocation_mode=Report.MODE_IGNORE,
-        # )
-        # builder = ReportBuilder(instance=report)
-        # # builder.build_balance()
-        # builder.build_position_only()
-        #
-        # for i in report.items:
-        #     if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
-        #         opened_instrument_items.append(i)
-        #         # instruments_pk.add(i.instr.id)
-        #
-        # _l.debug('opened instruments: %s', {i.instr.id for i in opened_instrument_items})
-        # if not opened_instrument_items:
-        #     return
-        #
-        # event_schedule_qs = EventSchedule.objects.prefetch_related(
-        #     'instrument__master_user',
-        #     'instrument',
-        #     'event_class',
-        #     'notification_class',
-        #     'periodicity',
-        #     'actions',
-        #     'actions__transaction_type'
-        # ).filter(
-        #     effective_date__lte=(now - F("notify_in_n_days")),
-        #     final_date__gte=now,
-        #     instrument__in={i.instr.id for i in opened_instrument_items}
-        # ).order_by(
-        #     'instrument__master_user__id',
-        #     'instrument__id'
-        # )
-        # # event_schedule_qs = event_schedule_qs.filter(instrument__in=instruments_pk)
-        #
-        # if not event_schedule_qs.exists():
-        #     _l.debug('event schedules not found')
-        #     return
-        #
-        # event_schedule_cache = defaultdict(list)
-        # for event_schedule in event_schedule_qs:
-        #     event_schedule_cache[event_schedule.instrument_id].append(event_schedule)
-        #
-        # for item in opened_instrument_items:
-        #     portfolio = item.prtfl
-        #     account = item.acc
-        #     strategy1 = item.str1
-        #     strategy2 = item.str2
-        #     strategy3 = item.str3
-        #     instrument = item.instr
-        #     position = item.pos_size
-        #
-        #     event_schedules = event_schedule_cache.get(instrument.id, None) or []
-        #
-        #     _l.debug('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
-        #              'instrument=%s, position=%s, event_schedules=%s',
-        #              portfolio.id, account.id, strategy1.id, strategy2.id, strategy3.id,
-        #              instrument.id, position, [e.id for e in event_schedules])
-        #
-        #     if not event_schedules:
-        #         continue
-        #
-        #     for event_schedule in event_schedules:
-        #         _l.debug('event_schedule=%s, event_class=%s, notification_class=%s, periodicity=%s, n=%s',
-        #                  event_schedule.id, event_schedule.event_class, event_schedule.notification_class,
-        #                  event_schedule.periodicity, event_schedule.periodicity_n)
-        #
-        #         is_complies, effective_date, notification_date = event_schedule.check_date(now)
-        #
-        #         _l.debug('is_complies=%s', is_complies)
-        #         if is_complies:
-        #             ge_dup_qs = GeneratedEvent.objects.filter(
-        #                 master_user=master_user,
-        #                 event_schedule=event_schedule,
-        #                 effective_date=effective_date,
-        #                 notification_date=notification_date,
-        #                 instrument=instrument,
-        #                 portfolio=portfolio,
-        #                 account=account,
-        #                 strategy1=strategy1,
-        #                 strategy2=strategy2,
-        #                 strategy3=strategy3,
-        #                 position=position
-        #             )
-        #             if ge_dup_qs.exists():
-        #                 _l.debug('generated event already exist')
-        #                 continue
-        #
-        #             generated_event = GeneratedEvent()
-        #             generated_event.master_user = master_user
-        #             generated_event.event_schedule = event_schedule
-        #             generated_event.status = GeneratedEvent.NEW
-        #             generated_event.status_modified = timezone.now()
-        #             generated_event.effective_date = effective_date
-        #             generated_event.notification_date = notification_date
-        #             generated_event.instrument = instrument
-        #             generated_event.portfolio = portfolio
-        #             generated_event.account = account
-        #             generated_event.strategy1 = strategy1
-        #             generated_event.strategy2 = strategy2
-        #             generated_event.strategy3 = strategy3
-        #             generated_event.position = position
-        #             generated_event.save()
-        generate_events0.apply_async(kwargs={'master_user': master_user})
+        master_user_qs = MasterUser.objects.all()
+        if master_users:
+            master_user_qs = master_user_qs.filter(pk__in=master_users)
 
-    # process_events.apply_async(kwargs={'master_users': master_users})
+        for master_user in master_user_qs:
+            # _l.debug('generate_events: master_user=%s', master_user.id)
+            #
+            # opened_instrument_items = []
+            # # instruments_pk = set()
+            #
+            # report = Report(
+            #     master_user=master_user,
+            #     report_date=now,
+            #     allocation_mode=Report.MODE_IGNORE,
+            # )
+            # builder = ReportBuilder(instance=report)
+            # # builder.build_balance()
+            # builder.build_position_only()
+            #
+            # for i in report.items:
+            #     if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
+            #         opened_instrument_items.append(i)
+            #         # instruments_pk.add(i.instr.id)
+            #
+            # _l.debug('opened instruments: %s', {i.instr.id for i in opened_instrument_items})
+            # if not opened_instrument_items:
+            #     return
+            #
+            # event_schedule_qs = EventSchedule.objects.prefetch_related(
+            #     'instrument__master_user',
+            #     'instrument',
+            #     'event_class',
+            #     'notification_class',
+            #     'periodicity',
+            #     'actions',
+            #     'actions__transaction_type'
+            # ).filter(
+            #     effective_date__lte=(now - F("notify_in_n_days")),
+            #     final_date__gte=now,
+            #     instrument__in={i.instr.id for i in opened_instrument_items}
+            # ).order_by(
+            #     'instrument__master_user__id',
+            #     'instrument__id'
+            # )
+            # # event_schedule_qs = event_schedule_qs.filter(instrument__in=instruments_pk)
+            #
+            # if not event_schedule_qs.exists():
+            #     _l.debug('event schedules not found')
+            #     return
+            #
+            # event_schedule_cache = defaultdict(list)
+            # for event_schedule in event_schedule_qs:
+            #     event_schedule_cache[event_schedule.instrument_id].append(event_schedule)
+            #
+            # for item in opened_instrument_items:
+            #     portfolio = item.prtfl
+            #     account = item.acc
+            #     strategy1 = item.str1
+            #     strategy2 = item.str2
+            #     strategy3 = item.str3
+            #     instrument = item.instr
+            #     position = item.pos_size
+            #
+            #     event_schedules = event_schedule_cache.get(instrument.id, None) or []
+            #
+            #     _l.debug('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
+            #              'instrument=%s, position=%s, event_schedules=%s',
+            #              portfolio.id, account.id, strategy1.id, strategy2.id, strategy3.id,
+            #              instrument.id, position, [e.id for e in event_schedules])
+            #
+            #     if not event_schedules:
+            #         continue
+            #
+            #     for event_schedule in event_schedules:
+            #         _l.debug('event_schedule=%s, event_class=%s, notification_class=%s, periodicity=%s, n=%s',
+            #                  event_schedule.id, event_schedule.event_class, event_schedule.notification_class,
+            #                  event_schedule.periodicity, event_schedule.periodicity_n)
+            #
+            #         is_complies, effective_date, notification_date = event_schedule.check_date(now)
+            #
+            #         _l.debug('is_complies=%s', is_complies)
+            #         if is_complies:
+            #             ge_dup_qs = GeneratedEvent.objects.filter(
+            #                 master_user=master_user,
+            #                 event_schedule=event_schedule,
+            #                 effective_date=effective_date,
+            #                 notification_date=notification_date,
+            #                 instrument=instrument,
+            #                 portfolio=portfolio,
+            #                 account=account,
+            #                 strategy1=strategy1,
+            #                 strategy2=strategy2,
+            #                 strategy3=strategy3,
+            #                 position=position
+            #             )
+            #             if ge_dup_qs.exists():
+            #                 _l.debug('generated event already exist')
+            #                 continue
+            #
+            #             generated_event = GeneratedEvent()
+            #             generated_event.master_user = master_user
+            #             generated_event.event_schedule = event_schedule
+            #             generated_event.status = GeneratedEvent.NEW
+            #             generated_event.status_modified = timezone.now()
+            #             generated_event.effective_date = effective_date
+            #             generated_event.notification_date = notification_date
+            #             generated_event.instrument = instrument
+            #             generated_event.portfolio = portfolio
+            #             generated_event.account = account
+            #             generated_event.strategy1 = strategy1
+            #             generated_event.strategy2 = strategy2
+            #             generated_event.strategy3 = strategy3
+            #             generated_event.position = position
+            #             generated_event.save()
+            generate_events0.apply_async(kwargs={'master_user': master_user})
 
-    # _l.debug('finished')
+        # process_events.apply_async(kwargs={'master_users': master_users})
+
+        # _l.debug('finished')
+
+    except Exception as e:
+
+        _l.info('generate_events exception occurred %s' % e)
+        _l.info(traceback.format_exc())
 
 
 @shared_task(name='instruments.generate_events_do_not_inform_apply_default0', ignore_result=True)
 def generate_events_do_not_inform_apply_default0(master_user):
-    _l.debug('generate_events0: master_user=%s', master_user.id)
 
-    opened_instrument_items = []
+    try:
 
-    now = date_now()
+        _l.debug('generate_events0: master_user=%s', master_user.id)
 
-    report = Report(
-        master_user=master_user,
-        report_date=now,
-        allocation_mode=Report.MODE_IGNORE,
-    )
-    builder = ReportBuilder(instance=report)
-    builder.build_position_only()
+        opened_instrument_items = []
 
-    for i in report.items:
-        if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
-            opened_instrument_items.append(i)
+        now = date_now()
 
-    _l.debug('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
-    if not opened_instrument_items:
-        return
+        report = Report(
+            master_user=master_user,
+            report_date=now,
+            allocation_mode=Report.MODE_IGNORE,
+        )
+        builder = ReportBuilder(instance=report)
+        builder.build_position_only()
 
-    event_schedule_qs = EventSchedule.objects.prefetch_related(
-        'instrument',
-        'event_class',
-        'notification_class',
-        'periodicity',
-        'actions',
-        'actions__transaction_type'
-    ).filter(
-        effective_date__lte=(now - F("notify_in_n_days")),
-        final_date__gte=now,
-        instrument__in={i.instr.id for i in opened_instrument_items}
-    ).order_by(
-        'instrument__master_user__id',
-        'instrument__id'
-    )
+        for i in report.items:
+            if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
+                opened_instrument_items.append(i)
 
-    if not event_schedule_qs.exists():
-        _l.debug('event schedules not found')
-        return
+        _l.debug('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
+        if not opened_instrument_items:
+            return
 
-    event_schedules_cache = defaultdict(list)
-    for event_schedule in event_schedule_qs:
-        event_schedules_cache[event_schedule.instrument_id].append(event_schedule)
+        event_schedule_qs = EventSchedule.objects.prefetch_related(
+            'instrument',
+            'event_class',
+            'notification_class',
+            'periodicity',
+            'actions',
+            'actions__transaction_type'
+        ).filter(
+            effective_date__lte=(now - F("notify_in_n_days")),
+            final_date__gte=now,
+            instrument__in={i.instr.id for i in opened_instrument_items}
+        ).order_by(
+            'instrument__master_user__id',
+            'instrument__id'
+        )
 
-    for item in opened_instrument_items:
-        portfolio = item.prtfl
-        account = item.acc
-        strategy1 = item.str1
-        strategy2 = item.str2
-        strategy3 = item.str3
-        instrument = item.instr
-        position = item.pos_size
+        if not event_schedule_qs.exists():
+            _l.debug('event schedules not found')
+            return
 
-        event_schedules = event_schedules_cache.get(instrument.id, None)
-        _l.debug('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
-                 'instrument=%s, position=%s, event_schedules=%s',
-                 portfolio.id, account.id, strategy1.id, strategy2.id, strategy3.id,
-                 instrument.id, position, [e.id for e in event_schedules] if event_schedules else [])
+        event_schedules_cache = defaultdict(list)
+        for event_schedule in event_schedule_qs:
+            event_schedules_cache[event_schedule.instrument_id].append(event_schedule)
 
-        if not event_schedules:
-            continue
+        for item in opened_instrument_items:
+            portfolio = item.prtfl
+            account = item.acc
+            strategy1 = item.str1
+            strategy2 = item.str2
+            strategy3 = item.str3
+            instrument = item.instr
+            position = item.pos_size
 
-        for event_schedule in event_schedules:
-            _l.debug('event_schedule=%s, event_class=%s, notification_class=%s, periodicity=%s, n=%s',
-                     event_schedule.id, event_schedule.event_class, event_schedule.notification_class,
-                     event_schedule.periodicity, event_schedule.periodicity_n)
+            event_schedules = event_schedules_cache.get(instrument.id, None)
+            _l.debug('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
+                     'instrument=%s, position=%s, event_schedules=%s',
+                     portfolio.id, account.id, strategy1.id, strategy2.id, strategy3.id,
+                     instrument.id, position, [e.id for e in event_schedules] if event_schedules else [])
 
-            is_complies, effective_date, notification_date = event_schedule.check_date(now)
+            if not event_schedules:
+                continue
 
-            is_apply_default = event_schedule.notification_class == NotificationClass.APPLY_DEF_ON_EDATE or event_schedule.notification_class == NotificationClass.APPLY_DEF_ON_NDATE
+            for event_schedule in event_schedules:
+                _l.debug('event_schedule=%s, event_class=%s, notification_class=%s, periodicity=%s, n=%s',
+                         event_schedule.id, event_schedule.event_class, event_schedule.notification_class,
+                         event_schedule.periodicity, event_schedule.periodicity_n)
 
-            _l.debug('is_complies=%s', is_complies)
-            if is_complies and is_apply_default:
-                ge_dup_qs = GeneratedEvent.objects.filter(
-                    master_user=master_user,
-                    event_schedule=event_schedule,
-                    effective_date=effective_date,
-                    # notification_date=notification_date,
-                    instrument=instrument,
-                    portfolio=portfolio,
-                    account=account,
-                    strategy1=strategy1,
-                    strategy2=strategy2,
-                    strategy3=strategy3,
-                    position=position
-                )
-                if ge_dup_qs.exists():
-                    _l.debug('generated event already exist')
-                    continue
+                is_complies, effective_date, notification_date = event_schedule.check_date(now)
 
-                print('event_schedule %s' % event_schedule)
+                is_apply_default = event_schedule.notification_class == NotificationClass.APPLY_DEF_ON_EDATE or event_schedule.notification_class == NotificationClass.APPLY_DEF_ON_NDATE
 
-                generated_event = GeneratedEvent()
-                generated_event.master_user = master_user
-                generated_event.event_schedule = event_schedule
-                generated_event.status = GeneratedEvent.NEW
-                generated_event.status_modified = timezone.now()
-                generated_event.effective_date = effective_date
-                generated_event.notification_date = notification_date
-                generated_event.instrument = instrument
-                generated_event.portfolio = portfolio
-                generated_event.account = account
-                generated_event.strategy1 = strategy1
-                generated_event.strategy2 = strategy2
-                generated_event.strategy3 = strategy3
-                generated_event.position = position
-                generated_event.save()
+                _l.debug('is_complies=%s', is_complies)
+                if is_complies and is_apply_default:
+                    ge_dup_qs = GeneratedEvent.objects.filter(
+                        master_user=master_user,
+                        event_schedule=event_schedule,
+                        effective_date=effective_date,
+                        # notification_date=notification_date,
+                        instrument=instrument,
+                        portfolio=portfolio,
+                        account=account,
+                        strategy1=strategy1,
+                        strategy2=strategy2,
+                        strategy3=strategy3,
+                        position=position
+                    )
+                    if ge_dup_qs.exists():
+                        _l.debug('generated event already exist')
+                        continue
 
-    process_events0.apply_async(kwargs={'master_user': master_user})
+                    print('event_schedule %s' % event_schedule)
+
+                    generated_event = GeneratedEvent()
+                    generated_event.master_user = master_user
+                    generated_event.event_schedule = event_schedule
+                    generated_event.status = GeneratedEvent.NEW
+                    generated_event.status_modified = timezone.now()
+                    generated_event.effective_date = effective_date
+                    generated_event.notification_date = notification_date
+                    generated_event.instrument = instrument
+                    generated_event.portfolio = portfolio
+                    generated_event.account = account
+                    generated_event.strategy1 = strategy1
+                    generated_event.strategy2 = strategy2
+                    generated_event.strategy3 = strategy3
+                    generated_event.position = position
+                    generated_event.save()
+
+        process_events0.apply_async(kwargs={'master_user': master_user})
+
+    except Exception as e:
+
+        _l.info('generate_events exception occurred %s' % e)
+        _l.info(traceback.format_exc())
 
 
 @shared_task(name='instruments.generate_events_do_not_inform_apply_default', ignore_result=True)
 def generate_events_do_not_inform_apply_default(master_users=None):
-    _l.debug('generate_events_do_not_inform_apply_default: master_users=%s', master_users)
 
-    master_user_qs = MasterUser.objects.all()
-    if master_users:
-        master_user_qs = master_user_qs.filter(pk__in=master_users)
+    try:
+        _l.debug('generate_events_do_not_inform_apply_default: master_users=%s', master_users)
 
-    limit = 5
-    index = 0
+        master_user_qs = MasterUser.objects.all()
+        if master_users:
+            master_user_qs = master_user_qs.filter(pk__in=master_users)
 
-    for master_user in master_user_qs:
+        limit = 5
+        index = 0
 
-        index = index + 1
-        if index < limit:
-            generate_events_do_not_inform_apply_default0.apply_async(kwargs={'master_user': master_user})
+        for master_user in master_user_qs:
+
+            index = index + 1
+            if index < limit:
+                generate_events_do_not_inform_apply_default0.apply_async(kwargs={'master_user': master_user})
+
+    except Exception as e:
+
+        _l.info('generate_events_do_not_inform_apply_default exception occurred %s' % e)
+        _l.info(traceback.format_exc())
 
 
 @shared_task(name='instruments.process_events_do_not_inform_apply_default0', ignore_result=True)
 @transaction.atomic()
 def process_events_do_not_inform_apply_default0(master_user):
-    from poms.instruments.handlers import GeneratedEventProcess
 
-    _l.debug('process_events0: master_user=%s', master_user.id)
+    try:
 
-    now = date_now()
+        from poms.instruments.handlers import GeneratedEventProcess
 
-    generated_event_qs = GeneratedEvent.objects.prefetch_related(
-        'event_schedule',
-        'event_schedule__notification_class',
-        'instrument',
-        'instrument__pricing_currency',
-        'instrument__accrued_currency',
-        'portfolio',
-        'account',
-        'strategy1',
-        'strategy2',
-        'strategy3',
-    ).filter(
-        master_user=master_user,
-        status=GeneratedEvent.NEW,
-    ).filter(
-        Q(effective_date=now) | Q(notification_date=now),
-        )
+        _l.debug('process_events0: master_user=%s', master_user.id)
 
-    for gevent in generated_event_qs:
+        now = date_now()
 
-        is_apply_default_on_notification_date = gevent.is_apply_default_on_notification_date(now)
-        is_apply_default_on_effective_date = gevent.is_apply_default_on_effective_date(now)
+        generated_event_qs = GeneratedEvent.objects.prefetch_related(
+            'event_schedule',
+            'event_schedule__notification_class',
+            'instrument',
+            'instrument__pricing_currency',
+            'instrument__accrued_currency',
+            'portfolio',
+            'account',
+            'strategy1',
+            'strategy2',
+            'strategy3',
+        ).filter(
+            master_user=master_user,
+            status=GeneratedEvent.NEW,
+        ).filter(
+            Q(effective_date=now) | Q(notification_date=now),
+            )
 
-        _l.debug(
-            'process_events_do_not_inform_apply_default0:'
-            ' notification_class=%s,'
-            ' notification_date=%s,'
-            ' notification_date_notified=%s'
-            ' effective_date=%s,'
-            ' effective_date_notified=%s,'
-            ' is_apply_default_on_notification_date=%s,'
-            ' is_apply_default_on_effective_date=%s,',
-            gevent.event_schedule.notification_class.user_code,
-            gevent.notification_date,
-            gevent.notification_date_notified,
-            gevent.effective_date,
-            gevent.effective_date_notified,
+        for gevent in generated_event_qs:
 
-            is_apply_default_on_notification_date,
-            is_apply_default_on_effective_date)
+            is_apply_default_on_notification_date = gevent.is_apply_default_on_notification_date(now)
+            is_apply_default_on_effective_date = gevent.is_apply_default_on_effective_date(now)
 
-        owner = next(iter([m for m in gevent.master_user.members.all() if m.is_owner]))
+            _l.debug(
+                'process_events_do_not_inform_apply_default0:'
+                ' notification_class=%s,'
+                ' notification_date=%s,'
+                ' notification_date_notified=%s'
+                ' effective_date=%s,'
+                ' effective_date_notified=%s,'
+                ' is_apply_default_on_notification_date=%s,'
+                ' is_apply_default_on_effective_date=%s,',
+                gevent.event_schedule.notification_class.user_code,
+                gevent.notification_date,
+                gevent.notification_date_notified,
+                gevent.effective_date,
+                gevent.effective_date_notified,
 
-        if is_apply_default_on_notification_date or is_apply_default_on_effective_date:
-            action = next((a for a in gevent.event_schedule.actions.all() if a.is_book_automatic), None)
-            if action:
-                ttp = GeneratedEventProcess(
-                    generated_event=gevent,
-                    action=action,
-                    context={
-                        'master_user': master_user,
-                        'member': owner,
-                    }
-                )
-                ttp.process()
-                gevent.processed(None, action, ttp.complex_transaction)
-            else:
-                gevent.status = GeneratedEvent.BOOKED_SYSTEM_DEFAULT
-                gevent.status_date = timezone.now()
+                is_apply_default_on_notification_date,
+                is_apply_default_on_effective_date)
 
-        if is_apply_default_on_notification_date or is_apply_default_on_effective_date:
-            gevent.save()
+            owner = next(iter([m for m in gevent.master_user.members.all() if m.is_owner]))
+
+            if is_apply_default_on_notification_date or is_apply_default_on_effective_date:
+                action = next((a for a in gevent.event_schedule.actions.all() if a.is_book_automatic), None)
+                if action:
+                    ttp = GeneratedEventProcess(
+                        generated_event=gevent,
+                        action=action,
+                        context={
+                            'master_user': master_user,
+                            'member': owner,
+                        }
+                    )
+                    ttp.process()
+                    gevent.processed(None, action, ttp.complex_transaction)
+                else:
+                    gevent.status = GeneratedEvent.BOOKED_SYSTEM_DEFAULT
+                    gevent.status_date = timezone.now()
+
+            if is_apply_default_on_notification_date or is_apply_default_on_effective_date:
+                gevent.save()
+    except Exception as e:
+
+        _l.info('process_events_do_not_inform_apply_default0 exception occurred %s' % e)
+        _l.info(traceback.format_exc())
+
 
 @shared_task(name='instruments.process_events0', ignore_result=True)
 @transaction.atomic()
 def process_events0(master_user):
-    from poms.instruments.handlers import GeneratedEventProcess
 
-    _l.debug('process_events0: master_user=%s', master_user.id)
+    try:
+        from poms.instruments.handlers import GeneratedEventProcess
 
-    now = date_now()
+        _l.debug('process_events0: master_user=%s', master_user.id)
 
-    generated_event_qs = GeneratedEvent.objects.prefetch_related(
-        'event_schedule',
-        'event_schedule__notification_class',
-        'instrument',
-        'instrument__pricing_currency',
-        'instrument__accrued_currency',
-        'portfolio',
-        'account',
-        'strategy1',
-        'strategy2',
-        'strategy3',
-    ).filter(
-        master_user=master_user,
-        status=GeneratedEvent.NEW,
-    ).filter(
-        Q(effective_date=now) | Q(notification_date=now),
-    )
+        now = date_now()
 
-    for gevent in generated_event_qs:
-        is_notify_on_notification_date = gevent.is_notify_on_notification_date(now)
-        is_notify_on_effective_date = gevent.is_notify_on_effective_date(now)
-        is_apply_default_on_notification_date = gevent.is_apply_default_on_notification_date(now)
-        is_apply_default_on_effective_date = gevent.is_apply_default_on_effective_date(now)
-        is_need_reaction_on_notification_date = gevent.is_need_reaction_on_notification_date(now)
-        is_need_reaction_on_effective_date = gevent.is_need_reaction_on_effective_date(now)
+        generated_event_qs = GeneratedEvent.objects.prefetch_related(
+            'event_schedule',
+            'event_schedule__notification_class',
+            'instrument',
+            'instrument__pricing_currency',
+            'instrument__accrued_currency',
+            'portfolio',
+            'account',
+            'strategy1',
+            'strategy2',
+            'strategy3',
+        ).filter(
+            master_user=master_user,
+            status=GeneratedEvent.NEW,
+        ).filter(
+            Q(effective_date=now) | Q(notification_date=now),
+        )
 
-        _l.debug(
-            'process:'
-            ' notification_class=%s,'
-            ' notification_date=%s,'
-            ' notification_date_notified=%s'
-            ' effective_date=%s,'
-            ' effective_date_notified=%s,'
-            ' is_notify_on_notification_date=%s,'
-            ' is_notify_on_effective_date=%s,'
-            ' is_apply_default_on_notification_date=%s,'
-            ' is_apply_default_on_effective_date=%s,'
-            ' is_need_reaction_on_notification_date=%s,'
-            ' is_need_reaction_on_effective_date=%s',
-            gevent.event_schedule.notification_class.user_code,
-            gevent.notification_date,
-            gevent.notification_date_notified,
-            gevent.effective_date,
-            gevent.effective_date_notified,
-            is_notify_on_notification_date,
-            is_notify_on_effective_date,
-            is_apply_default_on_notification_date,
-            is_apply_default_on_effective_date,
-            is_need_reaction_on_notification_date,
-            is_need_reaction_on_effective_date)
+        for gevent in generated_event_qs:
+            is_notify_on_notification_date = gevent.is_notify_on_notification_date(now)
+            is_notify_on_effective_date = gevent.is_notify_on_effective_date(now)
+            is_apply_default_on_notification_date = gevent.is_apply_default_on_notification_date(now)
+            is_apply_default_on_effective_date = gevent.is_apply_default_on_effective_date(now)
+            is_need_reaction_on_notification_date = gevent.is_need_reaction_on_notification_date(now)
+            is_need_reaction_on_effective_date = gevent.is_need_reaction_on_effective_date(now)
 
-        owner = next(iter([m for m in gevent.master_user.members.all() if m.is_owner]))
+            _l.debug(
+                'process:'
+                ' notification_class=%s,'
+                ' notification_date=%s,'
+                ' notification_date_notified=%s'
+                ' effective_date=%s,'
+                ' effective_date_notified=%s,'
+                ' is_notify_on_notification_date=%s,'
+                ' is_notify_on_effective_date=%s,'
+                ' is_apply_default_on_notification_date=%s,'
+                ' is_apply_default_on_effective_date=%s,'
+                ' is_need_reaction_on_notification_date=%s,'
+                ' is_need_reaction_on_effective_date=%s',
+                gevent.event_schedule.notification_class.user_code,
+                gevent.notification_date,
+                gevent.notification_date_notified,
+                gevent.effective_date,
+                gevent.effective_date_notified,
+                is_notify_on_notification_date,
+                is_notify_on_effective_date,
+                is_apply_default_on_notification_date,
+                is_apply_default_on_effective_date,
+                is_need_reaction_on_notification_date,
+                is_need_reaction_on_effective_date)
 
-        if is_notify_on_notification_date or is_notify_on_effective_date:
-            if is_notify_on_notification_date:
-                gevent.notification_date_notified = True
-            if is_notify_on_effective_date:
-                gevent.effective_date_notified = True
+            owner = next(iter([m for m in gevent.master_user.members.all() if m.is_owner]))
 
-            recipients = [m for m in gevent.master_user.members.all() if not m.is_deleted]
+            if is_notify_on_notification_date or is_notify_on_effective_date:
+                if is_notify_on_notification_date:
+                    gevent.notification_date_notified = True
+                if is_notify_on_effective_date:
+                    gevent.effective_date_notified = True
 
-            expr = gevent.event_schedule.description or gevent.event_schedule.name
-            if expr:
-                for member in recipients:
-                    message = gevent.generate_text(
-                        exr=expr,
-                        context={
-                            'master_user': master_user,
-                            'member': member
-                        })
-                    notifications.send(recipients=[member],
-                                       message=message,
+                recipients = [m for m in gevent.master_user.members.all() if not m.is_deleted]
+
+                expr = gevent.event_schedule.description or gevent.event_schedule.name
+                if expr:
+                    for member in recipients:
+                        message = gevent.generate_text(
+                            exr=expr,
+                            context={
+                                'master_user': master_user,
+                                'member': member
+                            })
+                        notifications.send(recipients=[member],
+                                           message=message,
+                                           actor=gevent.event_schedule,
+                                           verb='event occurred',
+                                           action_object=gevent.instrument)
+                else:
+                    notifications.send(recipients=recipients,
                                        actor=gevent.event_schedule,
                                        verb='event occurred',
                                        action_object=gevent.instrument)
-            else:
-                notifications.send(recipients=recipients,
-                                   actor=gevent.event_schedule,
-                                   verb='event occurred',
-                                   action_object=gevent.instrument)
 
-        if is_apply_default_on_notification_date or is_apply_default_on_effective_date:
-            action = next((a for a in gevent.event_schedule.actions.all() if a.is_book_automatic), None)
-            if action:
-                ttp = GeneratedEventProcess(
-                    generated_event=gevent,
-                    action=action,
-                    context={
-                        'master_user': master_user,
-                        'member': owner,
-                    }
-                )
-                ttp.process()
-                gevent.processed(None, action, ttp.complex_transaction)
-            else:
-                gevent.status = GeneratedEvent.BOOKED_SYSTEM_DEFAULT
-                gevent.status_date = timezone.now()
+            if is_apply_default_on_notification_date or is_apply_default_on_effective_date:
+                action = next((a for a in gevent.event_schedule.actions.all() if a.is_book_automatic), None)
+                if action:
+                    ttp = GeneratedEventProcess(
+                        generated_event=gevent,
+                        action=action,
+                        context={
+                            'master_user': master_user,
+                            'member': owner,
+                        }
+                    )
+                    ttp.process()
+                    gevent.processed(None, action, ttp.complex_transaction)
+                else:
+                    gevent.status = GeneratedEvent.BOOKED_SYSTEM_DEFAULT
+                    gevent.status_date = timezone.now()
 
-        if is_notify_on_notification_date or is_notify_on_effective_date or \
-                is_apply_default_on_notification_date or is_apply_default_on_effective_date:
-            gevent.save()
+            if is_notify_on_notification_date or is_notify_on_effective_date or \
+                    is_apply_default_on_notification_date or is_apply_default_on_effective_date:
+                gevent.save()
+
+    except Exception as e:
+
+        _l.info('process_events0 exception occurred %s' % e)
+        _l.info(traceback.format_exc())
 
 
 @shared_task(name='instruments.process_events', ignore_result=True)
 def process_events(master_users=None):
 
-    _l.debug('process_events: master_users=%s', master_users)
+    try:
 
-    master_user_qs = MasterUser.objects.prefetch_related(
-        'members'
-    )
-    if master_users:
-        master_user_qs = master_user_qs.filter(pk__in=master_users)
+        _l.debug('process_events: master_users=%s', master_users)
 
-    for master_user in master_user_qs:
+        master_user_qs = MasterUser.objects.prefetch_related(
+            'members'
+        )
+        if master_users:
+            master_user_qs = master_user_qs.filter(pk__in=master_users)
 
-        _l.debug('process_events: master_user=%s', master_user.id)
+        for master_user in master_user_qs:
 
-        process_events0.apply_async(kwargs={'master_user': master_user})
+            _l.debug('process_events: master_user=%s', master_user.id)
+
+            process_events0.apply_async(kwargs={'master_user': master_user})
+
+    except Exception as e:
+
+        _l.info('process_events exception occurred %s' % e)
+        _l.info(traceback.format_exc())
