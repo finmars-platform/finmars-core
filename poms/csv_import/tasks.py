@@ -65,7 +65,6 @@ from tempfile import NamedTemporaryFile
 
 
 def generate_file_report(instance, master_user, type, name):
-
     columns = ['Row number']
 
     columns = columns + instance.stats[0]['error_data']['columns']['imported_columns']
@@ -279,7 +278,6 @@ def get_item(scheme, result):
 
 
 def update_row_with_calculated_data(csv_row_dict, inputs, calculated_inputs):
-
     for i in calculated_inputs:
 
         try:
@@ -291,6 +289,7 @@ def update_row_with_calculated_data(csv_row_dict, inputs, calculated_inputs):
             csv_row_dict[i.name] = None
 
     return csv_row_dict
+
 
 def process_csv_file(master_user,
                      scheme,
@@ -305,7 +304,6 @@ def process_csv_file(master_user,
                      process_result_handler,
                      member,
                      execution_context=None):
-
     csv_fields = scheme.csv_fields.all()
     entity_fields = scheme.entity_fields.all()
     calculated_inputs = list(scheme.calculated_inputs.all())
@@ -476,7 +474,6 @@ def process_csv_file(master_user,
 
                                     executed_expressions.append(executed_expression)
 
-
                                     if key in mapping_map:
 
                                         try:
@@ -489,7 +486,7 @@ def process_csv_file(master_user,
                                             try:
 
                                                 instance[key] = relation_map[key].objects.get(master_user=master_user,
-                                                                                                  user_code=executed_expression)
+                                                                                              user_code=executed_expression)
 
                                             except (relation_map[key].DoesNotExist, KeyError):
 
@@ -552,7 +549,8 @@ def process_csv_file(master_user,
 
                                     else:
 
-                                        _l.debug('ExpressionEvalError Appending Error %s key %s' % (ExpressionEvalError, key))
+                                        _l.debug('ExpressionEvalError Appending Error %s key %s' % (
+                                        ExpressionEvalError, key))
 
                                         instance[key] = None
 
@@ -601,7 +599,8 @@ def process_csv_file(master_user,
                                                 master_user=master_user,
                                                 value=executed_expression, attribute_type=attr_type).content_object
 
-                                        except (classifier_mapping_map[scheme.content_type.model].DoesNotExist, KeyError):
+                                        except (
+                                        classifier_mapping_map[scheme.content_type.model].DoesNotExist, KeyError):
 
                                             try:
 
@@ -657,7 +656,8 @@ def process_csv_file(master_user,
 
                         try:
 
-                            instance, error_row = process_result_handler(instance, error_row, scheme, error_handler, mode,
+                            instance, error_row = process_result_handler(instance, error_row, scheme, error_handler,
+                                                                         mode,
                                                                          member, master_user)
 
                             results.append(instance)
@@ -678,14 +678,12 @@ def process_csv_file(master_user,
 
             except Exception as e:
 
-
-
                 error_row['error_message'] = error_row['error_message'] + ugettext(
                     'Unhandled Error. %s' % e)
 
             finally:
 
-                if row_index != 0: # skip header from counting
+                if row_index != 0:  # skip header from counting
                     processed_row_index = processed_row_index + 1
 
                 errors.append(error_row)
@@ -762,7 +760,7 @@ class ValidateHandler:
                     if attr_type.value_type == 10:
                         attribute.value_string = str(result_attr['executed_expression'])
                     elif attr_type.value_type == 20:
-                        attribute.value_float = float(result_attr['executed_expression']) 
+                        attribute.value_float = float(result_attr['executed_expression'])
                     elif attr_type.value_type == 30:
 
                         attribute.classifier = result_attr['executed_expression']
@@ -778,14 +776,14 @@ class ValidateHandler:
 
             except Exception as e:
 
-                _l.info("e %s" % e )
+                _l.info("e %s" % e)
 
                 error_row['error_reaction'] = 'Continue import'
                 error_row['level'] = 'error'
                 error_row['error_message'] = error_row['error_message'] + ugettext(
                     'Validation error %(error)s ') % {
                                                  'error': 'Cannot create attribute'
-                                         }
+                                             }
 
     def instance_full_clean(self, scheme, result, error_handler, error_row):
 
@@ -902,7 +900,6 @@ class ValidateHandler:
         try:
             with SFS.open(instance.file_path, 'rb') as f:
                 with NamedTemporaryFile() as tmpf:
-
                     for chunk in f.chunks():
                         tmpf.write(chunk)
                     tmpf.flush()
@@ -1331,7 +1328,6 @@ class ImportHandler:
         try:
             with SFS.open(instance.file_path, 'rb') as f:
                 with NamedTemporaryFile() as tmpf:
-
                     for chunk in f.chunks():
                         tmpf.write(chunk)
                     tmpf.flush()
@@ -1404,13 +1400,11 @@ class ImportHandler:
                                     file_report_id=instance.stats_file_report)
             else:
                 send_system_message(master_user=instance.master_user,
-                                        source="Simple Import Service",
-                                        text="User %s Import Finished" % member.username,
-                                        file_report_id=instance.stats_file_report)
+                                    source="Simple Import Service",
+                                    text="User %s Import Finished" % member.username,
+                                    file_report_id=instance.stats_file_report)
 
         return instance
-
-
 
 
 @shared_task(name='csv_import.data_csv_file_import', bind=True)
@@ -1505,9 +1499,12 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
 
                         file_report = FileReport()
 
-                        file_report.upload_file(file_name='Data Procedure %s (%s).csv' % (current_date_time, file_name_hash), text=decrypt_text, master_user=procedure_instance.master_user)
+                        file_report.upload_file(
+                            file_name='Data Procedure %s (%s).csv' % (current_date_time, file_name_hash),
+                            text=decrypt_text, master_user=procedure_instance.master_user)
                         file_report.master_user = procedure_instance.master_user
-                        file_report.name = "'Data Import File. Procedure ' %s %s" % (procedure_instance.id, current_date_time)
+                        file_report.name = "'Data Import File. Procedure ' %s %s" % (
+                        procedure_instance.id, current_date_time)
                         file_report.file_name = 'Data Procedure %s (%s).csv' % (current_date_time, file_name_hash)
                         file_report.type = 'csv_import.import'
                         file_report.notes = 'Data Import File. Procedure %s' % procedure_instance.id
@@ -1550,7 +1547,6 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
             procedure_instance.save()
 
 
-
 class UnifiedImportHandler():
 
     def __init__(self, instance, update_state, execution_context):
@@ -1563,7 +1559,6 @@ class UnifiedImportHandler():
 
         index = 0
         for col in first_row:
-
             col = col.lower().replace(" ", "_")
 
             csv_row_dict[col] = row[index]
@@ -1588,6 +1583,54 @@ class UnifiedImportHandler():
 
         return row_index
 
+    def process_row(self, first_row, row, item, ecosystem_default, context):
+
+        row_as_dict = self.get_row_data(row, first_row)
+
+        item['row_as_dict'] = row_as_dict
+
+        row_data = {}
+        row_data = row_as_dict  # tmp
+
+        try:
+            row_data['pricing_currency'] = Currency.objects.get(master_user=self.instance.master_user,
+                                                                user_code=row_as_dict['pricing_currency'])
+        except Exception as e:
+            row_data['pricing_currency'] = ecosystem_default.currency.id
+
+
+        try:
+            row_data['accrued_currency'] = Currency.objects.get(master_user=self.instance.master_user,
+                                                                user_code=row_as_dict['accrued_currency'])
+        except Exception as e:
+            row_data['accrued_currency'] = ecosystem_default.currency.id
+
+
+        try:
+            row_data['instrument_type'] = InstrumentType.objects.get(master_user=self.instance.master_user,
+                                                                user_code=row_as_dict['instrument_type'])
+        except Exception as e:
+            row_data['instrument_type'] = ecosystem_default.instrument_type.id
+
+
+        row_data['master_user'] = self.instance.master_user.id
+        row_data['manual_pricing_formulas'] = []
+        row_data['accrual_calculation_schedules'] = []
+        row_data['event_schedules'] = []
+        row_data['factor_schedules'] = []
+
+        serializer = InstrumentExternalApiSerializer(data=row_data, context=context)
+
+        is_valid = serializer.is_valid()
+
+        item['row_data'] = row_data
+
+        if is_valid:
+            serializer.save()
+        else:
+            item['error_message'] = serializer.errors
+
+
     def unified_process_csv_file(self, file):
 
         errors = []
@@ -1602,6 +1645,8 @@ class UnifiedImportHandler():
 
         context = {'master_user': self.instance.master_user}
 
+        ecosystem_default = EcosystemDefault.objects.get(master_user=self.instance.master_user)
+
         items = []
 
         for row_index, row in enumerate(reader):
@@ -1612,21 +1657,11 @@ class UnifiedImportHandler():
                 first_row = row
             else:
 
-                row_as_dict = self.get_row_data(row, first_row)
-
-                row_data = {}
-                row_data = row_as_dict # tmp
-
-                serializer = InstrumentExternalApiSerializer(data=row_data, context=context)
-
-                is_valid = serializer.is_valid()
-
-                if is_valid:
-                    serializer.save()
-                else:
-                    item['error_message'] = serializer.errors
+               self.process_row(first_row, row, item, ecosystem_default, context)
 
             items.append(item)
+
+        _l.info('items %s' % items)
 
         return items
 
@@ -1643,7 +1678,6 @@ class UnifiedImportHandler():
         try:
             with SFS.open(self.instance.file_path, 'rb') as f:
                 with NamedTemporaryFile() as tmpf:
-
                     for chunk in f.chunks():
                         tmpf.write(chunk)
                     tmpf.flush()
@@ -1651,8 +1685,8 @@ class UnifiedImportHandler():
                     with open(tmpf.name, mode='rt', encoding=self.instance.encoding, errors='ignore') as cfr:
                         self.instance.total_rows = self._row_count(cfr, self.instance)
                         self.update_state(task_id=self.instance.task_id, state=Task.STATUS_PENDING,
-                                     meta={'total_rows': self.instance.total_rows,
-                                           'file_name': self.instance.filename})
+                                          meta={'total_rows': self.instance.total_rows,
+                                                'file_name': self.instance.filename})
 
                     with open(tmpf.name, mode='rt', encoding=self.instance.encoding, errors='ignore') as cf:
                         context = {}
@@ -1672,7 +1706,6 @@ class UnifiedImportHandler():
             SFS.delete(self.instance.file_path)
 
         if self.instance.stats and len(self.instance.stats):
-
 
             send_websocket_message(data={
                 'type': 'simple_import_status',
@@ -1706,6 +1739,7 @@ class UnifiedImportHandler():
 
         return self.instance
 
+
 @shared_task(name='csv_import.unified_data_csv_file_import', bind=True)
 def unified_data_csv_file_import(self, instance, execution_context=None):
     handler = UnifiedImportHandler(instance, self.update_state, execution_context)
@@ -1715,4 +1749,3 @@ def unified_data_csv_file_import(self, instance, execution_context=None):
     handler.process()
 
     return instance
-
