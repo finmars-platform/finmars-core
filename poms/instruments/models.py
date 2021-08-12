@@ -490,11 +490,11 @@ class InstrumentType( NamedModelAutoMapping, FakeDeletableModel, DataTimeStamped
                                                   on_delete=models.SET_NULL)
 
     co_directional_exposure_currency = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('co directional exposure currency'))
-    co_directional_exposure_currency_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
+    co_directional_exposure_currency_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.RELATION,
                                                                  verbose_name=ugettext_lazy('co directional exposure currency value type'))
 
     counter_directional_exposure_currency =  models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('counter directional exposure currency'))
-    counter_directional_exposure_currency_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
+    counter_directional_exposure_currency_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.RELATION,
                                                                                    verbose_name=ugettext_lazy('counter directional exposure currency value type'))
 
     DIRECT_POSITION = 1

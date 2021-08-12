@@ -46,7 +46,7 @@ def calculate_prices_accrued_price_async(master_user=None, begin_date=None, end_
 
 @shared_task(name='instruments.only_generate_events_at_date', ignore_result=True)
 def only_generate_events_at_date(master_user, date):
-    _l.debug('generate_events0: master_user=%s', master_user.id)
+    _l.info('generate_events0: master_user=%s', master_user.id)
 
     opened_instrument_items = []
 
@@ -62,7 +62,7 @@ def only_generate_events_at_date(master_user, date):
         if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
             opened_instrument_items.append(i)
 
-    _l.debug('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
+    _l.info('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
     if not opened_instrument_items:
         return
 
@@ -84,7 +84,7 @@ def only_generate_events_at_date(master_user, date):
 
 
     if not event_schedule_qs.exists():
-        _l.debug('event schedules not found. Date %s' % date)
+        _l.info('event schedules not found. Date %s' % date)
         return
 
     event_schedules_cache = defaultdict(list)
@@ -101,7 +101,7 @@ def only_generate_events_at_date(master_user, date):
         position = item.pos_size
 
         event_schedules = event_schedules_cache.get(instrument.id, None)
-        _l.debug('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
+        _l.info('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
                  'instrument=%s, position=%s, event_schedules=%s',
                  portfolio.id, account.id, strategy1.id, strategy2.id, strategy3.id,
                  instrument.id, position, [e.id for e in event_schedules] if event_schedules else [])
@@ -110,13 +110,13 @@ def only_generate_events_at_date(master_user, date):
             continue
 
         for event_schedule in event_schedules:
-            _l.debug('event_schedule=%s, event_class=%s, notification_class=%s, periodicity=%s, n=%s',
+            _l.info('event_schedule=%s, event_class=%s, notification_class=%s, periodicity=%s, n=%s',
                      event_schedule.id, event_schedule.event_class, event_schedule.notification_class,
                      event_schedule.periodicity, event_schedule.periodicity_n)
 
             is_complies, effective_date, notification_date = event_schedule.check_date(date)
 
-            _l.debug('is_complies=%s', is_complies)
+            _l.info('is_complies=%s', is_complies)
             if is_complies:
                 ge_dup_qs = GeneratedEvent.objects.filter(
                     master_user=master_user,
@@ -132,10 +132,10 @@ def only_generate_events_at_date(master_user, date):
                     position=position
                 )
                 if ge_dup_qs.exists():
-                    _l.debug('generated event already exist')
+                    _l.info('generated event already exist')
                     continue
 
-                print('event_schedule %s' % event_schedule)
+                _l.info('event_schedule %s' % event_schedule)
 
                 generated_event = GeneratedEvent()
                 generated_event.master_user = master_user

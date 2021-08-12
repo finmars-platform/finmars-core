@@ -564,7 +564,7 @@ def process_csv_file(master_user,
                                     else:
 
                                         _l.debug('ExpressionEvalError Appending Error %s key %s' % (
-                                        ExpressionEvalError, key))
+                                            ExpressionEvalError, key))
 
                                         instance[key] = None
 
@@ -614,7 +614,8 @@ def process_csv_file(master_user,
                                                 value=executed_expression, attribute_type=attr_type).content_object
 
                                         except (
-                                        classifier_mapping_map[scheme.content_type.model].DoesNotExist, KeyError):
+                                                classifier_mapping_map[scheme.content_type.model].DoesNotExist,
+                                                KeyError):
 
                                             try:
 
@@ -1518,7 +1519,7 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
                             text=decrypt_text, master_user=procedure_instance.master_user)
                         file_report.master_user = procedure_instance.master_user
                         file_report.name = "'Data Import File. Procedure ' %s %s" % (
-                        procedure_instance.id, current_date_time)
+                            procedure_instance.id, current_date_time)
                         file_report.file_name = 'Data Procedure %s (%s).csv' % (current_date_time, file_name_hash)
                         file_report.type = 'csv_import.import'
                         file_report.notes = 'Data Import File. Procedure %s' % procedure_instance.id
@@ -1562,9 +1563,98 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
 
 
 def set_defaults_from_instrument_type(instrument_object, instrument_type):
+    # Set system attributes
 
+    instrument_object['payment_size_detail'] = instrument_type.payment_size_detail
+    instrument_object['accrued_currency'] = instrument_type.accrued_currency
+    instrument_object['accrued_multiplier'] = instrument_type.accrued_multiplier
+    instrument_object['default_accrued'] = instrument_type.default_accrued
 
+    instrument_object['exposure_calculation_model'] = instrument_type.exposure_calculation_model
+    instrument_object['long_underlying_instrument'] = instrument_type.long_underlying_instrument
+    instrument_object['underlying_long_multiplier'] = instrument_type.underlying_long_multiplier
 
+    instrument_object['short_underlying_instrument'] = instrument_type.short_underlying_instrument
+    instrument_object['underlying_short_multiplier'] = instrument_type.underlying_short_multiplier
+
+    instrument_object['long_underlying_exposure'] = instrument_type.long_underlying_exposure
+    instrument_object['short_underlying_exposure'] = instrument_type.short_underlying_exposure
+
+    instrument_object['co_directional_exposure_currency'] = instrument_type.co_directional_exposure_currency
+    instrument_object['counter_directional_exposure_currency'] = instrument_type.counter_directional_exposure_currency
+
+    # Set attributes
+    instrument_object['attributes'] = []
+
+    for attribute in instrument_type.instrument_attributes:
+
+        attr = {
+            'attribute_type': attribute.attribute_type.id
+        }
+
+        if attribute.value_type == 10:
+            attr['value_string'] = attribute.value_string
+
+        if attribute.value_type == 20:
+            attr['value_float'] = attribute.value_float
+
+        if attribute.value_type == 30:
+            try:
+                attr['classifier'] = GenericClassifier(attribute_type=attribute.attribute_type,
+                                                       name=attribute.value_classifier).id
+            except Exception as e:
+                attr['classifier'] = None
+
+        if attribute.value_type == 40:
+            attr['value_date'] = attribute.value_date
+
+        instrument_object['attributes'].append(attr)
+
+    # Set Event Schedules
+
+    instrument_object['event_schedules'] = []
+
+    for instrument_type_event in instrument_type.events:
+
+        event_schedule = {
+            'event_class': instrument_type_event.event_class
+        }
+
+        for item in instrument_type_event.data['items']:
+
+            # TODO add check for value type
+            if 'default_value' in item:
+                event_schedule[item['key']] = item['default_value']
+
+        event_schedule['actions'] = []
+
+        for instrument_type_action in instrument_type_event.actions:
+            action = {}
+            action['transaction_type'] = instrument_type_action[
+                'transaction_type']  # TODO check if here user code instead of id
+            action['text'] = instrument_type_action['text']
+            action['is_sent_to_pending'] = instrument_type_action['is_sent_to_pending']
+            action['is_book_automatic'] = instrument_type_action['is_book_automatic']
+
+            event_schedule['actions'].append(action)
+
+        instrument_object['event_schedules'].append(event_schedule)
+
+    # Set Accruals
+
+    instrument_object['accrual_calculation_schedules'] = []
+
+    for instrument_type_accrual in instrument_type.accruals:
+
+        accrual = {
+
+        }
+
+        for item in instrument_type_accrual.data['items']:
+
+            # TODO add check for value type
+            if 'default_value' in item:
+                accrual[item['key']] = item['default_value']
 
     return instrument_object
 
@@ -1630,7 +1720,6 @@ class UnifiedImportHandler():
 
             row_data['instrument_type'] = instrument_type.id
 
-
         set_defaults_from_instrument_type(row_data, instrument_type)
 
         try:
@@ -1639,15 +1728,11 @@ class UnifiedImportHandler():
         except Exception as e:
             row_data['pricing_currency'] = self.ecosystem_default.currency.id
 
-
         try:
             row_data['accrued_currency'] = Currency.objects.get(master_user=self.instance.master_user,
                                                                 user_code=row_as_dict['accrued_currency'])
         except Exception as e:
             row_data['accrued_currency'] = self.ecosystem_default.currency.id
-
-
-
 
         row_data['attributes'] = []
 
@@ -1671,7 +1756,8 @@ class UnifiedImportHandler():
 
                     try:
 
-                        classifier = GenericClassifier.objects.get(attribute_type=attribute_type, name=row_as_dict[lower_user_code])
+                        classifier = GenericClassifier.objects.get(attribute_type=attribute_type,
+                                                                   name=row_as_dict[lower_user_code])
 
                         attribute['classifier'] = classifier.id
 
@@ -1683,13 +1769,11 @@ class UnifiedImportHandler():
 
                 row_data['attributes'].append(attribute)
 
-
         row_data['master_user'] = self.instance.master_user.id
         row_data['manual_pricing_formulas'] = []
-        row_data['accrual_calculation_schedules'] = []
-        row_data['event_schedules'] = []
+        # row_data['accrual_calculation_schedules'] = []
+        # row_data['event_schedules'] = []
         row_data['factor_schedules'] = []
-        
 
         serializer = InstrumentSerializer(data=row_data, context=context)
 
@@ -1701,7 +1785,6 @@ class UnifiedImportHandler():
             serializer.save()
         else:
             item['error_message'] = serializer.errors
-
 
     def unified_process_csv_file(self, file):
 
@@ -1718,14 +1801,14 @@ class UnifiedImportHandler():
         proxy_user = ProxyUser(self.instance.member, self.instance.master_user)
         proxy_request = ProxyRequest(proxy_user)
 
-
         context = {'master_user': self.instance.master_user,
                    'request': proxy_request}
 
         instrument_content_type = ContentType.objects.get(app_label="instruments", model='instrument')
 
         self.ecosystem_default = EcosystemDefault.objects.get(master_user=self.instance.master_user)
-        self.attribute_types = GenericAttributeType.objects.filter(master_user=self.instance.master_user, content_type=instrument_content_type)
+        self.attribute_types = GenericAttributeType.objects.filter(master_user=self.instance.master_user,
+                                                                   content_type=instrument_content_type)
 
         items = []
 
@@ -1737,7 +1820,7 @@ class UnifiedImportHandler():
                 first_row = row
             else:
 
-               self.process_row(first_row, row, item, context)
+                self.process_row(first_row, row, item, context)
 
             items.append(item)
 
