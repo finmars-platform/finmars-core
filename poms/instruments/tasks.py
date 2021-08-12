@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from datetime import date
+from datetime import date, datetime, timedelta
 
 from celery import shared_task
 from django.db import transaction
@@ -14,9 +14,6 @@ from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
 from poms.transactions.models import NotificationClass
 from poms.users.models import MasterUser
-from django.db.models.functions import Cast
-from django.db.models import DateField
-from datetime import datetime, timedelta
 
 import traceback
 
@@ -201,8 +198,8 @@ def only_generate_events_at_date_for_single_instrument(master_user, date, instru
             'actions',
             'actions__transaction_type'
         ).filter(
-            effective_date__lte=date - timedelta(days=1)*F("notify_in_n_days"),
-            final_date__gte=date,
+            # effective_date__lte=(date - F("notify_in_n_days")),
+            # final_date__gte=date,
             instrument__in={i.instr.id for i in opened_instrument_items}
         ).order_by(
             'instrument__master_user__id',
@@ -213,8 +210,19 @@ def only_generate_events_at_date_for_single_instrument(master_user, date, instru
             _l.debug('event schedules not found. Date %s' % date)
             return
 
-        event_schedules_cache = defaultdict(list)
+        result = []
+
         for event_schedule in event_schedule_qs:
+
+            final_date = datetime.strptime(event_schedule.final_date, 'yyyy-MM-dd')
+            effective_date = datetime.strptime(event_schedule.effective_date, 'yyyy-MM-dd')
+
+            if final_date >= date and effective_date - timedelta(days=event_schedule.notify_in_n_days):
+                result.append(event_schedule)
+
+        event_schedules_cache = defaultdict(list)
+        # for event_schedule in event_schedule_qs:
+        for event_schedule in result:
             event_schedules_cache[event_schedule.instrument_id].append(event_schedule)
 
         for item in opened_instrument_items:
