@@ -18,6 +18,7 @@ from poms.system_messages.handlers import send_system_message
 
 from poms.users.models import EcosystemDefault, Group
 from django.apps import apps
+from django.contrib.contenttypes.models import ContentType
 
 from poms.integrations.models import CounterpartyMapping, AccountMapping, ResponsibleMapping, PortfolioMapping, \
     PortfolioClassifierMapping, AccountClassifierMapping, ResponsibleClassifierMapping, CounterpartyClassifierMapping, \
@@ -48,7 +49,7 @@ from ..common.websockets import send_websocket_message
 
 import traceback
 
-from ..instruments.serializers import InstrumentExternalApiSerializer, InstrumentSerializer
+from ..instruments.serializers import InstrumentExternalApiSerializer, InstrumentSerializer, InstrumentUnifiedSerializer
 
 _l = getLogger('poms.csv_import')
 
@@ -62,6 +63,19 @@ from storages.backends.sftpstorage import SFTPStorage
 SFS = SFTPStorage()
 
 from tempfile import NamedTemporaryFile
+
+
+class ProxyUser(object):
+
+    def __init__(self, member, master_user):
+        self.member = member
+        self.master_user = master_user
+
+
+class ProxyRequest(object):
+
+    def __init__(self, user):
+        self.user = user
 
 
 def generate_file_report(instance, master_user, type, name):
@@ -1583,7 +1597,7 @@ class UnifiedImportHandler():
 
         return row_index
 
-    def process_row(self, first_row, row, item, ecosystem_default, context):
+    def process_row(self, first_row, row, item, context):
 
         row_as_dict = self.get_row_data(row, first_row)
 
@@ -1596,21 +1610,55 @@ class UnifiedImportHandler():
             row_data['pricing_currency'] = Currency.objects.get(master_user=self.instance.master_user,
                                                                 user_code=row_as_dict['pricing_currency'])
         except Exception as e:
-            row_data['pricing_currency'] = ecosystem_default.currency.id
+            row_data['pricing_currency'] = self.ecosystem_default.currency.id
 
 
         try:
             row_data['accrued_currency'] = Currency.objects.get(master_user=self.instance.master_user,
                                                                 user_code=row_as_dict['accrued_currency'])
         except Exception as e:
-            row_data['accrued_currency'] = ecosystem_default.currency.id
+            row_data['accrued_currency'] = self.ecosystem_default.currency.id
 
 
         try:
             row_data['instrument_type'] = InstrumentType.objects.get(master_user=self.instance.master_user,
                                                                 user_code=row_as_dict['instrument_type'])
         except Exception as e:
-            row_data['instrument_type'] = ecosystem_default.instrument_type.id
+            row_data['instrument_type'] = self.ecosystem_default.instrument_type.id
+
+        row_data['attributes'] = []
+
+        for attribute_type in self.attribute_types:
+
+            lower_user_code = attribute_type.user_code.lower()
+
+            if lower_user_code in row_as_dict:
+
+                attribute = {
+                    'attribute_type': attribute_type.id,
+                }
+
+                if attribute_type.value_type == 10:
+                    attribute['value_string'] = row_as_dict[lower_user_code]
+
+                if attribute_type.value_type == 20:
+                    attribute['value_float'] = row_as_dict[lower_user_code]
+
+                if attribute_type.value_type == 30:
+
+                    try:
+
+                        classifier = GenericClassifier.objects.get(attribute_type=attribute_type, name=row_as_dict[lower_user_code])
+
+                        attribute['classifier'] = classifier.id
+
+                    except Exception as e:
+                        attribute['classifier'] = None
+
+                if attribute_type.value_type == 40:
+                    attribute['value_date'] = row_as_dict[lower_user_code]
+
+                row_data['attributes'].append(attribute)
 
 
         row_data['master_user'] = self.instance.master_user.id
@@ -1618,8 +1666,9 @@ class UnifiedImportHandler():
         row_data['accrual_calculation_schedules'] = []
         row_data['event_schedules'] = []
         row_data['factor_schedules'] = []
+        
 
-        serializer = InstrumentExternalApiSerializer(data=row_data, context=context)
+        serializer = InstrumentUnifiedSerializer(data=row_data, context=context)
 
         is_valid = serializer.is_valid()
 
@@ -1643,9 +1692,17 @@ class UnifiedImportHandler():
 
         first_row = None
 
-        context = {'master_user': self.instance.master_user}
+        proxy_user = ProxyUser(self.instance.member, self.instance.master_user)
+        proxy_request = ProxyRequest(proxy_user)
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=self.instance.master_user)
+
+        context = {'master_user': self.instance.master_user,
+                   'request': proxy_request}
+
+        instrument_content_type = ContentType.objects.get(app_label="instruments", model='instrument')
+
+        self.ecosystem_default = EcosystemDefault.objects.get(master_user=self.instance.master_user)
+        self.attribute_types = GenericAttributeType.objects.filter(master_user=self.instance.master_user, content_type=instrument_content_type)
 
         items = []
 
@@ -1657,7 +1714,7 @@ class UnifiedImportHandler():
                 first_row = row
             else:
 
-               self.process_row(first_row, row, item, ecosystem_default, context)
+               self.process_row(first_row, row, item, context)
 
             items.append(item)
 

@@ -1185,6 +1185,50 @@ class InstrumentExternalApiSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(InstrumentExternalApiSerializer, self).__init__(*args, **kwargs)
 
+
+class InstrumentUnifiedSerializer(ModelWithAttributesSerializer):
+
+    class Meta:
+        model = Instrument
+        fields = [
+            'id', 'master_user', 'instrument_type', 'user_code', 'name', 'short_name',
+            'public_name', 'notes', 'is_active', 'is_deleted', 'has_linked_with_portfolio',
+            'pricing_currency', 'price_multiplier',
+            'accrued_currency', 'accrued_multiplier',
+
+
+
+            'payment_size_detail',  'default_price', 'default_accrued',
+            'user_text_1', 'user_text_2', 'user_text_3',
+            'reference_for_pricing',
+            'daily_pricing_model',
+            'pricing_condition',
+            'price_download_scheme',
+            'maturity_date', 'maturity_price',
+            'manual_pricing_formulas', 'accrual_calculation_schedules', 'factor_schedules', 'event_schedules',
+            'is_enabled',
+
+            'exposure_calculation_model',
+
+            'co_directional_exposure_currency', 'counter_directional_exposure_currency',
+
+            'long_underlying_instrument', 'short_underlying_instrument',
+
+            'underlying_long_multiplier', 'underlying_short_multiplier',
+
+            'long_underlying_exposure', 'short_underlying_exposure',
+
+            'position_reporting'
+
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(InstrumentUnifiedSerializer, self).__init__(*args, **kwargs)
+
+
+
+
+
 class InstrumentLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
 
     master_user = MasterUserField()
