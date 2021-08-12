@@ -23,6 +23,7 @@ _l = logging.getLogger('poms.auth_tokens')
 
 class ObtainAuthToken(APIView):
     throttle_classes = ()
+    authentication_classes = ()
     permission_classes = ()
     parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)
     renderer_classes = (renderers.JSONRenderer,)

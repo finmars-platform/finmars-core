@@ -1734,6 +1734,9 @@ class UnifiedImportHandler():
         except Exception as e:
             row_data['accrued_currency'] = self.ecosystem_default.currency.id
 
+        if 'maturity' in row_as_dict:
+            row_data['maturity_date'] = row_as_dict['maturity']
+
         row_data['attributes'] = []
 
         for attribute_type in self.attribute_types:
