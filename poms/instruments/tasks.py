@@ -14,6 +14,8 @@ from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
 from poms.transactions.models import NotificationClass
 from poms.users.models import MasterUser
+from django.db.models.functions import Cast
+from django.db.models import DateField
 
 import traceback
 
@@ -198,7 +200,7 @@ def only_generate_events_at_date_for_single_instrument(master_user, date, instru
             'actions',
             'actions__transaction_type'
         ).filter(
-            effective_date__lte=(date - F("notify_in_n_days")),
+            effective_date__lte=Cast(date - F("notify_in_n_days"), output_field=DateField()),
             final_date__gte=date,
             instrument__in={i.instr.id for i in opened_instrument_items}
         ).order_by(
