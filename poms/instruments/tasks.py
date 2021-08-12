@@ -79,8 +79,8 @@ def only_generate_events_at_date(master_user, date):
             'actions',
             'actions__transaction_type'
         ).filter(
-            effective_date__lte=(date - F("notify_in_n_days")),
-            final_date__gte=date,
+            # effective_date__lte=(date - F("notify_in_n_days")),
+            # final_date__gte=date,
             instrument__in={i.instr.id for i in opened_instrument_items}
         ).order_by(
             'instrument__master_user__id',
@@ -92,8 +92,19 @@ def only_generate_events_at_date(master_user, date):
             _l.info('event schedules not found. Date %s' % date)
             return
 
-        event_schedules_cache = defaultdict(list)
+        result = []
+
         for event_schedule in event_schedule_qs:
+
+            final_date = datetime.date(datetime.strptime(event_schedule.final_date, '%Y-%m-%d'))
+            effective_date = datetime.date(datetime.strptime(event_schedule.effective_date, '%Y-%m-%d'))
+
+            if final_date >= date and effective_date - timedelta(days=event_schedule.notify_in_n_days):
+                result.append(event_schedule)
+
+        event_schedules_cache = defaultdict(list)
+        # for event_schedule in event_schedule_qs:
+        for event_schedule in result:
             event_schedules_cache[event_schedule.instrument_id].append(event_schedule)
 
         for item in opened_instrument_items:
