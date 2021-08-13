@@ -493,6 +493,17 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
 
     accrual_calculation_model = accrual.accrual_calculation_model
     cpn = accrual.accrual_size if not factor else 1.0
+
+    cpn = 0.0
+
+    try:
+        cpn = int(accrual.accrual_size)
+    except Exception as e:
+        cpn = 0.0
+
+    if factor:
+        cpn = 1.0
+
     periodicity = accrual.periodicity
     freq = periodicity.to_freq()
     # dt3 = accrual.first_payment_date
