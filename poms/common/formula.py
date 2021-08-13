@@ -19,6 +19,9 @@ from poms.common.utils import date_now, isclose
 from pandas.tseries.offsets import BMonthEnd, BYearEnd, BQuarterEnd, BDay
 from datetime import date
 
+import traceback
+
+
 _l = logging.getLogger('poms.formula')
 
 MAX_STR_LEN = 2000
@@ -1178,12 +1181,23 @@ _get_instrument_accrual_factor.evaluator = True
 
 
 def _get_instrument_coupon(evaluator, instrument, date):
-    if instrument is None or date is None:
+
+    try:
+
+        _l.info("_get_instrument_coupon instrument %s" % instrument)
+        _l.info("_get_instrument_coupon date %s" % date)
+
+        if instrument is None or date is None:
+            return 0.0
+        instrument = _safe_get_instrument(evaluator, instrument)
+        date = _parse_date(date)
+        cpn_val, is_cpn = instrument.get_coupon(date, with_maturity=False)
+        return _check_float(cpn_val)
+    
+    except Exception as e:
+        _l.info('_get_instrument_coupon exception occurred %s' % e)
+        _l.info(traceback.format_exc())
         return 0.0
-    instrument = _safe_get_instrument(evaluator, instrument)
-    date = _parse_date(date)
-    cpn_val, is_cpn = instrument.get_coupon(date, with_maturity=False)
-    return _check_float(cpn_val)
 
 
 _get_instrument_coupon.evaluator = True
