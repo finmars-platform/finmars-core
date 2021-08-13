@@ -1126,6 +1126,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             _l.info('get_coupon  first_payment_date %s ' % first_payment_date)
 
             if accrual_start_date <= cpn_date < accrual_end_date:
+                l.info('get coupon start processing ')
                 prev_d = accrual_start_date
                 for i in range(0, 3652058):
                     stop = False
@@ -1144,7 +1145,12 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                         stop = True
 
                     if d == cpn_date:
+
+
                         val_or_factor = get_coupon(accrual, prev_d, d, maturity_date=self.maturity_date, factor=factor)
+
+                        _l.info('get_coupon  d == cpn_date %s' % val_or_factor)
+
                         return val_or_factor, True
 
                     if stop or d >= accrual_end_date:
