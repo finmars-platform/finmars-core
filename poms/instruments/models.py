@@ -1117,7 +1117,8 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         for accrual in accruals:
 
             accrual_start_date = datetime.date(datetime.strptime(accrual.accrual_start_date, '%Y-%m-%d'))
-            accrual_end_date = datetime.date(datetime.strptime(accrual.accrual_end_date, '%Y-%m-%d'))
+            # accrual_end_date = datetime.date(datetime.strptime(accrual.accrual_end_date, '%Y-%m-%d'))
+            accrual_end_date = accrual.accrual_end_date
             first_payment_date = datetime.date(datetime.strptime(accrual.first_payment_date, '%Y-%m-%d'))
 
             _l.info('get_coupon  accrual_start_date %s ' % accrual_start_date)
