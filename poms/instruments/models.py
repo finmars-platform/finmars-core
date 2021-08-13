@@ -1126,7 +1126,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             _l.info('get_coupon  first_payment_date %s ' % first_payment_date)
 
             if accrual_start_date <= cpn_date < accrual_end_date:
-                l.info('get coupon start processing ')
+                _l.info('get coupon start processing ')
                 prev_d = accrual_start_date
                 for i in range(0, 3652058):
                     stop = False
