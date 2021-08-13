@@ -1098,6 +1098,9 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         return accrual.accrual_size * factor
 
     def get_coupon(self, cpn_date, with_maturity=False, factor=False):
+
+        _l.info('get_coupon self.maturity_date %s' % self.maturity_date)
+
         if cpn_date == self.maturity_date:
             if with_maturity:
                 return self.maturity_price, True
@@ -1108,11 +1111,18 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             return 0.0, False
 
         accruals = self.get_accrual_calculation_schedules_all()
+
+        _l.info('get_coupon len accruals %s ' % len(accruals))
+
         for accrual in accruals:
 
             accrual_start_date = datetime.date(datetime.strptime(accrual.accrual_start_date, '%Y-%m-%d'))
             accrual_end_date = datetime.date(datetime.strptime(accrual.accrual_end_date, '%Y-%m-%d'))
             first_payment_date = datetime.date(datetime.strptime(accrual.first_payment_date, '%Y-%m-%d'))
+
+            _l.info('get_coupon  accrual_start_date %s ' % accrual_start_date)
+            _l.info('get_coupon  accrual_end_date %s ' % accrual_end_date)
+            _l.info('get_coupon  first_payment_date %s ' % first_payment_date)
 
             if accrual_start_date <= cpn_date < accrual_end_date:
                 prev_d = accrual_start_date
@@ -1124,7 +1134,8 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                         try:
                             d = first_payment_date + accrual.periodicity.to_timedelta(
                                 n=accrual.periodicity_n, i=i, same_date=accrual_start_date)
-                        except (OverflowError, ValueError):  # year is out of range
+                        except (OverflowError, ValueError) as e:  # year is out of range
+                            _l.info('get_coupon overflow error %s' % e)
                             return 0.0, False
 
                     if d >= accrual_end_date:
@@ -1139,6 +1150,8 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                         break
 
                     prev_d = d
+
+        _l.info('get_coupon last return')
 
         return 0.0, False
 
