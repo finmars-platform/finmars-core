@@ -2,7 +2,7 @@ from __future__ import unicode_literals, division
 
 import calendar
 import logging
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 
 from dateutil import relativedelta, rrule
 from scipy.optimize import newton
@@ -495,7 +495,10 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
     cpn = accrual.accrual_size if not factor else 1.0
     periodicity = accrual.periodicity
     freq = periodicity.to_freq()
-    dt3 = accrual.first_payment_date
+    # dt3 = accrual.first_payment_date
+    dt3 = datetime.date(datetime.strptime(accrual.first_payment_date, '%Y-%m-%d'))
+
+
 
     d1 = dt1.day
     m1 = dt1.month

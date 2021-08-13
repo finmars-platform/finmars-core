@@ -1109,28 +1109,33 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
         accruals = self.get_accrual_calculation_schedules_all()
         for accrual in accruals:
-            if accrual.accrual_start_date <= cpn_date < accrual.accrual_end_date:
-                prev_d = accrual.accrual_start_date
+
+            accrual_start_date = datetime.date(datetime.strptime(accrual.accrual_start_date, '%Y-%m-%d'))
+            accrual_end_date = datetime.date(datetime.strptime(accrual.accrual_end_date, '%Y-%m-%d'))
+            first_payment_date = datetime.date(datetime.strptime(accrual.first_payment_date, '%Y-%m-%d'))
+
+            if accrual_start_date <= cpn_date < accrual_end_date:
+                prev_d = accrual_start_date
                 for i in range(0, 3652058):
                     stop = False
                     if i == 0:
-                        d = accrual.first_payment_date
+                        d = first_payment_date
                     else:
                         try:
-                            d = accrual.first_payment_date + accrual.periodicity.to_timedelta(
-                                n=accrual.periodicity_n, i=i, same_date=accrual.accrual_start_date)
+                            d = first_payment_date + accrual.periodicity.to_timedelta(
+                                n=accrual.periodicity_n, i=i, same_date=accrual_start_date)
                         except (OverflowError, ValueError):  # year is out of range
                             return 0.0, False
 
-                    if d >= accrual.accrual_end_date:
-                        d = accrual.accrual_end_date - timedelta(days=1)
+                    if d >= accrual_end_date:
+                        d = accrual_end_date - timedelta(days=1)
                         stop = True
 
                     if d == cpn_date:
                         val_or_factor = get_coupon(accrual, prev_d, d, maturity_date=self.maturity_date, factor=factor)
                         return val_or_factor, True
 
-                    if stop or d >= accrual.accrual_end_date:
+                    if stop or d >= accrual_end_date:
                         break
 
                     prev_d = d

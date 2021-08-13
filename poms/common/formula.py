@@ -1192,8 +1192,11 @@ def _get_instrument_coupon(evaluator, instrument, date):
         instrument = _safe_get_instrument(evaluator, instrument)
         date = _parse_date(date)
         cpn_val, is_cpn = instrument.get_coupon(date, with_maturity=False)
+
+        _l.info("_get_instrument_coupon cpn_val %s" % cpn_val)
+
         return _check_float(cpn_val)
-    
+
     except Exception as e:
         _l.info('_get_instrument_coupon exception occurred %s' % e)
         _l.info(traceback.format_exc())
