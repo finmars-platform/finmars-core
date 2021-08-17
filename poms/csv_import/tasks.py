@@ -186,6 +186,88 @@ def generate_file_report(instance, master_user, type, name):
     return file_report.pk
 
 
+def generate_file_report_simple(instance,  type, name):
+    try:
+        columns = ['Row number']
+
+
+        columns.append('Message')
+
+        rows_content = []
+
+        for errorRow in instance.items:
+
+            if errorRow['original_row_index'] != 0:
+
+                localResult = []
+
+                localResult.append(errorRow['original_row_index'])
+
+                if errorRow['error_message']:
+                    localResult.append(str(errorRow['error_message']))
+                else:
+                    localResult.append('OK')
+
+                localResultWrapper = []
+
+                for item in localResult:
+                    localResultWrapper.append('"' + str(item) + '"')
+
+                rows_content.append(localResultWrapper)
+
+        columnRow = ','.join(columns)
+
+        result = []
+
+        result.append('Type, ' + type)
+        # result.append('Filename, ' + instance.file.name)
+        result.append('Mode, ' + instance.mode)
+        # result.append('Import Rules - if object is not found, ' + instance.missing_data_handler)
+        # result.push('Entity, ' + vm.scheme.content_type)
+
+        result.append('Rows total, ' + str(instance.total_rows))
+
+        rowsSuccessTotal = 0
+        rowsSkippedCount = 0
+        rowsFailedCount = 0
+
+        # result.append('Rows success import, ' + str(rowsSuccessTotal))
+        # result.append('Rows omitted, ' + str(rowsSkippedCount))
+        # result.append('Rows fail import, ' + str(rowsFailedCount))
+
+        result.append('\n')
+        result.append(columnRow)
+
+        for contentRow in rows_content:
+            contentRowStr = list(map(str, contentRow))
+
+            result.append(','.join(contentRowStr))
+
+        result = '\n'.join(result)
+
+        current_date_time = now().strftime("%Y-%m-%d-%H-%M")
+
+        file_name = 'Unified Instrument Import %s.csv' % current_date_time
+
+        file_report = FileReport()
+
+        file_report.upload_file(file_name=file_name, text=result, master_user=instance.master_user)
+        file_report.master_user = instance.master_user
+        file_report.name = "%s %s" % (name, current_date_time)
+        file_report.file_name = file_name
+        file_report.type = type
+        file_report.notes = 'System File'
+
+        file_report.save()
+
+        return file_report.pk
+    except Exception as e:
+        _l.info("Generate file error occured %s" % e)
+        _l.info(traceback.print_exc())
+        return None
+
+
+
 def get_row_data(row, csv_fields):
     csv_row_dict = {}
 
@@ -1617,7 +1699,7 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
     for instrument_type_event in instrument_type.events.all():
 
         event_schedule = {
-            'event_class': instrument_type_event.event_class
+            'event_class': instrument_type_event.data['event_class']
         }
 
         for item in instrument_type_event.data['items']:
@@ -1628,7 +1710,7 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
 
         event_schedule['actions'] = []
 
-        for instrument_type_action in instrument_type_event.actions:
+        for instrument_type_action in instrument_type_event.data['actions']:
             action = {}
             action['transaction_type'] = instrument_type_action[
                 'transaction_type']  # TODO check if here user code instead of id
@@ -1697,120 +1779,138 @@ class UnifiedImportHandler():
 
     def process_row(self, first_row, row, item, context):
 
-        row_as_dict = self.get_row_data(row, first_row)
-
-        item['row_as_dict'] = row_as_dict
-
-        row_data = {}
-        row_data = row_as_dict  # tmp
-
-        instrument_type = None
-
         try:
 
-            instrument_type = InstrumentType.objects.get(master_user=self.instance.master_user,
-                                                         user_code=row_as_dict['instrument_type'])
+            row_as_dict = self.get_row_data(row, first_row)
 
-            row_data['instrument_type'] = instrument_type.id
+            item['row_as_dict'] = row_as_dict
 
+            row_data = {}
+            row_data = row_as_dict  # tmp
 
-        except Exception as e:
-
-            instrument_type = self.ecosystem_default.instrument_type
-
-            row_data['instrument_type'] = instrument_type.id
-
-        set_defaults_from_instrument_type(row_data, instrument_type)
-
-        try:
-            row_data['pricing_currency'] = Currency.objects.get(master_user=self.instance.master_user,
-                                                                user_code=row_as_dict['pricing_currency'])
-        except Exception as e:
-            row_data['pricing_currency'] = self.ecosystem_default.currency.id
-
-        try:
-            row_data['accrued_currency'] = Currency.objects.get(master_user=self.instance.master_user,
-                                                                user_code=row_as_dict['accrued_currency'])
-        except Exception as e:
-            row_data['accrued_currency'] = self.ecosystem_default.currency.id
-
-        if 'maturity' in row_as_dict:
-            row_data['maturity_date'] = row_as_dict['maturity']
-
-        row_data['attributes'] = []
-
-        for attribute_type in self.attribute_types:
-
-            lower_user_code = attribute_type.user_code.lower()
-
-            if lower_user_code in row_as_dict:
-
-                attribute = {
-                    'attribute_type': attribute_type.id,
-                }
-
-                if attribute_type.value_type == 10:
-                    attribute['value_string'] = row_as_dict[lower_user_code]
-
-                if attribute_type.value_type == 20:
-                    attribute['value_float'] = row_as_dict[lower_user_code]
-
-                if attribute_type.value_type == 30:
-
-                    try:
-
-                        classifier = GenericClassifier.objects.get(attribute_type=attribute_type,
-                                                                   name=row_as_dict[lower_user_code])
-
-                        attribute['classifier'] = classifier.id
-
-                    except Exception as e:
-                        attribute['classifier'] = None
-
-                if attribute_type.value_type == 40:
-                    attribute['value_date'] = row_as_dict[lower_user_code]
-
-                row_data['attributes'].append(attribute)
-
-        row_data['master_user'] = self.instance.master_user.id
-        row_data['manual_pricing_formulas'] = []
-        # row_data['accrual_calculation_schedules'] = []
-        # row_data['event_schedules'] = []
-        row_data['factor_schedules'] = []
-
-        if self.instance.mode == 'skip':
-
-            serializer = InstrumentSerializer(data=row_data, context=context)
-
-            is_valid = serializer.is_valid()
-
-            item['row_data'] = row_data
-
-            if is_valid:
-                serializer.save()
-            else:
-                item['error_message'] = serializer.errors
-
-        if self.instance.mode == 'overwrite':
-
-            instrument = None
+            instrument_type = None
 
             try:
-                instrument = Instrument.objects.get(user_code=row_data['user_code'], master_user=self.instance.master_user)
-            except Instrument.DoesNotExist:
+
+                instrument_type = InstrumentType.objects.get(master_user=self.instance.master_user,
+                                                             user_code=row_as_dict['instrument_type'])
+
+                row_data['instrument_type'] = instrument_type.id
+
+
+            except Exception as e:
+
+                instrument_type = self.ecosystem_default.instrument_type
+
+                row_data['instrument_type'] = instrument_type.id
+
+            set_defaults_from_instrument_type(row_data, instrument_type)
+
+            try:
+                row_data['pricing_currency'] = Currency.objects.get(master_user=self.instance.master_user,
+                                                                    user_code=row_as_dict['pricing_currency'])
+            except Exception as e:
+                row_data['pricing_currency'] = self.ecosystem_default.currency.id
+
+            try:
+                row_data['accrued_currency'] = Currency.objects.get(master_user=self.instance.master_user,
+                                                                    user_code=row_as_dict['accrued_currency'])
+            except Exception as e:
+                row_data['accrued_currency'] = self.ecosystem_default.currency.id
+
+            if 'maturity' in row_as_dict:
+                row_data['maturity_date'] = row_as_dict['maturity']
+
+            row_data['attributes'] = []
+
+            for attribute_type in self.attribute_types:
+
+                lower_user_code = attribute_type.user_code.lower()
+
+                if lower_user_code in row_as_dict:
+
+                    attribute = {
+                        'attribute_type': attribute_type.id,
+                    }
+
+                    if attribute_type.value_type == 10:
+                        attribute['value_string'] = row_as_dict[lower_user_code]
+
+                    if attribute_type.value_type == 20:
+                        attribute['value_float'] = row_as_dict[lower_user_code]
+
+                    if attribute_type.value_type == 30:
+
+                        try:
+
+                            classifier = GenericClassifier.objects.get(attribute_type=attribute_type,
+                                                                       name=row_as_dict[lower_user_code])
+
+                            attribute['classifier'] = classifier.id
+
+                        except Exception as e:
+                            attribute['classifier'] = None
+
+                    if attribute_type.value_type == 40:
+                        attribute['value_date'] = row_as_dict[lower_user_code]
+
+                    row_data['attributes'].append(attribute)
+
+            row_data['master_user'] = self.instance.master_user.id
+            row_data['manual_pricing_formulas'] = []
+            # row_data['accrual_calculation_schedules'] = []
+            # row_data['event_schedules'] = []
+            row_data['factor_schedules'] = []
+
+            if self.instance.mode == 'skip':
+
+                serializer = InstrumentSerializer(data=row_data, context=context)
+
+                is_valid = serializer.is_valid()
+
+                item['row_data'] = row_data
+
+                if is_valid:
+                    serializer.save()
+                else:
+                    item['error_message'] = serializer.errors
+
+            if self.instance.mode == 'overwrite':
+
                 instrument = None
 
-            serializer = InstrumentSerializer(data=row_data, context=context, instance=instrument)
+                try:
+                    instrument = Instrument.objects.get(user_code=row_data['user_code'], master_user=self.instance.master_user)
+                except Instrument.DoesNotExist:
+                    instrument = None
 
-            is_valid = serializer.is_valid()
+                serializer = InstrumentSerializer(data=row_data, context=context, instance=instrument)
 
-            item['row_data'] = row_data
+                is_valid = serializer.is_valid()
 
-            if is_valid:
-                serializer.save()
-            else:
-                item['error_message'] = serializer.errors
+                item['row_data'] = row_data
 
+                if is_valid:
+                    serializer.save()
+                else:
+                    item['error_message'] = serializer.errors
+
+        except Exception as e:
+            item['error_message'] = 'Unhandled error in row processing. Exception %s' % str(e)
+
+        finally:
+
+            self.instance.processed_rows = item['original_row_index']
+
+            send_websocket_message(data={
+                'type': 'simple_import_status',
+                'payload': {'task_id': self.instance.task_id,
+                            'state': Task.STATUS_PENDING,
+                            'processed_rows': self.instance.processed_rows,
+                            'total_rows': self.instance.total_rows,
+                            'file_name': self.instance.filename}
+            }, level="member",
+                context={"master_user": self.instance.master_user, "member": self.instance.member})
 
     def unified_process_csv_file(self, file):
 
@@ -1842,7 +1942,10 @@ class UnifiedImportHandler():
 
         for row_index, row in enumerate(reader):
 
-            item = {}
+            item = {
+                'original_row_index': row_index,
+                'error_message': ''
+            }
 
             if row_index == 0:
                 first_row = row
@@ -1852,7 +1955,6 @@ class UnifiedImportHandler():
 
             items.append(item)
 
-        _l.info('items %s' % items)
 
         return items
 
@@ -1886,7 +1988,7 @@ class UnifiedImportHandler():
 
                         _l.debug('UnifiedImportHandler.process_csv_file: finished')
 
-                        self.instance.stats = items
+                        self.instance.items = items
         except Exception as e:
 
             _l.debug(e)
@@ -1896,7 +1998,14 @@ class UnifiedImportHandler():
             # import_file_storage.delete(instance.file_path)
             SFS.delete(self.instance.file_path)
 
-        if self.instance.stats and len(self.instance.stats):
+        _l.info("Import here? %s" % len(self.instance.items))
+
+        if self.instance.items and len(self.instance.items):
+
+            self.instance.stats_file_report = generate_file_report_simple(self.instance, 'csv_import.unified_import',
+                                                              'Unified Data Import')
+
+            _l.info('self.instance.stats_file_report %s' % self.instance.stats_file_report)
 
             send_websocket_message(data={
                 'type': 'simple_import_status',
