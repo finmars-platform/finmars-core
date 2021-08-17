@@ -1818,8 +1818,10 @@ class UnifiedImportHandler():
             except Exception as e:
                 row_data['accrued_currency'] = self.ecosystem_default.currency.id
 
-            if 'maturity' in row_as_dict:
+            if 'maturity' in row_as_dict and row_as_dict['maturity'] != '':
                 row_data['maturity_date'] = row_as_dict['maturity']
+            else:
+                row_data['maturity_date'] = '2999-01-01'
 
             row_data['attributes'] = []
 
