@@ -1808,13 +1808,13 @@ class UnifiedImportHandler():
 
             try:
                 row_data['pricing_currency'] = Currency.objects.get(master_user=self.instance.master_user,
-                                                                    user_code=row_as_dict['pricing_currency'])
+                                                                    user_code=row_as_dict['pricing_currency']).id
             except Exception as e:
                 row_data['pricing_currency'] = self.ecosystem_default.currency.id
 
             try:
                 row_data['accrued_currency'] = Currency.objects.get(master_user=self.instance.master_user,
-                                                                    user_code=row_as_dict['accrued_currency'])
+                                                                    user_code=row_as_dict['accrued_currency']).id
             except Exception as e:
                 row_data['accrued_currency'] = self.ecosystem_default.currency.id
 
@@ -1861,6 +1861,13 @@ class UnifiedImportHandler():
             # row_data['accrual_calculation_schedules'] = []
             # row_data['event_schedules'] = []
             row_data['factor_schedules'] = []
+
+
+            if 'name' not in row_data and 'user_code' in row_data:
+                row_data['name'] = row_data['user_code']
+
+            if 'short_name' not in row_data and 'user_code' in row_data:
+                row_data['short_name'] = row_data['user_code']
 
             if self.instance.mode == 'skip':
 
