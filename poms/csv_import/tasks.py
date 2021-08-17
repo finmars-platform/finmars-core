@@ -1586,7 +1586,7 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
     # Set attributes
     instrument_object['attributes'] = []
 
-    for attribute in instrument_type.instrument_attributes:
+    for attribute in instrument_type.instrument_attributes.all():
 
         attr = {
             'attribute_type': attribute.attribute_type.id
@@ -1614,7 +1614,7 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
 
     instrument_object['event_schedules'] = []
 
-    for instrument_type_event in instrument_type.events:
+    for instrument_type_event in instrument_type.events.all():
 
         event_schedule = {
             'event_class': instrument_type_event.event_class
@@ -1644,7 +1644,7 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
 
     instrument_object['accrual_calculation_schedules'] = []
 
-    for instrument_type_accrual in instrument_type.accruals:
+    for instrument_type_accrual in instrument_type.accruals.all():
 
         accrual = {
 
@@ -1778,18 +1778,43 @@ class UnifiedImportHandler():
         # row_data['event_schedules'] = []
         row_data['factor_schedules'] = []
 
-        serializer = InstrumentSerializer(data=row_data, context=context)
+        if self.instance.mode == 'skip':
 
-        is_valid = serializer.is_valid()
+            serializer = InstrumentSerializer(data=row_data, context=context)
 
-        item['row_data'] = row_data
+            is_valid = serializer.is_valid()
 
-        if is_valid:
-            serializer.save()
-        else:
-            item['error_message'] = serializer.errors
+            item['row_data'] = row_data
+
+            if is_valid:
+                serializer.save()
+            else:
+                item['error_message'] = serializer.errors
+
+        if self.instance.mode == 'overwrite':
+
+            instrument = None
+
+            try:
+                instrument = Instrument.objects.get(user_code=row_data['user_code'], master_user=self.instance.master_user)
+            except Instrument.DoesNotExist:
+                instrument = None
+
+            serializer = InstrumentSerializer(data=row_data, context=context, instance=instrument)
+
+            is_valid = serializer.is_valid()
+
+            item['row_data'] = row_data
+
+            if is_valid:
+                serializer.save()
+            else:
+                item['error_message'] = serializer.errors
+
 
     def unified_process_csv_file(self, file):
+
+        _l.info('unified_process_csv_file mode %s' % self.instance.mode)
 
         errors = []
         results = []
