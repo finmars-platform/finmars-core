@@ -1818,6 +1818,14 @@ class UnifiedImportHandler():
             except Exception as e:
                 row_data['accrued_currency'] = self.ecosystem_default.currency.id
 
+
+            try:
+                row_data['payment_size_detail'] = PaymentSizeDetail.objects.get(user_code=row_as_dict['payment_size_detail']).id
+            except Exception as e:
+                row_data['payment_size_detail'] = PaymentSizeDetail.DEFAULT
+
+
+
             if 'maturity' in row_as_dict and row_as_dict['maturity'] != '':
                 row_data['maturity_date'] = row_as_dict['maturity']
             else:
