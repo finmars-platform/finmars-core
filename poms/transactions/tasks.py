@@ -2,6 +2,7 @@ from __future__ import unicode_literals, print_function
 
 import logging
 import time
+import traceback
 
 from celery import shared_task
 from django.contrib.auth.models import Permission
@@ -9,10 +10,12 @@ from django.contrib.contenttypes.models import ContentType
 
 from poms.accounts.models import Account
 from poms.celery_tasks.models import CeleryTask
+from poms.common import formula
 from poms.common.utils import datetime_now
 from poms.obj_perms.models import GenericObjectPermission
 from poms.portfolios.models import Portfolio
-from poms.transactions.models import Transaction, ComplexTransaction, TransactionType, ComplexTransactionInput
+from poms.transactions.models import Transaction, ComplexTransaction, TransactionType, ComplexTransactionInput, \
+    TransactionTypeInput
 from poms.users.models import Group
 
 _l = logging.getLogger('poms.transactions')
@@ -410,97 +413,127 @@ def recalculate_permissions_complex_transaction(self, instance):
     return instance
 
 
+def get_values(complex_transaction):
+
+    values = {}
+
+    # if complex transaction already exists
+    if complex_transaction and complex_transaction.id is not None and complex_transaction.id > 0:
+        # load previous values if need
+        ci_qs = complex_transaction.inputs.all().select_related(
+            'transaction_type_input', 'transaction_type_input__content_type'
+        )
+        for ci in ci_qs:
+            i = ci.transaction_type_input
+            value = None
+            if i.value_type == TransactionTypeInput.STRING or i.value_type == TransactionTypeInput.SELECTOR:
+                value = ci.value_string
+            elif i.value_type == TransactionTypeInput.NUMBER:
+                value = ci.value_float
+            elif i.value_type == TransactionTypeInput.DATE:
+                value = ci.value_date
+            if value is not None:
+                values[i.name] = value
+
+def execute_user_fields_expressions(complex_transaction, values, context):
+
+    _l.debug('execute_user_fields_expressions')
+
+    ctrn = formula.value_prepare(complex_transaction)
+    trns = complex_transaction.transactions.all()
+
+    names = {
+        'complex_transaction': ctrn,
+        'transactions': trns,
+    }
+
+    for key, value in values.items():
+        names[key] = value
+
+    fields = [
+        'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
+        'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
+
+        'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
+        'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
+
+        'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
+        'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+
+        'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
+        'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
+
+        'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5'
+    ]
+
+    for field_key in fields:
+
+        # _l.debug('field_key')
+
+        if getattr(complex_transaction.transaction_type, field_key):
+
+            try:
+
+                # _l.debug('epxr %s' % getattr(self.complex_transaction.transaction_type, field_key))
+
+                val = formula.safe_eval(
+                    getattr(complex_transaction.transaction_type, field_key), names=names,
+                    context=context)
+
+                setattr(complex_transaction, field_key, val)
+
+            except Exception as e:
+
+                _l.debug("User Field Expression Eval error %s" % e)
+
+                try:
+                    setattr(complex_transaction, field_key, '<InvalidExpression>')
+                except Exception as e:
+                    setattr(complex_transaction, field_key, None)
+
 
 @shared_task(name='transactions.recalculate_user_fields', bind=True)
 def recalculate_user_fields(self, instance):
 
-    _l.debug('recalculate_attributes: instance', instance)
-    # _l.debug('recalculate_attributes: context', context)
+    try:
 
-    transaction_type = TransactionType.objects.get(id=instance.attribute_type_id, master_user=instance.master_user)
+        _l.info('recalculate_user_fields: instance', instance)
+        # _l.debug('recalculate_attributes: context', context)
 
-    complex_transactions = ComplexTransaction.objects.filter(
-        transaction_type=transaction_type)
+        transaction_type = TransactionType.objects.get(id=instance.attribute_type_id, master_user=instance.master_user)
 
-    _l.debug('recalculate_user_fields: complex_transactions len %s' % len(complex_transactions))
+        complex_transactions = ComplexTransaction.objects.filter(
+            transaction_type=transaction_type)
 
-    _l.debug('self task id %s' % self.request.id)
+        _l.info('recalculate_user_fields: complex_transactions len %s' % len(complex_transactions))
 
-    celery_task = CeleryTask.objects.create(master_user=instance.master_user,
-                                            member=instance.member,
-                                            started_at=datetime_now(),
-                                            task_status='P',
-                                            task_type='complex_transaction_user_field_recalculation', task_id=self.request.id)
+        _l.info('recalculate_user_fields task id %s' % self.request.id)
 
-    celery_task.save()
+        celery_task = CeleryTask.objects.create(master_user=instance.master_user,
+                                                member=instance.member,
+                                                started_at=datetime_now(),
+                                                task_status='P',
+                                                task_type='complex_transaction_user_field_recalculation', task_id=self.request.id)
 
-    context = {
-        'master_user': instance.master_user,
-        'member': instance.member
-    }
+        celery_task.save()
 
-    # json_objs = get_json_objs(instance.target_model,
-    #                           instance.target_model_serializer,
-    #                           instance.target_model_content_type,
-    #
-    #                           instance.master_user,
-    #                           context)
-    #
-    # total = len(attributes)
-    # current = 0
-    #
-    # for attr in attributes:
-    #
-    #     data = json_objs[attr.object_id]
-    #
-    #     # _l.debug('data %s' % data)
-    #
-    #     try:
-    #         executed_expression = safe_eval(attribute_type.expr, names={'this': data}, context=context)
-    #     except (ExpressionEvalError, TypeError, Exception, KeyError):
-    #         executed_expression = 'Invalid Expression'
-    #
-    #     # print('executed_expression %s' % executed_expression)
-    #
-    #     if attr.attribute_type.value_type == GenericAttributeType.STRING:
-    #
-    #         if executed_expression == 'Invalid Expression':
-    #             attr.value_string = None
-    #         else:
-    #             attr.value_string = executed_expression
-    #
-    #     if attr.attribute_type.value_type == GenericAttributeType.NUMBER:
-    #
-    #         if executed_expression == 'Invalid Expression':
-    #             attr.value_float = None
-    #         else:
-    #             attr.value_float = executed_expression
-    #
-    #     if attr.attribute_type.value_type == GenericAttributeType.DATE:
-    #
-    #         if executed_expression == 'Invalid Expression':
-    #             attr.value_date = None
-    #         else:
-    #             attr.value_date = executed_expression
-    #
-    #     if attr.attribute_type.value_type == GenericAttributeType.CLASSIFIER:
-    #
-    #         if executed_expression == 'Invalid Expression':
-    #             attr.classifier = None
-    #         else:
-    #             attr.classifier = executed_expression
-    #
-    #     attr.save()
-    #
-    #     current = current + 1
-    #
-    #     celery_task.data = {
-    #         "total_rows": total,
-    #         "processed_rows": current
-    #     }
-    #
-    #     celery_task.save()
+        context = {
+            'master_user': instance.master_user,
+            'member': instance.member
+        }
 
-    celery_task.task_status = 'D'
+        for complex_transaction in complex_transactions:
 
-    celery_task.save()
+            values = get_values(complex_transaction)
+
+            execute_user_fields_expressions(complex_transaction, values, context)
+            complex_transaction.save()
+
+
+        celery_task.task_status = 'D'
+
+        celery_task.save()
+
+    except Exception as e:
+        _l.info("Exception recalculate_user_fields %s" % e)
+        _l.info(traceback.print_exc())
