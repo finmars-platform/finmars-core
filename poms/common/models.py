@@ -67,6 +67,7 @@ class AbstractClassModel(models.Model):
     id = models.PositiveSmallIntegerField(primary_key=True, verbose_name=ugettext_lazy('ID'))
     user_code = models.CharField(max_length=255, unique=True, verbose_name=ugettext_lazy('user code'))
     name = models.CharField(max_length=255, blank=True, default='', verbose_name=ugettext_lazy('name'))
+    short_name = models.CharField(max_length=255, blank=True, default='', verbose_name=ugettext_lazy('short name'))
     description = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('description'))
 
     class Meta:

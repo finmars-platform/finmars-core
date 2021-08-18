@@ -18,7 +18,6 @@ def force_qs_evaluation(qs):
 
 
 def db_class_check_data(model, verbosity, using):
-
     from django.db import IntegrityError, ProgrammingError
 
     try:
@@ -33,6 +32,7 @@ def db_class_check_data(model, verbosity, using):
                 print('create %s class -> %s:%s' % (model._meta.verbose_name, id, name))
             try:
                 model.objects.using(using).create(pk=id, user_code=code,
+                                                  short_name=name,
                                                   name=name, description=name)
             except (IntegrityError, ProgrammingError):
                 pass
@@ -41,6 +41,9 @@ def db_class_check_data(model, verbosity, using):
             obj.user_code = code
             if not obj.name:
                 obj.name = name
+
+            if not obj.short_name:
+                obj.short_name = name
             if not obj.description:
                 obj.description = name
             obj.save()
@@ -49,8 +52,10 @@ def db_class_check_data(model, verbosity, using):
 def date_now():
     return timezone_today()
 
+
 def datetime_now():
     return now()
+
 
 try:
     isclose = math.isclose
@@ -178,17 +183,17 @@ def recursive_callback(dict, callback, prop="children"):
 
 class MemorySavingQuerysetIterator(object):
 
-    def __init__(self,queryset,max_obj_num=1000):
+    def __init__(self, queryset, max_obj_num=1000):
         self._base_queryset = queryset
         self._generator = self._setup()
         self.max_obj_num = max_obj_num
 
     def _setup(self):
-        for i in range(0,self._base_queryset.count(),self.max_obj_num):
+        for i in range(0, self._base_queryset.count(), self.max_obj_num):
             # By making a copy of of the queryset and using that to actually access
             # the objects we ensure that there are only `max_obj_num` objects in
             # memory at any given time
-            smaller_queryset = copy.deepcopy(self._base_queryset)[i:i+self.max_obj_num]
+            smaller_queryset = copy.deepcopy(self._base_queryset)[i:i + self.max_obj_num]
             # logger.debug('Grabbing next %s objects from DB' % self.max_obj_num)
             for obj in smaller_queryset.iterator():
                 yield obj
@@ -201,7 +206,6 @@ class MemorySavingQuerysetIterator(object):
 
 
 def format_float(val):
-
     # 0.000050000892 -> 0.0000500009
     # 0.005623 -> 0.005623
     # 0.005623000551 -> 0.0056230006
@@ -216,7 +220,6 @@ def format_float(val):
 
 
 def format_float_to_2(val):
-
     # 0.000050000892 -> 0.0000500009
     # 0.005623 -> 0.005623
     # 0.005623000551 -> 0.0056230006

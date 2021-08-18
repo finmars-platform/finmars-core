@@ -49,6 +49,8 @@ def is_relation(item):
                     'one_off_event', 'regular_event', 'factor_same',
                     'factor_up', 'factor_down',
 
+                    'instrument_class',
+
                     'strategy1_position', 'strategy1_cash',
                     'strategy2_position', 'strategy2_cash',
                     'strategy3_position', 'strategy3_cash',
