@@ -345,7 +345,8 @@ class CsvDataImportSerializer(serializers.Serializer):
     delimiter = serializers.CharField(max_length=3, required=False, initial=',', default=',')
 
     quotechar = serializers.CharField(max_length=1, required=False, initial='"', default='"')
-    encoding = serializers.CharField(max_length=20, required=False, initial='utf-8', default='utf-8')
+    # encoding = serializers.CharField(max_length=20, required=False, initial='utf-8', default='utf-8')
+    encoding = serializers.CharField(max_length=20, required=False, initial='utf-8-sig', default='utf-8-sig')
 
     error_handler = serializers.ChoiceField(
         choices=[('break', 'Break on first error'), ('continue', 'Try continue')],

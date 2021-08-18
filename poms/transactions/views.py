@@ -49,8 +49,9 @@ from poms.transactions.serializers import TransactionClassSerializer, Transactio
     ComplexTransactionLightSerializer, ComplexTransactionSimpleSerializer, \
     RecalculatePermissionTransactionSerializer, RecalculatePermissionComplexTransactionSerializer, \
     TransactionTypeLightSerializerWithInputs, TransactionTypeEvSerializer, ComplexTransactionEvSerializer, \
-    TransactionEvSerializer, TransactionTypeRecalculateSerializer
-from poms.transactions.tasks import recalculate_permissions_transaction, recalculate_permissions_complex_transaction
+    TransactionEvSerializer, TransactionTypeRecalculateSerializer, RecalculateUserFieldsSerializer
+from poms.transactions.tasks import recalculate_permissions_transaction, recalculate_permissions_complex_transaction, \
+    recalculate_user_fields
 from poms.users.filters import OwnerByMasterUserFilter
 
 import logging
@@ -634,6 +635,41 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
 
         return Response(serializer.data)
 
+    @action(detail=True, methods=['post'], url_path='recalculate-user-fields', serializer_class=RecalculateUserFieldsSerializer)
+    def recalculate_user_fields(self, request, pk):
+
+        context = {'request': request}
+
+        serializer = RecalculateUserFieldsSerializer(data=request.data, context=context)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        task_id = instance.task_id
+
+        # signer = TimestampSigner()
+
+        print('instance %s' % instance)
+
+        if task_id:
+
+            # TODO import-like status check chain someday
+            # TODO Right now is not important because status showed at Active Processes page
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        else:
+
+            instance.transaction_type_type_id = pk
+
+            res = recalculate_user_fields.apply_async(kwargs={'instance': instance})
+
+            # instance.task_id = signer.sign('%s' % res.id)
+            instance.task_id = res.id
+            instance.task_status = res.status
+
+            print('instance.task_id %s' % instance.task_id)
+
+            serializer = RecalculateUserFieldsSerializer(instance=instance, many=False)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
 class TransactionTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = TransactionType.objects.select_related(

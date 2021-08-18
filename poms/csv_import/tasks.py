@@ -186,10 +186,9 @@ def generate_file_report(instance, master_user, type, name):
     return file_report.pk
 
 
-def generate_file_report_simple(instance,  type, name):
+def generate_file_report_simple(instance, type, name):
     try:
         columns = ['Row number']
-
 
         columns.append('Message')
 
@@ -265,7 +264,6 @@ def generate_file_report_simple(instance,  type, name):
         _l.info("Generate file error occured %s" % e)
         _l.info(traceback.print_exc())
         return None
-
 
 
 def get_row_data(row, csv_fields):
@@ -1741,6 +1739,42 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
     return instrument_object
 
 
+def set_events_for_instrument(instance, instrument_object, data_object):
+
+    instrument_type = data_object['instrument_type']
+
+    if instrument_type in ['bonds']:
+
+        if len(instrument_object['event_schedules']):
+
+            coupon_event = instrument_object['event_schedules'][0]
+
+            coupon_event['effective_date'] = data_object['first_coupon_date']
+            coupon_event['final_date'] = data_object['maturity']
+
+            expiration_event = instrument_object['event_schedules'][1]
+
+            expiration_event['effective_date'] = data_object['maturity']
+            expiration_event['final_date'] = data_object['maturity']
+
+
+
+def set_accruals_for_instrument(instance, instrument_object, data_object):
+
+    instrument_type = data_object['instrument_type']
+
+    if instrument_type in ['bonds']:
+
+        if len(instrument_object['accrual_calculation_schedules']):
+
+            accrual = instrument_object['accrual_calculation_schedules'][0]
+
+            accrual['effective_date'] = data_object['first_coupon_date']
+            accrual['accrual_end_date'] = data_object['maturity']
+
+
+
+
 class UnifiedImportHandler():
 
     def __init__(self, instance, update_state, execution_context):
@@ -1753,9 +1787,9 @@ class UnifiedImportHandler():
 
         index = 0
         for col in first_row:
-            col = col.lower().replace(" ", "_")
+            col_name = col.lower().replace(" ", "_")
 
-            csv_row_dict[col] = row[index]
+            csv_row_dict[col_name] = row[index]
 
             index = index + 1
 
@@ -1790,6 +1824,9 @@ class UnifiedImportHandler():
 
             instrument_type = None
 
+
+            # _l.info('row_data %s' % row_data)
+
             try:
 
                 instrument_type = InstrumentType.objects.get(master_user=self.instance.master_user,
@@ -1818,13 +1855,11 @@ class UnifiedImportHandler():
             except Exception as e:
                 row_data['accrued_currency'] = self.ecosystem_default.currency.id
 
-
             try:
-                row_data['payment_size_detail'] = PaymentSizeDetail.objects.get(user_code=row_as_dict['payment_size_detail']).id
+                row_data['payment_size_detail'] = PaymentSizeDetail.objects.get(
+                    user_code=row_as_dict['payment_size_detail']).id
             except Exception as e:
                 row_data['payment_size_detail'] = PaymentSizeDetail.DEFAULT
-
-
 
             if 'maturity' in row_as_dict and row_as_dict['maturity'] != '':
                 row_data['maturity_date'] = row_as_dict['maturity']
@@ -1872,6 +1907,8 @@ class UnifiedImportHandler():
             # row_data['event_schedules'] = []
             row_data['factor_schedules'] = []
 
+            set_events_for_instrument(self.instance, row_data, row_as_dict)
+            set_accruals_for_instrument(self.instance, row_data, row_as_dict)
 
             if 'name' not in row_data and 'user_code' in row_data:
                 row_data['name'] = row_data['user_code']
@@ -1897,7 +1934,8 @@ class UnifiedImportHandler():
                 instrument = None
 
                 try:
-                    instrument = Instrument.objects.get(user_code=row_data['user_code'], master_user=self.instance.master_user)
+                    instrument = Instrument.objects.get(user_code=row_data['user_code'],
+                                                        master_user=self.instance.master_user)
                 except Instrument.DoesNotExist:
                     instrument = None
 
@@ -1913,6 +1951,10 @@ class UnifiedImportHandler():
                     item['error_message'] = serializer.errors
 
         except Exception as e:
+
+            _l.info("Error %s" % e)
+            _l.info(traceback.print_exc())
+
             item['error_message'] = 'Unhandled error in row processing. Exception %s' % str(e)
 
         finally:
@@ -1972,7 +2014,6 @@ class UnifiedImportHandler():
 
             items.append(item)
 
-
         return items
 
     def process(self):
@@ -2020,7 +2061,7 @@ class UnifiedImportHandler():
         if self.instance.items and len(self.instance.items):
 
             self.instance.stats_file_report = generate_file_report_simple(self.instance, 'csv_import.unified_import',
-                                                              'Unified Data Import')
+                                                                          'Unified Data Import')
 
             _l.info('self.instance.stats_file_report %s' % self.instance.stats_file_report)
 

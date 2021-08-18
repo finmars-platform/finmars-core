@@ -3662,3 +3662,46 @@ class RecalculatePermissionComplexTransactionSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         return RecalculatePermission(**validated_data)
+
+
+class RecalculateUserFields:
+    def __init__(self, task_id=None, task_status=None, master_user=None, member=None, attribute_type_id=None,
+                 target_model_content_type=None, target_model=None, target_model_serializer=None,
+                 total_rows=None, processed_rows=None, stats_file_report=None, stats=None):
+        self.task_id = task_id
+        self.task_status = task_status
+
+        self.master_user = master_user
+        self.member = member
+        self.attribute_type_id = attribute_type_id
+        self.target_model_content_type = target_model_content_type
+        self.target_model = target_model
+        self.target_model_serializer = target_model_serializer
+
+        self.total_rows = total_rows
+        self.processed_rows = processed_rows
+
+        self.stats = stats
+        self.stats_file_report = stats_file_report
+
+    def __str__(self):
+        return '%s' % (getattr(self.master_user, 'name', None))
+
+
+class RecalculateUserFieldsSerializer(serializers.Serializer):
+    task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    task_status = serializers.ReadOnlyField()
+
+    master_user = MasterUserField()
+    member = HiddenMemberField()
+    # attribute_type_id = serializers.IntegerField(allow_null=True, required=False)
+
+    processed_rows = serializers.ReadOnlyField()
+    total_rows = serializers.ReadOnlyField()
+
+    stats = serializers.ReadOnlyField()
+    stats_file_report = serializers.ReadOnlyField()
+
+    def create(self, validated_data):
+
+        return RecalculateUserFields(**validated_data)

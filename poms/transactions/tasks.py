@@ -8,6 +8,8 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 
 from poms.accounts.models import Account
+from poms.celery_tasks.models import CeleryTask
+from poms.common.utils import datetime_now
 from poms.obj_perms.models import GenericObjectPermission
 from poms.portfolios.models import Portfolio
 from poms.transactions.models import Transaction, ComplexTransaction, TransactionType, ComplexTransactionInput
@@ -406,3 +408,99 @@ def recalculate_permissions_complex_transaction(self, instance):
     _l.debug('recalculate_complex_transaction done: %s', (time.perf_counter() - st))
 
     return instance
+
+
+
+@shared_task(name='transactions.recalculate_user_fields', bind=True)
+def recalculate_user_fields(self, instance):
+
+    _l.debug('recalculate_attributes: instance', instance)
+    # _l.debug('recalculate_attributes: context', context)
+
+    transaction_type = TransactionType.objects.get(id=instance.attribute_type_id, master_user=instance.master_user)
+
+    complex_transactions = ComplexTransaction.objects.filter(
+        transaction_type=transaction_type)
+
+    _l.debug('recalculate_user_fields: complex_transactions len %s' % len(complex_transactions))
+
+    _l.debug('self task id %s' % self.request.id)
+
+    celery_task = CeleryTask.objects.create(master_user=instance.master_user,
+                                            member=instance.member,
+                                            started_at=datetime_now(),
+                                            task_status='P',
+                                            task_type='complex_transaction_user_field_recalculation', task_id=self.request.id)
+
+    celery_task.save()
+
+    context = {
+        'master_user': instance.master_user,
+        'member': instance.member
+    }
+
+    # json_objs = get_json_objs(instance.target_model,
+    #                           instance.target_model_serializer,
+    #                           instance.target_model_content_type,
+    #
+    #                           instance.master_user,
+    #                           context)
+    #
+    # total = len(attributes)
+    # current = 0
+    #
+    # for attr in attributes:
+    #
+    #     data = json_objs[attr.object_id]
+    #
+    #     # _l.debug('data %s' % data)
+    #
+    #     try:
+    #         executed_expression = safe_eval(attribute_type.expr, names={'this': data}, context=context)
+    #     except (ExpressionEvalError, TypeError, Exception, KeyError):
+    #         executed_expression = 'Invalid Expression'
+    #
+    #     # print('executed_expression %s' % executed_expression)
+    #
+    #     if attr.attribute_type.value_type == GenericAttributeType.STRING:
+    #
+    #         if executed_expression == 'Invalid Expression':
+    #             attr.value_string = None
+    #         else:
+    #             attr.value_string = executed_expression
+    #
+    #     if attr.attribute_type.value_type == GenericAttributeType.NUMBER:
+    #
+    #         if executed_expression == 'Invalid Expression':
+    #             attr.value_float = None
+    #         else:
+    #             attr.value_float = executed_expression
+    #
+    #     if attr.attribute_type.value_type == GenericAttributeType.DATE:
+    #
+    #         if executed_expression == 'Invalid Expression':
+    #             attr.value_date = None
+    #         else:
+    #             attr.value_date = executed_expression
+    #
+    #     if attr.attribute_type.value_type == GenericAttributeType.CLASSIFIER:
+    #
+    #         if executed_expression == 'Invalid Expression':
+    #             attr.classifier = None
+    #         else:
+    #             attr.classifier = executed_expression
+    #
+    #     attr.save()
+    #
+    #     current = current + 1
+    #
+    #     celery_task.data = {
+    #         "total_rows": total,
+    #         "processed_rows": current
+    #     }
+    #
+    #     celery_task.save()
+
+    celery_task.task_status = 'D'
+
+    celery_task.save()
