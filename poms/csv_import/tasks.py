@@ -1740,9 +1740,9 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
 
 
 def set_events_for_instrument(instance, instrument_object, data_object):
-    instrument_type = data_object['instrument_type']
+    instrument_type = data_object['instrument_type'].lower()
 
-    if instrument_type in ['bond', 'index_linked_bond', 'short_term_note']:
+    if instrument_type in ['bonds', 'index_linked_bonds', 'short_term_notes']:
 
         if len(instrument_object['event_schedules']):
             # C
@@ -1758,8 +1758,8 @@ def set_events_for_instrument(instance, instrument_object, data_object):
             expiration_event['effective_date'] = data_object['maturity']
             expiration_event['final_date'] = data_object['maturity']
 
-    if instrument_type in ['bond_futures', 'forward', 'futures', 'commodity_futures', 'call_option', 'etf', 'fund',
-                           'index_future', 'index_option', 'put_option', 'tbill', 'warrant']:
+    if instrument_type in ['bond_futures', 'fx_forwards', 'forwards', 'futures', 'commodity_futures', 'call_options', 'etfs', 'funds',
+                           'index_futures', 'index_options', 'put_options', 'tbills', 'warrants']:
         # M
         expiration_event = instrument_object['event_schedules'][0]
 
