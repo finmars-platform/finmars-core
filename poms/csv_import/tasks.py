@@ -1742,13 +1742,13 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
 def set_events_for_instrument(instance, instrument_object, data_object, instrument_type_obj):
     instrument_type = instrument_type_obj.user_code.lower()
 
-    if instrument_type in ['bonds', 'index_linked_bonds', 'short_term_notes']:
+    if instrument_type in ['bonds', 'convertible_bonds', 'index_linked_bonds', 'short_term_notes']:
 
         if len(instrument_object['event_schedules']):
             # C
             coupon_event = instrument_object['event_schedules'][0]
 
-            coupon_event['periodicity'] = data_object['periodicity']
+            # coupon_event['periodicity'] = data_object['periodicity']
             coupon_event['effective_date'] = data_object['first_coupon_date']
             coupon_event['final_date'] = data_object['maturity']
 
@@ -1758,7 +1758,8 @@ def set_events_for_instrument(instance, instrument_object, data_object, instrume
             expiration_event['effective_date'] = data_object['maturity']
             expiration_event['final_date'] = data_object['maturity']
 
-    if instrument_type in ['bond_futures', 'fx_forwards', 'forwards', 'futures', 'commodity_futures', 'call_options', 'etfs', 'funds',
+    if instrument_type in ['bond_futures', 'fx_forwards', 'forwards', 'futures', 'commodity_futures',
+                           'call_options', 'etfs', 'funds',
                            'index_futures', 'index_options', 'put_options', 'tbills', 'warrants']:
         # M
         expiration_event = instrument_object['event_schedules'][0]
@@ -1779,6 +1780,9 @@ def set_accruals_for_instrument(instance, instrument_object, data_object, instru
 
             accrual['effective_date'] = data_object['first_coupon_date']
             accrual['accrual_end_date'] = data_object['maturity']
+            # accrual['accrual_size'] = data_object['accrual_size']
+            # accrual['periodicity'] = data_object['periodicity']
+            # accrual['periodicity_n'] = data_object['periodicity_n']
 
 
 class UnifiedImportHandler():
@@ -1831,6 +1835,8 @@ class UnifiedImportHandler():
             instrument_type = None
 
             # _l.info('row_data %s' % row_data)
+            
+            skip = False
 
             try:
 
@@ -1842,124 +1848,126 @@ class UnifiedImportHandler():
 
             except Exception as e:
 
-                instrument_type = self.ecosystem_default.instrument_type
+                item['error_message'] = 'Instrument Type Does not Find'
 
-                row_data['instrument_type'] = instrument_type.id
+                skip = True
+                
+            if skip == False:
 
-            set_defaults_from_instrument_type(row_data, instrument_type)
-
-            try:
-                row_data['pricing_currency'] = Currency.objects.get(master_user=self.instance.master_user,
-                                                                    user_code=row_as_dict['pricing_currency']).id
-            except Exception as e:
-                row_data['pricing_currency'] = self.ecosystem_default.currency.id
-
-            try:
-                row_data['accrued_currency'] = Currency.objects.get(master_user=self.instance.master_user,
-                                                                    user_code=row_as_dict['accrued_currency']).id
-            except Exception as e:
-                row_data['accrued_currency'] = row_data['pricing_currency']
-
-            try:
-                row_data['payment_size_detail'] = PaymentSizeDetail.objects.get(
-                    user_code=row_as_dict['payment_size_detail']).id
-            except Exception as e:
-                row_data['payment_size_detail'] = self.ecosystem_default.payment_size_detail.id
-
-            try:
-                row_data['pricing_condition'] = PricingCondition.objects.get(
-                    user_code=row_as_dict['pricing_condition']).id
-            except Exception as e:
-                row_data['pricing_condition'] = self.ecosystem_default.pricing_condition.id
-
-            if 'maturity' in row_as_dict and row_as_dict['maturity'] != '':
-                row_data['maturity_date'] = row_as_dict['maturity']
-            else:
-                row_data['maturity_date'] = '2999-01-01'
-
-            row_data['attributes'] = []
-
-            for attribute_type in self.attribute_types:
-
-                lower_user_code = attribute_type.user_code.lower()
-
-                if lower_user_code in row_as_dict:
-
-                    attribute = {
-                        'attribute_type': attribute_type.id,
-                    }
-
-                    if attribute_type.value_type == 10:
-                        attribute['value_string'] = row_as_dict[lower_user_code]
-
-                    if attribute_type.value_type == 20:
-                        attribute['value_float'] = row_as_dict[lower_user_code]
-
-                    if attribute_type.value_type == 30:
-
-                        try:
-
-                            classifier = GenericClassifier.objects.get(attribute_type=attribute_type,
-                                                                       name=row_as_dict[lower_user_code])
-
-                            attribute['classifier'] = classifier.id
-
-                        except Exception as e:
-                            attribute['classifier'] = None
-
-                    if attribute_type.value_type == 40:
-                        attribute['value_date'] = row_as_dict[lower_user_code]
-
-                    row_data['attributes'].append(attribute)
-
-            row_data['master_user'] = self.instance.master_user.id
-            row_data['manual_pricing_formulas'] = []
-            # row_data['accrual_calculation_schedules'] = []
-            # row_data['event_schedules'] = []
-            row_data['factor_schedules'] = []
-
-            set_events_for_instrument(self.instance, row_data, row_as_dict, instrument_type)
-            set_accruals_for_instrument(self.instance, row_data, row_as_dict, instrument_type)
-
-            if 'name' not in row_data and 'user_code' in row_data:
-                row_data['name'] = row_data['user_code']
-
-            if 'short_name' not in row_data and 'user_code' in row_data:
-                row_data['short_name'] = row_data['user_code']
-
-            if self.instance.mode == 'skip':
-
-                serializer = InstrumentSerializer(data=row_data, context=context)
-
-                is_valid = serializer.is_valid()
-
-                item['row_data'] = row_data
-
-                if is_valid:
-                    serializer.save()
-                else:
-                    item['error_message'] = serializer.errors
-
-            if self.instance.mode == 'overwrite':
-
-                instrument = None
-
+                set_defaults_from_instrument_type(row_data, instrument_type)
+    
                 try:
-                    instrument = Instrument.objects.get(user_code=row_data['user_code'],
-                                                        master_user=self.instance.master_user)
-                except Instrument.DoesNotExist:
-                    instrument = None
-
-                serializer = InstrumentSerializer(data=row_data, context=context, instance=instrument)
-
-                is_valid = serializer.is_valid()
-
-                item['row_data'] = row_data
-
-                if is_valid:
-                    serializer.save()
+                    row_data['pricing_currency'] = Currency.objects.get(master_user=self.instance.master_user,
+                                                                        user_code=row_as_dict['pricing_currency']).id
+                except Exception as e:
+                    row_data['pricing_currency'] = self.ecosystem_default.currency.id
+    
+                try:
+                    row_data['accrued_currency'] = Currency.objects.get(master_user=self.instance.master_user,
+                                                                        user_code=row_as_dict['accrued_currency']).id
+                except Exception as e:
+                    row_data['accrued_currency'] = row_data['pricing_currency']
+    
+                try:
+                    row_data['payment_size_detail'] = PaymentSizeDetail.objects.get(
+                        user_code=row_as_dict['payment_size_detail']).id
+                except Exception as e:
+                    row_data['payment_size_detail'] = self.ecosystem_default.payment_size_detail.id
+    
+                try:
+                    row_data['pricing_condition'] = PricingCondition.objects.get(
+                        user_code=row_as_dict['pricing_condition']).id
+                except Exception as e:
+                    row_data['pricing_condition'] = self.ecosystem_default.pricing_condition.id
+    
+                if 'maturity' in row_as_dict and row_as_dict['maturity'] != '':
+                    row_data['maturity_date'] = row_as_dict['maturity']
                 else:
-                    item['error_message'] = serializer.errors
+                    row_data['maturity_date'] = '2999-01-01'
+    
+                row_data['attributes'] = []
+    
+                for attribute_type in self.attribute_types:
+    
+                    lower_user_code = attribute_type.user_code.lower()
+    
+                    if lower_user_code in row_as_dict:
+    
+                        attribute = {
+                            'attribute_type': attribute_type.id,
+                        }
+    
+                        if attribute_type.value_type == 10:
+                            attribute['value_string'] = row_as_dict[lower_user_code]
+    
+                        if attribute_type.value_type == 20:
+                            attribute['value_float'] = row_as_dict[lower_user_code]
+    
+                        if attribute_type.value_type == 30:
+    
+                            try:
+    
+                                classifier = GenericClassifier.objects.get(attribute_type=attribute_type,
+                                                                           name=row_as_dict[lower_user_code])
+    
+                                attribute['classifier'] = classifier.id
+    
+                            except Exception as e:
+                                attribute['classifier'] = None
+    
+                        if attribute_type.value_type == 40:
+                            attribute['value_date'] = row_as_dict[lower_user_code]
+    
+                        row_data['attributes'].append(attribute)
+    
+                row_data['master_user'] = self.instance.master_user.id
+                row_data['manual_pricing_formulas'] = []
+                # row_data['accrual_calculation_schedules'] = []
+                # row_data['event_schedules'] = []
+                row_data['factor_schedules'] = []
+    
+                set_events_for_instrument(self.instance, row_data, row_as_dict, instrument_type)
+                set_accruals_for_instrument(self.instance, row_data, row_as_dict, instrument_type)
+    
+                if 'name' not in row_data and 'user_code' in row_data:
+                    row_data['name'] = row_data['user_code']
+    
+                if 'short_name' not in row_data and 'user_code' in row_data:
+                    row_data['short_name'] = row_data['user_code']
+    
+                if self.instance.mode == 'skip':
+    
+                    serializer = InstrumentSerializer(data=row_data, context=context)
+    
+                    is_valid = serializer.is_valid()
+    
+                    item['row_data'] = row_data
+    
+                    if is_valid:
+                        serializer.save()
+                    else:
+                        item['error_message'] = serializer.errors
+    
+                if self.instance.mode == 'overwrite':
+    
+                    instrument = None
+    
+                    try:
+                        instrument = Instrument.objects.get(user_code=row_data['user_code'],
+                                                            master_user=self.instance.master_user)
+                    except Instrument.DoesNotExist:
+                        instrument = None
+    
+                    serializer = InstrumentSerializer(data=row_data, context=context, instance=instrument)
+    
+                    is_valid = serializer.is_valid()
+    
+                    item['row_data'] = row_data
+    
+                    if is_valid:
+                        serializer.save()
+                    else:
+                        item['error_message'] = serializer.errors
 
         except Exception as e:
 
