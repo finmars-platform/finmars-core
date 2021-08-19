@@ -3665,18 +3665,14 @@ class RecalculatePermissionComplexTransactionSerializer(serializers.Serializer):
 
 
 class RecalculateUserFields:
-    def __init__(self, task_id=None, task_status=None, master_user=None, member=None, attribute_type_id=None,
-                 target_model_content_type=None, target_model=None, target_model_serializer=None,
+    def __init__(self, task_id=None, task_status=None, master_user=None, member=None, transaction_type_id=None,
                  total_rows=None, processed_rows=None, stats_file_report=None, stats=None):
         self.task_id = task_id
         self.task_status = task_status
 
         self.master_user = master_user
         self.member = member
-        self.attribute_type_id = attribute_type_id
-        self.target_model_content_type = target_model_content_type
-        self.target_model = target_model
-        self.target_model_serializer = target_model_serializer
+        self.transaction_type_id = transaction_type_id
 
         self.total_rows = total_rows
         self.processed_rows = processed_rows
@@ -3694,7 +3690,7 @@ class RecalculateUserFieldsSerializer(serializers.Serializer):
 
     master_user = MasterUserField()
     member = HiddenMemberField()
-    # attribute_type_id = serializers.IntegerField(allow_null=True, required=False)
+    transaction_type_id = serializers.IntegerField(allow_null=True, required=False)
 
     processed_rows = serializers.ReadOnlyField()
     total_rows = serializers.ReadOnlyField()

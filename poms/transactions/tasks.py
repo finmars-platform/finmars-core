@@ -435,6 +435,8 @@ def get_values(complex_transaction):
             if value is not None:
                 values[i.name] = value
 
+    return values
+
 def execute_user_fields_expressions(complex_transaction, values, context):
 
     _l.debug('execute_user_fields_expressions')
@@ -497,10 +499,10 @@ def recalculate_user_fields(self, instance):
 
     try:
 
-        _l.info('recalculate_user_fields: instance', instance)
+        _l.info('recalculate_user_fields: instance.transaction_type_id %s'  % instance.transaction_type_id)
         # _l.debug('recalculate_attributes: context', context)
 
-        transaction_type = TransactionType.objects.get(id=instance.attribute_type_id, master_user=instance.master_user)
+        transaction_type = TransactionType.objects.get(id=instance.transaction_type_id, master_user=instance.master_user)
 
         complex_transactions = ComplexTransaction.objects.filter(
             transaction_type=transaction_type)
@@ -511,9 +513,8 @@ def recalculate_user_fields(self, instance):
 
         celery_task = CeleryTask.objects.create(master_user=instance.master_user,
                                                 member=instance.member,
-                                                started_at=datetime_now(),
-                                                task_status='P',
-                                                task_type='complex_transaction_user_field_recalculation', task_id=self.request.id)
+                                                status='P',
+                                                type='complex_transaction_user_field_recalculation', celery_task_id=self.request.id)
 
         celery_task.save()
 
