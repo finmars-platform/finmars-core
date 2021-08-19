@@ -1739,8 +1739,8 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
     return instrument_object
 
 
-def set_events_for_instrument(instance, instrument_object, data_object):
-    instrument_type = data_object['instrument_type'].lower()
+def set_events_for_instrument(instance, instrument_object, data_object, instrument_type_obj):
+    instrument_type = instrument_type_obj.user_code.lower()
 
     if instrument_type in ['bonds', 'index_linked_bonds', 'short_term_notes']:
 
@@ -1916,8 +1916,8 @@ class UnifiedImportHandler():
             # row_data['event_schedules'] = []
             row_data['factor_schedules'] = []
 
-            set_events_for_instrument(self.instance, row_data, row_as_dict)
-            set_accruals_for_instrument(self.instance, row_data, row_as_dict)
+            set_events_for_instrument(self.instance, row_data, row_as_dict, instrument_type)
+            set_accruals_for_instrument(self.instance, row_data, row_as_dict, instrument_type)
 
             if 'name' not in row_data and 'user_code' in row_data:
                 row_data['name'] = row_data['user_code']
