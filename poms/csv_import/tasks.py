@@ -1845,7 +1845,7 @@ class UnifiedImportHandler():
                 row_data['accrued_currency'] = Currency.objects.get(master_user=self.instance.master_user,
                                                                     user_code=row_as_dict['accrued_currency']).id
             except Exception as e:
-                row_data['accrued_currency'] = self.ecosystem_default.currency.id
+                row_data['accrued_currency'] = row_data['pricing_currency']
 
             try:
                 row_data['payment_size_detail'] = PaymentSizeDetail.objects.get(
