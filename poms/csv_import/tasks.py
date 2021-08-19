@@ -1767,8 +1767,10 @@ def set_events_for_instrument(instance, instrument_object, data_object, instrume
         expiration_event['final_date'] = data_object['maturity']
 
 
-def set_accruals_for_instrument(instance, instrument_object, data_object):
-    instrument_type = data_object['instrument_type']
+def set_accruals_for_instrument(instance, instrument_object, data_object, instrument_type_obj):
+    # instrument_type = data_object['instrument_type']
+
+    instrument_type = instrument_type_obj.user_code.lower()
 
     if instrument_type in ['bonds']:
 
