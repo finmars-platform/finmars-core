@@ -1740,13 +1740,11 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
 
 
 def set_events_for_instrument(instance, instrument_object, data_object):
-
     instrument_type = data_object['instrument_type']
 
     if instrument_type in ['bonds']:
 
         if len(instrument_object['event_schedules']):
-
             coupon_event = instrument_object['event_schedules'][0]
 
             coupon_event['effective_date'] = data_object['first_coupon_date']
@@ -1758,21 +1756,16 @@ def set_events_for_instrument(instance, instrument_object, data_object):
             expiration_event['final_date'] = data_object['maturity']
 
 
-
 def set_accruals_for_instrument(instance, instrument_object, data_object):
-
     instrument_type = data_object['instrument_type']
 
     if instrument_type in ['bonds']:
 
         if len(instrument_object['accrual_calculation_schedules']):
-
             accrual = instrument_object['accrual_calculation_schedules'][0]
 
             accrual['effective_date'] = data_object['first_coupon_date']
             accrual['accrual_end_date'] = data_object['maturity']
-
-
 
 
 class UnifiedImportHandler():
@@ -1824,7 +1817,6 @@ class UnifiedImportHandler():
 
             instrument_type = None
 
-
             # _l.info('row_data %s' % row_data)
 
             try:
@@ -1859,7 +1851,13 @@ class UnifiedImportHandler():
                 row_data['payment_size_detail'] = PaymentSizeDetail.objects.get(
                     user_code=row_as_dict['payment_size_detail']).id
             except Exception as e:
-                row_data['payment_size_detail'] = PaymentSizeDetail.DEFAULT
+                row_data['payment_size_detail'] = self.ecosystem_default.payment_size_detail.id
+
+            try:
+                row_data['pricing_condition'] = PricingCondition.objects.get(
+                    user_code=row_as_dict['pricing_condition']).id
+            except Exception as e:
+                row_data['pricing_condition'] = self.ecosystem_default.pricing_condition.id
 
             if 'maturity' in row_as_dict and row_as_dict['maturity'] != '':
                 row_data['maturity_date'] = row_as_dict['maturity']
