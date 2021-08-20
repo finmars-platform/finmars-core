@@ -1516,7 +1516,7 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
         return ret
 
 
-class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer):
+class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     rule_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
 
