@@ -946,10 +946,14 @@ class PriceHistoryError(models.Model):
 
     STATUS_ERROR = 'E'
     STATUS_SKIP = 'S'
+    STATUS_CREATED = 'C'
+    STATUS_OVERWRITTEN = 'O'
 
     STATUS_CHOICES = (
         (STATUS_ERROR, ugettext_lazy('Error')),
         (STATUS_SKIP, ugettext_lazy('Skip')),
+        (STATUS_CREATED, ugettext_lazy('Created')),
+        (STATUS_OVERWRITTEN, ugettext_lazy('Overwritten')),
     )
 
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
@@ -988,10 +992,14 @@ class CurrencyHistoryError(models.Model):
 
     STATUS_ERROR = 'E'
     STATUS_SKIP = 'S'
+    STATUS_CREATED = 'C'
+    STATUS_OVERWRITTEN = 'O'
 
     STATUS_CHOICES = (
         (STATUS_ERROR, ugettext_lazy('Error')),
         (STATUS_SKIP, ugettext_lazy('Skip')),
+        (STATUS_CREATED, ugettext_lazy('Created')),
+        (STATUS_OVERWRITTEN, ugettext_lazy('Overwritten')),
     )
 
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),

@@ -5,7 +5,7 @@ from django.db import transaction
 from django.db.models import Q
 
 from poms.common import formula
-from poms.common.utils import isclose
+from poms.common.utils import isclose, date_now
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import PricingCondition
 from poms.integrations.models import ProviderClass, BloombergDataProviderCredential
@@ -438,6 +438,8 @@ class PricingCurrencyHandler(object):
                             date=date
                         )
 
+                    price.procedure_modified_datetime = date_now()
+
                     price.fx_rate = 0
 
                     if fx_rate is not None:
@@ -456,6 +458,12 @@ class PricingCurrencyHandler(object):
                             successful_prices_count = successful_prices_count + 1
 
                             price.save()
+
+                            if price.id:
+                                error.status = CurrencyHistoryError.STATUS_OVERWRITTEN
+                            else:
+                                error.status = CurrencyHistoryError.STATUS_SKIP
+                            error.save()
 
                     else:
 
@@ -696,6 +704,9 @@ class PricingCurrencyHandler(object):
 
                         _l.debug('Create new %s' % price)
 
+
+                    price.procedure_modified_datetime = date_now()
+
                     price.fx_rate = 0
 
                     if fx_rate is not None:
@@ -714,6 +725,12 @@ class PricingCurrencyHandler(object):
                             successful_prices_count = successful_prices_count + 1
 
                             price.save()
+
+                            if price.id:
+                                error.status = CurrencyHistoryError.STATUS_OVERWRITTEN
+                            else:
+                                error.status = CurrencyHistoryError.STATUS_SKIP
+                            error.save()
 
                     else:
 

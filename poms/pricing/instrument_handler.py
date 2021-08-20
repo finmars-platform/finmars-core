@@ -478,6 +478,8 @@ class PricingInstrumentHandler(object):
 
                         _l.debug('Create new %s' % price)
 
+                    price.procedure_modified_datetime = date_now()
+
                     price.principal_price = 0
                     price.accrued_price = 0
 
@@ -720,6 +722,8 @@ class PricingInstrumentHandler(object):
 
                         _l.debug('Create new %s' % price)
 
+                    price.procedure_modified_datetime = date_now()
+
                     price.principal_price = 0
                     price.accrued_price = 0
 
@@ -759,6 +763,12 @@ class PricingInstrumentHandler(object):
                             successful_prices_count = successful_prices_count + 1
 
                             price.save()
+
+                            if price.id:
+                                error.status = PriceHistoryError.STATUS_OVERWRITTEN
+                            else:
+                                error.status = PriceHistoryError.STATUS_SKIP
+                            error.save()
 
                     else:
 
@@ -1029,6 +1039,8 @@ class PricingInstrumentHandler(object):
 
                         _l.debug('Create new %s' % price)
 
+                    price.procedure_modified_datetime = date_now()
+
                     price.principal_price = 0
                     price.accrued_price = 0
 
@@ -1067,6 +1079,12 @@ class PricingInstrumentHandler(object):
                             successful_prices_count = successful_prices_count + 1
 
                             price.save()
+
+                            if price.id:
+                                error.status = PriceHistoryError.STATUS_OVERWRITTEN
+                            else:
+                                error.status = PriceHistoryError.STATUS_SKIP
+                            error.save()
 
                     else:
 
