@@ -78,6 +78,9 @@ class CurrencyHistory(DataTimeStampedModel):
     date = models.DateField(db_index=True, default=date_now, verbose_name=ugettext_lazy('date'))
     fx_rate = models.FloatField(default=1, verbose_name=ugettext_lazy('fx rate'))
 
+    procedure_modified_datetime = models.DateTimeField(null=True, blank=True,
+                                                       verbose_name=ugettext_lazy('procedure_modified_datetime'))
+
     class Meta:
         verbose_name = ugettext_lazy('currency history')
         verbose_name_plural = ugettext_lazy('currency histories')

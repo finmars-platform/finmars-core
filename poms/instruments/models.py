@@ -1303,6 +1303,9 @@ class PriceHistory(DataTimeStampedModel):
     nav = models.FloatField(default=0.0, verbose_name=ugettext_lazy('nav'))
     modified_duration = models.FloatField(default=0.0, verbose_name=ugettext_lazy('modified duration'))
 
+    procedure_modified_datetime = models.DateTimeField(null=True, blank=True,
+                                    verbose_name=ugettext_lazy('procedure_modified_datetime'))
+
     class Meta:
         verbose_name = ugettext_lazy('price history')
         verbose_name_plural = ugettext_lazy('price histories')

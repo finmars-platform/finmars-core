@@ -1463,6 +1463,8 @@ class PriceHistorySerializer(serializers.ModelSerializer):
             'id', 'instrument', 'instrument_object', 'pricing_policy', 'pricing_policy_object',
             'date', 'principal_price', 'accrued_price',
 
+            'procedure_modified_datetime',
+
             'nav',
 
             'long_delta',

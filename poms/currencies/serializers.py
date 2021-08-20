@@ -226,7 +226,7 @@ class CurrencyHistorySerializer(ModelWithTimeStampSerializer):
     class Meta:
         model = CurrencyHistory
         fields = [
-            'id', 'currency', 'currency_object', 'pricing_policy', 'pricing_policy_object', 'date', 'fx_rate'
+            'id', 'currency', 'currency_object', 'pricing_policy', 'pricing_policy_object', 'date', 'fx_rate', 'procedure_modified_datetime'
         ]
 
     def __init__(self, *args, **kwargs):
