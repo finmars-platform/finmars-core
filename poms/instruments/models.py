@@ -558,6 +558,10 @@ class InstrumentTypeAccrual(models.Model):
 
     json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
 
+    class Meta:
+
+        ordering = ['order']
+
     @property
     def data(self):
         if self.json_data:
@@ -589,6 +593,10 @@ class InstrumentTypeEvent(models.Model):
     autogenerate = models.BooleanField(default=True, verbose_name=ugettext_lazy('autogenerate'))
 
     json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+
+    class Meta:
+
+        ordering = ['order']
 
     @property
     def data(self):
