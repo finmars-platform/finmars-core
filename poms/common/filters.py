@@ -50,6 +50,7 @@ def is_relation(item):
                     'factor_up', 'factor_down',
 
                     'instrument_class',
+                    'transaction_class',
 
                     'strategy1_position', 'strategy1_cash',
                     'strategy2_position', 'strategy2_cash',
