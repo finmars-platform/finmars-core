@@ -2166,7 +2166,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         delete_prop(results, 'master_user')
 
         result = {
-            "entity": "obj_attrs." + model + "attributetype",
+            "entity": "obj_attrs.genericattributetype",
             "count": len(results),
             "content": results
         }
@@ -2240,7 +2240,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         delete_prop(results, 'pk')
 
         result = {
-            "entity": "pricing.pricingprocedure",
+            "entity": "procedures.pricingprocedure",
             "count": len(results),
             "content": results
         }
@@ -2293,7 +2293,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             results.append(result_item)
 
         result = {
-            "entity": "schedules.pricingschedule",
+            "entity": "schedules.schedule",
             "count": len(results),
             "content": results
         }
@@ -2974,6 +2974,9 @@ class ConfigurationDuplicateCheckViewSet(AbstractModelViewSet):
                     model = apps.get_model(app_label=app_label, model_name=model_name)
 
                 except (LookupError, KeyError):
+
+                    _l.info("Model is not found for %s %s" % (app_label, model_name))
+
                     continue
 
                 for item in entity['content']:

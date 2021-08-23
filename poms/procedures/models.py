@@ -168,9 +168,11 @@ class PricingProcedure(BaseProcedure):
 
     def save(self, *args, **kwargs):
 
+        _l.info('self.instrument_filters %s' % self.instrument_filters)
+
         if self.type == PricingProcedure.CREATED_BY_INSTRUMENT:
 
-            if self.instrument_filters:
+            if self.instrument_filters and self.instrument_filters != '':
 
                 user_code = self.instrument_filters
 
@@ -201,7 +203,7 @@ class PricingProcedure(BaseProcedure):
 
         if self.type == PricingProcedure.CREATED_BY_CURRENCY:
 
-            if self.currency_filters:
+            if self.currency_filters and self.currency_filters != '':
 
                 user_code = self.currency_filters
 

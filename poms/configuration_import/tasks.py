@@ -2706,51 +2706,59 @@ class ImportManager(object):
 
                     for content_object in item['content']:
 
-                        serializer = PricingProcedureSerializer(data=content_object,
-                                                                     context=self.get_serializer_context())
+                        if content_object['type'] == 1:
 
-                        stats = {
-                            'content_type': item['entity'],
-                            'mode': self.instance.mode,
-                            'item': content_object,
-                            'error': {
-                                'message': None
-                            },
-                            'status': 'info'
-                        }
+                            serializer = PricingProcedureSerializer(data=content_object,
+                                                                         context=self.get_serializer_context())
 
-                        try:
-                            serializer.is_valid(raise_exception=True)
-                            serializer.save()
-                        except Exception as error:
+                            stats = {
+                                'content_type': item['entity'],
+                                'mode': self.instance.mode,
+                                'item': content_object,
+                                'error': {
+                                    'message': None
+                                },
+                                'status': 'info'
+                            }
 
-                            if self.instance.mode == 'overwrite':
+                            try:
+                                serializer.is_valid(raise_exception=True)
+                                serializer.save()
+                            except Exception as error:
 
-                                try:
+                                _l.info("Pricing Procedure create error %s" % error)
+                                _l.info(traceback.print_exc())
 
-                                    instance = PricingProcedure.objects.get(master_user=self.master_user,
-                                                                                 name=content_object['name'])
+                                if self.instance.mode == 'overwrite':
 
-                                    serializer = PricingProcedureSerializer(data=content_object,
-                                                                                   instance=instance,
-                                                                                   context=self.get_serializer_context())
-                                    serializer.is_valid(raise_exception=True)
-                                    serializer.save()
+                                    try:
 
-                                except Exception as error:
+                                        instance = PricingProcedure.objects.get(master_user=self.master_user,
+                                                                                     user_code=content_object['user_code'])
+
+                                        serializer = PricingProcedureSerializer(data=content_object,
+                                                                                       instance=instance,
+                                                                                       context=self.get_serializer_context())
+                                        serializer.is_valid(raise_exception=True)
+                                        serializer.save()
+
+                                    except Exception as error:
+
+                                        _l.info("Pricing Procedure overwrite error %s" % error)
+                                        _l.info(traceback.print_exc())
+
+                                        stats['status'] = 'error'
+                                        stats['error'][
+                                            'message'] = 'Error. Can\'t Overwrite Pricing Procedure for %s' % content_object['name']
+
+                                else:
 
                                     stats['status'] = 'error'
-                                    stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Pricing Procedure for %s' % content_object['name']
+                                    stats['error']['message'] = 'Pricing Procedure %s already exists' % content_object['name']
 
-                            else:
+                            self.instance.stats['configuration'][item['entity']].append(stats)
 
-                                stats['status'] = 'error'
-                                stats['error']['message'] = 'Pricing Procedure %s already exists' % content_object['name']
-
-                        self.instance.stats['configuration'][item['entity']].append(stats)
-
-                        self.update_progress()
+                            self.update_progress()
 
         _l.info('Import Configuration Pricing Procedure done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -2826,9 +2834,10 @@ class ImportManager(object):
 
     def import_configuration(self, configuration_section):
 
-        self.configuration_recovery_handler.set_configuration(configuration_section)
-
-        configuration_section = self.configuration_recovery_handler.process_recovery()
+        # TODO inspect later
+        # self.configuration_recovery_handler.set_configuration(configuration_section)
+        # 
+        # configuration_section = self.configuration_recovery_handler.process_recovery()
 
         # try:
 
@@ -3045,6 +3054,8 @@ class ImportManager(object):
 
                                             _l.info('error %s' % error)
 
+                                            _l.info(traceback.print_exc())
+
                                             stats['status'] = 'error'
 
                                             if '___user_code' in content_object:
@@ -3073,6 +3084,7 @@ class ImportManager(object):
         except Exception as error:
 
             _l.info('Import Mappings Error %s' % error)
+            _l.info(traceback.print_exc())
 
 @shared_task(name='configuration_import.configuration_import_as_json', bind=True)
 def configuration_import_as_json(self, instance):
