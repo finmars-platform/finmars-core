@@ -662,6 +662,9 @@ class ImportManager(object):
                                         #     user_code='-').pk  # TODO Add to EcosystemDefaults
 
 
+                        if 'instrument_factor_schedule_data' not in content_object:
+                            content_object['instrument_factor_schedule_data'] = {}
+
 
                         serializer = InstrumentTypeSerializer(data=content_object,
                                                               context=self.get_serializer_context())
