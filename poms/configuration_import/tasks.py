@@ -3008,23 +3008,23 @@ class ImportManager(object):
                             if '___user_code' in content_object:
 
                                 try:
-                                    content_object['content_object'] = map_to_model[entity_object['entity']].objects.get(
-                                        master_user=self.master_user, user_code__exact=content_object['___user_code']).pk
+
+                                    if entity_object['entity'] in ['integrations.accounttypemapping', 'integrations.instrumenttypemapping', 'integrations.pricingpolicymapping']:
+                                        content_object['content_object'] = map_to_model[entity_object['entity']].objects.get(
+                                            master_user=self.master_user, user_code=content_object['___user_code']).pk
+                                    else:
+
+                                        content_object['content_object'] = map_to_model[entity_object['entity']].objects.get(
+                                            user_code=content_object['___user_code']).pk
 
                                 except map_to_model[entity_object['entity']].DoesNotExist:
                                     error = True
 
-                            if '___user_code' in content_object:
-
-                                try:
-                                    content_object['content_object'] = map_to_model[entity_object['entity']].objects.get(
-                                        master_user=self.master_user,
-                                        user_code__exact=content_object['___user_code']).pk
-
-                                except map_to_model[entity_object['entity']].DoesNotExist:
-                                    error = True
-
+        
                             if error == False:
+
+                                content_object['provider'] = 1
+                            
                                 serializer = map_to_serializer[entity_object['entity']](data=content_object,
                                                                                         context=self.get_serializer_context())
 
@@ -3039,6 +3039,7 @@ class ImportManager(object):
 
                                             instance = map_to_mapping[entity_object['entity']].objects.get(
                                                     value=content_object['value'],
+                                                    provider=1,
                                                     master_user=self.master_user, content_object=content_object['content_object'])
 
                                             serializer = map_to_serializer[entity_object['entity']](data=content_object,
