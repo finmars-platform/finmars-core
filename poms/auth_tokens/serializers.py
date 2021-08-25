@@ -35,3 +35,11 @@ class CreateMemberSerializer(serializers.Serializer):
     member_id = serializers.CharField(label=_("Member id"))
     master_user_id = serializers.CharField(label=_("Master User id"))
     master_user_legacy_id = serializers.IntegerField(required=False, label=_("Current master user legacy id"))
+
+
+
+class DeleteMemberSerializer(serializers.Serializer):
+    user_id = serializers.CharField(label=_("User Id"))
+    master_user_id = serializers.CharField(label=_("Master User id"))
+
+
