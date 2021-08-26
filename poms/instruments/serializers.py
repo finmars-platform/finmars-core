@@ -5,7 +5,7 @@ from datetime import timedelta
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import empty
+from rest_framework.fields import empty, ReadOnlyField
 from rest_framework.serializers import ListSerializer
 
 from poms.common.fields import ExpressionField, FloatEvalField, DateTimeTzAwareField
@@ -1456,6 +1456,8 @@ class PriceHistorySerializer(serializers.ModelSerializer):
     pricing_policy_object = PricingPolicySerializer(source='pricing_policy', read_only=True)
     principal_price = FloatEvalField()
     accrued_price = FloatEvalField()
+
+    procedure_modified_datetime = ReadOnlyField()
 
     class Meta:
         model = PriceHistory

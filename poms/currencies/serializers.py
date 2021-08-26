@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from rest_framework import serializers
+from rest_framework.fields import ReadOnlyField
 
 from poms.common.fields import FloatEvalField
 from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
@@ -222,6 +223,8 @@ class CurrencyHistorySerializer(ModelWithTimeStampSerializer):
     pricing_policy = PricingPolicyField(allow_null=False)
     pricing_policy_object = serializers.PrimaryKeyRelatedField(source='pricing_policy', read_only=True)
     fx_rate = FloatEvalField()
+
+    procedure_modified_datetime = ReadOnlyField()
 
     class Meta:
         model = CurrencyHistory
