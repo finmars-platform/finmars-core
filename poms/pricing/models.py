@@ -979,7 +979,7 @@ class PriceHistoryError(models.Model):
     # DEPRECATED
     accrual_error_text = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('accrual error text'))
 
-    procedure_instance = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE,
+    procedure_instance = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE,  null=True,
                                            verbose_name=ugettext_lazy('pricing procedure instance'))
 
     status = models.CharField(max_length=1, default=STATUS_ERROR, choices=STATUS_CHOICES,
@@ -1020,7 +1020,7 @@ class CurrencyHistoryError(models.Model):
 
     error_text = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('error text'))
 
-    procedure_instance = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE,
+    procedure_instance = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE,  null=True,
                                            verbose_name=ugettext_lazy('pricing procedure instance'))
 
     status = models.CharField(max_length=1, default=STATUS_ERROR, choices=STATUS_CHOICES,

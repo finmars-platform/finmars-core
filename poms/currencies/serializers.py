@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from django.utils.timezone import now
 from rest_framework import serializers
 from rest_framework.fields import ReadOnlyField
 
@@ -11,34 +12,30 @@ from poms.instruments.fields import PricingPolicyField
 from poms.instruments.models import PricingPolicy
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, ModelWithAttributesOnlySerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
-from poms.pricing.models import CurrencyPricingPolicy
+from poms.pricing.models import CurrencyPricingPolicy, CurrencyHistoryError
 from poms.pricing.serializers import CurrencyPricingPolicySerializer
 from poms.tags.serializers import ModelWithTagSerializer
 from poms.users.fields import MasterUserField
 
-def set_currency_pricing_scheme_parameters(pricing_policy, parameters):
 
+def set_currency_pricing_scheme_parameters(pricing_policy, parameters):
     # print('pricing_policy %s ' % pricing_policy)
     # print('parameters %s ' % parameters)
 
     if parameters:
 
         if hasattr(parameters, 'data'):
-
             pricing_policy.data = parameters.data
 
         if hasattr(parameters, 'default_value'):
-
             pricing_policy.default_value = parameters.default_value
 
         if hasattr(parameters, 'attribute_key'):
-
             pricing_policy.attribute_key = parameters.attribute_key
 
 
 class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
                          ModelWithAttributesSerializer, ModelWithTagSerializer, ModelWithTimeStampSerializer):
-
     master_user = MasterUserField()
 
     pricing_policies = CurrencyPricingPolicySerializer(allow_null=True, many=True, required=False)
@@ -56,8 +53,6 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
 
     def __init__(self, *args, **kwargs):
         super(CurrencySerializer, self).__init__(*args, **kwargs)
-
-
 
     def create(self, validated_data):
 
@@ -100,7 +95,6 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
                 # print('policy.default_instrument_pricing_scheme %s' % policy.default_currency_pricing_scheme)
 
                 if policy.default_currency_pricing_scheme:
-
                     o.pricing_scheme = policy.default_currency_pricing_scheme
 
                     parameters = policy.default_currency_pricing_scheme.get_parameters()
@@ -138,7 +132,6 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
                         o.data = None
 
                     o.notes = item['notes']
-
 
                     o.save()
 
@@ -180,8 +173,8 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
             CurrencyPricingPolicy.objects.filter(currency=instance).exclude(id__in=ids).delete()
 
 
-class CurrencyEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesOnlySerializer, ModelWithUserCodeSerializer):
-
+class CurrencyEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesOnlySerializer,
+                           ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
     class Meta(ModelWithObjectPermissionSerializer.Meta):
@@ -193,9 +186,7 @@ class CurrencyEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribu
         ]
 
 
-
 class CurrencyLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
-
     master_user = MasterUserField()
 
     class Meta(ModelWithObjectPermissionSerializer.Meta):
@@ -229,7 +220,8 @@ class CurrencyHistorySerializer(ModelWithTimeStampSerializer):
     class Meta:
         model = CurrencyHistory
         fields = [
-            'id', 'currency', 'currency_object', 'pricing_policy', 'pricing_policy_object', 'date', 'fx_rate', 'procedure_modified_datetime'
+            'id', 'currency', 'currency_object', 'pricing_policy', 'pricing_policy_object', 'date', 'fx_rate',
+            'procedure_modified_datetime'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -239,3 +231,64 @@ class CurrencyHistorySerializer(ModelWithTimeStampSerializer):
 
         from poms.instruments.serializers import PricingPolicyViewSerializer
         self.fields['pricing_policy_object'] = PricingPolicyViewSerializer(source='pricing_policy', read_only=True)
+
+    def create(self, validated_data):
+
+        instance = super(CurrencyHistorySerializer, self).create(validated_data)
+
+        instance.procedure_modified_datetime = now()
+        instance.save()
+
+        try:
+
+            history_item = CurrencyHistoryError.objects.get(currency=instance.currency,
+                                                            master_user=instance.currency.master_user, date=instance.date,
+                                                            pricing_policy=instance.pricing_policy)
+
+            history_item.status = CurrencyHistoryError.STATUS_OVERWRITTEN
+
+        except CurrencyHistoryError.DoesNotExist:
+
+            history_item = CurrencyHistoryError()
+
+            history_item.status = CurrencyHistoryError.STATUS_CREATED
+
+            history_item.master_user = instance.currency.master_user
+            history_item.currency = instance.currency
+            history_item.fx_rate = instance.fx_rate
+            history_item.date = instance.date
+            history_item.pricing_policy = instance.pricing_policy
+
+        history_item.save()
+
+        return instance
+
+    def update(self, instance, validated_data):
+        instance = super(CurrencyHistorySerializer, self).update(instance, validated_data)
+
+        instance.procedure_modified_datetime = now()
+        instance.save()
+
+        try:
+
+            history_item = CurrencyHistoryError.objects.get(currency=instance.currency.currency,
+                                                            master_user=instance.master_user, date=instance.date,
+                                                            pricing_policy=instance.pricing_policy)
+
+            history_item.status = CurrencyHistoryError.STATUS_OVERWRITTEN
+
+        except CurrencyHistoryError.DoesNotExist:
+
+            history_item = CurrencyHistoryError()
+
+            history_item.status = CurrencyHistoryError.STATUS_CREATED
+
+            history_item.master_user = instance.currency.master_user
+            history_item.currency = instance.currency
+            history_item.fx_rate = instance.fx_rate
+            history_item.date = instance.date
+            history_item.pricing_policy = instance.pricing_policy
+
+        history_item.save()
+
+        return instance

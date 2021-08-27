@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from datetime import timedelta
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.timezone import now
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import empty, ReadOnlyField
@@ -24,7 +25,7 @@ from poms.instruments.models import Instrument, PriceHistory, InstrumentClass, D
 from poms.integrations.fields import PriceDownloadSchemeField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, ModelWithAttributesOnlySerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
-from poms.pricing.models import InstrumentPricingPolicy, InstrumentTypePricingPolicy
+from poms.pricing.models import InstrumentPricingPolicy, InstrumentTypePricingPolicy, PriceHistoryError
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
     InstrumentTypePricingPolicySerializer, InstrumentPricingPolicySerializer
 from poms.tags.serializers import ModelWithTagSerializer
@@ -1477,6 +1478,69 @@ class PriceHistorySerializer(serializers.ModelSerializer):
         super(PriceHistorySerializer, self).__init__(*args, **kwargs)
         # if 'request' not in self.context:
         #     self.fields.pop('url')
+
+    def create(self, validated_data):
+
+        instance = super(PriceHistorySerializer, self).create(validated_data)
+
+        instance.procedure_modified_datetime = now()
+        instance.save()
+
+        try:
+
+            history_item = PriceHistoryError.objects.get(instrument=instance.instrument,
+                                                            master_user=instance.instrument.master_user, date=instance.date,
+                                                            pricing_policy=instance.pricing_policy)
+
+            history_item.status = PriceHistoryError.STATUS_OVERWRITTEN
+
+        except PriceHistoryError.DoesNotExist:
+
+            history_item = PriceHistoryError()
+
+            history_item.status = PriceHistoryError.STATUS_CREATED
+
+            history_item.master_user = instance.instrument.master_user
+            history_item.instrument = instance.instrument
+            history_item.principal_price = instance.principal_price
+            history_item.accrued_price = instance.accrued_price
+            history_item.date = instance.date
+            history_item.pricing_policy = instance.pricing_policy
+
+        history_item.save()
+
+        return instance
+
+    def update(self, instance, validated_data):
+        instance = super(PriceHistorySerializer, self).update(instance, validated_data)
+
+        instance.procedure_modified_datetime = now()
+        instance.save()
+
+        try:
+
+            history_item = PriceHistoryError.objects.get(instrument=instance.instrument,
+                                                            master_user=instance.instrument.master_user, date=instance.date,
+                                                            pricing_policy=instance.pricing_policy)
+
+            history_item.status = PriceHistoryError.STATUS_OVERWRITTEN
+
+        except PriceHistoryError.DoesNotExist:
+
+            history_item = PriceHistoryError()
+
+            history_item.status = PriceHistoryError.STATUS_CREATED
+
+            history_item.master_user = instance.instrument.master_user
+            history_item.instrument = instance.instrument
+            history_item.principal_price = instance.principal_price
+            history_item.accrued_price = instance.accrued_price
+            history_item.date = instance.date
+            history_item.pricing_policy = instance.pricing_policy
+
+        history_item.save()
+
+        return instance
 
 
 class GeneratedEventSerializer(serializers.ModelSerializer):

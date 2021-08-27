@@ -94,6 +94,8 @@ class CurrencyHistory(DataTimeStampedModel):
 
         if self.fx_rate == 0:
             raise ValidationError('FX rate must not be zero')
+
+
         super(CurrencyHistory, self).save(*args, **kwargs)
 
     def __str__(self):
