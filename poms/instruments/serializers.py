@@ -542,7 +542,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
                         print("Can't Create Instrument Type Event %s" % e)
 
 
-        print('events create ids %s ' % ids)
+        # print('events create ids %s ' % ids)
 
 
         InstrumentTypeEvent.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
@@ -728,7 +728,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
                     try:
 
-                        print("Id is not Provided. Trying to lookup.")
+                        # print("Id is not Provided. Trying to lookup.")
 
                         o = InstrumentTypePricingPolicy.objects.get(instrument_type=instance,
                                                                     pricing_policy=item['pricing_policy'])
@@ -1025,7 +1025,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
 
                     try:
 
-                        print("Id is not Provided. Trying to lookup.")
+                        # print("Id is not Provided. Trying to lookup.")
 
                         o = InstrumentPricingPolicy.objects.get(instrument=instance,
                                                                 pricing_policy=item['pricing_policy'])

@@ -655,11 +655,11 @@ class ImportManager(object):
 
                                     except InstrumentPricingScheme.DoesNotExist:
 
-                                        policy['pricing_scheme'] = None
+                                        # policy['pricing_scheme'] = None
 
-                                        # policy['pricing_scheme'] = InstrumentPricingScheme.objects.get(
-                                        #     master_user=self.master_user,
-                                        #     user_code='-').pk  # TODO Add to EcosystemDefaults
+                                        policy['pricing_scheme'] = InstrumentPricingScheme.objects.get(
+                                            master_user=self.master_user,
+                                            user_code='-').pk  # TODO Add to EcosystemDefaults
 
 
                         if 'instrument_factor_schedule_data' not in content_object:
@@ -2130,10 +2130,10 @@ class ImportManager(object):
                                             user_code=policy['___pricing_scheme__user_code']).pk
 
                                     except CurrencyPricingScheme.DoesNotExist:
-                                        policy['pricing_scheme'] = None
-                                        # policy['pricing_scheme'] = CurrencyPricingScheme.objects.get(
-                                        #     master_user=self.master_user,
-                                        #     user_code='-').pk  # TODO Add to EcosystemDefaults
+                                        # policy['pricing_scheme'] = None
+                                        policy['pricing_scheme'] = CurrencyPricingScheme.objects.get(
+                                            master_user=self.master_user,
+                                            user_code='-').pk  # TODO Add to EcosystemDefaults
 
                         # _l.info('content_object %s' % content_object)
 

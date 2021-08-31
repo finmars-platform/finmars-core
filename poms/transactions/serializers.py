@@ -1536,7 +1536,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
 
             if settings_data:
 
-                print('inp.settings %s' % inp.settings)
+                # print('inp.settings %s' % inp.settings)
 
                 if inp.settings:
 
