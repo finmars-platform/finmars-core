@@ -712,6 +712,8 @@ class InstrumentExternalAPIViewSet(APIView):
         ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
         content_type = ContentType.objects.get(model="instrument", app_label="instruments")
 
+        _l.info('request.data %s' % request.data)
+
         instrument_data = {}
 
         for key, value in request.data['data'].items():
