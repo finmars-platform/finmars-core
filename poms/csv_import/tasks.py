@@ -1739,7 +1739,7 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
     return instrument_object
 
 
-def set_events_for_instrument(instance, instrument_object, data_object, instrument_type_obj):
+def set_events_for_instrument(instrument_object, data_object, instrument_type_obj):
     instrument_type = instrument_type_obj.user_code.lower()
 
     if instrument_type in ['bonds', 'convertible_bonds', 'index_linked_bonds', 'short_term_notes']:
@@ -1768,7 +1768,7 @@ def set_events_for_instrument(instance, instrument_object, data_object, instrume
         expiration_event['final_date'] = data_object['maturity']
 
 
-def set_accruals_for_instrument(instance, instrument_object, data_object, instrument_type_obj):
+def set_accruals_for_instrument(instrument_object, data_object, instrument_type_obj):
     # instrument_type = data_object['instrument_type']
 
     instrument_type = instrument_type_obj.user_code.lower()
@@ -1783,6 +1783,99 @@ def set_accruals_for_instrument(instance, instrument_object, data_object, instru
             # accrual['accrual_size'] = data_object['accrual_size']
             # accrual['periodicity'] = data_object['periodicity']
             # accrual['periodicity_n'] = data_object['periodicity_n']
+
+
+def handler_instrument_object(source_data, instrument_type, master_user, ecosystem_default, attribute_types):
+
+    object_data = {}
+    object_data = source_data
+
+    object_data['instrument_type'] = instrument_type.id
+
+
+    set_defaults_from_instrument_type(object_data, instrument_type)
+
+    try:
+        object_data['pricing_currency'] = Currency.objects.get(master_user=master_user,
+                                                               user_code=source_data['pricing_currency']).id
+    except Exception as e:
+        object_data['pricing_currency'] = ecosystem_default.currency.id
+
+    try:
+        object_data['accrued_currency'] = Currency.objects.get(master_user=master_user,
+                                                               user_code=source_data['accrued_currency']).id
+    except Exception as e:
+        object_data['accrued_currency'] = object_data['pricing_currency']
+
+    try:
+        object_data['payment_size_detail'] = PaymentSizeDetail.objects.get(
+            user_code=source_data['payment_size_detail']).id
+    except Exception as e:
+        object_data['payment_size_detail'] = ecosystem_default.payment_size_detail.id
+
+    try:
+        object_data['pricing_condition'] = PricingCondition.objects.get(
+            user_code=source_data['pricing_condition']).id
+    except Exception as e:
+        object_data['pricing_condition'] = ecosystem_default.pricing_condition.id
+
+    if 'maturity' in source_data and source_data['maturity'] != '':
+        object_data['maturity_date'] = source_data['maturity']
+    else:
+        object_data['maturity_date'] = '2999-01-01'
+
+    object_data['attributes'] = []
+
+    for attribute_type in attribute_types:
+
+        lower_user_code = attribute_type.user_code.lower()
+
+        if lower_user_code in source_data:
+
+            attribute = {
+                'attribute_type': attribute_type.id,
+            }
+
+            if attribute_type.value_type == 10:
+                attribute['value_string'] = source_data[lower_user_code]
+
+            if attribute_type.value_type == 20:
+                attribute['value_float'] = source_data[lower_user_code]
+
+            if attribute_type.value_type == 30:
+
+                try:
+
+                    classifier = GenericClassifier.objects.get(attribute_type=attribute_type,
+                                                               name=source_data[lower_user_code])
+
+                    attribute['classifier'] = classifier.id
+
+                except Exception as e:
+                    attribute['classifier'] = None
+
+            if attribute_type.value_type == 40:
+                attribute['value_date'] = source_data[lower_user_code]
+
+            object_data['attributes'].append(attribute)
+
+    object_data['master_user'] = master_user.id
+    object_data['manual_pricing_formulas'] = []
+    # object_data['accrual_calculation_schedules'] = []
+    # object_data['event_schedules'] = []
+    object_data['factor_schedules'] = []
+
+    set_events_for_instrument(object_data, source_data, instrument_type)
+    set_accruals_for_instrument(object_data, source_data, instrument_type)
+
+    if 'name' not in object_data and 'user_code' in object_data:
+        object_data['name'] = object_data['user_code']
+
+    if 'short_name' not in object_data and 'user_code' in object_data:
+        object_data['short_name'] = object_data['user_code']
+
+    return object_data
+
 
 
 class UnifiedImportHandler():
@@ -1843,8 +1936,6 @@ class UnifiedImportHandler():
                 instrument_type = InstrumentType.objects.get(master_user=self.instance.master_user,
                                                              user_code=row_as_dict['instrument_type'])
 
-                row_data['instrument_type'] = instrument_type.id
-
 
             except Exception as e:
 
@@ -1854,86 +1945,7 @@ class UnifiedImportHandler():
                 
             if skip == False:
 
-                set_defaults_from_instrument_type(row_data, instrument_type)
-    
-                try:
-                    row_data['pricing_currency'] = Currency.objects.get(master_user=self.instance.master_user,
-                                                                        user_code=row_as_dict['pricing_currency']).id
-                except Exception as e:
-                    row_data['pricing_currency'] = self.ecosystem_default.currency.id
-    
-                try:
-                    row_data['accrued_currency'] = Currency.objects.get(master_user=self.instance.master_user,
-                                                                        user_code=row_as_dict['accrued_currency']).id
-                except Exception as e:
-                    row_data['accrued_currency'] = row_data['pricing_currency']
-    
-                try:
-                    row_data['payment_size_detail'] = PaymentSizeDetail.objects.get(
-                        user_code=row_as_dict['payment_size_detail']).id
-                except Exception as e:
-                    row_data['payment_size_detail'] = self.ecosystem_default.payment_size_detail.id
-    
-                try:
-                    row_data['pricing_condition'] = PricingCondition.objects.get(
-                        user_code=row_as_dict['pricing_condition']).id
-                except Exception as e:
-                    row_data['pricing_condition'] = self.ecosystem_default.pricing_condition.id
-    
-                if 'maturity' in row_as_dict and row_as_dict['maturity'] != '':
-                    row_data['maturity_date'] = row_as_dict['maturity']
-                else:
-                    row_data['maturity_date'] = '2999-01-01'
-    
-                row_data['attributes'] = []
-    
-                for attribute_type in self.attribute_types:
-    
-                    lower_user_code = attribute_type.user_code.lower()
-    
-                    if lower_user_code in row_as_dict:
-    
-                        attribute = {
-                            'attribute_type': attribute_type.id,
-                        }
-    
-                        if attribute_type.value_type == 10:
-                            attribute['value_string'] = row_as_dict[lower_user_code]
-    
-                        if attribute_type.value_type == 20:
-                            attribute['value_float'] = row_as_dict[lower_user_code]
-    
-                        if attribute_type.value_type == 30:
-    
-                            try:
-    
-                                classifier = GenericClassifier.objects.get(attribute_type=attribute_type,
-                                                                           name=row_as_dict[lower_user_code])
-    
-                                attribute['classifier'] = classifier.id
-    
-                            except Exception as e:
-                                attribute['classifier'] = None
-    
-                        if attribute_type.value_type == 40:
-                            attribute['value_date'] = row_as_dict[lower_user_code]
-    
-                        row_data['attributes'].append(attribute)
-    
-                row_data['master_user'] = self.instance.master_user.id
-                row_data['manual_pricing_formulas'] = []
-                # row_data['accrual_calculation_schedules'] = []
-                # row_data['event_schedules'] = []
-                row_data['factor_schedules'] = []
-    
-                set_events_for_instrument(self.instance, row_data, row_as_dict, instrument_type)
-                set_accruals_for_instrument(self.instance, row_data, row_as_dict, instrument_type)
-    
-                if 'name' not in row_data and 'user_code' in row_data:
-                    row_data['name'] = row_data['user_code']
-    
-                if 'short_name' not in row_data and 'user_code' in row_data:
-                    row_data['short_name'] = row_data['user_code']
+                row_data = handler_instrument_object(row_as_dict, instrument_type, self.instance.master_user, self.ecosystem_default, self.attribute_types)
     
                 if self.instance.mode == 'skip':
     

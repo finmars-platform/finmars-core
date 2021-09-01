@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import django_filters
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Prefetch, Q, Case, When, Value, BooleanField
@@ -25,6 +26,7 @@ from poms.common.mixins import UpdateModelMixinExt
 from poms.common.pagination import CustomPaginationMixin
 from poms.common.utils import date_now
 from poms.common.views import AbstractClassModelViewSet, AbstractModelViewSet, AbstractReadOnlyModelViewSet
+from poms.csv_import.tasks import set_defaults_from_instrument_type, handler_instrument_object
 from poms.currencies.models import Currency
 from poms.instruments.filters import OwnerByInstrumentFilter, PriceHistoryObjectPermissionFilter, \
     GeneratedEventPermissionFilter
@@ -40,12 +42,12 @@ from poms.instruments.serializers import InstrumentSerializer, PriceHistorySeria
     PricingPolicySerializer, EventScheduleConfigSerializer, InstrumentCalculatePricesAccruedPriceSerializer, \
     GeneratedEventSerializer, EventScheduleActionSerializer, InstrumentTypeLightSerializer, InstrumentLightSerializer, \
     PricingPolicyLightSerializer, PricingConditionSerializer, InstrumentEvSerializer, InstrumentTypeEvSerializer, \
-    ExposureCalculationModelSerializer, LongUnderlyingExposureSerializer, ShortUnderlyingExposureSerializer, \
-    InstrumentExternalApiSerializer
+    ExposureCalculationModelSerializer, LongUnderlyingExposureSerializer, ShortUnderlyingExposureSerializer
 from poms.instruments.tasks import calculate_prices_accrued_price, generate_events, process_events, \
     only_generate_events_at_date, generate_events_do_not_inform_apply_default0, \
     generate_events_do_not_inform_apply_default, only_generate_events_at_date_for_single_instrument
 from poms.integrations.models import PriceDownloadScheme
+from poms.obj_attrs.models import GenericAttributeType, GenericAttribute, GenericClassifier
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
     GenericClassifierViewSet
@@ -61,7 +63,7 @@ from poms.tags.filters import TagFilter
 from poms.transactions.models import TransactionType, TransactionTypeGroup, NotificationClass
 from poms.transactions.serializers import TransactionTypeProcessSerializer
 from poms.users.filters import OwnerByMasterUserFilter
-from poms.users.models import MasterUser
+from poms.users.models import MasterUser, EcosystemDefault
 from poms.users.permissions import SuperUserOrReadOnly
 
 import datetime
@@ -707,21 +709,62 @@ class InstrumentExternalAPIViewSet(APIView):
 
         context = {'request': request, 'master_user': master_user}
 
+        ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
+        content_type = ContentType.objects.get(model="instrument", app_label="instruments")
 
-        request.data.update({"master_user": master_user.id})
+        instrument_data = {}
+
+        for key, value in request.data['data'].items():
+
+            if key == 'attributes':
+
+                for attr_key, attr_value in request.data['data']['attributes'].items():
+
+                    instrument_data[attr_key] = attr_value
+
+            else:
+                instrument_data[key] = value
+
+
+
+        attribute_types =  GenericAttributeType.objects.filter(master_user=master_user,
+                                                                    content_type=content_type)
+
+        try:
+
+            instrument_type = InstrumentType.objects.get(master_user=master_user,
+                                                         user_code=instrument_data['instrument_type'])
+
+
+        except Exception as e:
+
+            _l.info('Instrument Type is not found %s' % e)
+
+        object_data = handler_instrument_object(instrument_data, instrument_type, master_user, ecosystem_defaults, attribute_types)
+
+        serializer = InstrumentSerializer(data=object_data, context=context)
+
+        is_valid = serializer.is_valid()
+
+        if is_valid:
+            serializer.save()
+        else:
+            _l.info('InstrumentExternalAPIViewSet error', serializer.errors)
+
+        # request.data.update({"master_user": master_user.id})
 
         _l.info(request.data)
 
-        serializer = InstrumentExternalApiSerializer(data=request.data, context=context)
-        is_valid = serializer.is_valid()
+        # serializer = InstrumentExternalApiSerializer(data=request.data, context=context)
+        # is_valid = serializer.is_valid()
+        #
+        # if not is_valid:
+        #     return Response(serializer.errors, status=400)
 
-        if not is_valid:
-            return Response(serializer.errors, status=400)
-
-        _l.info('is valid %s' % is_valid)
-
-
-        serializer.save()
+        # _l.info('is valid %s' % is_valid)
+        #
+        #
+        # serializer.save()
 
         _l.info("Instrument created")
 

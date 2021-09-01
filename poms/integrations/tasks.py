@@ -1,6 +1,7 @@
 from __future__ import unicode_literals, print_function
 
 import csv
+import json
 import logging
 import time
 import uuid
@@ -10,8 +11,7 @@ from collections import defaultdict
 from datetime import timedelta, date
 from tempfile import NamedTemporaryFile
 
-
-
+import requests
 from celery import shared_task, chord, current_task
 from celery.exceptions import TimeoutError, MaxRetriesExceededError
 from dateutil.rrule import rrule, DAILY
@@ -249,6 +249,41 @@ def download_instrument(instrument_code=None, instrument_download_scheme=None, m
             instrument, errors = provider.create_instrument(instrument_download_scheme, values)
             return task, instrument, errors
         return task, None, None
+
+
+def download_instrument_cbond(instrument_code=None, master_user=None, member=None,
+                        task=None, value_overrides=None):
+    _l.debug('download_pricing: master_user_id=%s, task=%s, instrument_code=%s',
+             getattr(master_user, 'id', None), getattr(task, 'info', None), instrument_code)
+
+    options = {
+
+        'instrument_code': instrument_code,
+    }
+    with transaction.atomic():
+        task = Task(
+            master_user=master_user,
+            member=member,
+            status=Task.STATUS_PENDING,
+            action=Task.ACTION_INSTRUMENT
+        )
+        task.options_object = options
+        task.save()
+
+        headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+
+        options['request_id'] = task.pk
+        options['token'] = settings.BASE_API_URL
+
+        response = None
+
+        try:
+            response = requests.post(url=str(settings.CBONDS_BROKER_URL) + '/request-instrument/', data=json.dumps(options), headers=headers)
+            _l.info('response download_instrument_cbond %s' % response)
+        except Exception as e:
+            _l.debug("Can't send request to CBONDS BROKER. %s" % e)
+            
+        return task
 
 
 @shared_task(name='integrations.download_instrument_pricing_async', bind=True, ignore_result=False)

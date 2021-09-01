@@ -60,7 +60,7 @@ from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer
     InstrumentClassifierMappingSerializer, AccountTypeMappingSerializer, TestCertificateSerializer, \
     ComplexTransactionImportSchemeLightSerializer, BloombergDataProviderCredentialSerializer, \
     PricingConditionMappingSerializer, TransactionFileResultSerializer, DataProviderSerializer, \
-    InstrumentDownloadSchemeLightSerializer
+    InstrumentDownloadSchemeLightSerializer, ImportInstrumentCbondsSerializer
 from poms.integrations.tasks import complex_transaction_csv_file_import, complex_transaction_csv_file_import_validate, \
     complex_transaction_csv_file_import_by_procedure, complex_transaction_csv_file_import_parallel, \
     complex_transaction_csv_file_import_validate_parallel
@@ -720,6 +720,19 @@ class PricingAutomatedScheduleViewSet(AbstractModelViewSet):
 
 class ImportInstrumentViewSet(AbstractViewSet):
     serializer_class = ImportInstrumentSerializer
+    permission_classes = AbstractViewSet.permission_classes + [
+        PomsFunctionPermission
+    ]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
+class ImportInstrumentCbondsViewSet(AbstractViewSet):
+    serializer_class = ImportInstrumentCbondsSerializer
     permission_classes = AbstractViewSet.permission_classes + [
         PomsFunctionPermission
     ]

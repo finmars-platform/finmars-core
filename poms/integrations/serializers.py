@@ -42,7 +42,7 @@ from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDo
     BloombergDataProviderCredential, PricingConditionMapping, TransactionFileResult, DataProvider
 from poms.integrations.providers.base import get_provider, ProviderException
 from poms.integrations.storage import import_file_storage
-from poms.integrations.tasks import download_instrument, test_certificate
+from poms.integrations.tasks import download_instrument, test_certificate, download_instrument_cbond
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, GenericAttributeTypeSerializer, \
     GenericClassifierSerializer
@@ -1114,6 +1114,30 @@ class ImportInstrumentSerializer(serializers.Serializer):
             result_object = obj.task_object.result_object
             return {k: v for k, v in result_object.items() if k in fields}
         return {}
+
+
+class ImportInstrumentCbondsSerializer(serializers.Serializer):
+    master_user = MasterUserField()
+    member = HiddenMemberField()
+    instrument_code = serializers.CharField(required=True, initial='USP16394AG62 Corp')
+    task = serializers.IntegerField(required=False, allow_null=True)
+
+
+    def create(self, validated_data):
+
+        task_result_overrides = validated_data.get('task_result_overrides', None)
+        instance = ImportInstrumentEntry(**validated_data)
+
+        task, instrument, errors = download_instrument_cbond(
+            instrument_code=instance.instrument_code,
+            master_user=instance.master_user,
+            member=instance.member
+        )
+        instance.task_object = task
+        instance.instrument = instrument
+        instance.errors = errors
+
+        return instance
 
 
 class ImportTestCertificate(object):
