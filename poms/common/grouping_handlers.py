@@ -145,7 +145,9 @@ def get_root_system_attr_group(qs, root_group, groups_order):
 
         if root_group == 'date':
 
-            qs = qs.annotate(group_name=F(root_group), group_identifier=F(root_group), items_count=Count(root_group)) \
+            qs = qs \
+                # .distinct() \
+                .annotate(group_name=F(root_group), group_identifier=F(root_group), items_count=Count(root_group)) \
                 .values('group_name', 'group_identifier', 'items_count') \
                 .order_by(root_group)
         else:

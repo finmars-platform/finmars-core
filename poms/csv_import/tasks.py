@@ -49,7 +49,7 @@ from ..common.websockets import send_websocket_message
 
 import traceback
 
-from ..instruments.serializers import InstrumentExternalApiSerializer, InstrumentSerializer
+from ..instruments.serializers import InstrumentSerializer
 
 _l = getLogger('poms.csv_import')
 
