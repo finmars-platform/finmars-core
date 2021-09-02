@@ -1128,14 +1128,12 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
         task_result_overrides = validated_data.get('task_result_overrides', None)
         instance = ImportInstrumentEntry(**validated_data)
 
-        task, instrument, errors = download_instrument_cbond(
+        task = download_instrument_cbond(
             instrument_code=instance.instrument_code,
             master_user=instance.master_user,
             member=instance.member
         )
         instance.task_object = task
-        instance.instrument = instrument
-        instance.errors = errors
 
         return instance
 

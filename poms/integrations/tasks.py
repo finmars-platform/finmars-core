@@ -16,6 +16,7 @@ from celery import shared_task, chord, current_task
 from celery.exceptions import TimeoutError, MaxRetriesExceededError
 from dateutil.rrule import rrule, DAILY
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail as django_send_mail, send_mass_mail as django_send_mass_mail, \
     mail_admins as django_mail_admins, mail_managers as django_mail_managers
@@ -63,6 +64,9 @@ from .models import ImportConfig
 from ..common.websockets import send_websocket_message
 
 import traceback
+
+from ..csv_import.tasks import handler_instrument_object
+from ..obj_attrs.models import GenericAttributeType
 
 _l = logging.getLogger('poms.integrations')
 
@@ -250,6 +254,76 @@ def download_instrument(instrument_code=None, instrument_download_scheme=None, m
             return task, instrument, errors
         return task, None, None
 
+class ProxyUser(object):
+
+    def __init__(self, member, master_user):
+        self.member = member
+        self.master_user = master_user
+
+
+class ProxyRequest(object):
+
+    def __init__(self, user):
+        self.user = user
+
+
+
+def create_instrument_cbond(data, master_user, member):
+
+    from poms.instruments.serializers import InstrumentSerializer
+
+    ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
+    content_type = ContentType.objects.get(model="instrument", app_label="instruments")
+
+    proxy_user = ProxyUser(member, master_user)
+    proxy_request = ProxyRequest(proxy_user)
+
+    context = {'master_user': master_user,
+               'request': proxy_request}
+
+    instrument_data = {}
+
+    for key, value in data.items():
+
+        if key == 'attributes':
+
+            for attr_key, attr_value in data['attributes'].items():
+
+                instrument_data[attr_key] = attr_value
+
+        else:
+            instrument_data[key] = value
+
+
+
+    attribute_types =  GenericAttributeType.objects.filter(master_user=master_user,
+                                                           content_type=content_type)
+
+    instrument_type = None
+
+    try:
+
+        instrument_type = InstrumentType.objects.get(master_user=master_user,
+                                                     user_code=instrument_data['instrument_type'])
+
+
+    except Exception as e:
+
+        _l.info('Instrument Type is not found %s' % e)
+
+        raise Exception("Instrument Type is not found")
+
+    object_data = handler_instrument_object(instrument_data, instrument_type, master_user, ecosystem_defaults, attribute_types)
+
+    serializer = InstrumentSerializer(data=object_data, context=context)
+
+    is_valid = serializer.is_valid()
+
+    if is_valid:
+        serializer.save()
+    else:
+        _l.info('InstrumentExternalAPIViewSet error', serializer.errors)
+
 
 def download_instrument_cbond(instrument_code=None, master_user=None, member=None,
                         task=None, value_overrides=None):
@@ -258,7 +332,7 @@ def download_instrument_cbond(instrument_code=None, master_user=None, member=Non
 
     options = {
 
-        'instrument_code': instrument_code,
+        'isin': instrument_code,
     }
     with transaction.atomic():
         task = Task(
@@ -270,19 +344,40 @@ def download_instrument_cbond(instrument_code=None, master_user=None, member=Non
         task.options_object = options
         task.save()
 
-        headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+        headers = {'Content-type': 'application/json'}
 
         options['request_id'] = task.pk
-        options['token'] = settings.BASE_API_URL
+        options['base_api_url'] = settings.BASE_API_URL
+        options['token'] = 'fd09a190279e45a2bbb52fcabb7899bd'
+
+        options['data'] = {}
+
 
         response = None
 
+        # OLD ASYNC CODE
+        # try:
+        #     response = requests.post(url=str(settings.CBONDS_BROKER_URL) + '/request-instrument/', data=json.dumps(options), headers=headers)
+        #     _l.info('response download_instrument_cbond %s' % response)
+        # except Exception as e:
+        #     _l.debug("Can't send request to CBONDS BROKER. %s" % e)
+
+        _l.info('options %s' % options)
+        _l.info('settings.CBONDS_BROKER_URL %s' % settings.CBONDS_BROKER_URL)
+
         try:
-            response = requests.post(url=str(settings.CBONDS_BROKER_URL) + '/request-instrument/', data=json.dumps(options), headers=headers)
+            response = requests.post(url=str(settings.CBONDS_BROKER_URL) + '/export/', data=json.dumps(options), headers=headers)
             _l.info('response download_instrument_cbond %s' % response)
         except Exception as e:
             _l.debug("Can't send request to CBONDS BROKER. %s" % e)
-            
+
+        _l.info('data response.text %s ' % response.text)
+        data = response.json()
+
+        create_instrument_cbond(data['data'], master_user, member)
+        
+        _l.info('data %s ' % data)
+
         return task
 
 

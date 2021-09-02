@@ -807,3 +807,4 @@ if DEBUG:
 TOKEN_TTL = datetime.timedelta(days=15)
 
 AUTHORIZER_URL = os.environ.get('AUTHORIZER_URL', None)
+CBONDS_BROKER_URL = os.environ.get('CBONDS_BROKER_URL', None)

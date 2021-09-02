@@ -49,7 +49,6 @@ from ..common.websockets import send_websocket_message
 
 import traceback
 
-from ..instruments.serializers import InstrumentSerializer
 
 _l = getLogger('poms.csv_import')
 
@@ -1915,6 +1914,9 @@ class UnifiedImportHandler():
         return row_index
 
     def process_row(self, first_row, row, item, context):
+
+        from poms.instruments.serializers import InstrumentSerializer
+
 
         try:
 
