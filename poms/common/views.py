@@ -31,7 +31,7 @@ from poms.users.utils import get_master_user_and_member
 
 from django.contrib.contenttypes.models import ContentType
 
-from poms.common.grouping_handlers import handle_groups
+from poms.common.grouping_handlers import handle_groups, count_groups
 import time
 
 from django.db import models
@@ -218,6 +218,8 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
 
         filtered_qs = handle_groups(filtered_qs, groups_types, groups_values, groups_order, master_user,
                                     self.get_queryset(), content_type)
+
+        filtered_qs = count_groups(filtered_qs, groups_types, groups_values, master_user, self.get_queryset(), content_type)
 
         # print('len after handle groups %s' % len(filtered_qs))
 

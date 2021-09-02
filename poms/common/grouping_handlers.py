@@ -1,3 +1,5 @@
+from django.apps import apps
+
 from poms.common.utils import force_qs_evaluation
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 
@@ -46,8 +48,8 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
         qs = qs \
             .values(attr=F('attributes__value_float')) \
             .distinct() \
-            .annotate(group_identifier=F('attr'), group_name=F('attr'), items_count=Count('pk')) \
-            .values('group_name', 'group_identifier', 'items_count') \
+            .annotate(group_identifier=F('attr'), group_name=F('attr')) \
+            .values('group_name', 'group_identifier') \
             .order_by()
 
     if attribute_type.value_type == 10:
@@ -61,8 +63,8 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
         qs = qs \
             .values(attr=F('attributes__value_string')) \
             .distinct() \
-            .annotate(group_identifier=F('attr'), group_name=F('attr'), items_count=Count('pk')) \
-            .values('group_name', 'group_identifier', 'items_count') \
+            .annotate(group_identifier=F('attr'), group_name=F('attr')) \
+            .values('group_name', 'group_identifier') \
             .order_by()
 
     if attribute_type.value_type == 30:
@@ -70,8 +72,8 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
             .values('attributes__classifier') \
             .annotate(group_identifier=F('attributes__classifier')) \
             .distinct() \
-            .annotate(group_name=F('attributes__classifier__name'), group_identifier=F('attributes__classifier'), items_count=Count('pk')) \
-            .values('group_name', 'group_identifier', 'items_count') \
+            .annotate(group_name=F('attributes__classifier__name'), group_identifier=F('attributes__classifier')) \
+            .values('group_name', 'group_identifier') \
             .order_by()
 
     if attribute_type.value_type == 40:
@@ -84,8 +86,8 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
         qs = qs \
             .values(attr=F('attributes__value_date')) \
             .distinct() \
-            .annotate(group_identifier=F('attr'), group_name=F('attr'), items_count=Count('pk')) \
-            .values('group_name', 'group_identifier', 'items_count') \
+            .annotate(group_identifier=F('attr'), group_name=F('attr')) \
+            .values('group_name', 'group_identifier') \
             .order_by()
 
     # force_qs_evaluation(qs)
@@ -130,29 +132,33 @@ def is_relation(item):
                     ]
 
 
-def get_root_system_attr_group(qs, root_group, groups_order):
+def is_attribute(item):
+    return 'attributes.' in item
 
+
+def get_root_system_attr_group(qs, root_group, groups_order):
     if is_relation(root_group):
 
         print("pricing currency?")
         qs = qs.values(root_group) \
             .annotate(group_identifier=F(root_group + '__user_code')) \
             .distinct() \
-            .annotate(group_name=F(root_group + '__short_name'), items_count=Count(root_group + '__short_name')) \
-            .values('group_name', 'group_identifier', 'items_count') \
+            .annotate(group_name=F(root_group + '__short_name')) \
+            .values('group_name', 'group_identifier') \
             .order_by()
     else:
 
         if root_group == 'date':
 
             qs = qs \
-                .annotate(group_name=F(root_group), group_identifier=F(root_group), items_count=Count(root_group)) \
-                .values('group_name', 'group_identifier', 'items_count') \
+                .distinct() \
+                .annotate(group_name=F(root_group), group_identifier=F(root_group)) \
+                .values('group_name', 'group_identifier') \
                 .order_by(root_group)
         else:
             qs = qs \
-                .annotate(group_name=F(root_group), group_identifier=F(root_group), items_count=Count(root_group)) \
-                .values('group_name', 'group_identifier', 'items_count') \
+                .annotate(group_name=F(root_group), group_identifier=F(root_group)) \
+                .values('group_name', 'group_identifier') \
                 .order_by(root_group)
 
     if groups_order == 'asc':
@@ -194,8 +200,8 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
         qs = qs \
             .values(attr=F('attributes__value_float')) \
             .distinct() \
-            .annotate(group_identifier=F('attr'), group_name=F('attr'), items_count=Count('pk')) \
-            .values('group_name', 'group_identifier', 'items_count') \
+            .annotate(group_identifier=F('attr'), group_name=F('attr')) \
+            .values('group_name', 'group_identifier') \
             .order_by()
 
     if attribute_type.value_type == 10:
@@ -209,8 +215,8 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
         qs = qs \
             .values(attr=F('attributes__value_string')) \
             .distinct() \
-            .annotate(group_identifier=F('attr'), group_name=F('attr'), items_count=Count('pk')) \
-            .values('group_name', 'group_identifier', 'items_count') \
+            .annotate(group_identifier=F('attr'), group_name=F('attr')) \
+            .values('group_name', 'group_identifier') \
             .order_by()
 
     if attribute_type.value_type == 30:
@@ -218,8 +224,8 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
             .values('attributes__classifier') \
             .annotate(group_identifier=F('attributes__classifier')) \
             .distinct() \
-            .annotate(group_name=F('attributes__classifier__name'), items_count=Count('pk')) \
-            .values('group_name', 'group_identifier', 'items_count') \
+            .annotate(group_name=F('attributes__classifier__name')) \
+            .values('group_name', 'group_identifier') \
             .order_by()
 
     if attribute_type.value_type == 40:
@@ -232,8 +238,8 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
         qs = qs \
             .values(attr=F('attributes__value_date')) \
             .distinct() \
-            .annotate(group_identifier=F('attr'), group_name=F('attr'), items_count=Count('pk')) \
-            .values('group_name', 'group_identifier', 'items_count') \
+            .annotate(group_identifier=F('attr'), group_name=F('attr')) \
+            .values('group_name', 'group_identifier') \
             .order_by()
 
     # force_qs_evaluation(qs)
@@ -255,14 +261,14 @@ def get_last_system_attr_group(qs, last_group, groups_order):
         qs = qs.values(last_group) \
             .annotate(group_identifier=F(last_group + '__user_code')) \
             .distinct() \
-            .annotate(group_name=F(last_group + '__short_name'),  items_count=Count(last_group + '__short_name')) \
-            .values('group_name', 'group_identifier', 'items_count') \
+            .annotate(group_name=F(last_group + '__short_name')) \
+            .values('group_name', 'group_identifier') \
             .order_by()
     else:
 
         qs = qs.distinct(last_group) \
-            .annotate(group_name=F(last_group), group_identifier=F(last_group), items_count=Count(last_group)) \
-            .values('group_name', 'group_identifier', 'items_count') \
+            .annotate(group_name=F(last_group), group_identifier=F(last_group)) \
+            .values('group_name', 'group_identifier') \
             .order_by()
 
     if groups_order == 'desc':
@@ -419,5 +425,116 @@ def handle_groups(qs, groups_types, groups_values, groups_order, master_user, or
     # print('handle_groups  %s' % qs)
 
     _l.debug("handle_groups %s seconds " % (time.time() - start_time))
+
+    return qs
+
+
+def count_groups(qs, groups_types, group_values, master_user, original_qs, content_type):
+
+    Model = apps.get_model(app_label=content_type.app_label, model_name=content_type.model)
+
+    start_time = time.time()
+
+    _l.info('groups_types %s' % groups_types)
+    _l.info('group_values %s' % group_values)
+
+
+    for item in qs:
+
+        options = {}
+        
+        index = 0
+
+        _l.info('item %s' % item['group_identifier'])
+
+        #  TODO handle attributes
+        for groups_type in groups_types:
+
+            if is_attribute(groups_type):
+
+                attribute_type_user_code = groups_type.split('attributes.')[1]
+
+                attribute_type = GenericAttributeType.objects.get(user_code__exact=attribute_type_user_code,
+                                                                  master_user=master_user, content_type=content_type)
+
+                value = None
+                if len(group_values) and index < len(group_values):
+                    value = group_values[index]
+                else:
+                    value = item['group_identifier']
+
+
+                attribute_options = {
+                    "attributes__attribute_type": attribute_type
+                }
+
+                _l.info('attribute value %s' % value)
+
+                # add previous options
+                for key, val in options.items():
+                    attribute_options[key] = val
+
+
+                if attribute_type.value_type == 20:
+
+                    attribute_options["attributes__value_float"] = value
+
+                    result = Model.objects.filter(Q(**attribute_options)).values_list('id', flat=True)
+
+                if attribute_type.value_type == 10:
+
+                    attribute_options["attributes__value_string"] = value
+
+                    _l.info('attribute_options %s' % attribute_options)
+
+                    result = Model.objects.filter(Q(**attribute_options)).values_list('id', flat=True)
+
+                if attribute_type.value_type == 30:
+
+                    attribute_options["attributes__classifier___name"] = value
+
+                    result = Model.objects.filter(Q(**attribute_options)).values_list('id', flat=True)
+
+                if attribute_type.value_type == 40:
+
+                    attribute_options["attributes__value_date"] = value
+
+                    result = Model.objects.filter(Q(**attribute_options)).values_list('id', flat=True)
+
+
+                _l.info('result %s' % result)
+
+                key = 'id__in'
+
+                if len(result):
+                    options[key] = result
+                    
+            else:
+
+                key = groups_type
+
+                if is_relation(groups_type):
+                    key = key + '__user_code'
+
+                if len(group_values) and index < len(group_values):
+                    options[key] = group_values[index]
+                else:
+                    options[key] = item['group_identifier']
+
+            index = index + 1
+
+
+        if content_type.model in ['currencyhistory', 'currencyhistoryerror']:
+            options['currency__master_user_id'] = master_user.pk
+        elif content_type.model in [ 'pricehistory', 'pricehistoryerror']:
+            options['instrument__master_user_id'] = master_user.pk
+        else:
+            options['master_user_id'] = master_user.pk
+
+        _l.info('options %s' % options)
+
+        item['items_count'] = Model.objects.filter(Q(**options)).count()
+
+    _l.debug("count_groups %s seconds " % str((time.time() - start_time)))
 
     return qs
