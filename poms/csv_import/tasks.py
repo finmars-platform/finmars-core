@@ -1820,6 +1820,8 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
 
     if 'maturity' in source_data and source_data['maturity'] != '':
         object_data['maturity_date'] = source_data['maturity']
+    elif  'maturity_date' in source_data and source_data['maturity_date'] != '':
+        object_data['maturity_date'] = source_data['maturity_date']
     else:
         object_data['maturity_date'] = '2999-01-01'
 
@@ -1865,7 +1867,22 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     object_data['factor_schedules'] = []
 
     set_events_for_instrument(object_data, source_data, instrument_type)
-    set_accruals_for_instrument(object_data, source_data, instrument_type)
+
+
+    if 'accrual_calculation_schedules' in source_data:
+        if len(object_data['accrual_calculation_schedules']):
+            accrual = object_data['accrual_calculation_schedules'][0]
+
+            if source_data['accrual_calculation_schedules']['accrual_start_date']:
+                accrual['accrual_start_date'] = source_data['accrual_calculation_schedules']['accrual_start_date']
+
+            if source_data['accrual_calculation_schedules']['first_payment_date']:
+                accrual['first_payment_date'] = source_data['accrual_calculation_schedules']['first_payment_date']
+
+            accrual['accrual_size'] = source_data['accrual_calculation_schedules']['accrual_size']
+            accrual['periodicity_n'] = source_data['accrual_calculation_schedules']['periodicity_n']
+    else:
+        set_accruals_for_instrument(object_data, source_data, instrument_type)
 
     if 'name' not in object_data and 'user_code' in object_data:
         object_data['name'] = object_data['user_code']

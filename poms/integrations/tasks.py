@@ -315,70 +315,89 @@ def create_instrument_cbond(data, master_user, member):
 
     object_data = handler_instrument_object(instrument_data, instrument_type, master_user, ecosystem_defaults, attribute_types)
 
-    serializer = InstrumentSerializer(data=object_data, context=context)
+    if 'default_price' in object_data or not object_data['default_price']:
+        object_data['default_price'] = 0
+
+    if 'price_multiplier' in object_data or not object_data['price_multiplier']:
+        object_data['price_multiplier'] = 1
+
+    try:
+
+        instance = Instrument.objects.get(master_user=master_user, user_code=object_data['user_code'])
+
+        serializer = InstrumentSerializer(data=object_data, context=context, instance=instance)
+    except Instrument.DoesNotExist:
+
+        serializer = InstrumentSerializer(data=object_data, context=context)
 
     is_valid = serializer.is_valid()
 
     if is_valid:
         serializer.save()
     else:
-        _l.info('InstrumentExternalAPIViewSet error', serializer.errors)
+        _l.info('InstrumentExternalAPIViewSet error %s' %serializer.errors)
 
 
 def download_instrument_cbond(instrument_code=None, master_user=None, member=None,
                         task=None, value_overrides=None):
-    _l.debug('download_pricing: master_user_id=%s, task=%s, instrument_code=%s',
-             getattr(master_user, 'id', None), getattr(task, 'info', None), instrument_code)
 
-    options = {
+    try:
+        _l.debug('download_pricing: master_user_id=%s, task=%s, instrument_code=%s',
+                 getattr(master_user, 'id', None), getattr(task, 'info', None), instrument_code)
 
-        'isin': instrument_code,
-    }
-    with transaction.atomic():
-        task = Task(
-            master_user=master_user,
-            member=member,
-            status=Task.STATUS_PENDING,
-            action=Task.ACTION_INSTRUMENT
-        )
-        task.options_object = options
-        task.save()
+        options = {
 
-        headers = {'Content-type': 'application/json'}
+            'isin': instrument_code,
+        }
+        with transaction.atomic():
+            task = Task(
+                master_user=master_user,
+                member=member,
+                status=Task.STATUS_PENDING,
+                action=Task.ACTION_INSTRUMENT
+            )
+            task.options_object = options
+            task.save()
 
-        options['request_id'] = task.pk
-        options['base_api_url'] = settings.BASE_API_URL
-        options['token'] = 'fd09a190279e45a2bbb52fcabb7899bd'
+            headers = {'Content-type': 'application/json'}
 
-        options['data'] = {}
+            options['request_id'] = task.pk
+            options['base_api_url'] = settings.BASE_API_URL
+            options['token'] = 'fd09a190279e45a2bbb52fcabb7899bd'
+
+            options['data'] = {}
 
 
-        response = None
+            response = None
 
-        # OLD ASYNC CODE
-        # try:
-        #     response = requests.post(url=str(settings.CBONDS_BROKER_URL) + '/request-instrument/', data=json.dumps(options), headers=headers)
-        #     _l.info('response download_instrument_cbond %s' % response)
-        # except Exception as e:
-        #     _l.debug("Can't send request to CBONDS BROKER. %s" % e)
+            # OLD ASYNC CODE
+            # try:
+            #     response = requests.post(url=str(settings.CBONDS_BROKER_URL) + '/request-instrument/', data=json.dumps(options), headers=headers)
+            #     _l.info('response download_instrument_cbond %s' % response)
+            # except Exception as e:
+            #     _l.debug("Can't send request to CBONDS BROKER. %s" % e)
 
-        _l.info('options %s' % options)
-        _l.info('settings.CBONDS_BROKER_URL %s' % settings.CBONDS_BROKER_URL)
+            _l.info('options %s' % options)
+            _l.info('settings.CBONDS_BROKER_URL %s' % settings.CBONDS_BROKER_URL)
 
-        try:
-            response = requests.post(url=str(settings.CBONDS_BROKER_URL) + '/export/', data=json.dumps(options), headers=headers)
-            _l.info('response download_instrument_cbond %s' % response)
-        except Exception as e:
-            _l.debug("Can't send request to CBONDS BROKER. %s" % e)
+            try:
+                response = requests.post(url=str(settings.CBONDS_BROKER_URL) + '/export/', data=json.dumps(options), headers=headers)
+                _l.info('response download_instrument_cbond %s' % response)
+            except Exception as e:
+                _l.debug("Can't send request to CBONDS BROKER. %s" % e)
 
-        _l.info('data response.text %s ' % response.text)
-        data = response.json()
+            _l.info('data response.text %s ' % response.text)
+            data = response.json()
 
-        create_instrument_cbond(data['data'], master_user, member)
-        
-        _l.info('data %s ' % data)
+            create_instrument_cbond(data['data'], master_user, member)
 
-        return task
+            _l.info('data %s ' % data)
+
+            return task
+
+    except Exception as e:
+        _l.info("error %s " % e)
+        _l.info(traceback.print_exc())
 
 
 @shared_task(name='integrations.download_instrument_pricing_async', bind=True, ignore_result=False)
