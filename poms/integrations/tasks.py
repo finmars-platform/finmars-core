@@ -336,10 +336,14 @@ def create_instrument_cbond(data, master_user, member):
         serializer.save()
     else:
         _l.info('InstrumentExternalAPIViewSet error %s' %serializer.errors)
+        raise Exception(serializer.errors)
+
 
 
 def download_instrument_cbond(instrument_code=None, master_user=None, member=None,
                         task=None, value_overrides=None):
+
+    errors = []
 
     try:
         _l.debug('download_pricing: master_user_id=%s, task=%s, instrument_code=%s',
@@ -386,18 +390,33 @@ def download_instrument_cbond(instrument_code=None, master_user=None, member=Non
             except Exception as e:
                 _l.debug("Can't send request to CBONDS BROKER. %s" % e)
 
-            _l.info('data response.text %s ' % response.text)
-            data = response.json()
+                errors.append('Request to broker failed. %s' % str(e))
 
-            create_instrument_cbond(data['data'], master_user, member)
+            _l.info('data response.text %s ' % response.text)
+
+            try:
+                data = response.json()
+            except Exception as e:
+
+                errors.append("Could not parse response from broker. %s" % response.text)
+                return task, errors
+            try:
+                create_instrument_cbond(data['data'], master_user, member)
+            except Exception as e:
+                errors.append("Could not create instrument. %s" % str(e))
+                return task, errors
 
             _l.info('data %s ' % data)
 
-            return task
+            return task, errors
 
     except Exception as e:
         _l.info("error %s " % e)
         _l.info(traceback.print_exc())
+
+        errors.append('Something went wrong. %s' % str(e))
+
+        return None, errors
 
 
 @shared_task(name='integrations.download_instrument_pricing_async', bind=True, ignore_result=False)

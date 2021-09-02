@@ -1122,18 +1122,20 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
     instrument_code = serializers.CharField(required=True, initial='USP16394AG62 Corp')
     task = serializers.IntegerField(required=False, allow_null=True)
 
+    errors = serializers.ReadOnlyField()
 
     def create(self, validated_data):
 
         task_result_overrides = validated_data.get('task_result_overrides', None)
         instance = ImportInstrumentEntry(**validated_data)
 
-        task = download_instrument_cbond(
+        task, errors = download_instrument_cbond(
             instrument_code=instance.instrument_code,
             master_user=instance.master_user,
             member=instance.member
         )
         instance.task_object = task
+        instance.errors = errors
 
         return instance
 
