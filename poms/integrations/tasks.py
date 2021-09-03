@@ -1906,12 +1906,12 @@ def complex_transaction_csv_file_import(self, task_id):
                     field_value = _convert_value(field, field_value, error_rows)
                     fields[field.transaction_type_input.name] = field_value
 
-
-
                 except (Exception, ValueError, ExpressionEvalError):
                     _l.debug('can\'t process field: %s|%s', field.transaction_type_input.name,
-                             field.transaction_type_input.pk, exc_info=True)
+                             field.transaction_type_input.pk)
                     fields_error.append(field)
+
+
             _l.debug('fields (step 1): error=%s, values=%s', fields_error, fields)
 
             if fields_error:
@@ -2002,6 +2002,8 @@ def complex_transaction_csv_file_import(self, task_id):
                                 strict=False, skipinitialspace=True)
 
             for row_index, row in enumerate(reader):
+
+                _l.info('process row %s ' % row_index)
 
                 # _l.debug('process row: %s -> %s', row_index, row)
                 if (row_index == 0 and instance.skip_first_line) or not row:
@@ -2255,6 +2257,9 @@ def complex_transaction_csv_file_import(self, task_id):
 
             for row_index, row in enumerate(reader):
                 pass
+
+            _l.info("Total rows in file: %s" % row_index)
+
             return row_index
 
         instance.error_rows = []
