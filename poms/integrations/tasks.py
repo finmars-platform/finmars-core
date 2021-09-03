@@ -311,7 +311,7 @@ def create_instrument_cbond(data, master_user, member):
 
         _l.info('Instrument Type %s is not found %s' % (instrument_data['instrument_type'], e))
 
-        raise Exception("Instrument Type is not found")
+        raise Exception("Instrument Type %s is not found %s" % (instrument_data['instrument_type'], e))
 
     object_data = handler_instrument_object(instrument_data, instrument_type, master_user, ecosystem_defaults, attribute_types)
 
