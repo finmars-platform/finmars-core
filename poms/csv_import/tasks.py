@@ -1879,8 +1879,15 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
             if source_data['accrual_calculation_schedules']['first_payment_date']:
                 accrual['first_payment_date'] = source_data['accrual_calculation_schedules']['first_payment_date']
 
-            accrual['accrual_size'] = source_data['accrual_calculation_schedules']['accrual_size']
-            accrual['periodicity_n'] = source_data['accrual_calculation_schedules']['periodicity_n']
+            try:
+                accrual['accrual_size'] = float(source_data['accrual_calculation_schedules']['accrual_size'])
+            except Exception as e:
+                accrual['accrual_size'] = 0
+
+            try:
+                accrual['periodicity_n'] = int(source_data['accrual_calculation_schedules']['periodicity_n'])
+            except Exception as e:
+                accrual['periodicity_n'] = 0
     else:
         set_accruals_for_instrument(object_data, source_data, instrument_type)
 
