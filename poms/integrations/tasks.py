@@ -309,7 +309,7 @@ def create_instrument_cbond(data, master_user, member):
 
     except Exception as e:
 
-        _l.info('Instrument Type is not found %s' % e)
+        _l.info('Instrument Type %s is not found %s' % (instrument_data['instrument_type'], e))
 
         raise Exception("Instrument Type is not found")
 
