@@ -491,7 +491,7 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
 
                 if attribute_type.value_type == 30:
 
-                    attribute_options["attributes__classifier___name"] = value
+                    attribute_options["attributes__classifier__name"] = value
 
                     result = Model.objects.filter(Q(**attribute_options)).values_list('id', flat=True)
 
