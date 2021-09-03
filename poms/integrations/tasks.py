@@ -1908,7 +1908,7 @@ def complex_transaction_csv_file_import(self, task_id):
 
 
 
-                except (ValueError, ExpressionEvalError):
+                except (Exception, ValueError, ExpressionEvalError):
                     _l.debug('can\'t process field: %s|%s', field.transaction_type_input.name,
                              field.transaction_type_input.pk, exc_info=True)
                     fields_error.append(field)
@@ -1921,7 +1921,7 @@ def complex_transaction_csv_file_import(self, task_id):
                 error_rows['error_message'] = error_rows['error_message'] + '\n' + str(ugettext(
                     'Can\'t process fields: %(fields)s') % {
                                                                                            'fields': ', '.join(
-                                                                                               '[' + f.transaction_type_input.name + '] ' + '( TType: ' + rule_value + ')'
+                                                                                               '[' + f.transaction_type_input.name + '] '
                                                                                                for f in
                                                                                                fields_error)
                                                                                        })
