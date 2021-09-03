@@ -14,6 +14,8 @@ import logging
 _l = logging.getLogger('poms.auth_tokens')
 
 
+
+
 class ExpiringTokenAuthentication(TokenAuthentication):
     """
     Expiring token for mobile and desktop clients.
@@ -23,22 +25,63 @@ class ExpiringTokenAuthentication(TokenAuthentication):
 
     model = AuthToken
 
+    def try_token(self, tokens, index):
+
+        if index < len(tokens):
+            try:
+                self.result_token_user, self.result_token = self.authenticate_credentials(tokens[index])
+            except Exception as e:
+
+                index = index + 1
+
+                self.try_token(tokens, index)
+
+                _l.info('wrong token')
+        else:
+            msg = _('Invalid token header. All Tokens invalid.')
+            raise exceptions.AuthenticationFailed(msg)
+
+
     def authenticate(self, request):
         auth = get_authorization_header(request).split()
 
         # print('auth %s' % auth)
 
+        _l.info('equest.COOKIES %s' % request.COOKIES)
+
         if len(auth) == 0:
 
             # print(request.COOKIES['authtoken'])
 
-            token = None
+            tokens = []
 
-            if 'authtoken' in request.COOKIES:
-                token = request.COOKIES['authtoken']
+            for key, value in request.COOKIES.items():
 
-            if token:
-                return self.authenticate_credentials(token)
+                if 'authtoken' == key:
+
+                    tokens.append(value)
+
+            if len(tokens):
+
+                _l.info("Multiple tokens detected %s " % len(tokens))
+
+                index = 0
+                self.try_token(tokens, index)
+                return self.result_token_user, self.result_token
+
+
+
+        # if len(auth) == 0:
+        #
+        #     # print(request.COOKIES['authtoken'])
+        #
+        #     token = None
+        #
+        #     if 'authtoken' in request.COOKIES:
+        #         token = request.COOKIES['authtoken']
+        #
+        #     if token:
+        #         return self.authenticate_credentials(token)
 
         if not auth or auth[0].lower() != self.keyword.lower().encode():
             return None
