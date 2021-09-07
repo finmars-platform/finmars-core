@@ -184,7 +184,7 @@ admin.site.register(InstrumentFactorSchedule, InstrumentFactorScheduleAdmin)
 
 class EventScheduleActionInline(admin.TabularInline):
     model = EventScheduleAction
-    raw_id_fields = ['transaction_type']
+    # raw_id_fields = ['transaction_type']
     extra = 0
 
 
@@ -229,13 +229,13 @@ admin.site.register(EventSchedule, EventScheduleAdmin)
 class EventScheduleActionAdmin(AbstractModelAdmin):
     model = EventScheduleAction
     master_user_path = 'event_schedule__instrument__master_user'
-    list_display = ['id', 'master_user', 'instrument', 'event_schedule', 'transaction_type', 'text',
+    list_display = ['id', 'master_user', 'instrument', 'event_schedule',  'text',
                     'is_sent_to_pending', 'is_book_automatic', 'button_position']
     list_select_related = ['event_schedule', 'event_schedule__instrument', 'event_schedule__instrument__master_user',
                            'transaction_type']
     search_fields = ['event_schedule__instrument__id', 'event_schedule__instrument__user_code',
                      'event_schedule__instrument__name']
-    raw_id_fields = ['event_schedule', 'transaction_type']
+    raw_id_fields = ['event_schedule']
 
     def master_user(self, obj):
         return obj.event_schedule.instrument.master_user

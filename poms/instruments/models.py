@@ -848,7 +848,8 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
                     a = EventScheduleAction()
                     a.text = event_schedule_config.action_text
-                    a.transaction_type = instrument_type.regular_event
+                    if instrument_type.regular_event:
+                        a.transaction_type = instrument_type.regular_event.user_code
                     a.is_sent_to_pending = event_schedule_config.action_is_sent_to_pending
                     a.is_book_automatic = event_schedule_config.action_is_book_automatic
                     a.button_position = 1
@@ -873,7 +874,8 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
                 a = EventScheduleAction()
                 a.text = event_schedule_config.action_text
-                a.transaction_type = instrument_type.one_off_event
+                if instrument_type.one_off_event:
+                    a.transaction_type = instrument_type.one_off_event.user_code
                 a.is_sent_to_pending = event_schedule_config.action_is_sent_to_pending
                 a.is_book_automatic = event_schedule_config.action_is_book_automatic
                 a.button_position = 1
@@ -928,7 +930,8 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
             a = EventScheduleAction()
             a.text = event_schedule_config.action_text
-            a.transaction_type = transaction_type
+            if transaction_type:
+                a.transaction_type = transaction_type.user_code
             a.is_sent_to_pending = event_schedule_config.action_is_sent_to_pending
             a.is_book_automatic = event_schedule_config.action_is_book_automatic
             a.button_position = 1
@@ -1655,8 +1658,11 @@ class EventScheduleAction(models.Model):
     # TODO: for auto generated always one
     event_schedule = models.ForeignKey(EventSchedule, related_name='actions',
                                        verbose_name=ugettext_lazy('event schedule'), on_delete=models.CASCADE)
-    transaction_type = models.ForeignKey('transactions.TransactionType', on_delete=models.PROTECT,
-                                         verbose_name=ugettext_lazy('transaction type'))
+    # transaction_type = models.ForeignKey('transactions.TransactionType', on_delete=models.PROTECT,
+    #                                      verbose_name=ugettext_lazy('transaction type'))
+
+    transaction_type = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('transaction type'))
+
     # T O D O: on auto generate fill 'Book: ' + transaction_type
     text = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                             verbose_name=ugettext_lazy('text'))

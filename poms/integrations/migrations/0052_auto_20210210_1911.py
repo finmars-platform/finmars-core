@@ -10,6 +10,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # Somehow breaks migrations on new db setup
         migrations.AddField(
             model_name='instrumentdownloadscheme',
             name='name',

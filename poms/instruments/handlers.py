@@ -1,6 +1,6 @@
 from poms.instruments.models import GeneratedEvent
 from poms.transactions.handlers import TransactionTypeProcess
-from poms.transactions.models import ComplexTransaction
+from poms.transactions.models import ComplexTransaction, TransactionType
 
 
 # Context variables here
@@ -9,7 +9,9 @@ class GeneratedEventProcess(TransactionTypeProcess):
     def __init__(self, generated_event=None, action=None, **kwargs):
         self.generated_event = generated_event
         self.action = action
-        kwargs['transaction_type'] = action.transaction_type
+        # kwargs['transaction_type'] = action.transaction_type
+
+        kwargs['transaction_type'] = TransactionType.objects.get(master_user=generated_event.master_user, user_code=action.transaction_type)
 
         # Some Inputs can choose from which context variable it will take value
 

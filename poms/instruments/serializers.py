@@ -1358,8 +1358,8 @@ class EventScheduleActionSerializer(serializers.ModelSerializer):
         super(EventScheduleActionSerializer, self).__init__(*args, **kwargs)
 
         from poms.transactions.serializers import TransactionTypeViewSerializer
-        self.fields['transaction_type_object'] = TransactionTypeViewSerializer(source='transaction_type',
-                                                                               read_only=True)
+        # self.fields['transaction_type_object'] = TransactionTypeViewSerializer(source='transaction_type',
+        #                                                                        read_only=True)
 
     def get_display_text(self, obj):
         r = self.root
