@@ -333,7 +333,9 @@ def create_instrument_cbond(data, master_user, member):
     is_valid = serializer.is_valid()
 
     if is_valid:
-        serializer.save()
+        instrument = serializer.save()
+
+        return instrument
     else:
         _l.info('InstrumentExternalAPIViewSet error %s' % serializer.errors)
         raise Exception(serializer.errors)
@@ -401,7 +403,17 @@ def download_instrument_cbond(instrument_code=None, master_user=None, member=Non
                 errors.append("Could not parse response from broker. %s" % response.text)
                 return task, errors
             try:
-                create_instrument_cbond(data['data'], master_user, member)
+                instrument = create_instrument_cbond(data['data'], master_user, member)
+
+                result = {
+                    "instrument_id": instrument.pk
+                }
+
+                task.result_object = result
+
+                task.save()
+                return task, errors
+
             except Exception as e:
                 errors.append("Could not create instrument. %s" % str(e))
                 return task, errors

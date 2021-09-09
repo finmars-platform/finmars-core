@@ -171,6 +171,7 @@ router.register(r'instruments/instrument-ev-group', instruments.InstrumentEvGrou
 router.register(r'instruments/instrument', instruments.InstrumentViewSet)
 router.register(r'instruments/instrument-ev', instruments.InstrumentEvViewSet)
 router.register(r'instruments/instrument-light', instruments.InstrumentLightViewSet)
+router.register(r'instruments/instrument-for-select', instruments.InstrumentForSelectViewSet)
 
 
 

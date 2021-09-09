@@ -1209,6 +1209,33 @@ class InstrumentLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
         return result
 
 
+class InstrumentForSelectSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+
+    master_user = MasterUserField()
+
+    instrument_type_object = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
+
+    class Meta:
+        model = Instrument
+        fields = [
+            'id', 'master_user', 'user_code', 'name', 'short_name', 'modified',
+            'instrument_type', 'instrument_type_object',
+            'public_name', 'is_active', 'is_deleted', 'is_enabled', 'has_linked_with_portfolio'
+        ]
+
+    def to_representation(self, instance):
+
+        st = time.perf_counter()
+
+        result = super(InstrumentForSelectSerializer, self).to_representation(instance)
+
+        # _l.debug('InstrumentLightSerializer done: %s', "{:3.3f}".format(time.perf_counter() - st))
+
+        return result
+
+
+
+
 class InstrumentEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesOnlySerializer, ModelWithUserCodeSerializer):
 
     master_user = MasterUserField()
@@ -1345,13 +1372,13 @@ class InstrumentFactorScheduleSerializer(serializers.ModelSerializer):
 class EventScheduleActionSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
     text = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=True, allow_blank=True, allow_null=True)
-    transaction_type = TransactionTypeField()
-    transaction_type_object = serializers.PrimaryKeyRelatedField(source='transaction_type', read_only=True)
+    # transaction_type = TransactionTypeField()
+    # transaction_type_object = serializers.PrimaryKeyRelatedField(source='transaction_type', read_only=True)
     display_text = serializers.SerializerMethodField()
 
     class Meta:
         model = EventScheduleAction
-        fields = ['id', 'transaction_type', 'transaction_type_object', 'text', 'is_sent_to_pending',
+        fields = ['id', 'transaction_type', 'text', 'is_sent_to_pending',
                   'is_book_automatic', 'button_position', 'display_text']
 
     def __init__(self, *args, **kwargs):

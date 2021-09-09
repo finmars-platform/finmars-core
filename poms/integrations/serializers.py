@@ -1121,6 +1121,7 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
     member = HiddenMemberField()
     instrument_code = serializers.CharField(required=True, initial='USP16394AG62 Corp')
     task = serializers.IntegerField(required=False, allow_null=True)
+    result_id = serializers.IntegerField(required=False, allow_null=True)
 
     errors = serializers.ReadOnlyField()
 
@@ -1136,6 +1137,9 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
         )
         instance.task_object = task
         instance.errors = errors
+
+        if task.result_object:
+            instance.result_id = task.result_object['instrument_id']
 
         return instance
 

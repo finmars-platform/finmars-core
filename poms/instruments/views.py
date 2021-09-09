@@ -42,7 +42,8 @@ from poms.instruments.serializers import InstrumentSerializer, PriceHistorySeria
     PricingPolicySerializer, EventScheduleConfigSerializer, InstrumentCalculatePricesAccruedPriceSerializer, \
     GeneratedEventSerializer, EventScheduleActionSerializer, InstrumentTypeLightSerializer, InstrumentLightSerializer, \
     PricingPolicyLightSerializer, PricingConditionSerializer, InstrumentEvSerializer, InstrumentTypeEvSerializer, \
-    ExposureCalculationModelSerializer, LongUnderlyingExposureSerializer, ShortUnderlyingExposureSerializer
+    ExposureCalculationModelSerializer, LongUnderlyingExposureSerializer, ShortUnderlyingExposureSerializer, \
+    InstrumentForSelectSerializer
 from poms.instruments.tasks import calculate_prices_accrued_price, generate_events, process_events, \
     only_generate_events_at_date, generate_events_do_not_inform_apply_default0, \
     generate_events_do_not_inform_apply_default, only_generate_events_at_date_for_single_instrument
@@ -509,16 +510,7 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
                 'event_class', 'notification_class', 'periodicity'
             ).prefetch_related(
                 Prefetch(
-                    'actions',
-                    queryset=EventScheduleAction.objects.select_related(
-                        'transaction_type',
-                        'transaction_type__group'
-                    ).prefetch_related(
-                        *get_permissions_prefetch_lookups(
-                            ('transaction_type', TransactionType),
-                            ('transaction_type__group', TransactionTypeGroup)
-                        )
-                    )
+                    'actions'
                 ),
             )),
         get_attributes_prefetch(),
@@ -804,6 +796,28 @@ class InstrumentLightViewSet(AbstractWithObjectPermissionViewSet):
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
     ]
+
+
+class InstrumentForSelectViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = Instrument.objects.select_related(
+        'master_user'
+    ).prefetch_related(
+        *get_permissions_prefetch_lookups(
+            (None, Instrument)
+        )
+    )
+    serializer_class = InstrumentForSelectSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+        EntitySpecificFilter
+    ]
+    filter_class = InstrumentLightFilterSet
+    ordering_fields = [
+        'user_code', 'name', 'short_name', 'public_name',
+    ]
+
+
+
 
 
 class InstrumentEvFilterSet(FilterSet):
