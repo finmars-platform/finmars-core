@@ -814,7 +814,9 @@ class InstrumentForSelectFilterSet(FilterSet):
 
 class InstrumentForSelectViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Instrument.objects.select_related(
-        'master_user'
+        'master_user',
+        'instrument_type',
+        'instrument_type__instrument_class',
     ).prefetch_related(
         *get_permissions_prefetch_lookups(
             (None, Instrument)
@@ -823,10 +825,10 @@ class InstrumentForSelectViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = InstrumentForSelectSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
-        EntitySpecificFilter,
         InstrumentSelectSpecialQueryFilter
 
     ]
+    filter_class = InstrumentForSelectFilterSet
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
     ]

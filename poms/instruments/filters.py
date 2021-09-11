@@ -81,8 +81,6 @@ class GeneratedEventPermissionFilter(BaseFilterBackend):
 class InstrumentSelectSpecialQueryFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
 
-        queryset = queryset.filter(is_active=False)
-
         query = request.query_params.get('query', '')
 
         pieces = query.split(' ')
