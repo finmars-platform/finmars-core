@@ -29,7 +29,7 @@ from poms.common.views import AbstractClassModelViewSet, AbstractModelViewSet, A
 from poms.csv_import.tasks import set_defaults_from_instrument_type, handler_instrument_object
 from poms.currencies.models import Currency
 from poms.instruments.filters import OwnerByInstrumentFilter, PriceHistoryObjectPermissionFilter, \
-    GeneratedEventPermissionFilter
+    GeneratedEventPermissionFilter, InstrumentSelectSpecialQueryFilter
 from poms.instruments.handlers import GeneratedEventProcess
 from poms.instruments.models import Instrument, PriceHistory, InstrumentClass, DailyPricingModel, \
     AccrualCalculationModel, PaymentSizeDetail, Periodicity, CostMethod, InstrumentType, PricingPolicy, \
@@ -798,6 +798,20 @@ class InstrumentLightViewSet(AbstractWithObjectPermissionViewSet):
     ]
 
 
+
+
+class InstrumentForSelectFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_deleted = django_filters.BooleanFilter()
+    user_code = CharFilter()
+    name = CharFilter()
+    public_name = CharFilter()
+    short_name = CharFilter()
+
+    class Meta:
+        model = Instrument
+        fields = []
+
 class InstrumentForSelectViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Instrument.objects.select_related(
         'master_user'
@@ -809,9 +823,10 @@ class InstrumentForSelectViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = InstrumentForSelectSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
-        EntitySpecificFilter
+        EntitySpecificFilter,
+        InstrumentSelectSpecialQueryFilter
+
     ]
-    filter_class = InstrumentLightFilterSet
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
     ]

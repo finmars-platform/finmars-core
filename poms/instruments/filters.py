@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+from django.db.models import Q
 from rest_framework.filters import BaseFilterBackend
 
 from poms.accounts.models import Account
@@ -73,5 +74,27 @@ class GeneratedEventPermissionFilter(BaseFilterBackend):
         #                            strategy1__in=strategy1_qs, strategy2__in=strategy2_qs, strategy3__in=strategy3_qs)
 
         queryset = queryset.filter(portfolio__in=portfolio_qs, account__in=account_qs)
+
+        return queryset
+
+
+class InstrumentSelectSpecialQueryFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+
+        queryset = queryset.filter(is_active=False)
+
+        query = request.query_params.get('query', '')
+
+        pieces = query.split(' ')
+
+        options = Q()
+
+        for piece in pieces:
+
+            options.add(Q(name__icontains=piece), Q.OR)
+            options.add(Q(user_code__icontains=piece), Q.OR)
+            options.add(Q(short_name__icontains=piece), Q.OR)
+
+        queryset = queryset.filter(options)
 
         return queryset
