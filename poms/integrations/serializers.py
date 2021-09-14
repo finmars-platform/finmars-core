@@ -1138,7 +1138,7 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
         instance.task_object = task
         instance.errors = errors
 
-        if task.result_object:
+        if task and task.result_object:
             instance.result_id = task.result_object['instrument_id']
 
         return instance

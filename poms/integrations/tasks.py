@@ -389,12 +389,11 @@ def download_instrument_cbond(instrument_code=None, master_user=None, member=Non
             try:
                 response = requests.post(url=str(settings.CBONDS_BROKER_URL) + '/export/', data=json.dumps(options), headers=headers)
                 _l.info('response download_instrument_cbond %s' % response)
+                _l.info('data response.text %s ' % response.text)
             except Exception as e:
                 _l.debug("Can't send request to CBONDS BROKER. %s" % e)
 
                 errors.append('Request to broker failed. %s' % str(e))
-
-            _l.info('data response.text %s ' % response.text)
 
             try:
                 data = response.json()
