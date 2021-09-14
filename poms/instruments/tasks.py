@@ -76,8 +76,7 @@ def only_generate_events_at_date(master_user, date):
             'event_class',
             'notification_class',
             'periodicity',
-            'actions',
-            'actions__transaction_type'
+            'actions'
         ).filter(
             # effective_date__lte=(date - F("notify_in_n_days")),
             # final_date__gte=date,
@@ -206,8 +205,7 @@ def only_generate_events_at_date_for_single_instrument(master_user, date, instru
             'event_class',
             'notification_class',
             'periodicity',
-            'actions',
-            'actions__transaction_type'
+            'actions'
         ).filter(
             # effective_date__lte=(date - F("notify_in_n_days")),
             # final_date__gte=date,
@@ -335,8 +333,7 @@ def generate_events0(master_user):
             'event_class',
             'notification_class',
             'periodicity',
-            'actions',
-            'actions__transaction_type'
+            'actions'
         ).filter(
             effective_date__lte=(now - F("notify_in_n_days")),
             final_date__gte=now,
@@ -591,8 +588,7 @@ def generate_events_do_not_inform_apply_default0(master_user):
             'event_class',
             'notification_class',
             'periodicity',
-            'actions',
-            'actions__transaction_type'
+            'actions'
         ).filter(
             effective_date__lte=(now - F("notify_in_n_days")),
             final_date__gte=now,
