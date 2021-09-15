@@ -288,9 +288,7 @@ class TransactionTypeLightViewSet(AbstractWithObjectPermissionViewSet):
     serializer_class = TransactionTypeLightSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter,
-        AttributeFilter,
-        GroupsAttributeFilter,
-        EntitySpecificFilter
+        AttributeFilter
     ]
     filter_class = TransactionTypeFilterSet
     ordering_fields = [
