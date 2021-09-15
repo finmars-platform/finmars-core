@@ -87,6 +87,8 @@ class InstrumentSelectSpecialQueryFilter(BaseFilterBackend):
 
         options = Q()
 
+
+
         for piece in pieces:
 
             options.add(Q(name__icontains=piece), Q.OR)
