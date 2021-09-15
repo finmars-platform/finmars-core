@@ -183,6 +183,9 @@ class CurrencyEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribu
             'id', 'master_user',
             'user_code', 'name', 'short_name', 'notes',
             'is_default', 'is_deleted', 'is_enabled',
+
+            'reference_for_pricing', 'default_fx_rate',
+            'pricing_condition'
         ]
 
 

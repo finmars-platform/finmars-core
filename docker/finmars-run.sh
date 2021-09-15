@@ -73,6 +73,10 @@ then
 
 fi
 
+echo "Create admin user"
+
+/var/app-venv/bin/python /var/app/manage.py generate_super_user
+
 echo "Run uwsgi"
 
 /usr/bin/uwsgi /etc/uwsgi/apps-enabled/finmars.ini
