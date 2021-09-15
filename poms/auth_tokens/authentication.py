@@ -47,7 +47,7 @@ class ExpiringTokenAuthentication(TokenAuthentication):
 
         # print('auth %s' % auth)
 
-        _l.info('equest.COOKIES %s' % request.COOKIES)
+        # _l.info('equest.COOKIES %s' % request.COOKIES)
 
         if len(auth) == 0:
 
