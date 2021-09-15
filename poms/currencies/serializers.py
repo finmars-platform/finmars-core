@@ -274,8 +274,8 @@ class CurrencyHistorySerializer(ModelWithTimeStampSerializer):
 
         try:
 
-            history_item = CurrencyHistoryError.objects.get(currency=instance.currency.currency,
-                                                            master_user=instance.master_user, date=instance.date,
+            history_item = CurrencyHistoryError.objects.get(currency=instance.currency,
+                                                            master_user=instance.currency.master_user, date=instance.date,
                                                             pricing_policy=instance.pricing_policy)
 
             history_item.status = CurrencyHistoryError.STATUS_OVERWRITTEN

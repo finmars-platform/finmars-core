@@ -404,6 +404,8 @@ class FillPricesBrokerBloombergProcess(object):
             price.principal_price = 0
             price.accrued_price = 0
 
+            price.procedure_modified_datetime = self.procedure_instance.created
+
             if principal_price:
 
                 if price.id:
@@ -573,6 +575,8 @@ class FillPricesBrokerBloombergProcess(object):
                 _l.debug('Create new %s' % price)
 
             price.fx_rate = 0
+
+            price.procedure_modified_datetime = self.procedure_instance.created
 
             if fx_rate:
                 price.fx_rate = fx_rate
@@ -827,6 +831,7 @@ class FillPricesBrokerBloombergForwardsProcess(object):
 
             price.principal_price = 0
             price.accrued_price = 0
+            price.procedure_modified_datetime = self.procedure_instance.created
 
             if principal_price:
 
@@ -1129,6 +1134,7 @@ class FillPricesBrokerWtradeProcess(object):
 
             price.principal_price = 0
             price.accrued_price = 0
+            price.procedure_modified_datetime = self.procedure_instance.created
 
             if principal_price:
 
@@ -1358,6 +1364,7 @@ class FillPricesBrokerFixerProcess(object):
                 _l.debug('Create new %s' % price)
 
             price.fx_rate = 0
+            price.procedure_modified_datetime = self.procedure_instance.created
 
             if fx_rate:
                 price.fx_rate = fx_rate
@@ -1611,6 +1618,7 @@ class FillPricesBrokerAlphavProcess(object):
 
             price.principal_price = 0
             price.accrued_price = 0
+            price.procedure_modified_datetime = self.procedure_instance.created
 
             if principal_price:
 

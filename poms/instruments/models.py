@@ -1441,6 +1441,9 @@ class PriceHistory(DataTimeStampedModel):
 
         try:
 
+            if not self.procedure_modified_datetime:
+                self.procedure_modified_datetime = date_now()
+
             if self.instrument.accrued_currency_id == self.instrument.pricing_currency_id:
 
                 self.instr_accrued_ccy_cur_fx = 1

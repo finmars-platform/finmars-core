@@ -95,6 +95,9 @@ class CurrencyHistory(DataTimeStampedModel):
         if self.fx_rate == 0:
             raise ValidationError('FX rate must not be zero')
 
+        if not self.procedure_modified_datetime:
+            self.procedure_modified_datetime = date_now()
+
 
         super(CurrencyHistory, self).save(*args, **kwargs)
 
