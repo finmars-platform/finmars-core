@@ -87,13 +87,30 @@ class InstrumentSelectSpecialQueryFilter(BaseFilterBackend):
 
         options = Q()
 
-
+        name_q = Q()
+        user_code_q = Q()
+        short_name_q = Q()
+        reference_for_pricing_q = Q()
 
         for piece in pieces:
 
-            options.add(Q(name__icontains=piece), Q.OR)
-            options.add(Q(user_code__icontains=piece), Q.OR)
-            options.add(Q(short_name__icontains=piece), Q.OR)
+            name_q.add(Q(name__icontains=piece), Q.AND)
+
+        for piece in pieces:
+            user_code_q.add(Q(user_code__icontains=piece), Q.AND)
+
+        for piece in pieces:
+            short_name_q.add(Q(short_name__icontains=piece), Q.AND)
+
+        for piece in pieces:
+            reference_for_pricing_q.add(Q(reference_for_pricing__icontains=piece), Q.AND)
+
+
+        options.add(name_q, Q.OR)
+        options.add(user_code_q, Q.OR)
+        options.add(short_name_q, Q.OR)
+        options.add(reference_for_pricing_q, Q.OR)
+
 
         queryset = queryset.filter(options)
 
