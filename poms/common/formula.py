@@ -79,6 +79,9 @@ def _check_float(val):
 def _str(a):
     return str(a)
 
+def _substr(str, start_index, end_index):
+    return str[start_index:end_index]
+
 
 def _upper(a):
     return str(a).upper()
@@ -1820,6 +1823,7 @@ class _UserDef(object):
 
 FUNCTIONS = [
     SimpleEval2Def('str', _str),
+    SimpleEval2Def('substr', _substr),
     SimpleEval2Def('upper', _upper),
     SimpleEval2Def('lower', _lower),
     SimpleEval2Def('contains', _contains),
