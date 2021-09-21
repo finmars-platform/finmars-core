@@ -62,8 +62,8 @@ def group_instrument_items_by_provider(items, groups):
 
     result = {}
 
-    for item in groups:
-        result[item.type.id] = []
+    for group in groups:
+        result[group.type.id] = []
 
     result['has_linked_with_portfolio'] = []
 

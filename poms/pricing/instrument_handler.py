@@ -428,10 +428,14 @@ class PricingInstrumentHandler(object):
 
             last_price = None
 
+            _l.info('item %s' % item)
+            _l.info('item %s' % item.__dict__)
+
             for date in dates:
 
                 principal_price = None
                 accrued_price = None
+
 
                 try:
 
