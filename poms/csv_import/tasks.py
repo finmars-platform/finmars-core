@@ -1818,10 +1818,16 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     except Exception as e:
         object_data['pricing_condition'] = ecosystem_default.pricing_condition.id
 
+
+
     if 'maturity' in source_data and source_data['maturity'] != '':
         object_data['maturity_date'] = source_data['maturity']
     elif  'maturity_date' in source_data and source_data['maturity_date'] != '':
-        object_data['maturity_date'] = source_data['maturity_date']
+
+        if source_data['maturity_date'] == 'null':
+            object_data['maturity_date'] = '2999-01-01'
+        else:
+            object_data['maturity_date'] = source_data['maturity_date']
     else:
         object_data['maturity_date'] = '2999-01-01'
 
@@ -1867,7 +1873,6 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     object_data['factor_schedules'] = []
 
     set_events_for_instrument(object_data, source_data, instrument_type)
-
 
     if 'accrual_calculation_schedules' in source_data:
         if len(object_data['accrual_calculation_schedules']):
