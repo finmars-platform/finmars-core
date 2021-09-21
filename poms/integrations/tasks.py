@@ -270,75 +270,76 @@ class ProxyRequest(object):
 
 def create_instrument_cbond(data, master_user, member):
 
-    from poms.instruments.serializers import InstrumentSerializer
-
-    ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
-    content_type = ContentType.objects.get(model="instrument", app_label="instruments")
-
-    proxy_user = ProxyUser(member, master_user)
-    proxy_request = ProxyRequest(proxy_user)
-
-    context = {'master_user': master_user,
-               'request': proxy_request}
-
-    instrument_data = {}
-
-    for key, value in data.items():
-
-        if key == 'attributes':
-
-            for attr_key, attr_value in data['attributes'].items():
-
-                instrument_data[attr_key] = attr_value
-
-        else:
-            instrument_data[key] = value
-
-
-
-    attribute_types =  GenericAttributeType.objects.filter(master_user=master_user,
-                                                           content_type=content_type)
-
-    instrument_type = None
-
     try:
 
-        instrument_type = InstrumentType.objects.get(master_user=master_user,
-                                                     user_code=instrument_data['instrument_type'])
+        from poms.instruments.serializers import InstrumentSerializer
 
+        ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
+        content_type = ContentType.objects.get(model="instrument", app_label="instruments")
+
+        proxy_user = ProxyUser(member, master_user)
+        proxy_request = ProxyRequest(proxy_user)
+
+        context = {'master_user': master_user,
+                   'request': proxy_request}
+
+        instrument_data = {}
+
+        for key, value in data.items():
+
+            if key == 'attributes':
+
+                for attr_key, attr_value in data['attributes'].items():
+
+                    instrument_data[attr_key] = attr_value
+
+            else:
+                instrument_data[key] = value
+
+
+
+        attribute_types =  GenericAttributeType.objects.filter(master_user=master_user,
+                                                               content_type=content_type)
+
+        instrument_type = None
+
+        try:
+
+            instrument_type = InstrumentType.objects.get(master_user=master_user,
+                                                         user_code=instrument_data['instrument_type'])
+
+
+        except Exception as e:
+
+            _l.info('Instrument Type %s is not found %s' % (instrument_data['instrument_type'], e))
+
+            raise Exception("Instrument Type %s is not found %s" % (instrument_data['instrument_type'], e))
+
+        object_data = handler_instrument_object(instrument_data, instrument_type, master_user, ecosystem_defaults, attribute_types)
+
+
+        try:
+
+            instance = Instrument.objects.get(master_user=master_user, user_code=object_data['user_code'])
+
+            serializer = InstrumentSerializer(data=object_data, context=context, instance=instance)
+        except Instrument.DoesNotExist:
+
+            serializer = InstrumentSerializer(data=object_data, context=context)
+
+        is_valid = serializer.is_valid()
+
+        if is_valid:
+            instrument = serializer.save()
+
+            return instrument
+        else:
+            _l.info('InstrumentExternalAPIViewSet error %s' % serializer.errors)
+            raise Exception(serializer.errors)
 
     except Exception as e:
-
-        _l.info('Instrument Type %s is not found %s' % (instrument_data['instrument_type'], e))
-
-        raise Exception("Instrument Type %s is not found %s" % (instrument_data['instrument_type'], e))
-
-    object_data = handler_instrument_object(instrument_data, instrument_type, master_user, ecosystem_defaults, attribute_types)
-
-    if 'default_price' in object_data or not object_data['default_price']:
-        object_data['default_price'] = 0
-
-    if 'price_multiplier' in object_data or not object_data['price_multiplier']:
-        object_data['price_multiplier'] = 1
-
-    try:
-
-        instance = Instrument.objects.get(master_user=master_user, user_code=object_data['user_code'])
-
-        serializer = InstrumentSerializer(data=object_data, context=context, instance=instance)
-    except Instrument.DoesNotExist:
-
-        serializer = InstrumentSerializer(data=object_data, context=context)
-
-    is_valid = serializer.is_valid()
-
-    if is_valid:
-        instrument = serializer.save()
-
-        return instrument
-    else:
-        _l.info('InstrumentExternalAPIViewSet error %s' % serializer.errors)
-        raise Exception(serializer.errors)
+        _l.info('InstrumentExternalAPIViewSet error %s' % e)
+        _l.info(traceback.print_exc())
 
 
 
