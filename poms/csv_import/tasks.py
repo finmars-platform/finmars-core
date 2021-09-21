@@ -1679,7 +1679,7 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
 
         if attribute.value_type == 30:
             try:
-                attr['classifier'] = GenericClassifier(attribute_type=attribute.attribute_type,
+                attr['classifier'] = GenericClassifier.objects.get(attribute_type=attribute.attribute_type,
                                                        name=attribute.value_classifier).id
             except Exception as e:
                 attr['classifier'] = None

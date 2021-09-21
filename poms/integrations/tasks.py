@@ -308,7 +308,6 @@ def create_instrument_cbond(data, master_user, member):
             instrument_type = InstrumentType.objects.get(master_user=master_user,
                                                          user_code=instrument_data['instrument_type'])
 
-
         except Exception as e:
 
             _l.info('Instrument Type %s is not found %s' % (instrument_data['instrument_type'], e))
@@ -340,6 +339,7 @@ def create_instrument_cbond(data, master_user, member):
     except Exception as e:
         _l.info('InstrumentExternalAPIViewSet error %s' % e)
         _l.info(traceback.print_exc())
+        raise Exception(e)
 
 
 
