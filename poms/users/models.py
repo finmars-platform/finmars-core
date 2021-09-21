@@ -803,6 +803,8 @@ class MasterUser(models.Model):
         from poms.transactions.models import NotificationClass, TransactionTypeGroup, TransactionType
         from poms.obj_perms.utils import get_change_perms, assign_perms3
         from poms.instruments.models import PricingPolicy
+        from poms.instruments.models import PricingCondition
+
 
         if not EventScheduleConfig.objects.filter(master_user=self).exists():
             EventScheduleConfig.create_default(master_user=self)
@@ -954,6 +956,7 @@ class MasterUser(models.Model):
             pk=AccrualCalculationModel.DEFAULT)
         ecosystem_defaults.payment_size_detail = PaymentSizeDetail.objects.get(pk=PaymentSizeDetail.DEFAULT)
         ecosystem_defaults.periodicity = Periodicity.objects.get(pk=Periodicity.DEFAULT)
+        ecosystem_defaults.pricing_condition = PricingCondition.objects.get(pk=PricingCondition.NO_VALUATION)
 
         ecosystem_defaults.save()
 
