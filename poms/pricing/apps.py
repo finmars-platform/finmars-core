@@ -98,6 +98,11 @@ class PricingConfig(AppConfig):
                 "name": "Bloomberg Forwards",
                 "input_type": InstrumentPricingSchemeType.MULTIPLE_PARAMETERS
             },
+            {
+                "id": 9,
+                "name": "CBONDS",
+                "input_type": InstrumentPricingSchemeType.SINGLE_PARAMETER
+            },
 
         ]
 

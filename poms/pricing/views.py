@@ -13,7 +13,7 @@ from poms.obj_perms.utils import get_permissions_prefetch_lookups
 
 from poms.pricing.handlers import FillPricesBrokerBloombergProcess, \
     FillPricesBrokerWtradeProcess, FillPricesBrokerFixerProcess, FillPricesBrokerAlphavProcess, \
-    FillPricesBrokerBloombergForwardsProcess
+    FillPricesBrokerBloombergForwardsProcess, FillPricesBrokerCbondsProcess
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, InstrumentPricingSchemeType, \
     CurrencyPricingSchemeType, PricingProcedureInstance, PriceHistoryError, \
     CurrencyHistoryError
@@ -279,6 +279,44 @@ class PricingBrokerAlphavHandler(APIView):
             if not request.data['error_code']:
 
                 instance = FillPricesBrokerAlphavProcess(instance=request.data, master_user=procedure.master_user)
+                instance.process()
+
+            else:
+
+                procedure.status = PricingProcedureInstance.STATUS_ERROR
+                procedure.save()
+
+        except PricingProcedureInstance.DoesNotExist:
+
+            _l.debug("Does not exist? Procedure %s" % procedure_id)
+
+            return Response({'status': '404'})  # TODO handle 404 properly
+
+        return Response({'status': 'ok'})
+
+
+class PricingBrokerCbondsHandler(APIView):
+
+    permission_classes = []
+
+    def post(self, request):
+
+        # _l.debug('request.data %s' % request.data)
+
+        procedure_id = request.data['procedure']
+
+        _l.debug("> handle_callback broker cbonds: procedure_id %s" % procedure_id)
+
+        try:
+
+            procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
+
+            procedure.error_code = request.data['error_code']
+            procedure.error_message = request.data['error_message']
+
+            if not request.data['error_code']:
+
+                instance = FillPricesBrokerCbondsProcess(instance=request.data, master_user=procedure.master_user)
                 instance.process()
 
             else:

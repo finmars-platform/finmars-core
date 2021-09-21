@@ -14,7 +14,8 @@ from poms.portfolios.models import PortfolioRegister, PortfolioRegisterRecord
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
 from poms.pricing.models import InstrumentPricingSchemeType, \
     PricingProcedureBloombergInstrumentResult, PricingProcedureWtradeInstrumentResult, PriceHistoryError, \
-    PricingProcedureAlphavInstrumentResult, PricingProcedureBloombergForwardInstrumentResult
+    PricingProcedureAlphavInstrumentResult, PricingProcedureBloombergForwardInstrumentResult, \
+    PricingProcedureCbondsInstrumentResult
 from poms.pricing.transport.transport import PricingTransport
 from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_between_two_dates, \
     get_is_yesterday, optimize_items, roll_price_history_for_n_day_forward, get_empty_values_for_dates, \
@@ -1840,6 +1841,160 @@ class PricingInstrumentHandler(object):
                                 source="Pricing Procedure Service",
                                 text="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
 
+    def process_to_cbonds_provider(self, items):
+
+        _l.debug("Pricing Instrument Handler - Cbonds Provider: len %s" % len(items))
+
+        procedure_instance = PricingProcedureInstance(procedure=self.procedure,
+                                                      parent_procedure_instance=self.parent_procedure,
+                                                      master_user=self.master_user,
+                                                      status=PricingProcedureInstance.STATUS_PENDING,
+                                                      action='cbonds_get_instrument_prices',
+                                                      provider='cbonds',
+
+                                                      action_verbose='Get Instrument Prices from Cbonds',
+                                                      provider_verbose='Cbonds'
+
+                                                      )
+
+        if self.member:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
+            procedure_instance.member = self.member
+
+        if self.schedule_instance:
+            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_SCHEDULE
+            procedure_instance.schedule_instance = self.schedule_instance
+
+        procedure_instance.save()
+
+        body = {}
+        body['action'] = procedure_instance.action
+        body['procedure'] = procedure_instance.id
+        body['provider'] = procedure_instance.provider
+
+        body['user'] = {
+            'token': self.master_user.id,
+            'base_api_url': settings.BASE_API_URL
+        }
+
+        body['error_code'] = None
+        body['error_message'] = None
+
+        body['data'] = {}
+
+        body['data']['date_from'] = str(self.procedure.price_date_from)
+        body['data']['date_to'] = str(self.procedure.price_date_to)
+        body['data']['items'] = []
+
+        items_with_missing_parameters = []
+
+        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
+                                                    date_to=self.procedure.price_date_to)
+
+        empty_values = get_empty_values_for_dates(dates)
+
+        _l.debug('procedure id %s' % body['procedure'])
+
+        full_items = []
+
+        for item in items:
+
+            if len(item.parameters):
+
+                item_parameters = item.parameters.copy()
+                item_parameters.pop()
+
+                for date in dates:
+
+                    with transaction.atomic():
+                        try:
+                            record = PricingProcedureCbondsInstrumentResult(master_user=self.master_user,
+                                                                            procedure=procedure_instance,
+                                                                            instrument=item.instrument,
+                                                                            instrument_parameters=str(
+                                                                                item_parameters),
+                                                                            pricing_policy=item.policy.pricing_policy,
+                                                                            pricing_scheme=item.pricing_scheme,
+                                                                            reference=item.parameters[0],
+                                                                            date=date)
+
+                            record.save()
+
+                        except Exception as e:
+                            _l.debug("Cant create Result Record %s" % e)
+                            pass
+
+                item_obj = {
+                    'reference': item.parameters[0],
+                    'parameters': item_parameters,
+                    'fields': []
+                }
+
+                item_obj['fields'].append({
+                    'code': 'close',
+                    'parameters': [],
+                    'values': empty_values
+                })
+
+                item_obj['fields'].append({
+                    'code': 'open',
+                    'parameters': [],
+                    'values': empty_values
+                })
+
+                item_obj['fields'].append({
+                    'code': 'high',
+                    'parameters': [],
+                    'values': empty_values
+                })
+
+                item_obj['fields'].append({
+                    'code': 'low',
+                    'parameters': [],
+                    'values': empty_values
+                })
+
+                item_obj['fields'].append({
+                    'code': 'volume',
+                    'parameters': [],
+                    'values': empty_values
+                })
+
+                full_items.append(item_obj)
+
+            else:
+                items_with_missing_parameters.append(item)
+
+        _l.debug('full_items len: %s' % len(full_items))
+
+        optimized_items = optimize_items(full_items)
+
+        _l.debug('optimized_items len: %s' % len(optimized_items))
+
+        body['data']['items'] = optimized_items
+
+        _l.debug('items_with_missing_parameters %s' % len(items_with_missing_parameters))
+        # _l.debug('data %s' % data)
+
+        _l.debug('self.procedure %s' % self.procedure.id)
+        _l.debug('send request %s' % body)
+
+        try:
+
+            self.transport.send_request(body)
+
+        except Exception as e:
+
+            procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+            procedure_instance.error_code = 500
+            procedure_instance.error_message = "Mediator is unavailable. Please try later."
+
+            procedure_instance.save()
+
+            send_system_message(master_user=self.master_user,
+                                source="Pricing Procedure Service",
+                                text="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
+
     def print_grouped_instruments(self):
 
         names = {
@@ -1851,6 +2006,7 @@ class PricingInstrumentHandler(object):
             6: 'Wtrade',
             7: 'Alphav',
             8: 'Bloomberg Forwards',
+            9: 'Cbonds',
             'has_linked_with_portfolio': "Has Linked with Portfolio"
         }
 
