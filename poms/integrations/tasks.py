@@ -331,6 +331,8 @@ def create_instrument_cbond(data, master_user, member):
         if is_valid:
             instrument = serializer.save()
 
+            _l.info("Instrument is imported successfully")
+
             return instrument
         else:
             _l.info('InstrumentExternalAPIViewSet error %s' % serializer.errors)
