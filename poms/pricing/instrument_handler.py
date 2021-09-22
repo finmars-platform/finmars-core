@@ -201,6 +201,9 @@ class PricingInstrumentHandler(object):
                 if provider_id == 8:
                     self.process_to_bloomberg_forwards_provider(items)
 
+                if provider_id == 9:
+                    self.process_to_cbonds_provider(items)
+
                 if provider_id == 'has_linked_with_portfolio':
                     self.process_to_linked_with_portfolio_provider(items)
 
