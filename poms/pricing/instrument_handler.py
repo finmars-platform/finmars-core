@@ -430,6 +430,7 @@ class PricingInstrumentHandler(object):
 
             _l.info('item %s' % item)
             _l.info('item %s' % item.__dict__)
+            _l.info('item %s' % item.instrument)
 
             for date in dates:
 
@@ -513,7 +514,7 @@ class PricingInstrumentHandler(object):
 
                     last_price = price
 
-                except (PortfolioRegister.DoesNotExist, PortfolioRegisterRecord.DoesNotExist):
+                except (Exception, PortfolioRegister.DoesNotExist, PortfolioRegisterRecord.DoesNotExist):
                     _l.debug("Portfolio register or PortfolioRegisterRecord is not found")
 
             successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user,
