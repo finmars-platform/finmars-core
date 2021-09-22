@@ -441,6 +441,7 @@ class PricingInstrumentHandler(object):
 
                     portfolio_register = PortfolioRegister.objects.get(master_user=self.master_user,
                                                                        instrument=item.instrument)
+
                     portfolio_register_record = PortfolioRegisterRecord.objects.get(master_user=self.master_user,
                                                                                     instrument=item.instrument,
                                                                                     transaction_date=date)
@@ -451,10 +452,10 @@ class PricingInstrumentHandler(object):
 
                     nav = 0
 
-                    for item in balance_report.items:
+                    for balance_report_item in balance_report.items:
 
-                        if item['market_value']:
-                            nav = nav + item['market_value']
+                        if balance_report_item['market_value']:
+                            nav = nav + balance_report_item['market_value']
 
                     principal_price = nav / portfolio_register_record.n_shares_end_of_the_day
 
