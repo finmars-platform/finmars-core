@@ -69,8 +69,15 @@ class InstrumentItem(object):
 
                     try:
 
+                        user_code = ''
+
+                        if 'attributes' in self.policy.attribute_key:
+                            user_code = self.policy.attribute_key.split('attributes.')[1]
+                        else:
+                            user_code = self.policy.attribute_key
+
                         attribute = GenericAttribute.objects.get(object_id=self.instrument.id,
-                                                                 attribute_type__user_code=self.policy.attribute_key)
+                                                                 attribute_type__user_code=user_code)
 
                         if attribute.attribute_type.value_type == GenericAttributeType.STRING:
                             result = attribute.value_string
