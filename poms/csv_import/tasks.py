@@ -1822,9 +1822,10 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
 
     if 'maturity' in source_data and source_data['maturity'] != '':
         object_data['maturity_date'] = source_data['maturity']
+
     elif  'maturity_date' in source_data and source_data['maturity_date'] != '':
 
-        if source_data['maturity_date'] == 'null':
+        if source_data['maturity_date'] == 'null' or source_data['maturity_date'] == '9999-00-00':
             object_data['maturity_date'] = '2999-01-01'
         else:
             object_data['maturity_date'] = source_data['maturity_date']
