@@ -1906,6 +1906,8 @@ class PricingInstrumentHandler(object):
 
         full_items = []
 
+        _l.debug('items len: %s' % len(items))
+
         for item in items:
 
             if len(item.parameters):
@@ -1940,34 +1942,11 @@ class PricingInstrumentHandler(object):
                 }
 
                 item_obj['fields'].append({
-                    'code': 'close',
+                    'code': 'value',
                     'parameters': [],
                     'values': empty_values
                 })
 
-                item_obj['fields'].append({
-                    'code': 'open',
-                    'parameters': [],
-                    'values': empty_values
-                })
-
-                item_obj['fields'].append({
-                    'code': 'high',
-                    'parameters': [],
-                    'values': empty_values
-                })
-
-                item_obj['fields'].append({
-                    'code': 'low',
-                    'parameters': [],
-                    'values': empty_values
-                })
-
-                item_obj['fields'].append({
-                    'code': 'volume',
-                    'parameters': [],
-                    'values': empty_values
-                })
 
                 full_items.append(item_obj)
 
