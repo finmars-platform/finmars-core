@@ -1761,30 +1761,33 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
 def set_events_for_instrument(instrument_object, data_object, instrument_type_obj):
     instrument_type = instrument_type_obj.user_code.lower()
 
-    if instrument_type in ['bonds', 'convertible_bonds', 'index_linked_bonds', 'short_term_notes']:
 
-        if len(instrument_object['event_schedules']):
-            # C
-            coupon_event = instrument_object['event_schedules'][0]
+    if 'maturity' in data_object:
 
-            # coupon_event['periodicity'] = data_object['periodicity']
-            coupon_event['effective_date'] = data_object['first_coupon_date']
-            coupon_event['final_date'] = data_object['maturity']
+        if instrument_type in ['bonds', 'convertible_bonds', 'index_linked_bonds', 'short_term_notes']:
 
+            if len(instrument_object['event_schedules']):
+                # C
+                coupon_event = instrument_object['event_schedules'][0]
+
+                # coupon_event['periodicity'] = data_object['periodicity']
+                coupon_event['effective_date'] = data_object['first_coupon_date']
+                coupon_event['final_date'] = data_object['maturity']
+
+                # M
+                expiration_event = instrument_object['event_schedules'][1]
+
+                expiration_event['effective_date'] = data_object['maturity']
+                expiration_event['final_date'] = data_object['maturity']
+
+        if instrument_type in ['bond_futures', 'fx_forwards', 'forwards', 'futures', 'commodity_futures',
+                               'call_options', 'etfs', 'funds',
+                               'index_futures', 'index_options', 'put_options', 'tbills', 'warrants']:
             # M
-            expiration_event = instrument_object['event_schedules'][1]
+            expiration_event = instrument_object['event_schedules'][0]
 
             expiration_event['effective_date'] = data_object['maturity']
             expiration_event['final_date'] = data_object['maturity']
-
-    if instrument_type in ['bond_futures', 'fx_forwards', 'forwards', 'futures', 'commodity_futures',
-                           'call_options', 'etfs', 'funds',
-                           'index_futures', 'index_options', 'put_options', 'tbills', 'warrants']:
-        # M
-        expiration_event = instrument_object['event_schedules'][0]
-
-        expiration_event['effective_date'] = data_object['maturity']
-        expiration_event['final_date'] = data_object['maturity']
 
 
 def set_accruals_for_instrument(instrument_object, data_object, instrument_type_obj):
@@ -1907,19 +1910,19 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
         if len(object_data['accrual_calculation_schedules']):
             accrual = object_data['accrual_calculation_schedules'][0]
 
-            if source_data['accrual_calculation_schedules']['accrual_start_date']:
-                accrual['accrual_start_date'] = source_data['accrual_calculation_schedules']['accrual_start_date']
+            if 'accrual_start_date' in source_data['accrual_calculation_schedules'][0]:
+                accrual['accrual_start_date'] = source_data['accrual_calculation_schedules'][0]['accrual_start_date']
 
-            if source_data['accrual_calculation_schedules']['first_payment_date']:
-                accrual['first_payment_date'] = source_data['accrual_calculation_schedules']['first_payment_date']
+            if 'first_payment_date' in source_data['accrual_calculation_schedules'][0]:
+                accrual['first_payment_date'] = source_data['accrual_calculation_schedules'][0]['first_payment_date']
 
             try:
-                accrual['accrual_size'] = float(source_data['accrual_calculation_schedules']['accrual_size'])
+                accrual['accrual_size'] = float(source_data['accrual_calculation_schedules'][0]['accrual_size'])
             except Exception as e:
                 accrual['accrual_size'] = 0
 
             try:
-                accrual['periodicity_n'] = int(source_data['accrual_calculation_schedules']['periodicity_n'])
+                accrual['periodicity_n'] = int(source_data['accrual_calculation_schedules'][0]['periodicity_n'])
             except Exception as e:
                 accrual['periodicity_n'] = 0
     else:
