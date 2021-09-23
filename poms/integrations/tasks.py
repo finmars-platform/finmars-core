@@ -291,10 +291,17 @@ def create_instrument_cbond(data, master_user, member):
 
                 for attr_key, attr_value in data['attributes'].items():
 
-                    instrument_data[attr_key] = attr_value
+                    if attr_value == 'null':
+                        instrument_data[attr_key] = None
+                    else:
+                        instrument_data[attr_key] = attr_value
 
             else:
-                instrument_data[key] = value
+
+                if value == 'null':
+                    instrument_data[key] = None
+                else:
+                    instrument_data[key] = value
 
 
 
