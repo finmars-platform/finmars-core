@@ -1799,7 +1799,7 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
                                                                user_code=source_data['pricing_currency']).id
     except Exception as e:
 
-        if not object_data['pricing_currency']:
+        if 'pricing_currency' not in object_data:
             object_data['pricing_currency'] = ecosystem_default.currency.id
 
     try:
@@ -1807,7 +1807,7 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
                                                                user_code=source_data['accrued_currency']).id
     except Exception as e:
 
-        if not object_data['accrued_currency']:
+        if 'accrued_currency' not in object_data:
             object_data['accrued_currency'] = ecosystem_default.currency.id
 
     try:
@@ -1815,14 +1815,15 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
             user_code=source_data['payment_size_detail']).id
     except Exception as e:
 
-        if not object_data['payment_size_detail']:
+        if 'payment_size_detail' not in object_data:
             object_data['payment_size_detail'] = ecosystem_default.payment_size_detail.id
 
     try:
         object_data['pricing_condition'] = PricingCondition.objects.get(
             user_code=source_data['pricing_condition']).id
     except Exception as e:
-        if not object_data['pricing_condition']:
+
+        if 'pricing_condition' not in object_data:
             object_data['pricing_condition'] = ecosystem_default.pricing_condition.id
 
 
