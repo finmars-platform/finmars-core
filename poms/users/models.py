@@ -1185,6 +1185,25 @@ class Member(FakeDeletableModel):
 
     groups = models.ManyToManyField('Group', blank=True, related_name='members', verbose_name=ugettext_lazy('groups'))
 
+    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+
+    @property
+    def data(self):
+        if self.json_data:
+            try:
+                return json.loads(self.json_data)
+            except (ValueError, TypeError):
+                return None
+        else:
+            return None
+
+    @data.setter
+    def data(self, val):
+        if val:
+            self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+        else:
+            self.json_data = None
+
     # permissions = models.ManyToManyField(Permission, blank=True)
 
     class Meta(FakeDeletableModel.Meta):

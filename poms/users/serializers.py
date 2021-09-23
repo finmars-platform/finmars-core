@@ -678,12 +678,15 @@ class MemberSerializer(serializers.ModelSerializer):
     groups = GroupField(many=True, required=False)
     groups_object = serializers.PrimaryKeyRelatedField(source='groups', read_only=True, many=True)
 
+    data = serializers.JSONField(allow_null=True)
+
     class Meta:
         model = Member
         fields = [
             'id', 'master_user', 'join_date', 'is_owner', 'is_admin', 'is_superuser', 'is_current',
             'notification_level', 'interface_level',
-            'is_deleted', 'username', 'first_name', 'last_name', 'display_name', 'groups', 'groups_object'
+            'is_deleted', 'username', 'first_name', 'last_name', 'display_name', 'groups', 'groups_object',
+            'data'
         ]
         read_only_fields = [
             'master_user', 'join_date', 'is_owner', 'is_superuser', 'is_current', 'is_deleted',
