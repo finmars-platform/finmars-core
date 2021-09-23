@@ -1644,12 +1644,12 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
 def set_defaults_from_instrument_type(instrument_object, instrument_type):
     # Set system attributes
 
-    instrument_object['payment_size_detail'] = instrument_type.payment_size_detail
-    instrument_object['accrued_currency'] = instrument_type.accrued_currency
+    instrument_object['payment_size_detail'] = instrument_type.payment_size_detail.id
+    instrument_object['accrued_currency'] = instrument_type.accrued_currency.id
     instrument_object['accrued_multiplier'] = instrument_type.accrued_multiplier
     instrument_object['default_accrued'] = instrument_type.default_accrued
 
-    instrument_object['exposure_calculation_model'] = instrument_type.exposure_calculation_model
+    instrument_object['exposure_calculation_model'] = instrument_type.exposure_calculation_model.id
     instrument_object['long_underlying_instrument'] = instrument_type.long_underlying_instrument
     instrument_object['underlying_long_multiplier'] = instrument_type.underlying_long_multiplier
 
