@@ -1642,100 +1642,108 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
 
 
 def set_defaults_from_instrument_type(instrument_object, instrument_type):
-    # Set system attributes
 
-    instrument_object['payment_size_detail'] = instrument_type.payment_size_detail.id
-    instrument_object['accrued_currency'] = instrument_type.accrued_currency.id
-    instrument_object['accrued_multiplier'] = instrument_type.accrued_multiplier
-    instrument_object['default_accrued'] = instrument_type.default_accrued
+    try:
+        # Set system attributes
 
-    instrument_object['exposure_calculation_model'] = instrument_type.exposure_calculation_model.id
-    instrument_object['long_underlying_instrument'] = instrument_type.long_underlying_instrument
-    instrument_object['underlying_long_multiplier'] = instrument_type.underlying_long_multiplier
+        instrument_object['payment_size_detail'] = instrument_type.payment_size_detail.id
+        instrument_object['accrued_currency'] = instrument_type.accrued_currency.id
+        instrument_object['accrued_multiplier'] = instrument_type.accrued_multiplier
+        instrument_object['default_accrued'] = instrument_type.default_accrued
 
-    instrument_object['short_underlying_instrument'] = instrument_type.short_underlying_instrument
-    instrument_object['underlying_short_multiplier'] = instrument_type.underlying_short_multiplier
+        instrument_object['exposure_calculation_model'] = instrument_type.exposure_calculation_model.id
+        instrument_object['long_underlying_instrument'] = instrument_type.long_underlying_instrument
+        instrument_object['underlying_long_multiplier'] = instrument_type.underlying_long_multiplier
 
-    instrument_object['long_underlying_exposure'] = instrument_type.long_underlying_exposure
-    instrument_object['short_underlying_exposure'] = instrument_type.short_underlying_exposure
+        instrument_object['short_underlying_instrument'] = instrument_type.short_underlying_instrument
+        instrument_object['underlying_short_multiplier'] = instrument_type.underlying_short_multiplier
 
-    instrument_object['co_directional_exposure_currency'] = instrument_type.co_directional_exposure_currency
-    instrument_object['counter_directional_exposure_currency'] = instrument_type.counter_directional_exposure_currency
+        instrument_object['long_underlying_exposure'] = instrument_type.long_underlying_exposure
+        instrument_object['short_underlying_exposure'] = instrument_type.short_underlying_exposure
 
-    # Set attributes
-    instrument_object['attributes'] = []
+        instrument_object['co_directional_exposure_currency'] = instrument_type.co_directional_exposure_currency
+        instrument_object['counter_directional_exposure_currency'] = instrument_type.counter_directional_exposure_currency
 
-    for attribute in instrument_type.instrument_attributes.all():
+        # Set attributes
+        instrument_object['attributes'] = []
 
-        attr = {
-            'attribute_type': attribute.attribute_type.id
-        }
+        for attribute in instrument_type.instrument_attributes.all():
 
-        if attribute.value_type == 10:
-            attr['value_string'] = attribute.value_string
+            attr = {
+                'attribute_type': attribute.attribute_type.id
+            }
 
-        if attribute.value_type == 20:
-            attr['value_float'] = attribute.value_float
+            if attribute.value_type == 10:
+                attr['value_string'] = attribute.value_string
 
-        if attribute.value_type == 30:
-            try:
-                attr['classifier'] = GenericClassifier.objects.get(attribute_type=attribute.attribute_type,
-                                                       name=attribute.value_classifier).id
-            except Exception as e:
-                attr['classifier'] = None
+            if attribute.value_type == 20:
+                attr['value_float'] = attribute.value_float
 
-        if attribute.value_type == 40:
-            attr['value_date'] = attribute.value_date
+            if attribute.value_type == 30:
+                try:
+                    attr['classifier'] = GenericClassifier.objects.get(attribute_type=attribute.attribute_type,
+                                                           name=attribute.value_classifier).id
+                except Exception as e:
+                    attr['classifier'] = None
 
-        instrument_object['attributes'].append(attr)
+            if attribute.value_type == 40:
+                attr['value_date'] = attribute.value_date
 
-    # Set Event Schedules
+            instrument_object['attributes'].append(attr)
 
-    instrument_object['event_schedules'] = []
+        # Set Event Schedules
 
-    for instrument_type_event in instrument_type.events.all():
+        instrument_object['event_schedules'] = []
 
-        event_schedule = {
-            'event_class': instrument_type_event.data['event_class']
-        }
+        for instrument_type_event in instrument_type.events.all():
 
-        for item in instrument_type_event.data['items']:
+            event_schedule = {
+                'event_class': instrument_type_event.data['event_class']
+            }
 
-            # TODO add check for value type
-            if 'default_value' in item:
-                event_schedule[item['key']] = item['default_value']
+            for item in instrument_type_event.data['items']:
 
-        event_schedule['actions'] = []
+                # TODO add check for value type
+                if 'default_value' in item:
+                    event_schedule[item['key']] = item['default_value']
 
-        for instrument_type_action in instrument_type_event.data['actions']:
-            action = {}
-            action['transaction_type'] = instrument_type_action[
-                'transaction_type']  # TODO check if here user code instead of id
-            action['text'] = instrument_type_action['text']
-            action['is_sent_to_pending'] = instrument_type_action['is_sent_to_pending']
-            action['is_book_automatic'] = instrument_type_action['is_book_automatic']
+            event_schedule['actions'] = []
 
-            event_schedule['actions'].append(action)
+            for instrument_type_action in instrument_type_event.data['actions']:
+                action = {}
+                action['transaction_type'] = instrument_type_action[
+                    'transaction_type']  # TODO check if here user code instead of id
+                action['text'] = instrument_type_action['text']
+                action['is_sent_to_pending'] = instrument_type_action['is_sent_to_pending']
+                action['is_book_automatic'] = instrument_type_action['is_book_automatic']
 
-        instrument_object['event_schedules'].append(event_schedule)
+                event_schedule['actions'].append(action)
 
-    # Set Accruals
+            instrument_object['event_schedules'].append(event_schedule)
 
-    instrument_object['accrual_calculation_schedules'] = []
+        # Set Accruals
 
-    for instrument_type_accrual in instrument_type.accruals.all():
+        instrument_object['accrual_calculation_schedules'] = []
 
-        accrual = {
+        for instrument_type_accrual in instrument_type.accruals.all():
 
-        }
+            accrual = {
 
-        for item in instrument_type_accrual.data['items']:
+            }
 
-            # TODO add check for value type
-            if 'default_value' in item:
-                accrual[item['key']] = item['default_value']
+            for item in instrument_type_accrual.data['items']:
 
-    return instrument_object
+                # TODO add check for value type
+                if 'default_value' in item:
+                    accrual[item['key']] = item['default_value']
+
+        return instrument_object
+
+    except Exception as e:
+        _l.info('set_defaults_from_instrument_type e %s' % e)
+        _l.info(traceback.print_exc())
+
+        raise Exception("Instrument Type is not configured correctly %s" % e)
 
 
 def set_events_for_instrument(instrument_object, data_object, instrument_type_obj):
