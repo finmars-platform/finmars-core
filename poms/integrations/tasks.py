@@ -340,7 +340,7 @@ def create_instrument_cbond(data, master_user, member):
 
     except Exception as e:
         _l.info('InstrumentExternalAPIViewSet error %s' % e)
-        _l.info(traceback.print_exc())
+        _l.info(traceback.format_exc())
         raise Exception(e)
 
 
@@ -426,7 +426,7 @@ def download_instrument_cbond(instrument_code=None, master_user=None, member=Non
 
     except Exception as e:
         _l.info("error %s " % e)
-        _l.info(traceback.print_exc())
+        _l.info(traceback.format_exc())
 
         errors.append('Something went wrong. %s' % str(e))
 

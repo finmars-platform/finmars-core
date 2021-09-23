@@ -537,4 +537,4 @@ def recalculate_user_fields(self, instance):
 
     except Exception as e:
         _l.info("Exception recalculate_user_fields %s" % e)
-        _l.info(traceback.print_exc())
+        _l.info(traceback.format_exc())

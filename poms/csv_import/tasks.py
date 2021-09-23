@@ -261,7 +261,7 @@ def generate_file_report_simple(instance, type, name):
         return file_report.pk
     except Exception as e:
         _l.info("Generate file error occured %s" % e)
-        _l.info(traceback.print_exc())
+        _l.info(traceback.format_exc())
         return None
 
 
@@ -348,7 +348,7 @@ def get_item(scheme, result):
 
         except Exception as e:
 
-            traceback.print_exc()
+            traceback.format_exc()
 
             # _l.debug('get_item currencyhistory exception %s' % e)
 
@@ -760,7 +760,7 @@ def process_csv_file(master_user,
 
                             _l.info('Result processing error %s ' % e)
 
-                            traceback.print_exc()
+                            traceback.format_exc()
 
                             raise Exception("Result processing error")
 
@@ -1621,7 +1621,7 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
 
                 except Exception as e:
 
-                    traceback.print_exc()
+                    traceback.format_exc()
 
                     _l.debug('data_csv_file_import_by_procedure decryption error %s' % e)
 
@@ -1646,12 +1646,24 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
     try:
         # Set system attributes
 
-        instrument_object['payment_size_detail'] = instrument_type.payment_size_detail.id
-        instrument_object['accrued_currency'] = instrument_type.accrued_currency.id
+        if instrument_type.payment_size_detail:
+            instrument_object['payment_size_detail'] = instrument_type.payment_size_detail.id
+        else:
+            instrument_object['payment_size_detail'] = None
+
+        if instrument_type.accrued_currency:
+            instrument_object['accrued_currency'] = instrument_type.accrued_currency.id
+        else:
+            instrument_object['accrued_currency'] = None
+
         instrument_object['accrued_multiplier'] = instrument_type.accrued_multiplier
         instrument_object['default_accrued'] = instrument_type.default_accrued
 
-        instrument_object['exposure_calculation_model'] = instrument_type.exposure_calculation_model.id
+        if instrument_type.exposure_calculation_model:
+            instrument_object['exposure_calculation_model'] = instrument_type.exposure_calculation_model.id
+        else:
+            instrument_object['exposure_calculation_model'] = None
+
         instrument_object['long_underlying_instrument'] = instrument_type.long_underlying_instrument
         instrument_object['underlying_long_multiplier'] = instrument_type.underlying_long_multiplier
 
@@ -1741,7 +1753,7 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
 
     except Exception as e:
         _l.info('set_defaults_from_instrument_type e %s' % e)
-        _l.info(traceback.print_exc())
+        _l.info(traceback.format_exc())
 
         raise Exception("Instrument Type is not configured correctly %s" % e)
 
@@ -2032,7 +2044,7 @@ class UnifiedImportHandler():
         except Exception as e:
 
             _l.info("Error %s" % e)
-            _l.info(traceback.print_exc())
+            _l.info(traceback.format_exc())
 
             item['error_message'] = 'Unhandled error in row processing. Exception %s' % str(e)
 

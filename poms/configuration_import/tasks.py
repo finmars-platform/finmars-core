@@ -2730,7 +2730,7 @@ class ImportManager(object):
                             except Exception as error:
 
                                 _l.info("Pricing Procedure create error %s" % error)
-                                _l.info(traceback.print_exc())
+                                _l.info(traceback.format_exc())
 
                                 if self.instance.mode == 'overwrite':
 
@@ -2748,7 +2748,7 @@ class ImportManager(object):
                                     except Exception as error:
 
                                         _l.info("Pricing Procedure overwrite error %s" % error)
-                                        _l.info(traceback.print_exc())
+                                        _l.info(traceback.format_exc())
 
                                         stats['status'] = 'error'
                                         stats['error'][
@@ -3058,7 +3058,7 @@ class ImportManager(object):
 
                                             _l.info('error %s' % error)
 
-                                            _l.info(traceback.print_exc())
+                                            _l.info(traceback.format_exc())
 
                                             stats['status'] = 'error'
 
@@ -3088,7 +3088,7 @@ class ImportManager(object):
         except Exception as error:
 
             _l.info('Import Mappings Error %s' % error)
-            _l.info(traceback.print_exc())
+            _l.info(traceback.format_exc())
 
 @shared_task(name='configuration_import.configuration_import_as_json', bind=True)
 def configuration_import_as_json(self, instance):
@@ -3137,7 +3137,7 @@ def configuration_import_as_json(self, instance):
     except Exception as e:
 
         _l.info("Error occurred %s" % e)
-        _l.info(traceback.print_exc())
+        _l.info(traceback.format_exc())
 
     return instance
 
