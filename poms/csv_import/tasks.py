@@ -29,7 +29,7 @@ from poms.integrations.models import CounterpartyMapping, AccountMapping, Respon
 from poms.portfolios.models import Portfolio
 from poms.currencies.models import Currency
 from poms.instruments.models import PricingPolicy, Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail, \
-    PricingCondition
+    PricingCondition, AccrualCalculationModel, Periodicity
 from poms.counterparties.models import Counterparty, Responsible
 from poms.accounts.models import Account, AccountType
 
@@ -1710,6 +1710,7 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
         for instrument_type_event in instrument_type.events.all():
 
             event_schedule = {
+                # 'name': instrument_type_event.name,
                 'event_class': instrument_type_event.data['event_class']
             }
 
@@ -1719,7 +1720,13 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
                 if 'default_value' in item:
                     event_schedule[item['key']] = item['default_value']
 
+            if 'items2' in instrument_type_event.data:
 
+                for item in instrument_type_event.data['items2']:
+                    if 'default_value' in item:
+                        event_schedule[item['key']] = item['default_value']
+
+            #
             event_schedule['is_auto_generated'] = True
             event_schedule['actions'] = []
 
@@ -1908,6 +1915,7 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     set_events_for_instrument(object_data, source_data, instrument_type)
 
     if 'accrual_calculation_schedules' in source_data:
+
         if len(object_data['accrual_calculation_schedules']):
             accrual = object_data['accrual_calculation_schedules'][0]
 
@@ -1926,6 +1934,33 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
                 accrual['periodicity_n'] = int(source_data['accrual_calculation_schedules'][0]['periodicity_n'])
             except Exception as e:
                 accrual['periodicity_n'] = 0
+
+        else:
+
+            accrual = {}
+
+            accrual['accrual_calculation_model'] = AccrualCalculationModel.ACT_365
+            accrual['periodicity'] = Periodicity.ANNUALLY
+
+
+            if 'accrual_start_date' in source_data['accrual_calculation_schedules'][0]:
+                accrual['accrual_start_date'] = source_data['accrual_calculation_schedules'][0]['accrual_start_date']
+
+            if 'first_payment_date' in source_data['accrual_calculation_schedules'][0]:
+                accrual['first_payment_date'] = source_data['accrual_calculation_schedules'][0]['first_payment_date']
+
+            try:
+                accrual['accrual_size'] = float(source_data['accrual_calculation_schedules'][0]['accrual_size'])
+            except Exception as e:
+                accrual['accrual_size'] = 0
+
+            try:
+                accrual['periodicity_n'] = int(source_data['accrual_calculation_schedules'][0]['periodicity_n'])
+            except Exception as e:
+                accrual['periodicity_n'] = 0
+
+
+            object_data['accrual_calculation_schedules'].append(accrual)
     else:
         set_accruals_for_instrument(object_data, source_data, instrument_type)
 
