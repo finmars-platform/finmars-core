@@ -1916,51 +1916,54 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
 
     if 'accrual_calculation_schedules' in source_data:
 
-        if len(object_data['accrual_calculation_schedules']):
-            accrual = object_data['accrual_calculation_schedules'][0]
+        if len(source_data['accrual_calculation_schedules']):
 
-            if 'accrual_start_date' in source_data['accrual_calculation_schedules'][0]:
-                accrual['accrual_start_date'] = source_data['accrual_calculation_schedules'][0]['accrual_start_date']
+            if len(object_data['accrual_calculation_schedules']):
 
-            if 'first_payment_date' in source_data['accrual_calculation_schedules'][0]:
-                accrual['first_payment_date'] = source_data['accrual_calculation_schedules'][0]['first_payment_date']
+                accrual = object_data['accrual_calculation_schedules'][0]
 
-            try:
-                accrual['accrual_size'] = float(source_data['accrual_calculation_schedules'][0]['accrual_size'])
-            except Exception as e:
-                accrual['accrual_size'] = 0
+                if 'accrual_start_date' in source_data['accrual_calculation_schedules'][0]:
+                    accrual['accrual_start_date'] = source_data['accrual_calculation_schedules'][0]['accrual_start_date']
 
-            try:
-                accrual['periodicity_n'] = int(source_data['accrual_calculation_schedules'][0]['periodicity_n'])
-            except Exception as e:
-                accrual['periodicity_n'] = 0
+                if 'first_payment_date' in source_data['accrual_calculation_schedules'][0]:
+                    accrual['first_payment_date'] = source_data['accrual_calculation_schedules'][0]['first_payment_date']
 
-        else:
+                try:
+                    accrual['accrual_size'] = float(source_data['accrual_calculation_schedules'][0]['accrual_size'])
+                except Exception as e:
+                    accrual['accrual_size'] = 0
 
-            accrual = {}
+                try:
+                    accrual['periodicity_n'] = int(source_data['accrual_calculation_schedules'][0]['periodicity_n'])
+                except Exception as e:
+                    accrual['periodicity_n'] = 0
 
-            accrual['accrual_calculation_model'] = AccrualCalculationModel.ACT_365
-            accrual['periodicity'] = Periodicity.ANNUALLY
+            else:
 
+                accrual = {}
 
-            if 'accrual_start_date' in source_data['accrual_calculation_schedules'][0]:
-                accrual['accrual_start_date'] = source_data['accrual_calculation_schedules'][0]['accrual_start_date']
-
-            if 'first_payment_date' in source_data['accrual_calculation_schedules'][0]:
-                accrual['first_payment_date'] = source_data['accrual_calculation_schedules'][0]['first_payment_date']
-
-            try:
-                accrual['accrual_size'] = float(source_data['accrual_calculation_schedules'][0]['accrual_size'])
-            except Exception as e:
-                accrual['accrual_size'] = 0
-
-            try:
-                accrual['periodicity_n'] = int(source_data['accrual_calculation_schedules'][0]['periodicity_n'])
-            except Exception as e:
-                accrual['periodicity_n'] = 0
+                accrual['accrual_calculation_model'] = AccrualCalculationModel.ACT_365
+                accrual['periodicity'] = Periodicity.ANNUALLY
 
 
-            object_data['accrual_calculation_schedules'].append(accrual)
+                if 'accrual_start_date' in source_data['accrual_calculation_schedules'][0]:
+                    accrual['accrual_start_date'] = source_data['accrual_calculation_schedules'][0]['accrual_start_date']
+
+                if 'first_payment_date' in source_data['accrual_calculation_schedules'][0]:
+                    accrual['first_payment_date'] = source_data['accrual_calculation_schedules'][0]['first_payment_date']
+
+                try:
+                    accrual['accrual_size'] = float(source_data['accrual_calculation_schedules'][0]['accrual_size'])
+                except Exception as e:
+                    accrual['accrual_size'] = 0
+
+                try:
+                    accrual['periodicity_n'] = int(source_data['accrual_calculation_schedules'][0]['periodicity_n'])
+                except Exception as e:
+                    accrual['periodicity_n'] = 0
+
+
+                object_data['accrual_calculation_schedules'].append(accrual)
     else:
         set_accruals_for_instrument(object_data, source_data, instrument_type)
 
