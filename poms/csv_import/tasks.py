@@ -1822,12 +1822,14 @@ def set_accruals_for_instrument(instrument_object, data_object, instrument_type_
 def handler_instrument_object(source_data, instrument_type, master_user, ecosystem_default, attribute_types):
 
     object_data = {}
-    object_data = source_data
+    object_data = source_data.copy()
 
     object_data['instrument_type'] = instrument_type.id
 
 
     set_defaults_from_instrument_type(object_data, instrument_type)
+
+    _l.info("Settings defaults for instrument done")
 
     try:
         object_data['pricing_currency'] = Currency.objects.get(master_user=master_user,
@@ -1906,19 +1908,31 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
 
             object_data['attributes'].append(attribute)
 
+    _l.info("Settings attributes for instrument done")
+
     object_data['master_user'] = master_user.id
     object_data['manual_pricing_formulas'] = []
     # object_data['accrual_calculation_schedules'] = []
     # object_data['event_schedules'] = []
     object_data['factor_schedules'] = []
 
+
     set_events_for_instrument(object_data, source_data, instrument_type)
+    _l.info("Settings events for instrument done")
+
+    _l.info('source_data %s' % source_data)
 
     if 'accrual_calculation_schedules' in source_data:
 
+
+
         if len(source_data['accrual_calculation_schedules']):
 
+            _l.info("Setting up accrual schedules. Init")
+
             if len(object_data['accrual_calculation_schedules']):
+
+                _l.info("Setting up accrual schedules. Overwrite Existing")
 
                 accrual = object_data['accrual_calculation_schedules'][0]
 
@@ -1939,6 +1953,8 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
                     accrual['periodicity_n'] = 0
 
             else:
+
+                _l.info("Setting up accrual schedules. Creating new")
 
                 accrual = {}
 
