@@ -1719,6 +1719,8 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
                 if 'default_value' in item:
                     event_schedule[item['key']] = item['default_value']
 
+
+            event_schedule['is_auto_generated'] = True
             event_schedule['actions'] = []
 
             for instrument_type_action in instrument_type_event.data['actions']:
@@ -1748,6 +1750,9 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
                 # TODO add check for value type
                 if 'default_value' in item:
                     accrual[item['key']] = item['default_value']
+
+
+            instrument_object['accrual_calculation_schedules'].append(accrual)
 
         return instrument_object
 
