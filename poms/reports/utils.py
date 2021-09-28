@@ -36,10 +36,20 @@ def generate_report_unique_hash(app, action, data, master_user, member):
     report_options['master_user'] = master_user.id
     report_options['member'] = member.id
 
-    report_options['begin_date'] = _data['begin_date']
-    report_options['date_field'] = _data['date_field']
-    report_options['end_date'] = _data['end_date']
-    report_options['report_date'] = _data['report_date']
+    if 'begin_date' in _data:
+        report_options['begin_date'] = _data['begin_date']
+
+    if 'date_field' in _data:
+        report_options['date_field'] = _data['date_field']
+
+    if 'end_date' in _data:
+        report_options['end_date'] = _data['end_date']
+
+    if 'report_date' in _data:
+        report_options['report_date'] = _data['report_date']
+
+    if 'pl_first_date' in _data:
+        report_options['pl_first_date'] = _data['pl_first_date']
 
     report_options['report_currency'] = _data['report_currency']
     report_options['pricing_policy'] = _data['pricing_policy']
