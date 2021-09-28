@@ -31,6 +31,8 @@ from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, 
 from poms.tags.models import TagLink
 from poms.users.models import MasterUser, Member
 from math import isnan, copysign
+from django.core.cache import cache
+
 
 _l = logging.getLogger('poms.instruments')
 
@@ -1438,6 +1440,8 @@ class PriceHistory(DataTimeStampedModel):
     def save(self, *args, **kwargs):
 
         # TODO make readable exception if currency history is missng
+
+        cache.clear()
 
         try:
 

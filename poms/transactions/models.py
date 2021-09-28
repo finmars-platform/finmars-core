@@ -29,6 +29,9 @@ from poms.users.models import MasterUser, Member, FakeSequence
 from poms.common.formula_accruals import f_xirr
 from math import isnan, copysign
 from poms.common.utils import isclose
+from django.core.cache import cache
+
+
 
 import logging
 _l = logging.getLogger('poms.transactions')
@@ -1421,6 +1424,9 @@ class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
         return str(self.code)
 
     def save(self, *args, **kwargs):
+
+        cache.clear()
+
         print("Complex Transaction Save text %s" % self.text)
         print("Complex Transaction Save date %s" % self.date)
         print("Complex Transaction Save transaction_unique_code %s" % self.transaction_unique_code)

@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import hashlib
+import json
 import logging
 
 from django_filters.rest_framework import FilterSet
@@ -24,10 +26,13 @@ from poms.reports.sql_builders.transaction import TransactionReportBuilderSql
 
 from poms.reports.tasks import balance_report, pl_report, transaction_report, cash_flow_projection_report, \
     performance_report
+from poms.reports.utils import generate_report_unique_hash
 from poms.users.filters import OwnerByMasterUserFilter
 
 from rest_framework.response import Response
 from rest_framework import permissions, status
+
+from django.core.cache import cache
 
 _l = logging.getLogger('poms.reports')
 import time
@@ -138,24 +143,35 @@ class BalanceReportSqlSyncViewSet(AbstractViewSet):
 
     def create(self, request, *args, **kwargs):
 
-
         serialize_report_st = time.perf_counter()
 
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
+        key = generate_report_unique_hash('report', 'balance', request.data, request.user.master_user, request.user.member)
 
-        builder = BalanceReportBuilderSql(instance=instance)
-        instance = builder.build_balance()
+        cached_data = cache.get(key)
 
-        instance.task_id = 1
-        instance.task_status = "SUCCESS"
+        if not cached_data:
 
-        serializer = self.get_serializer(instance=instance, many=False)
+            _l.info("Could not find in cache")
 
-        _l.debug('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            builder = BalanceReportBuilderSql(instance=instance)
+            instance = builder.build_balance()
+
+            instance.task_id = 1
+            instance.task_status = "SUCCESS"
+
+            serializer = self.get_serializer(instance=instance, many=False)
+
+            _l.debug('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+
+            cached_data = serializer.data
+
+            cache.set(key, cached_data)
+
+        return Response(cached_data, status=status.HTTP_200_OK)
 
 
 
@@ -197,21 +213,31 @@ class PLReportSqlSyncViewSet(AbstractViewSet):
 
         serialize_report_st = time.perf_counter()
 
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
+        key = generate_report_unique_hash('report', 'pl', request.data, request.user.master_user, request.user.member)
 
-        builder = PLReportBuilderSql(instance=instance)
-        instance = builder.build_balance()
+        cached_data = cache.get(key)
 
-        instance.task_id = 1
-        instance.task_status = "SUCCESS"
+        if not cached_data:
 
-        serializer = self.get_serializer(instance=instance, many=False)
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
 
-        _l.debug('PL Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+            builder = PLReportBuilderSql(instance=instance)
+            instance = builder.build_balance()
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            instance.task_id = 1
+            instance.task_status = "SUCCESS"
+
+            serializer = self.get_serializer(instance=instance, many=False)
+
+            _l.debug('PL Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+
+            cached_data = serializer.data
+
+            cache.set(key, cached_data)
+
+        return Response(cached_data, status=status.HTTP_200_OK)
 
 
 class TransactionReportViewSet(AbstractAsyncViewSet):
@@ -265,21 +291,31 @@ class TransactionReportSqlSyncViewSet(AbstractViewSet):
 
         serialize_report_st = time.perf_counter()
 
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
+        key = generate_report_unique_hash('report', 'transaction', request.data, request.user.master_user, request.user.member)
 
-        builder = TransactionReportBuilderSql(instance=instance)
-        instance = builder.build_transaction()
+        cached_data = cache.get(key)
 
-        instance.task_id = 1
-        instance.task_status = "SUCCESS"
+        if not cached_data:
 
-        serializer = self.get_serializer(instance=instance, many=False)
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
 
-        _l.debug('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+            builder = TransactionReportBuilderSql(instance=instance)
+            instance = builder.build_transaction()
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            instance.task_id = 1
+            instance.task_status = "SUCCESS"
+
+            serializer = self.get_serializer(instance=instance, many=False)
+
+            _l.debug('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+
+            cached_data = serializer.data
+
+            cache.set(key, cached_data)
+
+        return Response(cached_data, status=status.HTTP_200_OK)
 
 
 

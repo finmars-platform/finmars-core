@@ -17,6 +17,8 @@ from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
 from poms.tags.models import TagLink
 from poms.users.models import MasterUser
+from django.core.cache import cache
+
 
 
 def _load_currencies_data():
@@ -91,6 +93,8 @@ class CurrencyHistory(DataTimeStampedModel):
 
 
     def save(self, *args, **kwargs):
+
+        cache.clear()
 
         if self.fx_rate == 0:
             raise ValidationError('FX rate must not be zero')
