@@ -992,7 +992,7 @@ class InstrumentPricingPolicy(models.Model):
         )
 
 
-class PriceHistoryError(models.Model):
+class PriceHistoryError(DataTimeStampedModel):
 
     STATUS_ERROR = 'E'
     STATUS_SKIP = 'S'
@@ -1038,7 +1038,7 @@ class PriceHistoryError(models.Model):
     error_text = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('error text'))
 
 
-class CurrencyHistoryError(models.Model):
+class CurrencyHistoryError(DataTimeStampedModel):
 
     STATUS_ERROR = 'E'
     STATUS_SKIP = 'S'

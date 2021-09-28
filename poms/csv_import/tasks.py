@@ -1847,13 +1847,15 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     except Exception as e:
 
         object_data['pricing_currency'] = ecosystem_default.currency.id
+     
+    # try:
+    #     object_data['accrued_currency'] = Currency.objects.get(master_user=master_user,
+    #                                                            user_code=source_data['accrued_currency']).id
+    # except Exception as e:
+    # 
+    #     object_data['accrued_currency'] = ecosystem_default.currency.id
 
-    try:
-        object_data['accrued_currency'] = Currency.objects.get(master_user=master_user,
-                                                               user_code=source_data['accrued_currency']).id
-    except Exception as e:
-
-        object_data['accrued_currency'] = ecosystem_default.currency.id
+    object_data['accrued_currency'] = object_data['pricing_currency']
 
     try:
         object_data['payment_size_detail'] = PaymentSizeDetail.objects.get(

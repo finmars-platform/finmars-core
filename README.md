@@ -162,3 +162,6 @@ def to_representation(self, instance):
 
 Settings -> Tools -> Database -> User Parameters -> Enable in string literals with SQL injection  
 `\{(\w+)\}` for Python
+
+
+- Token Refrsh
