@@ -1173,8 +1173,8 @@ class PriceHistoryErrorSerializer(serializers.ModelSerializer):
     pricing_scheme_object = InstrumentPricingSchemeLightSerializer(source='pricing_scheme', read_only=True)
     procedure_instance_object = PricingProcedureInstanceSerializer(source='procedure_instance', read_only=True)
 
-    modified = serializers.DateField(read_only=True, allow_null=False)
-    created = serializers.DateField(read_only=True, allow_null=False)
+    modified = serializers.DateTimeField(read_only=True, allow_null=False)
+    created = serializers.DateTimeField(read_only=True, allow_null=False)
 
     def __init__(self, *args, **kwargs):
         super(PriceHistoryErrorSerializer, self).__init__(*args, **kwargs)
@@ -1223,8 +1223,8 @@ class CurrencyHistoryErrorSerializer(serializers.ModelSerializer):
     pricing_scheme_object = CurrencyPricingSchemeLightSerializer(source='pricing_scheme', read_only=True)
     procedure_instance_object = PricingProcedureInstanceSerializer(source='procedure_instance', read_only=True)
 
-    modified = serializers.DateField(read_only=True, allow_null=False)
-    created = serializers.DateField(read_only=True, allow_null=False)
+    modified = serializers.DateTimeField(read_only=True, allow_null=False)
+    created = serializers.DateTimeField(read_only=True, allow_null=False)
 
     def __init__(self, *args, **kwargs):
         super(CurrencyHistoryErrorSerializer, self).__init__(*args, **kwargs)
