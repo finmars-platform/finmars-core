@@ -688,7 +688,11 @@ class PriceHistoryCheckerSql:
 
             positions = execute_nav_sql(self.instance, cursor, self.ecosystem_defaults)
 
-            self.instance.items = self.instance.items + positions
+            for item in positions:
+                if item['user_code'] != '-' and item['name'] != '-':
+                    self.instance.items.append(item)
+
+            # self.instance.items = self.instance.items + positions
 
             transactions = execute_transaction_prices_sql(self.instance, cursor, self.ecosystem_defaults)
 
