@@ -1291,8 +1291,11 @@ class FillPricesBrokerCbondsProcess(object):
             values = {
                 'd': record.date,
                 'instrument': safe_instrument,
-                'value': record.value,
-
+                'open': record.open_value,
+                'close': record.close_value,
+                'high': record.high_value,
+                'low': record.low_value,
+                'volume': record.volume_value
             }
 
             pricing_scheme_parameters = record.pricing_scheme.get_parameters()

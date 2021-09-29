@@ -1949,7 +1949,31 @@ class PricingInstrumentHandler(object):
                 }
 
                 item_obj['fields'].append({
-                    'code': 'value',
+                    'code': 'close',
+                    'parameters': [],
+                    'values': empty_values
+                })
+
+                item_obj['fields'].append({
+                    'code': 'open',
+                    'parameters': [],
+                    'values': empty_values
+                })
+
+                item_obj['fields'].append({
+                    'code': 'high',
+                    'parameters': [],
+                    'values': empty_values
+                })
+
+                item_obj['fields'].append({
+                    'code': 'low',
+                    'parameters': [],
+                    'values': empty_values
+                })
+
+                item_obj['fields'].append({
+                    'code': 'volume',
                     'parameters': [],
                     'values': empty_values
                 })

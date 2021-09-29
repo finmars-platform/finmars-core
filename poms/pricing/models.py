@@ -1342,7 +1342,11 @@ class PricingProcedureCbondsInstrumentResult(models.Model):
 
     instrument_parameters = models.CharField(max_length=255, null=True, blank=True)
 
-    value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('value'))
+    open_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('open value'))
+    close_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('close value'))
+    high_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('high value'))
+    low_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('low value'))
+    volume_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('volume value'))
 
     class Meta:
         unique_together = (
