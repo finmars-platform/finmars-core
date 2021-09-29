@@ -2,7 +2,7 @@ from rest_framework.relations import PrimaryKeyRelatedField
 
 from poms.common.fields import PrimaryKeyRelatedFilteredField
 # from poms.reports.models import CustomField
-from poms.reports.models import BalanceReportCustomField
+from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
 from poms.users.filters import OwnerByMasterUserFilter
 
 
@@ -14,14 +14,14 @@ class BalanceReportCustomFieldField(PrimaryKeyRelatedFilteredField):
 
 
 class PLReportCustomFieldField(PrimaryKeyRelatedFilteredField):
-    queryset = BalanceReportCustomField.objects
+    queryset = PLReportCustomField.objects
     filter_backends = [
         OwnerByMasterUserFilter,
     ]
 
 
 class TransactionReportCustomFieldField(PrimaryKeyRelatedFilteredField):
-    queryset = BalanceReportCustomField.objects
+    queryset = TransactionReportCustomField.objects
     filter_backends = [
         OwnerByMasterUserFilter,
     ]

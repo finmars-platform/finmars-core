@@ -9,7 +9,7 @@ from poms.instruments.models import Instrument, CostMethod, InstrumentType
 from poms.portfolios.models import Portfolio
 from poms.reports.builders.balance_item import Report
 from poms.reports.builders.base_builder import BaseReportBuilder
-from poms.reports.models import BalanceReportCustomField
+from poms.reports.models import BalanceReportCustomField, PLReportCustomField
 from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, get_report_fx_rate, \
     get_fx_trades_and_fx_variations_transaction_filter_sql_string, get_where_expression_for_position_consolidation, \
     get_position_consolidation_for_select, dictfetchall
@@ -3479,7 +3479,7 @@ class PLReportBuilderSql:
         self.add_data_items_accounts(account_ids)
         self.add_data_items_currencies(currencies_ids)
 
-        self.instance.custom_fields = BalanceReportCustomField.objects.filter(master_user=self.instance.master_user)
+        self.instance.custom_fields = PLReportCustomField.objects.filter(master_user=self.instance.master_user)
 
         _l.debug('_refresh_with_perms_optimized item relations done: %s',
                  "{:3.3f}".format(time.perf_counter() - item_relations_st))

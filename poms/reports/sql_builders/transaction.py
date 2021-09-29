@@ -9,7 +9,7 @@ from poms.instruments.models import Instrument
 from poms.portfolios.models import Portfolio
 from poms.reports.builders.balance_item import Report
 from poms.reports.builders.base_builder import BaseReportBuilder
-from poms.reports.models import BalanceReportCustomField
+from poms.reports.models import BalanceReportCustomField, TransactionReportCustomField
 from poms.reports.sql_builders.helpers import dictfetchall
 from poms.transactions.models import ComplexTransaction
 from poms.users.models import EcosystemDefault
@@ -233,6 +233,6 @@ class TransactionReportBuilderSql:
         self.add_data_items_currencies(currencies_ids)
         # self.add_data_items_complex_transactions(complex_transactions_ids)  # too slow
 
-        self.instance.custom_fields = BalanceReportCustomField.objects.filter(master_user=self.instance.master_user)
+        self.instance.custom_fields = TransactionReportCustomField.objects.filter(master_user=self.instance.master_user)
 
         _l.debug('_refresh_with_perms_optimized item relations done: %s', "{:3.3f}".format(time.perf_counter() - item_relations_st))

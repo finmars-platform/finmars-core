@@ -71,7 +71,7 @@ class TransactionReportItemSerializer(serializers.Serializer):
 
     custom_fields = ReportItemTransactionReportCustomFieldSerializer(many=True, read_only=True)
 
-    custom_fields_to_calculate = serializers.CharField(default='', allow_null=True, allow_blank=True, required=False)
+
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('read_only', True)
@@ -85,6 +85,8 @@ class TransactionReportSerializer(serializers.Serializer):
 
     master_user = MasterUserField()
     member = HiddenMemberField()
+
+    custom_fields_to_calculate = serializers.CharField(default='', allow_null=True, allow_blank=True, required=False)
 
     date_field = serializers.ChoiceField(required=False, allow_null=True,
                                          choices=(
@@ -449,6 +451,7 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
 
     custom_fields = TransactionReportCustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
     custom_fields_to_calculate = serializers.CharField(default='', allow_null=True, allow_blank=True, required=False)
+    custom_fields_object = TransactionReportCustomFieldSerializer(source='custom_fields', read_only=True, many=True)
 
     portfolios_object = PortfolioViewSerializer(source='portfolios', read_only=True, many=True)
     accounts_object = AccountViewSerializer(source='accounts', read_only=True, many=True)
@@ -457,9 +460,6 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
     strategies1_object = Strategy1ViewSerializer(source='strategies1', read_only=True, many=True)
     strategies2_object = Strategy2ViewSerializer(source='strategies2', read_only=True, many=True)
     strategies3_object = Strategy3ViewSerializer(source='strategies3', read_only=True, many=True)
-
-    custom_fields_object = TransactionReportCustomFieldSerializer(source='custom_fields', read_only=True, many=True)
-
 
     items = serializers.SerializerMethodField()
     item_transaction_classes = TransactionClassSerializer(many=True, read_only=True)
@@ -511,7 +511,11 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
         items = data['items']
         custom_fields = data['custom_fields_object']
 
+        # _l.info('custom_fields_to_calculate %s' % data["custom_fields_to_calculate"])
+        # _l.info('custom_fields %s' % data["custom_fields_object"])
+
         if len(data["custom_fields_to_calculate"]):
+
             if custom_fields and items:
                 item_transaction_classes = {o['id']: o for o in data['item_transaction_classes']}
                 item_complex_transactions = {o['id']: o for o in data['item_complex_transactions']}
@@ -591,7 +595,8 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
                                 if not cf['user_code'] in custom_fields_names:
                                     custom_fields_names[cf['user_code']] = value
                                 else:
-                                    if custom_fields_names[cf['user_code']] == None or custom_fields_names[cf['user_code']] == ugettext('Invalid expression'):
+                                    if custom_fields_names[cf['user_code']] == None or custom_fields_names[
+                                        cf['user_code']] == ugettext('Invalid expression'):
                                         custom_fields_names[cf['user_code']] = value
 
                         names['custom_fields'] = custom_fields_names
