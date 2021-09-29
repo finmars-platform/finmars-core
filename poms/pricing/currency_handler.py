@@ -244,7 +244,7 @@ class PricingCurrencyHandler(object):
 
                 _l.debug("currencies before filter %s " % len(currencies))
                 currencies = currencies.filter(user_code__in=user_codes)
-                _l.debug("instruments after filter %s " % len(currencies))
+                _l.debug("currencies after filter %s " % len(currencies))
 
 
         return currencies
