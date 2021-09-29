@@ -527,11 +527,12 @@ class PricingInstrumentHandler(object):
                 except (Exception, PortfolioRegister.DoesNotExist, PortfolioRegisterRecord.DoesNotExist):
                     _l.debug("Portfolio register or PortfolioRegisterRecord is not found")
 
-            successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user,
-                                                                     procedure_instance)
+            if last_price:
+                successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user,
+                                                                         procedure_instance)
 
-            successful_prices_count = successful_prices_count + successes
-            error_prices_count = error_prices_count + errors
+                successful_prices_count = successful_prices_count + successes
+                error_prices_count = error_prices_count + errors
 
         procedure_instance.successful_prices_count = successful_prices_count
         procedure_instance.error_prices_count = error_prices_count
