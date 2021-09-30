@@ -946,9 +946,13 @@ class FillPricesBrokerWtradeProcess(object):
 
                 _l.debug('< get records from db done: %s', (time.perf_counter() - records_st))
 
+                _l.info("item %s" % item)
+
                 for record in records:
 
                     for field in item['fields']:
+
+                        _l.info('field %s' % field)
 
                         for val_obj in field['values']:
 
