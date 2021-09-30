@@ -989,6 +989,9 @@ class FillPricesBrokerWtradeProcess(object):
                                     except Exception as e:
                                         _l.debug('volume_value e %s ' % e)
 
+                                _l.info('record %s' % record)
+                                _l.info('record %s' % record.low_value)
+
                                 record.save()
 
                         if not len(records):
