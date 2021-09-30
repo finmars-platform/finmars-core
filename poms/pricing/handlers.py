@@ -1252,10 +1252,40 @@ class FillPricesBrokerCbondsProcess(object):
 
                             if str(record.date) == str(val_obj['date']):
 
-                                try:
-                                    record.value = float(val_obj['value'])
-                                except Exception as e:
-                                    _l.debug('fx_rate_value e %s ' % e)
+                                if field['code'] == 'open':
+
+                                    try:
+                                        record.open_value = float(val_obj['value'])
+                                    except Exception as e:
+                                        _l.debug('fx_rate_value e %s ' % e)
+
+                                if field['code'] == 'close':
+
+                                    try:
+                                        record.close_value = float(val_obj['value'])
+                                    except Exception as e:
+                                        _l.debug('close_value e %s ' % e)
+
+                                if field['code'] == 'high':
+
+                                    try:
+                                        record.high_value = float(val_obj['value'])
+                                    except Exception as e:
+                                        _l.debug('high_value e %s ' % e)
+
+                                if field['code'] == 'low':
+
+                                    try:
+                                        record.low_value = float(val_obj['value'])
+                                    except Exception as e:
+                                        _l.debug('low_value e %s ' % e)
+
+                                if field['code'] == 'volume':
+
+                                    try:
+                                        record.volume_value = float(val_obj['value'])
+                                    except Exception as e:
+                                        _l.debug('volume_value e %s ' % e)
 
                                 record.save()
 
