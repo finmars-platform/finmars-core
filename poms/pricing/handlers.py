@@ -946,18 +946,11 @@ class FillPricesBrokerWtradeProcess(object):
 
                 _l.debug('< get records from db done: %s', (time.perf_counter() - records_st))
 
-                _l.info("item %s" % item)
-
                 for record in records:
 
                     for field in item['fields']:
 
-                        _l.info('field %s' % field)
-
                         for val_obj in field['values']:
-
-                            _l.info('str(record.date) %s' % str(record.date))
-                            _l.info('str(val_obj[date] %s' % str(val_obj['date']))
 
                             if str(record.date) == str(val_obj['date']):
 
@@ -1260,6 +1253,9 @@ class FillPricesBrokerCbondsProcess(object):
 
                         for val_obj in field['values']:
 
+                            _l.info('str(record.date) %s' % str(record.date))
+                            _l.info('str(val_obj[date] %s' % str(val_obj['date']))
+
                             if str(record.date) == str(val_obj['date']):
 
                                 if field['code'] == 'open':
@@ -1297,12 +1293,12 @@ class FillPricesBrokerCbondsProcess(object):
                                     except Exception as e:
                                         _l.debug('volume_value e %s ' % e)
 
-                                record.save()
+                record.save()
 
-                        if not len(records):
-                            _l.debug('Cant fill the value. Related records not found. Reference %s' % item['reference'])
+                if not len(records):
+                    _l.debug('Cant fill the value. Related records not found. Reference %s' % item['reference'])
 
-                _l.debug('< processing item: %s', (time.perf_counter() - processing_st))
+                    _l.debug('< processing item: %s', (time.perf_counter() - processing_st))
 
             self.create_price_history()
 
