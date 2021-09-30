@@ -1856,6 +1856,8 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     #     object_data['accrued_currency'] = ecosystem_default.currency.id
 
     object_data['accrued_currency'] = object_data['pricing_currency']
+    object_data['co_directional_exposure_currency'] = object_data['pricing_currency']
+    object_data['counter_directional_exposure_currency'] = object_data['pricing_currency']
 
     try:
         object_data['payment_size_detail'] = PaymentSizeDetail.objects.get(
@@ -1961,6 +1963,22 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
 
                 try:
                     accrual['periodicity_n'] = int(source_data['accrual_calculation_schedules'][0]['periodicity_n'])
+
+                    if accrual['periodicity_n'] == 1:
+                        accrual['periodicity'] = Periodicity.ANNUALLY
+
+                    if accrual['periodicity_n'] == 2:
+                        accrual['periodicity'] = Periodicity.SEMI_ANNUALLY
+
+                    if accrual['periodicity_n'] == 4:
+                        accrual['periodicity'] = Periodicity.QUARTERLY
+
+                    if accrual['periodicity_n'] == 6:
+                        accrual['periodicity'] = Periodicity.BIMONTHLY
+
+                    if accrual['periodicity_n'] == 12:
+                        accrual['periodicity'] = Periodicity.MONTHLY
+
                 except Exception as e:
                     accrual['periodicity_n'] = 0
 
