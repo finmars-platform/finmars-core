@@ -1979,6 +1979,8 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
                     if accrual['periodicity_n'] == 12:
                         accrual['periodicity'] = Periodicity.MONTHLY
 
+                    _l.info('periodicity %s' % accrual['periodicity'])
+
                 except Exception as e:
                     accrual['periodicity_n'] = 0
 
@@ -2005,6 +2007,24 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
 
                 try:
                     accrual['periodicity_n'] = int(source_data['accrual_calculation_schedules'][0]['periodicity_n'])
+
+                    if accrual['periodicity_n'] == 1:
+                        accrual['periodicity'] = Periodicity.ANNUALLY
+
+                    if accrual['periodicity_n'] == 2:
+                        accrual['periodicity'] = Periodicity.SEMI_ANNUALLY
+
+                    if accrual['periodicity_n'] == 4:
+                        accrual['periodicity'] = Periodicity.QUARTERLY
+
+                    if accrual['periodicity_n'] == 6:
+                        accrual['periodicity'] = Periodicity.BIMONTHLY
+
+                    if accrual['periodicity_n'] == 12:
+                        accrual['periodicity'] = Periodicity.MONTHLY
+
+                    _l.info('periodicity %s' % accrual['periodicity'])
+
                 except Exception as e:
                     accrual['periodicity_n'] = 0
 
