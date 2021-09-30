@@ -155,6 +155,16 @@ class InstrumentPricingScheme(NamedModel, DataTimeStampedModel):
 
                     result = None
 
+            if self.type.id == 9: # cbonds
+
+                try:
+
+                    result = InstrumentPricingSchemeCbondsParameters.objects.get(instrument_pricing_scheme=self)
+
+                except InstrumentPricingSchemeCbondsParameters.DoesNotExist:
+
+                    result = None
+
         # print('result %s' % result)
 
         return result
