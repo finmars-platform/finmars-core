@@ -1293,7 +1293,7 @@ class FillPricesBrokerCbondsProcess(object):
                                     except Exception as e:
                                         _l.debug('volume_value e %s ' % e)
 
-                record.save()
+                    record.save()
 
                 if not len(records):
                     _l.debug('Cant fill the value. Related records not found. Reference %s' % item['reference'])
