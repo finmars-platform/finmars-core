@@ -1794,6 +1794,7 @@ def set_events_for_instrument(instrument_object, data_object, instrument_type_ob
                 if 'first_coupon_date' in data_object:
                     coupon_event['effective_date'] = data_object['first_coupon_date']
 
+
                 coupon_event['final_date'] = maturity
 
                 # M
@@ -1936,9 +1937,17 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
 
     _l.info('source_data %s' % source_data)
 
+    if 'accrual_calculation_schedules':
+        if len(source_data['accrual_calculation_schedules']):
+
+            if len(object_data['event_schedules']):
+                # C
+                coupon_event = object_data['event_schedules'][0]
+
+                if 'first_payment_date' in source_data['accrual_calculation_schedules'][0]:
+                    coupon_event['effective_date'] = source_data['accrual_calculation_schedules'][0]['first_payment_date']
+
     if 'accrual_calculation_schedules' in source_data:
-
-
 
         if len(source_data['accrual_calculation_schedules']):
 
