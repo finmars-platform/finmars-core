@@ -997,7 +997,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             # print('self.maturity_date %s ' % self.maturity_date)
             try:
                 a.accrual_end_date = self.maturity_date + timedelta(days=1)
-            except OverflowError:
+            except (OverflowError, Exception):
 
                 print("Overflow Error %s " % self.maturity_date)
 
