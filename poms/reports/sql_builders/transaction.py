@@ -129,6 +129,8 @@ class TransactionReportBuilderSql:
 
             statuses = [1, 3]
 
+            _l.info('complex_transaction_statuses_filter %s ' % self.instance.complex_transaction_statuses_filter)
+
             if self.instance.complex_transaction_statuses_filter:
 
                 pieces  = self.instance.complex_transaction_statuses_filter.split(',')

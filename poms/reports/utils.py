@@ -79,6 +79,9 @@ def generate_report_unique_hash(app, action, data, master_user, member):
     if 'custom_fields_to_calculate' in _data:
         report_options['custom_fields_to_calculate'] = _data['custom_fields_to_calculate']
 
+    if 'complex_transaction_statuses_filter' in _data:
+        report_options['complex_transaction_statuses_filter'] = _data['complex_transaction_statuses_filter']
+
     if 'cost_method' in _data:
         report_options['cost_method'] = _data['cost_method']
 
