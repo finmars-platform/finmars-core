@@ -1767,13 +1767,16 @@ class GeneratedEvent(models.Model):
         return 'Event #%s' % self.id
 
     def processed(self, member, action, complex_transaction, status=BOOKED_SYSTEM_DEFAULT):
+
+        from poms.transactions.models import TransactionType
         self.member = member
         self.action = action
 
         self.status = status
 
         self.status_date = timezone.now()
-        self.transaction_type = action.transaction_type
+
+        self.transaction_type = TransactionType.objects.get(user_code=action.transaction_type, master_user=member.master_user)
         self.complex_transaction = complex_transaction
 
     def is_notify_on_effective_date(self, now=None):
