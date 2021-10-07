@@ -122,12 +122,30 @@ class TransactionReportBuilderSql:
                 INNER JOIN transactions_complextransaction tc on t.complex_transaction_id = tc.id
                 INNER JOIN transactions_transactiontype tt on tc.transaction_type_id = tt.id
                 INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id
-                WHERE t.transaction_date >= %s AND t.transaction_date <= %s AND t.master_user_id = %s
+                WHERE t.transaction_date >= %s AND t.transaction_date <= %s AND t.master_user_id = %s AND tc.status IN %s
                 
                 
             """
 
-            cursor.execute(query, [self.instance.begin_date, self.instance.end_date, self.instance.master_user.id])
+            statuses = [1, 3]
+
+            if self.instance.complex_transaction_statuses_filter:
+
+                pieces  = self.instance.complex_transaction_statuses_filter.split(',')
+
+                if len(pieces):
+
+                    statuses = []
+                    if 'booked' in pieces:
+                        statuses.append(1)
+                    if 'ignored' in pieces:
+                        statuses.append(3)
+
+
+            statuses = tuple(statuses)
+
+
+            cursor.execute(query, [self.instance.begin_date, self.instance.end_date, self.instance.master_user.id, statuses])
 
             result = dictfetchall(cursor)
 

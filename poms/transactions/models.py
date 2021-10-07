@@ -1256,9 +1256,11 @@ class EventToHandle(NamedModel):
 class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
     PRODUCTION = 1
     PENDING = 2
+    IGNORE = 3
     STATUS_CHOICES = (
         (PRODUCTION, ugettext_lazy('Production')),
         (PENDING, ugettext_lazy('Pending')),
+        (IGNORE, ugettext_lazy('Ignore')),
     )
 
     SHOW_PARAMETERS = 1

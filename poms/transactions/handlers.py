@@ -104,8 +104,14 @@ class TransactionTypeProcess(object):
 
         self.complex_transaction.visibility_status = self.transaction_type.visibility_status
 
+        self.complex_transaction_status = complex_transaction_status
+
         if complex_transaction_status is not None:
             self.complex_transaction.status = complex_transaction_status
+
+        _l.info('complex_transaction_status %s' % complex_transaction_status)
+        _l.info('self.complex_transaction.status %s' % self.complex_transaction.status)
+
         # if complex_transaction_date is not None:
         #     self.complex_transaction.date = complex_transaction_date
 
@@ -1817,7 +1823,7 @@ class TransactionTypeProcess(object):
             _l.debug('execute_uniqueness_expression default behavior' )
 
             if self.complex_transaction.transaction_type.transaction_unique_code_expr and \
-                    self.complex_transaction.status == ComplexTransaction.PRODUCTION \
+                    (self.complex_transaction.status == ComplexTransaction.PRODUCTION or self.complex_transaction.status == ComplexTransaction.IGNORE) \
                     and not self.complex_transaction.is_canceled:
 
                 ctrn = formula.value_prepare(self.complex_transaction)
@@ -1954,8 +1960,12 @@ class TransactionTypeProcess(object):
         if bool(complex_transaction_errors):
             self.complex_transaction_errors.append(complex_transaction_errors)
 
+        if self.complex_transaction_status is not None:
+            self.complex_transaction.status = self.complex_transaction_status
+
         _l.debug("complex_transaction.date %s" % self.complex_transaction.date)
         _l.debug("complex_transaction.code %s" % self.complex_transaction.code)
+        _l.debug("complex_transaction.status %s" % self.complex_transaction.status)
 
         self.complex_transaction.save()
 

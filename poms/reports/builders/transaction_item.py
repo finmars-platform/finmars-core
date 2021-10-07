@@ -182,6 +182,7 @@ class TransactionReport(BaseReport):
                  strategies3=None,
                  custom_fields=None,
                  custom_fields_to_calculate=None,
+                 complex_transaction_statuses_filter=None,
                  items=None,
                  date_field=None):
         super(TransactionReport, self).__init__(id=id, master_user=master_user, member=member,
@@ -206,6 +207,7 @@ class TransactionReport(BaseReport):
         self.strategies3 = strategies3 or []
         self.custom_fields = custom_fields or []
         self.custom_fields_to_calculate = custom_fields_to_calculate or ''
+        self.complex_transaction_statuses_filter = complex_transaction_statuses_filter or ''
 
         # self.context = {
         #     'master_user': self.master_user,

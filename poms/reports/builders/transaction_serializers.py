@@ -453,6 +453,8 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
     custom_fields_to_calculate = serializers.CharField(default='', allow_null=True, allow_blank=True, required=False)
     custom_fields_object = TransactionReportCustomFieldSerializer(source='custom_fields', read_only=True, many=True)
 
+    complex_transaction_statuses_filter = serializers.CharField(default='', allow_null=True, allow_blank=True, required=False)
+
     portfolios_object = PortfolioViewSerializer(source='portfolios', read_only=True, many=True)
     accounts_object = AccountViewSerializer(source='accounts', read_only=True, many=True)
     accounts_position_object = AccountViewSerializer(source='accounts_position', read_only=True, many=True)

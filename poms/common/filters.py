@@ -651,3 +651,44 @@ class EntitySpecificFilter(BaseFilterBackend):
                     pass
 
         return queryset
+
+
+class ComplexTransactionStatusFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+
+        from poms.transactions.models import ComplexTransaction
+
+        if not view.detail:
+
+            show_booked = False
+            show_ignored = False
+
+            if 'ev_options' in request.data:
+
+                if 'complex_transaction_filters' in request.data['ev_options']:
+
+                    if 'booked' in request.data['ev_options']['complex_transaction_filters']:
+
+                        show_booked = True
+
+                    if 'ignored' in request.data['ev_options']['complex_transaction_filters']:
+
+                        show_ignored = True
+
+
+            if show_booked == False and show_ignored == True:
+
+                try:
+
+                    queryset = queryset.filter(status=ComplexTransaction.IGNORE)
+                except FieldDoesNotExist:
+                    pass
+
+            if show_booked == True and show_ignored == False:
+
+                try:
+                    queryset = queryset.filter(status__in=[ComplexTransaction.PRODUCTION, ComplexTransaction.PENDING])
+                except FieldDoesNotExist:
+                    pass
+
+        return queryset

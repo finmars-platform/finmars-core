@@ -16,7 +16,7 @@ from rest_framework.settings import api_settings
 from poms.accounts.models import Account, AccountType
 from poms.audit import history
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, ModelExtMultipleChoiceFilter, \
-    NoOpFilter, AttributeFilter, GroupsAttributeFilter, EntitySpecificFilter
+    NoOpFilter, AttributeFilter, GroupsAttributeFilter, EntitySpecificFilter, ComplexTransactionStatusFilter
 from poms.common.pagination import CustomPaginationMixin
 from poms.common.views import AbstractClassModelViewSet, AbstractModelViewSet, AbstractAsyncViewSet
 from poms.counterparties.models import Responsible, Counterparty, ResponsibleGroup, CounterpartyGroup
@@ -526,7 +526,7 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
     @action(detail=True, methods=['get', 'put'], url_path='book', serializer_class=TransactionTypeProcessSerializer)
     def book(self, request, pk=None):
 
-        complex_transaction_status = ComplexTransaction.PRODUCTION
+        complex_transaction_status=request.data['complex_transaction_status']
 
         # Some Inputs can choose from which context variable it will take value
         context_values = self.get_context_for_book(request)
@@ -1296,6 +1296,8 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
         # if request.method != 'GET':
         #     complex_transaction.status = ComplexTransaction.PRODUCTION
 
+
+
         print('detail_route: /rebook: process rebook')
 
         if request.method == 'GET':
@@ -1311,6 +1313,8 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
 
             st = time.perf_counter()
 
+            _l.info('complex tt status %s' % request.data['complex_transaction_status'] )
+
             uniqueness_reaction = request.data.get('uniqueness_reaction', None)
 
             process_st = time.perf_counter()
@@ -1318,6 +1322,7 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
             instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
                                               process_mode=request.data['process_mode'],
                                               complex_transaction=complex_transaction,
+                                              complex_transaction_status=request.data['complex_transaction_status'],
                                               context=self.get_serializer_context(),
                                               uniqueness_reaction=uniqueness_reaction)
 
@@ -1327,7 +1332,8 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
                 history.set_flag_change()
 
                 if request.data['complex_transaction']:
-                    request.data['complex_transaction']['status'] = ComplexTransaction.PRODUCTION
+                    if not request.data['complex_transaction']['status']:
+                        request.data['complex_transaction']['status'] = ComplexTransaction.PRODUCTION
 
                 serializer = self.get_serializer(instance=instance, data=request.data)
                 serializer.is_valid(raise_exception=True)
@@ -1484,7 +1490,8 @@ class ComplexTransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSe
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         # ComplexTransactionPermissionFilter,
         OwnerByMasterUserFilter,
-        AttributeFilter
+        AttributeFilter,
+        ComplexTransactionStatusFilter
     ]
 
 
@@ -1539,6 +1546,7 @@ class ComplexTransactionEvViewSet(AbstractWithObjectPermissionViewSet):
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
+        ComplexTransactionStatusFilter
     ]
     # filter_class = ComplexTransactionFilterSet
     ordering_fields = [
