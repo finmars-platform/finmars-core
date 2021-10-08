@@ -38,149 +38,154 @@ class ReportsConfig(AppConfig):
 
     def create_view_for_positions(self):
 
-        _l.debug("create_view_for_positions")
+        try:
 
-        with connection.cursor() as cursor:
+            _l.debug("create_view_for_positions")
 
-            query = "DROP VIEW IF EXISTS pl_transactions_with_ttype"
+            with connection.cursor() as cursor:
 
-            cursor.execute(query)
+                query = "DROP VIEW IF EXISTS pl_transactions_with_ttype"
 
-            query = """
-                CREATE or REPLACE VIEW pl_transactions_with_ttype AS
-                    SELECT
-                       id,
-                       master_user_id,
-                       transaction_class_id,
-                       
-                       transaction_date,
-                       accounting_date,
-                       cash_date,
-                       
-                       cash_consideration,
-                       position_size_with_sign,
-                       principal_with_sign,
-                       carry_with_sign,
-                       overheads_with_sign,
-                       instrument_id,
-                       linked_instrument_id,
-                       portfolio_id,
-                       account_position_id,
-                       account_cash_id,
-                       account_interim_id,
-                       
-                       strategy1_position_id,
-                       strategy1_cash_id,
-                       strategy2_position_id,
-                       strategy2_cash_id,
-                       strategy3_position_id,
-                       strategy3_cash_id,
-                       
-                       transaction_currency_id,
-                       settlement_currency_id,
-                       
-                       reference_fx_rate,
-                       ytm_at_cost,
-                       
-                       case
-                         
-                         when transaction_class_id = 4
-                            then 4
-                         when position_size_with_sign < 0
-                           then 0
-                         else 1
-                         end as ttype
-                    FROM transactions_transaction
-                    WHERE transaction_class_id in (1,2,4) and NOT is_canceled
-                    
-                    UNION ALL
-                    
-                    select
-                      id,
-                      master_user_id,
-                      (1) as transaction_class_id,
-                      
-                      transaction_date,
-                      accounting_date,
-                      cash_date,
-                      
-                      cash_consideration,
-                      position_size_with_sign,
-                      (-principal_with_sign) as principal_with_sign,
-                      (-carry_with_sign) as carry_with_sign,
-                      (-overheads_with_sign) as overheads_with_sign,
-                      instrument_id,
-                      linked_instrument_id,
-                      portfolio_id,
-                      account_cash_id as account_position_id,
-                      account_cash_id,
-                      account_interim_id,
-                      strategy1_cash_id as strategy1_position_id,
-                      strategy1_cash_id,
-                      strategy2_cash_id as strategy2_position_id,
-                      strategy2_cash_id,
-                      strategy3_cash_id as strategy3_position_id,
-                      strategy3_cash_id,
-                      
-                      transaction_currency_id,
-                      settlement_currency_id,
-                      
-                      reference_fx_rate,
-                      ytm_at_cost,
-                      
-                      case
-                        when position_size_with_sign < 0
-                          then 0
-                        else 1
-                        end as ttype
-                    from transactions_transaction
-                    WHERE transaction_class_id in (6) and NOT is_canceled
-                    
-                    UNION ALL
-                    
-                    select
-                      id,
-                      master_user_id,
-                      (2) as transaction_class_id,
-                      
-                      transaction_date,
-                      accounting_date,
-                      cash_date,
-                      
-                      cash_consideration,
-                      (-position_size_with_sign) as position_size_with_sign,
-                      principal_with_sign,
-                      carry_with_sign,
-                      overheads_with_sign,
-                      instrument_id,
-                      linked_instrument_id,
-                      portfolio_id,
-                      account_position_id,
-                      account_position_id as account_cash_id,
-                      account_interim_id,
-                      strategy1_position_id,
-                      strategy1_position_id as strategy1_cash_id,
-                      strategy2_position_id,
-                      strategy2_position_id as strategy2_cash_id,
-                      strategy3_position_id,
-                      strategy3_position_id as strategy3_cash_id,
-                      
-                      transaction_currency_id,
-                      settlement_currency_id,
-                      
-                      reference_fx_rate,
-                      ytm_at_cost,
-                      
-                      case
-                        when (-position_size_with_sign) < 0 
-                          then 0
-                        else 1
-                        end as ttype
-                    from transactions_transaction
-                    WHERE transaction_class_id in (6) and NOT is_canceled;            
-            """
+                cursor.execute(query)
 
-            cursor.execute(query)
+                query = """
+                    CREATE or REPLACE VIEW pl_transactions_with_ttype AS
+                        SELECT
+                           id,
+                           master_user_id,
+                           transaction_class_id,
+                           
+                           transaction_date,
+                           accounting_date,
+                           cash_date,
+                           
+                           cash_consideration,
+                           position_size_with_sign,
+                           principal_with_sign,
+                           carry_with_sign,
+                           overheads_with_sign,
+                           instrument_id,
+                           linked_instrument_id,
+                           portfolio_id,
+                           account_position_id,
+                           account_cash_id,
+                           account_interim_id,
+                           
+                           strategy1_position_id,
+                           strategy1_cash_id,
+                           strategy2_position_id,
+                           strategy2_cash_id,
+                           strategy3_position_id,
+                           strategy3_cash_id,
+                           
+                           transaction_currency_id,
+                           settlement_currency_id,
+                           
+                           reference_fx_rate,
+                           ytm_at_cost,
+                           
+                           case
+                             
+                             when transaction_class_id = 4
+                                then 4
+                             when position_size_with_sign < 0
+                               then 0
+                             else 1
+                             end as ttype
+                        FROM transactions_transaction
+                        WHERE transaction_class_id in (1,2,4) and NOT is_canceled
+                        
+                        UNION ALL
+                        
+                        select
+                          id,
+                          master_user_id,
+                          (1) as transaction_class_id,
+                          
+                          transaction_date,
+                          accounting_date,
+                          cash_date,
+                          
+                          cash_consideration,
+                          position_size_with_sign,
+                          (-principal_with_sign) as principal_with_sign,
+                          (-carry_with_sign) as carry_with_sign,
+                          (-overheads_with_sign) as overheads_with_sign,
+                          instrument_id,
+                          linked_instrument_id,
+                          portfolio_id,
+                          account_cash_id as account_position_id,
+                          account_cash_id,
+                          account_interim_id,
+                          strategy1_cash_id as strategy1_position_id,
+                          strategy1_cash_id,
+                          strategy2_cash_id as strategy2_position_id,
+                          strategy2_cash_id,
+                          strategy3_cash_id as strategy3_position_id,
+                          strategy3_cash_id,
+                          
+                          transaction_currency_id,
+                          settlement_currency_id,
+                          
+                          reference_fx_rate,
+                          ytm_at_cost,
+                          
+                          case
+                            when position_size_with_sign < 0
+                              then 0
+                            else 1
+                            end as ttype
+                        from transactions_transaction
+                        WHERE transaction_class_id in (6) and NOT is_canceled
+                        
+                        UNION ALL
+                        
+                        select
+                          id,
+                          master_user_id,
+                          (2) as transaction_class_id,
+                          
+                          transaction_date,
+                          accounting_date,
+                          cash_date,
+                          
+                          cash_consideration,
+                          (-position_size_with_sign) as position_size_with_sign,
+                          principal_with_sign,
+                          carry_with_sign,
+                          overheads_with_sign,
+                          instrument_id,
+                          linked_instrument_id,
+                          portfolio_id,
+                          account_position_id,
+                          account_position_id as account_cash_id,
+                          account_interim_id,
+                          strategy1_position_id,
+                          strategy1_position_id as strategy1_cash_id,
+                          strategy2_position_id,
+                          strategy2_position_id as strategy2_cash_id,
+                          strategy3_position_id,
+                          strategy3_position_id as strategy3_cash_id,
+                          
+                          transaction_currency_id,
+                          settlement_currency_id,
+                          
+                          reference_fx_rate,
+                          ytm_at_cost,
+                          
+                          case
+                            when (-position_size_with_sign) < 0 
+                              then 0
+                            else 1
+                            end as ttype
+                        from transactions_transaction
+                        WHERE transaction_class_id in (6) and NOT is_canceled;            
+                """
+
+                cursor.execute(query)
+
+        except Exception as e:
+            _l.info("create_view_for_positions %s" % e)
 
     def create_view_for_cash_fx_trades(self):
 
