@@ -14,7 +14,7 @@ from django.utils import numberformat
 from django.utils.functional import Promise, SimpleLazyObject
 
 from poms.common.utils import date_now, isclose
-
+import re
 
 from pandas.tseries.offsets import BMonthEnd, BYearEnd, BQuarterEnd, BDay
 from datetime import date
@@ -78,10 +78,6 @@ def _check_float(val):
 
 def _str(a):
     return str(a)
-
-def _substr(str, start_index, end_index):
-    return str[start_index:end_index]
-
 
 def _upper(a):
     return str(a).upper()
@@ -505,6 +501,27 @@ def _if_null(evaluator, input, default):
 
 
 _if_null.evaluator = True
+
+def _substr(evaluator, text, start_index, end_index):
+    return text[start_index:end_index]
+
+
+_substr.evaluator = True
+
+
+def _reg_search(evaluator, text, expression):
+
+    return re.search(expression, text).group()
+
+
+_reg_search.evaluator = True
+
+
+def _reg_replace(evaluator, text, expession, replace_text):
+    return re.sub(expession, replace_text, text)
+
+
+_reg_replace.evaluator = True
 
 
 def _generate_user_code(evaluator, prefix='', suffix='', counter=0):
@@ -1821,12 +1838,16 @@ class _UserDef(object):
         return ret
 
 
+
 FUNCTIONS = [
     SimpleEval2Def('str', _str),
     SimpleEval2Def('substr', _substr),
     SimpleEval2Def('upper', _upper),
     SimpleEval2Def('lower', _lower),
     SimpleEval2Def('contains', _contains),
+
+    SimpleEval2Def('reg_search', _reg_search),
+    SimpleEval2Def('reg_replace', _reg_replace),
 
     SimpleEval2Def('int', _int),
     SimpleEval2Def('float', _float),
@@ -1931,7 +1952,6 @@ FUNCTIONS = [
 
 
 ]
-
 empty = object()
 
 SAFE_TYPES = (bool, int, float, str, list, tuple, dict, OrderedDict,
