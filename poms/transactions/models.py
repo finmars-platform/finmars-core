@@ -49,6 +49,7 @@ class TransactionClass(AbstractClassModel):
     CASH_OUTFLOW = 9
 
     DEFAULT = 10
+    PLACEHOLDER = 11
 
     CLASSES = (
         (BUY, 'BUY', ugettext_lazy("Buy")),
@@ -61,6 +62,7 @@ class TransactionClass(AbstractClassModel):
         (CASH_INFLOW, 'CASH_INFLOW', ugettext_lazy("Cash-Inflow")),
         (CASH_OUTFLOW, 'CASH_OUTFLOW', ugettext_lazy("Cash-Outflow")),
         (DEFAULT, '-', ugettext_lazy("Default")),
+        (DEFAULT, 'PLACEHOLDER', ugettext_lazy("Technical: Placeholder")),
     )
 
     class Meta(AbstractClassModel.Meta):
