@@ -1730,7 +1730,7 @@ class GeneratedEvent(models.Model):
                                               verbose_name=ugettext_lazy('status'))
     status_date = models.DateTimeField(default=timezone.now, db_index=True, verbose_name=ugettext_lazy('status date'))
 
-    event_schedule = models.ForeignKey(EventSchedule, null=True, blank=True, on_delete=models.SET_NULL,
+    event_schedule = models.ForeignKey(EventSchedule,on_delete=models.CASCADE,
                                        related_name='generated_events', verbose_name=ugettext_lazy('event schedule'))
 
     instrument = models.ForeignKey('instruments.Instrument', null=True, blank=True, on_delete=models.PROTECT,
