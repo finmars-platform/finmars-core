@@ -8,6 +8,9 @@ from django.utils.translation import ugettext_lazy
 from django.db import connection
 
 import logging
+
+from poms_app import settings
+
 _l = logging.getLogger('poms.reports')
 
 
@@ -31,10 +34,12 @@ class ReportsConfig(AppConfig):
 
         _l.debug("Creating views for SQL reports")
 
-        self.create_view_for_positions()
-        self.create_view_for_cash_fx_trades()
-        self.create_view_for_cash_fx_variations()
-        self.create_view_for_cash_transaction_pl()
+        if settings.DROP_VIEWS:
+
+            self.create_view_for_positions()
+            self.create_view_for_cash_fx_trades()
+            self.create_view_for_cash_fx_variations()
+            self.create_view_for_cash_transaction_pl()
 
     def create_view_for_positions(self):
 

@@ -809,3 +809,10 @@ TOKEN_TTL = datetime.timedelta(days=15)
 AUTHORIZER_URL = os.environ.get('AUTHORIZER_URL', None)
 CBONDS_BROKER_URL = os.environ.get('CBONDS_BROKER_URL', None)
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
+
+DROP_VIEWS = os.environ.get('DROP_VIEWS', 'True')
+
+if DROP_VIEWS == 'False':
+    DROP_VIEWS = False
+else:
+    DROP_VIEWS = True
