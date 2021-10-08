@@ -526,7 +526,7 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
     @action(detail=True, methods=['get', 'put'], url_path='book', serializer_class=TransactionTypeProcessSerializer)
     def book(self, request, pk=None):
 
-        complex_transaction_status=request.data['complex_transaction_status']
+
 
         # Some Inputs can choose from which context variable it will take value
         context_values = self.get_context_for_book(request)
@@ -544,12 +544,13 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
 
             instance = TransactionTypeProcess(process_mode='book', transaction_type=transaction_type,
                                               context=self.get_serializer_context(), context_values=context_values,
-                                              default_values=default_values,
-                                              complex_transaction_status=complex_transaction_status)
+                                              default_values=default_values)
 
             serializer = self.get_serializer(instance=instance)
             return Response(serializer.data)
         else:
+
+            complex_transaction_status=request.data['complex_transaction_status']
 
             uniqueness_reaction = request.data.get('uniqueness_reaction', None)
 
