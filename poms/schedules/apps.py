@@ -31,12 +31,38 @@ class SchedulesConfig(AppConfig):
                                                                             month_of_year='*'
                                                                             )
 
+        crontabs['daily_morning'], _ = CrontabSchedule.objects.get_or_create(minute='0',
+                                                                          hour='6',
+                                                                          day_of_week='*',
+                                                                          day_of_month='*',
+                                                                          month_of_year='*'
+                                                                          )
+
+        crontabs['daily_noon'], _ = CrontabSchedule.objects.get_or_create(minute='0',
+                                                                           hour='12',
+                                                                           day_of_week='*',
+                                                                           day_of_month='*',
+                                                                           month_of_year='*'
+                                                                           )
+
         periodic_tasks = [
             {
                 "id": 1,
                 "name": "Shedules Process",
                 "task": 'schedules.process',
                 "crontab": crontabs['every_5_min']
+            },
+            {
+                "id": 2,
+                "name": "Generate Events",
+                "task": 'instruments.generate_events',
+                "crontab": crontabs['daily_morning']
+            },
+            {
+                "id": 3,
+                "name": "Events Process",
+                "task": 'instruments.process_events',
+                "crontab": crontabs['daily_noon']
             }
         ]
 
