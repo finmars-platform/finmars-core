@@ -11,7 +11,7 @@ from poms.reports.builders.balance_item import Report
 from poms.reports.builders.base_builder import BaseReportBuilder
 from poms.reports.models import BalanceReportCustomField, TransactionReportCustomField
 from poms.reports.sql_builders.helpers import dictfetchall
-from poms.transactions.models import ComplexTransaction
+from poms.transactions.models import ComplexTransaction, TransactionClass
 from poms.users.models import EcosystemDefault
 
 _l = logging.getLogger('poms.reports')
@@ -208,6 +208,10 @@ class TransactionReportBuilderSql:
             'attributes__classifier'
         ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
+    def add_data_items_transaction_classes(self):
+
+        self.instance.item_transaction_classes = TransactionClass.objects.all()
+
     def add_data_items(self):
 
         instance_relations_st = time.perf_counter()
@@ -251,6 +255,7 @@ class TransactionReportBuilderSql:
         self.add_data_items_portfolios(portfolio_ids)
         self.add_data_items_accounts(account_ids)
         self.add_data_items_currencies(currencies_ids)
+        self.add_data_items_transaction_classes()
         # self.add_data_items_complex_transactions(complex_transactions_ids)  # too slow
 
         self.instance.custom_fields = TransactionReportCustomField.objects.filter(master_user=self.instance.master_user)
