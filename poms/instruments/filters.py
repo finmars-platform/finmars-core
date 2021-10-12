@@ -82,6 +82,7 @@ class InstrumentSelectSpecialQueryFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
 
         query = request.query_params.get('query', '')
+        instrument_type = request.query_params.get('instrument_type', '')
 
         pieces = query.split(' ')
 
@@ -91,6 +92,8 @@ class InstrumentSelectSpecialQueryFilter(BaseFilterBackend):
         user_code_q = Q()
         short_name_q = Q()
         reference_for_pricing_q = Q()
+        instrument_type_name = Q()
+        instrument_type_user_code = Q()
 
         for piece in pieces:
 
@@ -105,11 +108,22 @@ class InstrumentSelectSpecialQueryFilter(BaseFilterBackend):
         for piece in pieces:
             reference_for_pricing_q.add(Q(reference_for_pricing__icontains=piece), Q.AND)
 
+        # for piece in pieces:
+        #     instrument_type_name.add(Q(instrument_type__name__icontains=piece), Q.OR)
+
+        for piece in pieces:
+            instrument_type_user_code.add(Q(instrument_type__user_code__icontains=piece), Q.AND)
+
 
         options.add(name_q, Q.OR)
         options.add(user_code_q, Q.OR)
         options.add(short_name_q, Q.OR)
         options.add(reference_for_pricing_q, Q.OR)
+        # options.add(instrument_type_name, Q.AND)
+        options.add(instrument_type_user_code, Q.AND)
+
+        if instrument_type:
+            options.add(Q(instrument_type__user_code=instrument_type), Q.AND)
 
 
         queryset = queryset.filter(options)
