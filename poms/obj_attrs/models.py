@@ -23,10 +23,21 @@ class GenericAttributeType(NamedModel):
         (CLASSIFIER, ugettext_lazy('Classifier')),
     )
 
+    USER = 1
+    SYSTEM = 2
+
+    KIND_TYPES = (
+        (USER, ugettext_lazy('User')),
+        (SYSTEM, ugettext_lazy('System')),
+    )
+
     master_user = models.ForeignKey(MasterUser, verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
     content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'), on_delete=models.CASCADE)
     value_type = models.PositiveSmallIntegerField(choices=VALUE_TYPES, default=STRING,
                                                   verbose_name=ugettext_lazy('value type'))
+
+    kind = models.PositiveSmallIntegerField(choices=KIND_TYPES, default=USER,
+                                            verbose_name=ugettext_lazy('kind'))
 
     tooltip = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('tooltip'))
 

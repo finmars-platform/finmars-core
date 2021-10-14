@@ -112,6 +112,7 @@ class GenericClassifierViewSet(AbstractReadOnlyModelViewSet):
 class GenericAttributeTypeFilterSet(FilterSet):
     id = NoOpFilter()
     user_code = CharFilter()
+    kind = CharFilter()
     name = CharFilter()
     short_name = CharFilter()
     public_name = CharFilter()

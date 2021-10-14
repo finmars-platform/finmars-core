@@ -24,7 +24,7 @@ from poms.common.models import NamedModel, AbstractClassModel, FakeDeletableMode
 from poms.common.utils import date_now, isclose
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.currencies.models import CurrencyHistory
-from poms.obj_attrs.models import GenericAttribute
+from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.obj_perms.models import GenericObjectPermission
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, CurrencyPricingPolicy, \
     InstrumentTypePricingPolicy, InstrumentPricingPolicy
@@ -1235,6 +1235,159 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             return res.factor_value
         return 1.0
 
+    def generate_instrument_system_attributes(self):
+
+        from django.contrib.contenttypes.models import ContentType
+
+        content_type = ContentType.objects.get(app_label="instruments", model='instrument')
+        instrument_pricing_policies = InstrumentPricingPolicy.objects.filter(instrument=self)
+
+        for ipp in instrument_pricing_policies:
+
+            pp = ipp.pricing_policy
+
+            user_code_scheme = 'pricing_policy_' + pp.user_code + '_scheme'
+            user_code_parameter = 'pricing_policy_' + pp.user_code + '_parameter'
+            user_code_notes = 'pricing_policy_' + pp.user_code + '_notes'
+
+
+            name_scheme = 'Pricing Policy ' + pp.user_code + ' Scheme'
+            name_parameter = 'Pricing Policy ' + pp.user_code + ' Parameter'
+            name_notes = 'Pricing Policy ' + pp.user_code + ' Notes'
+
+            attr_type_scheme = None
+            attr_type_parameter = None
+            attr_type_notes = None
+
+            try:
+                attr_type_scheme = GenericAttributeType.objects.get(master_user=self.master_user, content_type=content_type, user_code=user_code_scheme)
+            except GenericAttributeType.DoesNotExist:
+                attr_type_scheme = GenericAttributeType.objects.create(
+                    master_user=self.master_user,
+                    content_type=content_type,
+                    value_type=GenericAttributeType.STRING,
+                    user_code=user_code_scheme,
+                    name=name_scheme,
+                    kind=GenericAttributeType.SYSTEM
+                )
+
+            try:
+                attr_type_parameter = GenericAttributeType.objects.get(master_user=self.master_user, content_type=content_type, user_code=user_code_parameter)
+            except GenericAttributeType.DoesNotExist:
+                attr_type_parameter = GenericAttributeType.objects.create(
+                    master_user=self.master_user,
+                    content_type=content_type,
+                    value_type=GenericAttributeType.STRING,
+                    user_code=user_code_parameter,
+                    name=name_parameter,
+                    kind=GenericAttributeType.SYSTEM
+                )
+
+            try:
+                attr_type_notes = GenericAttributeType.objects.get(master_user=self.master_user, content_type=content_type, user_code=user_code_notes)
+            except GenericAttributeType.DoesNotExist:
+                attr_type_notes = GenericAttributeType.objects.create(
+                    master_user=self.master_user,
+                    content_type=content_type,
+                    value_type=GenericAttributeType.STRING,
+                    user_code=user_code_notes,
+                    name=name_notes,
+                    kind=GenericAttributeType.SYSTEM
+                )
+
+            try:
+
+                attr_scheme = GenericAttribute.objects.get(attribute_type=attr_type_scheme, object_id=self.pk, content_type=content_type)
+
+            except GenericAttribute.DoesNotExist:
+
+                attr_scheme = GenericAttribute.objects.create(attribute_type=attr_type_scheme, object_id=self.pk, content_type=content_type)
+
+            if ipp.pricing_scheme:
+                attr_scheme.value_string = ipp.pricing_scheme.name
+            else:
+                attr_scheme.value_string = ''
+
+            attr_scheme.save()
+
+            try:
+
+                attr_parameter = GenericAttribute.objects.get(attribute_type=attr_type_parameter, object_id=self.pk, content_type=content_type)
+
+            except GenericAttribute.DoesNotExist:
+
+                attr_parameter = GenericAttribute.objects.create(attribute_type=attr_type_parameter, object_id=self.pk, content_type=content_type)
+
+            if ipp.attribute_key:
+
+                if 'attributes.' in ipp.attribute_key:
+
+                    try:
+                        code = ipp.attribute_key.split('attributes.')[1]
+                        type = GenericAttributeType.objects.get(master_user=self.master_user, content_type=content_type, user_code=code)
+
+                        attr = GenericAttribute.objects.get(object_id=self.pk, attribute_type=type, content_type=content_type)
+
+                        if type.value_type == 10:
+                            attr_parameter.value_string = attr.value_string
+
+                        if type.value_type == 20:
+                            attr_parameter.value_string = str(attr.value_float)
+
+                        if type.value_type == 30:
+
+                            attr_parameter.value_string = attr.classifier.name
+
+                        if type.value_type == 40:
+                            attr_parameter.value_string = attr.value_date
+
+                    except Exception as e:
+                        _l.info("Could not get attribute value %s " % e)
+
+
+                else:
+                    attr_parameter.value_string = str(getattr(self, ipp.attribute_key, ''))
+            elif ipp.default_value:
+                attr_parameter.value_string = ipp.default_value
+            else:
+                attr_parameter.value_string = ''
+
+            attr_parameter.save()
+
+
+
+            try:
+
+                attr_notes = GenericAttribute.objects.get(attribute_type=attr_type_notes, object_id=self.pk, content_type=content_type)
+
+            except GenericAttribute.DoesNotExist:
+
+                attr_notes = GenericAttribute.objects.create(attribute_type=attr_type_notes, object_id=self.pk, content_type=content_type)
+
+            if ipp.notes:
+                attr_notes.value_string = ipp.notes
+            else:
+                attr_notes.value_string = ''
+
+            _l.info('attr_notes %s' % attr_notes.value_string)
+
+            attr_notes.save()
+
+        _l.info('generate_instrument_system_attributes done')
+
+
+
+    def save(self, *args, **kwargs):
+
+        super(Instrument, self).save(*args, **kwargs)
+
+        try:
+
+            self.generate_instrument_system_attributes()
+
+        except Exception as error:
+
+            _l.debug('Instrument save error %s' % error)
 
 # DEPRECTATED (25.05.2020) delete soon
 class ManualPricingFormula(models.Model):

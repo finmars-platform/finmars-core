@@ -361,6 +361,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
                   'favorites',
                   'expr', 'can_recalculate',
                   'tooltip',
+                  'kind',
                   'value_type', 'order', 'is_hidden', 'classifiers', 'classifiers_flat']
 
     def __init__(self, *args, **kwargs):
@@ -556,7 +557,7 @@ class GenericAttributeTypeViewSerializer(ModelWithObjectPermissionSerializer):
     class Meta:
         model = GenericAttributeType
         fields = ['id', 'user_code', 'name', 'short_name', 'public_name', 'notes',
-                  'value_type', 'order', 'is_hidden']
+                  'value_type', 'order', 'is_hidden', 'kind']
 
 
 class GenericAttributeListSerializer(serializers.ListSerializer):
