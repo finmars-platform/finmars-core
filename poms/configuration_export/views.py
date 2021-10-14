@@ -2142,7 +2142,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         content_type = ContentType.objects.get(app_label=app_label, model=model)
 
         items = to_json_objects(
-            GenericAttributeType.objects.filter(master_user=self._master_user, content_type=content_type))
+            GenericAttributeType.objects.filter(master_user=self._master_user, content_type=content_type, kind=GenericAttributeType.USER))
 
         results = []
 
