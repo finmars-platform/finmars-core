@@ -335,20 +335,33 @@ def generate_events0(master_user):
             'periodicity',
             'actions'
         ).filter(
-            effective_date__lte=(now - F("notify_in_n_days")),
-            final_date__gte=now,
+            # effective_date__lte=(now - F("notify_in_n_days")),
+            # final_date__gte=now,
             instrument__in={i.instr.id for i in opened_instrument_items}
         ).order_by(
             'instrument__master_user__id',
             'instrument__id'
         )
 
-        if not event_schedule_qs.exists():
+
+        result = []
+
+        for event_schedule in event_schedule_qs:
+
+            final_date = datetime.date(datetime.strptime(event_schedule.final_date, '%Y-%m-%d'))
+            effective_date = datetime.date(datetime.strptime(event_schedule.effective_date, '%Y-%m-%d'))
+
+            if final_date >= now and effective_date - timedelta(days=event_schedule.notify_in_n_days):
+                result.append(event_schedule)
+
+
+
+        if not len(result):
             _l.debug('event schedules not found')
             return
 
         event_schedules_cache = defaultdict(list)
-        for event_schedule in event_schedule_qs:
+        for event_schedule in result:
             event_schedules_cache[event_schedule.instrument_id].append(event_schedule)
 
         for item in opened_instrument_items:

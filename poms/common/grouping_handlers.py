@@ -427,8 +427,8 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
 
     start_time = time.time()
 
-    _l.info('groups_types %s' % groups_types)
-    _l.info('group_values %s' % group_values)
+    # _l.info('groups_types %s' % groups_types)
+    # _l.info('group_values %s' % group_values)
 
 
     for item in qs:
@@ -437,7 +437,7 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
         
         index = 0
 
-        _l.info('item %s' % item['group_identifier'])
+        # _l.info('item %s' % item['group_identifier'])
 
         #  TODO handle attributes
         for groups_type in groups_types:
@@ -460,7 +460,7 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
                     "attributes__attribute_type": attribute_type
                 }
 
-                _l.info('attribute value %s' % value)
+                # _l.info('attribute value %s' % value)
 
                 # add previous options
                 for key, val in options.items():
@@ -477,7 +477,7 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
 
                     attribute_options["attributes__value_string"] = value
 
-                    _l.info('attribute_options %s' % attribute_options)
+                    # _l.info('attribute_options %s' % attribute_options)
 
                     result = Model.objects.filter(Q(**attribute_options)).values_list('id', flat=True)
 
@@ -494,7 +494,7 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
                     result = Model.objects.filter(Q(**attribute_options)).values_list('id', flat=True)
 
 
-                _l.info('result %s' % result)
+                # _l.info('result %s' % result)
 
                 key = 'id__in'
 
@@ -523,7 +523,7 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
         else:
             options['master_user_id'] = master_user.pk
 
-        _l.info('options %s' % options)
+        # _l.info('options %s' % options)
 
         item['items_count'] = Model.objects.filter(Q(**options)).count()
 
