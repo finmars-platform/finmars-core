@@ -1544,26 +1544,26 @@ class PriceHistorySerializer(serializers.ModelSerializer):
         instance.procedure_modified_datetime = now()
         instance.save()
 
-        try:
+        # try:
+        #
+        #     history_item = PriceHistoryError.objects.get(instrument=instance.instrument,
+        #                                                     master_user=instance.instrument.master_user, date=instance.date,
+        #                                                     pricing_policy=instance.pricing_policy)
+        #
+        #     history_item.status = PriceHistoryError.STATUS_OVERWRITTEN
+        #
+        # except PriceHistoryError.DoesNotExist:
 
-            history_item = PriceHistoryError.objects.get(instrument=instance.instrument,
-                                                            master_user=instance.instrument.master_user, date=instance.date,
-                                                            pricing_policy=instance.pricing_policy)
+        history_item = PriceHistoryError()
 
-            history_item.status = PriceHistoryError.STATUS_OVERWRITTEN
+        history_item.status = PriceHistoryError.STATUS_CREATED
 
-        except PriceHistoryError.DoesNotExist:
-
-            history_item = PriceHistoryError()
-
-            history_item.status = PriceHistoryError.STATUS_CREATED
-
-            history_item.master_user = instance.instrument.master_user
-            history_item.instrument = instance.instrument
-            history_item.principal_price = instance.principal_price
-            history_item.accrued_price = instance.accrued_price
-            history_item.date = instance.date
-            history_item.pricing_policy = instance.pricing_policy
+        history_item.master_user = instance.instrument.master_user
+        history_item.instrument = instance.instrument
+        history_item.principal_price = instance.principal_price
+        history_item.accrued_price = instance.accrued_price
+        history_item.date = instance.date
+        history_item.pricing_policy = instance.pricing_policy
 
         history_item.save()
 

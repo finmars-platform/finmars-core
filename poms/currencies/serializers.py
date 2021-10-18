@@ -242,25 +242,25 @@ class CurrencyHistorySerializer(ModelWithTimeStampSerializer):
         instance.procedure_modified_datetime = now()
         instance.save()
 
-        try:
+        # try:
+        #
+        #     history_item = CurrencyHistoryError.objects.get(currency=instance.currency,
+        #                                                     master_user=instance.currency.master_user, date=instance.date,
+        #                                                     pricing_policy=instance.pricing_policy)
+        #
+        #     history_item.status = CurrencyHistoryError.STATUS_OVERWRITTEN
+        #
+        # except CurrencyHistoryError.DoesNotExist:
 
-            history_item = CurrencyHistoryError.objects.get(currency=instance.currency,
-                                                            master_user=instance.currency.master_user, date=instance.date,
-                                                            pricing_policy=instance.pricing_policy)
+        history_item = CurrencyHistoryError()
 
-            history_item.status = CurrencyHistoryError.STATUS_OVERWRITTEN
+        history_item.status = CurrencyHistoryError.STATUS_CREATED
 
-        except CurrencyHistoryError.DoesNotExist:
-
-            history_item = CurrencyHistoryError()
-
-            history_item.status = CurrencyHistoryError.STATUS_CREATED
-
-            history_item.master_user = instance.currency.master_user
-            history_item.currency = instance.currency
-            history_item.fx_rate = instance.fx_rate
-            history_item.date = instance.date
-            history_item.pricing_policy = instance.pricing_policy
+        history_item.master_user = instance.currency.master_user
+        history_item.currency = instance.currency
+        history_item.fx_rate = instance.fx_rate
+        history_item.date = instance.date
+        history_item.pricing_policy = instance.pricing_policy
 
         history_item.save()
 
