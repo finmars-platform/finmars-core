@@ -93,7 +93,9 @@ class InstrumentItem(object):
                             if attribute.classifier:
                                 result = attribute.classifier.name
 
-                    except GenericAttribute.DoesNotExist:
+                    except (Exception, GenericAttribute.DoesNotExist) as e:
+                        _l.info("instrument_handler fill_parameters instrument %s " % self.instrument)
+                        _l.info("instrument_handler fill_parameters error %s " %  e)
                         pass
 
                 if result:
