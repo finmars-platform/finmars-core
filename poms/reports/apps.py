@@ -56,8 +56,12 @@ class ReportsConfig(AppConfig):
                 query = """
                     CREATE or REPLACE VIEW pl_transactions_with_ttype AS
                         SELECT
-                           id,
-                           master_user_id,
+                        
+                        
+                            ct.status,
+                            
+                           tt.id,
+                           tt.master_user_id,
                            transaction_class_id,
                            
                            transaction_date,
@@ -97,14 +101,18 @@ class ReportsConfig(AppConfig):
                                then 0
                              else 1
                              end as ttype
-                        FROM transactions_transaction
-                        WHERE transaction_class_id in (1,2,4) and NOT is_canceled
+                        FROM transactions_transaction as tt
+                        left join transactions_complextransaction as ct
+                        ON complex_transaction_id = ct.id
+                        WHERE transaction_class_id in (1,2,4) and NOT tt.is_canceled and ct.status = 1
                         
                         UNION ALL
                         
                         select
-                          id,
-                          master_user_id,
+                        
+                          ct.status,
+                          tt.id,
+                          tt.master_user_id,
                           (1) as transaction_class_id,
                           
                           transaction_date,
@@ -140,14 +148,18 @@ class ReportsConfig(AppConfig):
                               then 0
                             else 1
                             end as ttype
-                        from transactions_transaction
-                        WHERE transaction_class_id in (6) and NOT is_canceled
+                        from transactions_transaction as tt
+                        left join transactions_complextransaction as ct
+                        ON complex_transaction_id = ct.id
+                        WHERE transaction_class_id in (6) and NOT tt.is_canceled AND ct.status = 1
                         
                         UNION ALL
                         
                         select
-                          id,
-                          master_user_id,
+                        
+                          ct.status,
+                          tt.id,
+                          tt.master_user_id,
                           (2) as transaction_class_id,
                           
                           transaction_date,
@@ -183,8 +195,10 @@ class ReportsConfig(AppConfig):
                               then 0
                             else 1
                             end as ttype
-                        from transactions_transaction
-                        WHERE transaction_class_id in (6) and NOT is_canceled;            
+                        from transactions_transaction as tt
+                        left join transactions_complextransaction as ct
+                        ON complex_transaction_id = ct.id
+                        WHERE transaction_class_id in (6) and NOT tt.is_canceled AND ct.status = 1;            
                 """
 
                 cursor.execute(query)
@@ -206,11 +220,12 @@ class ReportsConfig(AppConfig):
                 CREATE or REPLACE VIEW pl_cash_fx_trades_transactions_with_ttype AS
                     (
                     select 
-                        id,
-                         master_user_id,
+                        ct.status,
+                        tt.id,
+                         tt.master_user_id,
                        
                        transaction_date,
-                       accounting_date,
+                       accounting_date, 
                        cash_date,
                        
                        (1001) as transaction_class_id,
@@ -251,13 +266,17 @@ class ReportsConfig(AppConfig):
                          
 
                 from transactions_transaction tt
-                where transaction_class_id in (3) and NOT is_canceled
+                left join transactions_complextransaction as ct
+                ON tt.complex_transaction_id = ct.id
+                where transaction_class_id in (3) and NOT tt.is_canceled AND ct.status = 1
                 
                 union
                 
                 select 
-                     id,
-                     master_user_id,
+                
+                     ct.status,
+                     tt.id,
+                     tt.master_user_id,
                        
                        transaction_date,
                        accounting_date,
@@ -302,8 +321,9 @@ class ReportsConfig(AppConfig):
               /*перечислить все поля*/
 
           from transactions_transaction tt
-
-          where transaction_class_id in (3) and NOT is_canceled
+          left join transactions_complextransaction as ct
+          ON complex_transaction_id = ct.id
+          where transaction_class_id in (3) and NOT tt.is_canceled AND ct.status = 1
 
          )         
             """
@@ -323,8 +343,10 @@ class ReportsConfig(AppConfig):
             query = """
                 CREATE or REPLACE VIEW pl_cash_fx_variations_transactions_with_ttype AS
                     select
-                           id,
-                           master_user_id,
+                            
+                            ct.status,
+                           tt.id,
+                           tt.master_user_id,
                            
                            transaction_date,
                            accounting_date,
@@ -366,14 +388,17 @@ class ReportsConfig(AppConfig):
                            strategy3_cash_id
                            
 
-                    from transactions_transaction
-                    where transaction_class_id in (8,9) and NOT is_canceled  
+                    from transactions_transaction as tt
+                    left join transactions_complextransaction as ct
+                        ON complex_transaction_id = ct.id
+                    where transaction_class_id in (8,9) and NOT tt.is_canceled   AND ct.status = 1
                     
                     union all
 
                     select 
-                         id,
-                         master_user_id,
+                        ct.status,
+                         tt.id,
+                         tt.master_user_id,
                          
                          transaction_date,
                          accounting_date,
@@ -416,14 +441,17 @@ class ReportsConfig(AppConfig):
                           strategy3_cash_id
                          
                       from transactions_transaction tt
-                
-                      where transaction_class_id in (7) and NOT is_canceled
+                        left join transactions_complextransaction as ct
+                        ON complex_transaction_id = ct.id
+                      where transaction_class_id in (7) and NOT tt.is_canceled AND ct.status = 1
                           
                     union all
 
                     select 
-                         id,
-                         master_user_id,
+                    
+                        ct.status,
+                         tt.id,
+                         tt.master_user_id,
                          
                          transaction_date,
                          accounting_date,
@@ -466,8 +494,9 @@ class ReportsConfig(AppConfig):
                          strategy2_cash_id
                          
                     from transactions_transaction tt
-        
-                    where transaction_class_id in (7) and NOT is_canceled
+                    left join transactions_complextransaction as ct
+                        ON complex_transaction_id = ct.id
+                    where transaction_class_id in (7) and NOT tt.is_canceled AND ct.status = 1
                            
             """
 
@@ -487,8 +516,10 @@ class ReportsConfig(AppConfig):
                 CREATE or REPLACE VIEW pl_cash_transaction_pl_transactions_with_ttype AS
                     (
                     select 
-                        id,
-                         master_user_id,
+                    
+                        ct.status,
+                        tt.id,
+                         tt.master_user_id,
                        
                        transaction_date,
                        accounting_date,
@@ -533,7 +564,9 @@ class ReportsConfig(AppConfig):
                          
 
                 from transactions_transaction tt
-                where transaction_class_id in (5) and NOT is_canceled
+                left join transactions_complextransaction as ct
+                        ON complex_transaction_id = ct.id
+                where transaction_class_id in (5) and NOT tt.is_canceled AND ct.status = 1
                 )         
             """
 
