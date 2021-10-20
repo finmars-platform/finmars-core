@@ -344,8 +344,10 @@ class FillPricesBrokerBloombergProcess(object):
 
                 try:
                     accrued_price = record.instrument.get_accrued_price(record.date)
-                except Exception:
+                except Exception as e:
                     has_error = True
+
+                    _l.debug('record.instrument.get_accrued_price e %s' % e)
 
                     try:
 
