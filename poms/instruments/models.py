@@ -1103,10 +1103,14 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         if accrual is None:
             return 0.0
 
+
+        accrual_start_date = datetime.date(datetime.strptime(accrual.accrual_start_date, '%Y-%m-%d'))
+        first_payment_date = datetime.date(datetime.strptime(accrual.first_payment_date, '%Y-%m-%d'))
+
         factor = coupon_accrual_factor(accrual_calculation_schedule=accrual,
-                                       dt1=accrual.accrual_start_date,
+                                       dt1=accrual_start_date,
                                        dt2=price_date,
-                                       dt3=accrual.first_payment_date)
+                                       dt3=first_payment_date)
 
         return accrual.accrual_size * factor
 
