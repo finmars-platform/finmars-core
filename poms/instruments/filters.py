@@ -11,6 +11,10 @@ from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 
 
+
+import logging
+_l = logging.getLogger('poms.instruments')
+
 class OwnerByInstrumentFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         instruments = Instrument.objects.filter(master_user=request.user.master_user)
@@ -115,12 +119,19 @@ class InstrumentSelectSpecialQueryFilter(BaseFilterBackend):
             instrument_type_user_code.add(Q(instrument_type__user_code__icontains=piece), Q.AND)
 
 
+        # _l.info('query %s' % query)
+
+
+        options.add(Q(name__icontains=query), Q.OR)
+        options.add(Q(user_code__icontains=query), Q.OR)
+        options.add(Q(short_name__icontains=query), Q.OR)
+
         options.add(name_q, Q.OR)
         options.add(user_code_q, Q.OR)
         options.add(short_name_q, Q.OR)
         options.add(reference_for_pricing_q, Q.OR)
         # options.add(instrument_type_name, Q.AND)
-        options.add(instrument_type_user_code, Q.AND)
+        options.add(instrument_type_user_code, Q.OR)
 
         if instrument_type:
             options.add(Q(instrument_type__user_code=instrument_type), Q.AND)

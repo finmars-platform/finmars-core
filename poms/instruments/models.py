@@ -1118,7 +1118,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                                        dt2=price_date,
                                        dt3=first_payment_date)
 
-        return accrual.accrual_size * factor
+        return float(accrual.accrual_size) * factor
 
     def get_coupon(self, cpn_date, with_maturity=False, factor=False):
 
