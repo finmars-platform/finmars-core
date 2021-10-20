@@ -497,7 +497,7 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
     cpn = 0.0
 
     try:
-        cpn = int(accrual.accrual_size)
+        cpn = float(accrual.accrual_size)
     except Exception as e:
         cpn = 0.0
 
