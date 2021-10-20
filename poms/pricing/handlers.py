@@ -1,4 +1,5 @@
 import time
+import traceback
 
 from django.db.models import Q
 
@@ -348,6 +349,7 @@ class FillPricesBrokerBloombergProcess(object):
                     has_error = True
 
                     _l.debug('record.instrument.get_accrued_price e %s' % e)
+                    _l.debug(traceback.print_exc())
 
                     try:
 
