@@ -988,6 +988,8 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
         accruals = sorted(accruals, key=lambda x: datetime.date(datetime.strptime(x.accrual_start_date, '%Y-%m-%d')))
 
+        _l.info('get_accrual_calculation_schedules_all after sort')
+
         a = None
         for next_a in accruals:
             if a is not None:
@@ -1015,7 +1017,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         accruals = self.get_accrual_calculation_schedules_all()
         accrual = None
         for a in accruals:
-            if a.accrual_start_date <= d:
+            if datetime.date(datetime.strptime(a.accrual_start_date, '%Y-%m-%d')) <= d:
                 accrual = a
 
         return accrual
