@@ -353,6 +353,8 @@ def serialize_transaction_report_item(item):
     result['complex_transaction.text'] = item['complex_transaction_text']
     result['complex_transaction.date'] = item['complex_transaction_date']
     result['complex_transaction.transaction_unique_code'] = item['transaction_unique_code']
+    result['complex_transaction.is_canceled'] = item['is_canceled']
+    result['complex_transaction.is_locked'] = item['is_locked']
 
     result['complex_transaction.user_text_1'] = item['complex_transaction_user_text_1']
     result['complex_transaction.user_text_2'] = item['complex_transaction_user_text_2']
