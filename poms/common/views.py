@@ -206,7 +206,7 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
         filtered_qs = handle_filters(filtered_qs, filter_settings, master_user, content_type)
 
         if global_table_search:
-            filtered_qs = handle_global_table_search(filtered_qs, global_table_search, self.serializer_class.Meta.model)
+            filtered_qs = handle_global_table_search(filtered_qs, global_table_search, self.serializer_class.Meta.model, content_type)
 
         # print('len after handle filters %s' % len(filtered_qs))
 
@@ -324,7 +324,7 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
 
 
         if global_table_search:
-            queryset = handle_global_table_search(queryset, global_table_search, self.serializer_class.Meta.model)
+            queryset = handle_global_table_search(queryset, global_table_search, self.serializer_class.Meta.model, content_type)
 
         page = self.paginator.post_paginate_queryset(queryset, request)
 

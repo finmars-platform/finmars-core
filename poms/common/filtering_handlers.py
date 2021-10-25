@@ -1026,7 +1026,7 @@ def handle_filters(qs, filter_settings, master_user, content_type):
     return qs
 
 
-def handle_global_table_search(qs, global_table_search, model):
+def handle_global_table_search(qs, global_table_search, model, content_type):
 
     start_time = time.time()
 
@@ -1071,15 +1071,18 @@ def handle_global_table_search(qs, global_table_search, model):
     for query in float_queries:
         q = q | query
 
-    string_attr_query = Q(**{'attributes__value_float__icontains': global_table_search})
-    date_attr_query = Q(**{'attributes__value_date__icontains': global_table_search})
-    float_attr_query = Q(**{'attributes__value_float__icontains': global_table_search})
-    classifier_attr_query = Q(**{'attributes__classifier__name__icontains': global_table_search})
 
-    q = q | classifier_attr_query
-    q = q | float_attr_query
-    q = q | string_attr_query
-    q = q | date_attr_query
+    if content_type.model not in ['currencyhistory', 'pricehistory',  'transaction', 'currencyhistoryerror', 'pricehistoryerror']:
+
+        string_attr_query = Q(**{'attributes__value_float__icontains': global_table_search})
+        date_attr_query = Q(**{'attributes__value_date__icontains': global_table_search})
+        float_attr_query = Q(**{'attributes__value_float__icontains': global_table_search})
+        classifier_attr_query = Q(**{'attributes__classifier__name__icontains': global_table_search})
+
+        q = q | classifier_attr_query
+        q = q | float_attr_query
+        q = q | string_attr_query
+        q = q | date_attr_query
 
     qs = qs.filter(q).distinct()
 
