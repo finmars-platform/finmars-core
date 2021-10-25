@@ -88,7 +88,7 @@ class InstrumentAdmin(AbstractModelAdmin):
     list_select_related = ['master_user', 'instrument_type', 'pricing_currency', 'accrued_currency']
     list_filter = ['instrument_type__instrument_class', 'is_deleted', ]
     search_fields = ['id', 'user_code', 'name']
-    raw_id_fields = ['master_user', 'instrument_type', 'pricing_currency', 'accrued_currency', 'price_download_scheme']
+    raw_id_fields = ['master_user', 'instrument_type', 'pricing_currency', 'accrued_currency']
     inlines = [
         # InstrumentAttributeInline,
         ManualPricingFormulaInline,

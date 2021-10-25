@@ -754,8 +754,8 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                                                  verbose_name=ugettext_lazy('short underlying exposure'),
                                                  on_delete=models.SET_NULL)
 
-    price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.PROTECT, null=True,
-                                              blank=True, verbose_name=ugettext_lazy('price download scheme'))
+    # price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.PROTECT, null=True,
+    #                                           blank=True, verbose_name=ugettext_lazy('price download scheme'))
     maturity_date = models.DateField(default=date.max,  null=True, verbose_name=ugettext_lazy('maturity date'))
     maturity_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('maturity price'))
 

@@ -21,7 +21,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
 
 from poms.audit.mixins import HistoricalModelMixin
-from poms.common.filtering_handlers import handle_filters
+from poms.common.filtering_handlers import handle_filters, handle_global_table_search
 from poms.common.filters import ByIdFilterBackend, ByIsDeletedFilterBackend, OrderingPostFilter, \
     ByIsEnabledFilterBackend, EntitySpecificFilter
 from poms.common.mixins import BulkModelMixin, DestroyModelFakeMixin, UpdateModelMixinExt
@@ -167,7 +167,9 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
             if is_enabled == 'true':
                 filtered_qs = filtered_qs.filter(is_enabled=True)
 
+
         filtered_qs = handle_groups(filtered_qs, request, self.get_queryset(), content_type)
+
 
         page = self.paginate_queryset(filtered_qs)
 
@@ -189,6 +191,7 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
         master_user = request.user.master_user
         content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
         filter_settings = request.data.get('filter_settings', None)
+        global_table_search = request.data.get('global_table_search', '')
 
         qs = self.get_queryset()
 
@@ -201,6 +204,9 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
         # print('len before handle filters %s' % len(filtered_qs))
 
         filtered_qs = handle_filters(filtered_qs, filter_settings, master_user, content_type)
+
+        if global_table_search:
+            filtered_qs = handle_global_table_search(filtered_qs, global_table_search, self.serializer_class.Meta.model)
 
         # print('len after handle filters %s' % len(filtered_qs))
 
@@ -287,6 +293,7 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         start_time = time.perf_counter()
 
         filter_settings = request.data.get('filter_settings', None)
+        global_table_search = request.data.get('global_table_search', '')
         content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
         master_user = request.user.master_user
 
@@ -314,6 +321,10 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         _l.debug('filtered_list apply filters done: %s', "{:3.3f}".format(time.perf_counter() - filters_st))
 
         page_st = time.perf_counter()
+
+
+        if global_table_search:
+            queryset = handle_global_table_search(queryset, global_table_search, self.serializer_class.Meta.model)
 
         page = self.paginator.post_paginate_queryset(queryset, request)
 

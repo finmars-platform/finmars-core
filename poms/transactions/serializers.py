@@ -2690,6 +2690,8 @@ class ComplexTransactionEvSerializer(ModelWithObjectPermissionSerializer, ModelW
             'id', 'master_user',
             'date', 'status', 'code', 'text',
             'is_deleted',
+            
+            'is_locked', 'is_canceled',
 
             'transaction_type', 'transaction_type_object',
 

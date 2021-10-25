@@ -4,7 +4,7 @@ from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from django.db.models import Count, Sum, F, Value, Aggregate
 from django.db.models.functions import Lower
 
-from django.db.models import CharField, Case, When
+from django.db.models import CharField, Case, When, DateField, FloatField, ForeignKey
 from django.db.models.functions import Coalesce
 from django.contrib.contenttypes.models import ContentType
 
@@ -1022,5 +1022,67 @@ def handle_filters(qs, filter_settings, master_user, content_type):
                 qs = add_filter(qs, filter_config)
 
     _l.debug("handle_filters done in %s seconds " % "{:3.3f}".format(time.time() - start_time))
+
+    return qs
+
+
+def handle_global_table_search(qs, global_table_search, model):
+
+    start_time = time.time()
+
+    q = Q()
+
+    relation_fields = [f for f in model._meta.fields if isinstance(f, ForeignKey) and f.name != 'master_user']
+
+    _l.info('relation_fields %s' % relation_fields)
+
+    relation_queries_short_name = [Q(**{f.name + '__short_name__icontains': global_table_search}) for f in relation_fields]
+
+    for query in relation_queries_short_name:
+        q = q | query
+
+    relation_queries_name = [Q(**{f.name + '__name__icontains': global_table_search}) for f in relation_fields]
+
+    for query in relation_queries_name:
+        q = q | query
+
+    relation_queries_user_code = [Q(**{f.name + '__user_code__icontains': global_table_search}) for f in relation_fields]
+
+    for query in relation_queries_user_code:
+        q = q | query
+
+    char_fields = [f for f in model._meta.fields if isinstance(f, CharField)]
+    char_queries = [Q(**{f.name + '__icontains': global_table_search}) for f in char_fields]
+
+
+    for query in char_queries:
+        q = q | query
+
+
+    date_fields = [f for f in model._meta.fields if isinstance(f, DateField)]
+    date_queries = [Q(**{f.name + '__icontains': global_table_search}) for f in date_fields]
+
+    for query in date_queries:
+        q = q | query
+
+    float_fields = [f for f in model._meta.fields if isinstance(f, FloatField)]
+    float_queries = [Q(**{f.name + '__icontains': global_table_search}) for f in float_fields]
+
+    for query in float_queries:
+        q = q | query
+
+    string_attr_query = Q(**{'attributes__value_float__icontains': global_table_search})
+    date_attr_query = Q(**{'attributes__value_date__icontains': global_table_search})
+    float_attr_query = Q(**{'attributes__value_float__icontains': global_table_search})
+    classifier_attr_query = Q(**{'attributes__classifier__name__icontains': global_table_search})
+
+    q = q | classifier_attr_query
+    q = q | float_attr_query
+    q = q | string_attr_query
+    q = q | date_attr_query
+
+    qs = qs.filter(q).distinct()
+
+    _l.debug("handle_global_table_search done in %s seconds " % "{:3.3f}".format(time.time() - start_time))
 
     return qs

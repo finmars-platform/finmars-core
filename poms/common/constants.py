@@ -7,6 +7,7 @@ DATE = 40
 BOOLEAN = 50
 SYSTEM_ATTRIBUTE = 60
 USER_ATTRIBUTE = 70
+DATETIME = 80
 
 
 RELATION = 100
@@ -23,7 +24,8 @@ SYSTEM_VALUE_TYPES = (
     (USER_ATTRIBUTE, ugettext_lazy('User Attribute')),
     (RELATION, ugettext_lazy('Relation')),
     (SELECTOR, ugettext_lazy('Selector')),
-    (BUTTON, ugettext_lazy('Button'))
+    (BUTTON, ugettext_lazy('Button')),
+    (DATETIME, ugettext_lazy('Datetime'))
 )
 
 class SystemValueType():
@@ -34,6 +36,7 @@ class SystemValueType():
     BOOLEAN = 50
     SYSTEM_ATTRIBUTE = 60
     USER_ATTRIBUTE = 70
+    DATETIME = 80
 
 
     RELATION = 100
