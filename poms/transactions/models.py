@@ -1431,6 +1431,7 @@ class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
 
         cache.clear()
 
+        print("Complex Transaction Save status %s" % self.status)
         print("Complex Transaction Save text %s" % self.text)
         print("Complex Transaction Save date %s" % self.date)
         print("Complex Transaction Save transaction_unique_code %s" % self.transaction_unique_code)

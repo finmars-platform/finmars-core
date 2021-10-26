@@ -2579,7 +2579,7 @@ class ComplexTransactionSimpleSerializer(ModelWithObjectPermissionSerializer, Mo
     class Meta:
         model = ComplexTransaction
         fields = [
-            'id', 'is_locked', 'is_canceled',
+            'id', 'is_locked', 'is_canceled', 'status'
         ]
 
     def update_base_transactions_permissions(self, instance, complex_transaction_permissions):
@@ -2620,7 +2620,7 @@ class ComplexTransactionSimpleSerializer(ModelWithObjectPermissionSerializer, Mo
         pass
 
     def update(self, instance, validated_data):
-        # print('here? %s' % validated_data)
+        print('here? %s' % validated_data)
         # print('instance? %s' % instance)
 
         transactions = Transaction.objects.filter(complex_transaction=instance.id)
