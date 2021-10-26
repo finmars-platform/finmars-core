@@ -467,7 +467,7 @@ class InstrumentFilterSet(FilterSet):
     user_text_3 = CharFilter()
     reference_for_pricing = CharFilter()
     daily_pricing_model = django_filters.ModelMultipleChoiceFilter(queryset=DailyPricingModel.objects)
-    price_download_scheme = ModelExtMultipleChoiceFilter(model=PriceDownloadScheme, field_name='scheme_name')
+    # price_download_scheme = ModelExtMultipleChoiceFilter(model=PriceDownloadScheme, field_name='scheme_name')
     maturity_date = django_filters.DateFromToRangeFilter()
     tag = TagFilter(model=Instrument)
     member = ObjectPermissionMemberFilter(object_permission_model=Instrument)
@@ -488,8 +488,8 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
         'accrued_currency',
         'payment_size_detail',
         'daily_pricing_model',
-        'price_download_scheme',
-        'price_download_scheme__provider',
+        # 'price_download_scheme',
+        # 'price_download_scheme__provider',
     ).prefetch_related(
         # Prefetch(
         #     'attributes',
@@ -888,8 +888,8 @@ class InstrumentEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Custo
         'accrued_currency',
         'payment_size_detail',
         'daily_pricing_model',
-        'price_download_scheme',
-        'price_download_scheme__provider',
+        # 'price_download_scheme',
+        # 'price_download_scheme__provider',
     ).prefetch_related(
         # Prefetch(
         #     'attributes',

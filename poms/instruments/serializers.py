@@ -838,8 +838,8 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
     payment_size_detail_object = PaymentSizeDetailSerializer(source='payment_size_detail', read_only=True)
     daily_pricing_model_object = DailyPricingModelSerializer(source='daily_pricing_model', read_only=True)
     pricing_condition_object = PricingConditionSerializer(source='pricing_condition', read_only=True)
-    price_download_scheme = PriceDownloadSchemeField(allow_null=True, required=False)
-    price_download_scheme_object = serializers.PrimaryKeyRelatedField(source='price_download_scheme', read_only=True)
+    # price_download_scheme = PriceDownloadSchemeField(allow_null=True, required=False)
+    # price_download_scheme_object = serializers.PrimaryKeyRelatedField(source='price_download_scheme', read_only=True)
 
     manual_pricing_formulas = serializers.PrimaryKeyRelatedField(many=True, required=False, allow_null=True,
                                                                  read_only=True)
@@ -870,7 +870,6 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
             'reference_for_pricing',
             'daily_pricing_model', 'daily_pricing_model_object',
             'pricing_condition', 'pricing_condition_object',
-            'price_download_scheme', 'price_download_scheme_object',
             'maturity_date', 'maturity_price',
             'manual_pricing_formulas', 'accrual_calculation_schedules', 'factor_schedules', 'event_schedules',
             'is_enabled', 'pricing_policies',
@@ -902,8 +901,8 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
 
 
         from poms.integrations.serializers import PriceDownloadSchemeViewSerializer
-        self.fields['price_download_scheme_object'] = PriceDownloadSchemeViewSerializer(source='price_download_scheme',
-                                                                                        read_only=True)
+        # self.fields['price_download_scheme_object'] = PriceDownloadSchemeViewSerializer(source='price_download_scheme',
+        #                                                                                 read_only=True)
 
         self.fields['manual_pricing_formulas'] = ManualPricingFormulaSerializer(many=True, required=False,
                                                                                 allow_null=True)

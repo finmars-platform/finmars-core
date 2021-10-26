@@ -560,8 +560,8 @@ class BaseReportBuilder:
                 'accrued_currency',
                 'payment_size_detail',
                 'daily_pricing_model',
-                'price_download_scheme',
-                'price_download_scheme__provider',
+                # 'price_download_scheme',
+                # 'price_download_scheme__provider',
                 get_attributes_prefetch(),
                 # get_tag_prefetch(),
                 *get_permissions_prefetch_lookups(
@@ -1039,8 +1039,8 @@ class BaseReportBuilder:
             'accrued_currency',
             'payment_size_detail',
             'daily_pricing_model',
-            'price_download_scheme',
-            'price_download_scheme__provider',
+            # 'price_download_scheme',
+            # 'price_download_scheme__provider',
         ).prefetch_related(
             # get_attributes_prefetch_simple(),
             'attributes',

@@ -3588,8 +3588,8 @@ class ReportBuilder(object):
             'accrued_currency',
             'payment_size_detail',
             'daily_pricing_model',
-            'price_download_scheme',
-            'price_download_scheme__provider',
+            # 'price_download_scheme',
+            # 'price_download_scheme__provider',
             get_attributes_prefetch(),
             get_tag_prefetch(),
             # *get_permissions_prefetch_lookups(
@@ -3602,8 +3602,8 @@ class ReportBuilder(object):
         ccys = Currency.objects.filter(master_user=self.instance.master_user).prefetch_related(
             'master_user',
             'daily_pricing_model',
-            'price_download_scheme',
-            'price_download_scheme__provider',
+            # 'price_download_scheme',
+            # 'price_download_scheme__provider',
             get_attributes_prefetch(),
             get_tag_prefetch()
         ).in_bulk(ccys)

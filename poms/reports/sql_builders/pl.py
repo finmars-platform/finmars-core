@@ -3384,8 +3384,8 @@ class PLReportBuilderSql:
             'accrued_currency',
             'payment_size_detail',
             'daily_pricing_model',
-            'price_download_scheme',
-            'price_download_scheme__provider',
+            # 'price_download_scheme',
+            # 'price_download_scheme__provider',
         ).prefetch_related(
             'attributes',
             'attributes__attribute_type',
