@@ -2,6 +2,19 @@
 
 from django.db import migrations
 
+def fix_transactions(apps, schema_editor):
+    ComplexTransactionStatus = apps.get_model("transactions", "ComplexTransactionStatus")
+
+    ComplexTransactionStatus.objects.create(id=1, name="Production", user_code="PRODUCTION")
+    ComplexTransactionStatus.objects.create(id=2, name="Pending", user_code="PENDING")
+    ComplexTransactionStatus.objects.create(id=3, name="Ignore", user_code="IGNORE")
+
+
+def rev(apps, schema_editor):
+    # the reverse goes here if you want to copy company names into customer again if you migrate backwards.
+    pass
+
+
 
 class Migration(migrations.Migration):
 
@@ -14,5 +27,6 @@ class Migration(migrations.Migration):
             model_name='complextransaction',
             old_name='status',
             new_name='status_old',
-        )
+        ),
+        migrations.RunPython(fix_transactions, rev)
     ]

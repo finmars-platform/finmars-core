@@ -5,11 +5,6 @@ import django.db.models.deletion
 
 def fix_transactions(apps, schema_editor):
     ComplexTransaction = apps.get_model("transactions", "ComplexTransaction")
-    ComplexTransactionStatus = apps.get_model("transactions", "ComplexTransactionStatus")
-
-    ComplexTransactionStatus.objects.create(name="Production", user_code="PRODUCTION")
-    ComplexTransactionStatus.objects.create(name="Pending", user_code="PENDING")
-    ComplexTransactionStatus.objects.create(name="Ignore", user_code="IGNORE")
 
     for complexTransaction in ComplexTransaction.objects.all():
         complexTransaction.status_id = complexTransaction.status_old
