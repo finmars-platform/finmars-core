@@ -18,7 +18,8 @@ from poms.reports.fields import TransactionReportCustomFieldField
 from poms.reports.serializers import TransactionReportCustomFieldSerializer
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
 from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, Strategy3ViewSerializer
-from poms.transactions.serializers import TransactionClassSerializer, ComplexTransactionSerializer
+from poms.transactions.serializers import TransactionClassSerializer, ComplexTransactionSerializer, \
+    ComplexTransactionStatusSerializer
 from poms.users.fields import MasterUserField, HiddenMemberField
 
 import time
@@ -131,6 +132,7 @@ class TransactionReportSerializer(serializers.Serializer):
 
     items = TransactionReportItemSerializer(many=True, read_only=True)
     item_transaction_classes = TransactionClassSerializer(many=True, read_only=True)
+    item_complex_transaction_status = ComplexTransactionStatusSerializer(many=True, read_only=True)
     item_complex_transactions = ReportComplexTransactionSerializer(many=True, read_only=True)
     # item_complex_transactions = ComplexTransactionSerializer(many=True, read_only=True)
     # item_transaction_types = TransactionTypeViewSerializer(source='transaction_types', many=True, read_only=True)
@@ -348,7 +350,7 @@ def serialize_transaction_report_item(item):
 
     # Complex Transaction Fields
 
-    result['complex_transaction.status'] = item['complex_transaction_status']
+    # result['complex_transaction.status'] = item['complex_transaction_status']
     result['complex_transaction.code'] = item['complex_transaction_code']
     result['complex_transaction.text'] = item['complex_transaction_text']
     result['complex_transaction.date'] = item['complex_transaction_date']
@@ -412,6 +414,8 @@ def serialize_transaction_report_item(item):
     result['complex_transaction.transaction_type.short_name'] = item['transaction_type_short_name']
     result['complex_transaction.transaction_type.group'] = item['transaction_type_group_name']
 
+    result['complex_transaction.status.name'] = item['complex_transaction_status_name']
+
     return result
 
 
@@ -468,6 +472,7 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
     items = serializers.SerializerMethodField()
     item_transaction_classes = TransactionClassSerializer(many=True, read_only=True)
     item_complex_transactions = ReportComplexTransactionSerializer(many=True, read_only=True)
+    item_complex_transaction_status = ComplexTransactionStatusSerializer(many=True, read_only=True)
     # item_complex_transactions = ComplexTransactionSerializer(many=True, read_only=True)
     # item_transaction_types = TransactionTypeViewSerializer(source='transaction_types', many=True, read_only=True)
     item_instruments = ReportInstrumentSerializer(many=True, read_only=True)

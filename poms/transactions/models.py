@@ -70,6 +70,24 @@ class TransactionClass(AbstractClassModel):
         verbose_name_plural = ugettext_lazy('transaction classes')
 
 
+class ComplexTransactionStatus(AbstractClassModel):
+
+    PRODUCTION = 1
+    PENDING = 2
+    IGNORE = 3
+
+    CLASSES = (
+        (PRODUCTION, 'PRODUCTION', ugettext_lazy("Production")),
+        (PENDING, 'PENDING', ugettext_lazy("Pending")),
+        (IGNORE, 'IGNORE', ugettext_lazy("Ignore")),
+
+    )
+
+    class Meta(AbstractClassModel.Meta):
+        verbose_name = ugettext_lazy('complex transaction status')
+        verbose_name_plural = ugettext_lazy('complex transaction status')
+
+
 class ActionClass(AbstractClassModel):
     CREATE_INSTRUMENT = 1
     CREATE_INSTRUMENT_PARAMETER = 2
@@ -1285,8 +1303,11 @@ class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
     error_code = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=ugettext_lazy('error code'))
 
     date = models.DateField(default=date_now, db_index=True, verbose_name=ugettext_lazy("date"))
-    status = models.PositiveSmallIntegerField(default=PRODUCTION, choices=STATUS_CHOICES, db_index=True,
+    status_old = models.PositiveSmallIntegerField(default=PRODUCTION, choices=STATUS_CHOICES, db_index=True,
                                               verbose_name=ugettext_lazy('status'))
+    status = models.ForeignKey(ComplexTransactionStatus, on_delete=models.PROTECT, default=ComplexTransactionStatus.PRODUCTION,
+                               verbose_name=ugettext_lazy("status"))
+
 
     visibility_status = models.PositiveSmallIntegerField(default=SHOW_PARAMETERS, choices=VISIBILITY_STATUS_CHOICES, db_index=True,
                                                            verbose_name=ugettext_lazy('visibility_status'))

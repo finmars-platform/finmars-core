@@ -11,7 +11,7 @@ from poms.reports.builders.balance_item import Report
 from poms.reports.builders.base_builder import BaseReportBuilder
 from poms.reports.models import BalanceReportCustomField, TransactionReportCustomField
 from poms.reports.sql_builders.helpers import dictfetchall
-from poms.transactions.models import ComplexTransaction, TransactionClass
+from poms.transactions.models import ComplexTransaction, TransactionClass, ComplexTransactionStatus
 from poms.users.models import EcosystemDefault
 
 _l = logging.getLogger('poms.reports')
@@ -57,7 +57,7 @@ class TransactionReportBuilderSql:
                   -- transaction fields
                   t.*,
                   -- complex transaction fields
-                  tc.status as complex_transaction_status,
+                  tc.status_id as complex_transaction_status,
                   tc.code as complex_transaction_code,
                   tc.text as complex_transaction_text,
                   tc.date as complex_transaction_date,
@@ -119,12 +119,15 @@ class TransactionReportBuilderSql:
                   tt.name as transaction_type_name,
                   tt.short_name as transaction_type_short_name,
                   -- complex transaction transaction type group fields
-                  tt2.name as transaction_type_group_name
+                  tt2.name as transaction_type_group_name,
+                  
+                  cts.name as complex_transaction_status_name
                 FROM transactions_transaction as t
                 INNER JOIN transactions_complextransaction tc on t.complex_transaction_id = tc.id
                 INNER JOIN transactions_transactiontype tt on tc.transaction_type_id = tt.id
                 INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id
-                WHERE t.transaction_date >= %s AND t.transaction_date <= %s AND t.master_user_id = %s AND tc.status IN %s
+                INNER JOIN transactions_complextransactionstatus cts on tc.status_id = cts.id
+                WHERE t.transaction_date >= %s AND t.transaction_date <= %s AND t.master_user_id = %s AND tc.status_id IN %s
                 
                 
             """
@@ -214,6 +217,12 @@ class TransactionReportBuilderSql:
 
         self.instance.item_transaction_classes = TransactionClass.objects.all()
 
+
+    def add_data_items_complex_transaction_status(self):
+
+        self.instance.item_complex_transaction_status = ComplexTransactionStatus.objects.all()
+
+
     def add_data_items(self):
 
         instance_relations_st = time.perf_counter()
@@ -258,6 +267,7 @@ class TransactionReportBuilderSql:
         self.add_data_items_accounts(account_ids)
         self.add_data_items_currencies(currencies_ids)
         self.add_data_items_transaction_classes()
+        self.add_data_items_complex_transaction_status()
         # self.add_data_items_complex_transactions(complex_transactions_ids)  # too slow
 
         self.instance.custom_fields = TransactionReportCustomField.objects.filter(master_user=self.instance.master_user)

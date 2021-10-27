@@ -15,9 +15,10 @@ class TransactionsConfig(AppConfig):
 
     def update_transaction_classes(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
         from poms.common.utils import db_class_check_data
-        from .models import TransactionClass, ActionClass, NotificationClass, EventClass, PeriodicityGroup
+        from .models import TransactionClass, ActionClass, NotificationClass, EventClass, PeriodicityGroup, ComplexTransactionStatus
 
         db_class_check_data(TransactionClass, verbosity, using)
+        db_class_check_data(ComplexTransactionStatus, verbosity, using)
         db_class_check_data(ActionClass, verbosity, using)
         db_class_check_data(NotificationClass, verbosity, using)
         db_class_check_data(EventClass, verbosity, using)

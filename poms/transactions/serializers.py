@@ -52,7 +52,7 @@ from poms.transactions.models import TransactionClass, Transaction, TransactionT
     TransactionTypeActionInstrumentFactorSchedule, TransactionTypeActionInstrumentManualPricingFormula, \
     TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentEventSchedule, \
     TransactionTypeActionInstrumentEventScheduleAction, TransactionTypeActionExecuteCommand, \
-    TransactionTypeInputSettings
+    TransactionTypeInputSettings, ComplexTransactionStatus
 from poms.users.fields import MasterUserField, HiddenMemberField
 
 from django.core.validators import RegexValidator
@@ -77,6 +77,11 @@ class NotificationClassSerializer(PomsClassSerializer):
 class TransactionClassSerializer(PomsClassSerializer):
     class Meta(PomsClassSerializer.Meta):
         model = TransactionClass
+
+
+class ComplexTransactionStatusSerializer(PomsClassSerializer):
+    class Meta(PomsClassSerializer.Meta):
+        model = ComplexTransactionStatus
 
 
 class TransactionTypeGroupSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
