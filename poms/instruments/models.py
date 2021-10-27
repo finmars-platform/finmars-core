@@ -1256,14 +1256,14 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
             pp = ipp.pricing_policy
 
-            user_code_scheme = 'pricing_policy_' + pp.user_code + '_scheme'
-            user_code_parameter = 'pricing_policy_' + pp.user_code + '_parameter'
-            user_code_notes = 'pricing_policy_' + pp.user_code + '_notes'
+            user_code_scheme = 'pricing_policy_scheme_' +  pp.user_code
+            user_code_parameter = 'pricing_policy_parameter_' + pp.user_code
+            user_code_notes = 'pricing_policy_notes_' + pp.user_code
 
 
-            name_scheme = 'Pricing Policy ' + pp.user_code + ' Scheme'
-            name_parameter = 'Pricing Policy ' + pp.user_code + ' Parameter'
-            name_notes = 'Pricing Policy ' + pp.user_code + ' Notes'
+            name_scheme = 'Pricing Policy Scheme ' + pp.user_code
+            name_parameter = 'Pricing Policy Parameter ' + pp.user_code
+            name_notes = 'Pricing Policy Notes ' + pp.user_code
 
             attr_type_scheme = None
             attr_type_parameter = None
