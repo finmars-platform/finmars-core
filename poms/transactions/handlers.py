@@ -107,10 +107,10 @@ class TransactionTypeProcess(object):
         self.complex_transaction_status = complex_transaction_status
 
         if complex_transaction_status is not None:
-            self.complex_transaction.status = complex_transaction_status
+            self.complex_transaction.status_id = complex_transaction_status
 
         _l.info('complex_transaction_status %s' % complex_transaction_status)
-        _l.info('self.complex_transaction.status %s' % self.complex_transaction.status)
+        _l.info('self.complex_transaction.status %s' % self.complex_transaction.status_id)
 
         # if complex_transaction_date is not None:
         #     self.complex_transaction.date = complex_transaction_date
@@ -1823,7 +1823,7 @@ class TransactionTypeProcess(object):
             _l.debug('execute_uniqueness_expression default behavior' )
 
             if self.complex_transaction.transaction_type.transaction_unique_code_expr and \
-                    (self.complex_transaction.status == ComplexTransaction.PRODUCTION or self.complex_transaction.status == ComplexTransaction.IGNORE) \
+                    (self.complex_transaction.status_id == ComplexTransaction.PRODUCTION or self.complex_transaction.status_id == ComplexTransaction.IGNORE) \
                     and not self.complex_transaction.is_canceled:
 
                 ctrn = formula.value_prepare(self.complex_transaction)
@@ -1961,7 +1961,7 @@ class TransactionTypeProcess(object):
             self.complex_transaction_errors.append(complex_transaction_errors)
 
         if self.complex_transaction_status is not None:
-            self.complex_transaction.status = self.complex_transaction_status
+            self.complex_transaction.status_id = self.complex_transaction_status
 
         _l.debug("complex_transaction.date %s" % self.complex_transaction.date)
         _l.debug("complex_transaction.code %s" % self.complex_transaction.code)
@@ -1994,7 +1994,7 @@ class TransactionTypeProcess(object):
             for trn in self.transactions:
                 trn.calc_cash_by_formulas()
 
-        if self.complex_transaction.status == ComplexTransaction.PENDING:
+        if self.complex_transaction.status_id == ComplexTransaction.PENDING:
             self.complex_transaction.transactions.all().delete()
 
         if self.complex_transaction.transaction_type.type == TransactionType.TYPE_PROCEDURE:
