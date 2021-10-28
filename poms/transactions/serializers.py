@@ -3121,8 +3121,7 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
 
     date = serializers.DateField(required=False, allow_null=True)
     code = serializers.IntegerField(default=0, initial=0, min_value=0, required=False)
-    status = serializers.ChoiceField(default=ComplexTransaction.PRODUCTION, initial=ComplexTransaction.PRODUCTION,
-                                     required=False, choices=ComplexTransaction.STATUS_CHOICES)
+
 
     visibility_status = serializers.ChoiceField(default=ComplexTransaction.SHOW_PARAMETERS,
                                                 initial=ComplexTransaction.SHOW_PARAMETERS,
