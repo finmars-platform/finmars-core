@@ -303,6 +303,9 @@ def serialize_transaction_report_item(item):
     result = {
         "id": item["id"],
 
+        "is_locked": item["is_locked"],
+        "is_canceled": item["is_canceled"],
+        "notes": item["notes"],
         "transaction_code": item["transaction_code"],
         "transaction_class": item["transaction_class_id"],
         "complex_transaction": item["complex_transaction_id"],

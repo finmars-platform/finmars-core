@@ -407,19 +407,41 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 configuration["body"].append(reference_tables)
 
             if self.access_table['obj_attrs.attributetype']:
-                configuration["body"].append(portfolio_attribute_types)
-                configuration["body"].append(currency_attribute_types)
-                configuration["body"].append(account_attribute_types)
-                configuration["body"].append(account_type_attribute_types)
-                configuration["body"].append(responsible_attribute_types)
-                configuration["body"].append(counterparty_attribute_types)
-                configuration["body"].append(instrument_attribute_types)
-                configuration["body"].append(instrument_type_attribute_types)
-                configuration["body"].append(transaction_type_attribute_types)
+                if portfolio_attribute_types['count']:
+                    configuration["body"].append(portfolio_attribute_types)
 
-            configuration["body"].append(strategy1_attribute_types)
-            configuration["body"].append(strategy2_attribute_types)
-            configuration["body"].append(strategy3_attribute_types)
+                if currency_attribute_types['count']:
+                    configuration["body"].append(currency_attribute_types)
+
+                if account_attribute_types['count']:
+                    configuration["body"].append(account_attribute_types)
+
+                if account_type_attribute_types['count']:
+                    configuration["body"].append(account_type_attribute_types)
+
+                if responsible_attribute_types['count']:
+                    configuration["body"].append(responsible_attribute_types)
+
+                if counterparty_attribute_types['count']:
+                    configuration["body"].append(counterparty_attribute_types)
+
+                if instrument_attribute_types['count']:
+                    configuration["body"].append(instrument_attribute_types)
+
+                if instrument_type_attribute_types['count']:
+                    configuration["body"].append(instrument_type_attribute_types)
+
+                if transaction_type_attribute_types['count']:
+                    configuration["body"].append(transaction_type_attribute_types)
+
+            if strategy1_attribute_types['count']:
+                configuration["body"].append(strategy1_attribute_types)
+
+            if strategy2_attribute_types['count']:
+                configuration["body"].append(strategy2_attribute_types)
+
+            if strategy3_attribute_types['count']:
+                configuration["body"].append(strategy3_attribute_types)
 
             configuration["body"].append(balance_report_custom_fields)
             configuration["body"].append(pl_report_custom_fields)
