@@ -386,6 +386,7 @@ def execute_nav_sql(instance, cursor, ecosystem_defaults):
                       instrument_id) as t
                 left join instruments_instrument as i
                 ON instrument_id = i.id
+                where not i.is_deleted and i.is_active = true and i.is_enabled = true
                 ) as grouped
             where position_size != 0
             ) as balance_q
