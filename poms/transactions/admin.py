@@ -19,13 +19,14 @@ from poms.transactions.models import TransactionClass, Transaction, TransactionT
     TransactionTypeGroup, ComplexTransactionInput, TransactionTypeActionInstrumentFactorSchedule, \
     TransactionTypeActionInstrumentManualPricingFormula, TransactionTypeActionInstrumentAccrualCalculationSchedules, \
     TransactionTypeActionInstrumentEventSchedule, TransactionTypeActionInstrumentEventScheduleAction, \
-    TransactionTypeInputSettings
+    TransactionTypeInputSettings, ComplexTransactionStatus
 
 admin.site.register(TransactionClass, ClassModelAdmin)
 admin.site.register(ActionClass, ClassModelAdmin)
 admin.site.register(EventClass, ClassModelAdmin)
 admin.site.register(NotificationClass, ClassModelAdmin)
 admin.site.register(PeriodicityGroup, ClassModelAdmin)
+admin.site.register(ComplexTransactionStatus, ClassModelAdmin)
 
 
 class TransactionTypeGroupAdmin(AbstractModelAdmin):

@@ -23,7 +23,8 @@ class TreeModelAdmin(MPTTModelAdmin):
 #     master_user.admin_order_field = 'attribute_type__master_user'
 
 
-class ClassModelAdmin(TranslationAdmin):
+# class ClassModelAdmin(TranslationAdmin):
+class ClassModelAdmin(admin.ModelAdmin):
     list_display = ['id', 'user_code', 'name']
     ordering = ['id']
     search_fields = ['id', 'user_code', 'name']

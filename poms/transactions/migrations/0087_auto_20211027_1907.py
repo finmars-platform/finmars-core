@@ -5,7 +5,7 @@ from django.db import migrations
 def fix_transactions(apps, schema_editor):
     ComplexTransactionStatus = apps.get_model("transactions", "ComplexTransactionStatus")
 
-    ComplexTransactionStatus.objects.create(id=1, name="Production", user_code="PRODUCTION")
+    ComplexTransactionStatus.objects.create(id=1, name="Booked", user_code="BOOKED")
     ComplexTransactionStatus.objects.create(id=2, name="Pending", user_code="PENDING")
     ComplexTransactionStatus.objects.create(id=3, name="Ignore", user_code="IGNORE")
 

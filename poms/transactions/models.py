@@ -72,12 +72,12 @@ class TransactionClass(AbstractClassModel):
 
 class ComplexTransactionStatus(AbstractClassModel):
 
-    PRODUCTION = 1
+    BOOKED = 1
     PENDING = 2
     IGNORE = 3
 
     CLASSES = (
-        (PRODUCTION, 'PRODUCTION', ugettext_lazy("Production")),
+        (BOOKED, 'BOOKED', ugettext_lazy("Booked")),
         (PENDING, 'PENDING', ugettext_lazy("Pending")),
         (IGNORE, 'IGNORE', ugettext_lazy("Ignore")),
 
@@ -1278,7 +1278,7 @@ class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
     PENDING = 2
     IGNORE = 3
     STATUS_CHOICES = (
-        (PRODUCTION, ugettext_lazy('Production')),
+        (PRODUCTION, ugettext_lazy('Booked')),
         (PENDING, ugettext_lazy('Pending')),
         (IGNORE, ugettext_lazy('Ignore')),
     )
@@ -1305,7 +1305,7 @@ class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
     date = models.DateField(default=date_now, db_index=True, verbose_name=ugettext_lazy("date"))
     status_old = models.PositiveSmallIntegerField(default=PRODUCTION, choices=STATUS_CHOICES, db_index=True,
                                               verbose_name=ugettext_lazy('status'))
-    status = models.ForeignKey(ComplexTransactionStatus, on_delete=models.PROTECT, default=ComplexTransactionStatus.PRODUCTION,
+    status = models.ForeignKey(ComplexTransactionStatus, on_delete=models.PROTECT, default=ComplexTransactionStatus.BOOKED,
                                verbose_name=ugettext_lazy("status"))
 
 

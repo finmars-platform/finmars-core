@@ -1261,9 +1261,9 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             user_code_notes = 'pricing_policy_notes_' + pp.user_code
 
 
-            name_scheme = 'Pricing Policy Scheme ' + pp.user_code
-            name_parameter = 'Pricing Policy Parameter ' + pp.user_code
-            name_notes = 'Pricing Policy Notes ' + pp.user_code
+            name_scheme = 'Pricing Policy Scheme: ' + pp.user_code
+            name_parameter = 'Pricing Policy Parameter: ' + pp.user_code
+            name_notes = 'Pricing Policy Notes: ' + pp.user_code
 
             attr_type_scheme = None
             attr_type_parameter = None
