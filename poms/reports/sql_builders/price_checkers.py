@@ -695,7 +695,14 @@ class PriceHistoryCheckerSql:
 
             for item in positions:
                 if item['user_code'] != '-' and item['name'] != '-':
-                    self.instance.items.append(item)
+
+                    item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
+
+                    if item['type'] == 'missing_principal_pricing_history':
+                        if item['position_size']:
+                            self.instance.items.append(item)
+                    else:
+                        self.instance.items.append(item)
 
             # self.instance.items = self.instance.items + positions
 
