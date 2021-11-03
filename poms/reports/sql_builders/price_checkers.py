@@ -397,6 +397,7 @@ def execute_nav_sql(instance, cursor, ecosystem_defaults):
             (instrument_id) as id,
             name,
             user_code,
+            position_size,
             ('missing_principal_pricing_history') as type
         from nav_positions WHERE instrument_principal_price ISNULL and instrument_accrued_price ISNULL 
         
@@ -406,6 +407,7 @@ def execute_nav_sql(instance, cursor, ecosystem_defaults):
             DISTINCT pricing_currency_id,
             (pricing_currency_id::VARCHAR(255)) as name,
             (pricing_currency_id::VARCHAR(255)) as user_code,
+            (0) as position_size,
             ('missing_instrument_currency_fx_rate') as type
         from nav_positions WHERE instrument_pricing_currency_fx_rate ISNULL 
         
@@ -415,6 +417,7 @@ def execute_nav_sql(instance, cursor, ecosystem_defaults):
             DISTINCT accrued_currency_id,
             (accrued_currency_id::VARCHAR(255)) as name,
             (accrued_currency_id::VARCHAR(255)) as user_code,
+            (0) as position_size,
             ('missing_instrument_currency_fx_rate') as type
         from nav_positions WHERE instrument_accrued_currency_fx_rate ISNULL
         
@@ -424,6 +427,7 @@ def execute_nav_sql(instance, cursor, ecosystem_defaults):
             DISTINCT id,
             name,
             user_code,
+            (0) as position_size,
             ('missing_report_currency_fx_rate') as type
         from currencies_currency ch1
         where 

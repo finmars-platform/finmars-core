@@ -1118,6 +1118,9 @@ def serialize_price_checker_item(item):
     if "id" in item:
         result["id"] = item["id"]
 
+    if "position_size" in item:
+        result["position_size"] = item["position_size"]
+
     if "accounting_date" in item:
         result["accounting_date"] = item["accounting_date"]
 
