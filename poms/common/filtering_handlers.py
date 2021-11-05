@@ -10,7 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 
 import operator
 from functools import reduce
-
+from dateutil.parser import parse
 
 from datetime import date, timedelta, datetime
 
@@ -44,6 +44,7 @@ class FilterType:
     GREATER_EQUAL = 'greater_equal'
     LESS = 'less'
     LESS_EQUAL = 'less_equal'
+    DATE_TREE = 'date_tree'
 
 
 def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
@@ -506,6 +507,26 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
 
         attributes_qs = attributes_qs.filter(Q(**include_null_options))
 
+    if filter_type == FilterType.DATE_TREE and value_type == ValueType.DATE:
+
+        dates = []
+
+        if len(filter_config['value']):
+
+            for val in filter_config['value']:
+                dates.append(parse(val))
+
+        if len(dates):
+
+            options = {}
+            options['value_date__in'] = dates
+
+            include_null_options = {}
+            if not exclude_empty_cells:
+                include_null_options['value_date__isnull'] = True
+
+            attributes_qs = attributes_qs.filter(Q(**options) | Q(**include_null_options))
+
     filtered_attributes_ids =  attributes_qs.values_list('object_id', flat=True)
 
     # print('filtered_attributes_ids %s ' % filtered_attributes_ids)
@@ -594,7 +615,7 @@ def add_filter(qs, filter_config):
             for value in values:
 
                 options = {}
-                options[key + '__icontains'] = value
+                options[key] = value
 
                 clauses.append(Q(**options))
 
@@ -625,7 +646,7 @@ def add_filter(qs, filter_config):
             for value in values:
 
                 options = {}
-                options[key + '__user_code__icontains'] = value
+                options[key + '__user_code'] = value
 
                 clauses.append(Q(**options))
 
@@ -652,7 +673,7 @@ def add_filter(qs, filter_config):
         if value:
 
             options = {}
-            options[key + '__icontains'] = value
+            options[key] = value
 
             include_null_options = {}
             include_empty_string_options = {}
@@ -677,7 +698,7 @@ def add_filter(qs, filter_config):
             print('value %s' % value)
 
             options = {}
-            options[key + '__user_code__icontains'] = value
+            options[key + '__user_code'] = value
 
             include_null_options = {}
             include_empty_string_options = {}
@@ -739,6 +760,22 @@ def add_filter(qs, filter_config):
         include_empty_string_options[key] = ''
 
         qs = qs.filter(Q(**include_null_options) | Q(**include_empty_string_options))
+
+    elif filter_type == FilterType.EQUAL and value_type == ValueType.STRING:
+
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
+
+        if value:
+
+            options = {}
+            options[key] = value
+
+            include_null_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+
+            qs = qs.filter(Q(**options) | Q(**include_null_options))
 
     # STRING FILTERS END
 
@@ -993,6 +1030,26 @@ def add_filter(qs, filter_config):
         include_null_options[key + '__isnull'] = True
 
         qs = qs.filter(Q(**include_null_options) )
+
+    elif filter_type == FilterType.DATE_TREE and value_type == ValueType.DATE:
+
+        dates = []
+
+        if len(filter_config['value']):
+
+            for val in filter_config['value']:
+                dates.append(parse(val))
+
+        if len(dates):
+
+            options = {}
+            options[key + '__in'] = dates
+
+            include_null_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+
+            qs = qs.filter(Q(**options) | Q(**include_null_options))
 
     # DATE FILTERS END
 
