@@ -1,5 +1,6 @@
 from django.apps import apps
 
+from poms.common.filtering_handlers import handle_filters
 from poms.common.utils import force_qs_evaluation
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 
@@ -421,7 +422,7 @@ def handle_groups(qs, groups_types, groups_values, groups_order, master_user, or
     return qs
 
 
-def count_groups(qs, groups_types, group_values, master_user, original_qs, content_type):
+def count_groups(qs, groups_types, group_values, master_user, original_qs, content_type, filter_settings):
 
     Model = apps.get_model(app_label=content_type.app_label, model_name=content_type.model)
 
@@ -500,7 +501,7 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
 
                 if len(result):
                     options[key] = result
-                    
+
             else:
 
                 key = groups_type
@@ -525,7 +526,13 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
 
         # _l.info('options %s' % options)
 
-        item['items_count'] = Model.objects.filter(Q(**options)).count()
+        # item['items_count'] = Model.objects.filter(Q(**options)).count()
+        count_cs = Model.objects.filter(Q(**options))
+        item['items_count_raw'] = count_cs.count()
+        count_cs = handle_filters(count_cs, filter_settings, master_user, content_type)
+        item['items_count'] = count_cs.count()
+
+
 
     _l.debug("count_groups %s seconds " % str((time.time() - start_time)))
 
