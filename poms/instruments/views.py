@@ -873,7 +873,7 @@ class InstrumentDatabaseSearchViewSet(APIView):
         response = None
 
         try:
-            response = requests.get(url=url, headers=headers)
+            response = requests.get(url=url, headers=headers, verify=True, cert=['/var/rancher-certificates/tls.crt'])
         except Exception as e:
             _l.info("Request error %s" % e)
             result = {}
