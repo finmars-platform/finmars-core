@@ -20,6 +20,8 @@ RUN apt-get update && \
     curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.6.2-amd64.deb && \
     dpkg -i filebeat-7.6.2-amd64.deb
 
+RUN apt-get update && apt-get install ca-certificates
+
 
 RUN rm -rf /var/app
 COPY requirements.txt /var/app/requirements.txt
