@@ -61,6 +61,7 @@ from io import BytesIO
 from poms.common.utils import date_now, datetime_now
 
 from .models import ImportConfig
+from ..common.jwt import encode_with_jwt
 from ..common.websockets import send_websocket_message
 
 import traceback
@@ -376,6 +377,15 @@ def download_instrument_cbond(instrument_code=None, master_user=None, member=Non
             task.save()
 
             headers = {'Content-type': 'application/json'}
+
+            payload_jwt = {
+                "sub":  settings.BASE_API_URL, #"user_id_or_name",
+                "role": 0 # 0 -- ordinary user, 1 -- admin (access to /loadfi and /loadeq)
+            }
+
+            token = encode_with_jwt(payload_jwt)
+
+            headers['Authorization'] = 'Bearer %s' % token
 
             options['request_id'] = task.pk
             options['base_api_url'] = settings.BASE_API_URL

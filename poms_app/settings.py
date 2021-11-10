@@ -816,3 +816,5 @@ if DROP_VIEWS == 'False':
     DROP_VIEWS = False
 else:
     DROP_VIEWS = True
+
+JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', None)

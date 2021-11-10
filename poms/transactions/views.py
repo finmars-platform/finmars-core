@@ -1389,7 +1389,7 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
 
         complex_transaction = self.get_object()
 
-        complex_transaction.status = ComplexTransaction.PENDING
+        complex_transaction.status_id = ComplexTransaction.PENDING
 
         instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
                                           process_mode='rebook',

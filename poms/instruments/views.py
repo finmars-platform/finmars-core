@@ -1,13 +1,14 @@
 from __future__ import unicode_literals
 
 import django_filters
+import requests
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Prefetch, Q, Case, When, Value, BooleanField
 from django.utils import timezone
 from django_filters.rest_framework import FilterSet
-from rest_framework import serializers
+from rest_framework import serializers, permissions
 from rest_framework.decorators import action
 
 from rest_framework.exceptions import MethodNotAllowed, PermissionDenied, ValidationError
@@ -22,6 +23,7 @@ from poms.accounts.models import AccountType
 from poms.audit import history
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
     ModelExtMultipleChoiceFilter, AttributeFilter, GroupsAttributeFilter, EntitySpecificFilter
+from poms.common.jwt import encode_with_jwt
 from poms.common.mixins import UpdateModelMixinExt
 from poms.common.pagination import CustomPaginationMixin
 from poms.common.utils import date_now
@@ -70,6 +72,9 @@ from poms.users.permissions import SuperUserOrReadOnly
 import datetime
 
 import logging
+
+from poms_app import settings
+
 _l = logging.getLogger('poms.instruments')
 
 
@@ -834,6 +839,50 @@ class InstrumentForSelectViewSet(AbstractWithObjectPermissionViewSet):
     ]
 
 
+class InstrumentDatabaseSearchViewSet(APIView):
+
+    permission_classes = []
+
+    def get(self, request):
+
+        headers = {'Content-type': 'application/json'}
+
+        payload_jwt = {
+            "sub":  settings.BASE_API_URL, #"user_id_or_name",
+            "role": 0 # 0 -- ordinary user, 1 -- admin (access to /loadfi and /loadeq)
+        }
+
+        token = encode_with_jwt(payload_jwt)
+
+        name = request.query_params.get('name', '')
+        instrument_type = request.query_params.get('instrument_type', '')
+        page = request.query_params.get('page', 1)
+
+        headers['Authorization'] = 'Bearer %s' % token
+
+        result = {}
+
+        url = str(settings.CBONDS_BROKER_URL) + '/instr/find/name/%s?page=%s' % (name, page)
+
+        if instrument_type:
+            url = url + '&instrument_type=' + str(instrument_type)
+
+        response = None
+
+        try:
+            response = requests.get(url=url, headers=headers)
+        except Exception as e:
+            _l.info("Request error %s" % e)
+            result = {}
+
+        try:
+            result = response.json()
+        except Exception as e:
+            _l.info("Response parse error %s" % e)
+            result = {}
+
+
+        return Response(result)
 
 
 

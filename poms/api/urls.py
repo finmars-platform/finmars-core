@@ -487,6 +487,7 @@ urlpatterns = [
 
     # external callbacks
 
+    url(r'instruments/instrument-database-search', instruments.InstrumentDatabaseSearchViewSet.as_view()),
     url(r'internal/brokers/bloomberg/callback', csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view())),
     url(r'internal/brokers/bloomberg-forwards/callback', csrf_exempt(pricing.PricingBrokerBloombergForwardsHandler.as_view())),
     url(r'internal/brokers/wtrade/callback', csrf_exempt(pricing.PricingBrokerWtradeHandler.as_view())),

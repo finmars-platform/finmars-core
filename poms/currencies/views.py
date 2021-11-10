@@ -124,6 +124,10 @@ class CurrencyLightFilterSet(FilterSet):
 class CurrencyLightViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Currency.objects.select_related(
         'master_user',
+    ).prefetch_related(
+        *get_permissions_prefetch_lookups(
+            (None, Currency),
+        )
     )
     serializer_class = CurrencyLightSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
