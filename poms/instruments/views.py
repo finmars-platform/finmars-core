@@ -867,6 +867,9 @@ class InstrumentDatabaseSearchViewSet(APIView):
         if instrument_type:
             url = url + '&instrument_type=' + str(instrument_type)
 
+
+        _l.info("Requesting URL %s" % url)
+
         response = None
 
         try:
