@@ -881,6 +881,7 @@ class InstrumentDatabaseSearchViewSet(APIView):
         try:
             result = response.json()
         except Exception as e:
+            _l.info('response %s' % response.text )
             _l.info("Response parse error %s" % e)
             result = {}
 
