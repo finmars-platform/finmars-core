@@ -368,7 +368,10 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
             'position_reporting',
 
-            'instrument_factor_schedule_data'
+            'instrument_factor_schedule_data',
+
+
+            'default_price', 'maturity_date', 'maturity_price'
 
         ]
 

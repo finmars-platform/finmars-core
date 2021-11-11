@@ -1656,6 +1656,10 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
         else:
             instrument_object['accrued_currency'] = None
 
+        instrument_object['default_price'] = instrument_type.default_price
+        instrument_object['maturity_date'] = instrument_type.maturity_date
+        instrument_object['maturity_price'] = instrument_type.maturity_price
+
         instrument_object['accrued_multiplier'] = instrument_type.accrued_multiplier
         instrument_object['default_accrued'] = instrument_type.default_accrued
 

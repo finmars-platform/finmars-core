@@ -499,6 +499,10 @@ class InstrumentType( NamedModelAutoMapping, FakeDeletableModel, DataTimeStamped
     counter_directional_exposure_currency_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.RELATION,
                                                                                    verbose_name=ugettext_lazy('counter directional exposure currency value type'))
 
+    default_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('default price'))
+    maturity_date = models.DateField(default=date.max,  null=True, verbose_name=ugettext_lazy('maturity date'))
+    maturity_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('maturity price'))
+
     DIRECT_POSITION = 1
     FACTOR_ADJUSTED_POSITION = 2
     DO_NOT_SHOW = 3
