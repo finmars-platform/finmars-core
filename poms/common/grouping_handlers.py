@@ -422,7 +422,7 @@ def handle_groups(qs, groups_types, groups_values, groups_order, master_user, or
     return qs
 
 
-def count_groups(qs, groups_types, group_values, master_user, original_qs, content_type, filter_settings):
+def count_groups(qs, groups_types, group_values, master_user, original_qs, content_type, filter_settings, ev_options):
 
     Model = apps.get_model(app_label=content_type.app_label, model_name=content_type.model)
 
@@ -523,6 +523,25 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
             options['instrument__master_user_id'] = master_user.pk
         else:
             options['master_user_id'] = master_user.pk
+
+            if ev_options['entity_filters']:
+
+                if 'deleted' not in ev_options['entity_filters']:
+                    options['is_deleted'] = False
+
+                if content_type.model in ['instrument']:
+                    if 'active' in ev_options['entity_filters'] and not 'inactive' in ev_options['entity_filters']:
+                        options['is_active'] = True
+
+                    if 'inactive' in ev_options['entity_filters'] and not 'active' in ev_options['entity_filters']:
+                        options['is_active'] = False
+
+                if 'disabled' not in ev_options['entity_filters']:
+                    options['is_enabled'] = True
+
+
+
+
 
         # _l.info('options %s' % options)
 

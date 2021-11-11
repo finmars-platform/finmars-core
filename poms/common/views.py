@@ -192,6 +192,7 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
         content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
         filter_settings = request.data.get('filter_settings', None)
         global_table_search = request.data.get('global_table_search', '')
+        ev_options = request.data.get('ev_options', '')
 
         qs = self.get_queryset()
 
@@ -225,7 +226,7 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
         filtered_qs = handle_groups(filtered_qs, groups_types, groups_values, groups_order, master_user,
                                     self.get_queryset(), content_type)
 
-        filtered_qs = count_groups(filtered_qs, groups_types, groups_values, master_user, self.get_queryset(), content_type, filter_settings)
+        filtered_qs = count_groups(filtered_qs, groups_types, groups_values, master_user, self.get_queryset(), content_type, filter_settings, ev_options)
 
         # print('len after handle groups %s' % len(filtered_qs))
 

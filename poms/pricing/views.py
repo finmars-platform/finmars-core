@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
-from poms.common.filters import NoOpFilter
+from poms.common.filters import NoOpFilter, GroupsAttributeFilter
 from poms.common.pagination import CustomPaginationMixin
 
 from poms.common.views import AbstractModelViewSet, AbstractEvGroupViewSet
@@ -380,6 +380,7 @@ class PriceHistoryErrorEvViewSet(AbstractModelViewSet):
     serializer_class = PriceHistoryErrorSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        GroupsAttributeFilter
     ]
     filter_class = PriceHistoryErrorFilterSet
     ordering_fields = [
@@ -448,6 +449,7 @@ class CurrencyHistoryErrorEvViewSet(AbstractModelViewSet):
     serializer_class = CurrencyHistoryErrorSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        GroupsAttributeFilter
     ]
     filter_class = CurrencyHistoryErrorFilterSet
     ordering_fields = [
