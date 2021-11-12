@@ -536,8 +536,9 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
                     if 'inactive' in ev_options['entity_filters'] and not 'active' in ev_options['entity_filters']:
                         options['is_active'] = False
 
-                if 'disabled' not in ev_options['entity_filters']:
-                    options['is_enabled'] = True
+                if content_type.model not in ['complextransaction']:
+                    if 'disabled' not in ev_options['entity_filters']:
+                        options['is_enabled'] = True
 
 
 
