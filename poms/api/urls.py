@@ -355,6 +355,8 @@ router.register(r'chats/direct-message', chats.DirectMessageViewSet)
 router.register(r'security/http-session', sessions.SessionViewSet)
 router.register(r'audit/auth-log', audit.AuthLogViewSet)
 router.register(r'audit/history', audit.ObjectHistory4ViewSet)
+router.register(r'audit/history-ev', audit.ObjectHistory4EvViewSet)
+router.register(r'audit/history-ev-group', audit.ObjectHistory4EvGroupViewSet)
 
 router.register(r'data-provider/bloomberg/credential', integrations.BloombergDataProviderCredentialViewSet)
 router.register(r'import/config', integrations.ImportConfigViewSet)

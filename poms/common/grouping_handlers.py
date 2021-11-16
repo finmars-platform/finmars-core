@@ -526,8 +526,10 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
 
             if ev_options['entity_filters']:
 
-                if 'deleted' not in ev_options['entity_filters']:
-                    options['is_deleted'] = False
+                if content_type.model not in ['objecthistory4entry']:
+
+                    if 'deleted' not in ev_options['entity_filters']:
+                        options['is_deleted'] = False
 
                 if content_type.model in ['instrument']:
                     if 'active' in ev_options['entity_filters'] and not 'inactive' in ev_options['entity_filters']:
