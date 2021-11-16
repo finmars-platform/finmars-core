@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 from django.db import models
 from django.utils.text import Truncator
 from django.utils.translation import ugettext_lazy
+from django.core.cache import cache
+
 
 from poms.common import formula
 
@@ -34,6 +36,9 @@ class NamedModel(models.Model):
         return self.user_code or ''
 
     def save(self, *args, **kwargs):
+
+        cache.clear()
+
         if not self.user_code:
             # self.user_code = Truncator(self.name).chars(25, truncate='')
             self.user_code = self.name
