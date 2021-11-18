@@ -1315,6 +1315,125 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
         return Response(serializer.data)
 
 
+
+class GeneratedEventEvViewSet(AbstractModelViewSet):
+    queryset = GeneratedEvent.objects.select_related(
+        'master_user',
+        'event_schedule',
+        'event_schedule__event_class',
+        'event_schedule__notification_class',
+        'event_schedule__periodicity',
+        'instrument',
+        'instrument__instrument_type',
+        'instrument__instrument_type__instrument_class',
+        'portfolio',
+        'account',
+        'strategy1',
+        'strategy1__subgroup',
+        'strategy1__subgroup__group',
+        'strategy2',
+        'strategy2__subgroup',
+        'strategy2__subgroup__group',
+        'strategy3',
+        'strategy3__subgroup',
+        'strategy3__subgroup__group',
+        'action',
+        'transaction_type',
+        'transaction_type__group',
+        'member'
+    ).prefetch_related(
+        *get_permissions_prefetch_lookups(
+            ('instrument', Instrument),
+            ('instrument__instrument_type', InstrumentType),
+            ('portfolio', Portfolio),
+            ('account', Account),
+            ('account__type', AccountType),
+            ('strategy1', Strategy1),
+            ('strategy1__subgroup', Strategy1Subgroup),
+            ('strategy1__subgroup__group', Strategy1Group),
+            ('strategy2', Strategy2),
+            ('strategy2__subgroup', Strategy2Subgroup),
+            ('strategy2__subgroup__group', Strategy2Group),
+            ('strategy3', Strategy3),
+            ('strategy3__subgroup', Strategy3Subgroup),
+            ('strategy3__subgroup__group', Strategy3Group),
+            ('transaction_type', TransactionType),
+        )
+    )
+    serializer_class = GeneratedEventSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByInstrumentFilter,
+        PriceHistoryObjectPermissionFilter,
+        AttributeFilter,
+        GroupsAttributeFilter,
+    ]
+    filter_class = GeneratedEventFilterSet
+    ordering_fields = [
+        'instrument', 'instrument__user_code', 'instrument__name', 'instrument__short_name', 'instrument__public_name',
+        'pricing_policy', 'pricing_policy__user_code', 'pricing_policy__name', 'pricing_policy__short_name',
+        'pricing_policy__public_name',
+        'date', 'principal_price', 'accrued_price',
+    ]
+
+
+class GeneratedEventEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
+    queryset = GeneratedEvent.objects.select_related(
+        'master_user',
+        'event_schedule',
+        'event_schedule__event_class',
+        'event_schedule__notification_class',
+        'event_schedule__periodicity',
+        'instrument',
+        'instrument__instrument_type',
+        'instrument__instrument_type__instrument_class',
+        'portfolio',
+        'account',
+        'strategy1',
+        'strategy1__subgroup',
+        'strategy1__subgroup__group',
+        'strategy2',
+        'strategy2__subgroup',
+        'strategy2__subgroup__group',
+        'strategy3',
+        'strategy3__subgroup',
+        'strategy3__subgroup__group',
+        'action',
+        'transaction_type',
+        'transaction_type__group',
+        'member'
+    ).prefetch_related(
+        *get_permissions_prefetch_lookups(
+            ('instrument', Instrument),
+            ('instrument__instrument_type', InstrumentType),
+            ('portfolio', Portfolio),
+            ('account', Account),
+            ('account__type', AccountType),
+            ('strategy1', Strategy1),
+            ('strategy1__subgroup', Strategy1Subgroup),
+            ('strategy1__subgroup__group', Strategy1Group),
+            ('strategy2', Strategy2),
+            ('strategy2__subgroup', Strategy2Subgroup),
+            ('strategy2__subgroup__group', Strategy2Group),
+            ('strategy3', Strategy3),
+            ('strategy3__subgroup', Strategy3Subgroup),
+            ('strategy3__subgroup__group', Strategy3Group),
+            ('transaction_type', TransactionType),
+        )
+    )
+    serializer_class = GeneratedEventSerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = GeneratedEventFilterSet
+
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByInstrumentFilter,
+        PriceHistoryObjectPermissionFilter,
+        AttributeFilter,
+        GroupsAttributeFilter
+    ]
+
+
+
+
 class EventScheduleConfigViewSet(AbstractModelViewSet):
     queryset = EventScheduleConfig.objects.select_related(
         'notification_class'

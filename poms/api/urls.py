@@ -179,6 +179,8 @@ router.register(r'instruments/price-history-ev-group', instruments.PriceHistoryE
 router.register(r'instruments/price-history-ev', instruments.PriceHistoryViewSet)
 router.register(r'instruments/price-history', instruments.PriceHistoryViewSet)
 
+router.register(r'instruments/generated-event-ev-group', instruments.GeneratedEventEvGroupViewSet)
+router.register(r'instruments/generated-event-ev', instruments.GeneratedEventEvViewSet)
 router.register(r'instruments/generated-event', instruments.GeneratedEventViewSet)
 
 # router.register(r'portfolios/portfolio-attribute-type', portfolios.PortfolioAttributeTypeViewSet)
