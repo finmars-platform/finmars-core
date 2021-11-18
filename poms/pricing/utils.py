@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from poms.common import formula
 from poms.common.utils import date_now
 from poms.currencies.models import CurrencyHistory
 from poms.instruments.models import PriceHistory
@@ -8,6 +9,7 @@ from dateutil.relativedelta import relativedelta
 
 import logging
 
+from poms.obj_attrs.models import GenericAttribute
 from poms.pricing.models import PriceHistoryError, CurrencyHistoryError
 
 
@@ -109,6 +111,60 @@ def get_is_yesterday(date_from, date_to):
             return True
 
     return False
+
+def get_parameter_from_scheme_parameters(item, scheme_parameters):
+
+    parameter = None
+
+    try:
+
+        if item.policy.default_value:
+
+            if scheme_parameters.value_type == 10:
+
+                parameter = str(item.policy.default_value)
+
+            elif scheme_parameters.value_type == 20:
+
+                parameter = float(item.policy.default_value)
+
+            elif scheme_parameters.value_type == 40:
+
+                parameter = formula._parse_date(str(item.policy.default_value))
+
+            else:
+
+                parameter = item.policy.default_value
+
+        elif item.policy.attribute_key:
+
+            if 'attributes' in item.policy.attribute_key:
+
+                user_code = item.policy.attribute_key.split('attributes.')[1]
+
+                attribute = GenericAttribute.objects.get(object_id=item.instrument.id,
+                                                         attribute_type__user_code=user_code)
+
+                if scheme_parameters.value_type == 10:
+                    parameter = attribute.value_string
+
+                if scheme_parameters.value_type == 20:
+                    parameter = attribute.value_float
+
+                if scheme_parameters.value_type == 40:
+                    parameter = attribute.value_date
+
+            else:
+
+                parameter = getattr(item.instrument, item.policy.attribute_key, None)
+
+    except Exception as e:
+
+        _l.debug("Cant find parameter value. Error: %s" % e)
+
+        parameter = None
+
+    return parameter
 
 
 def optimize_items(items):
@@ -236,6 +292,8 @@ def roll_currency_history_for_n_day_forward(item, procedure, last_price, master_
 
 def roll_price_history_for_n_day_forward(item, procedure, last_price, master_user, procedure_instance):
 
+    scheme_parameters = item.pricing_scheme.get_parameters()
+    accrual_expr = scheme_parameters.accrual_expr
     _l.debug("Roll Price History for  %s for %s days" % (last_price, procedure.price_fill_days))
 
     successful_prices_count = 0
@@ -278,11 +336,34 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
             price.principal_price = 0
             price.accrued_price = 0
 
+            parameter = get_parameter_from_scheme_parameters(item, scheme_parameters)
+
+            values = {
+                'd': new_date,
+                'instrument': last_price.instrument,
+                'parameter': parameter
+            }
+
+
             if last_price.principal_price is not None:
                 price.principal_price = last_price.principal_price
 
-            if last_price.accrued_price is not None:
-                price.accrued_price = last_price.accrued_price
+            if scheme_parameters.accrual_calculation_method == 2: # ACCRUAL_PER_SCHEDULE
+                try:
+                    price.accrued_price  = item.instrument.get_accrued_price(new_date)
+                except Exception:
+                    price.accrued_price = 0
+
+            elif scheme_parameters.accrual_calculation_method == 3:  # ACCRUAL_PER_FORMULA
+
+                try:
+                    price.accrued_price = formula.safe_eval(accrual_expr, names=values)
+                except Exception:
+                    price.accrued_price = 0
+            else:
+
+                if last_price.accrued_price is not None:
+                    price.accrued_price = last_price.accrued_price
 
             # if can_write and not (price.accrued_price == 0 and price.principal_price == 0):
             if can_write:

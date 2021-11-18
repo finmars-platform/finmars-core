@@ -19,7 +19,7 @@ from poms.pricing.models import InstrumentPricingSchemeType, \
 from poms.pricing.transport.transport import PricingTransport
 from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_between_two_dates, \
     get_is_yesterday, optimize_items, roll_price_history_for_n_day_forward, get_empty_values_for_dates, \
-    get_closest_tenors, group_instrument_items_by_provider
+    get_closest_tenors, group_instrument_items_by_provider, get_parameter_from_scheme_parameters
 from poms.procedures.models import PricingProcedure, PricingProcedureInstance, BaseProcedureInstance
 from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
@@ -592,55 +592,7 @@ class PricingInstrumentHandler(object):
                         'id': item.instrument.id,
                     }
 
-                    parameter = None
-
-                    try:
-
-                        if item.policy.default_value:
-
-                            if scheme_parameters.value_type == 10:
-
-                                parameter = str(item.policy.default_value)
-
-                            elif scheme_parameters.value_type == 20:
-
-                                parameter = float(item.policy.default_value)
-
-                            elif scheme_parameters.value_type == 40:
-
-                                parameter = formula._parse_date(str(item.policy.default_value))
-
-                            else:
-
-                                parameter = item.policy.default_value
-
-                        elif item.policy.attribute_key:
-
-                            if 'attributes' in item.policy.attribute_key:
-
-                                user_code = item.policy.attribute_key.split('attributes.')[1]
-
-                                attribute = GenericAttribute.objects.get(object_id=item.instrument.id,
-                                                                         attribute_type__user_code=user_code)
-
-                                if scheme_parameters.value_type == 10:
-                                    parameter = attribute.value_string
-
-                                if scheme_parameters.value_type == 20:
-                                    parameter = attribute.value_float
-
-                                if scheme_parameters.value_type == 40:
-                                    parameter = attribute.value_date
-
-                            else:
-
-                                parameter = getattr(item.instrument, item.policy.attribute_key, None)
-
-                    except Exception as e:
-
-                        _l.debug("Cant find parameter value. Error: %s" % e)
-
-                        parameter = None
+                    parameter = get_parameter_from_scheme_parameters(item, scheme_parameters)
 
                     values = {
                         'd': date,
