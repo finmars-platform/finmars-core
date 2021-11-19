@@ -8,7 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy
 
 from poms.common import formula
-from poms.currencies.models import CurrencyHistory
+from poms.currencies.models import CurrencyHistory, Currency
 from poms.instruments.models import Instrument, PriceHistory
 from poms.integrations.models import InstrumentDownloadScheme, ProviderClass, CurrencyMapping, InstrumentTypeMapping, \
     InstrumentAttributeValueMapping, AccrualCalculationModelMapping, PeriodicityMapping, BloombergDataProviderCredential
@@ -87,6 +87,12 @@ class AbstractProvider(object):
             obj = CurrencyMapping.objects.select_related('content_object').get(
                 master_user=master_user, provider=provider, value=value)
         except CurrencyMapping.DoesNotExist:
+
+            try:
+                obj = Currency.objects.get(master_user=master_user, user_code=value)
+                return obj
+            except Exception as e:
+                pass
             return None
         return obj.content_object
 
