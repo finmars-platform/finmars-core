@@ -334,6 +334,9 @@ class RequestDataFileProcedureInstance(BaseProcedureInstance):
 
     json_request_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
 
+    class Meta:
+        ordering = ['-created']
+
     @property
     def request_data(self):
         if self.json_request_data:
