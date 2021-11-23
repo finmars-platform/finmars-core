@@ -181,7 +181,7 @@ class AbstractProvider(object):
                         try:
                             values_converted[key] = formula.safe_eval(input.name_expr, names=values)
                         except formula.InvalidExpression:
-                            _l.debug('Invalid instrument attribute expression conversion: id=%s, input=%s, expr=%s, values=%s',
+                            _l.info('Invalid instrument attribute expression conversion: id=%s, input=%s, expr=%s, values=%s',
                                      instrument_download_scheme.id, input, input.name_expr, values)
                             errors[input] = [ugettext_lazy('Invalid expression.')]
                             continue
@@ -189,7 +189,7 @@ class AbstractProvider(object):
             try:
                 user_code = formula.safe_eval(instrument_download_scheme.instrument_user_code, names=values_converted)
             except formula.InvalidExpression:
-                _l.debug('Invalid instrument attribute expression: id=%s, attr=%s, expr=%s, values=%s',
+                _l.info('Invalid instrument attribute expression: id=%s, attr=%s, expr=%s, values=%s',
                          instrument_download_scheme.id, 'instrument_user_code', instrument_download_scheme.instrument_user_code, values)
                 errors['instrument_user_code'] = [ugettext_lazy('Invalid expression.')]
                 instr = Instrument(master_user=master_user)
@@ -215,7 +215,7 @@ class AbstractProvider(object):
                 try:
                     v = formula.safe_eval(expr, names=values_converted)
                 except formula.InvalidExpression:
-                    _l.debug('Invalid instrument attribute expression: id=%s, attr=%s, expr=%s, values=%s',
+                    _l.info('Invalid instrument attribute expression: id=%s, attr=%s, expr=%s, values=%s',
                              instrument_download_scheme.id, attr, expr, values)
                     errors[attr] = [ugettext_lazy('Invalid expression.')]
                     continue
@@ -289,11 +289,13 @@ class AbstractProvider(object):
             instr._factor_schedules = self.create_factor_schedules(
                 instrument_download_scheme=instrument_download_scheme, instrument=instr, values=values)
 
+            return instr, errors
+
         except Exception as e:
-            _l.info("Error create instrument %" % e)
+            _l.info("Error create instrument %s" % e)
             _l.info(traceback.print_exc())
 
-        return instr, errors
+        return None, None
 
     def create_instrument_attributes(self, instrument_download_scheme, instrument, values, errors):
         iattrs = []

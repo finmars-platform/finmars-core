@@ -5,9 +5,11 @@ from poms.common.views import AbstractModelViewSet
 from poms.integrations.providers.base import parse_date_iso
 from poms.pricing.handlers import PricingProcedureProcess
 from poms.procedures.handlers import RequestDataFileProcedureProcess
-from poms.procedures.models import RequestDataFileProcedure, PricingProcedure, PricingParentProcedureInstance
+from poms.procedures.models import RequestDataFileProcedure, PricingProcedure, PricingParentProcedureInstance, \
+    RequestDataFileProcedureInstance
 from poms.procedures.serializers import RequestDataFileProcedureSerializer, RunRequestDataFileProcedureSerializer, \
-    PricingProcedureSerializer, RunProcedureSerializer, PricingParentProcedureInstanceSerializer
+    PricingProcedureSerializer, RunProcedureSerializer, PricingParentProcedureInstanceSerializer, \
+    RequestDataFileProcedureInstanceSerializer
 from poms.system_messages.handlers import send_system_message
 
 from poms.users.filters import OwnerByMasterUserFilter
@@ -144,4 +146,25 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
         serializer = self.get_serializer(instance=instance)
 
         return Response(serializer.data)
+
+
+class RequestDataFileProcedureInstanceFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    class Meta:
+        model = RequestDataFileProcedureInstance
+        fields = []
+
+
+class RequestDataFileProcedureInstanceViewSet(AbstractModelViewSet):
+    queryset = RequestDataFileProcedureInstance.objects.select_related(
+        'master_user',
+    )
+    serializer_class = RequestDataFileProcedureInstanceSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = RequestDataFileProcedureInstanceFilterSet
+
+
 

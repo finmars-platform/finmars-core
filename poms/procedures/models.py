@@ -330,3 +330,23 @@ class RequestDataFileProcedureInstance(BaseProcedureInstance):
     private_key = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('private key'))
     public_key = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('public key'))
     symmetric_key = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('symmetric key'))
+
+
+    json_request_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+
+    @property
+    def request_data(self):
+        if self.json_request_data:
+            try:
+                return json.loads(self.json_request_data)
+            except (ValueError, TypeError):
+                return None
+        else:
+            return None
+
+    @request_data.setter
+    def request_data(self, val):
+        if val:
+            self.json_request_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+        else:
+            self.json_request_data = None
