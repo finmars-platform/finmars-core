@@ -37,10 +37,13 @@ def procedure_request_data_file(self,
 
         _l.debug('url %s' % url)
 
+        procedure_instance.request_data = data
+
         response = requests.post(url=url, json=data, headers=headers)
 
         _l.debug('response %s' % response)
         _l.debug('response text %s' % response.text)
+
 
         if response.status_code == 200:
 
