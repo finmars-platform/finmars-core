@@ -29,7 +29,7 @@ class TransactionUserFieldSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TransactionUserFieldModel
-        fields = ['id', 'master_user', 'key', 'name']
+        fields = ['id', 'master_user', 'key', 'name', 'is_active']
 
 
 class ColorPaletteColorSerializer(serializers.ModelSerializer):

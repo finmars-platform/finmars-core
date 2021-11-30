@@ -259,6 +259,7 @@ class TransactionUserFieldModel(models.Model):
     key = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('key'))
     name = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('name'))
 
+    is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('is active'))
 
 class InstrumentUserFieldModel(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='instrument_user_fields',

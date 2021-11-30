@@ -21,6 +21,9 @@ host = socket.gethostname()
 
 DISK_USAGE_MAX = HEALTHCHECK['DISK_USAGE_MAX']
 MEMORY_MIN = HEALTHCHECK['MEMORY_MIN']
+from poms_app.celery import app
+
+
 
 class BaseHealthCheck:
 
@@ -220,3 +223,50 @@ class UptimePlugin(BaseHealthCheck):
 
     def identifier(self):
         return 'uptime'
+
+
+class CeleryPlugin(BaseHealthCheck):
+
+    def check_status(self):
+        pass
+
+    def get_info(self):
+        item = {}
+        item['componentType'] = 'system'
+
+        item['observedUnit'] = 'online'
+        item['time'] = datetime.datetime.now().isoformat()
+        item['status'] = 'pass'
+        item['output'] = ''
+
+        try:
+            i = app.control.inspect()
+            availability = i.ping()
+            stats = i.stats()
+            registered_tasks = i.registered()
+            active_tasks = i.active()
+            scheduled_tasks = i.scheduled()
+            result = {
+                'availability': availability,
+                'stats': stats,
+                'registered_tasks': registered_tasks,
+                'active_tasks': active_tasks,
+                'scheduled_tasks': scheduled_tasks
+            }
+            item['observedValue'] = result
+
+        except Exception as e:
+            print('e %s' % e)
+            item['observedValue'] = None
+            item['observedUnit'] = 'ofline'
+
+        data = []
+
+        data.append(item)
+
+        return data
+
+    def identifier(self):
+        return 'celery'
+
+

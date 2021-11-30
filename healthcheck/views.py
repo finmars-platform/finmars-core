@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 
 from concurrent.futures import ThreadPoolExecutor
 
-from healthcheck.handlers import DatabasePlugin, MemoryUsagePlugin, DiskUsagePlugin, UptimePlugin
+from healthcheck.handlers import DatabasePlugin, MemoryUsagePlugin, DiskUsagePlugin, UptimePlugin, CeleryPlugin
 
 
 class HealthcheckView(APIView):
@@ -27,7 +27,8 @@ class HealthcheckView(APIView):
                 DiskUsagePlugin(),
                 MemoryUsagePlugin(),
                 DatabasePlugin(),
-                UptimePlugin()
+                UptimePlugin(),
+                CeleryPlugin()
             ]
         return self._plugins
 
