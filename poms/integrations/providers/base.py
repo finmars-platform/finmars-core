@@ -218,6 +218,9 @@ class AbstractProvider(object):
                     _l.info('Invalid instrument attribute expression: id=%s, attr=%s, expr=%s, values=%s',
                              instrument_download_scheme.id, attr, expr, values)
                     errors[attr] = [ugettext_lazy('Invalid expression.')]
+
+                    v = 'Invalid Expression'
+
                     continue
                 if attr in ('pricing_currency', 'accrued_currency',):
                     # if self.is_empty_value(v):
@@ -270,7 +273,7 @@ class AbstractProvider(object):
                         instr_attr = attr[11:] # substring "instrument_" prefix
 
                         # setattr(instr, instr_attr, v)
-                        self.set_instrument_attr(instrument_download_scheme, instr, attr, v)
+                        self.set_instrument_attr(instrument_download_scheme, instr, instr_attr, v)
 
                 else:
                     if self.is_empty_value(v):
