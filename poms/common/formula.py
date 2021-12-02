@@ -2192,6 +2192,9 @@ class SimpleEval2(object):
     def _on_ast_NameConstant(self, node):
         return node.value
 
+    def _on_ast_Constant(self, node):
+        return node.value
+
     def _on_ast_Dict(self, node):
         d = {}
         for k, v in zip(node.keys, node.values):

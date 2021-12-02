@@ -613,7 +613,7 @@ class ReportSerializer(ReportSerializerWithLogs):
                                     try:
                                         value = formula.safe_eval(expr, names=names, context=self.context)
                                     except formula.InvalidExpression as e:
-                                        # _l.debug('error %s' % e)
+                                        _l.debug('error %s %s' % (cf["name"], e))
                                         value = ugettext('Invalid expression')
                                 else:
                                     value = None
