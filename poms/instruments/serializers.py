@@ -1535,6 +1535,7 @@ class PriceHistorySerializer(serializers.ModelSerializer):
             history_item.accrued_price = instance.accrued_price
             history_item.date = instance.date
             history_item.pricing_policy = instance.pricing_policy
+            history_item.created = now()
 
         history_item.save()
 

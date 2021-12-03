@@ -278,6 +278,7 @@ def roll_currency_history_for_n_day_forward(item, procedure, last_price, master_
                     pricing_scheme=item.pricing_scheme,
                     pricing_policy=last_price.pricing_policy,
                     date=new_date,
+                    created=procedure_instance.created
                 )
 
                 error.error_text = "Prices already exists. Fx rate: " + str(price.fx_rate) + "."
@@ -383,6 +384,8 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
                     pricing_scheme=item.pricing_scheme,
                     pricing_policy=last_price.pricing_policy,
                     date=new_date,
+                    created=procedure_instance.created
+
                 )
 
                 error.error_text = "Prices already exists. Principal Price: " + str(price.principal_price) +"; Accrued: "+ str(price.accrued_price) +"."

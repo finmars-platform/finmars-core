@@ -392,6 +392,7 @@ class PricingCurrencyHandler(object):
                         pricing_scheme=item.pricing_scheme,
                         pricing_policy=item.policy.pricing_policy,
                         date=date,
+                        created=procedure_instance.created
                     )
 
                     expr = scheme_parameters.expr
@@ -656,6 +657,7 @@ class PricingCurrencyHandler(object):
                         pricing_scheme=item.pricing_scheme,
                         pricing_policy=item.policy.pricing_policy,
                         date=date,
+                        created=procedure_instance.created
                     )
 
                     expr = scheme_parameters.expr

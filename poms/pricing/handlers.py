@@ -318,6 +318,7 @@ class FillPricesBrokerBloombergProcess(object):
                 pricing_scheme=record.pricing_scheme,
                 pricing_policy=record.pricing_policy,
                 date=record.date,
+                created=self.procedure_instance.created
             )
 
             principal_price = None
@@ -522,6 +523,7 @@ class FillPricesBrokerBloombergProcess(object):
                 pricing_scheme=record.pricing_scheme,
                 pricing_policy=record.pricing_policy,
                 date=record.date,
+                created=self.procedure_instance.created
             )
 
             pricing_scheme_parameters = record.pricing_scheme.get_parameters()
@@ -749,6 +751,7 @@ class FillPricesBrokerBloombergForwardsProcess(object):
                 pricing_scheme=record.pricing_scheme,
                 pricing_policy=record.pricing_policy,
                 date=record.date,
+                created=self.procedure_instance.created
             )
 
             principal_price = None
@@ -1055,6 +1058,7 @@ class FillPricesBrokerWtradeProcess(object):
                 pricing_scheme=record.pricing_scheme,
                 pricing_policy=record.pricing_policy,
                 date=record.date,
+                created=self.procedure_instance.created
             )
 
             principal_price = None
@@ -1356,6 +1360,7 @@ class FillPricesBrokerCbondsProcess(object):
                 pricing_scheme=record.pricing_scheme,
                 pricing_policy=record.pricing_policy,
                 date=record.date,
+                created=self.procedure_instance.created
             )
 
             principal_price = None
@@ -1617,6 +1622,7 @@ class FillPricesBrokerFixerProcess(object):
                 pricing_scheme=record.pricing_scheme,
                 pricing_policy=record.pricing_policy,
                 date=record.date,
+                created=self.procedure_instance.created
             )
 
             pricing_scheme_parameters = record.pricing_scheme.get_parameters()
@@ -1841,6 +1847,7 @@ class FillPricesBrokerAlphavProcess(object):
                 pricing_scheme=record.pricing_scheme,
                 pricing_policy=record.pricing_policy,
                 date=record.date,
+                created=self.procedure_instance.created
             )
 
             principal_price = None

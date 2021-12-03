@@ -616,6 +616,7 @@ class PricingInstrumentHandler(object):
                         pricing_scheme=item.pricing_scheme,
                         pricing_policy=item.policy.pricing_policy,
                         date=date,
+                        created=procedure_instance.created
                     )
 
                     principal_price = None
@@ -936,6 +937,7 @@ class PricingInstrumentHandler(object):
                         pricing_scheme=item.pricing_scheme,
                         pricing_policy=item.policy.pricing_policy,
                         date=date,
+                        created=procedure_instance.created
                     )
 
                     principal_price = None
