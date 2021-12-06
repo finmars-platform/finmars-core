@@ -301,7 +301,7 @@ class PricingBrokerCbondsHandler(APIView):
 
     def post(self, request):
 
-        # _l.debug('request.data %s' % request.data)
+        _l.info('request.data %s' % request.data)
 
         procedure_id = request.data['procedure']
 
