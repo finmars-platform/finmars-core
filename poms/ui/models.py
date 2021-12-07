@@ -256,10 +256,11 @@ class TransactionUserFieldModel(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='transaction_user_fields',
                                     verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
-    key = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('key'))
+    key = models.CharField(max_length=255, unique=True, verbose_name=ugettext_lazy('key'))
     name = models.CharField(max_length=255, default='', blank=True, verbose_name=ugettext_lazy('name'))
 
     is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('is active'))
+
 
 class InstrumentUserFieldModel(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='instrument_user_fields',
