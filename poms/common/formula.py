@@ -662,24 +662,35 @@ _add_price_history.evaluator = True
 
 
 def _get_latest_principal_price(evaluator, date_from, date_to, instrument, pricing_policy, default_value):
-    from poms.users.utils import get_master_user_from_context
-    from poms.instruments.models import PriceHistory
 
-    context = evaluator.context
-    master_user = get_master_user_from_context(context)
+    try:
+        from poms.users.utils import get_master_user_from_context
+        from poms.instruments.models import PriceHistory
 
-    date_from = _parse_date(date_from)
-    date_to = _parse_date(date_to)
-    instrument = _safe_get_instrument(evaluator, instrument)
-    pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
 
-    results = PriceHistory.objects.filter(date__gte=date_from, date__lte=date_to, instrument=instrument,
-                                          pricing_policy=pricing_policy).order_by('-date')
 
-    if len(list(results)):
-        return results[0].principal_price
+        context = evaluator.context
+        master_user = get_master_user_from_context(context)
 
-    return default_value
+        date_from = _parse_date(date_from)
+        date_to = _parse_date(date_to)
+        instrument = _safe_get_instrument(evaluator, instrument)
+        pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
+
+        _l.info("_get_latest_principal_price instrument %s " % instrument)
+        _l.info("_get_latest_principal_price  pricing_policy %s " % pricing_policy)
+
+
+        results = PriceHistory.objects.filter(date__gte=date_from, date__lte=date_to, instrument=instrument,
+                                              pricing_policy=pricing_policy).order_by('-date')
+
+        _l.info("_get_latest_principal_price results %s " % results)
+
+        if len(list(results)):
+            return results[0].principal_price
+    except Exception as e:
+        _l.info("_get_latest_principal_price exception %s " % e)
+        return default_value
 
 
 _get_latest_principal_price.evaluator = True
