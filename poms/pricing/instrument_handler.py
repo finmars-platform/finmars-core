@@ -1213,6 +1213,17 @@ class PricingInstrumentHandler(object):
                                     record.accrual_parameters = item.scheme_fields_map[
                                         'accrual_yesterday']
 
+
+                                history_record = PriceHistoryError.objects.create(
+                                    master_user=self.master_user,
+                                    procedure_instance_id=procedure_instance.id,
+                                    instrument=record.instrument,
+                                    pricing_scheme=record.pricing_scheme,
+                                    pricing_policy=record.pricing_policy,
+                                    date=record.date,
+                                    created=procedure_instance.created
+                                )
+
                                 record.save()
 
                             except Exception as e:
@@ -1287,6 +1298,16 @@ class PricingInstrumentHandler(object):
                                 if 'accrual_historical' in item.scheme_fields_map:
                                     record.accrual_parameters = item.scheme_fields_map[
                                         'accrual_historical']
+
+                                history_record = PriceHistoryError.objects.create(
+                                    master_user=self.master_user,
+                                    procedure_instance_id=procedure_instance.id,
+                                    instrument=record.instrument,
+                                    pricing_scheme=record.pricing_scheme,
+                                    pricing_policy=record.pricing_policy,
+                                    date=record.date,
+                                    created=procedure_instance.created
+                                )
 
                                 record.save()
 
@@ -1476,6 +1497,16 @@ class PricingInstrumentHandler(object):
                                                                                       date=date)
 
                             record.price_code_parameters = pricing_scheme_parameters.price_code
+
+                            history_record = PriceHistoryError.objects.create(
+                                master_user=self.master_user,
+                                procedure_instance_id=procedure_instance.id,
+                                instrument=record.instrument,
+                                pricing_scheme=record.pricing_scheme,
+                                pricing_policy=record.pricing_policy,
+                                date=record.date,
+                                created=procedure_instance.created
+                            )
 
                             record.save()
 

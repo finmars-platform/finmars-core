@@ -862,6 +862,16 @@ class PricingCurrencyHandler(object):
                                 record.fx_rate_parameters = item.scheme_fields_map[
                                     'fx_rate']
 
+                            CurrencyHistoryError.objects.create(
+                                master_user=self.master_user,
+                                procedure_instance_id=procedure_instance.id,
+                                currency=record.currency,
+                                pricing_scheme=record.pricing_scheme,
+                                pricing_policy=record.pricing_policy,
+                                date=record.date,
+                                created=procedure_instance.created
+                            )
+
                             record.save()
 
                         except Exception as e:

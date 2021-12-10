@@ -311,7 +311,9 @@ class FillPricesBrokerBloombergProcess(object):
             _l.debug('expr %s' % expr)
 
             has_error = False
-            error = PriceHistoryError(
+
+
+            error, created = PriceHistoryError.objects.get_or_create(
                 master_user=self.master_user,
                 procedure_instance_id=self.instance['procedure'],
                 instrument=record.instrument,
@@ -516,7 +518,7 @@ class FillPricesBrokerBloombergProcess(object):
             }
 
             has_error = False
-            error = CurrencyHistoryError(
+            error, created = CurrencyHistoryError.objects.get_or_create(
                 master_user=self.master_user,
                 procedure_instance_id=self.instance['procedure'],
                 currency=record.currency,
