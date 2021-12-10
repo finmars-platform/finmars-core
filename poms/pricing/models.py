@@ -1030,8 +1030,8 @@ class PriceHistoryError(DataTimeStampedModel):
 
     date = models.DateField(db_index=True, default=date_now, verbose_name=ugettext_lazy('date'))
 
-    principal_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('principal price'))
-    accrued_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('accrued price'))
+    principal_price = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('principal price'))
+    accrued_price = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('accrued price'))
 
     # DEPRECATED
     price_error_text = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('price error text'))
@@ -1079,7 +1079,7 @@ class CurrencyHistoryError(DataTimeStampedModel):
 
     date = models.DateField(db_index=True, default=date_now, verbose_name=ugettext_lazy('date'))
 
-    fx_rate = models.FloatField(default=0.0, verbose_name=ugettext_lazy('fx rate'))
+    fx_rate = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('fx rate'))
 
     error_text = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('error text'))
 
