@@ -592,11 +592,16 @@ class PricingInstrumentHandler(object):
                         'id': item.instrument.id,
                     }
 
+                    safe_pp = {
+                        'id': item.pricing_policy.id,
+                    }
+
                     parameter = get_parameter_from_scheme_parameters(item, scheme_parameters)
 
                     values = {
-                        'd': date,
-                        'instrument': safe_instrument,
+                        'context_date': date,
+                        'context_instrument': safe_instrument,
+                        'context_pricing_policy': safe_pp,
                         'parameter': parameter
                     }
 
@@ -817,6 +822,10 @@ class PricingInstrumentHandler(object):
                         'id': item.instrument.id,
                     }
 
+                    safe_pp = {
+                        'id': item.pricing_policy.id,
+                    }
+
                     parameter = None
 
                     try:
@@ -868,8 +877,9 @@ class PricingInstrumentHandler(object):
                         parameter = None
 
                     values = {
-                        'd': date,
-                        'instrument': safe_instrument,
+                        'context_date': date,
+                        'context_instrument': safe_instrument,
+                        'context_pricing_policy': safe_pp,
                         'parameter': parameter
                     }
 

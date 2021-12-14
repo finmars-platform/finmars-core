@@ -291,9 +291,14 @@ class FillPricesBrokerBloombergProcess(object):
                 'id': record.instrument.id,
             }
 
+            safe_pp = {
+                'id': record.pricing_policy.id,
+            }
+
             values = {
-                'd': record.date,
-                'instrument': safe_instrument,
+                'context_date': record.date,
+                'context_instrument': safe_instrument,
+                'context_pricing_policy': safe_pp,
                 'ask': record.ask_value,
                 'bid': record.bid_value,
                 'last': record.last_value,
@@ -511,9 +516,14 @@ class FillPricesBrokerBloombergProcess(object):
                 'id': record.currency.id,
             }
 
+            safe_pp = {
+                'id': record.pricing_policy.id
+            }
+
             values = {
-                'd': record.date,
-                'currency': safe_currency,
+                'context_date': record.date,
+                'context_currency': safe_currency,
+                'context_pricing_policy': safe_pp,
                 'fx_rate': record.fx_rate_value,
             }
 
@@ -729,9 +739,14 @@ class FillPricesBrokerBloombergForwardsProcess(object):
                 'id': record.instrument.id,
             }
 
+            safe_pp = {
+                'id': record.pricing_policy.id
+            }
+
             values = {
-                'd': record.date,
-                'instrument': safe_instrument,
+                'context_date': record.date,
+                'context_instrument': safe_instrument,
+                'context_pricing_policy': safe_pp,
                 'price': record.average_weighted_price,
             }
 
@@ -1032,9 +1047,14 @@ class FillPricesBrokerWtradeProcess(object):
                 'id': record.instrument.id,
             }
 
+            safe_pp = {
+                'id': record.pricing_policy.id,
+            }
+
             values = {
-                'd': record.date,
-                'instrument': safe_instrument,
+                'context_date': record.date,
+                'context_instrument': safe_instrument,
+                'context_pricing_policy': safe_pp,
                 'open': record.open_value,
                 'close': record.close_value,
                 'high': record.high_value,
@@ -1334,9 +1354,14 @@ class FillPricesBrokerCbondsProcess(object):
                 'id': record.instrument.id,
             }
 
+            safe_pp = {
+                'id': record.pricing_policy.id,
+            }
+
             values = {
-                'd': record.date,
-                'instrument': safe_instrument,
+                'context_date': record.date,
+                'context_instrument': safe_instrument,
+                'context_pricing_policy': safe_pp,
                 'open': record.open_value,
                 'close': record.close_value,
                 'high': record.high_value,
@@ -1610,9 +1635,15 @@ class FillPricesBrokerFixerProcess(object):
                 'id': record.currency.id,
             }
 
+            safe_pp = {
+                'id': record.pricing_policy.id,
+            }
+
+
             values = {
-                'd': record.date,
-                'currency': safe_currency,
+                'context_date': record.date,
+                'context_currency': safe_currency,
+                'context_pricing_policy': safe_pp,
                 'close': record.close_value,
             }
 
@@ -1825,9 +1856,14 @@ class FillPricesBrokerAlphavProcess(object):
                 'id': record.instrument.id,
             }
 
+            safe_pp = {
+                'id': record.pricing_policy.id,
+            }
+
             values = {
-                'd': record.date,
-                'instrument': safe_instrument,
+                'context_date': record.date,
+                'context_instrument': safe_instrument,
+                'context_pricing_policy': safe_pp,
                 'close': record.close_value,
             }
 

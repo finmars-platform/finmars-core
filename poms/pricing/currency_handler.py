@@ -326,6 +326,10 @@ class PricingCurrencyHandler(object):
                         'id': item.currency.id,
                     }
 
+                    safe_pp = {
+                        'id': item.pricing_policy.id,
+                    }
+
                     parameter = None
 
                     try:
@@ -379,8 +383,9 @@ class PricingCurrencyHandler(object):
                         parameter = None
 
                     values = {
-                        'd': date,
-                        'currency': safe_currency,
+                        'context_date': date,
+                        'context_currency': safe_currency,
+                        'context_pricing_policy': safe_pp,
                         'parameter': parameter
                     }
 
@@ -538,6 +543,10 @@ class PricingCurrencyHandler(object):
                         'id': item.currency.id,
                     }
 
+                    safe_pp = {
+                        'id': item.pricing_policy.id,
+                    }
+
                     parameter = None
 
                     try:
@@ -591,8 +600,9 @@ class PricingCurrencyHandler(object):
                         parameter = None
 
                     values = {
-                        'd': date,
-                        'currency': safe_currency,
+                        'context_date': date,
+                        'context_currency': safe_currency,
+                        'context_pricing_policy': safe_pp,
                         'parameter': parameter
                     }
 
