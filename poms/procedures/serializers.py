@@ -70,6 +70,8 @@ class PricingProcedureInstanceSerializer(serializers.ModelSerializer):
 
     procedure_object = PricingProcedureSerializer(source='procedure', read_only=True)
 
+    request_data = serializers.JSONField(allow_null=True, required=False)
+
     class Meta:
         model = PricingProcedureInstance
         fields = ('master_user', 'id', 'parent_procedure_instance',
@@ -80,7 +82,7 @@ class PricingProcedureInstanceSerializer(serializers.ModelSerializer):
 
                   'successful_prices_count', 'error_prices_count',
 
-                  'error_code', 'error_message'
+                  'error_code', 'error_message', 'request_data'
 
                   )
 

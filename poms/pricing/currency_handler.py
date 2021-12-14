@@ -909,6 +909,9 @@ class PricingCurrencyHandler(object):
         _l.debug('self.procedure %s' % self.procedure.id)
         _l.debug('send request %s' % body)
 
+        procedure_instance.request_data = body
+        procedure_instance.save()
+
         try:
 
             self.transport.send_request(body)
@@ -1040,6 +1043,9 @@ class PricingCurrencyHandler(object):
 
         _l.debug('self.procedure %s' % self.procedure.id)
         _l.debug('send request %s' % body)
+
+        procedure_instance.request_data = body
+        procedure_instance.save()
 
         try:
 
