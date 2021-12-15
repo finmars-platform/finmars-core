@@ -730,6 +730,8 @@ class PricingInstrumentHandler(object):
                     if price.accrued_price == 0 and price.principal_price == 0:
                         has_error = True
 
+                        error.error_text = error.error_text + ' Price is 0 or null'
+
                     if can_write:
 
                         if has_error:
@@ -1055,6 +1057,7 @@ class PricingInstrumentHandler(object):
 
                     if price.accrued_price == 0 and price.principal_price == 0:
                         has_error = True
+                        error.error_text = error.error_text + ' Price is 0 or null'
 
                     if can_write:
 

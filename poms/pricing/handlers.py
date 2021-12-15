@@ -443,6 +443,7 @@ class FillPricesBrokerBloombergProcess(object):
 
             if price.accrued_price == 0 and price.principal_price == 0:
                 has_error = True
+                error.error_text = error.error_text + ' Price is 0 or null'
 
             if can_write:
 
@@ -885,6 +886,7 @@ class FillPricesBrokerBloombergForwardsProcess(object):
 
             if price.accrued_price == 0 and price.principal_price == 0:
                 has_error = True
+                error.error_text = error.error_text + ' Price is 0 or null'
 
             if can_write:
 
@@ -1200,6 +1202,7 @@ class FillPricesBrokerWtradeProcess(object):
 
             if price.accrued_price == 0 and price.principal_price == 0:
                 has_error = True
+                error.error_text = error.error_text + ' Price is 0 or null'
 
             if can_write:
 
@@ -1510,6 +1513,7 @@ class FillPricesBrokerCbondsProcess(object):
 
             if price.accrued_price == 0 and price.principal_price == 0:
                 has_error = True
+                error.error_text = error.error_text + ' Price is 0 or null'
 
             if can_write:
 
@@ -2011,6 +2015,7 @@ class FillPricesBrokerAlphavProcess(object):
 
             if price.accrued_price == 0 and price.principal_price == 0:
                 has_error = True
+                error.error_text = error.error_text + ' Price is 0 or null'
 
             if can_write:
 
