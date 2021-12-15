@@ -115,6 +115,11 @@ class RequestDataFileProcedureSerializer(ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     data = serializers.JSONField(allow_null=True, required=False)
 
+    date_from_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True,
+                                           allow_blank=True, default='')
+    date_to_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True,
+                                         allow_blank=True, default='')
+
     def __init__(self, *args, **kwargs):
         super(RequestDataFileProcedureSerializer, self).__init__(*args, **kwargs)
 
@@ -127,6 +132,8 @@ class RequestDataFileProcedureSerializer(ModelWithTimeStampSerializer):
         fields = [
             'id', 'master_user', 'name', 'user_code', 'notes',
             'provider',  'scheme_user_code', 'scheme_type', 'data',
+
+            'date_from_expr', 'date_to_expr',
 
             'date_from', 'date_to',
         ]
