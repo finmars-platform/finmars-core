@@ -441,6 +441,9 @@ class FillPricesBrokerBloombergProcess(object):
 
             _l.debug('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
 
+            if price.accrued_price == 0 and price.principal_price == 0:
+                has_error = True
+
             if can_write:
 
                 # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
@@ -880,6 +883,9 @@ class FillPricesBrokerBloombergForwardsProcess(object):
 
             _l.debug('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
 
+            if price.accrued_price == 0 and price.principal_price == 0:
+                has_error = True
+
             if can_write:
 
                 # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
@@ -1192,6 +1198,9 @@ class FillPricesBrokerWtradeProcess(object):
 
             _l.debug('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
 
+            if price.accrued_price == 0 and price.principal_price == 0:
+                has_error = True
+
             if can_write:
 
                 # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
@@ -1498,6 +1507,9 @@ class FillPricesBrokerCbondsProcess(object):
                 error.accrued_price = accrued_price
 
             _l.debug('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
+
+            if price.accrued_price == 0 and price.principal_price == 0:
+                has_error = True
 
             if can_write:
 
@@ -1996,6 +2008,9 @@ class FillPricesBrokerAlphavProcess(object):
                 error.accrued_price = accrued_price
 
             _l.debug('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
+
+            if price.accrued_price == 0 and price.principal_price == 0:
+                has_error = True
 
             if can_write:
 
