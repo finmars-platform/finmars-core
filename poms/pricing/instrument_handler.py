@@ -1231,6 +1231,7 @@ class PricingInstrumentHandler(object):
                                     pricing_scheme=record.pricing_scheme,
                                     pricing_policy=record.pricing_policy,
                                     date=record.date,
+                                    status=PriceHistoryError.STATUS_REQUESTED,
                                     created=procedure_instance.created
                                 )
 
@@ -1518,6 +1519,7 @@ class PricingInstrumentHandler(object):
                                 pricing_scheme=record.pricing_scheme,
                                 pricing_policy=record.pricing_policy,
                                 date=record.date,
+                                status=PriceHistoryError.STATUS_REQUESTED,
                                 created=procedure_instance.created
                             )
 
