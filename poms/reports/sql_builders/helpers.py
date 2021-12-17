@@ -259,3 +259,51 @@ def get_cash_as_position_consolidation_for_select(instance):
 
     return resultString
 
+
+def get_transaction_report_filter_sql_string(instance):
+
+    result_string = ''
+
+    filter_sql_list = []
+
+    portfolios_ids = []
+    accounts_ids = []
+    strategies1_ids = []
+    strategies2_ids = []
+    strategies3_ids = []
+
+    if len(instance.portfolios):
+        for portfolio in instance.portfolios:
+            portfolios_ids.append(str(portfolio.id))
+
+        filter_sql_list.append('t.portfolio_id in (' + ', '.join(portfolios_ids) + ')')
+
+    if len(instance.accounts):
+        for account in instance.accounts:
+            accounts_ids.append(str(account.id))
+
+        filter_sql_list.append('t.account_position_id in (' + ', '.join(accounts_ids) + ')')
+
+    if len(instance.strategies1):
+        for strategy in instance.strategies1:
+            strategies1_ids.append(str(strategy.id))
+
+        filter_sql_list.append('t.strategy1_position_id in (' + ', '.join(strategies1_ids) + ')')
+
+    if len(instance.strategies2):
+        for strategy in instance.strategies2:
+            strategies2_ids.append(str(strategy.id))
+
+        filter_sql_list.append('t.strategy2_position_id in (' + ', '.join(strategies2_ids) + ')')
+
+    if len(instance.strategies3):
+        for strategy in instance.strategies3:
+            strategies3_ids.append(str(strategy.id))
+
+        filter_sql_list.append('t.strategy3_position_id in (' + ', '.join(strategies3_ids) + ')')
+
+    if len(filter_sql_list):
+        result_string = result_string + 'and '
+        result_string = result_string + ' and '.join(filter_sql_list)
+
+    return result_string

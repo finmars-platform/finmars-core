@@ -10,7 +10,8 @@ from poms.portfolios.models import Portfolio
 from poms.reports.builders.balance_item import Report
 from poms.reports.builders.base_builder import BaseReportBuilder
 from poms.reports.models import BalanceReportCustomField, TransactionReportCustomField
-from poms.reports.sql_builders.helpers import dictfetchall
+from poms.reports.sql_builders.helpers import dictfetchall, get_transaction_filter_sql_string, \
+    get_transaction_report_filter_sql_string
 from poms.transactions.models import ComplexTransaction, TransactionClass, ComplexTransactionStatus
 from poms.users.models import EcosystemDefault
 
@@ -51,6 +52,8 @@ class TransactionReportBuilderSql:
         _l.debug("build items")
 
         with connection.cursor() as cursor:
+
+            filter_sql_string = get_transaction_report_filter_sql_string(self.instance)
 
             query = """
                 SELECT
@@ -127,7 +130,7 @@ class TransactionReportBuilderSql:
                 INNER JOIN transactions_transactiontype tt on tc.transaction_type_id = tt.id
                 INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id
                 INNER JOIN transactions_complextransactionstatus cts on tc.status_id = cts.id
-                WHERE t.transaction_date >= %s AND t.transaction_date <= %s AND t.master_user_id = %s AND tc.status_id IN %s
+                WHERE t.transaction_date >= '{begin_date}' AND t.transaction_date <= '{end_date}' AND t.master_user_id = {master_user_id} AND tc.status_id IN {statuses} {filter_sql_string}
                 
                 
             """
@@ -144,15 +147,25 @@ class TransactionReportBuilderSql:
 
                     statuses = []
                     if 'booked' in pieces:
-                        statuses.append(1)
+                        statuses.append('1')
                     if 'ignored' in pieces:
-                        statuses.append(3)
+                        statuses.append('3')
 
 
-            statuses = tuple(statuses)
+            statuses_str = (',').join(statuses)
+            statuses_str = '(' + statuses_str +')'
 
 
-            cursor.execute(query, [self.instance.begin_date, self.instance.end_date, self.instance.master_user.id, statuses])
+            query = query.format(begin_date=self.instance.begin_date,
+                                 end_date=self.instance.end_date,
+                                 master_user_id=self.instance.master_user.id,
+                                 statuses=statuses_str,
+                                 filter_sql_string=filter_sql_string
+                                 )
+
+
+            # cursor.execute(query, [self.instance.begin_date, self.instance.end_date, self.instance.master_user.id, statuses, filter_sql_string])
+            cursor.execute(query)
 
             result = dictfetchall(cursor)
 

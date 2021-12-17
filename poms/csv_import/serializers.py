@@ -328,7 +328,7 @@ class CsvImportSchemeLightSerializer(ModelWithUserCodeSerializer):
     class Meta:
 
         model = CsvImportScheme
-        fields = ('id', 'master_user', 'user_code', 'filter_expr', 'content_type')
+        fields = ('id', 'master_user',  'name', 'user_code', 'filter_expr', 'content_type')
 
 
 class CsvDataImportSerializer(serializers.Serializer):
