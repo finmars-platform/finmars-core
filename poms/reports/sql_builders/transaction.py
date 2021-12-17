@@ -135,7 +135,7 @@ class TransactionReportBuilderSql:
                 
             """
 
-            statuses = [1, 3]
+            statuses = ['1', '3']
 
             _l.info('complex_transaction_statuses_filter %s ' % self.instance.complex_transaction_statuses_filter)
 

@@ -327,7 +327,7 @@ class PricingCurrencyHandler(object):
                     }
 
                     safe_pp = {
-                        'id': item.pricing_policy.id,
+                        'id': item.policy.id,
                     }
 
                     parameter = None
@@ -544,7 +544,7 @@ class PricingCurrencyHandler(object):
                     }
 
                     safe_pp = {
-                        'id': item.pricing_policy.id,
+                        'id': item.policy.id,
                     }
 
                     parameter = None

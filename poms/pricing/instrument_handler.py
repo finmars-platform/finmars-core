@@ -593,7 +593,7 @@ class PricingInstrumentHandler(object):
                     }
 
                     safe_pp = {
-                        'id': item.pricing_policy.id,
+                        'id': item.policy.id,
                     }
 
                     parameter = get_parameter_from_scheme_parameters(item, scheme_parameters)
@@ -828,7 +828,7 @@ class PricingInstrumentHandler(object):
                     }
 
                     safe_pp = {
-                        'id': item.pricing_policy.id,
+                        'id': item.policy.id,
                     }
 
                     parameter = None
