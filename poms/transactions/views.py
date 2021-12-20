@@ -531,10 +531,11 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
         # Some Inputs can choose from which context variable it will take value
         context_values = self.get_context_for_book(request)
         # But by default Context Variables overwrites default value
-        default_values = self.get_context_for_book(request)
+        # default_values = self.get_context_for_book(request)
 
 
 
+        # print("default_values %s" % default_values)
         print("context_values %s" % context_values)
         print("pk %s" % pk)
 
@@ -543,8 +544,7 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
         if request.method == 'GET':
 
             instance = TransactionTypeProcess(process_mode='book', transaction_type=transaction_type,
-                                              context=self.get_serializer_context(), context_values=context_values,
-                                              default_values=default_values)
+                                              context=self.get_serializer_context(), context_values=context_values)
 
             serializer = self.get_serializer(instance=instance)
             return Response(serializer.data)

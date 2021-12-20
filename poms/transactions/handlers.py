@@ -192,6 +192,7 @@ class TransactionTypeProcess(object):
 
             return False
 
+
     def _set_values(self):
         def _get_val_by_model_cls(obj, model_class):
             if issubclass(model_class, Account):
@@ -282,7 +283,7 @@ class TransactionTypeProcess(object):
 
                     value = _get_val_by_model_cls(i, model_class)
 
-                    _l.debug("Set from default. input %s value %s" % (i.name, value))
+                    _l.debug("Set from default. Relation input %s value %s" % (i.name, value))
 
                 else:
 
