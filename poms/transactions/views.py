@@ -389,19 +389,19 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
         master_user = request.user.master_user
         context_values = {}
 
-        instrument_id = request.query_params.get('instrument', None)
-        pricing_currency_id = request.query_params.get('pricing_currency', None)
-        accrued_currency_id = request.query_params.get('accrued_currency', None)
-        portfolio_id = request.query_params.get('portfolio', None)
-        account_id = request.query_params.get('account', None)
-        strategy1_id = request.query_params.get('strategy1', None)
-        strategy2_id = request.query_params.get('strategy2', None)
-        strategy3_id = request.query_params.get('strategy3', None)
+        instrument_id = request.query_params.get('context_instrument', None)
+        pricing_currency_id = request.query_params.get('context_pricing_currency', None)
+        accrued_currency_id = request.query_params.get('context_accrued_currency', None)
+        portfolio_id = request.query_params.get('context_portfolio', None)
+        account_id = request.query_params.get('context_account', None)
+        strategy1_id = request.query_params.get('context_strategy1', None)
+        strategy2_id = request.query_params.get('context_strategy2', None)
+        strategy3_id = request.query_params.get('context_strategy3', None)
 
-        currency_id = request.query_params.get('currency', None)
-        pricing_policy_id = request.query_params.get('pricing_policy', None)
-        allocation_balance_id = request.query_params.get('allocation_balance', None)
-        allocation_pl_id = request.query_params.get('allocation_pl', None)
+        currency_id = request.query_params.get('context_currency', None)
+        pricing_policy_id = request.query_params.get('context_pricing_policy', None)
+        allocation_balance_id = request.query_params.get('context_allocation_balance', None)
+        allocation_pl_id = request.query_params.get('context_allocation_pl', None)
 
         context_instrument = None
         context_pricing_currency = None
@@ -417,14 +417,14 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
         context_allocation_balance = None
         context_allocation_pl = None
 
-        context_position = request.query_params.get('position', None)
-        context_effective_date = request.query_params.get('effective_date', None)
-        context_notification_date = request.query_params.get('notification_date', None)
-        context_final_date = request.query_params.get('final_date', None)
-        context_maturity_date = request.query_params.get('maturity_date', None)
+        context_position = request.query_params.get('context_position', None)
+        context_effective_date = request.query_params.get('context_effective_date', None)
+        context_notification_date = request.query_params.get('context_notification_date', None)
+        context_final_date = request.query_params.get('context_final_date', None)
+        context_maturity_date = request.query_params.get('context_maturity_date', None)
 
-        context_report_date = request.query_params.get('report_date', None)
-        context_report_start_date = request.query_params.get('report_start_date', None)
+        context_report_date = request.query_params.get('context_report_date', None)
+        context_report_start_date = request.query_params.get('context_report_start_date', None)
 
         if pricing_policy_id:
             try:
@@ -499,27 +499,44 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
                 context_accrued_currency = None
 
         context_values.update({
-            'instrument': context_instrument,
-            'pricing_currency': context_pricing_currency,
-            'accrued_currency': context_accrued_currency,
-            'portfolio': context_portfolio,
-            'account': context_account,
-            'strategy1': context_strategy1,
-            'strategy2': context_strategy2,
-            'strategy3': context_strategy3,
-            'position': context_position,
-            'effective_date': context_effective_date,
+            'context_instrument': context_instrument,
+            'context_pricing_currency': context_pricing_currency,
+            'context_accrued_currency': context_accrued_currency,
+            'context_portfolio': context_portfolio,
+            'context_account': context_account,
+            'context_strategy1': context_strategy1,
+            'context_strategy2': context_strategy2,
+            'context_strategy3': context_strategy3,
+            'context_position': context_position,
+            'context_effective_date': context_effective_date,
             # 'notification_date': context_notification_date, # not in context variables
             # 'final_date': context_final_date,
             # 'maturity_date': context_maturity_date,
 
-            'currency': context_currency,
-            'report_date': context_report_date,
-            'report_start_date': context_report_start_date,
-            'pricing_policy': context_pricing_policy,
-            'allocation_balance': context_allocation_balance,
-            'allocation_pl': context_allocation_pl
+            'context_currency': context_currency,
+            'context_report_date': context_report_date,
+            'context_report_start_date': context_report_start_date,
+            'context_pricing_policy': context_pricing_policy,
+            'context_allocation_balance': context_allocation_balance,
+            'context_allocation_pl': context_allocation_pl
         })
+
+        context_values['context_parameter'] = request.query_params.get('context_parameter', None)
+
+        context_parameter_exist = True
+        increment = 1
+        while context_parameter_exist:
+
+            try:
+                parameter = request.query_params.get('context_parameter' + str(increment), None)
+
+                if parameter:
+                    context_values['context_parameter' + str(increment)] = parameter
+                    increment = increment + 1
+                else:
+                    context_parameter_exist = False
+            except Exception as e:
+                context_parameter_exist = False
 
         return context_values
 
