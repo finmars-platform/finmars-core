@@ -10,6 +10,7 @@ from poms.complex_import.models import ComplexImportScheme
 from poms.complex_import.serializers import ComplexImportSchemeSerializer
 from poms.configuration_import.handlers import ConfigurationEntityArchetypeGenerateHandler
 from poms.configuration_import.recovery import ConfigurationRecoveryHandler
+from poms.configuration_sharing.models import SharedConfigurationFile
 from poms.counterparties.models import Responsible, Counterparty
 from poms.csv_import.models import CsvImportScheme
 from poms.csv_import.serializers import CsvImportSchemeSerializer
@@ -1185,7 +1186,13 @@ class ImportManager(object):
                             content_object.pop('origin_for_global_layout')
 
                         if 'sourced_from_global_layout' in content_object:
-                            content_object.pop('sourced_from_global_layout')
+
+                            try:
+                                config_file = SharedConfigurationFile.objects.get(pk=content_object['sourced_from_global_layout'])
+
+                                content_object['json_data'] = config_file.json_data
+                            except Exception as e:
+                                content_object.pop('sourced_from_global_layout')
 
                         if 'data' in content_object:
 

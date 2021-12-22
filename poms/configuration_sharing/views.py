@@ -10,6 +10,7 @@ from poms.common.utils import date_now, datetime_now
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet
+from poms.configuration_import.serializers import ConfigurationImportAsJsonSerializer
 from poms.configuration_sharing.filters import OwnerByRecipient, OwnerBySender
 from poms.configuration_sharing.models import SharedConfigurationFile, InviteToSharedConfigurationFile
 from poms.configuration_sharing.serializers import SharedConfigurationFileSerializer, \
@@ -17,9 +18,13 @@ from poms.configuration_sharing.serializers import SharedConfigurationFileSerial
 
 from poms.csv_import.tasks import data_csv_file_import, data_csv_file_import_validate
 from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
+from poms.ui.models import ListLayout
+from poms.configuration_import.tasks import configuration_import_as_json
 
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByUserFilter
 
+import logging
+_l = logging.getLogger('poms.configuration_sharing')
 
 class SharedConfigurationFileFilterSet(FilterSet):
 
@@ -38,6 +43,49 @@ class SharedConfigurationFileViewSet(AbstractModelViewSet):
     permission_classes = AbstractModelViewSet.permission_classes + [
         PomsConfigurationPermission
     ]
+
+    def update(self, request, *args, **kwargs):
+
+        is_force = request.query_params.get('force', False)
+
+        if (is_force == 'true'):
+            is_force = True
+
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if is_force:
+            master_user = request.user.master_user
+            layouts = ListLayout.objects.filter(member__master_user=master_user, sourced_from_global_layout=instance)
+
+            _l.info("layouts to force update %s" % len(layouts))
+
+            processed = 0
+
+            for layout in layouts:
+
+                if layout.origin_for_global_layout.id != instance.id:
+
+                    serializer = ConfigurationImportAsJsonSerializer(data={
+                        "data": instance.json_data,
+                        "master_user": master_user,
+                        "member": layout.member,
+                        "mode": 'overwrite'
+                    }, context={
+                        "request": request
+                    })
+                    serializer.is_valid(raise_exception=True)
+                    instance = serializer.save()
+
+                    configuration_import_as_json.apply_async(kwargs={'instance': instance})
+                    processed = processed + 1
+
+            _l.info("Processed layouts %s" % processed)
+
+
+        return Response(serializer.data)
 
 
 class InviteToSharedConfigurationFileFilterSet(FilterSet):

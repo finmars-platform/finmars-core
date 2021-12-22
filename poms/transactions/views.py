@@ -573,7 +573,6 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
 
             instance = TransactionTypeProcess(process_mode=request.data['process_mode'], transaction_type=transaction_type,
                                               context=self.get_serializer_context(), context_values=context_values,
-                                              default_values=default_values,
                                               complex_transaction_status=complex_transaction_status,
                                               uniqueness_reaction=uniqueness_reaction)
 
@@ -631,7 +630,7 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
 
         context_values = self.get_context_for_book(request)
         # But by default Context Variables overwrites default value
-        default_values = self.get_context_for_book(request)
+        # default_values = self.get_context_for_book(request)
 
         uniqueness_reaction = request.data.get('uniqueness_reaction', None)
 
@@ -639,7 +638,6 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
 
         instance = TransactionTypeProcess(process_mode=request.data['process_mode'], transaction_type=transaction_type,
                                           context=self.get_serializer_context(), context_values=context_values,
-                                          default_values=default_values,
                                           complex_transaction_status=complex_transaction_status,
                                           uniqueness_reaction=uniqueness_reaction)
 
