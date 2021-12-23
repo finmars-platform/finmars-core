@@ -47,6 +47,41 @@ def calculate_prices_accrued_price_async(master_user=None, begin_date=None, end_
                                    instruments=instruments)
 
 
+def fill_parameters_from_instrument(event_schedule, instrument):
+
+    result = {}
+
+    for parameter in event_schedule.data['parameters']:
+
+        if parameter['___switch_state'] == 'attribute_key':
+
+            if 'attributes.' in parameter['attribute_key']:
+
+                attr_user_code = parameter['attribute_key'].split('attributes.')[1]
+
+                for attr in instrument.attributes.all():
+                    if attr.attribute_type.user_code == attr_user_code:
+
+                        if attr.attribute_type.value_type == 10:
+                            result['parameter' + str(parameter['index'])] = attr.value_string
+
+                        if attr.attribute_type.value_type == 20:
+                            result['parameter' + str(parameter['index'])] = attr.value_float
+
+                        if attr.attribute_type.value_type == 40:
+                            result['parameter' + str(parameter['index'])] = attr.value_date
+
+
+            else:
+                result['parameter' + str(parameter['index'])] = getattr(instrument, parameter['attribute_key'], None)
+
+        else:
+            result['parameter' + str(parameter['index'])] = parameter['default_value']
+
+
+    return result
+
+
 @shared_task(name='instruments.only_generate_events_at_date', ignore_result=True)
 def only_generate_events_at_date(master_user, date):
 
@@ -152,6 +187,8 @@ def only_generate_events_at_date(master_user, date):
 
                     _l.info('event_schedule %s' % event_schedule)
 
+                    parameters = fill_parameters_from_instrument(event_schedule, instrument)
+
                     generated_event = GeneratedEvent()
                     generated_event.master_user = master_user
                     generated_event.event_schedule = event_schedule
@@ -166,6 +203,9 @@ def only_generate_events_at_date(master_user, date):
                     generated_event.strategy2 = strategy2
                     generated_event.strategy3 = strategy3
                     generated_event.position = position
+                    generated_event.data = {
+                        'parameters': parameters
+                    }
                     generated_event.save()
 
     except Exception as e:
@@ -280,6 +320,8 @@ def only_generate_events_at_date_for_single_instrument(master_user, date, instru
 
                     print('event_schedule %s' % event_schedule)
 
+                    parameters = fill_parameters_from_instrument(event_schedule, instrument)
+
                     generated_event = GeneratedEvent()
                     generated_event.master_user = master_user
                     generated_event.event_schedule = event_schedule
@@ -294,6 +336,9 @@ def only_generate_events_at_date_for_single_instrument(master_user, date, instru
                     generated_event.strategy2 = strategy2
                     generated_event.strategy3 = strategy3
                     generated_event.position = position
+                    generated_event.data = {
+                        'parameters': parameters
+                    }
                     generated_event.save()
 
     except Exception as e:
@@ -410,6 +455,8 @@ def generate_events0(master_user):
 
                     print('event_schedule %s' % event_schedule)
 
+                    parameters = fill_parameters_from_instrument(event_schedule, instrument)
+
                     generated_event = GeneratedEvent()
                     generated_event.master_user = master_user
                     generated_event.event_schedule = event_schedule
@@ -424,6 +471,9 @@ def generate_events0(master_user):
                     generated_event.strategy2 = strategy2
                     generated_event.strategy3 = strategy3
                     generated_event.position = position
+                    generated_event.data = {
+                        'parameters': parameters
+                    }
                     generated_event.save()
 
         process_events0.apply_async(kwargs={'master_user': master_user})
@@ -679,6 +729,8 @@ def generate_events_do_not_inform_apply_default0(master_user):
 
                     print('event_schedule %s' % event_schedule)
 
+                    parameters = fill_parameters_from_instrument(event_schedule, instrument)
+
                     generated_event = GeneratedEvent()
                     generated_event.master_user = master_user
                     generated_event.event_schedule = event_schedule
@@ -693,6 +745,9 @@ def generate_events_do_not_inform_apply_default0(master_user):
                     generated_event.strategy2 = strategy2
                     generated_event.strategy3 = strategy3
                     generated_event.position = position
+                    generated_event.data = {
+                        'parameters': parameters
+                    }
                     generated_event.save()
 
         process_events0.apply_async(kwargs={'master_user': master_user})

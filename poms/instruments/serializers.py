@@ -1411,6 +1411,8 @@ class EventScheduleSerializer(serializers.ModelSerializer):
     display_name = serializers.SerializerMethodField()
     display_description = serializers.SerializerMethodField()
 
+    data = serializers.JSONField(allow_null=False)
+
     class Meta:
         model = EventSchedule
         fields = [
@@ -1421,7 +1423,7 @@ class EventScheduleSerializer(serializers.ModelSerializer):
             'final_date', 'final_date_value_type',
             'is_auto_generated',
             'display_name', 'display_description',
-            'actions',
+            'actions', 'data'
         ]
         read_only_fields = ['is_auto_generated']
 
@@ -1578,13 +1580,15 @@ class GeneratedEventSerializer(serializers.ModelSerializer):
     # is_need_reaction = serializers.SerializerMethodField()
     is_need_reaction = serializers.BooleanField(read_only=True)
 
+    data = serializers.JSONField(allow_null=False)
+
     class Meta:
         model = GeneratedEvent
         fields = [
             'id', 'effective_date', 'notification_date', 'status', 'status_date', 'event_schedule',
             'instrument', 'portfolio', 'account', 'strategy1', 'strategy2', 'strategy3', 'position',
             'is_need_reaction',
-            'action', 'transaction_type', 'member',
+            'action', 'transaction_type', 'member', 'data'
         ]
         read_only_fields = fields
 

@@ -1709,6 +1709,25 @@ class EventSchedule(models.Model):
                                         help_text=ugettext_lazy('Used for store link when is_auto_generated is True'),
                                         on_delete=models.SET_NULL)
 
+    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+
+    @property
+    def data(self):
+        if self.json_data:
+            try:
+                return json.loads(self.json_data)
+            except (ValueError, TypeError):
+                return None
+        else:
+            return None
+
+    @data.setter
+    def data(self, val):
+        if val:
+            self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+        else:
+            self.json_data = None
+
     class Meta:
         verbose_name = ugettext_lazy('event schedule')
         verbose_name_plural = ugettext_lazy('event schedules')
@@ -1924,6 +1943,25 @@ class GeneratedEvent(models.Model):
                                             verbose_name=ugettext_lazy('complex transaction'))
     member = models.ForeignKey('users.Member', null=True, blank=True, on_delete=models.SET_NULL,
                                verbose_name=ugettext_lazy('member'))
+
+    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+
+    @property
+    def data(self):
+        if self.json_data:
+            try:
+                return json.loads(self.json_data)
+            except (ValueError, TypeError):
+                return None
+        else:
+            return None
+
+    @data.setter
+    def data(self, val):
+        if val:
+            self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+        else:
+            self.json_data = None
 
     class Meta:
         verbose_name = ugettext_lazy('generated event')

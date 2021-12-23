@@ -31,27 +31,37 @@ class GeneratedEventProcess(TransactionTypeProcess):
             # 'final_date': generated_event.event_schedule.final_date,
             # 'maturity_date': generated_event.instrument.maturity_date
         })
+
+        _l.info('generated_event data %s' % generated_event.data)
+
+        if generated_event.data:
+            if generated_event.data['parameters']:
+
+                for key, value in generated_event.data['parameters'].items():
+                    context_values[key] = value
+
+
         kwargs['context_values'] = context_values
 
         # But by default Context Variables overwrites default value
 
-        default_values = kwargs.get('default_values', None) or {}
-        default_values.update({
-            'instrument': generated_event.instrument,
-            'pricing_currency': generated_event.instrument.pricing_currency,
-            'accrued_currency': generated_event.instrument.accrued_currency,
-            'portfolio': generated_event.portfolio,
-            'account': generated_event.account,
-            'strategy1': generated_event.strategy1,
-            'strategy2': generated_event.strategy2,
-            'strategy3': generated_event.strategy3,
-            'position': generated_event.position,
-            'effective_date': generated_event.effective_date,
-            'notification_date': generated_event.notification_date, # not in context variables
-            # 'final_date': generated_event.event_schedule.final_date,
-            # 'maturity_date': generated_event.instrument.maturity_date
-        })
-        kwargs['default_values'] = default_values
+        # default_values = kwargs.get('default_values', None) or {}
+        # default_values.update({
+        #     'instrument': generated_event.instrument,
+        #     'pricing_currency': generated_event.instrument.pricing_currency,
+        #     'accrued_currency': generated_event.instrument.accrued_currency,
+        #     'portfolio': generated_event.portfolio,
+        #     'account': generated_event.account,
+        #     'strategy1': generated_event.strategy1,
+        #     'strategy2': generated_event.strategy2,
+        #     'strategy3': generated_event.strategy3,
+        #     'position': generated_event.position,
+        #     'effective_date': generated_event.effective_date,
+        #     'notification_date': generated_event.notification_date, # not in context variables
+        #     # 'final_date': generated_event.event_schedule.final_date,
+        #     # 'maturity_date': generated_event.instrument.maturity_date
+        # })
+        # kwargs['default_values'] = default_values
 
         if generated_event.status == GeneratedEvent.ERROR:
             kwargs['complex_transaction_status'] = ComplexTransaction.PENDING
