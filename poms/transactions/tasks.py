@@ -437,7 +437,7 @@ def get_values(complex_transaction):
 
     return values
 
-def execute_user_fields_expressions(complex_transaction, values, context):
+def execute_user_fields_expressions(complex_transaction, values, context, instance):
 
     _l.debug('execute_user_fields_expressions')
 
@@ -459,6 +459,9 @@ def execute_user_fields_expressions(complex_transaction, values, context):
         'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
         'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
 
+        'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
+        'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
+
         'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
         'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
 
@@ -470,28 +473,30 @@ def execute_user_fields_expressions(complex_transaction, values, context):
 
     for field_key in fields:
 
-        # _l.debug('field_key')
+        if instance.key == field_key:
 
-        if getattr(complex_transaction.transaction_type, field_key):
+             # _l.debug('field_key')
 
-            try:
-
-                # _l.debug('epxr %s' % getattr(self.complex_transaction.transaction_type, field_key))
-
-                val = formula.safe_eval(
-                    getattr(complex_transaction.transaction_type, field_key), names=names,
-                    context=context)
-
-                setattr(complex_transaction, field_key, val)
-
-            except Exception as e:
-
-                _l.debug("User Field Expression Eval error %s" % e)
+            if getattr(complex_transaction.transaction_type, field_key):
 
                 try:
-                    setattr(complex_transaction, field_key, '<InvalidExpression>')
+
+                    # _l.debug('epxr %s' % getattr(self.complex_transaction.transaction_type, field_key))
+
+                    val = formula.safe_eval(
+                        getattr(complex_transaction.transaction_type, field_key), names=names,
+                        context=context)
+
+                    setattr(complex_transaction, field_key, val)
+
                 except Exception as e:
-                    setattr(complex_transaction, field_key, None)
+
+                    _l.debug("User Field Expression Eval error %s" % e)
+
+                    try:
+                        setattr(complex_transaction, field_key, '<InvalidExpression>')
+                    except Exception as e:
+                        setattr(complex_transaction, field_key, None)
 
 
 @shared_task(name='transactions.recalculate_user_fields', bind=True)
@@ -527,7 +532,7 @@ def recalculate_user_fields(self, instance):
 
             values = get_values(complex_transaction)
 
-            execute_user_fields_expressions(complex_transaction, values, context)
+            execute_user_fields_expressions(complex_transaction, values, context, instance)
             complex_transaction.save()
 
 

@@ -3697,6 +3697,7 @@ class RecalculateUserFieldsSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
     transaction_type_id = serializers.IntegerField(allow_null=True, required=False)
+    key = serializers.CharField(allow_null=True, allow_blank=True, required=False)
 
     processed_rows = serializers.ReadOnlyField()
     total_rows = serializers.ReadOnlyField()
