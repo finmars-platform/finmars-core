@@ -2277,12 +2277,16 @@ class TransactionEvSerializer(ModelWithObjectPermissionSerializer):
     responsible_object = ResponsibleSimpleViewSerializer(source='responsible', read_only=True)
     counterparty_object = CounterpartySimpleViewSerializer(source='counterparty', read_only=True)
 
+
+
     class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = Transaction
         fields = [
             'id', 'master_user',
 
-            'transaction_code', 'complex_transaction', 'complex_transaction_order', 'transaction_class',
+            'transaction_code', 'complex_transaction', 'complex_transaction_order',
+
+            'transaction_class',
 
             'instrument', 'instrument_object',
 
@@ -2325,6 +2329,9 @@ class TransactionEvSerializer(ModelWithObjectPermissionSerializer):
 
     def __init__(self, *args, **kwargs):
         super(TransactionEvSerializer, self).__init__(*args, **kwargs)
+
+        self.fields['transaction_class_object'] = TransactionClassSerializer(source='transaction_class', read_only=True)
+
 
 
 class TransactionTextRenderSerializer(TransactionSerializer):
