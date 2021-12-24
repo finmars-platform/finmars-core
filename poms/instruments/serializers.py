@@ -298,7 +298,7 @@ class InstrumentTypeInstrumentFactorScheduleSerializer(serializers.ModelSerializ
 
 class InstrumentTypeEventSerializer(serializers.ModelSerializer):
 
-    data = serializers.JSONField(allow_null=False, required=False, allow_null=True)
+    data = serializers.JSONField(allow_null=True, required=False)
 
     class Meta:
         model = InstrumentTypeEvent
@@ -1411,7 +1411,7 @@ class EventScheduleSerializer(serializers.ModelSerializer):
     display_name = serializers.SerializerMethodField()
     display_description = serializers.SerializerMethodField()
 
-    data = serializers.JSONField(allow_null=False, required=False, allow_null=True)
+    data = serializers.JSONField(allow_null=True, required=False)
 
     class Meta:
         model = EventSchedule
