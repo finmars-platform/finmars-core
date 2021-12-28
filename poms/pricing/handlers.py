@@ -475,7 +475,7 @@ class FillPricesBrokerBloombergProcess(object):
 
                 # roll_price_history_for_n_day_forward(self.procedure, price)
 
-                instrument_pp = record.instrument.pricing_policies.find(pricing_policy=record.pricing_policy)
+                instrument_pp = record.instrument.pricing_policies.filter(pricing_policy=record.pricing_policy)[0]
 
                 roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance, instrument_pp)
 
@@ -920,7 +920,7 @@ class FillPricesBrokerBloombergForwardsProcess(object):
                 _l.debug("Bloomberg Forwards Roll Prices for Price History")
 
                 # roll_price_history_for_n_day_forward(self.procedure, price)
-                instrument_pp = record.instrument.pricing_policies.find(pricing_policy=record.pricing_policy)
+                instrument_pp = record.instrument.pricing_policies.filter(pricing_policy=record.pricing_policy)[0]
                 roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance, instrument_pp)
 
         PricingProcedureBloombergInstrumentResult.objects.filter(master_user=self.master_user,
@@ -1236,7 +1236,7 @@ class FillPricesBrokerWtradeProcess(object):
 
                 _l.debug("Wtrade Roll Prices for Price History")
 
-                instrument_pp = record.instrument.pricing_policies.find(pricing_policy=record.pricing_policy)
+                instrument_pp = record.instrument.pricing_policies.filter(pricing_policy=record.pricing_policy)[0]
                 successes, errors = roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance, instrument_pp)
 
                 successful_prices_count = successful_prices_count + successes
@@ -1548,7 +1548,7 @@ class FillPricesBrokerCbondsProcess(object):
 
                 _l.debug("Cbonds Roll Prices for Price History")
 
-                instrument_pp = record.instrument.pricing_policies.find(pricing_policy=record.pricing_policy)
+                instrument_pp = record.instrument.pricing_policies.filter(pricing_policy=record.pricing_policy)[0]
                 successes, errors = roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance, instrument_pp)
 
                 successful_prices_count = successful_prices_count + successes
@@ -2051,7 +2051,7 @@ class FillPricesBrokerAlphavProcess(object):
 
                 _l.debug("Wtrade Roll Prices for Price History")
 
-                instrument_pp = record.instrument.pricing_policies.find(pricing_policy=record.pricing_policy)
+                instrument_pp = record.instrument.pricing_policies.filter(pricing_policy=record.pricing_policy)[0]
                 successes, errors = roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance, instrument_pp)
 
                 successful_prices_count = successful_prices_count + successes
