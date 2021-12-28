@@ -872,7 +872,7 @@ class PricingCurrencyHandler(object):
                                 record.fx_rate_parameters = item.scheme_fields_map[
                                     'fx_rate']
 
-                            return CurrencyHistoryError.objects.create(
+                            CurrencyHistoryError.objects.create(
                                 master_user=self.master_user,
                                 procedure_instance_id=procedure_instance.id,
                                 currency=record.currency,
