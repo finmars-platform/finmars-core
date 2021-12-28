@@ -929,6 +929,8 @@ class PricingCurrencyHandler(object):
 
         except Exception as e:
 
+            _l.info("Bloomberg fx rates request failed %s" % e)
+
             procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
             procedure_instance.error_code = 500
             procedure_instance.error_message = "Mediator is unavailable. Please try later."

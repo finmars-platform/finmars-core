@@ -596,7 +596,7 @@ class PricingInstrumentHandler(object):
                         'id': item.policy.id,
                     }
 
-                    parameter = get_parameter_from_scheme_parameters(item, scheme_parameters)
+                    parameter = get_parameter_from_scheme_parameters(item, item.policy, scheme_parameters)
 
                     values = {
                         'context_date': date,
