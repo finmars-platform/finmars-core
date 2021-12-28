@@ -291,7 +291,7 @@ def roll_currency_history_for_n_day_forward(item, procedure, last_price, master_
     return successful_prices_count, error_prices_count
 
 
-def roll_price_history_for_n_day_forward(item, procedure, last_price, master_user, procedure_instance):
+def roll_price_history_for_n_day_forward(item, procedure, last_price, master_user, procedure_instance, instrument_pp):
 
     scheme_parameters = item.pricing_scheme.get_parameters()
     accrual_expr = scheme_parameters.accrual_expr
@@ -337,7 +337,7 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
             price.principal_price = 0
             price.accrued_price = 0
 
-            parameter = get_parameter_from_scheme_parameters(item, last_price.pricing_policy, scheme_parameters)
+            parameter = get_parameter_from_scheme_parameters(item, instrument_pp, scheme_parameters)
 
             values = {
                 'd': new_date,

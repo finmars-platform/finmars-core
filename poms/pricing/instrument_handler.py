@@ -531,7 +531,7 @@ class PricingInstrumentHandler(object):
 
             if last_price:
                 successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user,
-                                                                         procedure_instance)
+                                                                         procedure_instance, item.policy)
 
                 successful_prices_count = successful_prices_count + successes
                 error_prices_count = error_prices_count + errors
@@ -766,7 +766,7 @@ class PricingInstrumentHandler(object):
                     last_price = price
 
             successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user,
-                                                                     procedure_instance)
+                                                                     procedure_instance, item.policy)
 
             successful_prices_count = successful_prices_count + successes
             error_prices_count = error_prices_count + errors
@@ -1092,7 +1092,7 @@ class PricingInstrumentHandler(object):
                     last_price = price
 
             successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user,
-                                                                     procedure_instance)
+                                                                     procedure_instance, item.policy)
 
             successful_prices_count = successful_prices_count + successes
             error_prices_count = error_prices_count + errors
