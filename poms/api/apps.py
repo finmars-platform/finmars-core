@@ -53,5 +53,6 @@ class ApiConfig(AppConfig):
 
             except Exception as e:
                 _l.info("register_at_authorizer_service error %s" % e)
-            else:
-                _l.info('settings.AUTHORIZER_URL is not set')
+
+        else:
+            _l.info('settings.AUTHORIZER_URL is not set')

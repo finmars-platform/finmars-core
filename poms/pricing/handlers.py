@@ -190,6 +190,11 @@ class FillPricesBrokerBloombergProcess(object):
                                         except Exception as e:
                                             _l.debug('fx_rate_value e %s ' % e)
 
+                                        try:
+                                            record.fx_rate_value_error_text = val_obj['error_text']
+                                        except Exception as e:
+                                            _l.debug('fx_rate_value_error_text e %s ' % e)
+
                                 record.save()
 
                         if not len(records):
@@ -236,6 +241,11 @@ class FillPricesBrokerBloombergProcess(object):
                                         except Exception as e:
                                             _l.debug('ask value e %s ' % e)
 
+                                        try:
+                                                record.ask_value_error_text = val_obj['error_text']
+                                        except Exception as e:
+                                            _l.debug('ask_value_error_text e %s ' % e)
+
                                 if record.bid_parameters:
                                     if field['code'] in record.bid_parameters:
 
@@ -243,6 +253,11 @@ class FillPricesBrokerBloombergProcess(object):
                                             record.bid_value = float(val_obj['value'])
                                         except Exception as e:
                                              _l.debug('bid value e %s ' % e)
+
+                                        try:
+                                            record.bid_value_error_text = val_obj['error_text']
+                                        except Exception as e:
+                                            _l.debug('bid_value_error_text e %s ' % e)
 
                                 if record.last_parameters:
                                     if field['code'] in record.last_parameters:
@@ -252,6 +267,11 @@ class FillPricesBrokerBloombergProcess(object):
                                         except Exception as e:
                                             _l.debug('last value e %s ' % e)
 
+                                        try:
+                                            record.last_value_error_text = val_obj['error_text']
+                                        except Exception as e:
+                                            _l.debug('last_value_error_text e %s ' % e)
+
                                 if record.accrual_parameters:
                                     if field['code'] in record.accrual_parameters:
 
@@ -259,6 +279,11 @@ class FillPricesBrokerBloombergProcess(object):
                                             record.accrual_value = float(val_obj['value'])
                                         except Exception as e:
                                             _l.debug('accrual_value value e %s ' % e)
+
+                                        try:
+                                            record.accrual_value_error_text = val_obj['error_text']
+                                        except Exception as e:
+                                            _l.debug('accrual_value_error_text e %s ' % e)
 
                                 record.save()
 
@@ -299,10 +324,16 @@ class FillPricesBrokerBloombergProcess(object):
                 'context_date': record.date,
                 'context_instrument': safe_instrument,
                 'context_pricing_policy': safe_pp,
+
                 'ask': record.ask_value,
                 'bid': record.bid_value,
                 'last': record.last_value,
-                'accrual': record.accrual_value
+                'accrual': record.accrual_value,
+
+                'ask_error': record.ask_value_error_text,
+                'bid_error': record.bid_value_error_text,
+                'last_error': record.last_value_error_text,
+                'accrual_error': record.accrual_value_error_text
             }
 
             pricing_scheme_parameters = record.pricing_scheme.get_parameters()
@@ -532,6 +563,7 @@ class FillPricesBrokerBloombergProcess(object):
                 'context_currency': safe_currency,
                 'context_pricing_policy': safe_pp,
                 'fx_rate': record.fx_rate_value,
+                'fx_rate__error': record.fx_rate_value_error_text,
             }
 
             has_error = False
@@ -713,6 +745,11 @@ class FillPricesBrokerBloombergForwardsProcess(object):
                                             _l.debug('price_code_value %s ' % e)
                                             _l.debug('price_code_value original value %s ' % val_obj['value'])
 
+                                        try:
+                                            record.price_code_value_error_text = val_obj['error_text']
+                                        except Exception as e:
+                                            _l.debug('price_code_value_error_text e %s ' % e)
+
                                 record.save()
 
                         if not len(records):
@@ -755,6 +792,7 @@ class FillPricesBrokerBloombergForwardsProcess(object):
                 'context_instrument': safe_instrument,
                 'context_pricing_policy': safe_pp,
                 'price': record.average_weighted_price,
+                'price_error': record.price_code_value_error_text,
             }
 
             pricing_scheme_parameters = record.pricing_scheme.get_parameters()
@@ -997,12 +1035,22 @@ class FillPricesBrokerWtradeProcess(object):
                                     except Exception as e:
                                         _l.debug('fx_rate_value e %s ' % e)
 
+                                    try:
+                                        record.open_value_error_text = val_obj['error_text']
+                                    except Exception as e:
+                                        _l.debug('open_value_error_text e %s ' % e)
+
                                 if field['code'] == 'close':
 
                                     try:
                                         record.close_value = float(val_obj['value'])
                                     except Exception as e:
                                         _l.debug('close_value e %s ' % e)
+
+                                    try:
+                                        record.close_value_error_text = val_obj['error_text']
+                                    except Exception as e:
+                                        _l.debug('close_value_error_text e %s ' % e)
 
                                 if field['code'] == 'high':
 
@@ -1011,6 +1059,11 @@ class FillPricesBrokerWtradeProcess(object):
                                     except Exception as e:
                                         _l.debug('high_value e %s ' % e)
 
+                                    try:
+                                        record.high_value_error_text = val_obj['error_text']
+                                    except Exception as e:
+                                        _l.debug('high_value_error_text e %s ' % e)
+
                                 if field['code'] == 'low':
 
                                     try:
@@ -1018,12 +1071,22 @@ class FillPricesBrokerWtradeProcess(object):
                                     except Exception as e:
                                         _l.debug('low_value e %s ' % e)
 
+                                    try:
+                                        record.low_value_error_text = val_obj['error_text']
+                                    except Exception as e:
+                                        _l.debug('low_value_error_text e %s ' % e)
+
                                 if field['code'] == 'volume':
 
                                     try:
                                         record.volume_value = float(val_obj['value'])
                                     except Exception as e:
                                         _l.debug('volume_value e %s ' % e)
+
+                                    try:
+                                        record.volume_value_error_text = val_obj['error_text']
+                                    except Exception as e:
+                                        _l.debug('volume_value_error_text e %s ' % e)
 
                                 _l.info('record %s' % record)
                                 _l.info('record %s' % record.low_value)
@@ -1071,7 +1134,13 @@ class FillPricesBrokerWtradeProcess(object):
                 'close': record.close_value,
                 'high': record.high_value,
                 'low': record.low_value,
-                'volume': record.volume_value
+                'volume': record.volume_value,
+
+                'open_error': record.open_value_error_text,
+                'close_error': record.close_value_error_text,
+                'high_error': record.high_value_error_text,
+                'low_error': record.low_value_error_text,
+                'volume_error': record.volume_value_error_text
             }
 
             pricing_scheme_parameters = record.pricing_scheme.get_parameters()
@@ -1312,12 +1381,22 @@ class FillPricesBrokerCbondsProcess(object):
                                     except Exception as e:
                                         _l.debug('fx_rate_value e %s ' % e)
 
+                                    try:
+                                        record.open_value_error_text = val_obj['error_text']
+                                    except Exception as e:
+                                        _l.debug('open_value_error_text e %s ' % e)
+
                                 if field['code'] == 'close':
 
                                     try:
                                         record.close_value = float(val_obj['value'])
                                     except Exception as e:
                                         _l.debug('close_value e %s ' % e)
+
+                                    try:
+                                        record.close_value_error_text = val_obj['error_text']
+                                    except Exception as e:
+                                        _l.debug('close_value_error_text e %s ' % e)
 
                                 if field['code'] == 'high':
 
@@ -1326,6 +1405,11 @@ class FillPricesBrokerCbondsProcess(object):
                                     except Exception as e:
                                         _l.debug('high_value e %s ' % e)
 
+                                    try:
+                                        record.high_value_error_text = val_obj['error_text']
+                                    except Exception as e:
+                                        _l.debug('high_value_error_text e %s ' % e)
+
                                 if field['code'] == 'low':
 
                                     try:
@@ -1333,12 +1417,22 @@ class FillPricesBrokerCbondsProcess(object):
                                     except Exception as e:
                                         _l.debug('low_value e %s ' % e)
 
+                                    try:
+                                        record.low_value_error_text = val_obj['error_text']
+                                    except Exception as e:
+                                        _l.debug('low_value_error_text e %s ' % e)
+
                                 if field['code'] == 'volume':
 
                                     try:
                                         record.volume_value = float(val_obj['value'])
                                     except Exception as e:
                                         _l.debug('volume_value e %s ' % e)
+
+                                    try:
+                                        record.volume_value_error_text = val_obj['error_text']
+                                    except Exception as e:
+                                        _l.debug('volume_value_error_text e %s ' % e)
 
                     record.save()
 
@@ -1383,7 +1477,14 @@ class FillPricesBrokerCbondsProcess(object):
                 'close': record.close_value,
                 'high': record.high_value,
                 'low': record.low_value,
-                'volume': record.volume_value
+                'volume': record.volume_value,
+
+                'open_error': record.open_value_error_text,
+                'close_error': record.close_value_error_text,
+                'high_error': record.high_value_error_text,
+                'low_error': record.low_value_error_text,
+                'volume_error': record.volume_value_error_text,
+
             }
 
             pricing_scheme_parameters = record.pricing_scheme.get_parameters()
@@ -1624,6 +1725,11 @@ class FillPricesBrokerFixerProcess(object):
                                     except Exception as e:
                                         _l.debug('close_value e %s ' % e)
 
+                                    try:
+                                        record.close_value_error_text = val_obj['error_text']
+                                    except Exception as e:
+                                        _l.debug('close_value_error_text e %s ' % e)
+
                                 record.save()
 
                         if not len(records):
@@ -1667,6 +1773,7 @@ class FillPricesBrokerFixerProcess(object):
                 'context_currency': safe_currency,
                 'context_pricing_policy': safe_pp,
                 'close': record.close_value,
+                'close_error': record.close_value_error_text
             }
 
             has_error = False
@@ -1847,6 +1954,11 @@ class FillPricesBrokerAlphavProcess(object):
                                     except Exception as e:
                                         _l.debug('close_value e %s ' % e)
 
+                                    try:
+                                        record.close_value_error_text = val_obj['error_text']
+                                    except Exception as e:
+                                        _l.debug('close_value_error_text e %s ' % e)
+
                                 record.save()
 
                         if not len(records):
@@ -1887,6 +1999,7 @@ class FillPricesBrokerAlphavProcess(object):
                 'context_instrument': safe_instrument,
                 'context_pricing_policy': safe_pp,
                 'close': record.close_value,
+                'close_error': record.close_value_error_text,
             }
 
             pricing_scheme_parameters = record.pricing_scheme.get_parameters()

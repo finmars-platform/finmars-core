@@ -1122,17 +1122,25 @@ class PricingProcedureBloombergInstrumentResult(models.Model):
                                       verbose_name=ugettext_lazy('ask parameters'))
     ask_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('ask value'))
 
+    ask_value_error_text = models.CharField(max_length=255, null=True, blank=True)
+
     bid_parameters = models.CharField(max_length=255, null=True, blank=True,
                                       verbose_name=ugettext_lazy('bid parameters'))
     bid_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('bid value'))
+
+    bid_value_error_text = models.CharField(max_length=255, null=True, blank=True)
 
     last_parameters = models.CharField(max_length=255, null=True, blank=True,
                                        verbose_name=ugettext_lazy('last parameters'))
     last_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('last value'))
 
+    last_value_error_text = models.CharField(max_length=255, null=True, blank=True)
+
     accrual_parameters = models.CharField(max_length=255, null=True, blank=True,
                                           verbose_name=ugettext_lazy('accrual parameters'))
     accrual_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('accrual value'))
+
+    accrual_value_error_text = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
         unique_together = (
@@ -1166,6 +1174,8 @@ class PricingProcedureBloombergForwardInstrumentResult(models.Model):
     price_code_parameters = models.CharField(max_length=255, null=True, blank=True,
                                       verbose_name=ugettext_lazy('price code parameters'))
     price_code_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('price code value'))
+
+    price_code_value_error_text = models.CharField(max_length=255, null=True, blank=True)
 
     tenor_type = models.CharField(max_length=255, null=True, blank=True,
                                              verbose_name=ugettext_lazy('tenor type'))
@@ -1205,6 +1215,8 @@ class PricingProcedureBloombergCurrencyResult(models.Model):
                                           verbose_name=ugettext_lazy('fx rate parameters'))
     fx_rate_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('fx rate value'))
 
+    fx_rate_value_error_text = models.CharField(max_length=255, null=True, blank=True)
+
     class Meta:
         unique_together = (
             ('master_user', 'currency', 'date', 'pricing_policy', 'procedure')
@@ -1238,6 +1250,13 @@ class PricingProcedureWtradeInstrumentResult(models.Model):
     high_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('high value'))
     low_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('low value'))
     volume_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('volume value'))
+
+
+    open_value_error_text = models.CharField(max_length=255, null=True, blank=True)
+    close_value_error_text = models.CharField(max_length=255, null=True, blank=True)
+    high_value_error_text = models.CharField(max_length=255, null=True, blank=True)
+    low_value_error_text = models.CharField(max_length=255, null=True, blank=True)
+    volume_value_error_text = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
         unique_together = (
@@ -1303,6 +1322,8 @@ class PricingProcedureFixerCurrencyResult(models.Model):
 
     close_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('close value'))
 
+    close_value_error_text = models.CharField(max_length=255, null=True, blank=True)
+
     class Meta:
         unique_together = (
             ('master_user', 'currency', 'date', 'pricing_policy', 'procedure')
@@ -1332,6 +1353,8 @@ class PricingProcedureAlphavInstrumentResult(models.Model):
     instrument_parameters = models.CharField(max_length=255, null=True, blank=True)
 
     close_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('close value'))
+
+    close_value_error_text = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
         unique_together = (
@@ -1367,6 +1390,12 @@ class PricingProcedureCbondsInstrumentResult(models.Model):
     high_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('high value'))
     low_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('low value'))
     volume_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('volume value'))
+
+    open_value_error_text = models.CharField(max_length=255, null=True, blank=True)
+    close_value_error_text = models.CharField(max_length=255, null=True, blank=True)
+    high_value_error_text = models.CharField(max_length=255, null=True, blank=True)
+    low_value_error_text = models.CharField(max_length=255, null=True, blank=True)
+    volume_value_error_text = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
         unique_together = (
