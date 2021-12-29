@@ -563,7 +563,7 @@ class FillPricesBrokerBloombergProcess(object):
                 'context_currency': safe_currency,
                 'context_pricing_policy': safe_pp,
                 'fx_rate': record.fx_rate_value,
-                'fx_rate__error': record.fx_rate_value_error_text,
+                'fx_rate_error': record.fx_rate_value_error_text,
             }
 
             has_error = False

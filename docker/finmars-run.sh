@@ -35,17 +35,17 @@ echo "Migrating"
 
 /var/app-venv/bin/python /var/app/manage.py migrate
 
-echo "Create cache table"
-
-/var/app-venv/bin/python /var/app/manage.py createcachetable
+#echo "Create cache table"
+#
+#/var/app-venv/bin/python /var/app/manage.py createcachetable
 
 echo "Clear sessions"
 
 /var/app-venv/bin/python /var/app/manage.py clearsessions
 
-echo "Collect static"
-
-/var/app-venv/bin/python /var/app/manage.py collectstatic -c --noinput
+#echo "Collect static"
+#
+#/var/app-venv/bin/python /var/app/manage.py collectstatic -c --noinput
 
 if [ $USE_CELERY == "True" ];
 then
