@@ -473,7 +473,7 @@ def execute_user_fields_expressions(complex_transaction, values, context, instan
 
     for field_key in fields:
 
-        if instance.key == field_key:
+        if instance.key == field_key or not instance.key:
 
              # _l.debug('field_key')
 
