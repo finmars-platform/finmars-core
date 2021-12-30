@@ -1378,9 +1378,11 @@ class EventScheduleActionSerializer(serializers.ModelSerializer):
     # transaction_type_object = serializers.PrimaryKeyRelatedField(source='transaction_type', read_only=True)
     display_text = serializers.SerializerMethodField()
 
+    data = serializers.JSONField(allow_null=True, required=False)
+
     class Meta:
         model = EventScheduleAction
-        fields = ['id', 'transaction_type', 'text', 'is_sent_to_pending',
+        fields = ['id', 'transaction_type', 'text', 'is_sent_to_pending', 'data',
                   'is_book_automatic', 'button_position', 'display_text']
 
     def __init__(self, *args, **kwargs):

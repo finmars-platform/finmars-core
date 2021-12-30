@@ -17,7 +17,6 @@ from poms.users.models import MasterUser
 
 import traceback
 
-
 _l = logging.getLogger('poms.instruments')
 
 
@@ -47,44 +46,62 @@ def calculate_prices_accrued_price_async(master_user=None, begin_date=None, end_
                                    instruments=instruments)
 
 
-def fill_parameters_from_instrument(event_schedule, instrument):
-
-    result = {}
+def get_calculated_parameter_by_name_from_event(event_schedule, name, instrument):
+    result = None
 
     for parameter in event_schedule.data['parameters']:
 
-        if parameter['___switch_state'] == 'attribute_key':
+        if parameter['name'] == name:
 
-            if 'attributes.' in parameter['attribute_key']:
+            if parameter['___switch_state'] == 'attribute_key':
 
-                attr_user_code = parameter['attribute_key'].split('attributes.')[1]
+                if 'attributes.' in parameter['attribute_key']:
 
-                for attr in instrument.attributes.all():
-                    if attr.attribute_type.user_code == attr_user_code:
+                    attr_user_code = parameter['attribute_key'].split('attributes.')[1]
 
-                        if attr.attribute_type.value_type == 10:
-                            result['parameter' + str(parameter['index'])] = attr.value_string
+                    for attr in instrument.attributes.all():
+                        if attr.attribute_type.user_code == attr_user_code:
 
-                        if attr.attribute_type.value_type == 20:
-                            result['parameter' + str(parameter['index'])] = attr.value_float
+                            if attr.attribute_type.value_type == 10:
+                                result = attr.value_string
 
-                        if attr.attribute_type.value_type == 40:
-                            result['parameter' + str(parameter['index'])] = attr.value_date
+                            if attr.attribute_type.value_type == 20:
+                                result = attr.value_float
 
+                            if attr.attribute_type.value_type == 40:
+                                result = attr.value_date
+
+
+                else:
+                    result = getattr(instrument, parameter['attribute_key'], None)
 
             else:
-                result['parameter' + str(parameter['index'])] = getattr(instrument, parameter['attribute_key'], None)
+                result = parameter['default_value']
 
-        else:
-            result['parameter' + str(parameter['index'])] = parameter['default_value']
+    return result
 
+
+def fill_parameters_from_instrument(event_schedule, instrument):
+    result = {}
+
+    for action in event_schedule.actions.all():
+
+        result[action.button_position] = {}
+
+        if action.data and action.data['parameters']:
+
+            for parameter in action.data['parameters']:
+                key = 'parameter' + str(parameter['index'])
+
+                result[action.button_position][key] = get_calculated_parameter_by_name_from_event(event_schedule,
+                                                                                                  parameter['name'],
+                                                                                                  instrument)
 
     return result
 
 
 @shared_task(name='instruments.only_generate_events_at_date', ignore_result=True)
 def only_generate_events_at_date(master_user, date):
-
     try:
         _l.info('generate_events0: master_user=%s', master_user.id)
 
@@ -121,7 +138,6 @@ def only_generate_events_at_date(master_user, date):
             'instrument__id'
         )
 
-
         if not event_schedule_qs.exists():
             _l.info('event schedules not found. Date %s' % date)
             return
@@ -152,17 +168,17 @@ def only_generate_events_at_date(master_user, date):
 
             event_schedules = event_schedules_cache.get(instrument.id, None)
             _l.info('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
-                     'instrument=%s, position=%s, event_schedules=%s',
-                     portfolio.id, account.id, strategy1.id, strategy2.id, strategy3.id,
-                     instrument.id, position, [e.id for e in event_schedules] if event_schedules else [])
+                    'instrument=%s, position=%s, event_schedules=%s',
+                    portfolio.id, account.id, strategy1.id, strategy2.id, strategy3.id,
+                    instrument.id, position, [e.id for e in event_schedules] if event_schedules else [])
 
             if not event_schedules:
                 continue
 
             for event_schedule in event_schedules:
                 _l.info('event_schedule=%s, event_class=%s, notification_class=%s, periodicity=%s, n=%s',
-                         event_schedule.id, event_schedule.event_class, event_schedule.notification_class,
-                         event_schedule.periodicity, event_schedule.periodicity_n)
+                        event_schedule.id, event_schedule.event_class, event_schedule.notification_class,
+                        event_schedule.periodicity, event_schedule.periodicity_n)
 
                 is_complies, effective_date, notification_date = event_schedule.check_date(date)
 
@@ -204,7 +220,7 @@ def only_generate_events_at_date(master_user, date):
                     generated_event.strategy3 = strategy3
                     generated_event.position = position
                     generated_event.data = {
-                        'parameters': parameters
+                        'actions_parameters': parameters
                     }
                     generated_event.save()
 
@@ -213,11 +229,12 @@ def only_generate_events_at_date(master_user, date):
         _l.info('only_generate_events_at_date exception occurred %s' % e)
         _l.info(traceback.format_exc())
 
+
 @shared_task(name='instruments.only_generate_events_at_date_for_single_instrument', ignore_result=True)
 def only_generate_events_at_date_for_single_instrument(master_user, date, instrument):
-
     try:
-        _l.debug('only_generate_events_at_date_for_single_instrument: master_user=%s, instrument=%s', (master_user.id, instrument))
+        _l.debug('only_generate_events_at_date_for_single_instrument: master_user=%s, instrument=%s',
+                 (master_user.id, instrument))
 
         opened_instrument_items = []
 
@@ -337,7 +354,7 @@ def only_generate_events_at_date_for_single_instrument(master_user, date, instru
                     generated_event.strategy3 = strategy3
                     generated_event.position = position
                     generated_event.data = {
-                        'parameters': parameters
+                        'actions_parameters': parameters
                     }
                     generated_event.save()
 
@@ -349,7 +366,6 @@ def only_generate_events_at_date_for_single_instrument(master_user, date, instru
 
 @shared_task(name='instruments.generate_events0', ignore_result=True)
 def generate_events0(master_user):
-
     try:
         _l.debug('generate_events0: master_user=%s', master_user.id)
 
@@ -388,7 +404,6 @@ def generate_events0(master_user):
             'instrument__id'
         )
 
-
         result = []
 
         for event_schedule in event_schedule_qs:
@@ -398,8 +413,6 @@ def generate_events0(master_user):
 
             if final_date >= now and effective_date - timedelta(days=event_schedule.notify_in_n_days):
                 result.append(event_schedule)
-
-
 
         if not len(result):
             _l.debug('event schedules not found')
@@ -484,10 +497,8 @@ def generate_events0(master_user):
         _l.info(traceback.format_exc())
 
 
-
 @shared_task(name='instruments.generate_events', ignore_result=True)
 def generate_events(master_users=None):
-
     try:
         _l.debug('generate_events: master_users=%s', master_users)
 
@@ -621,7 +632,6 @@ def generate_events(master_users=None):
 
 @shared_task(name='instruments.generate_events_do_not_inform_apply_default0', ignore_result=True)
 def generate_events_do_not_inform_apply_default0(master_user):
-
     try:
 
         _l.debug('generate_events0: master_user=%s', master_user.id)
@@ -674,8 +684,6 @@ def generate_events_do_not_inform_apply_default0(master_user):
         if not len(result):
             _l.debug('event schedules not found')
             return
-
-
 
         event_schedules_cache = defaultdict(list)
         for event_schedule in result:
@@ -746,7 +754,7 @@ def generate_events_do_not_inform_apply_default0(master_user):
                     generated_event.strategy3 = strategy3
                     generated_event.position = position
                     generated_event.data = {
-                        'parameters': parameters
+                        'actions_parameters': parameters
                     }
                     generated_event.save()
 
@@ -760,7 +768,6 @@ def generate_events_do_not_inform_apply_default0(master_user):
 
 @shared_task(name='instruments.generate_events_do_not_inform_apply_default', ignore_result=True)
 def generate_events_do_not_inform_apply_default(master_users=None):
-
     try:
         _l.debug('generate_events_do_not_inform_apply_default: master_users=%s', master_users)
 
@@ -786,7 +793,6 @@ def generate_events_do_not_inform_apply_default(master_users=None):
 @shared_task(name='instruments.process_events_do_not_inform_apply_default0', ignore_result=True)
 @transaction.atomic()
 def process_events_do_not_inform_apply_default0(master_user):
-
     try:
 
         from poms.instruments.handlers import GeneratedEventProcess
@@ -811,7 +817,7 @@ def process_events_do_not_inform_apply_default0(master_user):
             status=GeneratedEvent.NEW,
         ).filter(
             Q(effective_date=now) | Q(notification_date=now),
-            )
+        )
 
         for gevent in generated_event_qs:
 
@@ -866,7 +872,6 @@ def process_events_do_not_inform_apply_default0(master_user):
 @shared_task(name='instruments.process_events0', ignore_result=True)
 @transaction.atomic()
 def process_events0(master_user):
-
     try:
         from poms.instruments.handlers import GeneratedEventProcess
 
@@ -984,7 +989,6 @@ def process_events0(master_user):
 
 @shared_task(name='instruments.process_events', ignore_result=True)
 def process_events(master_users=None):
-
     try:
 
         _l.debug('process_events: master_users=%s', master_users)
@@ -996,7 +1000,6 @@ def process_events(master_users=None):
             master_user_qs = master_user_qs.filter(pk__in=master_users)
 
         for master_user in master_user_qs:
-
             _l.debug('process_events: master_user=%s', master_user.id)
 
             process_events0.apply_async(kwargs={'master_user': master_user})

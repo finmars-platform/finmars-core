@@ -2,6 +2,9 @@ from poms.instruments.models import GeneratedEvent
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import ComplexTransaction, TransactionType
 
+import logging
+_l = logging.getLogger('poms.instruments')
+
 
 # Context variables here
 
@@ -35,11 +38,10 @@ class GeneratedEventProcess(TransactionTypeProcess):
         _l.info('generated_event data %s' % generated_event.data)
 
         if generated_event.data:
-            if generated_event.data['parameters']:
+            if generated_event.data['actions_parameters']:
 
-                for key, value in generated_event.data['parameters'].items():
+                for key, value in generated_event.data['actions_parameters'][action.button_position].items():
                     context_values[key] = value
-
 
         kwargs['context_values'] = context_values
 
