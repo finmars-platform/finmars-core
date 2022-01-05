@@ -168,6 +168,8 @@ class CustomExceptionMiddleware(MiddlewareMixin):
 
         # print('exception %s' % exception)
 
+        print(traceback.format_exc())
+
         lines = traceback.format_exc().splitlines()[-6:]
         traceback_lines = []
 

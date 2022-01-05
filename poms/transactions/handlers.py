@@ -194,7 +194,7 @@ class TransactionTypeProcess(object):
 
 
     def _set_values(self):
-        def _get_val_by_model_cls(master_user, obj, model_class):
+        def _get_val_by_model_cls_for_transaction_type_input(master_user, obj, model_class):
             try:
                 if issubclass(model_class, Account):
                     return Account.objects.get(master_user=master_user, user_code=obj.value)
@@ -232,6 +232,44 @@ class TransactionTypeProcess(object):
                 _l.info("Could not find default value relation %s " % obj.value)
                 return None
 
+        def _get_val_by_model_cls_for_complex_transaction_input(master_user, obj, model_class):
+            try:
+                if issubclass(model_class, Account):
+                    return Account.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, Currency):
+                    return Currency.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, Instrument):
+                    return Instrument.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, InstrumentType):
+                    return InstrumentType.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, Counterparty):
+                    return Counterparty.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, Responsible):
+                    return Responsible.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, Strategy1):
+                    return Strategy1.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, Strategy2):
+                    return Strategy2.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, Strategy3):
+                    return Strategy3.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, PaymentSizeDetail):
+                    return PaymentSizeDetail.objects.get(user_code=obj.value_relation)
+                elif issubclass(model_class, Portfolio):
+                    return Portfolio.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, PricingPolicy):
+                    return PricingPolicy.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, Periodicity):
+                    return Periodicity.objects.get(user_code=obj.value_relation)
+                elif issubclass(model_class, AccrualCalculationModel):
+                    return AccrualCalculationModel.objects.get(user_code=obj.value_relation)
+                elif issubclass(model_class, EventClass):
+                    return EventClass.objects.get(user_code=obj.value_relation)
+                elif issubclass(model_class, NotificationClass):
+                    return NotificationClass.objects.get(user_code=obj.value_relation)
+            except Exception:
+                _l.info("Could not find default value relation %s " % obj.value_relation)
+                return None
+
         self.values = {}
         self.values.update(self.default_values)
         self.values.update(self.context_values)
@@ -252,7 +290,7 @@ class TransactionTypeProcess(object):
                 elif i.value_type == TransactionTypeInput.DATE:
                     value = ci.value_date
                 elif i.value_type == TransactionTypeInput.RELATION:
-                    value = _get_val_by_model_cls(self.complex_transaction.master_user, ci, i.content_type.model_class())
+                    value = _get_val_by_model_cls_for_complex_transaction_input(self.complex_transaction.master_user, ci, i.content_type.model_class())
                 if value is not None:
                     self.values[i.name] = value
 
@@ -282,7 +320,7 @@ class TransactionTypeProcess(object):
 
                     model_class = i.content_type.model_class()
 
-                    value = _get_val_by_model_cls(i, model_class)
+                    value = _get_val_by_model_cls_for_transaction_type_input(self.complex_transaction.master_user, i, model_class)
 
                     _l.debug("Set from default. Relation input %s value %s" % (i.name, value))
 

@@ -1420,6 +1420,8 @@ class ComplexTransactionInput(models.Model):
     transaction_type_input = models.ForeignKey(TransactionTypeInput, on_delete=models.CASCADE, related_name='+',
                                                verbose_name=ugettext_lazy('transaction type input'))
 
+    value_relation = models.TextField(default='', blank=True, verbose_name=ugettext_lazy('value relation'))
+
     value_string = models.TextField(default='', blank=True, verbose_name=ugettext_lazy('value string'))
     value_float = models.FloatField(default=0.0, verbose_name=ugettext_lazy('value float'))
     value_date = models.DateField(default=date.min, verbose_name=ugettext_lazy('value date'))
@@ -1450,9 +1452,6 @@ class ComplexTransactionInput(models.Model):
     payment_size_detail = models.ForeignKey('instruments.PaymentSizeDetail', null=True, blank=True,
                                             on_delete=models.SET_NULL, related_name='+',
                                             verbose_name=ugettext_lazy('payment size detail'))
-    # price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', null=True, blank=True,
-    #                                           on_delete=models.SET_NULL, related_name='+',
-    #                                           verbose_name=ugettext_lazy('price download scheme'))
 
     pricing_policy = models.ForeignKey('instruments.PricingPolicy', null=True, blank=True,
                                        on_delete=models.SET_NULL, related_name='+',

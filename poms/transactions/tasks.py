@@ -25,6 +25,7 @@ from celery.utils.log import get_task_logger
 celery_logger = get_task_logger(__name__)
 
 
+#  TODO UPDATE LOGIC
 def get_access_to_inputs(group_id, complex_transaction):
 
     # print('get_access_to_inputs: group_id %s' % group_id)
