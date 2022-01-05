@@ -227,11 +227,15 @@ class PricingCurrencyHandler(object):
 
                         if base_transaction.transaction_currency_id:
 
-                            currencies_opened.add(base_transaction.transaction_currency_id)
+                            if base_transaction.transaction_currency.pricing_condition_id in [PricingCondition.RUN_VALUATION_IF_NON_ZERO]:
+
+                                currencies_opened.add(base_transaction.transaction_currency_id)
 
                         if base_transaction.settlement_currency_id:
 
-                            currencies_opened.add(base_transaction.settlement_currency_id)
+                            if base_transaction.settlement_currency.pricing_condition_id in [PricingCondition.RUN_VALUATION_IF_NON_ZERO]:
+
+                                currencies_opened.add(base_transaction.settlement_currency_id)
 
             currencies = currencies.filter(pk__in=(currencies_always | currencies_opened))
 

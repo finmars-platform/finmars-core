@@ -649,54 +649,6 @@ class TransactionTypeInput(models.Model):
     value = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True,
                              verbose_name=ugettext_lazy('value'),
                              help_text=ugettext_lazy('this is expression for default value'))
-    account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.PROTECT, related_name='+',
-                                verbose_name=ugettext_lazy('account'))
-    instrument_type = models.ForeignKey('instruments.InstrumentType', null=True, blank=True, on_delete=models.SET_NULL,
-                                        related_name='+', verbose_name=ugettext_lazy('instrument type'))
-    instrument = models.ForeignKey('instruments.Instrument', null=True, blank=True, on_delete=models.SET_NULL,
-                                   related_name='+', verbose_name=ugettext_lazy('instrument'))
-    currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.PROTECT,
-                                 related_name='+', verbose_name=ugettext_lazy('currency'))
-    counterparty = models.ForeignKey('counterparties.Counterparty', null=True, blank=True, on_delete=models.PROTECT,
-                                     related_name='+', verbose_name=ugettext_lazy('counterparty'))
-    responsible = models.ForeignKey('counterparties.Responsible', null=True, blank=True, on_delete=models.PROTECT,
-                                    related_name='+', verbose_name=ugettext_lazy('responsible'))
-    portfolio = models.ForeignKey('portfolios.Portfolio', null=True, blank=True, on_delete=models.PROTECT,
-                                  related_name='+', verbose_name=ugettext_lazy('portfolio'))
-    strategy1 = models.ForeignKey('strategies.Strategy1', null=True, blank=True, on_delete=models.PROTECT,
-                                  related_name='+', verbose_name=ugettext_lazy('strategy 1'))
-    strategy2 = models.ForeignKey('strategies.Strategy2', null=True, blank=True, on_delete=models.PROTECT,
-                                  related_name='+', verbose_name=ugettext_lazy('strategy 2'))
-    strategy3 = models.ForeignKey('strategies.Strategy3', null=True, blank=True, on_delete=models.PROTECT,
-                                  related_name='+', verbose_name=ugettext_lazy('strategy 3'))
-    daily_pricing_model = models.ForeignKey('instruments.DailyPricingModel', null=True, blank=True,
-                                            on_delete=models.PROTECT, related_name='+',
-                                            verbose_name=ugettext_lazy('daily pricing model'))
-    payment_size_detail = models.ForeignKey('instruments.PaymentSizeDetail', null=True, blank=True,
-                                            on_delete=models.PROTECT, related_name='+',
-                                            verbose_name=ugettext_lazy('payment size detail'))
-    # price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', null=True, blank=True,
-    #                                           on_delete=models.PROTECT, related_name='+',
-    #                                           verbose_name=ugettext_lazy('price download scheme'))
-    pricing_policy = models.ForeignKey('instruments.PricingPolicy', null=True, blank=True,
-                                       on_delete=models.PROTECT, related_name='+',
-                                       verbose_name=ugettext_lazy('pricing policy'))
-
-    periodicity = models.ForeignKey('instruments.Periodicity', null=True, blank=True,
-                                    on_delete=models.PROTECT, related_name='+',
-                                    verbose_name=ugettext_lazy('periodicity'))
-
-    accrual_calculation_model = models.ForeignKey('instruments.AccrualCalculationModel', null=True, blank=True,
-                                                  on_delete=models.PROTECT, related_name='+',
-                                                  verbose_name=ugettext_lazy('accrual calculation model'))
-
-    event_class = models.ForeignKey(EventClass, null=True, blank=True,
-                                    on_delete=models.PROTECT, related_name='+',
-                                    verbose_name=ugettext_lazy('event class'))
-
-    notification_class = models.ForeignKey(NotificationClass, null=True, blank=True,
-                                           on_delete=models.PROTECT, related_name='+',
-                                           verbose_name=ugettext_lazy('notification class'))
 
     settings = models.ForeignKey('transactions.TransactionTypeInputSettings', null=True, blank=True,
                                  on_delete=models.SET_NULL,

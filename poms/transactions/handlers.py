@@ -194,42 +194,43 @@ class TransactionTypeProcess(object):
 
 
     def _set_values(self):
-        def _get_val_by_model_cls(obj, model_class):
-            if issubclass(model_class, Account):
-                return obj.account
-            elif issubclass(model_class, Currency):
-                return obj.currency
-            elif issubclass(model_class, Instrument):
-                return obj.instrument
-            elif issubclass(model_class, InstrumentType):
-                return obj.instrument_type
-            elif issubclass(model_class, Counterparty):
-                return obj.counterparty
-            elif issubclass(model_class, Responsible):
-                return obj.responsible
-            elif issubclass(model_class, Strategy1):
-                return obj.strategy1
-            elif issubclass(model_class, Strategy2):
-                return obj.strategy2
-            elif issubclass(model_class, Strategy3):
-                return obj.strategy3
-            elif issubclass(model_class, DailyPricingModel):
-                return obj.daily_pricing_model
-            elif issubclass(model_class, PaymentSizeDetail):
-                return obj.payment_size_detail
-            elif issubclass(model_class, Portfolio):
-                return obj.portfolio
-            elif issubclass(model_class, PricingPolicy):
-                return obj.pricing_policy
-            elif issubclass(model_class, Periodicity):
-                return obj.periodicity
-            elif issubclass(model_class, AccrualCalculationModel):
-                return obj.accrual_calculation_model
-            elif issubclass(model_class, EventClass):
-                return obj.event_class
-            elif issubclass(model_class, NotificationClass):
-                return obj.notification_class
-            return None
+        def _get_val_by_model_cls(master_user, obj, model_class):
+            try:
+                if issubclass(model_class, Account):
+                    return Account.objects.get(master_user=master_user, user_code=obj.value)
+                elif issubclass(model_class, Currency):
+                    return Currency.objects.get(master_user=master_user, user_code=obj.value)
+                elif issubclass(model_class, Instrument):
+                    return Instrument.objects.get(master_user=master_user, user_code=obj.value)
+                elif issubclass(model_class, InstrumentType):
+                    return InstrumentType.objects.get(master_user=master_user, user_code=obj.value)
+                elif issubclass(model_class, Counterparty):
+                    return Counterparty.objects.get(master_user=master_user, user_code=obj.value)
+                elif issubclass(model_class, Responsible):
+                    return Responsible.objects.get(master_user=master_user, user_code=obj.value)
+                elif issubclass(model_class, Strategy1):
+                    return Strategy1.objects.get(master_user=master_user, user_code=obj.value)
+                elif issubclass(model_class, Strategy2):
+                    return Strategy2.objects.get(master_user=master_user, user_code=obj.value)
+                elif issubclass(model_class, Strategy3):
+                    return Strategy3.objects.get(master_user=master_user, user_code=obj.value)
+                elif issubclass(model_class, PaymentSizeDetail):
+                    return PaymentSizeDetail.objects.get(user_code=obj.value)
+                elif issubclass(model_class, Portfolio):
+                    return Portfolio.objects.get(master_user=master_user, user_code=obj.value)
+                elif issubclass(model_class, PricingPolicy):
+                    return PricingPolicy.objects.get(master_user=master_user, user_code=obj.value)
+                elif issubclass(model_class, Periodicity):
+                    return Periodicity.objects.get(user_code=obj.value)
+                elif issubclass(model_class, AccrualCalculationModel):
+                    return AccrualCalculationModel.objects.get(user_code=obj.value)
+                elif issubclass(model_class, EventClass):
+                    return EventClass.objects.get(user_code=obj.value)
+                elif issubclass(model_class, NotificationClass):
+                    return NotificationClass.objects.get(user_code=obj.value)
+            except Exception:
+                _l.info("Could not find default value relation %s " % obj.value)
+                return None
 
         self.values = {}
         self.values.update(self.default_values)
@@ -251,7 +252,7 @@ class TransactionTypeProcess(object):
                 elif i.value_type == TransactionTypeInput.DATE:
                     value = ci.value_date
                 elif i.value_type == TransactionTypeInput.RELATION:
-                    value = _get_val_by_model_cls(ci, i.content_type.model_class())
+                    value = _get_val_by_model_cls(self.complex_transaction.master_user, ci, i.content_type.model_class())
                 if value is not None:
                     self.values[i.name] = value
 

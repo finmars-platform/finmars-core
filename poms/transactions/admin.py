@@ -207,8 +207,7 @@ class TransactionTypeInputInline(admin.TabularInline):
     #                    'daily_pricing_model', 'payment_size_detail',),
     #     }),
     # )
-    raw_id_fields = ('account', 'instrument_type', 'instrument', 'currency', 'counterparty',
-                     'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3',  'settings')
+    raw_id_fields = ( 'settings',)
     readonly_fields = ('id',)
 
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):

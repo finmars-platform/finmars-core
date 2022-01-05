@@ -154,39 +154,12 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
     is_fill_from_context = serializers.BooleanField(default=False, initial=False, required=False)
     value = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,
                             default='')
-    account = AccountField(required=False, allow_null=True)
-    instrument_type = InstrumentTypeField(required=False, allow_null=True)
-    instrument = InstrumentField(required=False, allow_null=True)
-    currency = CurrencyField(required=False, allow_null=True)
-    counterparty = CounterpartyField(required=False, allow_null=True)
-    responsible = ResponsibleField(required=False, allow_null=True)
-    portfolio = PortfolioField(required=False, allow_null=True)
-    strategy1 = Strategy1Field(required=False, allow_null=True)
-    strategy2 = Strategy2Field(required=False, allow_null=True)
-    strategy3 = Strategy3Field(required=False, allow_null=True)
-    pricing_policy = PricingPolicyField(required=False, allow_null=True)
 
-    periodicity = PeriodicityField(required=False, allow_null=True)
-    accrual_calculation_model = AccrualCalculationModelField(required=False, allow_null=True)
 
     settings = TransactionTypeInputSettingsSerializer(allow_null=True, required=False)
 
     button_data = serializers.JSONField(allow_null=True, required=False)
 
-    # settings = TransactionTypeInputSettingsField(required=False, allow_null=True)
-
-    # account_object = serializers.PrimaryKeyRelatedField(source='account', read_only=True)
-    # instrument_type_object = serializers.PrimaryKeyRelatedField(source='instrument_type', read_only=True)
-    # instrument_object = serializers.PrimaryKeyRelatedField(source='instrument', read_only=True)
-    # currency_object = serializers.PrimaryKeyRelatedField(source='currency', read_only=True)
-    # counterparty_object = serializers.PrimaryKeyRelatedField(source='counterparty', read_only=True)
-    # responsible_object = serializers.PrimaryKeyRelatedField(source='responsible', read_only=True)
-    # portfolio_object = serializers.PrimaryKeyRelatedField(source='portfolio', read_only=True)
-    # strategy1_object = serializers.PrimaryKeyRelatedField(source='strategy1', read_only=True)
-    # strategy2_object = serializers.PrimaryKeyRelatedField(source='strategy2', read_only=True)
-    # strategy3_object = serializers.PrimaryKeyRelatedField(source='strategy3', read_only=True)
-    # daily_pricing_model_object = serializers.PrimaryKeyRelatedField(source='daily_pricing_model', read_only=True)
-    # payment_size_detail_object = serializers.PrimaryKeyRelatedField(source='daily_pricing_model', read_only=True)
 
     class Meta:
         model = TransactionTypeInput
@@ -196,28 +169,12 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
 
             'tooltip',
 
-            'is_fill_from_context', 'context_property', 'value', 'account', 'instrument_type', 'instrument', 'currency',
-            'counterparty',
-            'responsible', 'portfolio', 'strategy1', 'strategy2', 'strategy3', 'daily_pricing_model',
-            'payment_size_detail', 'pricing_policy', 'periodicity',
-            'accrual_calculation_model',
+            'is_fill_from_context', 'context_property', 'value',
+
             'settings',
 
             'button_data'
 
-            # 'settings_old'
-            # 'account_object',
-            # 'instrument_type_object',
-            # 'instrument_object',
-            # 'currency_object',
-            # 'counterparty_object',
-            # 'responsible_object',
-            # 'portfolio_object',
-            # 'strategy1_object',
-            # 'strategy2_object',
-            # 'strategy3_object',
-            # 'daily_pricing_model_object',
-            # 'payment_size_detail_object',
         ]
         read_only_fields = ['order']
 
