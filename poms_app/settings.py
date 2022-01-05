@@ -179,7 +179,8 @@ MIDDLEWARE = [
 
 
     'poms.http_sessions.middleware.SessionMiddleware',
-    'poms.common.middleware.CommonMiddleware'
+    'poms.common.middleware.CommonMiddleware',
+    'poms.common.middleware.CustomExceptionMiddleware'
     # 'poms.users.middleware.AuthenticationMiddleware',
     # 'poms.users.middleware.TimezoneMiddleware',
     # 'poms.users.middleware.LocaleMiddleware',
@@ -502,7 +503,7 @@ REST_FRAMEWORK = {
         # 'user': '50/second',
         'anon': '20/min',
         'user': '500/min',
-    },
+    }
 
     # 'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%S %Z',
     # 'DATETIME_INPUT_FORMATS': (ISO_8601, '%c', '%Y-%m-%d %H:%M:%S %Z'),

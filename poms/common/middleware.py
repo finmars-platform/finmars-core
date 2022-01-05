@@ -2,10 +2,14 @@
 from __future__ import unicode_literals
 
 import ipaddress
+import json
+import re
+import traceback
 from threading import local
 
 from django.conf import settings
 from django.contrib.gis.geoip2 import GeoIP2
+from django.http import HttpResponse
 from django.utils.cache import get_max_age, patch_cache_control, add_never_cache_headers
 from django.utils.functional import SimpleLazyObject
 from geoip2.errors import AddressNotFoundError
@@ -147,3 +151,37 @@ class NoCacheMiddleware(MiddlewareMixin):
         else:
             add_never_cache_headers(response)
         return response
+
+
+
+class CustomExceptionMiddleware(MiddlewareMixin):
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        return response
+
+    def process_exception(self, request, exception):
+
+
+        # print('exception %s' % exception)
+
+        lines = traceback.format_exc().splitlines()[-6:]
+        traceback_lines = []
+
+        for line in lines:
+            traceback_lines.append(re.sub(r'File ".*[\\/]([^\\/]+.py)"', r'File "\1"', line))
+
+        # print(traceback_lines)
+
+        data = {
+            'url': request.build_absolute_uri(),
+            'message': repr(exception),
+            'trace': '\n'.join(traceback_lines)
+        }
+
+        response_json = json.dumps(data, indent=2, sort_keys=True)
+
+        return HttpResponse(response_json, status=500)

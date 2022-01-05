@@ -2,6 +2,7 @@ import logging
 import time
 
 from django.db import connection
+from rest_framework.exceptions import APIException
 
 from poms.accounts.models import Account
 from poms.currencies.models import Currency

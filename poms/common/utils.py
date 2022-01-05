@@ -240,3 +240,5 @@ def get_content_type_by_name(name):
     content_type = ContentType.objects.get(app_label=app_label_title, model=model_title)
 
     return content_type
+
+
