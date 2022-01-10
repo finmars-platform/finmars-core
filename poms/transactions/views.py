@@ -56,8 +56,8 @@ from poms.users.filters import OwnerByMasterUserFilter
 
 import logging
 import time
-_l = logging.getLogger('poms.transactions')
 
+_l = logging.getLogger('poms.transactions')
 
 
 class EventClassViewSet(AbstractClassModelViewSet):
@@ -168,7 +168,6 @@ class ModelExtWithAllWithMultipleChoiceFilter(ModelExtMultipleChoiceFilter):
 
     def filter(self, qs, value):
 
-
         if not value:
             return qs
 
@@ -197,10 +196,10 @@ class TransactionTypeFilterSet(FilterSet):
     group = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionTypeGroup)
     # portfolio = ModelExtWithPermissionMultipleChoiceFilter(model=Portfolio, name='portfolios')
     portfolios = ModelExtWithAllWithMultipleChoiceFilter(model=Portfolio,
-                                                                  all_field_name='is_valid_for_all_portfolios')
+                                                         all_field_name='is_valid_for_all_portfolios')
     # instrument_type = ModelExtWithPermissionMultipleChoiceFilter(model=InstrumentType, name='instrument_types')
     instrument_types = ModelExtWithAllWithMultipleChoiceFilter(model=InstrumentType,
-                                                                        all_field_name='is_valid_for_all_instruments')
+                                                               all_field_name='is_valid_for_all_instruments')
     is_valid_for_all_portfolios = django_filters.BooleanFilter()
     is_valid_for_all_instruments = django_filters.BooleanFilter()
     tag = TagFilter(model=TransactionType)
@@ -221,6 +220,7 @@ class TransactionTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
         PomsConfigurationPermission
     ]
 
+
 class TransactionTypeEvFilterSet(FilterSet):
     id = NoOpFilter()
     user_code = CharFilter()
@@ -240,17 +240,17 @@ class TransactionTypeEvFilterSet(FilterSet):
 
 
 class TransactionTypeEvViewSet(AbstractWithObjectPermissionViewSet):
-    queryset = TransactionType.objects\
-        .select_related('group')\
+    queryset = TransactionType.objects \
+        .select_related('group') \
         .prefetch_related(
-            'portfolios',
-            'instrument_types',
-            # get_attributes_prefetch(),
-            'attributes',
-            'attributes__classifier',
-            *get_permissions_prefetch_lookups(
-                (None, TransactionType),
-                ('group', TransactionTypeGroup),
+        'portfolios',
+        'instrument_types',
+        # get_attributes_prefetch(),
+        'attributes',
+        'attributes__classifier',
+        *get_permissions_prefetch_lookups(
+            (None, TransactionType),
+            ('group', TransactionTypeGroup),
         )
     )
     serializer_class = TransactionTypeEvSerializer
@@ -302,6 +302,7 @@ class TransactionTypeLightViewSet(AbstractWithObjectPermissionViewSet):
         'group__short_name',
         'group__public_name',
     ]
+
 
 class TransactionTypeLightWithInputsViewSet(AbstractWithObjectPermissionViewSet):
     queryset = TransactionType.objects.select_related('group').prefetch_related(
@@ -543,14 +544,10 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
     @action(detail=True, methods=['get', 'put'], url_path='book', serializer_class=TransactionTypeProcessSerializer)
     def book(self, request, pk=None):
 
-
-
         # Some Inputs can choose from which context variable it will take value
         context_values = self.get_context_for_book(request)
         # But by default Context Variables overwrites default value
         # default_values = self.get_context_for_book(request)
-
-
 
         # print("default_values %s" % default_values)
         print("context_values %s" % context_values)
@@ -567,11 +564,12 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
             return Response(serializer.data)
         else:
 
-            complex_transaction_status=request.data['complex_transaction_status']
+            complex_transaction_status = request.data['complex_transaction_status']
 
             uniqueness_reaction = request.data.get('uniqueness_reaction', None)
 
-            instance = TransactionTypeProcess(process_mode=request.data['process_mode'], transaction_type=transaction_type,
+            instance = TransactionTypeProcess(process_mode=request.data['process_mode'],
+                                              transaction_type=transaction_type,
                                               context=self.get_serializer_context(), context_values=context_values,
                                               complex_transaction_status=complex_transaction_status,
                                               uniqueness_reaction=uniqueness_reaction)
@@ -590,7 +588,8 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
                 if instance.has_errors:
                     transaction.set_rollback(True)
 
-    @action(detail=True, methods=['get', 'put'], url_path='book-pending', serializer_class=TransactionTypeProcessSerializer)
+    @action(detail=True, methods=['get', 'put'], url_path='book-pending',
+            serializer_class=TransactionTypeProcessSerializer)
     def book_pending(self, request, pk=None):
 
         complex_transaction_status = ComplexTransaction.PENDING
@@ -619,7 +618,8 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
                 if instance.has_errors:
                     transaction.set_rollback(True)
 
-    @action(detail=True, methods=['get', 'put'], url_path='recalculate', serializer_class=TransactionTypeRecalculateSerializer, permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['get', 'put'], url_path='recalculate',
+            serializer_class=TransactionTypeRecalculateSerializer, permission_classes=[IsAuthenticated])
     def recalculate(self, request, pk=None):
 
         st = time.perf_counter()
@@ -649,10 +649,13 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
 
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'], url_path='recalculate-user-fields', serializer_class=RecalculateUserFieldsSerializer)
+    @action(detail=True, methods=['post'], url_path='recalculate-user-fields',
+            serializer_class=RecalculateUserFieldsSerializer)
     def recalculate_user_fields(self, request, pk):
 
         context = {'request': request}
+
+        print('request.data %s' % request.data)
 
         serializer = RecalculateUserFieldsSerializer(data=request.data, context=context)
         serializer.is_valid(raise_exception=True)
@@ -684,6 +687,7 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
 
             serializer = RecalculateUserFieldsSerializer(instance=instance, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class TransactionTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = TransactionType.objects.select_related(
@@ -1067,7 +1071,6 @@ class TransactionViewSet(AbstractWithObjectPermissionViewSet):
 
 
 class TransactionEvViewSet(AbstractWithObjectPermissionViewSet):
-
     queryset = qs = Transaction.objects.select_related(
         'master_user',
         'complex_transaction',
@@ -1305,14 +1308,13 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
 
         ComplexTransaction.objects.get(id=instance.id).delete()
 
-    @action(detail=True, methods=['get', 'put'], url_path='rebook', serializer_class=TransactionTypeProcessSerializer, permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['get', 'put'], url_path='rebook', serializer_class=TransactionTypeProcessSerializer,
+            permission_classes=[IsAuthenticated])
     def rebook(self, request, pk=None):
         complex_transaction = self.get_object()
 
         # if request.method != 'GET':
         #     complex_transaction.status = ComplexTransaction.PRODUCTION
-
-
 
         print('detail_route: /rebook: process rebook')
 
@@ -1329,7 +1331,7 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
 
             st = time.perf_counter()
 
-            _l.info('complex tt status %s' % request.data['complex_transaction_status'] )
+            _l.info('complex tt status %s' % request.data['complex_transaction_status'])
 
             uniqueness_reaction = request.data.get('uniqueness_reaction', None)
 
@@ -1366,7 +1368,8 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
                 if instance.has_errors:
                     transaction.set_rollback(True)
 
-    @action(detail=True, methods=['get', 'put'], url_path='recalculate', serializer_class=TransactionTypeRecalculateSerializer, permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['get', 'put'], url_path='recalculate',
+            serializer_class=TransactionTypeRecalculateSerializer, permission_classes=[IsAuthenticated])
     def recalculate(self, request, pk=None):
 
         st = time.perf_counter()
@@ -1398,8 +1401,8 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
 
         return Response(serializer.data)
 
-
-    @action(detail=True, methods=['get', 'put'], url_path='rebook-pending', serializer_class=TransactionTypeProcessSerializer, permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['get', 'put'], url_path='rebook-pending',
+            serializer_class=TransactionTypeProcessSerializer, permission_classes=[IsAuthenticated])
     def rebook_pending(self, request, pk=None):
 
         complex_transaction = self.get_object()
@@ -1428,7 +1431,8 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
                 if instance.has_errors:
                     transaction.set_rollback(True)
 
-    @action(detail=True, methods=['put'], url_path='update-properties', serializer_class=ComplexTransactionSimpleSerializer)
+    @action(detail=True, methods=['put'], url_path='update-properties',
+            serializer_class=ComplexTransactionSimpleSerializer)
     def update_properties(self, request, pk=None):
         complex_transaction = self.get_object()
 
@@ -1446,7 +1450,8 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
 
         return Response(serializer.data)
 
-    @action(detail=False, methods=['put', 'patch'], url_path='bulk-update-properties', serializer_class=ComplexTransactionSimpleSerializer)
+    @action(detail=False, methods=['put', 'patch'], url_path='bulk-update-properties',
+            serializer_class=ComplexTransactionSimpleSerializer)
     def bulk_update_properties(self, request):
         data = request.data
         if not isinstance(data, list):

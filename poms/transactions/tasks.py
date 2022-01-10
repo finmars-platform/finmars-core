@@ -433,6 +433,10 @@ def get_values(complex_transaction):
                 value = ci.value_float
             elif i.value_type == TransactionTypeInput.DATE:
                 value = ci.value_date
+            elif i.value_type == TransactionTypeInput.RELATION:
+                value = ci.value_relation
+
+
             if value is not None:
                 values[i.name] = value
 

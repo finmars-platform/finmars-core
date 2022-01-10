@@ -3635,10 +3635,12 @@ class RecalculatePermissionComplexTransactionSerializer(serializers.Serializer):
 
 
 class RecalculateUserFields:
-    def __init__(self, task_id=None, task_status=None, master_user=None, member=None, transaction_type_id=None,
+    def __init__(self, task_id=None, task_status=None, master_user=None, member=None, transaction_type_id=None, key=None,
                  total_rows=None, processed_rows=None, stats_file_report=None, stats=None):
         self.task_id = task_id
         self.task_status = task_status
+        
+        self.key = key
 
         self.master_user = master_user
         self.member = member
