@@ -1685,8 +1685,10 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
 
         for attribute in instrument_type.instrument_attributes.all():
 
+            attribute_type = GenericAttributeType.objects.get(master_user=self.instrument_type.master_user, user_code=attribute.attribute_type_user_code)
+
             attr = {
-                'attribute_type': attribute.attribute_type.id
+                'attribute_type': attribute_type.id
             }
 
             if attribute.value_type == 10:

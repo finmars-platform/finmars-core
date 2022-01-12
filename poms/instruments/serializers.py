@@ -1689,3 +1689,29 @@ class EventScheduleConfigSerializer(serializers.ModelSerializer):
         from poms.transactions.serializers import NotificationClassSerializer
         self.fields['notification_class_object'] = NotificationClassSerializer(source='notification_class',
                                                                                read_only=True)
+
+
+class InstrumentTypeProcessSerializer(serializers.Serializer):
+
+
+    def __init__(self, **kwargs):
+
+        kwargs['context'] = context = kwargs.get('context', {}) or {}
+        super(InstrumentTypeProcessSerializer, self).__init__(**kwargs)
+        context['instance'] = self.instance
+
+        self.fields['instrument_type'] = serializers.PrimaryKeyRelatedField(read_only=True)
+        self.fields['instrument'] = serializers.SerializerMethodField(required=False, allow_null=True)
+
+        self.fields['instrument_type_object'] = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
+
+
+    def get_instrument(self, obj):
+        return obj.instrument
+
+    def validate(self, attrs):
+        return attrs
+
+    def create(self, validated_data):
+        return validated_data
+

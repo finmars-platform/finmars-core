@@ -32,7 +32,7 @@ from poms.csv_import.tasks import set_defaults_from_instrument_type, handler_ins
 from poms.currencies.models import Currency
 from poms.instruments.filters import OwnerByInstrumentFilter, PriceHistoryObjectPermissionFilter, \
     GeneratedEventPermissionFilter, InstrumentSelectSpecialQueryFilter
-from poms.instruments.handlers import GeneratedEventProcess
+from poms.instruments.handlers import GeneratedEventProcess, InstrumentTypeProcess
 from poms.instruments.models import Instrument, PriceHistory, InstrumentClass, DailyPricingModel, \
     AccrualCalculationModel, PaymentSizeDetail, Periodicity, CostMethod, InstrumentType, PricingPolicy, \
     EventScheduleConfig, ManualPricingFormula, \
@@ -45,7 +45,7 @@ from poms.instruments.serializers import InstrumentSerializer, PriceHistorySeria
     GeneratedEventSerializer, EventScheduleActionSerializer, InstrumentTypeLightSerializer, InstrumentLightSerializer, \
     PricingPolicyLightSerializer, PricingConditionSerializer, InstrumentEvSerializer, InstrumentTypeEvSerializer, \
     ExposureCalculationModelSerializer, LongUnderlyingExposureSerializer, ShortUnderlyingExposureSerializer, \
-    InstrumentForSelectSerializer
+    InstrumentForSelectSerializer, InstrumentTypeProcessSerializer
 from poms.instruments.tasks import calculate_prices_accrued_price, generate_events, process_events, \
     only_generate_events_at_date, generate_events_do_not_inform_apply_default0, \
     generate_events_do_not_inform_apply_default, only_generate_events_at_date_for_single_instrument
@@ -257,6 +257,19 @@ class InstrumentTypeViewSet(AbstractWithObjectPermissionViewSet):
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
     ]
+
+    @action(detail=True, methods=['get', 'put'], url_path='book', serializer_class=InstrumentTypeProcessSerializer)
+    def book(self, request, pk=None):
+
+        instrument_type = InstrumentType.objects.get(pk=pk)
+
+        instance = InstrumentTypeProcess(instrument_type=instrument_type,
+                                          context=self.get_serializer_context())
+
+        serializer = self.get_serializer(instance=instance)
+        return Response(serializer.data)
+
+
 
     @action(detail=True, methods=['get','put'], url_path='update-pricing',  permission_classes=[IsAuthenticated])
     def update_pricing(self, request, pk=None):
