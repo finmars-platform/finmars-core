@@ -308,6 +308,8 @@ class TransactionTypeLightWithInputsViewSet(AbstractWithObjectPermissionViewSet)
     queryset = TransactionType.objects.select_related('group').prefetch_related(
         'portfolios',
         'instrument_types',
+        'inputs',
+        'context_parameters',
         get_attributes_prefetch(),
         get_tag_prefetch(),
         *get_permissions_prefetch_lookups(

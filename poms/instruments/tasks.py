@@ -91,10 +91,10 @@ def fill_parameters_from_instrument(event_schedule, instrument):
         if action.data and action.data['parameters']:
 
             for parameter in action.data['parameters']:
-                key = 'parameter' + str(parameter['index'])
+                key = 'parameter' + str(parameter['order'])
 
                 result[action.button_position][key] = get_calculated_parameter_by_name_from_event(event_schedule,
-                                                                                                  parameter['name'],
+                                                                                                  parameter['event_parameter_name'],
                                                                                                   instrument)
 
     return result

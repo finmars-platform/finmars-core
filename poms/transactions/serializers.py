@@ -52,7 +52,7 @@ from poms.transactions.models import TransactionClass, Transaction, TransactionT
     TransactionTypeActionInstrumentFactorSchedule, TransactionTypeActionInstrumentManualPricingFormula, \
     TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentEventSchedule, \
     TransactionTypeActionInstrumentEventScheduleAction, TransactionTypeActionExecuteCommand, \
-    TransactionTypeInputSettings, ComplexTransactionStatus
+    TransactionTypeInputSettings, ComplexTransactionStatus, TransactionTypeContextParameter
 from poms.users.fields import MasterUserField, HiddenMemberField
 
 from django.core.validators import RegexValidator
@@ -124,6 +124,13 @@ class TransactionTypeActionInstrumentPhantomField(serializers.IntegerField):
 class TransactionTypeActionInstrumentEventSchedulePhantomField(serializers.IntegerField):
     def to_representation(self, value):
         return value.order if value else None
+
+
+class TransactionTypeContextParameterSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = TransactionTypeContextParameter
+        fields = ['name', 'value_type', 'order']
 
 
 class TransactionTypeInputSettingsSerializer(serializers.ModelSerializer):
@@ -1200,6 +1207,8 @@ class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelW
 class TransactionTypeLightSerializerWithInputs(TransactionTypeLightSerializer):
     inputs = TransactionTypeInputSerializer(required=False, many=True)
 
+    context_parameters = TransactionTypeContextParameterSerializer(required=False, many=True)
+
     class Meta(TransactionTypeLightSerializer.Meta):
         model = TransactionType
         fields = [
@@ -1228,7 +1237,10 @@ class TransactionTypeLightSerializerWithInputs(TransactionTypeLightSerializer):
             'is_valid_for_all_portfolios', 'is_valid_for_all_instruments', 'is_deleted',
 
             'instrument_types', 'portfolios',
-            'group_object', 'inputs'
+            'group_object', 'inputs',
+
+            'context_parameters_notes',
+            'context_parameters'
         ]
 
 
@@ -1366,6 +1378,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
     # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
     inputs = TransactionTypeInputSerializer(required=False, many=True)
     recon_fields = TransactionTypeReconFieldSerializer(required=False, many=True)
+    context_parameters = TransactionTypeContextParameterSerializer(required=False, many=True)
     actions = TransactionTypeActionSerializer(required=False, many=True, read_only=False)
     book_transaction_layout = serializers.JSONField(required=False, allow_null=True)
 
@@ -1420,7 +1433,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             'is_valid_for_all_portfolios', 'is_valid_for_all_instruments', 'is_deleted',
             'book_transaction_layout',
             'instrument_types', 'portfolios',
-            'inputs', 'actions', 'recon_fields',
+            'inputs', 'actions', 'recon_fields', 'context_parameters', 'context_parameters_notes',
             'group_object',
 
             'is_enabled'
@@ -1437,6 +1450,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
         inputs = validated_data.pop('inputs', empty)
         actions = validated_data.pop('actions', empty)
         recon_fields = validated_data.pop('recon_fields', empty)
+        context_parameters = validated_data.pop('context_parameters', empty)
         instance = super(TransactionTypeSerializer, self).create(validated_data)
         if inputs is not empty:
             inputs = self.save_inputs(instance, inputs)
@@ -1444,6 +1458,8 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             self.save_actions(instance, actions, inputs)
         if recon_fields is not empty:
             self.save_recon_fields(instance, recon_fields)
+        if context_parameters is not empty:
+            self.save_context_parameters(instance, context_parameters)
 
         # print('Transaction Type Serializer create %s' % (time.perf_counter() - st))
 
@@ -1453,6 +1469,7 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
         inputs = validated_data.pop('inputs', empty)
         actions = validated_data.pop('actions', empty)
         recon_fields = validated_data.pop('recon_fields', empty)
+        context_parameters = validated_data.pop('context_parameters', empty)
         instance = super(TransactionTypeSerializer, self).update(instance, validated_data)
 
         # print('actions %s' % actions)
@@ -1463,6 +1480,8 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             actions = self.save_actions(instance, actions, inputs)
         if recon_fields is not empty:
             recon_fields = self.save_recon_fields(instance, recon_fields)
+        if context_parameters is not empty:
+            context_parameters = self.save_context_parameters(instance, context_parameters)
 
         if inputs is not empty:
             instance.inputs.exclude(id__in=[i.id for i in inputs]).delete()
@@ -1470,6 +1489,9 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             instance.actions.exclude(id__in=[a.id for a in actions]).delete()
         if recon_fields is not empty:
             instance.recon_fields.exclude(id__in=[a.id for a in recon_fields]).delete()
+        if context_parameters is not empty:
+            instance.context_parameters.exclude(id__in=[a.id for a in context_parameters]).delete()
+
         return instance
 
     def save_inputs(self, instance, inputs_data):
@@ -1551,6 +1573,30 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             recon_field.save()
             new_recon_fields.append(recon_field)
         return new_recon_fields
+
+    def save_context_parameters(self, instance, context_parameters_data):
+        cur_context_parameters = {i.id: i for i in instance.context_parameters.all()}
+        new_context_parameters = []
+
+        # print('instance %s' % instance)
+
+        for order, context_parameter_field_data in enumerate(context_parameters_data):
+            # name = inp_data['name']
+            pk = context_parameter_field_data.pop('id', None)
+            context_parameter = cur_context_parameters.pop(pk, None)
+            if context_parameter is None:
+                try:
+                    context_parameter = TransactionTypeContextParameter.objects.get(transaction_type=instance,
+                                                                                    order=context_parameter_field_data['order'],
+                                                                        name=context_parameter_field_data['name'])
+                except TransactionTypeContextParameter.DoesNotExist:
+                    context_parameter = TransactionTypeContextParameter(transaction_type=instance)
+
+            for attr, value in context_parameter_field_data.items():
+                setattr(context_parameter, attr, value)
+            context_parameter.save()
+            new_context_parameters.append(context_parameter)
+        return new_context_parameters
 
     def save_actions_instrument(self, instance, inputs, actions, existed_actions, actions_data):
 

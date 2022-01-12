@@ -345,6 +345,8 @@ class TransactionType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     display_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                     verbose_name=ugettext_lazy('display expr'))
 
+    context_parameters_notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('context parameters notes'))
+
     transaction_unique_code_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                     verbose_name=ugettext_lazy('transaction unique code expr'))
 
@@ -579,6 +581,26 @@ class TransactionType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 #     (10, ugettext_lazy('Effective Date')),
 # )
 
+class TransactionTypeContextParameter(models.Model):
+    STRING = 10
+    NUMBER = 20
+    # EXPRESSION = 30
+    DATE = 40
+
+    TYPES = (
+        (NUMBER, ugettext_lazy('Number')),
+        (STRING, ugettext_lazy('String')),
+        (DATE, ugettext_lazy('Date')),
+    )
+
+    transaction_type = models.ForeignKey(TransactionType, related_name='context_parameters',
+                                         verbose_name=ugettext_lazy('transaction type'), on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('name'))
+
+    value_type = models.PositiveSmallIntegerField(default=STRING, choices=TYPES,
+                                                  verbose_name=ugettext_lazy('value type'))
+
+    order = models.IntegerField(default=1, verbose_name=ugettext_lazy('order'))
 
 class TransactionTypeInput(models.Model):
     STRING = 10
