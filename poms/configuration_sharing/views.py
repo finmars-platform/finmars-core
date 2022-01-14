@@ -50,6 +50,8 @@ class SharedConfigurationFileViewSet(AbstractModelViewSet):
 
         if (is_force == 'true'):
             is_force = True
+        else:
+            is_force = False
 
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data)
@@ -66,21 +68,19 @@ class SharedConfigurationFileViewSet(AbstractModelViewSet):
 
             for layout in layouts:
 
-                if layout.origin_for_global_layout.id != instance.id:
+                serializer = ConfigurationImportAsJsonSerializer(data={
+                    "data": instance.data,
+                    "master_user": master_user, # share only inside same ecosystem
+                    "member": layout.member,
+                    "mode": 'overwrite'
+                }, context={
+                    "request": request
+                })
+                serializer.is_valid(raise_exception=True)
+                config_import_instance = serializer.save()
 
-                    serializer = ConfigurationImportAsJsonSerializer(data={
-                        "data": instance.json_data,
-                        "master_user": master_user,
-                        "member": layout.member,
-                        "mode": 'overwrite'
-                    }, context={
-                        "request": request
-                    })
-                    serializer.is_valid(raise_exception=True)
-                    instance = serializer.save()
-
-                    configuration_import_as_json.apply_async(kwargs={'instance': instance})
-                    processed = processed + 1
+                configuration_import_as_json.apply_async(kwargs={'instance': config_import_instance})
+                processed = processed + 1
 
             _l.info("Processed layouts %s" % processed)
 
