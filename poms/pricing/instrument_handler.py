@@ -738,7 +738,7 @@ class PricingInstrumentHandler(object):
                             # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
 
                             error_prices_count = error_prices_count + 1
-
+                            error.status = PriceHistoryError.STATUS_ERROR
                             error.save()
 
                         else:
@@ -1065,7 +1065,7 @@ class PricingInstrumentHandler(object):
                         if has_error:
 
                             error_prices_count = error_prices_count + 1
-
+                            error.status = PriceHistoryError.STATUS_ERROR
                             error.save()
                         else:
 

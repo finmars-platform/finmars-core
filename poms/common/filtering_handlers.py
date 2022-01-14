@@ -48,11 +48,9 @@ class FilterType:
 
 
 def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
-
     filter_type = filter_config['filter_type']
     value_type = str(filter_config['value_type'])
     value = None
-
 
     exclude_empty_cells = filter_config['exclude_empty_cells']
 
@@ -151,7 +149,6 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             attributes_qs = attributes_qs.exclude(Q(**options) | Q(**exclude_empty_cells_options))
 
     if filter_type == FilterType.EMPTY and value_type == ValueType.CLASSIFIER:
-
         include_null_options = {}
         include_empty_string_options = {}
 
@@ -207,7 +204,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
                 include_null_options['value_string__isnull'] = True
                 include_empty_string_options['value_string'] = ''
 
-            attributes_qs = attributes_qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
+            attributes_qs = attributes_qs.filter(
+                Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
     if filter_type == FilterType.CONTAINS and value_type == ValueType.STRING:
 
@@ -225,7 +223,8 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
                 include_null_options['value_string__isnull'] = True
                 include_empty_string_options['value_string'] = ''
 
-            attributes_qs = attributes_qs.filter(Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
+            attributes_qs = attributes_qs.filter(
+                Q(**options) | Q(**include_null_options) | Q(**include_empty_string_options))
 
     if filter_type == FilterType.DOES_NOT_CONTAINS and value_type == ValueType.STRING:
 
@@ -243,10 +242,10 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
                 exclude_null_options['classifier__isnull'] = True
                 exclude_empty_cells_options['value_string'] = ''
 
-            attributes_qs = attributes_qs.exclude(Q(**options) | Q(**exclude_null_options) | Q(**exclude_empty_cells_options))
+            attributes_qs = attributes_qs.exclude(
+                Q(**options) | Q(**exclude_null_options) | Q(**exclude_empty_cells_options))
 
     if filter_type == FilterType.EMPTY and value_type == ValueType.STRING:
-
         include_null_options = {}
         include_empty_string_options = {}
 
@@ -500,7 +499,6 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
             attributes_qs = attributes_qs.filter(Q(**options) | Q(**include_null_options))
 
     if filter_type == FilterType.EMPTY and int(value_type) == ValueType.DATE:
-
         include_null_options = {}
 
         include_null_options['value_date__isnull'] = True
@@ -527,7 +525,7 @@ def add_dynamic_attribute_filter(qs, filter_config, master_user, content_type):
 
             attributes_qs = attributes_qs.filter(Q(**options) | Q(**include_null_options))
 
-    filtered_attributes_ids =  attributes_qs.values_list('object_id', flat=True)
+    filtered_attributes_ids = attributes_qs.values_list('object_id', flat=True)
 
     # print('filtered_attributes_ids %s ' % filtered_attributes_ids)
 
@@ -613,7 +611,6 @@ def add_filter(qs, filter_config):
             clauses = []
 
             for value in values:
-
                 options = {}
                 options[key] = value
 
@@ -644,7 +641,6 @@ def add_filter(qs, filter_config):
             clauses = []
 
             for value in values:
-
                 options = {}
                 options[key + '__user_code'] = value
 
@@ -903,7 +899,7 @@ def add_filter(qs, filter_config):
         include_null_options = {}
         include_null_options[key + '__isnull'] = True
 
-        qs = qs.filter(Q(**include_null_options) )
+        qs = qs.filter(Q(**include_null_options))
 
     # NUMBER FILTERS END
 
@@ -1029,7 +1025,7 @@ def add_filter(qs, filter_config):
 
         include_null_options[key + '__isnull'] = True
 
-        qs = qs.filter(Q(**include_null_options) )
+        qs = qs.filter(Q(**include_null_options))
 
     elif filter_type == FilterType.DATE_TREE and value_type == ValueType.DATE:
 
@@ -1065,7 +1061,6 @@ def is_dynamic_attribute_filter(filter_config):
 
 
 def handle_filters(qs, filter_settings, master_user, content_type):
-
     print('Handle filters %s' % filter_settings)
 
     start_time = time.time()
@@ -1084,16 +1079,17 @@ def handle_filters(qs, filter_settings, master_user, content_type):
 
 
 def handle_global_table_search(qs, global_table_search, model, content_type):
-
     start_time = time.time()
 
     q = Q()
 
-    relation_fields = [f for f in model._meta.fields if isinstance(f, ForeignKey) and f.name != 'master_user']
+    relation_fields = [f for f in model._meta.fields if
+                       isinstance(f, ForeignKey) and f.name != 'master_user' and f.name != 'procedure_instance']
 
     _l.info('relation_fields %s' % relation_fields)
 
-    relation_queries_short_name = [Q(**{f.name + '__short_name__icontains': global_table_search}) for f in relation_fields]
+    relation_queries_short_name = [Q(**{f.name + '__short_name__icontains': global_table_search}) for f in
+                                   relation_fields]
 
     for query in relation_queries_short_name:
         q = q | query
@@ -1103,7 +1099,8 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
     for query in relation_queries_name:
         q = q | query
 
-    relation_queries_user_code = [Q(**{f.name + '__user_code__icontains': global_table_search}) for f in relation_fields]
+    relation_queries_user_code = [Q(**{f.name + '__user_code__icontains': global_table_search}) for f in
+                                  relation_fields]
 
     for query in relation_queries_user_code:
         q = q | query
@@ -1111,10 +1108,8 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
     char_fields = [f for f in model._meta.fields if isinstance(f, CharField)]
     char_queries = [Q(**{f.name + '__icontains': global_table_search}) for f in char_fields]
 
-
     for query in char_queries:
         q = q | query
-
 
     date_fields = [f for f in model._meta.fields if isinstance(f, DateField)]
     date_queries = [Q(**{f.name + '__icontains': global_table_search}) for f in date_fields]
@@ -1128,9 +1123,8 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
     for query in float_queries:
         q = q | query
 
-
-    if content_type.model not in ['currencyhistory', 'pricehistory',  'transaction', 'currencyhistoryerror', 'pricehistoryerror']:
-
+    if content_type.model not in ['currencyhistory', 'pricehistory', 'transaction', 'currencyhistoryerror',
+                                  'pricehistoryerror']:
         string_attr_query = Q(**{'attributes__value_float__icontains': global_table_search})
         date_attr_query = Q(**{'attributes__value_date__icontains': global_table_search})
         float_attr_query = Q(**{'attributes__value_float__icontains': global_table_search})

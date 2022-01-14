@@ -461,7 +461,7 @@ class PricingCurrencyHandler(object):
                         # if has_error:
 
                             error_prices_count = error_prices_count + 1
-
+                            error.status = CurrencyHistoryError.STATUS_ERROR
                             error.save()
                         else:
 
@@ -734,7 +734,7 @@ class PricingCurrencyHandler(object):
                         # if has_error:
 
                             error_prices_count = error_prices_count + 1
-
+                            error.status = CurrencyHistoryError.STATUS_ERROR
                             error.save()
                         else:
 

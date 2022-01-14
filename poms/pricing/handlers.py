@@ -482,12 +482,15 @@ class FillPricesBrokerBloombergProcess(object):
                 if has_error:
 
                     error_prices_count = error_prices_count + 1
-
+                    error.status = PriceHistoryError.STATUS_ERROR
                     error.save()
 
                 else:
 
                     successful_prices_count = successful_prices_count + 1
+
+                    error.status = PriceHistoryError.STATUS_CREATED # its journal, not error log
+                    error.save()
 
                     price.save()
 
@@ -645,11 +648,14 @@ class FillPricesBrokerBloombergProcess(object):
                 # if has_error:
 
                     error_prices_count = error_prices_count + 1
-
+                    error.status = CurrencyHistoryError.STATUS_ERROR
                     error.save()
                 else:
 
                     successful_prices_count = successful_prices_count + 1
+
+                    error.status = CurrencyHistoryError.STATUS_CREATED # its journal, not error log
+                    error.save()
 
                     price.save()
 
@@ -935,12 +941,15 @@ class FillPricesBrokerBloombergForwardsProcess(object):
                 if has_error:
 
                     error_prices_count = error_prices_count + 1
-
+                    error.status = PriceHistoryError.STATUS_ERROR
                     error.save()
 
                 else:
 
                     successful_prices_count = successful_prices_count + 1
+
+                    error.status = PriceHistoryError.STATUS_CREATED # its journal, not error log
+                    error.save()
 
                     price.save()
 
@@ -1283,12 +1292,15 @@ class FillPricesBrokerWtradeProcess(object):
                 if has_error:
 
                     error_prices_count = error_prices_count + 1
-
+                    error.status = PriceHistoryError.STATUS_ERROR
                     error.save()
 
                 else:
 
                     successful_prices_count = successful_prices_count + 1
+
+                    error.status = PriceHistoryError.STATUS_CREATED # its journal, not error log
+                    error.save()
 
                     price.save()
 
@@ -1627,12 +1639,15 @@ class FillPricesBrokerCbondsProcess(object):
                 if has_error:
 
                     error_prices_count = error_prices_count + 1
-
+                    error.status = PriceHistoryError.STATUS_ERROR
                     error.save()
 
                 else:
 
                     successful_prices_count = successful_prices_count + 1
+
+                    error.status = PriceHistoryError.STATUS_CREATED # its journal, not error log
+                    error.save()
 
                     price.save()
 
@@ -1853,12 +1868,15 @@ class FillPricesBrokerFixerProcess(object):
                 # if has_error:
 
                     error_prices_count = error_prices_count + 1
-
+                    error.status = CurrencyHistoryError.STATUS_ERROR
                     error.save()
 
                 else:
 
                     successful_prices_count = successful_prices_count + 1
+
+                    error.status = CurrencyHistoryError.STATUS_CREATED # its journal, not error log
+                    error.save()
 
                     price.save()
 
@@ -2142,12 +2160,15 @@ class FillPricesBrokerAlphavProcess(object):
                 if has_error:
 
                     error_prices_count = error_prices_count + 1
-
+                    error.status = PriceHistoryError.STATUS_ERROR
                     error.save()
 
                 else:
 
                     successful_prices_count = successful_prices_count + 1
+
+                    error.status = PriceHistoryError.STATUS_CREATED # its journal, not error log
+                    error.save()
 
                     price.save()
 

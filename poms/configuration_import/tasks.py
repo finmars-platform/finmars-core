@@ -1850,17 +1850,21 @@ class ImportManager(object):
 
                             for rule in content_object['rule_scenarios']:
 
+                                tt_found = True
+
                                 try:
                                     rule['transaction_type'] = TransactionType.objects.get(master_user=self.master_user,
                                                                                            user_code=rule[
                                                                                                '___transaction_type__user_code']).pk
                                 except TransactionType.DoesNotExist:
                                     _l.info('Cant find Transaction Type form %s for %s' % (rule['___transaction_type__user_code'], content_object['user_code']))
-                                    stats['status'] = 'error'
-                                    stats['error']['message'] = 'Error. Can\'t Import Transaction Import Scheme for %s. Transaction Type %s is missing ' % (content_object['user_code'], rule['___transaction_type__user_code'])
-                                    continue
+                                    rule['transaction_type'] = self.ecosystem_default.transaction_type_id
+                                    tt_found = False
+                                    # stats['status'] = 'error'
+                                    # stats['error']['message'] = 'Error. Can\'t Import Transaction Import Scheme for %s. Transaction Type %s is missing ' % (content_object['user_code'], rule['___transaction_type__user_code'])
+                                    # continue
 
-                                if rule['transaction_type']:
+                                if rule['transaction_type'] and tt_found:
 
                                     for field in rule['fields']:
 
