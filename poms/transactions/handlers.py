@@ -1579,40 +1579,42 @@ class TransactionTypeProcess(object):
 
                 model_class = ti.content_type.model_class()
 
-                if issubclass(model_class, Account):
-                    ci.account = val
-                elif issubclass(model_class, Currency):
-                    ci.currency = val
-                elif issubclass(model_class, Instrument):
-                    ci.instrument = val
-                elif issubclass(model_class, InstrumentType):
-                    ci.instrument_type = val
-                elif issubclass(model_class, Counterparty):
-                    ci.counterparty = val
-                elif issubclass(model_class, Responsible):
-                    ci.responsible = val
-                elif issubclass(model_class, Strategy1):
-                    ci.strategy1 = val
-                elif issubclass(model_class, Strategy2):
-                    ci.strategy2 = val
-                elif issubclass(model_class, Strategy3):
-                    ci.strategy3 = val
-                elif issubclass(model_class, DailyPricingModel):
-                    ci.daily_pricing_model = val
-                elif issubclass(model_class, PaymentSizeDetail):
-                    ci.payment_size_detail = val
-                elif issubclass(model_class, Portfolio):
-                    ci.portfolio = val
-                elif issubclass(model_class, PricingPolicy):
-                    ci.pricing_policy = val
-                elif issubclass(model_class, Periodicity):
-                    ci.periodicity = val
-                elif issubclass(model_class, AccrualCalculationModel):
-                    ci.accrual_calculation_model = val
-                elif issubclass(model_class, EventClass):
-                    ci.event_class = val
-                elif issubclass(model_class, NotificationClass):
-                    ci.notification_class = val
+                ci.value_relation = val.user_code
+
+                # if issubclass(model_class, Account):
+                #     ci.account = val
+                # elif issubclass(model_class, Currency):
+                #     ci.currency = val
+                # elif issubclass(model_class, Instrument):
+                #     ci.instrument = val
+                # elif issubclass(model_class, InstrumentType):
+                #     ci.instrument_type = val
+                # elif issubclass(model_class, Counterparty):
+                #     ci.counterparty = val
+                # elif issubclass(model_class, Responsible):
+                #     ci.responsible = val
+                # elif issubclass(model_class, Strategy1):
+                #     ci.strategy1 = val
+                # elif issubclass(model_class, Strategy2):
+                #     ci.strategy2 = val
+                # elif issubclass(model_class, Strategy3):
+                #     ci.strategy3 = val
+                # elif issubclass(model_class, DailyPricingModel):
+                #     ci.daily_pricing_model = val
+                # elif issubclass(model_class, PaymentSizeDetail):
+                #     ci.payment_size_detail = val
+                # elif issubclass(model_class, Portfolio):
+                #     ci.portfolio = val
+                # elif issubclass(model_class, PricingPolicy):
+                #     ci.pricing_policy = val
+                # elif issubclass(model_class, Periodicity):
+                #     ci.periodicity = val
+                # elif issubclass(model_class, AccrualCalculationModel):
+                #     ci.accrual_calculation_model = val
+                # elif issubclass(model_class, EventClass):
+                #     ci.event_class = val
+                # elif issubclass(model_class, NotificationClass):
+                #     ci.notification_class = val
 
             ci.save()
 
