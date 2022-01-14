@@ -819,7 +819,7 @@ class MemberViewSet(AbstractModelViewSet):
     )
     serializer_class = MemberSerializer
     permission_classes = AbstractModelViewSet.permission_classes + [
-        SuperUserOrReadOnly,
+
     ]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
