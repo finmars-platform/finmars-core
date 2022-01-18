@@ -250,6 +250,7 @@ class ColorPaletteColor(models.Model):
         unique_together = [
             ['color_palette', 'order'],
         ]
+        ordering = ['order']
 
 
 class TransactionUserFieldModel(models.Model):
