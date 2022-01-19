@@ -509,9 +509,13 @@ def download_unified_data(user_code=None, entity_type=None, master_user=None, me
                     'request': proxy_request
                 }
 
+                ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
+
                 record = None
 
                 if entity_type == 'counterparty':
+
+                    obj_data['group'] = ecosystem_defaults.counterparty_group_id
 
                     serializer = CounterpartySerializer(data=obj_data,
                                                            context=context)
