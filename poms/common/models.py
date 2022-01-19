@@ -43,7 +43,8 @@ class NamedModel(models.Model):
             # self.user_code = Truncator(self.name).chars(25, truncate='')
             self.user_code = self.name
         if not self.short_name:
-            self.short_name = Truncator(self.name).chars(50)
+            self.short_name = self.name
+            # self.short_name = Truncator(self.name).chars(50)
         super(NamedModel, self).save(*args, **kwargs)
 
 

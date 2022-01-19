@@ -41,11 +41,11 @@ class ModelWithUserCodeSerializer(serializers.ModelSerializer):
         ret = super(ModelWithUserCodeSerializer, self).to_internal_value(data)
 
         # for correct message on unique error
-        user_code = ret.get('user_code', empty)
-        if user_code is empty or user_code is None:
-            name = ret.get('name', empty)
-            if name is not empty and name is not None:
-                ret['user_code'] = Truncator(name).chars(25, truncate='')
+        # user_code = ret.get('user_code', empty)
+        # if user_code is empty or user_code is None:
+        #     name = ret.get('name', empty)
+        #     if name is not empty and name is not None:
+        #         ret['user_code'] = Truncator(name).chars(25, truncate='')
 
         return ret
 
