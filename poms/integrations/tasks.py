@@ -457,8 +457,8 @@ def download_unified_data(id=None, entity_type=None, master_user=None, member=No
     errors = []
 
     try:
-        _l.debug('download_unified_data: master_user_id=%s, task=%s, user_code=%s',
-                 getattr(master_user, 'id', None), getattr(task, 'info', None), user_code)
+        _l.debug('download_unified_data: master_user_id=%s, task=%s' %
+                 getattr(master_user, 'id', None), getattr(task, 'info', None))
 
 
         with transaction.atomic():
@@ -468,7 +468,9 @@ def download_unified_data(id=None, entity_type=None, master_user=None, member=No
                 status=Task.STATUS_PENDING,
                 action=Task.ACTION_INSTRUMENT
             )
-            task.options_object = options
+            task.options_object = {
+                "id": id
+            }
             task.save()
 
             headers = {'Content-type': 'application/json'}
