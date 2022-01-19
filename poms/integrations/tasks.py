@@ -500,7 +500,11 @@ def download_unified_data(user_code=None, entity_type=None, master_user=None, me
                 return task, errors
             try:
 
-                obj_data = data['results'][0]
+                obj_data = None
+
+                for item in data['results']:
+                    if item['user_code'] == str(user_code):
+                        obj_data = item
 
                 proxy_user = ProxyUser(member, master_user)
                 proxy_request = ProxyRequest(proxy_user)
