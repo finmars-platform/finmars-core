@@ -1028,11 +1028,11 @@ class ImportInstrumentEntry(object):
 
 
 class UnifiedDataEntry(object):
-    def __init__(self, master_user=None, member=None, user_code=None, entity_type=None,
+    def __init__(self, master_user=None, member=None, id=None, entity_type=None,
                  task=None, task_result_overrides=None, errors=None):
         self.master_user = master_user
         self.member = member
-        self.user_code = user_code
+        self.id = id
         self.entity_type = entity_type
         self.task = task
         self._task_object = None
@@ -1170,10 +1170,10 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
 class ImportUnifiedDataProviderSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
-    user_code = serializers.CharField(required=True, initial='-')
+    id = serializers.CharField(required=True, initial='-')
     entity_type = serializers.CharField(required=True, initial='-')
     task = serializers.IntegerField(required=False, allow_null=True)
-    id = serializers.IntegerField(required=False, allow_null=True)
+    result_id = serializers.IntegerField(required=False, allow_null=True)
 
     errors = serializers.ReadOnlyField()
 
@@ -1182,7 +1182,7 @@ class ImportUnifiedDataProviderSerializer(serializers.Serializer):
         instance = UnifiedDataEntry(**validated_data)
 
         task, errors = download_unified_data(
-            user_code=instance.user_code,
+            id=instance.id,
             entity_type=instance.entity_type,
             master_user=instance.master_user,
             member=instance.member
@@ -1191,7 +1191,7 @@ class ImportUnifiedDataProviderSerializer(serializers.Serializer):
         instance.errors = errors
 
         if task and task.result_object:
-            instance.id = task.result_object['id']
+            instance.result_id = task.result_object['id']
 
         return instance
 

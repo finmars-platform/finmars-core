@@ -451,7 +451,7 @@ def download_instrument_cbond(instrument_code=None, master_user=None, member=Non
         return None, errors
 
 
-def download_unified_data(user_code=None, entity_type=None, master_user=None, member=None,
+def download_unified_data(id=None, entity_type=None, master_user=None, member=None,
                           task=None, value_overrides=None):
 
     errors = []
@@ -460,9 +460,7 @@ def download_unified_data(user_code=None, entity_type=None, master_user=None, me
         _l.debug('download_unified_data: master_user_id=%s, task=%s, user_code=%s',
                  getattr(master_user, 'id', None), getattr(task, 'info', None), user_code)
 
-        options = {
-            'user_code': user_code,
-        }
+
         with transaction.atomic():
             task = Task(
                 master_user=master_user,
@@ -484,7 +482,7 @@ def download_unified_data(user_code=None, entity_type=None, master_user=None, me
                 path = 'company'
 
             try:
-                response = requests.get(url=str(settings.UNIFIED_DATA_PROVIDER_URL) + '/data/' + path + '/?user_code=' + str(user_code), headers=headers)
+                response = requests.get(url=str(settings.UNIFIED_DATA_PROVIDER_URL) + '/data/' + path + '/' + id, headers=headers)
                 _l.info('response download_unified_data %s' % response)
                 _l.info('data response.text %s ' % response.text)
             except Exception as e:
@@ -500,11 +498,7 @@ def download_unified_data(user_code=None, entity_type=None, master_user=None, me
                 return task, errors
             try:
 
-                obj_data = None
-
-                for item in data['results']:
-                    if item['user_code'] == str(user_code):
-                        obj_data = item
+                obj_data = data
 
                 proxy_user = ProxyUser(member, master_user)
                 proxy_request = ProxyRequest(proxy_user)
