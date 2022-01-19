@@ -484,7 +484,7 @@ def download_unified_data(user_code=None, entity_type=None, master_user=None, me
                 path = 'company'
 
             try:
-                response = requests.get(url=str(settings.UNIFIED_DATA_PROVIDER_URL) + '/api/' + path + '/?user_code=' + str(user_code), headers=headers)
+                response = requests.get(url=str(settings.UNIFIED_DATA_PROVIDER_URL) + '/data/' + path + '/?user_code=' + str(user_code), headers=headers)
                 _l.info('response download_unified_data %s' % response)
                 _l.info('data response.text %s ' % response.text)
             except Exception as e:
