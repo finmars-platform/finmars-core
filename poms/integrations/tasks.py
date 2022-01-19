@@ -66,6 +66,7 @@ from ..common.websockets import send_websocket_message
 
 import traceback
 
+from ..counterparties.serializers import CounterpartySerializer
 from ..csv_import.tasks import handler_instrument_object
 from ..obj_attrs.models import GenericAttributeType
 
@@ -359,7 +360,7 @@ def download_instrument_cbond(instrument_code=None, master_user=None, member=Non
     errors = []
 
     try:
-        _l.debug('download_pricing: master_user_id=%s, task=%s, instrument_code=%s',
+        _l.debug('download_instrument_cbond: master_user_id=%s, task=%s, instrument_code=%s',
                  getattr(master_user, 'id', None), getattr(task, 'info', None), instrument_code)
 
         options = {
@@ -449,6 +450,99 @@ def download_instrument_cbond(instrument_code=None, master_user=None, member=Non
 
         return None, errors
 
+
+def download_unified_data(user_code=None, entity_type=None, master_user=None, member=None,
+                          task=None, value_overrides=None):
+
+    errors = []
+
+    try:
+        _l.debug('download_unified_data: master_user_id=%s, task=%s, user_code=%s',
+                 getattr(master_user, 'id', None), getattr(task, 'info', None), user_code)
+
+        options = {
+            'user_code': user_code,
+        }
+        with transaction.atomic():
+            task = Task(
+                master_user=master_user,
+                member=member,
+                status=Task.STATUS_PENDING,
+                action=Task.ACTION_INSTRUMENT
+            )
+            task.options_object = options
+            task.save()
+
+            headers = {'Content-type': 'application/json'}
+
+
+            response = None
+
+            path = ''
+
+            if entity_type == 'counterparty':
+                path = 'company'
+
+            try:
+                response = requests.get(url=str(settings.UNIFIED_DATA_PROVIDER_URL) + '/api/' + path + '/?user_code=' + str(user_code), headers=headers)
+                _l.info('response download_unified_data %s' % response)
+                _l.info('data response.text %s ' % response.text)
+            except Exception as e:
+                _l.debug("Can't send request to Unified Data Provider. %s" % e)
+
+                errors.append('Request to unified data provider. %s' % str(e))
+
+            try:
+                data = response.json()
+            except Exception as e:
+
+                errors.append("Could not parse response from unified data provider. %s" % response.text)
+                return task, errors
+            try:
+
+                _l.info('data %s' % data)
+
+                obj_data = data['results'][0]
+
+                proxy_user = ProxyUser(member, master_user)
+                proxy_request = ProxyRequest(proxy_user)
+
+                context = {
+                    'request': proxy_request
+                }
+
+                record = None
+
+                if entity_type == 'couterparty':
+
+                    serializer = CounterpartySerializer(data=obj_data,
+                                                           context=context)
+                    serializer.is_valid(raise_exception=True)
+                    record = serializer.save()
+
+
+                result = {
+                    "id": record.pk
+                }
+
+                task.result_object = result
+
+                task.save()
+                return task, errors
+
+            except Exception as e:
+                errors.append("Could not create record. %s" % str(e))
+                return task, errors
+
+            return task, errors
+
+    except Exception as e:
+        _l.info("error %s " % e)
+        _l.info(traceback.format_exc())
+
+        errors.append('Something went wrong. %s' % str(e))
+
+        return None, errors
 
 @shared_task(name='integrations.download_instrument_pricing_async', bind=True, ignore_result=False)
 def download_instrument_pricing_async(self, task_id):

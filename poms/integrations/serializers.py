@@ -42,7 +42,7 @@ from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDo
     BloombergDataProviderCredential, PricingConditionMapping, TransactionFileResult, DataProvider
 from poms.integrations.providers.base import get_provider, ProviderException
 from poms.integrations.storage import import_file_storage
-from poms.integrations.tasks import download_instrument, test_certificate, download_instrument_cbond
+from poms.integrations.tasks import download_instrument, test_certificate, download_instrument_cbond, download_unified_data
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, GenericAttributeTypeSerializer, \
     GenericClassifierSerializer
@@ -1027,6 +1027,29 @@ class ImportInstrumentEntry(object):
         self.task = getattr(value, 'pk', None)
 
 
+class UnifiedDataEntry(object):
+    def __init__(self, master_user=None, member=None, user_code=None, entity_type=None,
+                 task=None, task_result_overrides=None, errors=None):
+        self.master_user = master_user
+        self.member = member
+        self.user_code = user_code
+        self.entity_type = entity_type
+        self.task = task
+        self._task_object = None
+        self.task_result_overrides = task_result_overrides
+        self.errors = errors
+
+    @property
+    def task_object(self):
+        if not self._task_object and self.task:
+            self._task_object = self.master_user.tasks.get(pk=self.task)
+        return self._task_object
+
+    @task_object.setter
+    def task_object(self, value):
+        self._task_object = value
+        self.task = getattr(value, 'pk', None)
+
 class ImportInstrumentSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
@@ -1140,6 +1163,35 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
 
         if task and task.result_object:
             instance.result_id = task.result_object['instrument_id']
+
+        return instance
+
+
+class ImportUnifiedDataProviderSerializer(serializers.Serializer):
+    master_user = MasterUserField()
+    member = HiddenMemberField()
+    user_code = serializers.CharField(required=True, initial='-')
+    entity_type = serializers.CharField(required=True, initial='-')
+    task = serializers.IntegerField(required=False, allow_null=True)
+    id = serializers.IntegerField(required=False, allow_null=True)
+
+    errors = serializers.ReadOnlyField()
+
+    def create(self, validated_data):
+
+        instance = UnifiedDataEntry(**validated_data)
+
+        task, errors = download_unified_data(
+            user_code=instance.user_code,
+            entity_type=instance.entity_type,
+            master_user=instance.master_user,
+            member=instance.member
+        )
+        instance.task_object = task
+        instance.errors = errors
+
+        if task and task.result_object:
+            instance.id = task.result_object['id']
 
         return instance
 
