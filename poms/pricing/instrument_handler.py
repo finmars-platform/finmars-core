@@ -276,6 +276,8 @@ class PricingInstrumentHandler(object):
                 _l.debug('< get_instruments base transactions (step a) done in %s',
                          (time.perf_counter() - processing_st_a))
 
+                instruments_dict = {}
+
                 if len(list(base_transactions_a)):
 
                     instruments_positions = {}
@@ -291,9 +293,14 @@ class PricingInstrumentHandler(object):
 
                                 instruments_positions[trn.instrument_id] = trn.position_size_with_sign
 
+                            instruments_dict[trn.instrument_id] = trn.instrument
+
                     for id, pos in instruments_positions.items():
                         if not isclose(pos, 0.0):
-                            instruments_opened.add(id)
+
+                            if instruments_dict[id].pricing_condition_id in [PricingCondition.RUN_VALUATION_IF_NON_ZERO]:
+
+                                instruments_opened.add(id)
 
                 _l.debug('< get_instruments instruments_opened (step a) len %s' % len(instruments_opened))
 
@@ -324,7 +331,10 @@ class PricingInstrumentHandler(object):
                 for trn in base_transactions_b:
 
                     if trn.instrument_id:
-                        instruments_opened.add(trn.instrument_id)
+
+                        if trn.instrument.pricing_condition_id in [PricingCondition.RUN_VALUATION_IF_NON_ZERO]:
+
+                            instruments_opened.add(trn.instrument_id)
 
                 _l.debug('< get_instruments instruments_opened (step b) len %s' % len(instruments_opened))
 
