@@ -500,8 +500,6 @@ def download_unified_data(user_code=None, entity_type=None, master_user=None, me
                 return task, errors
             try:
 
-                _l.info('data %s' % data)
-
                 obj_data = data['results'][0]
 
                 proxy_user = ProxyUser(member, master_user)
@@ -513,7 +511,7 @@ def download_unified_data(user_code=None, entity_type=None, master_user=None, me
 
                 record = None
 
-                if entity_type == 'couterparty':
+                if entity_type == 'counterparty':
 
                     serializer = CounterpartySerializer(data=obj_data,
                                                            context=context)
