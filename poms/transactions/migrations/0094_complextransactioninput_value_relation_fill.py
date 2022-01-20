@@ -13,8 +13,6 @@ import django.db.models.deletion
 def fix_transactions(apps, schema_editor):
 
 
-
-
     ComplexTransactionInput = apps.get_model("transactions", "ComplexTransactionInput")
 
     # account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
@@ -82,7 +80,7 @@ def fix_transactions(apps, schema_editor):
                                                                 'periodicity',
                                                                 'accrual_calculation_model',
                                                                 'event_class',
-                                                                'notification_class').all():
+                                                                'notification_class').all().iterator():
 
         if input.account:
             input.value_relation = input.account.user_code

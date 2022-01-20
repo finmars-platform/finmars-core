@@ -13,8 +13,6 @@ import django.db.models.deletion
 def fix_transactions(apps, schema_editor):
 
 
-
-
     ComplexTransactionInput = apps.get_model("transactions", "ComplexTransactionInput")
 
     counter = 0
