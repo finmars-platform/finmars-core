@@ -879,6 +879,32 @@ class CurrencyPricingSchemeFixerParameters(models.Model):
                                                   verbose_name=ugettext_lazy('value type'))
 
 
+class CurrencyPricingSchemeCbondsParameters(models.Model):
+    STRING = 10
+    NUMBER = 20
+    DATE = 40
+
+    TYPES = (
+        (NUMBER, ugettext_lazy('Number')),
+        (STRING, ugettext_lazy('String')),
+        (DATE, ugettext_lazy('Date')),
+    )
+
+    currency_pricing_scheme = models.ForeignKey(CurrencyPricingScheme,
+                                                verbose_name=ugettext_lazy('Currency Pricing Scheme'),
+                                                on_delete=models.CASCADE)
+
+    expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                            verbose_name=ugettext_lazy('expr'))
+
+    error_text_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
+                                       verbose_name=ugettext_lazy('error text expr'))
+
+    default_value = models.CharField(max_length=255, null=True, blank=True)
+    attribute_key = models.CharField(max_length=255, null=True, blank=True)
+    value_type = models.PositiveSmallIntegerField(default=STRING, choices=TYPES,
+                                                  verbose_name=ugettext_lazy('value type'))
+
 
 class CurrencyPricingPolicy(models.Model):
     currency = models.ForeignKey('currencies.Currency', on_delete=models.CASCADE,
@@ -1300,6 +1326,38 @@ class PricingProcedureWtradeInstrumentResult(models.Model):
 
 
 class PricingProcedureFixerCurrencyResult(models.Model):
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
+
+    procedure = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE,
+                                  verbose_name=ugettext_lazy('procedure'))
+
+    currency = models.ForeignKey('currencies.Currency', on_delete=models.CASCADE,
+                                 verbose_name=ugettext_lazy('currency'))
+    pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE,
+                                       verbose_name=ugettext_lazy('pricing policy'))
+
+    pricing_scheme = models.ForeignKey(CurrencyPricingScheme, null=True, blank=True, on_delete=models.SET_NULL,
+                                       verbose_name=ugettext_lazy('pricing scheme'))
+
+    reference = models.CharField(max_length=255, null=True, blank=True)
+
+    date = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('date'))
+
+    currency_parameters = models.CharField(max_length=255, null=True, blank=True)
+
+    close_value = models.FloatField(null=True, blank=True, verbose_name=ugettext_lazy('close value'))
+
+    close_value_error_text = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        unique_together = (
+            ('master_user', 'currency', 'date', 'pricing_policy', 'procedure')
+        )
+        ordering = ['date']
+
+
+class PricingProcedureCbondsCurrencyResult(models.Model):
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 

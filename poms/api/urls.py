@@ -498,6 +498,7 @@ urlpatterns = [
     url(r'internal/brokers/bloomberg-forwards/callback', csrf_exempt(pricing.PricingBrokerBloombergForwardsHandler.as_view())),
     url(r'internal/brokers/wtrade/callback', csrf_exempt(pricing.PricingBrokerWtradeHandler.as_view())),
     url(r'internal/brokers/cbonds/callback', csrf_exempt(pricing.PricingBrokerCbondsHandler.as_view())),
+    url(r'internal/brokers/fx-cbonds/callback', csrf_exempt(pricing.PricingBrokerFxCbondsHandler.as_view())),
     url(r'internal/brokers/fixer/callback', csrf_exempt(pricing.PricingBrokerFixerHandler.as_view())),
     url(r'internal/brokers/alphav/callback', csrf_exempt(pricing.PricingBrokerAlphavHandler.as_view())),
     url(r'internal/data/transactions/callback', csrf_exempt(integrations.TransactionFileResultUploadHandler.as_view())),

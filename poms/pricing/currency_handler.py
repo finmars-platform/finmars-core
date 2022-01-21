@@ -12,7 +12,8 @@ from poms.integrations.models import ProviderClass, BloombergDataProviderCredent
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
 from poms.pricing.models import PricingProcedureInstance, PricingProcedureBloombergCurrencyResult, \
-    CurrencyPricingSchemeType, CurrencyHistoryError, PricingProcedureFixerCurrencyResult
+    CurrencyPricingSchemeType, CurrencyHistoryError, PricingProcedureFixerCurrencyResult, \
+    PricingProcedureCbondsCurrencyResult
 from poms.pricing.transport.transport import PricingTransport
 from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_between_two_dates, \
     get_is_yesterday, optimize_items, roll_currency_history_for_n_day_forward, get_empty_values_for_dates, \
@@ -173,6 +174,9 @@ class PricingCurrencyHandler(object):
 
                 if provider_id == 7:
                     self.process_to_fixer_provider(items)
+
+                if provider_id == 9:
+                    self.process_to_fx_cbonds_provider(items)
 
     def get_currencies(self):
 
@@ -1080,7 +1084,139 @@ class PricingCurrencyHandler(object):
                                 source="Pricing Procedure Service",
                                 text="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
 
+    def process_to_fx_cbonds_provider(self, items):
 
+        _l.debug("Pricing Currency Handler - Fixer Provider: len %s" % len(items))
+
+        with transaction.atomic():
+
+            procedure_instance = PricingProcedureInstance(procedure=self.procedure,
+                                                          parent_procedure_instance=self.parent_procedure,
+                                                          master_user=self.master_user,
+                                                          status=PricingProcedureInstance.STATUS_PENDING,
+                                                          action='cbonds_get_currency_prices',
+                                                          provider='cbonds',
+
+                                                          action_verbose='Get FX Rates from Cbonds',
+                                                          provider_verbose='Cbonds'
+
+                                                          )
+
+            if self.member:
+                procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
+                procedure_instance.member = self.member
+
+            if self.schedule_instance:
+                procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_SCHEDULE
+                procedure_instance.schedule_instance = self.schedule_instance
+
+            procedure_instance.save()
+
+        body = {}
+        body['action'] = procedure_instance.action
+        body['procedure'] = procedure_instance.id
+        body['provider'] = procedure_instance.provider
+
+        body['user'] = {
+            'token': self.master_user.id,
+            'base_api_url': settings.BASE_API_URL
+        }
+
+        body['error_code'] = None
+        body['error_message'] = None
+
+        body['data'] = {}
+
+        body['data']['date_from'] = str(self.procedure.price_date_from)
+        body['data']['date_to'] = str(self.procedure.price_date_to)
+        body['data']['items'] = []
+
+        items_with_missing_parameters = []
+
+        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
+                                                    date_to=self.procedure.price_date_to)
+
+        _l.debug('procedure id %s' % body['procedure'])
+
+        empty_values = get_empty_values_for_dates(dates)
+
+        full_items = []
+
+        for item in items:
+
+            if len(item.parameters):
+
+                item_parameters = item.parameters.copy()
+                item_parameters.pop()
+
+                for date in dates:
+
+                    with transaction.atomic():
+                        try:
+
+                            record = PricingProcedureCbondsCurrencyResult(master_user=self.master_user,
+                                                                         procedure=procedure_instance,
+                                                                         currency=item.currency,
+                                                                         currency_parameters=str(item_parameters),
+                                                                         pricing_policy=item.policy.pricing_policy,
+                                                                         pricing_scheme=item.pricing_scheme,
+                                                                         reference=item.parameters[0],
+                                                                         date=date)
+
+                            record.save()
+
+                        except Exception as e:
+                            _l.debug("Cant create Result Record %s" % e)
+
+                item_obj = {
+                    'reference': item.parameters[0],
+                    'parameters': item_parameters,
+                    'fields': []
+                }
+
+                item_obj['fields'].append({
+                    'code': 'close',
+                    'parameters': [],
+                    'values': empty_values
+                })
+
+                full_items.append(item_obj)
+
+            else:
+                items_with_missing_parameters.append(item)
+
+        _l.debug('full_items len: %s' % len(full_items))
+
+        optimized_items = optimize_items(full_items)
+
+        _l.debug('optimized_items len: %s' % len(optimized_items))
+
+        body['data']['items'] = optimized_items
+
+        _l.debug('items_with_missing_parameters %s' % len(items_with_missing_parameters))
+        # _l.debug('data %s' % data)
+
+        _l.debug('self.procedure %s' % self.procedure.id)
+        _l.debug('send request %s' % body)
+
+        procedure_instance.request_data = body
+        procedure_instance.save()
+
+        try:
+
+            self.transport.send_request(body)
+
+        except Exception as e:
+
+            procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+            procedure_instance.error_code = 500
+            procedure_instance.error_message = "Mediator is unavailable. Please try later."
+
+            procedure_instance.save()
+
+            send_system_message(master_user=self.master_user,
+                                source="Pricing Procedure Service",
+                                text="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
 
     def print_grouped_currencies(self):
 
@@ -1091,7 +1227,8 @@ class PricingCurrencyHandler(object):
             4: 'Multiple Parameter Formula',
             5: 'Bloomberg',
             6: 'Wtrade', # DEPRECATED
-            7: 'Fixer'
+            7: 'Fixer',
+            9: 'Cbonds'
 
         }
 

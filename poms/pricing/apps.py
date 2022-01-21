@@ -54,6 +54,11 @@ class PricingConfig(AppConfig):
                 "name": "Fixer",
                 "input_type": CurrencyPricingSchemeType.SINGLE_PARAMETER
             },
+            {
+                "id": 9,
+                "name": "CBONDS",
+                "input_type": InstrumentPricingSchemeType.SINGLE_PARAMETER
+            }
 
         ]
 

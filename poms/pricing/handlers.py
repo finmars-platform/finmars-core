@@ -14,7 +14,7 @@ from poms.pricing.models import PricingProcedureBloombergInstrumentResult, Prici
     PricingProcedureWtradeInstrumentResult, PriceHistoryError, \
     CurrencyHistoryError, PricingProcedureFixerCurrencyResult, \
     PricingProcedureAlphavInstrumentResult, PricingProcedureBloombergForwardInstrumentResult, \
-    PricingProcedureCbondsInstrumentResult
+    PricingProcedureCbondsInstrumentResult, PricingProcedureCbondsCurrencyResult
 
 import logging
 
@@ -1919,6 +1919,241 @@ class FillPricesBrokerFixerProcess(object):
 
         if self.procedure_instance.schedule_instance:
             self.procedure_instance.schedule_instance.run_next_procedure()
+
+
+class FillPricesBrokerFxCbondsProcess(object):
+
+    def __init__(self, instance, master_user):
+
+        self.instance = instance
+        self.master_user = master_user
+
+        self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
+        self.procedure = self.procedure_instance.procedure
+
+        _l.debug("Broker Fixer - Get FX Rates: %s" % self.procedure.price_get_fx_rates)
+        _l.debug("Broker Fixer - Overwrite FX Rates: %s" % self.procedure.price_overwrite_fx_rates)
+        _l.debug('Broker Fixer - Roll Days N Forward: %s' % self.procedure.price_fill_days)
+
+    def process(self):
+
+        _l.debug('< fill prices: total items len %s' % len(self.instance['data']['items']))
+        _l.debug('< action:  %s' % self.instance['action'])
+
+        if self.instance['action'] == 'cbonds_get_currency_prices':
+
+            for item in self.instance['data']['items']:
+
+                records_st = time.perf_counter()
+
+                records = PricingProcedureCbondsCurrencyResult.objects.filter(
+                    master_user=self.master_user,
+                    procedure=self.instance['procedure'],
+                    reference=item['reference'],
+                    currency_parameters=str(item['parameters'])
+                )
+
+                _l.debug('< fill currency prices: records for %s len %s' % (item['reference'], len(list(records))))
+
+                processing_st = time.perf_counter()
+
+                _l.debug('< get records from db done: %s', (time.perf_counter() - records_st))
+
+                for record in records:
+
+                    for field in item['fields']:
+
+                        for val_obj in field['values']:
+
+                            if str(record.date) == str(val_obj['date']):
+
+                                if field['code'] == 'close':
+
+                                    try:
+                                        record.close_value = float(val_obj['value'])
+                                    except Exception as e:
+                                        _l.debug('close_value e %s ' % e)
+
+                                    try:
+                                        record.close_value_error_text = val_obj['error_text']
+                                    except Exception as e:
+                                        _l.debug('close_value_error_text e %s ' % e)
+
+                                record.save()
+
+                        if not len(records):
+                            _l.debug('Cant fill the value. Related records not found. Reference %s' % item['reference'])
+
+                _l.debug('< processing item: %s', (time.perf_counter() - processing_st))
+
+            self.create_currency_history()
+
+            _l.debug("process fill currency prices")
+
+    def create_currency_history(self):
+
+        _l.debug("Creating currency history")
+
+        successful_prices_count = 0
+        error_prices_count = 0
+
+        records = PricingProcedureFixerCurrencyResult.objects.filter(
+            master_user=self.master_user,
+            procedure=self.instance['procedure'],
+            date__gte=self.instance['data']['date_from'],
+            date__lte=self.instance['data']['date_to']
+        )
+
+        _l.debug('create_currency_history: records len %s' % len(records))
+
+        for record in records:
+
+            safe_currency = {
+                'id': record.currency.id,
+            }
+
+            safe_pp = {
+                'id': record.pricing_policy.id,
+            }
+
+
+            values = {
+                'context_date': record.date,
+                'context_currency': safe_currency,
+                'context_pricing_policy': safe_pp,
+                'close': record.close_value,
+                'close_error': record.close_value_error_text
+            }
+
+            has_error = False
+            error = CurrencyHistoryError(
+                master_user=self.master_user,
+                procedure_instance_id=self.instance['procedure'],
+                currency=record.currency,
+                pricing_scheme=record.pricing_scheme,
+                pricing_policy=record.pricing_policy,
+                date=record.date,
+                created=self.procedure_instance.created
+            )
+
+            pricing_scheme_parameters = record.pricing_scheme.get_parameters()
+
+            expr = pricing_scheme_parameters.expr
+            error_text_expr = pricing_scheme_parameters.error_text_expr
+
+            _l.debug('values %s' % values)
+            _l.debug('expr %s' % expr)
+
+            fx_rate = None
+
+            try:
+                fx_rate = formula.safe_eval(expr, names=values)
+            except formula.InvalidExpression:
+
+                has_error = True
+
+                try:
+                    error.error_text = formula.safe_eval(error_text_expr, names=values)
+                except formula.InvalidExpression:
+                    error.error_text = 'Invalid Error Text Expression'
+
+            _l.debug('fx_rate %s' % fx_rate)
+            _l.debug('currency %s' % record.currency.user_code)
+            _l.debug('pricing_policy %s' % record.pricing_policy.user_code)
+
+            can_write = True
+            exist = False
+
+            try:
+
+                price = CurrencyHistory.objects.get(
+                    currency=record.currency,
+                    pricing_policy=record.pricing_policy,
+                    date=record.date
+                )
+
+                exist = True
+
+                if not self.procedure.price_overwrite_fx_rates:
+                    can_write = False
+                    _l.debug('Skip %s' % price)
+                else:
+                    _l.debug('Overwrite existing %s' % price)
+
+            except CurrencyHistory.DoesNotExist:
+
+                price = CurrencyHistory(
+                    currency=record.currency,
+                    pricing_policy=record.pricing_policy,
+                    date=record.date
+                )
+
+                _l.debug('Create new %s' % price)
+
+            price.fx_rate = 0
+            price.procedure_modified_datetime = self.procedure_instance.created
+
+            if fx_rate:
+                price.fx_rate = fx_rate
+
+            if can_write:
+
+                if has_error or price.fx_rate == 0:
+                    # if has_error:
+
+                    error_prices_count = error_prices_count + 1
+                    error.status = CurrencyHistoryError.STATUS_ERROR
+                    error.save()
+
+                else:
+
+                    successful_prices_count = successful_prices_count + 1
+
+                    error.status = CurrencyHistoryError.STATUS_CREATED # its journal, not error log
+                    error.save()
+
+                    price.save()
+
+            if not can_write and exist:
+
+                error_prices_count = error_prices_count + 1
+
+                error.error_text = "Prices already exists. Fx rate: " + str(fx_rate) + "."
+
+                error.status = CurrencyHistoryError.STATUS_SKIP
+                error.save()
+
+            if parse_date_iso(self.instance['data']['date_to']) == record.date:
+
+                _l.debug("Fixer Roll Prices for Currency History")
+
+                successes, errors = roll_currency_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance)
+
+                successful_prices_count = successful_prices_count + successes
+                error_prices_count = error_prices_count + errors
+
+        PricingProcedureCbondsCurrencyResult.objects.filter(master_user=self.master_user,
+                                                           procedure=self.instance['procedure'],
+                                                           date__gte=self.instance['data']['date_from'],
+                                                           date__lte=self.instance['data']['date_to']).delete()
+
+        _l.debug('cbonds self.procedure_instance %s' % self.procedure_instance)
+        _l.debug('cbonds fx successful_prices_count %s' % successful_prices_count)
+        _l.debug('cbonds fx error_prices_count %s' % error_prices_count)
+
+        self.procedure_instance.successful_prices_count = int(successful_prices_count)
+        self.procedure_instance.error_prices_count = int(error_prices_count)
+
+        self.procedure_instance.status = PricingProcedureInstance.STATUS_DONE
+
+        self.procedure_instance.save()
+
+        _l.debug('cbonds self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
+        _l.debug('cbonds self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
+
+        if self.procedure_instance.schedule_instance:
+            self.procedure_instance.schedule_instance.run_next_procedure()
+
 
 
 class FillPricesBrokerAlphavProcess(object):

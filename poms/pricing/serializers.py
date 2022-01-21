@@ -13,7 +13,8 @@ from poms.pricing.models import InstrumentPricingScheme, InstrumentPricingScheme
     InstrumentPricingPolicy, InstrumentPricingSchemeWtradeParameters, \
     PriceHistoryError, CurrencyHistoryError, CurrencyPricingSchemeFixerParameters, \
     InstrumentPricingSchemeAlphavParameters, \
-    InstrumentForwardsPricingSchemeBloombergParameters, InstrumentPricingSchemeCbondsParameters
+    InstrumentForwardsPricingSchemeBloombergParameters, InstrumentPricingSchemeCbondsParameters, \
+    CurrencyPricingSchemeCbondsParameters
 from poms.procedures.serializers import PricingProcedureInstanceSerializer
 from poms.users.fields import MasterUserField
 
@@ -104,6 +105,13 @@ class CurrencyPricingSchemeFixerParametersSerializer(serializers.ModelSerializer
     class Meta:
         model = CurrencyPricingSchemeFixerParameters
         fields = ('id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'error_text_expr')
+
+
+class CurrencyPricingSchemeCbondsParametersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CurrencyPricingSchemeCbondsParameters
+        fields = ('id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'error_text_expr')
+
 
 
 class InstrumentForwardsPricingSchemeBloombergParametersSerializer(serializers.ModelSerializer):
@@ -847,13 +855,26 @@ class CurrencyPricingSchemeSerializer(ModelWithTimeStampSerializer):
 
                 try:
 
-                    multiple_parameters_formula = CurrencyPricingSchemeFixerParameters.objects.get(
+                    item = CurrencyPricingSchemeFixerParameters.objects.get(
                         currency_pricing_scheme=instance.id)
 
                     result = CurrencyPricingSchemeFixerParametersSerializer(
-                        instance=multiple_parameters_formula).data
+                        instance=item).data
 
                 except CurrencyPricingSchemeFixerParameters.DoesNotExist:
+                    pass
+
+            if instance.type_id == 9:  # cbonds
+
+                try:
+
+                    item = CurrencyPricingSchemeCbondsParameters.objects.get(
+                        currency_pricing_scheme=instance.id)
+
+                    result = CurrencyPricingSchemeCbondsParametersSerializer(
+                        instance=item).data
+
+                except CurrencyPricingSchemeCbondsParameters.DoesNotExist:
                     pass
 
         return result
@@ -1074,6 +1095,43 @@ class CurrencyPricingSchemeSerializer(ModelWithTimeStampSerializer):
                     fixer.error_text_expr = None
 
                 fixer.save()
+
+            if instance.type_id == 9:  # cbonds
+
+                try:
+                    item = CurrencyPricingSchemeCbondsParameters.objects.get(
+                        currency_pricing_scheme_id=instance.id)
+
+                except CurrencyPricingSchemeCbondsParameters.DoesNotExist:
+
+                    item = CurrencyPricingSchemeCbondsParameters(currency_pricing_scheme_id=instance.id)
+
+                if 'default_value' in type_settings:
+                    item.default_value = type_settings['default_value']
+                else:
+                    item.default_value = None
+
+                if 'attribute_key' in type_settings:
+                    item.attribute_key = type_settings['attribute_key']
+                else:
+                    item.attribute_key = None
+
+                if 'value_type' in type_settings:
+                    item.value_type = type_settings['value_type']
+                else:
+                    item.value_type = None
+
+                if 'expr' in type_settings:
+                    item.expr = type_settings['expr']
+                else:
+                    item.expr = None
+
+                if 'error_text_expr' in type_settings:
+                    item.error_text_expr = type_settings['error_text_expr']
+                else:
+                    item.error_text_expr = None
+
+                item.save()
 
     def create(self, validated_data):
 
