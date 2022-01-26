@@ -295,6 +295,16 @@ class CurrencyPricingScheme(NamedModel, DataTimeStampedModel):
 
                     result = None
 
+            if self.type.id == 9:  # cbonds
+
+                try:
+
+                    result = CurrencyPricingSchemeCbondsParameters.objects.get(currency_pricing_scheme=self)
+
+                except CurrencyPricingSchemeCbondsParameters.DoesNotExist:
+
+                    result = None
+
         # print('result %s' % result)
 
         return result
