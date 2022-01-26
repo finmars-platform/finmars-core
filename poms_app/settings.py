@@ -320,8 +320,6 @@ if SERVER_TYPE == "development":
     CORS_ORIGIN_WHITELIST = ENV_CSRF_TRUSTED_ORIGINS.split(',')
     CSRF_TRUSTED_ORIGINS = ENV_CSRF_TRUSTED_ORIGINS.split(',')
 
-
-
 if SERVER_TYPE == "local":
 
     CORS_ORIGIN_ALLOW_ALL = True

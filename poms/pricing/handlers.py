@@ -1997,7 +1997,7 @@ class FillPricesBrokerFxCbondsProcess(object):
         successful_prices_count = 0
         error_prices_count = 0
 
-        records = PricingProcedureFixerCurrencyResult.objects.filter(
+        records = PricingProcedureCbondsCurrencyResult.objects.filter(
             master_user=self.master_user,
             procedure=self.instance['procedure'],
             date__gte=self.instance['data']['date_from'],
