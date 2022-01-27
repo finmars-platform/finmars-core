@@ -49,7 +49,7 @@ class NamedModel(models.Model):
 
 
 class DataTimeStampedModel(models.Model):
-    created = models.DateTimeField(auto_now_add=True, editable=False, db_index=True,
+    created = models.DateTimeField(auto_now_add=True, db_index=True,
                                    verbose_name=ugettext_lazy('created'))
     modified = models.DateTimeField(auto_now=True, editable=False, db_index=True,
                                     verbose_name=ugettext_lazy('modified'))
