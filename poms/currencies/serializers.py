@@ -268,6 +268,10 @@ class CurrencyHistorySerializer(ModelWithTimeStampSerializer):
         return instance
 
     def update(self, instance, validated_data):
+
+        if not instance.created:
+            instance.created = now()
+
         instance = super(CurrencyHistorySerializer, self).update(instance, validated_data)
 
         instance.procedure_modified_datetime = now()

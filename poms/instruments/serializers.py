@@ -1546,6 +1546,10 @@ class PriceHistorySerializer(serializers.ModelSerializer):
         return instance
 
     def update(self, instance, validated_data):
+
+        if not instance.created:
+            instance.created = now()
+
         instance = super(PriceHistorySerializer, self).update(instance, validated_data)
 
         instance.procedure_modified_datetime = now()
