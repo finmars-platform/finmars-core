@@ -102,6 +102,8 @@ class CurrencyHistory(DataTimeStampedModel):
         if not self.procedure_modified_datetime:
             self.procedure_modified_datetime = date_now()
 
+        if not self.created:
+            self.created = date_now()
 
         super(CurrencyHistory, self).save(*args, **kwargs)
 

@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import json
 import logging
+import traceback
 from datetime import date, timedelta, datetime
 
 from dateutil import relativedelta, rrule
@@ -1606,14 +1607,17 @@ class PriceHistory(DataTimeStampedModel):
 
     def save(self, *args, **kwargs):
 
-        # TODO make readable exception if currency history is missng
+        # TODO make readable exception if currency history is missing
 
         cache.clear()
 
-        try:
+        if not self.procedure_modified_datetime:
+            self.procedure_modified_datetime = date_now()
 
-            if not self.procedure_modified_datetime:
-                self.procedure_modified_datetime = date_now()
+        if not self.created:
+            self.created = date_now()
+
+        try:
 
             if self.instrument.accrued_currency_id == self.instrument.pricing_currency_id:
 
@@ -1641,6 +1645,7 @@ class PriceHistory(DataTimeStampedModel):
         except Exception as error:
 
             _l.debug('Price History save error %s' % error)
+            _l.debug(traceback.print_exc())
 
         super(PriceHistory, self).save(*args, **kwargs)
 
