@@ -1085,7 +1085,7 @@ class PriceHistoryError(DataTimeStampedModel):
 
     error_text = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('error text'))
 
-    created = models.DateTimeField(db_index=True,
+    created = models.DateTimeField(db_index=True, null=True, blank=True, default=None,
                                    verbose_name=ugettext_lazy('created'))
 
 
@@ -1129,7 +1129,7 @@ class CurrencyHistoryError(DataTimeStampedModel):
     status = models.CharField(max_length=1, default=STATUS_ERROR, choices=STATUS_CHOICES,
                               verbose_name=ugettext_lazy('status'))
 
-    created = models.DateTimeField(db_index=True,
+    created = models.DateTimeField(db_index=True, null=True, blank=True, default=None,
                                    verbose_name=ugettext_lazy('created'))
 
 

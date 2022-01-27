@@ -1566,6 +1566,7 @@ class PriceHistorySerializer(serializers.ModelSerializer):
         # except PriceHistoryError.DoesNotExist:
 
         history_item = PriceHistoryError()
+        history_item.created = now()
 
         history_item.status = PriceHistoryError.STATUS_CREATED
 

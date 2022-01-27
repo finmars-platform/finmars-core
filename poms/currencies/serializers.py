@@ -254,6 +254,8 @@ class CurrencyHistorySerializer(ModelWithTimeStampSerializer):
 
         history_item = CurrencyHistoryError()
 
+        history_item.created = now()
+
         history_item.status = CurrencyHistoryError.STATUS_CREATED
 
         history_item.master_user = instance.currency.master_user
