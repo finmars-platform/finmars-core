@@ -264,63 +264,6 @@ class ImportManager(object):
 
         return context
 
-    def sync_transaction_type_inputs(self, content_object):
-
-        for input_object in content_object['inputs']:
-
-            if input_object['value_type'] == 100:
-
-                if input_object['account']:
-                    input_object['account'] = self.ecosystem_default.account.pk
-
-                if input_object['accrual_calculation_model']:
-                    input_object['accrual_calculation_model'] = self.ecosystem_default.accrual_calculation_model.pk
-
-                if input_object['counterparty']:
-                    input_object['counterparty'] = self.ecosystem_default.counterparty.pk
-
-                if input_object['currency']:
-                    input_object['currency'] = self.ecosystem_default.currency.pk
-
-                if input_object['daily_pricing_model']:
-                    input_object['daily_pricing_model'] = self.ecosystem_default.daily_pricing_model.pk
-
-                if input_object['instrument']:
-                    input_object['instrument'] = self.ecosystem_default.instrument.pk
-
-                if input_object['instrument_type']:
-                    input_object['instrument_type'] = self.ecosystem_default.instrument_type.pk
-
-                if input_object['payment_size_detail']:
-                    input_object['payment_size_detail'] = self.ecosystem_default.payment_size_detail.pk
-
-                if input_object['periodicity']:
-                    input_object['periodicity'] = self.ecosystem_default.periodicity.pk
-
-                if input_object['portfolio']:
-                    input_object['portfolio'] = self.ecosystem_default.portfolio.pk
-
-                if input_object['pricing_policy']:
-                    input_object['pricing_policy'] = self.ecosystem_default.pricing_policy.pk
-
-                if input_object['responsible']:
-                    input_object['responsible'] = self.ecosystem_default.responsible.pk
-
-                if input_object['strategy1']:
-                    input_object['strategy1'] = self.ecosystem_default.strategy1.pk
-
-                if input_object['strategy2']:
-                    input_object['strategy2'] = self.ecosystem_default.strategy2.pk
-
-                if input_object['strategy3']:
-                    input_object['strategy3'] = self.ecosystem_default.strategy3.pk
-
-                # if input_object['notification_class']: # TODO find a way to set - as value
-                #     input_object['notification_class'] = self.ecosystem_default.notification_class.pk
-                #
-                # if input_object['event_class']:
-                #     input_object['event_class'] = self.ecosystem_default.event_class.pk
-
     def sync_transaction_type_action_instrument(self, action_object):
 
         item_object = action_object['instrument']

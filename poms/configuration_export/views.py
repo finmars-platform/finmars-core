@@ -488,6 +488,10 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
                 if input_model.pk == input_json['pk']:
 
+                    input_json["fields"]["content_type"] = '%s.%s' % (
+                        input_model.content_type.app_label, input_model.content_type.model)
+
+
                     if input_model.settings:
                         input_json["fields"]["settings"] = {
                             "linked_inputs_names": input_model.settings.linked_inputs_names,
