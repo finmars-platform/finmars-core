@@ -832,8 +832,8 @@ class ImportManager(object):
                         except (KeyError, TransactionTypeGroup.DoesNotExist):
                             content_object['group'] = self.ecosystem_default.transaction_type_group.pk
 
-                        if 'inputs' in content_object:
-                            self.sync_transaction_type_inputs(content_object)
+                        # if 'inputs' in content_object:
+                        #     self.sync_transaction_type_inputs(content_object)
 
                         if 'actions' in content_object:
                             self.sync_transaction_type_actions(content_object)
