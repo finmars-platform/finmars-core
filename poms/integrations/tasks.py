@@ -632,9 +632,11 @@ def test_certificate_async(self, task_id):
 
     try:
         result = provider.test_certificate(options)
-    except Exception:
+    except Exception as e:
         _l.warn("provider processing error", exc_info=True)
         task.status = Task.STATUS_ERROR
+
+        task.save()
         return
     else:
         _l.debug('handle_test_certificate_async task: result %s' % result)
