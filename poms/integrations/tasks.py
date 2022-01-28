@@ -1340,30 +1340,39 @@ def _create_instrument_manual_prices(options, instruments):
 def test_certificate(master_user=None, member=None, task=None):
     _l.debug('test_certificate: master_user_id=%s, task=%s',
             getattr(master_user, 'id', None), getattr(task, 'info', None))
-    if task is None:
-        with transaction.atomic():
 
-            options = {
+    try:
+        if task is None:
+            with transaction.atomic():
 
-            }
+                options = {
 
-            task = Task(
-                master_user=master_user,
-                member=member,
-                provider_id=1,
-                status=Task.STATUS_PENDING,
-                action=Task.ACTION_PRICING
-            )
+                }
 
-            task.options_object = options
-            task.save()
+                task = Task(
+                    master_user=master_user,
+                    member=member,
+                    provider_id=1,
+                    status=Task.STATUS_PENDING,
+                    action=Task.ACTION_PRICING
+                )
 
-            transaction.on_commit(lambda: test_certificate_async.apply_async(kwargs={'task_id': task.id}))
+                task.options_object = options
+                task.save()
 
-        return task, False
-    else:
-        if task.status == Task.STATUS_DONE:
-            return task, True
+                transaction.on_commit(lambda: test_certificate_async.apply_async(kwargs={'task_id': task.id}))
+
+            return task, False
+        else:
+            if task.status == Task.STATUS_DONE:
+                return task, True
+            return task, False
+
+    except Exception as e:
+
+        _l.info('test_certificate error %s ' % e)
+        _l.info(traceback.print_exc())
+
         return task, False
 
 

@@ -477,6 +477,8 @@ def get_provider(master_user=None, provider=None, task=None):
 
             try:
 
+                _l.debug("Trying to get bloomberg credentials")
+
                 config = BloombergDataProviderCredential.objects.get(master_user=master_user)
                 cert, key = config.pair
 
