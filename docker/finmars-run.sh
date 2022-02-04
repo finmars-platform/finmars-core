@@ -2,6 +2,8 @@
 
 USE_CELERY="${USE_CELERY:-False}"
 USE_FILEBEATS="${USE_FILEBEATS:-False}"
+USE_FLOWER="${$USE_FLOWER:-False}"
+BASE_API_URL="${$BASE_API_URL:-False}"
 
 echo "Finmars initialization"
 
@@ -79,7 +81,7 @@ then
 
     echo "Run Flower"
 
-    nohup /var/app-venv/bin/celery -A poms_app flower --port=5566 &
+    nohup /var/app-venv/bin/celery --url-prefix=$USE_FLOWER/flower -A poms_app flower --port=5566 &
 
 fi
 
