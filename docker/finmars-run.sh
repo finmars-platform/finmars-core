@@ -81,7 +81,7 @@ then
 
     echo "Run Flower"
 
-    nohup /var/app-venv/bin/celery flower --url-prefix=$USE_FLOWER/flower -A poms_app flower --port=5566 &
+    nohup /var/app-venv/bin/celery flower --url-prefix=$BASE_API_URL/flower -A poms_app flower --port=5566 &
 
 fi
 
