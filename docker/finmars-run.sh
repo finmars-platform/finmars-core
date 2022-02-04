@@ -82,7 +82,7 @@ then
 
     echo "Run Flower"
 
-    nohup /var/app-venv/bin/celery -A poms_app --broker=amqp://guest:guest@$RABBITMQ_HOST// flower --url-prefix=$BASE_API_URL/flower --port=5566 &
+    cd /var/app && nohup /var/app-venv/bin/celery --app poms_app --broker=amqp://guest:guest@$RABBITMQ_HOST// flower  --url-prefix=$BASE_API_URL/flower --port=5566 &
 
 fi
 
