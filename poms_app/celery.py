@@ -10,4 +10,9 @@ from poms.common.kombu_serializers import register_pickle_signed
 app = Celery('poms.backend')
 
 app.config_from_object('django.conf:settings', namespace='CELERY')
-app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
+
+app.autodiscover_tasks()
+
+@app.task(bind=True)
+def debug_task(self):
+    print(f'Request: {self.request!r}')
