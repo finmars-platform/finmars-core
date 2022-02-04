@@ -44,6 +44,7 @@ from .serializers import CsvDataImportSerializer, CsvImportSchemeSerializer, Csv
 
 from django.utils.translation import ugettext
 from logging import getLogger
+from openpyxl import load_workbook
 
 from ..common.websockets import send_websocket_message
 
@@ -386,6 +387,7 @@ def update_row_with_calculated_data(csv_row_dict, inputs, calculated_inputs):
 
 def process_csv_file(master_user,
                      scheme,
+                     original_file,
                      file,
                      error_handler,
                      missing_data_handler,
@@ -408,8 +410,27 @@ def process_csv_file(master_user,
 
     delimiter = task_instance.delimiter.encode('utf-8').decode('unicode_escape')
 
-    reader = csv.reader(file, delimiter=delimiter, quotechar=task_instance.quotechar,
-                        strict=False, skipinitialspace=True)
+    if '.csv' in task_instance.filename:
+
+        reader = csv.reader(file, delimiter=delimiter, quotechar=task_instance.quotechar,
+                            strict=False, skipinitialspace=True)
+
+    else:
+        _l.info('trying to parse excel %s ' % task_instance.filename)
+
+
+        wb = load_workbook(filename=original_file)
+
+        ws = wb.active
+
+        _l.info('ws %s' % ws)
+
+        reader = []
+
+        for r in ws.rows:
+            reader.append([cell.value for cell in r])
+
+        _l.info('reader %s' % ws)
 
     for row_index, row in enumerate(reader):
 
@@ -870,7 +891,7 @@ class ValidateHandler:
 
             except Exception as e:
 
-                _l.info("e %s" % e)
+                # _l.info("e %s" % e)
 
                 error_row['error_reaction'] = 'Continue import'
                 error_row['level'] = 'error'
@@ -998,16 +1019,40 @@ class ValidateHandler:
                         tmpf.write(chunk)
                     tmpf.flush()
 
-                    with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
-                        instance.total_rows = self._row_count(cfr, instance)
+                    if '.csv' in instance.filename:
+
+                        with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
+                            instance.total_rows = self._row_count(cfr, instance)
+                            update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
+                                         meta={'total_rows': instance.total_rows,
+                                               'user_code': instance.scheme.user_code, 'file_name': instance.filename})
+
+                    else:
+
+                        wb = load_workbook(filename=f)
+
+                        ws = wb.active
+
+                        _l.info('ws %s' % ws)
+
+                        reader = []
+
+                        row_index = 0
+
+                        for r in ws.rows:
+                            row_index = row_index + 1
+
+                        instance.total_rows = row_index
+
                         update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
                                      meta={'total_rows': instance.total_rows,
                                            'user_code': instance.scheme.user_code, 'file_name': instance.filename})
 
+
                     with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
                         context = {}
 
-                        results, process_errors = process_csv_file(master_user, scheme, cf, error_handler,
+                        results, process_errors = process_csv_file(master_user, scheme, f, cf, error_handler,
                                                                    missing_data_handler,
                                                                    classifier_handler,
                                                                    context, instance, update_state, mode,
@@ -1421,6 +1466,9 @@ class ImportHandler:
 
         try:
             with SFS.open(instance.file_path, 'rb') as f:
+
+                _l.info('f %s' % f)
+
                 with NamedTemporaryFile() as tmpf:
                     for chunk in f.chunks():
                         tmpf.write(chunk)
@@ -1435,7 +1483,7 @@ class ImportHandler:
                     with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
                         context = {}
 
-                        results, process_errors = process_csv_file(master_user, scheme, cf, error_handler,
+                        results, process_errors = process_csv_file(master_user, scheme, f, cf, error_handler,
                                                                    missing_data_handler,
                                                                    classifier_handler,
                                                                    context, instance, update_state, mode,
@@ -1503,13 +1551,22 @@ class ImportHandler:
 
 @shared_task(name='csv_import.data_csv_file_import', bind=True)
 def data_csv_file_import(self, instance, execution_context=None):
-    handler = ImportHandler()
 
-    setattr(instance, 'task_id', current_task.request.id)
+    try:
 
-    handler.process(instance, self.update_state, execution_context)
+        handler = ImportHandler()
 
-    return instance
+        setattr(instance, 'task_id', current_task.request.id)
+
+        handler.process(instance, self.update_state, execution_context)
+
+        return instance
+
+    except Exception as e:
+
+        traceback.format_exc()
+
+        _l.debug('data_csv_file_import_by_procedure decryption error %s' % e)
 
 
 @shared_task(name='csv_import.data_csv_file_import_by_procedure', bind=True)
@@ -1854,7 +1911,7 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     except Exception as e:
 
         object_data['pricing_currency'] = ecosystem_default.currency.id
-     
+
     # try:
     #     object_data['accrued_currency'] = Currency.objects.get(master_user=master_user,
     #                                                            user_code=source_data['accrued_currency']).id
@@ -2111,7 +2168,7 @@ class UnifiedImportHandler():
             instrument_type = None
 
             # _l.info('row_data %s' % row_data)
-            
+
             skip = False
 
             try:
@@ -2125,40 +2182,40 @@ class UnifiedImportHandler():
                 item['error_message'] = 'Instrument Type Does not Find'
 
                 skip = True
-                
+
             if skip == False:
 
                 row_data = handler_instrument_object(row_as_dict, instrument_type, self.instance.master_user, self.ecosystem_default, self.attribute_types)
-    
+
                 if self.instance.mode == 'skip':
-    
+
                     serializer = InstrumentSerializer(data=row_data, context=context)
-    
+
                     is_valid = serializer.is_valid()
-    
+
                     item['row_data'] = row_data
-    
+
                     if is_valid:
                         serializer.save()
                     else:
                         item['error_message'] = serializer.errors
-    
+
                 if self.instance.mode == 'overwrite':
-    
+
                     instrument = None
-    
+
                     try:
                         instrument = Instrument.objects.get(user_code=row_data['user_code'],
                                                             master_user=self.instance.master_user)
                     except Instrument.DoesNotExist:
                         instrument = None
-    
+
                     serializer = InstrumentSerializer(data=row_data, context=context, instance=instrument)
-    
+
                     is_valid = serializer.is_valid()
-    
+
                     item['row_data'] = row_data
-    
+
                     if is_valid:
                         serializer.save()
                     else:

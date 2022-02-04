@@ -633,6 +633,8 @@ DEFAULT_FILE_STORAGE = 'storages.backends.sftpstorage.SFTPStorage'
 if SERVER_TYPE == 'local':
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
+print('DEFAULT_FILE_STORAGE %s' % DEFAULT_FILE_STORAGE)
+
 
 SFTP_HOST = os.environ.get('SFTP_HOST', None)
 if SFTP_HOST:
