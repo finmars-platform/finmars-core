@@ -28,6 +28,7 @@ COPY requirements.txt /var/app/requirements.txt
 RUN python3 -m venv /var/app-venv
 RUN /var/app-venv/bin/pip install -U pip wheel uwsgitop
 RUN /var/app-venv/bin/pip install -r /var/app/requirements.txt
+RUN /var/app-venv/bin/pip install -U pip flower
 
 COPY docker/finmars-run.sh /var/app/docker/finmars-run.sh
 COPY data/ /var/app/data/

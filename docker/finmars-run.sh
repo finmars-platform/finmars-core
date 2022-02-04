@@ -73,6 +73,16 @@ then
 
 fi
 
+
+if [ $USE_FLOWER == "True" ];
+then
+
+    echo "Run Flower"
+
+    nohup /var/app-venv/bin/celery -A poms_app flower --port=5566 &
+
+fi
+
 echo "Create admin user"
 
 /var/app-venv/bin/python /var/app/manage.py generate_super_user
