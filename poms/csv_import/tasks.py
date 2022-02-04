@@ -1467,8 +1467,6 @@ class ImportHandler:
         try:
             with SFS.open(instance.file_path, 'rb') as f:
 
-                _l.info('f %s' % f)
-
                 with NamedTemporaryFile() as tmpf:
                     for chunk in f.chunks():
                         tmpf.write(chunk)
