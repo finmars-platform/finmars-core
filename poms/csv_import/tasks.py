@@ -1674,12 +1674,11 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
                                             text=text,
                                             file_report_id=file_report.id)
 
-                        # transaction.on_commit(
-                        #     lambda: data_csv_file_import.apply_async(
-                        #         kwargs={'instance': instance, 'execution_context': {'started_by': 'procedure'}}))
+                        transaction.on_commit(
+                            lambda: data_csv_file_import.apply_async(
+                                kwargs={'instance': instance, 'execution_context': {'started_by': 'procedure'}}))
 
-                        data_csv_file_import.apply_async(
-                            kwargs={'instance': instance, 'execution_context': {'started_by': 'procedure'}})
+
 
                 except Exception as e:
 
