@@ -1574,136 +1574,132 @@ def data_csv_file_import(self, instance, execution_context=None):
 @shared_task(name='csv_import.data_csv_file_import_by_procedure', bind=True)
 def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file_result):
 
-    # with transaction.atomic():
+    with transaction.atomic():
 
-    from poms.integrations.serializers import ComplexTransactionCsvFileImport
-    from poms.procedures.models import RequestDataFileProcedureInstance
+        from poms.integrations.serializers import ComplexTransactionCsvFileImport
+        from poms.procedures.models import RequestDataFileProcedureInstance
 
-    try:
+        try:
 
-        _l.debug(
-            'data_csv_file_import_by_procedure looking for scheme_user_code %s ' % procedure_instance.procedure.scheme_user_code)
+            _l.debug(
+                'data_csv_file_import_by_procedure looking for scheme_user_code %s ' % procedure_instance.procedure.scheme_user_code)
 
-        scheme = CsvImportScheme.objects.get(master_user=procedure_instance.master_user,
-                                             user_code=procedure_instance.procedure.scheme_user_code)
+            scheme = CsvImportScheme.objects.get(master_user=procedure_instance.master_user,
+                                                 user_code=procedure_instance.procedure.scheme_user_code)
 
-        text = "Data File Procedure %s. File is received, start data import" % (
-            procedure_instance.procedure.user_code)
+            text = "Data File Procedure %s. File is received, start data import" % (
+                procedure_instance.procedure.user_code)
 
-        send_system_message(master_user=procedure_instance.master_user,
-                            source="Data File Procedure Service",
-                            text=text)
+            send_system_message(master_user=procedure_instance.master_user,
+                                source="Data File Procedure Service",
+                                text=text)
 
-        with SFS.open(transaction_file_result.file_path, 'rb') as f:
-
-            try:
-
-                encrypted_text = f.read()
-
-                rsa_cipher = RSACipher()
-
-                aes_key = None
+            with SFS.open(transaction_file_result.file_path, 'rb') as f:
 
                 try:
-                    aes_key = rsa_cipher.decrypt(procedure_instance.private_key, procedure_instance.symmetric_key)
+
+                    encrypted_text = f.read()
+
+                    rsa_cipher = RSACipher()
+
+                    aes_key = None
+
+                    try:
+                        aes_key = rsa_cipher.decrypt(procedure_instance.private_key, procedure_instance.symmetric_key)
+                    except Exception as e:
+                        _l.debug('data_csv_file_import_by_procedure AES Key decryption error %s' % e)
+
+                    aes_cipher = AESCipher(aes_key)
+
+                    decrypt_text = None
+
+                    try:
+                        decrypt_text = aes_cipher.decrypt(encrypted_text)
+                    except Exception as e:
+                        _l.debug('data_csv_file_import_by_procedure Text decryption error %s' % e)
+
+                    _l.debug('data_csv_file_import_by_procedure file decrypted')
+
+                    _l.debug('Size of decrypted text: %s' % len(decrypt_text))
+
+                    with NamedTemporaryFile() as tmpf:
+
+                        tmpf.write(decrypt_text.encode('utf-8'))
+                        tmpf.flush()
+
+                        file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
+                        file_path = '%s/data_files/%s.dat' % (procedure_instance.master_user.token, file_name)
+
+                        SFS.save(file_path, tmpf)
+
+                        _l.debug('data_csv_file_import_by_procedure tmp file filled')
+
+                        instance = CsvDataFileImport(scheme=scheme,
+                                                     file_path=file_path,
+                                                     member=procedure_instance.member,
+                                                     master_user=procedure_instance.master_user,
+                                                     delimiter=scheme.delimiter,
+                                                     error_handler=scheme.error_handler,
+                                                     mode=scheme.mode,
+                                                     classifier_handler=scheme.classifier_handler,
+                                                     missing_data_handler=scheme.missing_data_handler)
+
+                        _l.debug('data_csv_file_import_by_procedure instance: %s' % instance)
+
+                        current_date_time = now().strftime("%Y-%m-%d-%H-%M")
+
+                        file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
+                        file_name_hash = hashlib.md5(file_name.encode('utf-8')).hexdigest()
+
+                        file_report = FileReport()
+
+                        file_report.upload_file(
+                            file_name='Data Procedure %s (%s).csv' % (current_date_time, file_name_hash),
+                            text=decrypt_text, master_user=procedure_instance.master_user)
+                        file_report.master_user = procedure_instance.master_user
+                        file_report.name = "'Data Import File. Procedure ' %s %s" % (
+                            procedure_instance.id, current_date_time)
+                        file_report.file_name = 'Data Procedure %s (%s).csv' % (current_date_time, file_name_hash)
+                        file_report.type = 'csv_import.import'
+                        file_report.notes = 'Data Import File. Procedure %s' % procedure_instance.id
+
+                        file_report.save()
+
+                        _l.debug('file_report %s' % file_report)
+
+                        text = "Data File Procedure %s. File is received. Start Import" % (
+                            procedure_instance.procedure.user_code)
+
+                        send_system_message(master_user=procedure_instance.master_user,
+                                            source="Data File Procedure Service",
+                                            text=text,
+                                            file_report_id=file_report.id)
+
+                        transaction.on_commit(
+                            lambda: data_csv_file_import.apply_async(
+                                kwargs={'instance': instance, 'execution_context': {'started_by': 'procedure'}}))
+
+
                 except Exception as e:
-                    _l.debug('data_csv_file_import_by_procedure AES Key decryption error %s' % e)
 
-                aes_cipher = AESCipher(aes_key)
+                    traceback.format_exc()
 
-                decrypt_text = None
+                    _l.debug('data_csv_file_import_by_procedure decryption error %s' % e)
 
-                try:
-                    decrypt_text = aes_cipher.decrypt(encrypted_text)
-                except Exception as e:
-                    _l.debug('data_csv_file_import_by_procedure Text decryption error %s' % e)
+        except CsvImportScheme.DoesNotExist:
 
-                _l.debug('data_csv_file_import_by_procedure file decrypted')
+            text = "Data File Procedure %s. Can't import file, Import scheme %s is not found" % (
+                procedure_instance.procedure.user_code, procedure_instance.procedure.user_code)
 
-                _l.debug('Size of decrypted text: %s' % len(decrypt_text))
+            send_system_message(master_user=procedure_instance.master_user,
+                                source="Data File Procedure Service",
+                                text=text)
 
-                with NamedTemporaryFile() as tmpf:
+            _l.debug(
+                'data_csv_file_import_by_procedure scheme %s not found' % procedure_instance.procedure.user_code)
 
-                    tmpf.write(decrypt_text.encode('utf-8'))
-                    tmpf.flush()
-
-                    file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
-                    file_path = '%s/data_files/%s.dat' % (procedure_instance.master_user.token, file_name)
-
-                    SFS.save(file_path, tmpf)
-
-                    _l.debug('data_csv_file_import_by_procedure tmp file filled')
-
-                    instance = CsvDataFileImport(scheme=scheme,
-                                                 file_path=file_path,
-                                                 member=procedure_instance.member,
-                                                 master_user=procedure_instance.master_user,
-                                                 delimiter=scheme.delimiter,
-                                                 error_handler=scheme.error_handler,
-                                                 mode=scheme.mode,
-                                                 classifier_handler=scheme.classifier_handler,
-                                                 missing_data_handler=scheme.missing_data_handler)
-
-                    _l.debug('data_csv_file_import_by_procedure instance: %s' % instance)
-
-                    current_date_time = now().strftime("%Y-%m-%d-%H-%M")
-
-                    file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
-                    file_name_hash = hashlib.md5(file_name.encode('utf-8')).hexdigest()
-
-                    file_report = FileReport()
-
-                    file_report.upload_file(
-                        file_name='Data Procedure %s (%s).csv' % (current_date_time, file_name_hash),
-                        text=decrypt_text, master_user=procedure_instance.master_user)
-                    file_report.master_user = procedure_instance.master_user
-                    file_report.name = "'Data Import File. Procedure ' %s %s" % (
-                        procedure_instance.id, current_date_time)
-                    file_report.file_name = 'Data Procedure %s (%s).csv' % (current_date_time, file_name_hash)
-                    file_report.type = 'csv_import.import'
-                    file_report.notes = 'Data Import File. Procedure %s' % procedure_instance.id
-
-                    file_report.save()
-
-                    _l.debug('file_report %s' % file_report)
-
-                    text = "Data File Procedure %s. File is received. Start Import" % (
-                        procedure_instance.procedure.user_code)
-
-                    send_system_message(master_user=procedure_instance.master_user,
-                                        source="Data File Procedure Service",
-                                        text=text,
-                                        file_report_id=file_report.id)
-
-                    # transaction.on_commit(
-                    #     lambda: data_csv_file_import.apply_async(
-                    #         kwargs={'instance': instance, 'execution_context': {'started_by': 'procedure'}}))
-
-                    data_csv_file_import.apply_async(
-                        kwargs={'instance': instance, 'execution_context': {'started_by': 'procedure'}})
-
-
-
-            except Exception as e:
-
-                traceback.format_exc()
-
-                _l.debug('data_csv_file_import_by_procedure decryption error %s' % e)
-
-    except CsvImportScheme.DoesNotExist:
-
-        text = "Data File Procedure %s. Can't import file, Import scheme %s is not found" % (
-            procedure_instance.procedure.user_code, procedure_instance.procedure.user_code)
-
-        send_system_message(master_user=procedure_instance.master_user,
-                            source="Data File Procedure Service",
-                            text=text)
-
-        _l.debug(
-            'data_csv_file_import_by_procedure scheme %s not found' % procedure_instance.procedure.user_code)
-
-        procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
-        procedure_instance.save()
+            procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
+            procedure_instance.save()
 
 
 def set_defaults_from_instrument_type(instrument_object, instrument_type):
