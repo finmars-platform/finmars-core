@@ -1634,6 +1634,7 @@ def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file
 
                         instance = CsvDataFileImport(scheme=scheme,
                                                      file_path=file_path,
+                                                     filename=file_name,
                                                      member=procedure_instance.member,
                                                      master_user=procedure_instance.master_user,
                                                      delimiter=scheme.delimiter,
