@@ -1554,6 +1554,8 @@ def data_csv_file_import(self, instance, execution_context=None):
 
     try:
 
+        _l.info('data_csv_file_import %s' % instance)
+
         handler = ImportHandler()
 
         setattr(instance, 'task_id', current_task.request.id)
