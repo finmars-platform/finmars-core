@@ -40,7 +40,7 @@ def procedure_request_data_file(self,
         procedure_instance.request_data = data
 
         try:
-            response = requests.post(url=url, json=data, headers=headers, timeout=0.0000000001) # hack?
+            response = requests.post(url=url, json=data, headers=headers)
         except requests.exceptions.ReadTimeout:
             _l.debug('Will not wait response')
             return
