@@ -1472,11 +1472,36 @@ class ImportHandler:
                         tmpf.write(chunk)
                     tmpf.flush()
 
-                    with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
-                        instance.total_rows = self._row_count(cfr, instance)
+                    if '.csv' in instance.filename:
+
+                        with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
+                            instance.total_rows = self._row_count(cfr, instance)
+                            update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
+                                         meta={'total_rows': instance.total_rows,
+                                               'user_code': instance.scheme.user_code, 'file_name': instance.filename})
+
+                    else:
+
+                        wb = load_workbook(filename=f)
+
+                        ws = wb.active
+
+                        _l.info('ws %s' % ws)
+
+                        reader = []
+
+                        row_index = 0
+
+                        for r in ws.rows:
+                            row_index = row_index + 1
+
+                        instance.total_rows = row_index
+
                         update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
                                      meta={'total_rows': instance.total_rows,
                                            'user_code': instance.scheme.user_code, 'file_name': instance.filename})
+
+
 
                     with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
                         context = {}

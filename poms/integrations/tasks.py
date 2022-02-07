@@ -3496,6 +3496,8 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                     ct = complex_transaction_csv_file_import.s(task_id=sub_task.id)
                     celery_sub_tasks.append(ct)
 
+                    _l.info("Creating %s subtasks" % len(celery_sub_tasks))
+
                     # chord(celery_sub_tasks, complex_transaction_csv_file_import_parallel_finish.si(task_id=celery_task.pk)).apply_async()
 
                     transaction.on_commit(
