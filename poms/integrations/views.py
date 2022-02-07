@@ -1181,14 +1181,14 @@ class TransactionFileResultUploadHandler(APIView):
 
                     if procedure_instance.procedure.scheme_type == 'transaction_import':
 
-                        complex_transaction_csv_file_import_by_procedure.apply_async(kwargs={'procedure_instance': procedure_instance,
-                                                                                         'transaction_file_result': item,
+                        complex_transaction_csv_file_import_by_procedure.apply_async(kwargs={'procedure_instance_id': procedure_instance.id,
+                                                                                         'transaction_file_result_id': item.id,
                                                                                          })
 
                     if procedure_instance.procedure.scheme_type == 'simple_import':
 
-                        data_csv_file_import_by_procedure.apply_async(kwargs={'procedure_instance': procedure_instance,
-                                                                                             'transaction_file_result': item,
+                        data_csv_file_import_by_procedure.apply_async(kwargs={'procedure_instance_id': procedure_instance.id,
+                                                                                             'transaction_file_result_id': item.id,
                                                                                              })
 
                 else:

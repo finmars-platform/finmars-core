@@ -1,6 +1,6 @@
 ENV_PYTHON="/var/app-venv/bin/python"
 
-CELERYD_NODES="worker1 worker2 worker3"
+CELERYD_NODES="worker1 worker2 worker3 worker4"
 
 
 CELERY_BIN="/var/app-venv/bin/celery"

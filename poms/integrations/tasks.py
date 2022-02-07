@@ -43,7 +43,7 @@ from poms.integrations.models import Task, PriceDownloadScheme, InstrumentDownlo
     AccountMapping, CurrencyMapping, PortfolioMapping, CounterpartyMapping, InstrumentTypeMapping, ResponsibleMapping, \
     Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, DailyPricingModelMapping, PaymentSizeDetailMapping, \
     PriceDownloadSchemeMapping, InstrumentMapping, PeriodicityMapping, AccrualCalculationModelMapping, \
-    BloombergDataProviderCredential, ComplexTransactionImportScheme
+    BloombergDataProviderCredential, ComplexTransactionImportScheme, TransactionFileResult
 from poms.integrations.providers.base import get_provider, parse_date_iso, fill_instrument_price, fill_currency_price, \
     AbstractProvider
 
@@ -3342,11 +3342,14 @@ def complex_transaction_csv_file_import_validate_parallel(task_id):
 
 
 @shared_task(name='integrations.complex_transaction_csv_file_import_by_procedure', bind=True)
-def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, transaction_file_result):
+def complex_transaction_csv_file_import_by_procedure(self, procedure_instance_id, transaction_file_result_id):
     with transaction.atomic():
 
         from poms.integrations.serializers import ComplexTransactionCsvFileImport
         from poms.procedures.models import RequestDataFileProcedureInstance
+
+        procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_instance_id)
+        transaction_file_result = TransactionFileResult.objects.get(id=transaction_file_result_id)
 
         try:
 
@@ -3494,7 +3497,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance, t
                     celery_sub_tasks = []
 
                     ct = complex_transaction_csv_file_import.s(task_id=sub_task.id)
-                    celery_sub_tasks.append(ct)
+                    celery_sub_tasks.append(ct)complex_transaction_csv_file_import_by_procedure
 
                     _l.info("Creating %s subtasks" % len(celery_sub_tasks))
 

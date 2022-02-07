@@ -24,7 +24,7 @@ from poms.integrations.models import CounterpartyMapping, AccountMapping, Respon
     PortfolioClassifierMapping, AccountClassifierMapping, ResponsibleClassifierMapping, CounterpartyClassifierMapping, \
     PricingPolicyMapping, InstrumentMapping, CurrencyMapping, InstrumentTypeMapping, PaymentSizeDetailMapping, \
     DailyPricingModelMapping, InstrumentClassifierMapping, AccountTypeMapping, \
-    Task, PricingConditionMapping
+    Task, PricingConditionMapping, TransactionFileResult
 
 from poms.portfolios.models import Portfolio
 from poms.currencies.models import Currency
@@ -1595,12 +1595,15 @@ def data_csv_file_import(self, instance, execution_context=None):
 
 
 @shared_task(name='csv_import.data_csv_file_import_by_procedure', bind=True)
-def data_csv_file_import_by_procedure(self, procedure_instance, transaction_file_result):
+def data_csv_file_import_by_procedure(self, procedure_instance_id, transaction_file_result_id):
 
     with transaction.atomic():
 
         from poms.integrations.serializers import ComplexTransactionCsvFileImport
         from poms.procedures.models import RequestDataFileProcedureInstance
+
+        procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_instance_id)
+        transaction_file_result = TransactionFileResult.objects.get(id=transaction_file_result_id)
 
         try:
 
