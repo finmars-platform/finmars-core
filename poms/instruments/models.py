@@ -517,6 +517,11 @@ class InstrumentType( NamedModelAutoMapping, FakeDeletableModel, DataTimeStamped
     position_reporting = models.PositiveSmallIntegerField(choices=VALUE_TYPES, default=DIRECT_POSITION,
                                                   verbose_name=ugettext_lazy('position reporting'))
 
+    pricing_condition = models.ForeignKey(PricingCondition, null=True, blank=True,
+                                          verbose_name=ugettext_lazy('pricing condition'),
+                                          on_delete=models.SET_NULL)
+
+
     @property
     def instrument_factor_schedule_data(self):
         if self.instrument_factor_schedule_json_data:

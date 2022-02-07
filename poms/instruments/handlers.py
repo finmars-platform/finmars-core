@@ -126,6 +126,9 @@ class InstrumentTypeProcess(object):
 
             instrument_object['accrued_multiplier'] = instrument_type.accrued_multiplier
             instrument_object['default_accrued'] = instrument_type.default_accrued
+            instrument_object['reference_for_pricing'] = instrument_type.reference_for_pricing
+            instrument_object['pricing_condition'] = instrument_type.pricing_condition
+            instrument_object['position_reporting'] = instrument_type.position_reporting
 
             if instrument_type.exposure_calculation_model:
                 instrument_object['exposure_calculation_model'] = instrument_type.exposure_calculation_model_id
@@ -163,6 +166,12 @@ class InstrumentTypeProcess(object):
                     }
                 }
 
+                attr['value_string'] = None
+                attr['value_float'] = None
+                attr['value_date'] = None
+                attr['classifier'] = None
+                attr['classifier_object'] = None
+
                 if attribute.value_type == 10:
                     attr['value_string'] = attribute.value_string
 
@@ -171,10 +180,16 @@ class InstrumentTypeProcess(object):
 
                 if attribute.value_type == 30:
                     try:
-                        attr['classifier'] = GenericClassifier.objects.get(attribute_type=attribute.attribute_type,
-                                                                           name=attribute.value_classifier).id
+                        attr['classifier'] = attribute.classifier_id
+                        attr['classifier_object'] = {
+                            "id": attribute.classifier.id,
+                            "level": attribute.classifier.level,
+                            "parent": attribute.classifier.parent,
+                            "name": attribute.classifier.name
+                        }
                     except Exception as e:
                         attr['classifier'] = None
+                        attr['classifier_object'] = None
 
                 if attribute.value_type == 40:
                     attr['value_date'] = attribute.value_date
