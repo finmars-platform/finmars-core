@@ -3497,7 +3497,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance_id
                     celery_sub_tasks = []
 
                     ct = complex_transaction_csv_file_import.s(task_id=sub_task.id)
-                    celery_sub_tasks.append(ct)complex_transaction_csv_file_import_by_procedure
+                    celery_sub_tasks.append(ct)
 
                     _l.info("Creating %s subtasks" % len(celery_sub_tasks))
 
