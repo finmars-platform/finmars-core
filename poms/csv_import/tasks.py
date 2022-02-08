@@ -410,7 +410,7 @@ def process_csv_file(master_user,
 
     delimiter = task_instance.delimiter.encode('utf-8').decode('unicode_escape')
 
-    if '.csv' in task_instance.filename:
+    if '.csv' in task_instance.filename or (execution_context and execution_context["started_by"] == 'procedure'):
 
         reader = csv.reader(file, delimiter=delimiter, quotechar=task_instance.quotechar,
                             strict=False, skipinitialspace=True)
@@ -1472,7 +1472,7 @@ class ImportHandler:
                         tmpf.write(chunk)
                     tmpf.flush()
 
-                    if '.csv' in instance.filename:
+                    if '.csv' in instance.filename or (execution_context and execution_context["started_by"] == 'procedure'):
 
                         with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
                             instance.total_rows = self._row_count(cfr, instance)
