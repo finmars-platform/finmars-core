@@ -1,3 +1,4 @@
+import re
 import uuid
 import hashlib
 
@@ -6,6 +7,7 @@ from django.contrib.auth.models import Permission
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.utils.timezone import now
+from openpyxl.utils import column_index_from_string
 
 from poms.common.crypto.AESCipher import AESCipher
 from poms.common.crypto.RSACipher import RSACipher
@@ -406,6 +408,8 @@ def process_csv_file(master_user,
     errors = []
     results = []
 
+    reader = []
+
     processed_row_index = 0
 
     delimiter = task_instance.delimiter.encode('utf-8').decode('unicode_escape')
@@ -415,7 +419,7 @@ def process_csv_file(master_user,
         reader = csv.reader(file, delimiter=delimiter, quotechar=task_instance.quotechar,
                             strict=False, skipinitialspace=True)
 
-    else:
+    elif '.xlsx' in task_instance.filename:
         _l.info('trying to parse excel %s ' % task_instance.filename)
 
 
@@ -427,10 +431,39 @@ def process_csv_file(master_user,
 
         reader = []
 
-        for r in ws.rows:
-            reader.append([cell.value for cell in r])
+        if task_instance.scheme.spreadsheet_start_cell == 'A1':
 
-        _l.info('reader %s' % ws)
+            for r in ws.rows:
+                reader.append([cell.value for cell in r])
+
+        else:
+
+            start_cell_row_number = int(re.search(r'\d+', task_instance.scheme.spreadsheet_start_cell)[0])
+            start_cell_letter = task_instance.scheme.spreadsheet_start_cell.split(str(start_cell_row_number))[0]
+
+            start_cell_column_number = column_index_from_string(start_cell_letter)
+
+
+            row_number = 1
+
+            for r in ws.rows:
+
+                row_values = []
+
+                if row_number >= start_cell_row_number:
+
+                    for cell in r:
+
+
+                        if cell.column >= start_cell_column_number:
+                            row_values.append(cell.value)
+
+                    reader.append(row_values)
+
+                row_number = row_number + 1
+
+
+        _l.info('reader %s' % reader)
 
     for row_index, row in enumerate(reader):
 
@@ -1027,7 +1060,7 @@ class ValidateHandler:
                                          meta={'total_rows': instance.total_rows,
                                                'user_code': instance.scheme.user_code, 'file_name': instance.filename})
 
-                    else:
+                    elif '.xlsx' in instance.filename:
 
                         wb = load_workbook(filename=f)
 
@@ -1480,7 +1513,7 @@ class ImportHandler:
                                          meta={'total_rows': instance.total_rows,
                                                'user_code': instance.scheme.user_code, 'file_name': instance.filename})
 
-                    else:
+                    elif '.xlsx' in instance.filename:
 
                         wb = load_workbook(filename=f)
 

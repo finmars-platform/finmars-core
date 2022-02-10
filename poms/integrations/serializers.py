@@ -1615,7 +1615,7 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
         model = ComplexTransactionImportScheme
         fields = ['id', 'master_user',
                   'user_code', 'name', 'short_name', 'public_name', 'notes',
-                  'rule_expr',
+                  'rule_expr', 'spreadsheet_start_cell',
                   'book_uniqueness_settings',
 
                   'inputs', 'calculated_inputs', 'rule_scenarios', 'selector_values',

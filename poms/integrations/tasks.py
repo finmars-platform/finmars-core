@@ -3,6 +3,7 @@ from __future__ import unicode_literals, print_function
 import csv
 import json
 import logging
+import re
 import time
 import uuid
 import hashlib
@@ -25,6 +26,9 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.timezone import now
 from django.utils.translation import ugettext
+from openpyxl import load_workbook
+from openpyxl.utils import column_index_from_string
+
 
 from poms.accounts.models import Account
 from poms.audit.models import AuthLogEntry
@@ -2128,14 +2132,59 @@ def complex_transaction_csv_file_import(self, task_id):
 
             return result, processed_scenarios
 
-        def _process_csv_file(file):
+        def _process_csv_file(file, original_file):
 
             instance.processed_rows = 0
 
-            delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
+            reader = []
 
-            reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
-                                strict=False, skipinitialspace=True)
+            if '.csv' in instance.file_path or (execution_context and execution_context["started_by"] == 'procedure'):
+
+                delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
+
+                reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
+                                    strict=False, skipinitialspace=True)
+
+            elif '.xlsx' in instance.file_path:
+                _l.info('trying to parse excel %s ' % instance.file_path)
+
+                wb = load_workbook(filename=original_file)
+
+                ws = wb.active
+
+                reader = []
+
+                if instance.scheme.spreadsheet_start_cell == 'A1':
+
+                    for r in ws.rows:
+                        reader.append([cell.value for cell in r])
+
+                else:
+
+                    start_cell_row_number = int(re.search(r'\d+', instance.scheme.spreadsheet_start_cell)[0])
+                    start_cell_letter = instance.scheme.spreadsheet_start_cell.split(str(start_cell_row_number))[0]
+
+                    start_cell_column_number = column_index_from_string(start_cell_letter)
+
+
+                    row_number = 1
+
+                    for r in ws.rows:
+
+                        row_values = []
+
+                        if row_number >= start_cell_row_number:
+
+                            for cell in r:
+
+
+                                if cell.column >= start_cell_column_number:
+                                    row_values.append(cell.value)
+
+                            reader.append(row_values)
+
+                        row_number = row_number + 1
+
 
             for row_index, row in enumerate(reader):
 
@@ -2382,7 +2431,7 @@ def complex_transaction_csv_file_import(self, task_id):
                 }, level="member",
                     context={"master_user": master_user, "member": member})
 
-        def _row_count(file):
+        def _row_count_csv(file):
 
             delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
 
@@ -2398,6 +2447,21 @@ def complex_transaction_csv_file_import(self, task_id):
 
             return row_index
 
+        def _row_count_xlsx(file):
+
+            wb = load_workbook(filename=file)
+
+            ws = wb.active
+
+            reader = []
+
+            row_index = 0
+
+            for r in ws.rows:
+                row_index = row_index + 1
+
+            return row_index
+
         instance.error_rows = []
 
         try:
@@ -2409,11 +2473,24 @@ def complex_transaction_csv_file_import(self, task_id):
                         tmpf.write(chunk)
                     tmpf.flush()
 
-                    with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
-                        instance.total_rows = _row_count(cfr)
+                    if '.csv' in instance.file_path or (execution_context and execution_context["started_by"] == 'procedure'):
 
-                    with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
-                        _process_csv_file(cf)
+                        with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
+                            instance.total_rows = _row_count_csv(cfr)
+
+                        with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
+                            _process_csv_file(cf, f)
+
+                    elif '.xlsx' in instance.file_path:
+
+                        instance.total_rows = _row_count_xlsx(f)
+
+                        with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
+                            _process_csv_file(cf, f)
+
+
+
+
         except Exception:
 
             _l.debug('Can\'t process file', exc_info=True)

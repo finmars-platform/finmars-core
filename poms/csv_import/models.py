@@ -48,6 +48,8 @@ class CsvImportScheme(NamedModel, DataTimeStampedModel):
     missing_data_handler = models.CharField(max_length=255, choices=MISSING_DATA_CHOICES, default='throw_error')
     classifier_handler = models.CharField(max_length=255, choices=CLASSIFIER_HANDLER, default='skip')
 
+    spreadsheet_start_cell = models.CharField(max_length=255, default='A1')
+
     class Meta:
         unique_together = (
             ('content_type', 'user_code', 'master_user')
