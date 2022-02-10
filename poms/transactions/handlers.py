@@ -1578,8 +1578,8 @@ class TransactionTypeProcess(object):
             elif ti.value_type == TransactionTypeInput.RELATION:
 
                 model_class = ti.content_type.model_class()
-
-                ci.value_relation = val.user_code
+                if val:
+                    ci.value_relation = val.user_code
 
                 # if issubclass(model_class, Account):
                 #     ci.account = val
