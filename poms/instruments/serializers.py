@@ -320,6 +320,9 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
     factor_down = TransactionTypeField(allow_null=True, required=False)
     factor_down_object = serializers.PrimaryKeyRelatedField(source='factor_down', read_only=True)
 
+    pricing_currency_object = serializers.PrimaryKeyRelatedField(source='pricing_currency', read_only=True)
+    pricing_condition_object = PricingConditionSerializer(source='pricing_condition', read_only=True)
+
     instrument_attributes = InstrumentTypeInstrumentAttributeSerializer(required=False, many=True, read_only=False)
     instrument_factor_schedules = InstrumentTypeInstrumentFactorScheduleSerializer(required=False, many=True, read_only=False)
 
@@ -370,6 +373,10 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
             'instrument_factor_schedule_data',
 
+            'pricing_currency', 'pricing_currency_object',
+            'pricing_multiplier',
+
+            'pricing_condition', 'pricing_condition_object',
 
             'default_price', 'maturity_date', 'maturity_price', 'reference_for_pricing'
 
