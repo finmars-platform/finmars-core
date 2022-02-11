@@ -778,8 +778,8 @@ class ImportManager(object):
                         # if 'inputs' in content_object:
                         #     self.sync_transaction_type_inputs(content_object)
 
-                        if 'actions' in content_object:
-                            self.sync_transaction_type_actions(content_object)
+                        # if 'actions' in content_object:
+                        #     self.sync_transaction_type_actions(content_object)
 
                         serializer = TransactionTypeSerializer(data=content_object,
                                                                context=self.get_serializer_context())
