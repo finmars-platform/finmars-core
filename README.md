@@ -165,3 +165,11 @@ Settings -> Tools -> Database -> User Parameters -> Enable in string literals wi
 
 
 - Token Refrsh
+
+
+
+CELERY
+
+
+Celery worker 
+    Сам не процессить, генерит процессы, поэтому вроде как финмарсу нету смысла иметь больше 1 воркера на проект
