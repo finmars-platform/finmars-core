@@ -312,12 +312,9 @@ class TransactionTypeActionInstrumentSerializer(serializers.ModelSerializer):
     short_name = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
     notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
 
-    instrument_type = InstrumentTypeField(required=False, allow_null=True)
     instrument_type_input = TransactionInputField(required=False, allow_null=True)
-    pricing_currency = CurrencyField(required=False, allow_null=True)
     pricing_currency_input = TransactionInputField(required=False, allow_null=True)
     price_multiplier = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="1.0")
-    accrued_currency = CurrencyField(required=False, allow_null=True)
     accrued_currency_input = TransactionInputField(required=False, allow_null=True)
     accrued_multiplier = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="1.0")
     default_price = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
@@ -328,17 +325,10 @@ class TransactionTypeActionInstrumentSerializer(serializers.ModelSerializer):
 
     reference_for_pricing = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                             default='')
-    daily_pricing_model_input = TransactionInputField(required=False, allow_null=True)
     payment_size_detail_input = TransactionInputField(required=False, allow_null=True)
 
     maturity_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
     maturity_price = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
-
-    # instrument_type_object = serializers.PrimaryKeyRelatedField(source='instrument_type', read_only=True)
-    # pricing_currency_object = serializers.PrimaryKeyRelatedField(source='pricing_currency', read_only=True)
-    # accrued_currency_object = serializers.PrimaryKeyRelatedField(source='accrued_currency', read_only=True)
-    # daily_pricing_model_object = serializers.PrimaryKeyRelatedField(source='daily_pricing_model', read_only=True)
-    # payment_size_detail_object = serializers.PrimaryKeyRelatedField(source='daily_pricing_model', read_only=True)
 
     class Meta:
         model = TransactionTypeActionInstrument
@@ -360,18 +350,11 @@ class TransactionTypeActionInstrumentSerializer(serializers.ModelSerializer):
             'user_text_2',
             'user_text_3',
             'reference_for_pricing',
-            'daily_pricing_model',
-            'daily_pricing_model_input',
             'maturity_date',
             'maturity_price',
 
             'action_notes'
 
-            # 'instrument_type_object',
-            # 'pricing_currency_object',
-            # 'accrued_currency_object',
-            # 'payment_size_detail_object',
-            # 'daily_pricing_model_object',
         ]
 
     def __init__(self, *args, **kwargs):
@@ -382,62 +365,35 @@ class TransactionTypeActionInstrumentSerializer(serializers.ModelSerializer):
         from poms.currencies.serializers import CurrencyViewSerializer
         from poms.integrations.serializers import PriceDownloadSchemeViewSerializer
 
-        self.fields['instrument_type_object'] = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
-        self.fields['daily_pricing_model_object'] = DailyPricingModelSerializer(source='daily_pricing_model',
-                                                                                read_only=True)
-        self.fields['payment_size_detail_object'] = PaymentSizeDetailSerializer(source='payment_size_detail',
-                                                                                read_only=True)
-
-        self.fields['pricing_currency_object'] = CurrencyViewSerializer(source='pricing_currency', read_only=True)
-        self.fields['accrued_currency_object'] = CurrencyViewSerializer(source='accrued_currency', read_only=True)
-
 
 class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
-    instrument = InstrumentField(required=False, allow_null=True)
     instrument_input = TransactionInputField(required=False, allow_null=True)
     instrument_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
-    transaction_currency = CurrencyField(required=False, allow_null=True)
     transaction_currency_input = TransactionInputField(required=False, allow_null=True)
     position_size_with_sign = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
-    settlement_currency = CurrencyField(required=False, allow_null=True)
     settlement_currency_input = TransactionInputField(required=False, allow_null=True)
     cash_consideration = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
     principal_with_sign = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
     carry_with_sign = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
     overheads_with_sign = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
-    portfolio = PortfolioField(required=False, allow_null=True)
     portfolio_input = TransactionInputField(required=False, allow_null=True)
-    account_position = AccountField(required=False, allow_null=True)
     account_position_input = TransactionInputField(required=False, allow_null=True)
-    account_cash = AccountField(required=False, allow_null=True)
     account_cash_input = TransactionInputField(required=False, allow_null=True)
-    account_interim = AccountField(required=False, allow_null=True)
     account_interim_input = TransactionInputField(required=False, allow_null=True)
     accounting_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="now()")
     cash_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="now()")
-    strategy1_position = Strategy1Field(required=False, allow_null=True)
     strategy1_position_input = TransactionInputField(required=False, allow_null=True)
-    strategy1_cash = Strategy1Field(required=False, allow_null=True)
     strategy1_cash_input = TransactionInputField(required=False, allow_null=True)
-    strategy2_position = Strategy2Field(required=False, allow_null=True)
     strategy2_position_input = TransactionInputField(required=False, allow_null=True)
-    strategy2_cash = Strategy2Field(required=False, allow_null=True)
     strategy2_cash_input = TransactionInputField(required=False, allow_null=True)
-    strategy3_position = Strategy3Field(required=False, allow_null=True)
     strategy3_position_input = TransactionInputField(required=False, allow_null=True)
-    strategy3_cash = Strategy3Field(required=False, allow_null=True)
     strategy3_cash_input = TransactionInputField(required=False, allow_null=True)
-    responsible = ResponsibleField(required=False, allow_null=True)
     responsible_input = TransactionInputField(required=False, allow_null=True)
-    counterparty = CounterpartyField(required=False, allow_null=True)
     counterparty_input = TransactionInputField(required=False, allow_null=True)
-    linked_instrument = InstrumentField(required=False, allow_null=True)
     linked_instrument_input = TransactionInputField(required=False, allow_null=True)
     linked_instrument_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
-    allocation_balance = InstrumentField(required=False, allow_null=True)
     allocation_balance_input = TransactionInputField(required=False, allow_null=True)
     allocation_balance_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
-    allocation_pl = InstrumentField(required=False, allow_null=True)
     allocation_pl_input = TransactionInputField(required=False, allow_null=True)
     allocation_pl_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
 
@@ -451,22 +407,6 @@ class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
 
     notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
 
-    # transaction_class_object = TransactionClassSerializer(source='transaction_class', read_only=True)
-    # instrument_object = serializers.PrimaryKeyRelatedField(source='instrument', read_only=True)
-    # transaction_currency_object = serializers.PrimaryKeyRelatedField(source='transaction_currency', read_only=True)
-    # settlement_currency_object = serializers.PrimaryKeyRelatedField(source='settlement_currency', read_only=True)
-    # portfolio_object = serializers.PrimaryKeyRelatedField(source='portfolio', read_only=True)
-    # account_position_object = serializers.PrimaryKeyRelatedField(source='account_position', read_only=True)
-    # account_cash_object = serializers.PrimaryKeyRelatedField(source='account_cash', read_only=True)
-    # account_interim_object = serializers.PrimaryKeyRelatedField(source='account_interim', read_only=True)
-    # strategy1_position_object = serializers.PrimaryKeyRelatedField(source='strategy1_position', read_only=True)
-    # strategy1_cash_object = serializers.PrimaryKeyRelatedField(source='strategy1_cash', read_only=True)
-    # strategy2_position_object = serializers.PrimaryKeyRelatedField(source='strategy2_position', read_only=True)
-    # strategy2_cash_object = serializers.PrimaryKeyRelatedField(source='strategy2_cash', read_only=True)
-    # strategy3_position_object = serializers.PrimaryKeyRelatedField(source='strategy3_position', read_only=True)
-    # strategy3_cash_object = serializers.PrimaryKeyRelatedField(source='strategy3_cash', read_only=True)
-    # responsible_object = serializers.PrimaryKeyRelatedField(source='responsible', read_only=True)
-    # counterparty_object = serializers.PrimaryKeyRelatedField(source='counterparty', read_only=True)
 
     class Meta:
         model = TransactionTypeActionTransaction
@@ -529,23 +469,6 @@ class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
             'notes',
 
             'action_notes'
-
-            # 'transaction_class_object',
-            # 'portfolio_object',
-            # 'instrument_object',
-            # 'transaction_currency_object',
-            # 'settlement_currency_object',
-            # 'account_position_object',
-            # 'account_cash_object',
-            # 'account_interim_object',
-            # 'strategy1_position_object',
-            # 'strategy1_cash_object',
-            # 'strategy2_position_object',
-            # 'strategy2_cash_object',
-            # 'strategy3_position_object',
-            # 'strategy3_cash_object',
-            # 'responsible_object',
-            # 'counterparty_object',
         ]
 
     def __init__(self, *args, **kwargs):
@@ -561,30 +484,6 @@ class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
 
         self.fields['transaction_class_object'] = TransactionClassSerializer(source='transaction_class', read_only=True)
 
-        self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
-        self.fields['transaction_currency_object'] = CurrencyViewSerializer(source='transaction_currency',
-                                                                            read_only=True)
-        self.fields['settlement_currency_object'] = CurrencyViewSerializer(source='settlement_currency', read_only=True)
-
-        self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
-
-        self.fields['account_position_object'] = AccountViewSerializer(source='account_position', read_only=True)
-        self.fields['account_cash_object'] = AccountViewSerializer(source='account_cash', read_only=True)
-        self.fields['account_interim_object'] = AccountViewSerializer(source='account_interim', read_only=True)
-
-        self.fields['strategy1_position_object'] = Strategy1ViewSerializer(source='strategy1_position', read_only=True)
-        self.fields['strategy1_cash_object'] = Strategy1ViewSerializer(source='strategy1_cash', read_only=True)
-        self.fields['strategy2_position_object'] = Strategy2ViewSerializer(source='strategy2_position', read_only=True)
-        self.fields['strategy2_cash_object'] = Strategy2ViewSerializer(source='strategy2_cash', read_only=True)
-        self.fields['strategy3_position_object'] = Strategy3ViewSerializer(source='strategy3_position', read_only=True)
-        self.fields['strategy3_cash_object'] = Strategy3ViewSerializer(source='strategy3_cash', read_only=True)
-
-        self.fields['responsible_object'] = ResponsibleViewSerializer(source='responsible', read_only=True)
-        self.fields['counterparty_object'] = CounterpartyViewSerializer(source='counterparty', read_only=True)
-
-        self.fields['linked_instrument_object'] = InstrumentViewSerializer(source='linked_instrument', read_only=True)
-        self.fields['allocation_balance_object'] = InstrumentViewSerializer(source='allocation_balance', read_only=True)
-        self.fields['allocation_pl_object'] = InstrumentViewSerializer(source='allocation_pl', read_only=True)
 
 
 class TransactionTypeActionInstrumentFactorScheduleSerializer(serializers.ModelSerializer):

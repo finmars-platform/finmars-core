@@ -247,17 +247,15 @@ class TransactionTypeActionInstrumentInline(admin.StackedInline):
         ('payment_size_detail', 'payment_size_detail_input',),
         ('default_price', 'default_accrued',),
         ('user_text_1', 'user_text_2', 'user_text_3',),
-        ('daily_pricing_model', 'daily_pricing_model_input',),
         ('reference_for_pricing',),
         ('maturity_date',),
     )
 
     raw_id_fields = (
-        'instrument_type', 'instrument_type_input',
-        'pricing_currency', 'pricing_currency_input',
-        'accrued_currency', 'accrued_currency_input',
-        'payment_size_detail_input',
-        'daily_pricing_model_input',
+        'instrument_type_input',
+        'pricing_currency_input',
+        'accrued_currency_input',
+        'payment_size_detail_input'
     )
 
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
@@ -306,25 +304,25 @@ class TransactionTypeActionTransactionInline(admin.StackedInline):
         'notes',
     )
     raw_id_fields = (
-        'portfolio', 'portfolio_input',
-        'instrument', 'instrument_input', 'instrument_phantom',
-        'transaction_currency', 'transaction_currency_input',
-        'settlement_currency', 'settlement_currency_input',
-        'account_position', 'account_position_input',
-        'account_cash', 'account_cash_input',
-        'account_interim', 'account_interim_input',
-        'strategy1_position', 'strategy1_position_input',
-        'strategy1_cash', 'strategy1_cash_input',
-        'strategy2_position', 'strategy2_position_input',
-        'strategy2_cash', 'strategy2_cash_input',
-        'strategy3_position', 'strategy3_position_input',
-        'strategy3_cash', 'strategy3_cash_input',
-        'responsible', 'responsible_input',
-        'counterparty', 'counterparty_input',
+        'portfolio_input',
+        'instrument_input', 'instrument_phantom',
+        'transaction_currency_input',
+        'settlement_currency_input',
+        'account_position_input',
+        'account_cash_input',
+        'account_interim_input',
+        'strategy1_position_input',
+        'strategy1_cash_input',
+        'strategy2_position_input',
+        'strategy2_cash_input',
+        'strategy3_position_input',
+        'strategy3_cash_input',
+        'responsible_input',
+        'counterparty_input',
 
-        'linked_instrument', 'linked_instrument_input', 'linked_instrument_phantom',
-        'allocation_balance', 'allocation_balance_input', 'allocation_balance_phantom',
-        'allocation_pl', 'allocation_pl_input', 'allocation_pl_phantom',
+        'linked_instrument_input', 'linked_instrument_phantom',
+        'allocation_balance_input', 'allocation_balance_phantom',
+        'allocation_pl_input', 'allocation_pl_phantom',
     )
 
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):

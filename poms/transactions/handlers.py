@@ -472,9 +472,6 @@ class TransactionTypeProcess(object):
                     self._set_val(errors=errors, values=self.values, default_value='',
                                   target=instrument, target_attr_name='reference_for_pricing',
                                   source=action_instrument, source_attr_name='reference_for_pricing')
-                    self._set_rel(errors=errors, values=self.values, default_value=daily_pricing_model,
-                                  target=instrument, target_attr_name='daily_pricing_model',
-                                  source=action_instrument, source_attr_name='daily_pricing_model')
                     self._set_val(errors=errors, values=self.values, default_value=date.max,
                                   target=instrument, target_attr_name='maturity_date',
                                   source=action_instrument, source_attr_name='maturity_date',
