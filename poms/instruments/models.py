@@ -521,6 +521,9 @@ class InstrumentType( NamedModelAutoMapping, FakeDeletableModel, DataTimeStamped
                                           verbose_name=ugettext_lazy('pricing condition'),
                                           on_delete=models.SET_NULL)
 
+    reference_for_pricing = models.CharField(max_length=100, blank=True, default='',
+                                             verbose_name=ugettext_lazy('reference for pricing'))
+
 
     @property
     def instrument_factor_schedule_data(self):

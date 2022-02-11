@@ -371,7 +371,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
             'instrument_factor_schedule_data',
 
 
-            'default_price', 'maturity_date', 'maturity_price'
+            'default_price', 'maturity_date', 'maturity_price', 'reference_for_pricing'
 
         ]
 
