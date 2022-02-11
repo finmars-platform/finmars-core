@@ -487,7 +487,7 @@ class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
 
 
 class TransactionTypeActionInstrumentFactorScheduleSerializer(serializers.ModelSerializer):
-    instrument = InstrumentField(required=False, allow_null=True)
+
     instrument_input = TransactionInputField(required=False, allow_null=True)
     instrument_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
 
@@ -508,13 +508,8 @@ class TransactionTypeActionInstrumentFactorScheduleSerializer(serializers.ModelS
     def __init__(self, *args, **kwargs):
         super(TransactionTypeActionInstrumentFactorScheduleSerializer, self).__init__(*args, **kwargs)
 
-        from poms.instruments.serializers import InstrumentViewSerializer
-
-        self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
-
 
 class TransactionTypeActionInstrumentManualPricingFormulaSerializer(serializers.ModelSerializer):
-    instrument = InstrumentField(required=False, allow_null=True)
     instrument_input = TransactionInputField(required=False, allow_null=True)
     instrument_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
 
@@ -544,12 +539,10 @@ class TransactionTypeActionInstrumentManualPricingFormulaSerializer(serializers.
 
         from poms.instruments.serializers import InstrumentViewSerializer, PricingPolicySerializer
 
-        self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
         self.fields['pricing_policy_object'] = PricingPolicySerializer(source='pricing_policy', read_only=True)
 
 
 class TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer(serializers.ModelSerializer):
-    instrument = InstrumentField(required=False, allow_null=True)
     instrument_input = TransactionInputField(required=False, allow_null=True)
     instrument_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
 
@@ -590,15 +583,12 @@ class TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer(seria
 
         from poms.instruments.serializers import InstrumentViewSerializer
 
-        self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
-
         self.fields['periodicity_object'] = PeriodicitySerializer(source='periodicity', read_only=True)
         self.fields['accrual_calculation_model_object'] = AccrualCalculationModelSerializer(
             source='accrual_calculation_model', read_only=True)
 
 
 class TransactionTypeActionInstrumentEventScheduleSerializer(serializers.ModelSerializer):
-    instrument = InstrumentField(required=False, allow_null=True)
     instrument_input = TransactionInputField(required=False, allow_null=True)
     instrument_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
 
@@ -649,7 +639,6 @@ class TransactionTypeActionInstrumentEventScheduleSerializer(serializers.ModelSe
 
         from poms.instruments.serializers import InstrumentViewSerializer
 
-        self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
         self.fields['periodicity_object'] = PeriodicitySerializer(source='periodicity', read_only=True)
         self.fields['notification_class_object'] = NotificationClassSerializer(source='notification_class',
                                                                                read_only=True)

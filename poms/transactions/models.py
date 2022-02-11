@@ -1042,8 +1042,8 @@ class TransactionTypeActionTransaction(TransactionTypeAction):
 
 
 class TransactionTypeActionInstrumentFactorSchedule(TransactionTypeAction):
-    instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
-                                   verbose_name=ugettext_lazy('instrument'))
+    instrument = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
+                                  verbose_name=ugettext_lazy('instrument'))
     instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                          related_name='+', verbose_name=ugettext_lazy('instrument input'))
     instrument_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
@@ -1065,8 +1065,8 @@ class TransactionTypeActionInstrumentFactorSchedule(TransactionTypeAction):
 
 # DEPRECATED (25.05.2020), delete soon
 class TransactionTypeActionInstrumentManualPricingFormula(TransactionTypeAction):
-    instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
-                                   verbose_name=ugettext_lazy('instrument'))
+    instrument = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
+                                  verbose_name=ugettext_lazy('instrument'))
     instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                          related_name='+', verbose_name=ugettext_lazy('instrument input'))
     instrument_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
@@ -1094,8 +1094,10 @@ class TransactionTypeActionInstrumentManualPricingFormula(TransactionTypeAction)
 
 
 class TransactionTypeActionInstrumentAccrualCalculationSchedules(TransactionTypeAction):
-    instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
-                                   verbose_name=ugettext_lazy('instrument'))
+
+    instrument = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
+                                  verbose_name=ugettext_lazy('instrument'))
+
     instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                          related_name='+', verbose_name=ugettext_lazy('instrument input'))
     instrument_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
@@ -1142,8 +1144,8 @@ class TransactionTypeActionInstrumentAccrualCalculationSchedules(TransactionType
 
 
 class TransactionTypeActionInstrumentEventSchedule(TransactionTypeAction):
-    instrument = models.ForeignKey(Instrument, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
-                                   verbose_name=ugettext_lazy('instrument'))
+    instrument = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
+                                  verbose_name=ugettext_lazy('instrument'))
     instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                          related_name='+', verbose_name=ugettext_lazy('instrument input'))
     instrument_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
