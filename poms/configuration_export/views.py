@@ -777,7 +777,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                     if key.endswith('_phantom') and result_json[key]:
                         result_json[key] = TransactionTypeAction.objects.get(pk=result_json[key]).order
 
-                self.add_user_code_to_relation(result_json, action_key)
+                # self.add_user_code_to_relation(result_json, action_key)
 
                 action[action_key] = result_json
 
