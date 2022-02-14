@@ -516,7 +516,7 @@ class InstrumentType( NamedModelAutoMapping, FakeDeletableModel, DataTimeStamped
 
     pricing_currency = models.ForeignKey('currencies.Currency', null=True, blank=True, related_name='instrument_types_pricing',
                                          on_delete=models.PROTECT, verbose_name=ugettext_lazy('pricing currency'))
-    pricing_multiplier = models.FloatField(default=1.0, verbose_name=ugettext_lazy('pricing multiplier'))
+    price_multiplier = models.FloatField(default=1.0, verbose_name=ugettext_lazy('price multiplier'))
 
     position_reporting = models.PositiveSmallIntegerField(choices=VALUE_TYPES, default=DIRECT_POSITION,
                                                   verbose_name=ugettext_lazy('position reporting'))

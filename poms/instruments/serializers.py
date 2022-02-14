@@ -374,7 +374,7 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
             'instrument_factor_schedule_data',
 
             'pricing_currency', 'pricing_currency_object',
-            'pricing_multiplier',
+            'price_multiplier',
 
             'pricing_condition', 'pricing_condition_object',
 
