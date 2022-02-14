@@ -120,11 +120,18 @@ class InstrumentTypeProcess(object):
             else:
                 instrument_object['accrued_currency'] = None
 
+            if instrument_type.pricing_currency:
+                instrument_object['pricing_currency'] = instrument_type.pricing_currency_id
+            else:
+                instrument_object['pricing_currency'] = None
+
             instrument_object['default_price'] = instrument_type.default_price
             instrument_object['maturity_date'] = instrument_type.maturity_date
             instrument_object['maturity_price'] = instrument_type.maturity_price
 
             instrument_object['accrued_multiplier'] = instrument_type.accrued_multiplier
+            instrument_object['price_multiplier'] = instrument_type.price_multiplier
+
             instrument_object['default_accrued'] = instrument_type.default_accrued
             instrument_object['reference_for_pricing'] = instrument_type.reference_for_pricing
             instrument_object['pricing_condition'] = instrument_type.pricing_condition_id
