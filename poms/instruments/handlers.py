@@ -144,8 +144,8 @@ class InstrumentTypeProcess(object):
             instrument_object['long_underlying_exposure'] = instrument_type.long_underlying_exposure_id
             instrument_object['short_underlying_exposure'] = instrument_type.short_underlying_exposure_id
 
-            instrument_object['co_directional_exposure_currency'] = instrument_type.co_directional_exposure_currency_id
-            instrument_object['counter_directional_exposure_currency'] = instrument_type.counter_directional_exposure_currency_id
+            instrument_object['co_directional_exposure_currency'] = instrument_type.co_directional_exposure_currency
+            instrument_object['counter_directional_exposure_currency'] = instrument_type.counter_directional_exposure_currency
 
             # Set attributes
             instrument_object['attributes'] = []
