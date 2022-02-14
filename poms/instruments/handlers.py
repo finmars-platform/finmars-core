@@ -127,7 +127,7 @@ class InstrumentTypeProcess(object):
             instrument_object['accrued_multiplier'] = instrument_type.accrued_multiplier
             instrument_object['default_accrued'] = instrument_type.default_accrued
             instrument_object['reference_for_pricing'] = instrument_type.reference_for_pricing
-            instrument_object['pricing_condition'] = instrument_type.pricing_condition
+            instrument_object['pricing_condition'] = instrument_type.pricing_condition_id
             instrument_object['position_reporting'] = instrument_type.position_reporting
 
             if instrument_type.exposure_calculation_model:
@@ -144,8 +144,8 @@ class InstrumentTypeProcess(object):
             instrument_object['long_underlying_exposure'] = instrument_type.long_underlying_exposure_id
             instrument_object['short_underlying_exposure'] = instrument_type.short_underlying_exposure_id
 
-            instrument_object['co_directional_exposure_currency'] = instrument_type.co_directional_exposure_currency
-            instrument_object['counter_directional_exposure_currency'] = instrument_type.counter_directional_exposure_currency
+            instrument_object['co_directional_exposure_currency'] = instrument_type.co_directional_exposure_currency_id
+            instrument_object['counter_directional_exposure_currency'] = instrument_type.counter_directional_exposure_currency_id
 
             # Set attributes
             instrument_object['attributes'] = []
