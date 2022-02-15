@@ -827,6 +827,14 @@ class TransactionTypeActionInstrument(TransactionTypeAction):
                                                   related_name='+',
                                                   verbose_name=ugettext_lazy('payment size detail input'))
 
+    pricing_condition = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
+                                           verbose_name=ugettext_lazy('pricing condition'))
+
+    pricing_condition_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True,
+                                                  on_delete=models.SET_NULL,
+                                                  related_name='+',
+                                                  verbose_name=ugettext_lazy('pricing condition input'))
+
     default_price = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.0',
                                      verbose_name=ugettext_lazy('default price'))
     default_accrued = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.0',

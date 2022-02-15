@@ -342,6 +342,8 @@ class TransactionTypeActionInstrumentSerializer(serializers.ModelSerializer):
             'accrued_multiplier',
             'payment_size_detail',
             'payment_size_detail_input',
+            'pricing_condition',
+            'pricing_condition_input',
             'default_price',
             'default_accrued',
             'user_text_1',
@@ -378,10 +380,10 @@ class TransactionTypeActionInstrumentSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
 
-        from poms.instruments.models import InstrumentType, PaymentSizeDetail
+        from poms.instruments.models import InstrumentType, PaymentSizeDetail, PricingCondition
         from poms.currencies.models import Currency
 
-        from poms.instruments.serializers import InstrumentTypeViewSerializer, PaymentSizeDetailSerializer
+        from poms.instruments.serializers import InstrumentTypeViewSerializer, PaymentSizeDetailSerializer, PricingConditionSerializer
         from poms.currencies.serializers import CurrencyViewSerializer
 
         data = super(TransactionTypeActionInstrumentSerializer, self).to_representation(instance)
@@ -397,6 +399,9 @@ class TransactionTypeActionInstrumentSerializer(serializers.ModelSerializer):
 
         data['payment_size_detail_object'] = self.lookup_for_relation_object(master_user, data, 'payment_size_detail', PaymentSizeDetail,
                                                                              PaymentSizeDetailSerializer)
+        data['pricing_condition_object'] = self.lookup_for_relation_object(master_user, data, 'pricing_condition', PricingCondition,
+                                                                           PricingConditionSerializer)
+
 
         return data
 
