@@ -1104,17 +1104,17 @@ class TransactionTypeActionInstrumentAccrualCalculationSchedules(TransactionType
                                            on_delete=models.SET_NULL, related_name='+',
                                            verbose_name=ugettext_lazy('instrument phantom'))
 
-    accrual_calculation_model = models.ForeignKey(AccrualCalculationModel, null=True, blank=True,
-                                                  on_delete=models.SET_NULL, related_name='+',
-                                                  verbose_name=ugettext_lazy('accrual calculation model'))
+    accrual_calculation_model = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
+                                        verbose_name=ugettext_lazy('accrual calculation model'))
+
 
     accrual_calculation_model_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True,
                                                         on_delete=models.SET_NULL,
                                                         related_name='+',
                                                         verbose_name=ugettext_lazy('accrual calculation model input'))
 
-    periodicity = models.ForeignKey(Periodicity, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
-                                    verbose_name=ugettext_lazy('periodicity'))
+    periodicity = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
+                                                 verbose_name=ugettext_lazy('periodicity'))
 
     periodicity_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                           related_name='+',
@@ -1152,23 +1152,22 @@ class TransactionTypeActionInstrumentEventSchedule(TransactionTypeAction):
                                            on_delete=models.SET_NULL, related_name='+',
                                            verbose_name=ugettext_lazy('instrument phantom'))
 
-    periodicity = models.ForeignKey(Periodicity, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
-                                    verbose_name=ugettext_lazy('periodicity'))
+    periodicity = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
+                                   verbose_name=ugettext_lazy('periodicity'))
 
     periodicity_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                           related_name='+',
                                           verbose_name=ugettext_lazy('periodicity input'))
 
-    notification_class = models.ForeignKey(NotificationClass, null=True, blank=True, on_delete=models.SET_NULL,
-                                           related_name='+',
-                                           verbose_name=ugettext_lazy('notification class'))
+    notification_class = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
+                                   verbose_name=ugettext_lazy('notification class'))
 
     notification_class_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                                  related_name='+',
                                                  verbose_name=ugettext_lazy('notification class input'))
 
-    event_class = models.ForeignKey(EventClass, null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
-                                    verbose_name=ugettext_lazy('event class'))
+    event_class = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
+                                          verbose_name=ugettext_lazy('event class'))
 
     event_class_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                           related_name='+',

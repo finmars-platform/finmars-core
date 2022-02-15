@@ -61,6 +61,7 @@ from poms.common.utils import date_now
 from poms.users.utils import get_member_from_context
 
 import logging
+
 _l = logging.getLogger('poms.transactions')
 
 
@@ -127,7 +128,6 @@ class TransactionTypeActionInstrumentEventSchedulePhantomField(serializers.Integ
 
 
 class TransactionTypeContextParameterSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = TransactionTypeContextParameter
         fields = ['name', 'value_type', 'order']
@@ -162,11 +162,9 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
     value = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,
                             default='')
 
-
     settings = TransactionTypeInputSettingsSerializer(allow_null=True, required=False)
 
     button_data = serializers.JSONField(allow_null=True, required=False)
-
 
     class Meta:
         model = TransactionTypeInput
@@ -365,6 +363,43 @@ class TransactionTypeActionInstrumentSerializer(serializers.ModelSerializer):
         from poms.currencies.serializers import CurrencyViewSerializer
         from poms.integrations.serializers import PriceDownloadSchemeViewSerializer
 
+    def lookup_for_relation_object(self, master_user, data, key, Model, Serializer):
+
+        result = None
+
+        try:
+            if key in data and data[key]:
+                field_instance = Model.objects.get(master_user=master_user, user_code=data[key])
+                result = Serializer(instance=field_instance).data
+        except Exception:
+            result = None
+
+        return result
+
+    def to_representation(self, instance):
+
+        from poms.instruments.models import InstrumentType, PaymentSizeDetail
+        from poms.currencies.models import Currency
+
+        from poms.instruments.serializers import InstrumentTypeViewSerializer, PaymentSizeDetailSerializer
+        from poms.currencies.serializers import CurrencyViewSerializer
+
+        data = super(TransactionTypeActionInstrumentSerializer, self).to_representation(instance)
+
+        master_user = instance.transaction_type.master_user
+
+        data['instrument_type_object'] = self.lookup_for_relation_object(master_user, data, 'instrument_type', InstrumentType,
+                                                                    InstrumentTypeViewSerializer)
+        data['pricing_currency_object'] = self.lookup_for_relation_object(master_user, data, 'pricing_currency',
+                                                                              Currency, CurrencyViewSerializer)
+        data['accrued_currency_object'] = self.lookup_for_relation_object(master_user, data, 'accrued_currency',
+                                                                             Currency, CurrencyViewSerializer)
+
+        data['payment_size_detail_object'] = self.lookup_for_relation_object(master_user, data, 'payment_size_detail', PaymentSizeDetail,
+                                                                             PaymentSizeDetailSerializer)
+
+        return data
+
 
 class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
     instrument_input = TransactionInputField(required=False, allow_null=True)
@@ -406,7 +441,6 @@ class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
     overheads = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
 
     notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
-
 
     class Meta:
         model = TransactionTypeActionTransaction
@@ -484,10 +518,112 @@ class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
 
         self.fields['transaction_class_object'] = TransactionClassSerializer(source='transaction_class', read_only=True)
 
+        # self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
+        # self.fields['transaction_currency_object'] = CurrencyViewSerializer(source='transaction_currency',
+        #                                                                     read_only=True)
+        # self.fields['settlement_currency_object'] = CurrencyViewSerializer(source='settlement_currency', read_only=True)
+        #
+        # self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio_id', read_only=True)
+
+        # self.fields['account_position_object'] = AccountViewSerializer(source='account_position', read_only=True)
+        # self.fields['account_cash_object'] = AccountViewSerializer(source='account_cash', read_only=True)
+        # self.fields['account_interim_object'] = AccountViewSerializer(source='account_interim', read_only=True)
+        #
+        # self.fields['strategy1_position_object'] = Strategy1ViewSerializer(source='strategy1_position', read_only=True)
+        # self.fields['strategy1_cash_object'] = Strategy1ViewSerializer(source='strategy1_cash', read_only=True)
+        # self.fields['strategy2_position_object'] = Strategy2ViewSerializer(source='strategy2_position', read_only=True)
+        # self.fields['strategy2_cash_object'] = Strategy2ViewSerializer(source='strategy2_cash', read_only=True)
+        # self.fields['strategy3_position_object'] = Strategy3ViewSerializer(source='strategy3_position', read_only=True)
+        # self.fields['strategy3_cash_object'] = Strategy3ViewSerializer(source='strategy3_cash', read_only=True)
+        #
+        # self.fields['responsible_object'] = ResponsibleViewSerializer(source='responsible', read_only=True)
+        # self.fields['counterparty_object'] = CounterpartyViewSerializer(source='counterparty', read_only=True)
+        #
+        # self.fields['linked_instrument_object'] = InstrumentViewSerializer(source='linked_instrument', read_only=True)
+        # self.fields['allocation_balance_object'] = InstrumentViewSerializer(source='allocation_balance', read_only=True)
+        # self.fields['allocation_pl_object'] = InstrumentViewSerializer(source='allocation_pl', read_only=True)
+
+    def lookup_for_relation_object(self, master_user, data, key, Model, Serializer):
+
+        result = None
+
+        try:
+            if key in data and data[key]:
+                field_instance = Model.objects.get(master_user=master_user, user_code=data[key])
+                result = Serializer(instance=field_instance).data
+        except Exception:
+            result = None
+
+        return result
+
+    def to_representation(self, instance):
+
+        from poms.portfolios.models import Portfolio
+        from poms.instruments.models import Instrument
+        from poms.currencies.models import Currency
+        from poms.accounts.models import Account
+        from poms.strategies.models import Strategy1, Strategy2, \
+            Strategy3
+        from poms.counterparties.models import Responsible, Counterparty
+
+        from poms.portfolios.serializers import PortfolioViewSerializer
+        from poms.instruments.serializers import InstrumentViewSerializer
+        from poms.currencies.serializers import CurrencyViewSerializer
+        from poms.accounts.serializers import AccountViewSerializer
+        from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, \
+            Strategy3ViewSerializer
+        from poms.counterparties.serializers import ResponsibleViewSerializer, CounterpartyViewSerializer
+
+        data = super(TransactionTypeActionTransactionSerializer, self).to_representation(instance)
+
+        master_user = instance.transaction_type.master_user
+
+        data['instrument_object'] = self.lookup_for_relation_object(master_user, data, 'instrument', Instrument,
+                                                                    InstrumentViewSerializer)
+        data['transaction_currency_object'] = self.lookup_for_relation_object(master_user, data, 'transaction_currency',
+                                                                              Currency, CurrencyViewSerializer)
+        data['settlement_currency_object'] = self.lookup_for_relation_object(master_user, data, 'settlement_currency',
+                                                                             Currency, CurrencyViewSerializer)
+
+        data['portfolio_object'] = self.lookup_for_relation_object(master_user, data, 'portfolio', Portfolio,
+                                                                   PortfolioViewSerializer)
+
+        data['account_position_object'] = self.lookup_for_relation_object(master_user, data, 'account_position',
+                                                                          Account, AccountViewSerializer)
+        data['account_cash_object'] = self.lookup_for_relation_object(master_user, data, 'account_cash', Account,
+                                                                      AccountViewSerializer)
+        data['account_interim_object'] = self.lookup_for_relation_object(master_user, data, 'account_interim', Account,
+                                                                         AccountViewSerializer)
+
+        data['strategy1_position_object'] = self.lookup_for_relation_object(master_user, data, 'strategy1_position',
+                                                                            Strategy1, Strategy1ViewSerializer)
+        data['strategy1_cash_object'] = self.lookup_for_relation_object(master_user, data, 'strategy1_cash', Strategy1,
+                                                                        Strategy1ViewSerializer)
+        data['strategy2_position_object'] = self.lookup_for_relation_object(master_user, data, 'strategy2_position',
+                                                                            Strategy2, Strategy2ViewSerializer)
+        data['strategy2_cash_object'] = self.lookup_for_relation_object(master_user, data, 'strategy2_cash', Strategy2,
+                                                                        Strategy2ViewSerializer)
+        data['strategy3_position_object'] = self.lookup_for_relation_object(master_user, data, 'strategy3_position',
+                                                                            Strategy3, Strategy3ViewSerializer)
+        data['strategy3_cash_object'] = self.lookup_for_relation_object(master_user, data, 'strategy3_cash', Strategy3,
+                                                                        Strategy3ViewSerializer)
+
+        data['responsible_object'] = self.lookup_for_relation_object(master_user, data, 'responsible', Responsible,
+                                                                     ResponsibleViewSerializer)
+        data['counterparty_object'] = self.lookup_for_relation_object(master_user, data, 'counterparty', Counterparty,
+                                                                      CounterpartyViewSerializer)
+
+        data['linked_instrument_object'] = self.lookup_for_relation_object(master_user, data, 'linked_instrument',
+                                                                           Instrument, InstrumentViewSerializer)
+        data['allocation_balance_object'] = self.lookup_for_relation_object(master_user, data, 'allocation_balance',
+                                                                            Instrument, InstrumentViewSerializer)
+        data['allocation_pl_object'] = self.lookup_for_relation_object(master_user, data, 'allocation_pl', Instrument,
+                                                                       InstrumentViewSerializer)
+
+        return data
 
 
 class TransactionTypeActionInstrumentFactorScheduleSerializer(serializers.ModelSerializer):
-
     instrument_input = TransactionInputField(required=False, allow_null=True)
     instrument_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
 
@@ -508,7 +644,35 @@ class TransactionTypeActionInstrumentFactorScheduleSerializer(serializers.ModelS
     def __init__(self, *args, **kwargs):
         super(TransactionTypeActionInstrumentFactorScheduleSerializer, self).__init__(*args, **kwargs)
 
+    def lookup_for_relation_object(self, master_user, data, key, Model, Serializer):
 
+        result = None
+
+        try:
+            if key in data and data[key]:
+                field_instance = Model.objects.get(master_user=master_user, user_code=data[key])
+                result = Serializer(instance=field_instance).data
+        except Exception:
+            result = None
+
+        return result
+
+    def to_representation(self, instance):
+
+        from poms.instruments.models import Instrument
+
+        from poms.instruments.serializers import InstrumentViewSerializer
+
+        data = super(TransactionTypeActionInstrumentFactorScheduleSerializer, self).to_representation(instance)
+
+        master_user = instance.transaction_type.master_user
+
+        data['instrument_object'] = self.lookup_for_relation_object(master_user, data, 'instrument', Instrument,
+                                                                         InstrumentViewSerializer)
+
+        return data
+
+# DEPRECATED
 class TransactionTypeActionInstrumentManualPricingFormulaSerializer(serializers.ModelSerializer):
     instrument_input = TransactionInputField(required=False, allow_null=True)
     instrument_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
@@ -583,9 +747,43 @@ class TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer(seria
 
         from poms.instruments.serializers import InstrumentViewSerializer
 
-        self.fields['periodicity_object'] = PeriodicitySerializer(source='periodicity', read_only=True)
-        self.fields['accrual_calculation_model_object'] = AccrualCalculationModelSerializer(
-            source='accrual_calculation_model', read_only=True)
+        # self.fields['periodicity_object'] = PeriodicitySerializer(source='periodicity', read_only=True)
+        # self.fields['accrual_calculation_model_object'] = AccrualCalculationModelSerializer(
+        #     source='accrual_calculation_model', read_only=True)
+
+    def lookup_for_relation_object(self, master_user, data, key, Model, Serializer):
+
+        result = None
+
+        try:
+            if key in data and data[key]:
+                field_instance = Model.objects.get(master_user=master_user, user_code=data[key])
+                result = Serializer(instance=field_instance).data
+        except Exception:
+            result = None
+
+        return result
+
+    def to_representation(self, instance):
+
+        from poms.instruments.models import Periodicity, AccrualCalculationModel
+
+        from poms.instruments.serializers import PeriodicitySerializer, AccrualCalculationModelSerializer
+
+        data = super(TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer, self).to_representation(instance)
+
+        master_user = instance.transaction_type.master_user
+
+        data['instrument_object'] = self.lookup_for_relation_object(master_user, data, 'instrument', Instrument,
+                                                                    InstrumentViewSerializer)
+
+        data['periodicity_object'] = self.lookup_for_relation_object(master_user, data, 'periodicity', Periodicity,
+                                                                     PeriodicitySerializer)
+
+        data['accrual_calculation_model_object'] = self.lookup_for_relation_object(master_user, data, 'accrual_calculation_model', AccrualCalculationModel,
+                                                                                   AccrualCalculationModelSerializer)
+
+        return data
 
 
 class TransactionTypeActionInstrumentEventScheduleSerializer(serializers.ModelSerializer):
@@ -639,10 +837,48 @@ class TransactionTypeActionInstrumentEventScheduleSerializer(serializers.ModelSe
 
         from poms.instruments.serializers import InstrumentViewSerializer
 
-        self.fields['periodicity_object'] = PeriodicitySerializer(source='periodicity', read_only=True)
-        self.fields['notification_class_object'] = NotificationClassSerializer(source='notification_class',
-                                                                               read_only=True)
-        self.fields['event_class_object'] = EventClassSerializer(source='event_class', read_only=True)
+        # self.fields['periodicity_object'] = PeriodicitySerializer(source='periodicity', read_only=True)
+        # self.fields['notification_class_object'] = NotificationClassSerializer(source='notification_class',
+        #                                                                        read_only=True)
+        # self.fields['event_class_object'] = EventClassSerializer(source='event_class', read_only=True)
+
+
+    def lookup_for_relation_object(self, master_user, data, key, Model, Serializer):
+
+        result = None
+
+        try:
+            if key in data and data[key]:
+                field_instance = Model.objects.get(master_user=master_user, user_code=data[key])
+                result = Serializer(instance=field_instance).data
+        except Exception:
+            result = None
+
+        return result
+
+    def to_representation(self, instance):
+
+        from poms.instruments.models import Periodicity, AccrualCalculationModel
+
+        from poms.instruments.serializers import PeriodicitySerializer, AccrualCalculationModelSerializer
+
+        data = super(TransactionTypeActionInstrumentEventScheduleSerializer, self).to_representation(instance)
+
+        master_user = instance.transaction_type.master_user
+
+        data['instrument_object'] = self.lookup_for_relation_object(master_user, data, 'instrument', Instrument,
+                                                                    InstrumentViewSerializer)
+
+        data['periodicity_object'] = self.lookup_for_relation_object(master_user, data, 'periodicity', Periodicity,
+                                                                     PeriodicitySerializer)
+
+        data['notification_class_object'] = self.lookup_for_relation_object(master_user, data, 'notification_class', NotificationClass,
+                                                                            NotificationClassSerializer)
+
+        data['event_class_object'] = self.lookup_for_relation_object(master_user, data, 'event_class', EventClass,
+                                                                            EventClassSerializer)
+
+        return data
 
 
 class TransactionTypeActionInstrumentEventScheduleActionSerializer(serializers.ModelSerializer):
@@ -1475,8 +1711,10 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             if context_parameter is None:
                 try:
                     context_parameter = TransactionTypeContextParameter.objects.get(transaction_type=instance,
-                                                                                    order=context_parameter_field_data['order'],
-                                                                        name=context_parameter_field_data['name'])
+                                                                                    order=context_parameter_field_data[
+                                                                                        'order'],
+                                                                                    name=context_parameter_field_data[
+                                                                                        'name'])
                 except TransactionTypeContextParameter.DoesNotExist:
                     context_parameter = TransactionTypeContextParameter(transaction_type=instance)
 
@@ -2168,8 +2406,6 @@ class TransactionEvSerializer(ModelWithObjectPermissionSerializer):
     responsible_object = ResponsibleSimpleViewSerializer(source='responsible', read_only=True)
     counterparty_object = CounterpartySimpleViewSerializer(source='counterparty', read_only=True)
 
-
-
     class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = Transaction
         fields = [
@@ -2222,7 +2458,6 @@ class TransactionEvSerializer(ModelWithObjectPermissionSerializer):
         super(TransactionEvSerializer, self).__init__(*args, **kwargs)
 
         self.fields['transaction_class_object'] = TransactionClassSerializer(source='transaction_class', read_only=True)
-
 
 
 class TransactionTextRenderSerializer(TransactionSerializer):
@@ -2593,7 +2828,7 @@ class ComplexTransactionEvSerializer(ModelWithObjectPermissionSerializer, ModelW
             'id', 'master_user',
             'date', 'status', 'code', 'text',
             'is_deleted',
-            
+
             'is_locked', 'is_canceled',
 
             'transaction_type', 'transaction_type_object',
@@ -2744,7 +2979,6 @@ class ComplexTransactionLightSerializer(ModelWithObjectPermissionSerializer, Mod
             'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
 
             'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
-
 
         ]
 
@@ -3019,7 +3253,6 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
 
     date = serializers.DateField(required=False, allow_null=True)
     code = serializers.IntegerField(default=0, initial=0, min_value=0, required=False)
-
 
     visibility_status = serializers.ChoiceField(default=ComplexTransaction.SHOW_PARAMETERS,
                                                 initial=ComplexTransaction.SHOW_PARAMETERS,
@@ -3457,7 +3690,7 @@ class TransactionTypeRecalculateSerializer(serializers.Serializer):
             self.fields['recalculate_inputs'] = serializers.MultipleChoiceField(required=False, allow_null=True,
                                                                                 choices=[])
 
-        self.fields['complex_transaction'] =  serializers.PrimaryKeyRelatedField(read_only=True)
+        self.fields['complex_transaction'] = serializers.PrimaryKeyRelatedField(read_only=True)
 
         _l.debug('TransactionTypeRecalculateSerializer init done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
@@ -3528,7 +3761,7 @@ class TransactionTypeRecalculateSerializer(serializers.Serializer):
 
         result_st = time.perf_counter() - st
 
-        _l.debug('TransactionTypeRecalculateSerializer to representation done %s' %  result_st)
+        _l.debug('TransactionTypeRecalculateSerializer to representation done %s' % result_st)
 
         return res
 
@@ -3569,11 +3802,12 @@ class RecalculatePermissionComplexTransactionSerializer(serializers.Serializer):
 
 
 class RecalculateUserFields:
-    def __init__(self, task_id=None, task_status=None, master_user=None, member=None, transaction_type_id=None, key=None,
+    def __init__(self, task_id=None, task_status=None, master_user=None, member=None, transaction_type_id=None,
+                 key=None,
                  total_rows=None, processed_rows=None, stats_file_report=None, stats=None):
         self.task_id = task_id
         self.task_status = task_status
-        
+
         self.key = key
 
         self.master_user = master_user
@@ -3606,5 +3840,4 @@ class RecalculateUserFieldsSerializer(serializers.Serializer):
     stats_file_report = serializers.ReadOnlyField()
 
     def create(self, validated_data):
-
         return RecalculateUserFields(**validated_data)
