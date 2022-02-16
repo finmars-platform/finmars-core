@@ -2191,7 +2191,7 @@ class TransactionTypeProcess(object):
             # convert to id
             if model:
                 try:
-                    value = model.objects.get(master_user=self.transaction_type.master_user, user_code=value).id
+                    value = model.objects.get(master_user=self.transaction_type.master_user, user_code=value)
                 except Exception as e:
                     _l.info("User code for default value is not found")
         else:
