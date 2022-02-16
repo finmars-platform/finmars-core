@@ -73,7 +73,7 @@ class CsvFieldSerializer(serializers.ModelSerializer):
 class EntityFieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = EntityField
-        fields = ('id', 'name', 'order', 'expression', 'system_property_key', 'dynamic_attribute_id')
+        fields = ('id', 'name', 'order', 'expression', 'system_property_key', 'dynamic_attribute_id', 'use_default')
         extra_kwargs = {
             'id': {
                 'read_only': True,

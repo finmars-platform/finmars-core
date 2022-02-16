@@ -616,66 +616,71 @@ def process_csv_file(master_user,
 
                                 try:
                                     # context=self.report.context
-                                    executed_expression = safe_eval(entity_field.expression, names=csv_row_dict,
-                                                                    context={})
 
-                                    executed_expressions.append(executed_expression)
+                                    if entity_field.use_default and scheme.content_type.model == 'instrument':
+                                        instance[key] = None # will be set from instrument type
+                                    else:
 
-                                    if key in mapping_map:
+                                        executed_expression = safe_eval(entity_field.expression, names=csv_row_dict,
+                                                                        context={})
 
-                                        try:
+                                        executed_expressions.append(executed_expression)
 
-                                            instance[key] = mapping_map[key].objects.get(master_user=master_user,
-                                                                                         value=executed_expression).content_object
-
-                                        except (mapping_map[key].DoesNotExist, KeyError):
+                                        if key in mapping_map:
 
                                             try:
 
-                                                instance[key] = relation_map[key].objects.get(master_user=master_user,
-                                                                                              user_code=executed_expression)
+                                                instance[key] = mapping_map[key].objects.get(master_user=master_user,
+                                                                                             value=executed_expression).content_object
 
-                                            except (relation_map[key].DoesNotExist, KeyError):
+                                            except (mapping_map[key].DoesNotExist, KeyError):
 
-                                                if missing_data_handler == 'set_defaults':
+                                                try:
 
-                                                    ecosystem_default = EcosystemDefault.objects.get(
-                                                        master_user=master_user)
+                                                    instance[key] = relation_map[key].objects.get(master_user=master_user,
+                                                                                                  user_code=executed_expression)
 
-                                                    eco_key = key
+                                                except (relation_map[key].DoesNotExist, KeyError):
 
-                                                    if key in instance_property_to_default_ecosystem_property:
-                                                        eco_key = instance_property_to_default_ecosystem_property[key]
+                                                    if missing_data_handler == 'set_defaults':
 
-                                                    if hasattr(ecosystem_default, eco_key):
-                                                        instance[key] = getattr(ecosystem_default, eco_key)
+                                                        ecosystem_default = EcosystemDefault.objects.get(
+                                                            master_user=master_user)
+
+                                                        eco_key = key
+
+                                                        if key in instance_property_to_default_ecosystem_property:
+                                                            eco_key = instance_property_to_default_ecosystem_property[key]
+
+                                                        if hasattr(ecosystem_default, eco_key):
+                                                            instance[key] = getattr(ecosystem_default, eco_key)
+                                                        else:
+                                                            _l.debug("Can't set default value for %s" % key)
                                                     else:
-                                                        _l.debug("Can't set default value for %s" % key)
+
+                                                        inputs_error.append(
+                                                            {"field": entity_field,
+                                                             "reason": "Relation does not exists"}
+                                                        )
+
+                                        else:
+
+                                            if key == 'user_code':
+
+                                                if len(executed_expression) <= 25:
+
+                                                    instance[key] = executed_expression
+
                                                 else:
 
                                                     inputs_error.append(
                                                         {"field": entity_field,
-                                                         "reason": "Relation does not exists"}
+                                                         "reason": "The imported User Code is too large. It should be limited with 25 symbols."}
                                                     )
-
-                                    else:
-
-                                        if key == 'user_code':
-
-                                            if len(executed_expression) <= 25:
-
-                                                instance[key] = executed_expression
 
                                             else:
 
-                                                inputs_error.append(
-                                                    {"field": entity_field,
-                                                     "reason": "The imported User Code is too large. It should be limited with 25 symbols."}
-                                                )
-
-                                        else:
-
-                                            instance[key] = executed_expression
+                                                instance[key] = executed_expression
 
                                 except (ExpressionEvalError, TypeError, Exception, KeyError):
 

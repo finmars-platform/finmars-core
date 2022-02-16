@@ -99,6 +99,8 @@ class EntityField(models.Model):
     name = models.CharField(max_length=255)
     expression = models.CharField(max_length=255, blank=True, default='')
 
+    use_default = models.BooleanField(default=True,  verbose_name=ugettext_lazy('use default'))
+
     order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
 
     system_property_key = models.CharField(max_length=255, null=True)
