@@ -3148,7 +3148,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                                 else:
                                     error_rows['error_data']['data']['executed_input_expressions'].append(field_value)
 
-                            except (ValueError, formula.InvalidExpression):
+                            except (Exception, ValueError, formula.InvalidExpression):
 
                                 _l.info('can\'t process field: %s|%s', field.transaction_type_input.name,
                                                    field.transaction_type_input.pk, exc_info=True)
