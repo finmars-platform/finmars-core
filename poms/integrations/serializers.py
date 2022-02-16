@@ -1961,7 +1961,7 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
             if file:
                 master_user = validated_data['master_user']
                 file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
-                file_path = self._get_path(master_user, file_name)
+                file_path = self._get_path(master_user, file.name)
 
                 SFS.save(file_path, file)
                 validated_data['file_path'] = file_path
@@ -1971,7 +1971,7 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
         return ComplexTransactionCsvFileImport(**validated_data)
 
     def _get_path(self, master_user, file_name):
-        return '%s/transaction_import_files/%s.dat' % (master_user.token, file_name)
+        return '%s/transaction_import_files/%s' % (master_user.token, file_name)
 
 
 # class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):

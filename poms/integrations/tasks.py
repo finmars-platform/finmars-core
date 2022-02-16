@@ -3,6 +3,7 @@ from __future__ import unicode_literals, print_function
 import csv
 import json
 import logging
+import os
 import re
 import time
 import uuid
@@ -2134,6 +2135,8 @@ def complex_transaction_csv_file_import(self, task_id):
 
         def _process_csv_file(file, original_file):
 
+            _l.info('_process_csv_file %s ' % instance.file_path)
+
             instance.processed_rows = 0
 
             reader = []
@@ -2465,8 +2468,13 @@ def complex_transaction_csv_file_import(self, task_id):
         instance.error_rows = []
 
         try:
+
+            _l.info("Open file %s" % instance.file_path)
+
             # with import_file_storage.open(instance.file_path, 'rb') as f:
             with SFS.open(instance.file_path, 'rb') as f:
+
+
                 with NamedTemporaryFile() as tmpf:
 
                     for chunk in f.chunks():
@@ -2587,8 +2595,8 @@ def complex_transaction_csv_file_import_parallel(task_id):
         lines_per_file = 300
         header_line = None
 
-        def _get_path(master_user, file_name):
-            return '%s/transaction_import_files/%s.dat' % (master_user.token, file_name)
+        def _get_path(master_user, file_name, ext):
+            return '%s/transaction_import_files/%s.%s' % (master_user.token, file_name, ext)
 
         chunk = None
 
@@ -2596,6 +2604,8 @@ def complex_transaction_csv_file_import_parallel(task_id):
         with SFS.open(celery_task.options_object['file_path'], 'rb') as f:
 
             _l.info("Start reading file to split it into chunks")
+
+            ext = celery_task.options_object['file_path'].split('.')[-1]
 
             for lineno, line in enumerate(f):
 
@@ -2612,7 +2622,7 @@ def complex_transaction_csv_file_import_parallel(task_id):
                         SFS.save(chunk_path, chunk) # save working chunk before creating new one
 
                     chunk_filename = '%s_chunk_file_%s' % (celery_task.id, str(lineno) + '_' + str(lineno + lines_per_file))
-                    chunk_path = _get_path(celery_task.master_user, chunk_filename)
+                    chunk_path = _get_path(celery_task.master_user, chunk_filename, ext)
 
                     # _l.info('creating chunk file %s' % chunk_path)
 
@@ -3338,14 +3348,16 @@ def complex_transaction_csv_file_import_validate_parallel(task_id):
         lines_per_file = 300
         header_line = None
 
-        def _get_path(master_user, file_name):
-            return '%s/transaction_import_files/%s.dat' % (master_user.token, file_name)
+        def _get_path(master_user, file_name, ext):
+            return '%s/transaction_import_files/%s.%s' % (master_user.token, file_name, ext)
 
         chunk = None
 
         with SFS.open(celery_task.options_object['file_path'], 'rb') as f:
 
             _l.info("Start reading file to split it into chunks")
+
+            ext = celery_task.options_object['file_path'].split('.')[-1]
 
             for lineno, line in enumerate(f):
 
@@ -3362,7 +3374,7 @@ def complex_transaction_csv_file_import_validate_parallel(task_id):
                         SFS.save(chunk_path, chunk) # save working chunk before creating new one
 
                     chunk_filename = '%s_chunk_file_%s' % (celery_task.id, str(lineno) + '_' + str(lineno + lines_per_file))
-                    chunk_path = _get_path(celery_task.master_user, chunk_filename)
+                    chunk_path = _get_path(celery_task.master_user, chunk_filename, ext)
 
                     # _l.info('creating chunk file %s' % chunk_path)
 

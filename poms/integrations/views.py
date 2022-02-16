@@ -1082,7 +1082,9 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
 
         options_object = {}
         options_object['file_path'] = instance.file_path
-        options_object['scheme_id'] = instance.scheme.id
+
+        if instance.scheme:
+            options_object['scheme_id'] = instance.scheme.id
 
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,
