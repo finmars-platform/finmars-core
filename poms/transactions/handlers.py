@@ -421,6 +421,7 @@ class TransactionTypeProcess(object):
                 if instrument.user_code != '-' and instrument.user_code != ecosystem_default.instrument.user_code:
 
                     self._set_val(errors=errors, values=self.values, default_value='',
+                                  model=Instrument,
                                   target=instrument, target_attr_name='name',
                                   source=action_instrument, source_attr_name='name')
                     self._set_val(errors=errors, values=self.values, default_value='',
@@ -437,15 +438,18 @@ class TransactionTypeProcess(object):
 
                     self._set_rel(errors=errors,
                                   target=instrument, target_attr_name='instrument_type',
+                                  model=InstrumentType,
                                   source=action_instrument, source_attr_name='instrument_type',
                                   values=self.values, default_value=master_user.instrument_type)
                     self._set_rel(errors=errors, values=self.values, default_value=master_user.currency,
+                                  model=Currency,
                                   target=instrument, target_attr_name='pricing_currency',
                                   source=action_instrument, source_attr_name='pricing_currency')
                     self._set_val(errors=errors, values=self.values, default_value=0.0,
                                   target=instrument, target_attr_name='price_multiplier',
                                   source=action_instrument, source_attr_name='price_multiplier')
                     self._set_rel(errors=errors, values=self.values, default_value=master_user.currency,
+                                  model=Currency,
                                   target=instrument, target_attr_name='accrued_currency',
                                   source=action_instrument, source_attr_name='accrued_currency')
                     self._set_val(errors=errors, values=self.values, default_value=0.0,
@@ -561,6 +565,7 @@ class TransactionTypeProcess(object):
 
                 self._set_rel(errors=errors, values=self.values, default_value=None,
                               target=factor, target_attr_name='instrument',
+                              model=Instrument,
                               source=action_instrument_factor_schedule, source_attr_name='instrument')
                 if action_instrument_factor_schedule.instrument_phantom is not None:
                     factor.instrument = instrument_map[
@@ -652,6 +657,7 @@ class TransactionTypeProcess(object):
                 manual_pricing_formula = ManualPricingFormula()
 
                 self._set_rel(errors=errors, values=self.values, default_value=None,
+                              model=Instrument,
                               target=manual_pricing_formula, target_attr_name='instrument',
                               source=action_instrument_manual_pricing_formula, source_attr_name='instrument')
                 if action_instrument_manual_pricing_formula.instrument_phantom is not None:
@@ -659,6 +665,7 @@ class TransactionTypeProcess(object):
                         action_instrument_manual_pricing_formula.instrument_phantom_id]
 
                 self._set_rel(errors=errors, values=self.values, default_value=None,
+                              model=PricingPolicy,
                               target=manual_pricing_formula, target_attr_name='pricing_policy',
                               source=action_instrument_manual_pricing_formula, source_attr_name='pricing_policy')
 
@@ -748,6 +755,7 @@ class TransactionTypeProcess(object):
                 accrual_calculation_schedule = AccrualCalculationSchedule()
 
                 self._set_rel(errors=errors, values=self.values, default_value=None,
+                              model=Instrument,
                               target=accrual_calculation_schedule, target_attr_name='instrument',
                               source=action_instrument_accrual_calculation_schedule, source_attr_name='instrument')
                 if action_instrument_accrual_calculation_schedule.instrument_phantom is not None:
@@ -755,11 +763,13 @@ class TransactionTypeProcess(object):
                         action_instrument_accrual_calculation_schedule.instrument_phantom_id]
 
                 self._set_rel(errors=errors, values=self.values, default_value=None,
+                              model=AccrualCalculationModel,
                               target=accrual_calculation_schedule, target_attr_name='accrual_calculation_model',
                               source=action_instrument_accrual_calculation_schedule,
                               source_attr_name='accrual_calculation_model')
 
                 self._set_rel(errors=errors, values=self.values, default_value=None,
+                              model=Periodicity,
                               target=accrual_calculation_schedule, target_attr_name='periodicity',
                               source=action_instrument_accrual_calculation_schedule, source_attr_name='periodicity')
 
@@ -870,6 +880,7 @@ class TransactionTypeProcess(object):
                 event_schedule = EventSchedule()
 
                 self._set_rel(errors=errors, values=self.values, default_value=None,
+                              model=Instrument,
                               target=event_schedule, target_attr_name='instrument',
                               source=action_instrument_event_schedule, source_attr_name='instrument')
 
@@ -878,14 +889,17 @@ class TransactionTypeProcess(object):
                         action_instrument_event_schedule.instrument_phantom_id]
 
                 self._set_rel(errors=errors, values=self.values, default_value=None,
+                              model=NotificationClass,
                               target=event_schedule, target_attr_name='notification_class',
                               source=action_instrument_event_schedule, source_attr_name='notification_class')
 
                 self._set_rel(errors=errors, values=self.values, default_value=None,
+                              model=Periodicity,
                               target=event_schedule, target_attr_name='periodicity',
                               source=action_instrument_event_schedule, source_attr_name='periodicity')
 
                 self._set_rel(errors=errors, values=self.values, default_value=None,
+                              model=EventClass,
                               target=event_schedule, target_attr_name='event_class',
                               source=action_instrument_event_schedule, source_attr_name='event_class')
 
@@ -1377,10 +1391,12 @@ class TransactionTypeProcess(object):
 
                 self._set_rel(errors=errors, values=self.values, default_value=None,
                               target=transaction, target_attr_name='instrument',
+                              model=Instrument,
                               source=action_transaction, source_attr_name='instrument')
                 if action_transaction.instrument_phantom is not None:
                     transaction.instrument = instrument_map[action_transaction.instrument_phantom_id]
                 self._set_rel(errors=errors, values=self.values, default_value=master_user.currency,
+                              model=Currency,
                               target=transaction, target_attr_name='transaction_currency',
                               source=action_transaction, source_attr_name='transaction_currency')
                 self._set_val(errors=errors, values=self.values, default_value=0.0,
@@ -1388,6 +1404,7 @@ class TransactionTypeProcess(object):
                               source=action_transaction, source_attr_name='position_size_with_sign')
 
                 self._set_rel(errors=errors, values=self.values, default_value=master_user.currency,
+                              model=Currency,
                               target=transaction, target_attr_name='settlement_currency',
                               source=action_transaction, source_attr_name='settlement_currency')
                 self._set_val(errors=errors, values=self.values, default_value=0.0,
@@ -1404,15 +1421,19 @@ class TransactionTypeProcess(object):
                               source=action_transaction, source_attr_name='overheads_with_sign')
 
                 self._set_rel(errors=errors, values=self.values, default_value=master_user.portfolio,
+                              model=Portfolio,
                               target=transaction, target_attr_name='portfolio',
                               source=action_transaction, source_attr_name='portfolio')
                 self._set_rel(errors=errors, values=self.values, default_value=master_user.account,
+                              model=Account,
                               target=transaction, target_attr_name='account_position',
                               source=action_transaction, source_attr_name='account_position')
                 self._set_rel(errors=errors, values=self.values, default_value=master_user.account,
+                              model=Account,
                               target=transaction, target_attr_name='account_cash',
                               source=action_transaction, source_attr_name='account_cash')
                 self._set_rel(errors=errors, values=self.values, default_value=master_user.account,
+                              model=Account,
                               target=transaction, target_attr_name='account_interim',
                               source=action_transaction, source_attr_name='account_interim')
 
@@ -1426,44 +1447,55 @@ class TransactionTypeProcess(object):
                               validator=formula.validate_date)
 
                 self._set_rel(errors=errors, values=self.values, default_value=master_user.strategy1,
+                              model=Strategy1,
                               target=transaction, target_attr_name='strategy1_position',
                               source=action_transaction, source_attr_name='strategy1_position')
                 self._set_rel(errors=errors, values=self.values, default_value=master_user.strategy1,
+                              model=Strategy1,
                               target=transaction, target_attr_name='strategy1_cash',
                               source=action_transaction, source_attr_name='strategy1_cash')
                 self._set_rel(errors=errors, values=self.values, default_value=master_user.strategy2,
+                              model=Strategy2,
                               target=transaction, target_attr_name='strategy2_position',
                               source=action_transaction, source_attr_name='strategy2_position')
                 self._set_rel(errors=errors, values=self.values, default_value=master_user.strategy2,
+                              model=Strategy2,
                               target=transaction, target_attr_name='strategy2_cash',
                               source=action_transaction, source_attr_name='strategy2_cash')
                 self._set_rel(errors=errors, values=self.values, default_value=master_user.strategy3,
+                              model=Strategy3,
                               target=transaction, target_attr_name='strategy3_position',
                               source=action_transaction, source_attr_name='strategy3_position')
                 self._set_rel(errors=errors, values=self.values, default_value=master_user.strategy3,
+                              model=Strategy3,
                               target=transaction, target_attr_name='strategy3_cash',
                               source=action_transaction, source_attr_name='strategy3_cash')
 
                 self._set_rel(errors=errors, values=self.values, default_value=master_user.responsible,
+                              model=Responsible,
                               target=transaction, target_attr_name='responsible',
                               source=action_transaction, source_attr_name='responsible')
                 self._set_rel(errors=errors, values=self.values, default_value=master_user.counterparty,
+                              model=Counterparty,
                               target=transaction, target_attr_name='counterparty',
                               source=action_transaction, source_attr_name='counterparty')
 
                 self._set_rel(errors=errors, values=self.values, default_value=None,
+                              model=Instrument,
                               target=transaction, target_attr_name='linked_instrument',
                               source=action_transaction, source_attr_name='linked_instrument')
                 if action_transaction.linked_instrument_phantom is not None:
                     transaction.linked_instrument = instrument_map[action_transaction.linked_instrument_phantom_id]
 
                 self._set_rel(errors=errors, values=self.values, default_value=None,
+                              model=Instrument,
                               target=transaction, target_attr_name='allocation_balance',
                               source=action_transaction, source_attr_name='allocation_balance')
                 if action_transaction.allocation_balance_phantom is not None:
                     transaction.allocation_balance = instrument_map[action_transaction.allocation_balance_phantom_id]
 
                 self._set_rel(errors=errors, values=self.values, default_value=None,
+                              model=Instrument,
                               target=transaction, target_attr_name='allocation_pl',
                               source=action_transaction, source_attr_name='allocation_pl')
                 if action_transaction.allocation_pl_phantom is not None:
@@ -2153,10 +2185,15 @@ class TransactionTypeProcess(object):
             value = default_value
         setattr(target, target_attr_name, value)
 
-    def _set_rel(self, errors, values, default_value, target, target_attr_name, source, source_attr_name):
-        value = getattr(source, source_attr_name, None)
+    def _set_rel(self, errors, values, default_value, target, target_attr_name, source, source_attr_name, model):
+        value = getattr(source, source_attr_name, None) # got user_code
         if value:
-            pass
+            # convert to id
+            if model:
+                try:
+                    value = model.objects.get(master_user=self.transaction_type.master_user, user_code=value).id
+                except Exception as e:
+                    _l.info("User code for default value is not found")
         else:
             from_input = getattr(source, '%s_input' % source_attr_name)
             if from_input:
