@@ -715,10 +715,8 @@ class TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer(seria
     instrument_input = TransactionInputField(required=False, allow_null=True)
     instrument_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
 
-    accrual_calculation_model = AccrualCalculationModelField(required=False, allow_null=True)
     accrual_calculation_model_input = TransactionInputField(required=False, allow_null=True)
 
-    periodicity = PeriodicityField(required=False, allow_null=True)
     periodicity_input = TransactionInputField(required=False, allow_null=True)
 
     accrual_start_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
@@ -795,13 +793,10 @@ class TransactionTypeActionInstrumentEventScheduleSerializer(serializers.ModelSe
     instrument_input = TransactionInputField(required=False, allow_null=True)
     instrument_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
 
-    periodicity = PeriodicityField(required=False, allow_null=True)
     periodicity_input = TransactionInputField(required=False, allow_null=True)
 
-    notification_class = NotificationClassField(required=False, allow_null=True)
     notification_class_input = TransactionInputField(required=False, allow_null=True)
 
-    event_class = EventClassField(required=False, allow_null=True)
     event_class_input = TransactionInputField(required=False, allow_null=True)
 
     effective_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
