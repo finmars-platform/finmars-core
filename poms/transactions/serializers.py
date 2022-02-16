@@ -368,12 +368,20 @@ class TransactionTypeActionInstrumentSerializer(serializers.ModelSerializer):
     def lookup_for_relation_object(self, master_user, data, key, Model, Serializer):
 
         result = None
+        field_instance = None
 
         try:
             if key in data and data[key]:
-                field_instance = Model.objects.get(master_user=master_user, user_code=data[key])
-                result = Serializer(instance=field_instance).data
-        except Exception:
+
+                try:
+                    if Model._meta.get_field('master_user'):
+                        field_instance = Model.objects.get(master_user=master_user, user_code=data[key])
+                except Exception as e:
+                    field_instance = Model.objects.get(user_code=data[key])
+
+                result = Serializer(instance=field_instance, context=self.context).data
+        except Exception as e:
+
             result = None
 
         return result
@@ -383,25 +391,28 @@ class TransactionTypeActionInstrumentSerializer(serializers.ModelSerializer):
         from poms.instruments.models import InstrumentType, PaymentSizeDetail, PricingCondition
         from poms.currencies.models import Currency
 
-        from poms.instruments.serializers import InstrumentTypeViewSerializer, PaymentSizeDetailSerializer, PricingConditionSerializer
+        from poms.instruments.serializers import InstrumentTypeViewSerializer, PaymentSizeDetailSerializer, \
+            PricingConditionSerializer
         from poms.currencies.serializers import CurrencyViewSerializer
 
         data = super(TransactionTypeActionInstrumentSerializer, self).to_representation(instance)
 
         master_user = instance.transaction_type.master_user
 
-        data['instrument_type_object'] = self.lookup_for_relation_object(master_user, data, 'instrument_type', InstrumentType,
-                                                                    InstrumentTypeViewSerializer)
+        data['instrument_type_object'] = self.lookup_for_relation_object(master_user, data, 'instrument_type',
+                                                                         InstrumentType,
+                                                                         InstrumentTypeViewSerializer)
         data['pricing_currency_object'] = self.lookup_for_relation_object(master_user, data, 'pricing_currency',
-                                                                              Currency, CurrencyViewSerializer)
+                                                                          Currency, CurrencyViewSerializer)
         data['accrued_currency_object'] = self.lookup_for_relation_object(master_user, data, 'accrued_currency',
-                                                                             Currency, CurrencyViewSerializer)
+                                                                          Currency, CurrencyViewSerializer)
 
-        data['payment_size_detail_object'] = self.lookup_for_relation_object(master_user, data, 'payment_size_detail', PaymentSizeDetail,
+        data['payment_size_detail_object'] = self.lookup_for_relation_object(master_user, data, 'payment_size_detail',
+                                                                             PaymentSizeDetail,
                                                                              PaymentSizeDetailSerializer)
-        data['pricing_condition_object'] = self.lookup_for_relation_object(master_user, data, 'pricing_condition', PricingCondition,
+        data['pricing_condition_object'] = self.lookup_for_relation_object(master_user, data, 'pricing_condition',
+                                                                           PricingCondition,
                                                                            PricingConditionSerializer)
-
 
         return data
 
@@ -551,12 +562,20 @@ class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
     def lookup_for_relation_object(self, master_user, data, key, Model, Serializer):
 
         result = None
+        field_instance = None
 
         try:
             if key in data and data[key]:
-                field_instance = Model.objects.get(master_user=master_user, user_code=data[key])
-                result = Serializer(instance=field_instance).data
-        except Exception:
+
+                try:
+                    if Model._meta.get_field('master_user'):
+                        field_instance = Model.objects.get(master_user=master_user, user_code=data[key])
+                except Exception as e:
+                    field_instance = Model.objects.get(user_code=data[key])
+
+                result = Serializer(instance=field_instance, context=self.context).data
+        except Exception as e:
+
             result = None
 
         return result
@@ -652,12 +671,20 @@ class TransactionTypeActionInstrumentFactorScheduleSerializer(serializers.ModelS
     def lookup_for_relation_object(self, master_user, data, key, Model, Serializer):
 
         result = None
+        field_instance = None
 
         try:
             if key in data and data[key]:
-                field_instance = Model.objects.get(master_user=master_user, user_code=data[key])
-                result = Serializer(instance=field_instance).data
-        except Exception:
+
+                try:
+                    if Model._meta.get_field('master_user'):
+                        field_instance = Model.objects.get(master_user=master_user, user_code=data[key])
+                except Exception as e:
+                    field_instance = Model.objects.get(user_code=data[key])
+
+                result = Serializer(instance=field_instance, context=self.context).data
+        except Exception as e:
+
             result = None
 
         return result
@@ -673,9 +700,10 @@ class TransactionTypeActionInstrumentFactorScheduleSerializer(serializers.ModelS
         master_user = instance.transaction_type.master_user
 
         data['instrument_object'] = self.lookup_for_relation_object(master_user, data, 'instrument', Instrument,
-                                                                         InstrumentViewSerializer)
+                                                                    InstrumentViewSerializer)
 
         return data
+
 
 # DEPRECATED
 class TransactionTypeActionInstrumentManualPricingFormulaSerializer(serializers.ModelSerializer):
@@ -757,12 +785,20 @@ class TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer(seria
     def lookup_for_relation_object(self, master_user, data, key, Model, Serializer):
 
         result = None
+        field_instance = None
 
         try:
             if key in data and data[key]:
-                field_instance = Model.objects.get(master_user=master_user, user_code=data[key])
-                result = Serializer(instance=field_instance).data
-        except Exception:
+
+                try:
+                    if Model._meta.get_field('master_user'):
+                        field_instance = Model.objects.get(master_user=master_user, user_code=data[key])
+                except Exception as e:
+                    field_instance = Model.objects.get(user_code=data[key])
+
+                result = Serializer(instance=field_instance, context=self.context).data
+        except Exception as e:
+
             result = None
 
         return result
@@ -773,7 +809,8 @@ class TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer(seria
 
         from poms.instruments.serializers import PeriodicitySerializer, AccrualCalculationModelSerializer
 
-        data = super(TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer, self).to_representation(instance)
+        data = super(TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer, self).to_representation(
+            instance)
 
         master_user = instance.transaction_type.master_user
 
@@ -783,7 +820,9 @@ class TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer(seria
         data['periodicity_object'] = self.lookup_for_relation_object(master_user, data, 'periodicity', Periodicity,
                                                                      PeriodicitySerializer)
 
-        data['accrual_calculation_model_object'] = self.lookup_for_relation_object(master_user, data, 'accrual_calculation_model', AccrualCalculationModel,
+        data['accrual_calculation_model_object'] = self.lookup_for_relation_object(master_user, data,
+                                                                                   'accrual_calculation_model',
+                                                                                   AccrualCalculationModel,
                                                                                    AccrualCalculationModelSerializer)
 
         return data
@@ -842,20 +881,26 @@ class TransactionTypeActionInstrumentEventScheduleSerializer(serializers.ModelSe
         #                                                                        read_only=True)
         # self.fields['event_class_object'] = EventClassSerializer(source='event_class', read_only=True)
 
-
     def lookup_for_relation_object(self, master_user, data, key, Model, Serializer):
 
         result = None
+        field_instance = None
 
         try:
             if key in data and data[key]:
-                field_instance = Model.objects.get(master_user=master_user, user_code=data[key])
-                result = Serializer(instance=field_instance).data
-        except Exception:
+
+                try:
+                    if Model._meta.get_field('master_user'):
+                        field_instance = Model.objects.get(master_user=master_user, user_code=data[key])
+                except Exception as e:
+                    field_instance = Model.objects.get(user_code=data[key])
+
+                result = Serializer(instance=field_instance, context=self.context).data
+        except Exception as e:
+
             result = None
 
         return result
-
     def to_representation(self, instance):
 
         from poms.instruments.models import Periodicity, AccrualCalculationModel
@@ -872,11 +917,12 @@ class TransactionTypeActionInstrumentEventScheduleSerializer(serializers.ModelSe
         data['periodicity_object'] = self.lookup_for_relation_object(master_user, data, 'periodicity', Periodicity,
                                                                      PeriodicitySerializer)
 
-        data['notification_class_object'] = self.lookup_for_relation_object(master_user, data, 'notification_class', NotificationClass,
+        data['notification_class_object'] = self.lookup_for_relation_object(master_user, data, 'notification_class',
+                                                                            NotificationClass,
                                                                             NotificationClassSerializer)
 
         data['event_class_object'] = self.lookup_for_relation_object(master_user, data, 'event_class', EventClass,
-                                                                            EventClassSerializer)
+                                                                     EventClassSerializer)
 
         return data
 
