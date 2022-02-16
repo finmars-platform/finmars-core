@@ -726,7 +726,7 @@ class TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer(seria
     notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True)
 
     class Meta:
-        model = TransactionTypeActionInstrumentFactorSchedule
+        model = TransactionTypeActionInstrumentAccrualCalculationSchedules
         fields = [
             'instrument',
             'instrument_input',
