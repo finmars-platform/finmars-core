@@ -421,7 +421,6 @@ class TransactionTypeProcess(object):
                 if instrument.user_code != '-' and instrument.user_code != ecosystem_default.instrument.user_code:
 
                     self._set_val(errors=errors, values=self.values, default_value='',
-                                  model=Instrument,
                                   target=instrument, target_attr_name='name',
                                   source=action_instrument, source_attr_name='name')
                     self._set_val(errors=errors, values=self.values, default_value='',
