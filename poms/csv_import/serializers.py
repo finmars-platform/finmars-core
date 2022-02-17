@@ -227,6 +227,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
                                                            'system_property_key'))
                     instance.expression = entity_field.get('expression', '')
                     instance.name = entity_field.get('name', instance.name)
+                    instance.use_default = entity_field.get('use_default', instance.use_default)
                     instance.save()
 
                 except EntityField.DoesNotExist:
