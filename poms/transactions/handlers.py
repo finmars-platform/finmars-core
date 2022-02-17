@@ -456,7 +456,7 @@ class TransactionTypeProcess(object):
                                   source=action_instrument, source_attr_name='accrued_multiplier')
                     self._set_rel(errors=errors, values=self.values, default_value=None,
                                   target=instrument, target_attr_name='payment_size_detail',
-                                  model=None,
+                                  model=PaymentSizeDetail,
                                   source=action_instrument, source_attr_name='payment_size_detail')
                     self._set_val(errors=errors, values=self.values, default_value=0.0,
                                   target=instrument, target_attr_name='default_price',
