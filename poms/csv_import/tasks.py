@@ -897,11 +897,17 @@ class ValidateHandler:
 
     def attributes_full_clean(self, instance, attributes, error_handler, error_row):
 
+        attr_type_user_code = 'Unknown'
+
         for result_attr in attributes:
+
+            attr_type_user_code = 'Unknown'
 
             try:
 
                 attr_type = GenericAttributeType.objects.get(pk=result_attr['dynamic_attribute_id'])
+
+                attr_type_user_code = attr_type.user_code
 
                 if attr_type:
 
@@ -935,7 +941,7 @@ class ValidateHandler:
                 error_row['level'] = 'error'
                 error_row['error_message'] = error_row['error_message'] + ugettext(
                     'Validation error %(error)s ') % {
-                                                 'error': 'Cannot create attribute'
+                                                 'error': 'Cannot create attribute Attribute type %s, value %s' % (attr_type_user_code, result_attr['executed_expression'])
                                              }
 
     def instance_full_clean(self, scheme, result, error_handler, error_row):
@@ -1388,7 +1394,9 @@ class ImportHandler:
 
                 instance.save()
 
-        except ValidationError as e:
+        except Exception as e:
+
+            _l.info("save_instance Exception %s" % e)
 
             error_row['error_reaction'] = 'Continue import'
             error_row['level'] = 'error'
