@@ -456,6 +456,7 @@ class TransactionTypeProcess(object):
                                   source=action_instrument, source_attr_name='accrued_multiplier')
                     self._set_rel(errors=errors, values=self.values, default_value=None,
                                   target=instrument, target_attr_name='payment_size_detail',
+                                  model=None,
                                   source=action_instrument, source_attr_name='payment_size_detail')
                     self._set_val(errors=errors, values=self.values, default_value=0.0,
                                   target=instrument, target_attr_name='default_price',
@@ -1011,6 +1012,7 @@ class TransactionTypeProcess(object):
 
                 self._set_rel(errors=errors, values=self.values, default_value=None,
                               target=event_schedule_action, target_attr_name='event_schedule',
+                              model=None,
                               source=action_instrument_event_schedule_action, source_attr_name='event_schedule')
 
                 if action_instrument_event_schedule_action.event_schedule_phantom is not None:
@@ -1023,6 +1025,7 @@ class TransactionTypeProcess(object):
 
                 self._set_rel(errors=errors, values=self.values, default_value=None,
                               target=event_schedule_action, target_attr_name='transaction_type',
+                              model=None,
                               source=event_schedule_action.event_schedule.instrument.instrument_type,
                               source_attr_name=action_instrument_event_schedule_action.transaction_type_from_instrument_type)
 

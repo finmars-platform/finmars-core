@@ -226,6 +226,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         response.write(json.dumps(configuration))
 
+        _l.debug('ConfigurationExportViewSet send response')
+
         return response
 
     def createConfiguration(self):
