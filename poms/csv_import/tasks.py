@@ -959,6 +959,8 @@ class ValidateHandler:
                 instance.full_clean()
 
         except CoreValidationError as e:
+            
+            _l.info('instance_full_clean  e %s' % e)
 
             error_row['error_reaction'] = 'Continue import'
             error_row['level'] = 'error'
@@ -1207,7 +1209,7 @@ class ImportHandler:
             elif key == 'portfolios':
                 getattr(instance, key, False).add(result[key])
 
-    def create_simple_instance(self, scheme, result):
+    def create_simple_instance(self, scheme, result, error_row):
 
         Model = apps.get_model(app_label=scheme.content_type.app_label, model_name=scheme.content_type.model)
 
@@ -1225,8 +1227,18 @@ class ImportHandler:
 
         try:
             instance = Model.objects.create(**result_without_many_to_many)
-        except (ValidationError, IntegrityError, ValueError):
+        except (ValidationError, IntegrityError, ValueError) as e:
+
+            _l.info('create_simple_instance %s' % e)
+
             instance = None
+
+
+            error_row['error_reaction'] = 'Continue import'
+            error_row['level'] = 'error'
+            error_row['error_message'] = error_row['error_message'] + ugettext(
+                'Cannot create simple instance %(error)s ') % {
+                                             'error': e}
 
         return instance
 
@@ -1377,7 +1389,7 @@ class ImportHandler:
 
         try:
 
-            instance = self.create_simple_instance(scheme, result)
+            instance = self.create_simple_instance(scheme, result, error_row)
 
             if instance:
 
