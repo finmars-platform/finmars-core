@@ -103,8 +103,10 @@ class InstrumentTypeProcess(object):
 
         try:
 
-            _l.info('InstrumentTypeProcess.fill_instrument_with_instrument_type_defaults instrument_type %s' % self.instrument_type.user_code)
-            _l.info('InstrumentTypeProcess.fill_instrument_with_instrument_type_defaults instrument_type %s' % self.instrument_type.maturity_date)
+            _l.info(
+                'InstrumentTypeProcess.fill_instrument_with_instrument_type_defaults instrument_type %s' % self.instrument_type.user_code)
+            _l.info(
+                'InstrumentTypeProcess.fill_instrument_with_instrument_type_defaults instrument_type %s' % self.instrument_type.maturity_date)
 
             start_time = time.time()
 
@@ -152,7 +154,8 @@ class InstrumentTypeProcess(object):
             instrument_object['short_underlying_exposure'] = instrument_type.short_underlying_exposure_id
 
             instrument_object['co_directional_exposure_currency'] = instrument_type.co_directional_exposure_currency
-            instrument_object['counter_directional_exposure_currency'] = instrument_type.counter_directional_exposure_currency
+            instrument_object[
+                'counter_directional_exposure_currency'] = instrument_type.counter_directional_exposure_currency
 
             # Set attributes
             instrument_object['attributes'] = []
@@ -161,7 +164,9 @@ class InstrumentTypeProcess(object):
 
             for attribute in instrument_type.instrument_attributes.all():
 
-                attribute_type = GenericAttributeType.objects.get(master_user=self.instrument_type.master_user, content_type=content_type, user_code=attribute.attribute_type_user_code)
+                attribute_type = GenericAttributeType.objects.get(master_user=self.instrument_type.master_user,
+                                                                  content_type=content_type,
+                                                                  user_code=attribute.attribute_type_user_code)
 
                 attr = {
                     'attribute_type': attribute_type.id,
@@ -187,12 +192,16 @@ class InstrumentTypeProcess(object):
 
                 if attribute.value_type == 30:
                     try:
-                        attr['classifier'] = attribute.classifier_id
+
+                        classifier = GenericClassifier.objects.filter(name=attribute.value_classifier,
+                                                                      attribute_type=attribute_type)[0]
+
+                        attr['classifier'] = classifier.id
                         attr['classifier_object'] = {
-                            "id": attribute.classifier.id,
-                            "level": attribute.classifier.level,
-                            "parent": attribute.classifier.parent,
-                            "name": attribute.classifier.name
+                            "id": classifier.id,
+                            "level": classifier.level,
+                            "parent": classifier.parent,
+                            "name": classifier.name
                         }
                     except Exception as e:
                         attr['classifier'] = None
@@ -258,12 +267,14 @@ class InstrumentTypeProcess(object):
                     if 'default_value' in item:
                         accrual[item['key']] = item['default_value']
 
-
                 instrument_object['accrual_calculation_schedules'].append(accrual)
 
-            _l.info('InstrumentTypeProcess.fill_instrument_with_instrument_type_defaults instrument_object %s' % instrument_object)
+            _l.info(
+                'InstrumentTypeProcess.fill_instrument_with_instrument_type_defaults instrument_object %s' % instrument_object)
 
-            _l.info("InstrumentTypeProcess.fill_instrument_with_instrument_type_defaults %s seconds " % "{:3.3f}".format(time.time() - start_time))
+            _l.info(
+                "InstrumentTypeProcess.fill_instrument_with_instrument_type_defaults %s seconds " % "{:3.3f}".format(
+                    time.time() - start_time))
 
             return instrument_object
 

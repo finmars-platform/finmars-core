@@ -52,6 +52,7 @@ from ..common.websockets import send_websocket_message
 
 import traceback
 
+from ..instruments.handlers import InstrumentTypeProcess
 
 _l = getLogger('poms.csv_import')
 
@@ -1223,6 +1224,14 @@ class ImportHandler:
 
         result_without_many_to_many = {}
 
+        if scheme.content_type.model == 'instrument':
+
+            result_without_many_to_many = InstrumentTypeProcess(instrument_type=result['instrument_type'])
+            
+            _l.info('create_simple_instance result_without_many_to_many %s ' % result_without_many_to_many)
+
+
+
         many_to_many_fields = ['counterparties', 'responsibles', 'accounts', 'portfolios']
         system_fields = ['_row_index', '_row']
 
@@ -1234,7 +1243,17 @@ class ImportHandler:
                     result_without_many_to_many[key] = value
 
         try:
-            instance = Model.objects.create(**result_without_many_to_many)
+
+            if scheme.content_type.model == 'instrument':
+                from poms.instruments.serializers import InstrumentSerializer
+                serializer = InstrumentSerializer(data=result_without_many_to_many, context=self.context)
+
+                is_valid = serializer.is_valid()
+
+                if is_valid:
+                    serializer.save()
+            else:
+                instance = Model.objects.create(**result_without_many_to_many)
         except (ValidationError, IntegrityError, ValueError) as e:
 
             _l.info('create_simple_instance %s' % e)
@@ -1525,6 +1544,12 @@ class ImportHandler:
         mode = instance.mode
         master_user = instance.master_user
         member = instance.member
+
+        proxy_user = ProxyUser(member, master_user)
+        proxy_request = ProxyRequest(proxy_user)
+
+        self.context = {'master_user': master_user,
+                   'request': proxy_request}
 
         _l.debug('ImportHandler.mode %s' % mode)
 
