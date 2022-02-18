@@ -1021,6 +1021,7 @@ class ComplexTransactionImportScheme(NamedModel, DataTimeStampedModel):
     missing_data_handler = models.CharField(max_length=255, choices=MISSING_DATA_CHOICES, default='throw_error')
 
     spreadsheet_start_cell = models.CharField(max_length=255, default='A1')
+    spreadsheet_active_tab_name = models.CharField(max_length=255, default='', blank=True, null=True)
 
     @property
     def recon_layout(self):

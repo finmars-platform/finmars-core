@@ -425,7 +425,12 @@ def process_csv_file(master_user,
 
         wb = load_workbook(filename=original_file)
 
-        ws = wb.active
+        # ws = wb.active
+
+        if task_instance.scheme.spreadsheet_active_tab_name and task_instance.scheme.spreadsheet_active_tab_name in wb.sheetnames:
+            ws = wb[task_instance.scheme.spreadsheet_active_tab_name]
+        else:
+            ws = wb.active
 
         _l.info('ws %s' % ws)
 
@@ -1077,7 +1082,10 @@ class ValidateHandler:
 
                         wb = load_workbook(filename=f)
 
-                        ws = wb.active
+                        if instance.scheme.spreadsheet_active_tab_name and instance.scheme.spreadsheet_active_tab_name in wb.sheetnames:
+                            ws = wb[instance.scheme.spreadsheet_active_tab_name]
+                        else:
+                            ws = wb.active
 
                         _l.info('ws %s' % ws)
 
@@ -1542,7 +1550,10 @@ class ImportHandler:
 
                         wb = load_workbook(filename=f)
 
-                        ws = wb.active
+                        if instance.scheme.spreadsheet_active_tab_name and instance.scheme.spreadsheet_active_tab_name in wb.sheetnames:
+                            ws = wb[instance.scheme.spreadsheet_active_tab_name]
+                        else:
+                            ws = wb.active
 
                         _l.info('ws %s' % ws)
 

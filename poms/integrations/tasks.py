@@ -2153,7 +2153,10 @@ def complex_transaction_csv_file_import(self, task_id):
 
                 wb = load_workbook(filename=original_file)
 
-                ws = wb.active
+                if instance.scheme.spreadsheet_active_tab_name and instance.scheme.spreadsheet_active_tab_name in wb.sheetnames:
+                    ws = wb[instance.scheme.spreadsheet_active_tab_name]
+                else:
+                    ws = wb.active
 
                 reader = []
 
@@ -2454,7 +2457,10 @@ def complex_transaction_csv_file_import(self, task_id):
 
             wb = load_workbook(filename=file)
 
-            ws = wb.active
+            if instance.scheme.spreadsheet_active_tab_name and instance.scheme.spreadsheet_active_tab_name in wb.sheetnames:
+                ws = wb[instance.scheme.spreadsheet_active_tab_name]
+            else:
+                ws = wb.active
 
             reader = []
 
