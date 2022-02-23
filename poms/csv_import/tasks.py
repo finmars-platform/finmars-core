@@ -1254,6 +1254,8 @@ class ImportHandler:
 
                 if is_valid:
                     serializer.save()
+
+                    instance = serializer.instance
             else:
                 instance = Model.objects.create(**result_without_many_to_many)
         except (ValidationError, IntegrityError, ValueError) as e:
