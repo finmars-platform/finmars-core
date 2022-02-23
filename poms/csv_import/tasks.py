@@ -1250,6 +1250,16 @@ class ImportHandler:
 
             if scheme.content_type.model == 'instrument':
                 from poms.instruments.serializers import InstrumentSerializer
+
+                if 'accrued_currency' in result_without_many_to_many:
+                    result_without_many_to_many['accrued_currency'] = result_without_many_to_many['accrued_currency'].id
+
+                if 'instrument_type' in result_without_many_to_many:
+                    result_without_many_to_many['instrument_type'] = result_without_many_to_many['instrument_type'].id
+
+                if 'pricing_currency' in result_without_many_to_many:
+                    result_without_many_to_many['pricing_currency'] = result_without_many_to_many['pricing_currency'].id
+
                 serializer = InstrumentSerializer(data=result_without_many_to_many, context=self.context)
 
                 is_valid = serializer.is_valid()
