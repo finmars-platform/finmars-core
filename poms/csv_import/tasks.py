@@ -1244,6 +1244,8 @@ class ImportHandler:
                 if key not in many_to_many_fields and key not in system_fields:
                     result_without_many_to_many[key] = value
 
+        instance = None
+
         try:
 
             if scheme.content_type.model == 'instrument':
@@ -1256,6 +1258,10 @@ class ImportHandler:
                     serializer.save()
 
                     instance = serializer.instance
+
+                else:
+                    _l.info('Serialize is not valid %s' % serializer.errors)
+
             else:
                 instance = Model.objects.create(**result_without_many_to_many)
         except (ValidationError, IntegrityError, ValueError) as e:
