@@ -947,7 +947,7 @@ class ValidateHandler:
                 error_row['level'] = 'error'
                 error_row['error_message'] = error_row['error_message'] + ugettext(
                     'Validation error %(error)s ') % {
-                                                 'error': 'Cannot create attribute Attribute type %s, value %s' % (attr_type_user_code, result_attr['executed_expression'])
+                                                 'error': 'Cannot create attribute. Attribute type %s, value %s. Exception: %s' % (attr_type_user_code, result_attr['executed_expression'], e)
                                              }
 
     def instance_full_clean(self, scheme, result, error_handler, error_row):
@@ -1226,8 +1226,10 @@ class ImportHandler:
 
         if scheme.content_type.model == 'instrument':
 
-            result_without_many_to_many = InstrumentTypeProcess(instrument_type=result['instrument_type'])
-            
+            process = InstrumentTypeProcess(instrument_type=result['instrument_type'])
+
+            result_without_many_to_many = process.instrument
+
             _l.info('create_simple_instance result_without_many_to_many %s ' % result_without_many_to_many)
 
 
