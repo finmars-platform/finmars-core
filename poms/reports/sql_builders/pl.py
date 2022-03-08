@@ -2977,7 +2977,7 @@ class PLReportBuilderSql:
                             (q2.mismatch - coalesce(q1.mismatch, 0)) as mismatch
                                 
                        from ({query_report_date}) as q2 
-                       left join ({query_first_date}) as q1 on q1.name = q2.name and q1.instrument_id = q2.instrument_id {final_consolidation_where_filters}"""
+                       left join ({query_first_date}) as q1 on q1.name = q2.name and q1.item_type = q2.item_type and q1.instrument_id = q2.instrument_id {final_consolidation_where_filters}"""
 
             query = query.format(query_first_date=query_1,
                                  query_report_date=query_2,
@@ -2986,7 +2986,7 @@ class PLReportBuilderSql:
                                  )
 
             if settings.SERVER_TYPE == 'local':
-                with open('/tmp/query_result_before_execution.txt', 'w') as the_file:
+                with open('/tmp/query_result_before_execution_pl.txt', 'w') as the_file:
                     the_file.write(query)
 
             cursor.execute(query)
@@ -2996,7 +2996,7 @@ class PLReportBuilderSql:
             query_str = str(cursor.query, 'utf-8')
 
             if settings.SERVER_TYPE == 'local':
-                with open('/tmp/query_result.txt', 'w') as the_file:
+                with open('/tmp/query_result_pl.txt', 'w') as the_file:
                     the_file.write(query_str)
 
             result_tmp_raw = dictfetchall(cursor)
