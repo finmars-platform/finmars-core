@@ -1419,7 +1419,7 @@ class BalanceReportBuilderSql:
                                 overheads_fixed_closed_loc,
                                 total_fixed_closed_loc
                                 
-                              from ({pl_query}) as pl 
+                              from ({pl_query}) as pl where pl.item_type != 6
                     ) as pl_q
                     on balance_q.instrument_id = pl_q.instrument_id {pl_left_join_consolidation}
                 

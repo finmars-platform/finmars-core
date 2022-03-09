@@ -2861,6 +2861,7 @@ class PLReportBuilderSql:
                             (q2.name) as name,
                             (q2.short_name) as short_name,
                             (q2.user_code) as user_code,
+                            (q2.item_type) as item_type,
                             
                             -- add optional account_position, strategy1 position etc
                             
