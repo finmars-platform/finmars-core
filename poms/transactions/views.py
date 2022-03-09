@@ -421,6 +421,13 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
         context_allocation_pl = None
 
         context_position = request.query_params.get('context_position', None)
+
+        if context_position:
+            try:
+                context_position = float(context_position)
+            except Exception as e:
+                context_position = None
+
         context_effective_date = request.query_params.get('context_effective_date', None)
         context_notification_date = request.query_params.get('context_notification_date', None)
         context_final_date = request.query_params.get('context_final_date', None)
