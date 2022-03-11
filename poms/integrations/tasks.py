@@ -2191,10 +2191,23 @@ def complex_transaction_csv_file_import(self, task_id):
 
                         row_number = row_number + 1
 
+            first_row = None
+
+            input_column_name_map = {}
 
             for row_index, row in enumerate(reader):
 
                 _l.info('process row %s ' % row_index)
+
+                if row_index == 0:
+                    first_row = row
+
+                    _local_index = 0
+                    for item in first_row:
+
+                        input_column_name_map[item] = _local_index
+                        _local_index = _local_index + 1
+
 
                 # _l.debug('process row: %s -> %s', row_index, row)
                 if (row_index == 0 and instance.skip_first_line) or not row:
@@ -2233,18 +2246,36 @@ def complex_transaction_csv_file_import(self, task_id):
                     'error_reaction': "Success"
                 }
 
+
+
                 for i in scheme_inputs:
 
                     error_rows['error_data']['columns']['imported_columns'].append(i.name)
 
-                    try:
-                        inputs_raw[i.name] = row[i.column - 1]
-                        error_rows['error_data']['data']['imported_columns'].append(row[i.column - 1])
-                    except Exception:
-                        _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
-                        _l.debug('can\'t process inputs_raw: %s|%s', inputs_raw)
-                        error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
-                        inputs_error.append(i)
+
+                    if instance.scheme.column_matcher == 'index':
+                        try:
+                            inputs_raw[i.name] = row[i.column - 1]
+                            error_rows['error_data']['data']['imported_columns'].append(row[i.column - 1])
+                        except Exception:
+                            _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                            _l.debug('can\'t process inputs_raw: %s|%s', inputs_raw)
+                            error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
+                            inputs_error.append(i)
+
+                    if instance.scheme.column_matcher == 'name':
+
+                        try:
+
+                            _col_index = input_column_name_map[i.name]
+
+                            inputs_raw[i.name] = row[_col_index]
+                            error_rows['error_data']['data']['imported_columns'].append(row[_col_index])
+                        except Exception:
+                            _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                            _l.debug('can\'t process inputs_raw: %s|%s', inputs_raw)
+                            error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
+                            inputs_error.append(i)
 
                 # _l.debug('Row %s inputs_raw: %s' % (row_index, inputs_raw))
 
@@ -2942,7 +2973,19 @@ def complex_transaction_csv_file_import_validate(self, task_id):
             reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
                                 strict=False, skipinitialspace=True)
 
+            first_row = None
+            input_column_name_map = {}
+
             for row_index, row in enumerate(reader):
+
+                if row_index == 0:
+                    first_row = row
+
+                    _local_index = 0
+                    for item in first_row:
+
+                        input_column_name_map[item] = _local_index
+                        _local_index = _local_index + 1
 
                 # _l.info('_validate_process_csv_file row: %s -> %s', row_index, row)
                 if (row_index == 0 and instance.skip_first_line) or not row:
@@ -2984,13 +3027,30 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
                     error_rows['error_data']['columns']['imported_columns'].append(i.name)
 
-                    try:
-                        inputs_raw[i.name] = row[i.column - 1]
-                        error_rows['error_data']['data']['imported_columns'].append(row[i.column - 1])
-                    except Exception:
-                        _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
-                        error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
-                        inputs_error.append(i)
+                    if instance.scheme.column_matcher == 'index':
+                        try:
+                            inputs_raw[i.name] = row[i.column - 1]
+                            error_rows['error_data']['data']['imported_columns'].append(row[i.column - 1])
+                        except Exception:
+                            _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                            _l.debug('can\'t process inputs_raw: %s|%s', inputs_raw)
+                            error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
+                            inputs_error.append(i)
+
+                    if instance.scheme.column_matcher == 'name':
+
+                        try:
+
+                            _col_index = input_column_name_map[i.name]
+
+                            inputs_raw[i.name] = row[_col_index]
+                            error_rows['error_data']['data']['imported_columns'].append(row[_col_index])
+                        except Exception:
+                            _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                            _l.debug('can\'t process inputs_raw: %s|%s', inputs_raw)
+                            error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
+                            inputs_error.append(i)
+
 
                 # _l.info('Row %s inputs_raw: %s' % (row_index, inputs_raw))
 

@@ -32,6 +32,11 @@ CLASSIFIER_HANDLER = [
     ['append', 'Append'],
 ]
 
+COLUMN_MATCHER_CHOICES = [
+    ['index', 'Index'],
+    ['name', 'Name']
+]
+
 
 
 class CsvImportScheme(NamedModel, DataTimeStampedModel):
@@ -50,6 +55,7 @@ class CsvImportScheme(NamedModel, DataTimeStampedModel):
 
     spreadsheet_start_cell = models.CharField(max_length=255, default='A1')
     spreadsheet_active_tab_name = models.CharField(max_length=255, default='', blank=True, null=True)
+    column_matcher = models.CharField(max_length=255, choices=COLUMN_MATCHER_CHOICES, default='index')
 
     class Meta:
         unique_together = (
@@ -82,6 +88,7 @@ class CsvImportSchemeCalculatedInput(models.Model):
 class CsvField(models.Model):
     column = models.IntegerField(default=0)
     name = models.CharField(max_length=255, blank=True, default='')
+    column_name = models.CharField(max_length=255, blank=True, null=True)
 
     name_expr = models.CharField(max_length=1000, default='', verbose_name=ugettext_lazy('name expression'))
 

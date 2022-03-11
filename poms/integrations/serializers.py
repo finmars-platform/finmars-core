@@ -1437,7 +1437,7 @@ class ComplexTransactionImportSchemeInputSerializer(serializers.ModelSerializer)
 
     class Meta:
         model = ComplexTransactionImportSchemeInput
-        fields = ['id', 'name', 'column', 'name_expr']
+        fields = ['id', 'name', 'column', 'name_expr', 'column_name']
 
 
 class ComplexTransactionImportSchemeCalculatedInputSerializer(serializers.ModelSerializer):
@@ -1610,6 +1610,7 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
     recon_layout = serializers.JSONField(required=False, allow_null=True)
 
     delimiter = serializers.CharField(max_length=3, required=False, initial=',', default=',')
+    column_matcher = serializers.CharField(max_length=255, required=False, initial='index', default='index')
 
     class Meta:
         model = ComplexTransactionImportScheme
@@ -1621,7 +1622,7 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
                   'inputs', 'calculated_inputs', 'rule_scenarios', 'selector_values',
                   'recon_scenarios', 'recon_layout',
 
-                  'delimiter', 'error_handler', 'missing_data_handler'
+                  'delimiter', 'error_handler', 'missing_data_handler', 'column_matcher'
 
                   ]
 

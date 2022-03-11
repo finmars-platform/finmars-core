@@ -67,7 +67,7 @@ class CsvFieldSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CsvField
-        fields = ('column', 'name', 'name_expr')
+        fields = ('column', 'name', 'name_expr', 'column_name')
 
 
 class EntityFieldSerializer(serializers.ModelSerializer):
@@ -104,6 +104,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
     calculated_inputs = CsvImportSchemeCalculatedInputSerializer(many=True, read_only=False, required=False)
 
     delimiter = serializers.CharField(max_length=3, required=False, initial=',', default=',')
+    column_matcher = serializers.CharField(max_length=255, required=False, initial='index', default='index')
 
     class Meta:
 
@@ -114,7 +115,8 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
 
                   'spreadsheet_start_cell', 'spreadsheet_active_tab_name',
 
-                  'mode', 'delimiter', 'error_handler', 'missing_data_handler', 'classifier_handler'
+                  'mode', 'delimiter', 'error_handler', 'missing_data_handler', 'classifier_handler',
+                  'column_matcher'
 
                   )
 
@@ -308,6 +310,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
 
         scheme.mode = validated_data.get('mode', scheme.mode)
         scheme.delimiter = validated_data.get('delimiter', scheme.delimiter)
+        scheme.column_matcher = validated_data.get('column_matcher', scheme.column_matcher)
         scheme.error_handler = validated_data.get('error_handler', scheme.error_handler)
         scheme.missing_data_handler = validated_data.get('missing_data_handler', scheme.missing_data_handler)
         scheme.classifier_handler = validated_data.get('classifier_handler', scheme.classifier_handler)

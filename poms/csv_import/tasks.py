@@ -269,19 +269,35 @@ def generate_file_report_simple(instance, type, name):
         return None
 
 
-def get_row_data(row, csv_fields):
+def get_row_data(row, csv_fields, scheme, first_row):
     csv_row_dict = {}
 
-    for csv_field in csv_fields:
+    if scheme.column_matcher == 'index':
 
-        if csv_field.column - 1 < len(row):
-            row_value = row[csv_field.column - 1]
+        for csv_field in csv_fields:
 
-            csv_row_dict[csv_field.name] = row_value
+            if csv_field.column - 1 < len(row):
+                row_value = row[csv_field.column - 1]
 
-        else:
+                csv_row_dict[csv_field.name] = row_value
 
-            csv_row_dict[csv_field.name] = ''
+            else:
+
+                csv_row_dict[csv_field.name] = ''
+
+    if scheme.column_matcher == 'name':
+
+        index_map = {}
+        index = 0
+        for item in first_row:
+            index_map[item] = index
+            index = index + 1
+
+        for key, value in index_map.items():
+
+            for csv_field in csv_fields:
+                if key == csv_field.column_name:
+                    csv_row_dict[csv_field.name] = row[value]
 
     return csv_row_dict
 
@@ -471,7 +487,12 @@ def process_csv_file(master_user,
 
         _l.info('reader %s' % reader)
 
+    first_row = None
+
     for row_index, row in enumerate(reader):
+
+        if row_index == 0:
+            first_row = row
 
         if row_index != 0:
 
@@ -512,7 +533,7 @@ def process_csv_file(master_user,
                 }
 
                 try:
-                    csv_row_dict_raw = get_row_data(row, csv_fields)
+                    csv_row_dict_raw = get_row_data(row, csv_fields, scheme, first_row)
                 except Exception as e:
                     raise Exception("Can't get row data")
 

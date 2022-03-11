@@ -991,6 +991,11 @@ MISSING_DATA_CHOICES = [
     ['set_defaults', 'Replace with Default Value'],
 ]
 
+COLUMN_MATCHER_CHOICES = [
+    ['index', 'Index'],
+    ['name', 'Name']
+]
+
 class ComplexTransactionImportScheme(NamedModel, DataTimeStampedModel):
 
     SKIP = 1
@@ -1023,6 +1028,8 @@ class ComplexTransactionImportScheme(NamedModel, DataTimeStampedModel):
     spreadsheet_start_cell = models.CharField(max_length=255, default='A1')
     spreadsheet_active_tab_name = models.CharField(max_length=255, default='', blank=True, null=True)
 
+    column_matcher = models.CharField(max_length=255, choices=COLUMN_MATCHER_CHOICES, default='index')
+
     @property
     def recon_layout(self):
         try:
@@ -1051,6 +1058,7 @@ class ComplexTransactionImportSchemeInput(models.Model):
     # order = models.SmallIntegerField(default=0)
     name = models.CharField(max_length=255)
     column = models.SmallIntegerField()
+    column_name = models.CharField(max_length=255, blank=True, null=True)
 
     name_expr = models.CharField(max_length=1000, default='', verbose_name=ugettext_lazy('name expression'))
 
