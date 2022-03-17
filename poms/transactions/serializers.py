@@ -3503,7 +3503,10 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
                     try:
 
                         if fvalues.fields[k].label != 'notes':
-                            fvalues.fields[k].fail('required')
+
+                            if not 'context_' in fvalues.fields[k].label:
+
+                                fvalues.fields[k].fail('required')
 
                     except ValidationError as e:
                         errors[k] = e.detail
