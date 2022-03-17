@@ -97,7 +97,7 @@ class AbstractClassModel(models.Model):
 
 class FakeDeletableModel(models.Model):
     is_deleted = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is deleted'))
-    deleted_user_code =  models.CharField(max_length=25, null=True, blank=True, verbose_name=ugettext_lazy('deleted user code'))
+    deleted_user_code =  models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('deleted user code'))
 
     class Meta:
         abstract = True
