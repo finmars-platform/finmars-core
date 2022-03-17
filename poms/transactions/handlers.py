@@ -1966,7 +1966,7 @@ class TransactionTypeProcess(object):
         if bool(complex_transaction_errors):
             self.complex_transaction_errors.append(complex_transaction_errors)
 
-        self.complex_transaction.status = ComplexTransaction.PENDING
+        self.complex_transaction.status_id = ComplexTransaction.PENDING
 
         self.complex_transaction.save()
 
