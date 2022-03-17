@@ -301,6 +301,9 @@ class TransactionTypeProcess(object):
             if i.name in self.values:
                 continue
 
+            if 'context_' in i.name: # input could not be context
+                continue
+
             value = None
 
             if i.is_fill_from_context:
