@@ -48,8 +48,10 @@ class GeneratedEventProcess(TransactionTypeProcess):
         if generated_event.data:
             if generated_event.data['actions_parameters']:
 
-                for key, value in generated_event.data['actions_parameters'][action.button_position].items():
-                    context_values[key] = value
+                if action.button_position in generated_event.data['actions_parameters']:
+
+                    for key, value in generated_event.data['actions_parameters'][action.button_position].items():
+                        context_values[key] = value
 
         kwargs['context_values'] = context_values
 
