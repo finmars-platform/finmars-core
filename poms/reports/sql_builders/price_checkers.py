@@ -21,7 +21,7 @@ from django.conf import settings
 _l = logging.getLogger('poms.reports')
 
 
-def execute_nav_sql(instance, cursor, ecosystem_defaults):
+def execute_nav_sql(date, instance, cursor, ecosystem_defaults):
 
     # language=PostgreSQL
     query = """
@@ -454,7 +454,7 @@ def execute_nav_sql(instance, cursor, ecosystem_defaults):
 
     transaction_filter_sql_string = get_transaction_filter_sql_string(instance)
 
-    query = query.format(report_date=instance.report_date,
+    query = query.format(report_date=date,
                          master_user_id=instance.master_user.id,
                          default_currency_id=instance.master_user.system_currency_id,
                          report_currency_id=instance.report_currency.id,
@@ -480,7 +480,7 @@ def execute_nav_sql(instance, cursor, ecosystem_defaults):
     return result
 
 
-def execute_transaction_prices_sql(instance, cursor, ecosystem_defaults):
+def execute_transaction_prices_sql(date, instance, cursor, ecosystem_defaults):
 
     # language=PostgreSQL
     query = """
@@ -644,7 +644,7 @@ def execute_transaction_prices_sql(instance, cursor, ecosystem_defaults):
 
     transaction_filter_sql_string = get_transaction_filter_sql_string(instance)
 
-    query = query.format(report_date=instance.report_date,
+    query = query.format(report_date=date,
                          master_user_id=instance.master_user.id,
                          default_currency_id=instance.master_user.system_currency_id,
                          report_currency_id=instance.report_currency.id,
@@ -673,6 +673,7 @@ def execute_transaction_prices_sql(instance, cursor, ecosystem_defaults):
 
     return result
 
+
 class PriceHistoryCheckerSql:
 
     def __init__(self, instance=None):
@@ -691,7 +692,34 @@ class PriceHistoryCheckerSql:
 
             self.instance.items = []
 
-            positions = execute_nav_sql(self.instance, cursor, self.ecosystem_defaults)
+            # pl first date
+
+            if self.instance.pl_first_date:
+                positions = execute_nav_sql(self.instance.pl_first_date, self.instance, cursor, self.ecosystem_defaults)
+
+                for item in positions:
+                    if item['user_code'] != '-' and item['name'] != '-':
+
+                        item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
+
+                        if item['type'] == 'missing_principal_pricing_history':
+                            if item['position_size']:
+                                self.instance.items.append(item)
+                        else:
+                            self.instance.items.append(item)
+
+                # self.instance.items = self.instance.items + positions
+
+                transactions = execute_transaction_prices_sql(self.instance.pl_first_date, self.instance, cursor, self.ecosystem_defaults)
+
+                _l.debug('transactions %s ' % len(transactions))
+
+                self.instance.items = self.instance.items + transactions
+
+
+            # report date
+
+            positions = execute_nav_sql(self.instance.report_date, self.instance, cursor, self.ecosystem_defaults)
 
             for item in positions:
                 if item['user_code'] != '-' and item['name'] != '-':
@@ -706,11 +734,36 @@ class PriceHistoryCheckerSql:
 
             # self.instance.items = self.instance.items + positions
 
-            transactions = execute_transaction_prices_sql(self.instance, cursor, self.ecosystem_defaults)
+            transactions = execute_transaction_prices_sql(self.instance.report_date, self.instance, cursor, self.ecosystem_defaults)
 
             _l.debug('transactions %s ' % len(transactions))
 
             self.instance.items = self.instance.items + transactions
+
+            unique_items_dict = {}
+            unique_items = []
+
+            for item in self.instance.items:
+
+                try:
+                    if 'user_code' in item:
+                        unique_items_dict[item['type'] + '_' + item['user_code']] = item
+                    elif 'name' in item:
+                        unique_items_dict[item['type'] + '_' + item['name']] = item
+                    elif 'transaction_currency_user_code' in item:
+                        unique_items_dict[item['type'] + '_' + item['transaction_currency_user_code']] = item
+                    elif 'settlement_currency_user_code' in item:
+                        unique_items_dict[item['type'] + '_' + item['settlement_currency_user_code']] = item
+                except Exception as e:
+                    _l.info('error %s' % e)
+                    _l.info(item)
+
+            for key, value in unique_items_dict.items():
+
+                unique_items.append(unique_items_dict[key])
+
+
+            self.instance.items = unique_items
 
 
         self.add_data_items()
@@ -784,6 +837,19 @@ class PriceHistoryCheckerSql:
 
                 if item['transaction_currency_id'] == dash_currency.id:
                     is_not_dash = False
+
+            if item['type'] == 'stl_cur_fx':
+                currencies_ids.append(item['transaction_currency_id'])
+
+                if item['transaction_currency_id'] == dash_currency.id:
+                    is_not_dash = False
+
+            if item['type'] == 'rep_fx_var':
+                currencies_ids.append(item['transaction_currency_id'])
+
+                if item['transaction_currency_id'] == dash_currency.id:
+                    is_not_dash = False
+
 
             if is_not_dash:
                 items_without_dash_currency.append(item)
