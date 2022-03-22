@@ -198,6 +198,7 @@ class ImportManager(object):
         self.configuration_recovery_handler = ConfigurationRecoveryHandler(master_user=self.master_user)
 
         _l.info('self.master_user %s ' % self.master_user)
+        _l.info('self.instance.mode %s ' % self.instance.mode)
         # _l.info('self.class instance %s' % self.master_user.__class__.__name__)
 
     def count_progress_total(self):
@@ -546,11 +547,13 @@ class ImportManager(object):
                                 except Exception as error:
                                     _l.info('import_attribute_types overwrite error %s' % error)
                                     stats['status'] = 'error'
+                                    stats['error']['message'] = 'Overwrite error. %s' % error
                                     # stats['message'] = error
 
                             else:
                                 _l.info('error %s' % error)
                                 stats['status'] = 'error'
+                                stats['error']['message'] = 'Create error. %s' % error
                                 # stats['message'] = error
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
@@ -643,6 +646,7 @@ class ImportManager(object):
 
                                 _l.info('error %s' % error)
                                 stats['status'] = 'error'
+                                stats['error']['message'] = 'Overwrite error. %s' % error
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -695,6 +699,7 @@ class ImportManager(object):
                             else:
                                 _l.info('error %s' % error)
                                 stats['status'] = 'error'
+                                stats['error']['message'] = 'Overwrite error. %s' % error
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -747,6 +752,7 @@ class ImportManager(object):
                             else:
                                 _l.info('error %s' % error)
                                 stats['status'] = 'error'
+                                stats['error']['message'] = 'Overwrite error. %s' % error
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -815,6 +821,7 @@ class ImportManager(object):
                             else:
                                 _l.info('error %s' % error)
                                 stats['status'] = 'error'
+                                stats['error']['message'] = 'Overwrite error. %s' % error
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -922,6 +929,7 @@ class ImportManager(object):
 
                                 _l.info('error %s' % error)
                                 stats['status'] = 'error'
+                                stats['error']['message'] = 'Overwrite error. %s' % error
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -975,6 +983,7 @@ class ImportManager(object):
 
                                 _l.info('error %s' % error)
                                 stats['status'] = 'error'
+                                stats['error']['message'] = 'Overwrite error. %s' % error
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -1029,6 +1038,7 @@ class ImportManager(object):
 
                                 _l.info('error %s' % error)
                                 stats['status'] = 'error'
+                                stats['error']['message'] = 'Overwrite error. %s' % error
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
