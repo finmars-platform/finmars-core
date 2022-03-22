@@ -986,7 +986,7 @@ class ValidateHandler:
                 instance.full_clean()
 
         except CoreValidationError as e:
-            
+
             _l.info('instance_full_clean  e %s' % e)
 
             error_row['error_reaction'] = 'Continue import'
@@ -1523,6 +1523,30 @@ class ImportHandler:
                                                                               'error': e
                                                                           })
 
+    def add_instrument_to_download_queue(self, scheme, result_item, error_handler, error_row, member, master_user):
+
+        from poms.integrations.tasks import download_instrument_cbond_task
+
+        if scheme.instrument_reference_column:
+            user_code = result_item[scheme.instrument_reference_column]
+
+            task = Task(
+                master_user=master_user,
+                member=member,
+                status=Task.STATUS_PENDING,
+                action='csv_import_instrument_download_from_provider',
+            )
+
+            task.options_object = {
+                'user_code': user_code
+            }
+            task.save()
+
+            download_instrument_cbond_task.apply_async(kwargs={'task_id': task.id})
+        else:
+            _l.info("ISIN For instrument download is not found")
+
+
     def import_result(self, result_item, error_row, scheme, error_handler, mode, member, master_user):
 
         # _l.debug('ImportHandler.result_item %s' % result_item)
@@ -1554,6 +1578,10 @@ class ImportHandler:
             error_row['level'] = 'error'
             error_row['error_message'] = error_row['error_message'] + error_row[
                 'error_message']
+
+        if scheme.content_type.model == 'instrument' and scheme.instrument_reference_column:
+            self.add_instrument_to_download_queue(scheme, result_item, error_handler, error_row, member, master_user)
+
 
         return result_item, error_row
 

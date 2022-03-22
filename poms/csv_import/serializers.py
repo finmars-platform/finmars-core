@@ -116,7 +116,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
                   'spreadsheet_start_cell', 'spreadsheet_active_tab_name',
 
                   'mode', 'delimiter', 'error_handler', 'missing_data_handler', 'classifier_handler',
-                  'column_matcher'
+                  'column_matcher', 'instrument_reference_column'
 
                   )
 
@@ -305,6 +305,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
         scheme.filter_expr = validated_data.get('filter_expr', scheme.filter_expr)
         scheme.spreadsheet_start_cell = validated_data.get('spreadsheet_start_cell', scheme.spreadsheet_start_cell)
         scheme.spreadsheet_active_tab_name = validated_data.get('spreadsheet_active_tab_name', scheme.spreadsheet_active_tab_name)
+        scheme.instrument_reference_column = validated_data.get('instrument_reference_column', scheme.instrument_reference_column)
 
         # 'mode', 'delimiter', 'error_handler', 'missing_data_handler', 'classifier_handler'
 

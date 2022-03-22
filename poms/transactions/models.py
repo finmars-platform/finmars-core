@@ -746,14 +746,17 @@ class RebookReactionChoice():
     CLEAR_AND_WRITE_OR_SKIP = 6
     CLEAR = 7
 
+    TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT = 8
+
     choices = ((CREATE, 'Create'),  # simple entity create
                (SKIP, 'Skip'),  # skip creating of entity
                (OVERWRITE, 'Overwrite'),  # rewrite entity if the same user_code already exists, if not -> create
                (CLEAR_AND_WRITE, 'Clear all & Create'),
                # Special rewrite for entities without user_code (e.g.  Accruals schedule in Instrument)
                (CREATE_IF_NOT_EXIST, 'Create if not exist'),
-               (CLEAR_AND_WRITE_OR_SKIP, 'If book: Clear & Append. If rebook: Skip')
+               (CLEAR_AND_WRITE_OR_SKIP, 'If book: Clear & Append. If rebook: Skip'),
                # Create if there is no entity with same user_code, otherwise skip
+               (TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT, 'Try download if error create default')
                )
 
 

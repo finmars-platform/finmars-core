@@ -567,7 +567,7 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
         if request.method == 'GET':
 
             instance = TransactionTypeProcess(process_mode='book', transaction_type=transaction_type,
-                                              context=self.get_serializer_context(), context_values=context_values)
+                                              context=self.get_serializer_context(), context_values=context_values, member=request.user.member)
 
             serializer = self.get_serializer(instance=instance)
             return Response(serializer.data)
@@ -581,7 +581,7 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
                                               transaction_type=transaction_type,
                                               context=self.get_serializer_context(), context_values=context_values,
                                               complex_transaction_status=complex_transaction_status,
-                                              uniqueness_reaction=uniqueness_reaction)
+                                              uniqueness_reaction=uniqueness_reaction, member=request.user.member)
 
             try:
                 history.set_flag_addition()
@@ -607,7 +607,7 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
 
         instance = TransactionTypeProcess(process_mode='book', transaction_type=transaction_type,
                                           context=self.get_serializer_context(),
-                                          complex_transaction_status=complex_transaction_status)
+                                          complex_transaction_status=complex_transaction_status, member=request.user.member)
 
         if request.method == 'GET':
             serializer = self.get_serializer(instance=instance)
@@ -648,7 +648,7 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
         instance = TransactionTypeProcess(process_mode=request.data['process_mode'], transaction_type=transaction_type,
                                           context=self.get_serializer_context(), context_values=context_values,
                                           complex_transaction_status=complex_transaction_status,
-                                          uniqueness_reaction=uniqueness_reaction)
+                                          uniqueness_reaction=uniqueness_reaction, member=request.user.member)
 
         _l.debug('rebook TransactionTypeProcess done: %s', "{:3.3f}".format(time.perf_counter() - process_st))
 
@@ -1332,7 +1332,7 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
             instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
                                               process_mode='rebook',
                                               complex_transaction=complex_transaction,
-                                              context=self.get_serializer_context())
+                                              context=self.get_serializer_context(), member=request.user.member)
 
             serializer = self.get_serializer(instance=instance)
             return Response(serializer.data)
@@ -1351,7 +1351,7 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
                                               complex_transaction=complex_transaction,
                                               complex_transaction_status=request.data['complex_transaction_status'],
                                               context=self.get_serializer_context(),
-                                              uniqueness_reaction=uniqueness_reaction)
+                                              uniqueness_reaction=uniqueness_reaction, member=request.user.member)
 
             _l.debug('rebook TransactionTypeProcess done: %s', "{:3.3f}".format(time.perf_counter() - process_st))
 
@@ -1393,7 +1393,7 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
                                           process_mode=request.data['process_mode'],
                                           complex_transaction=complex_transaction,
                                           context=self.get_serializer_context(),
-                                          uniqueness_reaction=uniqueness_reaction)
+                                          uniqueness_reaction=uniqueness_reaction, member=request.user.member)
 
         _l.debug('rebook TransactionTypeProcess done: %s', "{:3.3f}".format(time.perf_counter() - process_st))
 
@@ -1421,7 +1421,7 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
         instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
                                           process_mode='rebook',
                                           complex_transaction=complex_transaction,
-                                          context=self.get_serializer_context())
+                                          context=self.get_serializer_context(), member=request.user.member)
         if request.method == 'GET':
             serializer = self.get_serializer(instance=instance)
             return Response(serializer.data)

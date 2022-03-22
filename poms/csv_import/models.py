@@ -53,6 +53,8 @@ class CsvImportScheme(NamedModel, DataTimeStampedModel):
     missing_data_handler = models.CharField(max_length=255, choices=MISSING_DATA_CHOICES, default='throw_error')
     classifier_handler = models.CharField(max_length=255, choices=CLASSIFIER_HANDLER, default='skip')
 
+    instrument_reference_column = models.CharField(max_length=255, default='', blank=True, null=True)
+
     spreadsheet_start_cell = models.CharField(max_length=255, default='A1')
     spreadsheet_active_tab_name = models.CharField(max_length=255, default='', blank=True, null=True)
     column_matcher = models.CharField(max_length=255, choices=COLUMN_MATCHER_CHOICES, default='index')

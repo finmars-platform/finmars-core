@@ -73,11 +73,13 @@ class TransactionTypeProcess(object):
                  now=None,
                  context=None,  # for formula engine
                  context_values=None, # context_values = CONTEXT VARIABLES
-                 uniqueness_reaction=None):
+                 uniqueness_reaction=None,
+                 member=None):
 
         self.transaction_type = transaction_type
 
         master_user = self.transaction_type.master_user
+        self.member = member
 
         self.process_mode = process_mode
 
@@ -274,6 +276,8 @@ class TransactionTypeProcess(object):
         self.values.update(self.default_values)
         self.values.update(self.context_values)
 
+        _l.info("Transaction type values %s" % self.values)
+
         # if complex transaction already exists
         if self.complex_transaction and self.complex_transaction.id is not None and self.complex_transaction.id > 0:
             # load previous values if need
@@ -347,6 +351,7 @@ class TransactionTypeProcess(object):
                             self._set_eval_error(errors, i.name, i.value, e)
                             self.value_errors.append(errors)
                             _l.debug("ERROR Set from default. input %s" % i.name)
+                            _l.debug("ERROR Set from default. error %s" % e)
                             value = None
 
             if value or value == 0:
@@ -356,7 +361,7 @@ class TransactionTypeProcess(object):
 
         # _l.debug('setvalues %s' % self.values)
 
-    def book_create_instruments(self, actions, master_user, instrument_map):
+    def book_create_instruments(self, actions, master_user, instrument_map, pass_download=False):
 
         object_permissions = self.transaction_type.object_permissions.select_related('permission').all()
         daily_pricing_model = DailyPricingModel.objects.get(pk=DailyPricingModel.SKIP)
@@ -369,184 +374,200 @@ class TransactionTypeProcess(object):
 
             if action_instrument and self.execute_action_condition(action_instrument):
 
-                _l.debug('action_instrument %s' % action_instrument)
-                _l.debug('self.process_mode == self.MODE_REBOOK')
-                _l.debug('self.process_mode %s ' % self.process_mode)
-                _l.debug(self.process_mode == self.MODE_REBOOK)
-                _l.debug('action_instrument.rebook_reaction %s' % action_instrument.rebook_reaction)
+                if  action_instrument.rebook_reaction == RebookReactionChoice.TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT and pass_download == False:
 
-                _l.debug('process instrument: %s', action_instrument)
-                errors = {}
-                try:
-                    user_code = formula.safe_eval(action_instrument.user_code, names=self.values, now=self._now,
-                                                  context=self._context)
-                except formula.InvalidExpression as e:
-                    self._set_eval_error(errors, 'user_code', action_instrument.user_code, e)
-                    user_code = None
-
-                instrument = None
-                instrument_exists = False
-
-                ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
-
-                if user_code:
                     try:
+                        from poms.integrations.tasks import download_instrument_cbond
+                        _l.info("Trying to download instrument from provider")
+                        task = download_instrument_cbond(action_instrument.user_code, master_user, self.member)
 
-                        instrument = Instrument.objects.get(master_user=master_user, user_code=user_code,
-                                                            is_deleted=False)
-                        instrument_exists = True
+                        instrument = Instrument.objects.get(id=task.result_object['instrument_id'])
 
-                        _l.debug('Instrument found by user code')
+                        instrument_map[action.id] = instrument
 
-                    except Instrument.DoesNotExist:
+                    except Exception as e:
+                        self.book_create_instruments(actions, master_user, instrument_map, pass_download=True)
 
-                        _l.debug("Instrument DoesNotExist exception")
-                        _l.debug("action_instrument.rebook_reaction %s " % action_instrument.rebook_reaction)
-                        _l.debug("RebookReactionChoice.FIND_OR_CREATE %s" % RebookReactionChoice.FIND_OR_CREATE)
-                        _l.debug("self.process_mode %s" % self.process_mode)
-                        _l.debug("self.MODE_REBOOK %s" % self.MODE_REBOOK)
+                else:
 
-                        if action_instrument.rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and \
-                                self.process_mode == self.MODE_REBOOK:
-                            instrument = ecosystem_default.instrument
+                    _l.debug('action_instrument %s' % action_instrument)
+                    _l.debug('self.process_mode == self.MODE_REBOOK')
+                    _l.debug('self.process_mode %s ' % self.process_mode)
+                    _l.debug(self.process_mode == self.MODE_REBOOK)
+                    _l.debug('action_instrument.rebook_reaction %s' % action_instrument.rebook_reaction)
+
+                    _l.debug('process instrument: %s', action_instrument)
+                    errors = {}
+                    try:
+                        user_code = formula.safe_eval(action_instrument.user_code, names=self.values, now=self._now,
+                                                      context=self._context)
+                    except formula.InvalidExpression as e:
+                        self._set_eval_error(errors, 'user_code', action_instrument.user_code, e)
+                        user_code = None
+
+                    instrument = None
+                    instrument_exists = False
+
+                    ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+
+                    if user_code:
+                        try:
+
+                            instrument = Instrument.objects.get(master_user=master_user, user_code=user_code,
+                                                                is_deleted=False)
                             instrument_exists = True
 
-                            _l.debug('Rebook: Instrument is not exists, return Default %s' % instrument.user_code)
+                            _l.debug('Instrument found by user code')
 
-                if instrument is None:
-                    instrument = Instrument(master_user=master_user, user_code=user_code)
-                    _l.debug("Instrument is not exists. Create new.")
+                        except Instrument.DoesNotExist:
 
-                # instrument.user_code = user_code
+                            _l.debug("Instrument DoesNotExist exception")
+                            _l.debug("action_instrument.rebook_reaction %s " % action_instrument.rebook_reaction)
+                            _l.debug("RebookReactionChoice.FIND_OR_CREATE %s" % RebookReactionChoice.FIND_OR_CREATE)
+                            _l.debug("self.process_mode %s" % self.process_mode)
+                            _l.debug("self.MODE_REBOOK %s" % self.MODE_REBOOK)
 
-                _l.debug('instrument.user_code %s ' % instrument.user_code)
+                            if action_instrument.rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and \
+                                    self.process_mode == self.MODE_REBOOK:
+                                instrument = ecosystem_default.instrument
+                                instrument_exists = True
 
-                if instrument.user_code != '-' and instrument.user_code != ecosystem_default.instrument.user_code:
+                                _l.debug('Rebook: Instrument is not exists, return Default %s' % instrument.user_code)
 
-                    self._set_val(errors=errors, values=self.values, default_value='',
-                                  target=instrument, target_attr_name='name',
-                                  source=action_instrument, source_attr_name='name')
-                    self._set_val(errors=errors, values=self.values, default_value='',
-                                  target=instrument, target_attr_name='short_name',
-                                  source=action_instrument, source_attr_name='short_name')
-                    self._set_val(errors=errors, values=self.values, default_value='',
-                                  target=instrument, target_attr_name='public_name',
-                                  source=action_instrument, source_attr_name='public_name')
+                    if instrument is None:
+                        instrument = Instrument(master_user=master_user, user_code=user_code)
+                        _l.debug("Instrument is not exists. Create new.")
 
-                    if getattr(action_instrument, 'notes'):
+                    # instrument.user_code = user_code
+
+                    _l.debug('instrument.user_code %s ' % instrument.user_code)
+
+                    if instrument.user_code != '-' and instrument.user_code != ecosystem_default.instrument.user_code:
+
                         self._set_val(errors=errors, values=self.values, default_value='',
-                                      target=instrument, target_attr_name='notes',
-                                      source=action_instrument, source_attr_name='notes')
+                                      target=instrument, target_attr_name='name',
+                                      source=action_instrument, source_attr_name='name')
+                        self._set_val(errors=errors, values=self.values, default_value='',
+                                      target=instrument, target_attr_name='short_name',
+                                      source=action_instrument, source_attr_name='short_name')
+                        self._set_val(errors=errors, values=self.values, default_value='',
+                                      target=instrument, target_attr_name='public_name',
+                                      source=action_instrument, source_attr_name='public_name')
 
-                    self._set_rel(errors=errors,
-                                  target=instrument, target_attr_name='instrument_type',
-                                  model=InstrumentType,
-                                  source=action_instrument, source_attr_name='instrument_type',
-                                  values=self.values, default_value=master_user.instrument_type)
-                    self._set_rel(errors=errors, values=self.values, default_value=master_user.currency,
-                                  model=Currency,
-                                  target=instrument, target_attr_name='pricing_currency',
-                                  source=action_instrument, source_attr_name='pricing_currency')
-                    self._set_val(errors=errors, values=self.values, default_value=0.0,
-                                  target=instrument, target_attr_name='price_multiplier',
-                                  source=action_instrument, source_attr_name='price_multiplier')
-                    self._set_rel(errors=errors, values=self.values, default_value=master_user.currency,
-                                  model=Currency,
-                                  target=instrument, target_attr_name='accrued_currency',
-                                  source=action_instrument, source_attr_name='accrued_currency')
-                    self._set_val(errors=errors, values=self.values, default_value=0.0,
-                                  target=instrument, target_attr_name='accrued_multiplier',
-                                  source=action_instrument, source_attr_name='accrued_multiplier')
-                    self._set_rel(errors=errors, values=self.values, default_value=None,
-                                  target=instrument, target_attr_name='payment_size_detail',
-                                  model=PaymentSizeDetail,
-                                  source=action_instrument, source_attr_name='payment_size_detail')
-                    self._set_val(errors=errors, values=self.values, default_value=0.0,
-                                  target=instrument, target_attr_name='default_price',
-                                  source=action_instrument, source_attr_name='default_price')
-                    self._set_val(errors=errors, values=self.values, default_value=0.0,
-                                  target=instrument, target_attr_name='default_accrued',
-                                  source=action_instrument, source_attr_name='default_accrued')
-                    self._set_val(errors=errors, values=self.values, default_value='',
-                                  target=instrument, target_attr_name='user_text_1',
-                                  source=action_instrument, source_attr_name='user_text_1')
-                    self._set_val(errors=errors, values=self.values, default_value='',
-                                  target=instrument, target_attr_name='user_text_2',
-                                  source=action_instrument, source_attr_name='user_text_2')
-                    self._set_val(errors=errors, values=self.values, default_value='',
-                                  target=instrument, target_attr_name='user_text_3',
-                                  source=action_instrument, source_attr_name='user_text_3')
-                    self._set_val(errors=errors, values=self.values, default_value='',
-                                  target=instrument, target_attr_name='reference_for_pricing',
-                                  source=action_instrument, source_attr_name='reference_for_pricing')
-                    self._set_val(errors=errors, values=self.values, default_value=date.max,
-                                  target=instrument, target_attr_name='maturity_date',
-                                  source=action_instrument, source_attr_name='maturity_date',
-                                  validator=formula.validate_date)
-                    self._set_val(errors=errors, values=self.values, default_value=0.0,
-                                  target=instrument, target_attr_name='maturity_price',
-                                  source=action_instrument, source_attr_name='maturity_price')
+                        if getattr(action_instrument, 'notes'):
+                            self._set_val(errors=errors, values=self.values, default_value='',
+                                          target=instrument, target_attr_name='notes',
+                                          source=action_instrument, source_attr_name='notes')
 
-                try:
+                        self._set_rel(errors=errors,
+                                      target=instrument, target_attr_name='instrument_type',
+                                      model=InstrumentType,
+                                      source=action_instrument, source_attr_name='instrument_type',
+                                      values=self.values, default_value=master_user.instrument_type)
+                        self._set_rel(errors=errors, values=self.values, default_value=master_user.currency,
+                                      model=Currency,
+                                      target=instrument, target_attr_name='pricing_currency',
+                                      source=action_instrument, source_attr_name='pricing_currency')
+                        self._set_val(errors=errors, values=self.values, default_value=0.0,
+                                      target=instrument, target_attr_name='price_multiplier',
+                                      source=action_instrument, source_attr_name='price_multiplier')
+                        self._set_rel(errors=errors, values=self.values, default_value=master_user.currency,
+                                      model=Currency,
+                                      target=instrument, target_attr_name='accrued_currency',
+                                      source=action_instrument, source_attr_name='accrued_currency')
+                        self._set_val(errors=errors, values=self.values, default_value=0.0,
+                                      target=instrument, target_attr_name='accrued_multiplier',
+                                      source=action_instrument, source_attr_name='accrued_multiplier')
+                        self._set_rel(errors=errors, values=self.values, default_value=None,
+                                      target=instrument, target_attr_name='payment_size_detail',
+                                      model=PaymentSizeDetail,
+                                      source=action_instrument, source_attr_name='payment_size_detail')
+                        self._set_val(errors=errors, values=self.values, default_value=0.0,
+                                      target=instrument, target_attr_name='default_price',
+                                      source=action_instrument, source_attr_name='default_price')
+                        self._set_val(errors=errors, values=self.values, default_value=0.0,
+                                      target=instrument, target_attr_name='default_accrued',
+                                      source=action_instrument, source_attr_name='default_accrued')
+                        self._set_val(errors=errors, values=self.values, default_value='',
+                                      target=instrument, target_attr_name='user_text_1',
+                                      source=action_instrument, source_attr_name='user_text_1')
+                        self._set_val(errors=errors, values=self.values, default_value='',
+                                      target=instrument, target_attr_name='user_text_2',
+                                      source=action_instrument, source_attr_name='user_text_2')
+                        self._set_val(errors=errors, values=self.values, default_value='',
+                                      target=instrument, target_attr_name='user_text_3',
+                                      source=action_instrument, source_attr_name='user_text_3')
+                        self._set_val(errors=errors, values=self.values, default_value='',
+                                      target=instrument, target_attr_name='reference_for_pricing',
+                                      source=action_instrument, source_attr_name='reference_for_pricing')
+                        self._set_val(errors=errors, values=self.values, default_value=date.max,
+                                      target=instrument, target_attr_name='maturity_date',
+                                      source=action_instrument, source_attr_name='maturity_date',
+                                      validator=formula.validate_date)
+                        self._set_val(errors=errors, values=self.values, default_value=0.0,
+                                      target=instrument, target_attr_name='maturity_price',
+                                      source=action_instrument, source_attr_name='maturity_price')
 
-                    rebook_reaction = action_instrument.rebook_reaction
+                    try:
 
-                    _l.debug('rebook_reaction %s' % rebook_reaction)
-                    _l.debug('instrument_exists %s' % instrument_exists)
+                        rebook_reaction = action_instrument.rebook_reaction
 
-                    if self.process_mode == self.MODE_REBOOK:
+                        _l.debug('rebook_reaction %s' % rebook_reaction)
+                        _l.debug('instrument_exists %s' % instrument_exists)
 
-                        if rebook_reaction == RebookReactionChoice.OVERWRITE:
-                            _l.debug('Rebook  OVERWRITE')
+                        if self.process_mode == self.MODE_REBOOK:
 
+                            if rebook_reaction == RebookReactionChoice.OVERWRITE:
+                                _l.debug('Rebook  OVERWRITE')
+
+                                instrument.save()
+
+                            if rebook_reaction == RebookReactionChoice.CREATE and not instrument_exists:
+                                _l.debug('Rebook CREATE')
+
+                                instrument.save()
+
+                            if rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and not instrument_exists:
+                                _l.debug('Rebook FIND_OR_CREATE')
+
+                                instrument.save()
+
+                        else:
+
+                            if rebook_reaction == RebookReactionChoice.OVERWRITE:
+                                _l.debug('Book  OVERWRITE')
+
+                                instrument.save()
+
+                            if rebook_reaction == RebookReactionChoice.CREATE and not instrument_exists:
+                                _l.debug('Book  CREATE')
+
+                                instrument.save()
+
+                            if rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and not instrument_exists:
+                                _l.debug('Book  FIND_OR_CREATE')
+
+                                instrument.save()
+
+                        if rebook_reaction is None:
                             instrument.save()
 
-                        if rebook_reaction == RebookReactionChoice.CREATE and not instrument_exists:
-                            _l.debug('Rebook CREATE')
+                        self._instrument_assign_permission(instrument, object_permissions)
 
-                            instrument.save()
+                    except (ValueError, TypeError, IntegrityError):
 
-                        if rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and not instrument_exists:
-                            _l.debug('Rebook FIND_OR_CREATE')
-
-                            instrument.save()
-
+                        self._add_err_msg(errors, 'non_field_errors',
+                                          ugettext('Invalid instrument action fields (please, use type convertion).'))
+                    except DatabaseError:
+                        self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
                     else:
+                        instrument_map[action.id] = instrument
+                    finally:
 
-                        if rebook_reaction == RebookReactionChoice.OVERWRITE:
-                            _l.debug('Book  OVERWRITE')
+                        _l.debug("Instrument action errors %s " % errors)
 
-                            instrument.save()
-
-                        if rebook_reaction == RebookReactionChoice.CREATE and not instrument_exists:
-                            _l.debug('Book  CREATE')
-
-                            instrument.save()
-
-                        if rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and not instrument_exists:
-                            _l.debug('Book  FIND_OR_CREATE')
-
-                            instrument.save()
-
-                    if rebook_reaction is None:
-                        instrument.save()
-
-                    self._instrument_assign_permission(instrument, object_permissions)
-
-                except (ValueError, TypeError, IntegrityError):
-
-                    self._add_err_msg(errors, 'non_field_errors',
-                                      ugettext('Invalid instrument action fields (please, use type convertion).'))
-                except DatabaseError:
-                    self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
-                else:
-                    instrument_map[action.id] = instrument
-                finally:
-
-                    _l.debug("Instrument action errors %s " % errors)
-
-                    if bool(errors):
-                        self.instruments_errors.append(errors)
+                        if bool(errors):
+                            self.instruments_errors.append(errors)
 
         return instrument_map
 

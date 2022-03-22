@@ -359,14 +359,13 @@ def create_instrument_cbond(data, master_user, member):
 
 
 
-def download_instrument_cbond(instrument_code=None, master_user=None, member=None,
-                        task=None, value_overrides=None):
+def download_instrument_cbond(instrument_code=None, master_user=None, member=None):
 
     errors = []
 
     try:
-        _l.debug('download_instrument_cbond: master_user_id=%s, task=%s, instrument_code=%s',
-                 getattr(master_user, 'id', None), getattr(task, 'info', None), instrument_code)
+        _l.debug('download_instrument_cbond: master_user_id=%s, instrument_code=%s',
+                 getattr(master_user, 'id', None), instrument_code)
 
         options = {
 
@@ -428,7 +427,15 @@ def download_instrument_cbond(instrument_code=None, master_user=None, member=Non
                 errors.append("Could not parse response from broker. %s" % response.text)
                 return task, errors
             try:
-                instrument = create_instrument_cbond(data['data'], master_user, member)
+
+                if 'items' in data['data']:
+
+                    for item in data['data']['items']:
+                        instrument = create_instrument_cbond(item, master_user, member)
+
+                else:
+
+                    instrument = create_instrument_cbond(data['data'], master_user, member)
 
                 result = {
                     "instrument_id": instrument.pk
@@ -454,6 +461,14 @@ def download_instrument_cbond(instrument_code=None, master_user=None, member=Non
         errors.append('Something went wrong. %s' % str(e))
 
         return None, errors
+
+
+@shared_task(name='integrations.download_instrument_cbond_task', bind=True, ignore_result=False)
+def download_instrument_cbond_task(self, task_id):
+
+    task = Task.objects.get(pk=task_id)
+
+    download_instrument_cbond(task.options['user_code'], task.master_user, task.member)
 
 
 def download_unified_data(id=None, entity_type=None, master_user=None, member=None,
@@ -2091,7 +2106,8 @@ def complex_transaction_csv_file_import(self, task_id):
                             'master_user': instance.master_user,
                             'member': instance.member,
                         },
-                        uniqueness_reaction=instance.scheme.book_uniqueness_settings
+                        uniqueness_reaction=instance.scheme.book_uniqueness_settings,
+                        member=instance.member
                     )
                     tt_process.process()
 
