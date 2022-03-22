@@ -2437,8 +2437,6 @@ class ImportManager(object):
 
                     for content_object in item['content']:
 
-                        serializer = TransactionUserFieldSerializer(data=content_object,
-                                                                    context=self.get_serializer_context())
 
                         stats = {
                             'content_type': item['entity'],
@@ -2452,15 +2450,20 @@ class ImportManager(object):
 
                         try:
 
-                            serializer.is_valid(raise_exception=True)
 
                             try:
-                                serializer.instance = TransactionUserFieldModel.objects.get(
+                                instance = TransactionUserFieldModel.objects.get(
                                     master_user=self.master_user, key=content_object['key'])
-                            except TransactionUserFieldModel.DoesNotExist:
-                                pass
+                                instance.name = content_object['name']
+                                instance.is_active = content_object['is_active']
+                                instance.save()
 
-                            serializer.save()
+                            except TransactionUserFieldModel.DoesNotExist:
+                                TransactionUserFieldModel.objects.create(
+                                    is_active=content_object['is_active'], name=content_object['name'],
+                                    master_user=self.master_user, key=content_object['key'])
+
+
                         except Exception as error:
                             stats['status'] = 'error'
                             stats['error']['message'] = 'Transaction User Field %s already exists' % content_object['name']
