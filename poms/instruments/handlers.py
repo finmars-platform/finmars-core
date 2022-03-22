@@ -28,17 +28,17 @@ class GeneratedEventProcess(TransactionTypeProcess):
 
         context_values = kwargs.get('context_values', None) or {}
         context_values.update({
-            'instrument': generated_event.instrument,
-            'pricing_currency': generated_event.instrument.pricing_currency,
-            'accrued_currency': generated_event.instrument.accrued_currency,
-            'portfolio': generated_event.portfolio,
-            'account': generated_event.account,
-            'strategy1': generated_event.strategy1,
-            'strategy2': generated_event.strategy2,
-            'strategy3': generated_event.strategy3,
-            'position': generated_event.position,
-            'effective_date': generated_event.effective_date,
-            'notification_date': generated_event.notification_date,  # not in context variables
+            'context_instrument': generated_event.instrument,
+            'context_pricing_currency': generated_event.instrument.pricing_currency,
+            'context_accrued_currency': generated_event.instrument.accrued_currency,
+            'context_portfolio': generated_event.portfolio,
+            'context_account': generated_event.account,
+            'context_strategy1': generated_event.strategy1,
+            'context_strategy2': generated_event.strategy2,
+            'context_strategy3': generated_event.strategy3,
+            'context_position': generated_event.position,
+            'context_effective_date': generated_event.effective_date,
+            'context_notification_date': generated_event.notification_date,  # not in context variables
             # 'final_date': generated_event.event_schedule.final_date,
             # 'maturity_date': generated_event.instrument.maturity_date
         })
