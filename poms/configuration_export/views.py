@@ -2026,7 +2026,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         attr = GenericAttributeType.objects.get(pk=attribute_type["pk"])
 
-        serializer = GenericAttributeTypeSerializer([attr], many=True, show_classifiers=True,
+        serializer = GenericAttributeTypeSerializer([attr], many=True,
                                                     context={"member": self._member, "request": self._request})
 
         classifiers = serializer.data[0]["classifiers"]
