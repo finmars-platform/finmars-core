@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.utils.translation import ugettext_lazy
 from mptt.utils import get_cached_trees
 from rest_framework import serializers
@@ -365,14 +365,14 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
                   'value_type', 'order', 'is_hidden', 'classifiers', 'classifiers_flat']
 
     def __init__(self, *args, **kwargs):
-        show_classifiers = kwargs.pop('show_classifiers', False)
-        read_only_value_type = kwargs.pop('read_only_value_type', False)
+        # show_classifiers = kwargs.pop('show_classifiers', False)
+        # read_only_value_type = kwargs.pop('read_only_value_type', False)
         super(GenericAttributeTypeSerializer, self).__init__(*args, **kwargs)
-        if not show_classifiers:
-            self.fields.pop('classifiers', None)
-            self.fields.pop('classifiers_flat', None)
-        if read_only_value_type:
-            self.fields['value_type'].read_only = True
+        # if not show_classifiers:
+        #     self.fields.pop('classifiers', None)
+        #     self.fields.pop('classifiers_flat', None)
+        # if read_only_value_type:
+        #     self.fields['value_type'].read_only = True
 
     def validate(self, attrs):
         attrs = super(GenericAttributeTypeSerializer, self).validate(attrs)
@@ -406,6 +406,9 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
 
         self.create_attribute_for_entity_if_not_exist(instance)
 
+        # Do not delete, somehow this awfulness make it works
+        instance = GenericAttributeType.objects.get(id=instance.id)
+
         return instance
 
     def update(self, instance, validated_data):
@@ -415,8 +418,13 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
         instance = super(GenericAttributeTypeSerializer, self).update(instance, validated_data)
         if is_hidden is not empty:
             instance.options.update_or_create(member=member, defaults={'is_hidden': is_hidden})
+
         if classifiers is not empty:
             self.save_classifiers(instance, classifiers)
+
+        # Do not delete, somehow this awfulness make it works (same magic here)
+        instance = GenericAttributeType.objects.get(id=instance.id)
+
         return instance
 
     def save_classifiers(self, instance, classifier_tree):
@@ -432,6 +440,8 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
         processed = set()
         for node in classifier_tree:
             self.save_classifier(instance, node, None, processed)
+
+        print('save_classifiers instance.classifiers %s' % len(list(instance.classifiers.all())))
 
         instance.classifiers.exclude(pk__in=processed).delete()
 
@@ -461,11 +471,18 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
             for k, v in node.items():
                 setattr(o, k, v)
 
+            print('save o %s' % o)
+
             o.save()
+
+            print('save o  id %s' % o.id)
 
             self.create_classifier_node_mapping(instance, o)
 
-        except IntegrityError:
+        except IntegrityError as e:
+
+            print('classifier save error %s' % e)
+
             raise ValidationError("non unique user_code")
         processed.add(o.id)
 

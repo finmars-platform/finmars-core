@@ -153,9 +153,9 @@ class GenericAttributeTypeViewSet(AbstractModelViewSet):
             content_type=self.target_model_content_type)
 
     def get_serializer(self, *args, **kwargs):
-        kwargs.setdefault('show_classifiers',
-                          (self.action != 'list') or self.request.query_params.get('show_classifiers', None))
-        kwargs['read_only_value_type'] = (self.action != 'create')
+        # kwargs.setdefault('show_classifiers',
+        #                   (self.action != 'list') or self.request.query_params.get('show_classifiers', None))
+        # kwargs['read_only_value_type'] = (self.action != 'create')
         return super(GenericAttributeTypeViewSet, self).get_serializer(*args, **kwargs)
 
     @property

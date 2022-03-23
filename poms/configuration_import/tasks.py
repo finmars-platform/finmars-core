@@ -510,6 +510,8 @@ class ImportManager(object):
 
                         content_object['content_type_id'] = content_type.id
 
+                        _l.info('content_object %s' % content_object)
+
                         serializer = GenericAttributeTypeSerializer(data=content_object,
                                                                     context=self.get_serializer_context())
 
