@@ -2054,11 +2054,12 @@ def set_events_for_instrument(instrument_object, data_object, instrument_type_ob
 
                 coupon_event['final_date'] = maturity
 
-                # M
-                expiration_event = instrument_object['event_schedules'][1]
+                if len(instrument_object['event_schedules']) == 2:
+                    # M
+                    expiration_event = instrument_object['event_schedules'][1]
 
-                expiration_event['effective_date'] = maturity
-                expiration_event['final_date'] = maturity
+                    expiration_event['effective_date'] = maturity
+                    expiration_event['final_date'] = maturity
 
         if instrument_type in ['bond_futures', 'fx_forwards', 'forwards', 'futures', 'commodity_futures',
                                'call_options', 'etfs', 'funds',
