@@ -374,7 +374,15 @@ class TransactionTypeProcess(object):
 
             if action_instrument and self.execute_action_condition(action_instrument):
 
-                if  action_instrument.rebook_reaction == RebookReactionChoice.TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT and pass_download == False:
+                exist = False
+
+                try:
+                    inst = Instrument.objects.get(user_code=action_instrument.user_code, master_user=master_user)
+                    exist = True
+                except Instrument.DoesNotExist:
+                    exist = False
+
+                if not exist and action_instrument.rebook_reaction == RebookReactionChoice.TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT and pass_download == False:
 
                     try:
                         from poms.integrations.tasks import download_instrument_cbond
