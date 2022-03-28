@@ -17,6 +17,7 @@ from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string,
     get_position_consolidation_for_select, get_pl_left_join_consolidation, dictfetchall, \
     get_cash_consolidation_for_select, get_cash_as_position_consolidation_for_select
 from poms.reports.sql_builders.pl import PLReportBuilderSql
+from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.users.models import EcosystemDefault
 from django.conf import settings
 
@@ -1752,6 +1753,28 @@ class BalanceReportBuilderSql:
             'attributes__classifier',
         ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
+    def add_data_items_strategies1(self, ids):
+        self.instance.item_strategies1 = Strategy1.objects.prefetch_related(
+            'attributes',
+            'attributes__attribute_type',
+            'attributes__classifier',
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
+
+    def add_data_items_strategies2(self, ids):
+        self.instance.item_strategies1 = Strategy2.objects.prefetch_related(
+            'attributes',
+            'attributes__attribute_type',
+            'attributes__classifier',
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
+
+    def add_data_items_strategies3(self, ids):
+        self.instance.item_strategies1 = Strategy3.objects.prefetch_related(
+            'attributes',
+            'attributes__attribute_type',
+            'attributes__classifier',
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
+
+
     def add_data_items(self):
 
         instance_relations_st = time.perf_counter()
@@ -1769,6 +1792,9 @@ class BalanceReportBuilderSql:
         portfolio_ids = []
         account_ids = []
         currencies_ids = []
+        strategies1_ids = []
+        strategies2_ids = []
+        strategies3_ids = []
 
         for item in self.instance.items:
 
@@ -1790,10 +1816,32 @@ class BalanceReportBuilderSql:
             if 'exposure_currency_id' in item:
                 currencies_ids.append(item['exposure_currency_id'])
 
+            if 'strategy1_position_id' in item:
+                strategies1_ids.append(item['strategy1_position_id'])
+
+            if 'strategy2_position_id' in item:
+                strategies2_ids.append(item['strategy2_position_id'])
+
+            if 'strategy3_position_id' in item:
+                strategies3_ids.append(item['strategy3_position_id'])
+
+
+            if 'strategy1_cash_id' in item:
+                strategies1_ids.append(item['strategy1_cash_id'])
+
+            if 'strategy2_cash_id' in item:
+                strategies2_ids.append(item['strategy2_cash_id'])
+
+            if 'strategy3_cash_id' in item:
+                strategies3_ids.append(item['strategy3_cash_id'])
+
         self.add_data_items_instruments(instrument_ids)
         self.add_data_items_portfolios(portfolio_ids)
         self.add_data_items_accounts(account_ids)
         self.add_data_items_currencies(currencies_ids)
+        self.add_data_items_strategies1(strategies1_ids)
+        self.add_data_items_strategies2(strategies2_ids)
+        self.add_data_items_strategies3(strategies3_ids)
 
         self.add_data_items_instrument_types(self.instance.item_instruments)
 
