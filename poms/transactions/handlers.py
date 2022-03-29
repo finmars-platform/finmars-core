@@ -374,20 +374,29 @@ class TransactionTypeProcess(object):
 
             if action_instrument and self.execute_action_condition(action_instrument):
 
+                # Calculate user code value
+                errors = {}
+                try:
+                    user_code = formula.safe_eval(action_instrument.user_code, names=self.values, now=self._now,
+                                                  context=self._context)
+                except formula.InvalidExpression as e:
+                    self._set_eval_error(errors, 'user_code', action_instrument.user_code, e)
+                    user_code = None
+
                 exist = False
 
                 try:
-                    inst = Instrument.objects.get(user_code=action_instrument.user_code, master_user=master_user)
+                    inst = Instrument.objects.get(user_code=user_code, master_user=master_user)
                     exist = True
                 except Instrument.DoesNotExist:
                     exist = False
 
-                if not exist and action_instrument.rebook_reaction == RebookReactionChoice.TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT and pass_download == False:
+                if not exist and user_code and action_instrument.rebook_reaction == RebookReactionChoice.TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT and pass_download == False:
 
                     try:
                         from poms.integrations.tasks import download_instrument_cbond
                         _l.info("Trying to download instrument from provider")
-                        task, errors = download_instrument_cbond(action_instrument.user_code, master_user, self.member)
+                        task, errors = download_instrument_cbond(user_code, master_user, self.member)
 
                         _l.info("Download Instrument from provider. Task %s" % task)
                         _l.info("Download Instrument from provider. Errors %s" % errors)
@@ -413,13 +422,7 @@ class TransactionTypeProcess(object):
                     _l.debug('action_instrument.rebook_reaction %s' % action_instrument.rebook_reaction)
 
                     _l.debug('process instrument: %s', action_instrument)
-                    errors = {}
-                    try:
-                        user_code = formula.safe_eval(action_instrument.user_code, names=self.values, now=self._now,
-                                                      context=self._context)
-                    except formula.InvalidExpression as e:
-                        self._set_eval_error(errors, 'user_code', action_instrument.user_code, e)
-                        user_code = None
+
 
                     instrument = None
                     instrument_exists = False
