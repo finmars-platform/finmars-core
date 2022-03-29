@@ -377,6 +377,9 @@ class TransactionTypeProcess(object):
                 # Calculate user code value
                 errors = {}
                 try:
+
+                    _l.info("Calulate user code. Values %s" % self.values)
+
                     user_code = formula.safe_eval(action_instrument.user_code, names=self.values, now=self._now,
                                                   context=self._context)
                 except formula.InvalidExpression as e:
@@ -385,13 +388,16 @@ class TransactionTypeProcess(object):
 
                 exist = False
 
-                try:
-                    inst = Instrument.objects.get(user_code=user_code, master_user=master_user)
+                if isinstance(user_code, str) and user_code is not None:
+                    try:
+                        inst = Instrument.objects.get(user_code=user_code, master_user=master_user)
+                        exist = True
+                    except Instrument.DoesNotExist:
+                        exist = False
+                else:
                     exist = True
-                except Instrument.DoesNotExist:
-                    exist = False
 
-                if not exist and user_code and action_instrument.rebook_reaction == RebookReactionChoice.TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT and pass_download == False:
+                if not exist and isinstance(user_code, str) and action_instrument.rebook_reaction == RebookReactionChoice.TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT and pass_download == False:
 
                     try:
                         from poms.integrations.tasks import download_instrument_cbond
