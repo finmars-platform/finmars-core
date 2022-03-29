@@ -1907,6 +1907,7 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
         else:
             instrument_object['accrued_currency'] = None
 
+        instrument_object['price_multiplier'] = instrument_type.price_multiplier
         instrument_object['default_price'] = instrument_type.default_price
         instrument_object['maturity_date'] = instrument_type.maturity_date
         instrument_object['maturity_price'] = instrument_type.maturity_price
@@ -1918,6 +1919,11 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
             instrument_object['exposure_calculation_model'] = instrument_type.exposure_calculation_model.id
         else:
             instrument_object['exposure_calculation_model'] = None
+
+        if instrument_type.price_condition:
+            instrument_object['price_condition'] = instrument_type.price_condition.id
+        else:
+            instrument_object['price_condition'] = None
 
         instrument_object['long_underlying_instrument'] = instrument_type.long_underlying_instrument
         instrument_object['underlying_long_multiplier'] = instrument_type.underlying_long_multiplier
@@ -2018,6 +2024,29 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
 
             instrument_object['accrual_calculation_schedules'].append(accrual)
 
+        # Set Pricing Policy
+
+        try:
+
+            for it_pricing_policy in instrument_type.pricing_policies.all():
+
+                pricing_policy = {}
+
+                pricing_policy['pricing_policy'] = it_pricing_policy.pricing_policy.id
+                pricing_policy['pricing_scheme'] = it_pricing_policy.pricing_scheme.id
+                pricing_policy['notes'] = it_pricing_policy.notes
+                pricing_policy['default_value'] = it_pricing_policy.default_value
+                pricing_policy['attribute_key'] = it_pricing_policy.attribute_key
+                pricing_policy['json_data'] = it_pricing_policy.json_data
+
+
+                instrument_object['pricing_policies'].append(pricing_policy)
+
+        except Exception as e:
+            _l.info("Can't set default pricing policy %s" % e)
+
+
+
         return instrument_object
 
     except Exception as e:
@@ -2088,6 +2117,7 @@ def set_accruals_for_instrument(instrument_object, data_object, instrument_type_
             # accrual['periodicity_n'] = data_object['periodicity_n']
 
 
+# Global method for create instrument object from Instrument Type Defaults
 def handler_instrument_object(source_data, instrument_type, master_user, ecosystem_default, attribute_types):
 
     object_data = {}
@@ -2247,6 +2277,8 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
                         accrual['periodicity'] = Periodicity.MONTHLY
 
                     _l.info('periodicity %s' % accrual['periodicity'])
+
+                    accrual['periodicity_n'] = 0
 
                 except Exception as e:
                     accrual['periodicity_n'] = 0
