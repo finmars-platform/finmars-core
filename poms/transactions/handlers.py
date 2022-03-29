@@ -387,13 +387,21 @@ class TransactionTypeProcess(object):
                     try:
                         from poms.integrations.tasks import download_instrument_cbond
                         _l.info("Trying to download instrument from provider")
-                        task = download_instrument_cbond(action_instrument.user_code, master_user, self.member)
+                        task, errors = download_instrument_cbond(action_instrument.user_code, master_user, self.member)
 
-                        instrument = Instrument.objects.get(id=task.result_object['instrument_id'])
+                        _l.info("Download Instrument from provider. Task %s" % task)
+                        _l.info("Download Instrument from provider. Errors %s" % errors)
+
+                        instrument = Instrument.objects.get(id=task.result_object['instrument_id'], master_user=master_user)
 
                         instrument_map[action.id] = instrument
 
+                        _l.info("Download instrument from provider. Success")
+
                     except Exception as e:
+
+                        _l.info("Download instrument from provider. Error %s" % e)
+
                         self.book_create_instruments(actions, master_user, instrument_map, pass_download=True)
 
                 else:
