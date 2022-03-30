@@ -12,6 +12,7 @@ import copy
 from collections import defaultdict
 from datetime import timedelta, date
 from tempfile import NamedTemporaryFile
+from filtration import Expression
 
 import requests
 from celery import shared_task, chord, current_task
