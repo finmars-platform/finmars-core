@@ -1050,6 +1050,7 @@ class UnifiedDataEntry(object):
         self._task_object = value
         self.task = getattr(value, 'pk', None)
 
+
 class ImportInstrumentSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
@@ -1622,7 +1623,8 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
                   'inputs', 'calculated_inputs', 'rule_scenarios', 'selector_values',
                   'recon_scenarios', 'recon_layout',
 
-                  'delimiter', 'error_handler', 'missing_data_handler', 'column_matcher'
+                  'delimiter', 'error_handler', 'missing_data_handler', 'column_matcher',
+                  'filter_expression', 'has_header_row'
 
                   ]
 

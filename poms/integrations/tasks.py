@@ -2226,7 +2226,7 @@ def complex_transaction_csv_file_import(self, task_id):
 
 
                 # _l.debug('process row: %s -> %s', row_index, row)
-                if (row_index == 0 and instance.skip_first_line) or not row:
+                if (row_index == 0 and instance.skip_first_line and not scheme.has_header_row) or not row:
                     _l.debug('skip first row')
                     continue
 
@@ -2294,6 +2294,18 @@ def complex_transaction_csv_file_import(self, task_id):
                             inputs_error.append(i)
 
                 # _l.debug('Row %s inputs_raw: %s' % (row_index, inputs_raw))
+
+                if scheme.filter_expression:
+
+                    # expr = Expression.parseString("a == 1 and b == 2")
+                    expr = Expression.parseString(scheme.filter_expression)
+
+                    if expr(inputs_raw):
+                        # filter passed
+                    else:
+                        _l.info("Row skipped due filter %s" % row_index)
+                        continue
+
 
                 original_columns_count = len(row)
 
