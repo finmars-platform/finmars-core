@@ -2303,6 +2303,7 @@ def complex_transaction_csv_file_import(self, task_id):
 
                     if expr(inputs_raw):
                         # filter passed
+                        pass
                     else:
                         _l.info("Row skipped due filter %s" % row_index)
                         continue
