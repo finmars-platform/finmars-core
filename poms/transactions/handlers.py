@@ -168,8 +168,10 @@ class TransactionTypeProcess(object):
 
     def execute_action_condition(self, action):
 
-        _l.debug('action.condition_expr')
-        _l.debug(action.condition_expr)
+        _l.info('action.condition_expr')
+        _l.info(action.condition_expr)
+        _l.info('action.condition_expr values')
+        _l.info(self.values)
 
         if action is None:
             return False
