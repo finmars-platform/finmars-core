@@ -3084,6 +3084,18 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
                 # _l.info('Row %s inputs_raw: %s' % (row_index, inputs_raw))
 
+                if scheme.filter_expression:
+
+                    # expr = Expression.parseString("a == 1 and b == 2")
+                    expr = Expression.parseString(scheme.filter_expression)
+
+                    if expr(inputs_raw):
+                        # filter passed
+                        pass
+                    else:
+                        _l.info("Row skipped due filter %s" % row_index)
+                        continue
+
                 for i in scheme_inputs:
 
                     error_rows['error_data']['columns']['converted_imported_columns'].append(
