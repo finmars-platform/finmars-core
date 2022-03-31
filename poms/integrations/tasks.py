@@ -3089,8 +3089,12 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                     # expr = Expression.parseString("a == 1 and b == 2")
                     expr = Expression.parseString(scheme.filter_expression)
 
+                    _l.info('scheme.filter_expression %s ' % scheme.filter_expression)
+                    _l.info('scheme.inputs_raw %s ' % inputs_raw)
+
                     if expr(inputs_raw):
                         # filter passed
+
                         pass
                     else:
                         _l.info("Row skipped due filter %s" % row_index)
