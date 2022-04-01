@@ -198,7 +198,7 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
 
     def create(self, request, *args, **kwargs):
 
-        _l.debug('TASK: data_csv_file_import_validate')
+        _l.debug('CsvDataImportValidateViewSet TASK: data_csv_file_import_validate')
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -207,6 +207,8 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
         task_id = instance.task_id
 
         # signer = TimestampSigner()
+
+        _l.info('CsvDataImportValidateViewSet task_id %s ' % task_id)
 
         if task_id:
 

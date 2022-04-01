@@ -2175,6 +2175,9 @@ def complex_transaction_csv_file_import(self, task_id):
                 else:
                     ws = wb.active
 
+                _l.info('ws %s' % ws)
+                _l.info('task_instance.scheme.spreadsheet_start_cell %s' % instance.scheme.spreadsheet_start_cell)
+
                 reader = []
 
                 if instance.scheme.spreadsheet_start_cell == 'A1':

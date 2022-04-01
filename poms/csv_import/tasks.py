@@ -450,6 +450,7 @@ def process_csv_file(master_user,
             ws = wb.active
 
         _l.info('ws %s' % ws)
+        _l.info('task_instance.scheme.spreadsheet_start_cell %s' % task_instance.scheme.spreadsheet_start_cell)
 
         reader = []
 
@@ -465,6 +466,9 @@ def process_csv_file(master_user,
 
             start_cell_column_number = column_index_from_string(start_cell_letter)
 
+            _l.info('start_cell_column_number %s ' % start_cell_column_number)
+            _l.info('start_cell_row_number %s ' % start_cell_row_number)
+
 
             row_number = 1
 
@@ -476,6 +480,7 @@ def process_csv_file(master_user,
 
                     for cell in r:
 
+                        _l.info('cell.column  %s' % cell.column)
 
                         if cell.column >= start_cell_column_number:
                             row_values.append(cell.value)
@@ -536,6 +541,8 @@ def process_csv_file(master_user,
                     csv_row_dict_raw = get_row_data(row, csv_fields, scheme, first_row)
                 except Exception as e:
                     raise Exception("Can't get row data")
+
+                _l.info('csv_row_dict_raw %s ' % csv_row_dict_raw)
 
                 executed_filter_expression = True
 
@@ -1102,7 +1109,7 @@ class ValidateHandler:
 
                     elif '.xlsx' in instance.filename:
 
-                        wb = load_workbook(filename=f)
+                        wb = load_workbook(filename=tmpf.name)
 
                         if instance.scheme.spreadsheet_active_tab_name and instance.scheme.spreadsheet_active_tab_name in wb.sheetnames:
                             ws = wb[instance.scheme.spreadsheet_active_tab_name]
