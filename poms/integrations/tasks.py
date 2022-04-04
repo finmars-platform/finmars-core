@@ -2517,9 +2517,9 @@ def complex_transaction_csv_file_import(self, task_id):
 
             return row_index
 
-        def _row_count_xlsx(file):
+        def _row_count_xlsx(filename):
 
-            wb = load_workbook(filename=file)
+            wb = load_workbook(filename=filename)
 
             if instance.scheme.spreadsheet_active_tab_name and instance.scheme.spreadsheet_active_tab_name in wb.sheetnames:
                 ws = wb[instance.scheme.spreadsheet_active_tab_name]
@@ -2551,7 +2551,7 @@ def complex_transaction_csv_file_import(self, task_id):
                         tmpf.write(chunk)
                     tmpf.flush()
 
-                    os.link(f.name, f.name + '.xlsx')
+                    os.link(tmpf.name, tmpf.name + '.xlsx')
 
                     if '.csv' in instance.file_path or (execution_context and execution_context["started_by"] == 'procedure'):
 
@@ -2563,10 +2563,10 @@ def complex_transaction_csv_file_import(self, task_id):
 
                     elif '.xlsx' in instance.file_path:
 
-                        instance.total_rows = _row_count_xlsx(f)
+                        instance.total_rows = _row_count_xlsx(tmpf.name + '.xlsx')
 
                         with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
-                            _process_csv_file(cf, f, f.name + '.xlsx')
+                            _process_csv_file(cf, f, tmpf.name + '.xlsx')
 
 
 
@@ -3402,7 +3402,6 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
                     os.link(tmpf.name, tmpf.name + '.xlsx')
 
-                    os.link(f.name, f.name + '.xlsx')
 
                     if '.csv' in instance.file_path:
 
@@ -3414,10 +3413,10 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
                     elif '.xlsx' in instance.file_path:
 
-                        instance.total_rows = _row_count_xlsx(f)
+                        instance.total_rows = _row_count_xlsx(tmpf.name + '.xlsx')
 
                         with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
-                            _validate_process_csv_file(cf, f, f.name + '.xlsx')
+                            _validate_process_csv_file(cf, f, tmpf.name + '.xlsx')
 
         except Exception:
             _l.info('Can\'t process file', exc_info=True)
