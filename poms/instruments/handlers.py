@@ -46,7 +46,7 @@ class GeneratedEventProcess(TransactionTypeProcess):
         _l.info('generated_event data %s' % generated_event.data)
 
         if generated_event.data:
-            if generated_event.data['actions_parameters']:
+            if 'actions_parameters' in generated_event.data and generated_event.data['actions_parameters']:
 
                 if action.button_position in generated_event.data['actions_parameters']:
 
