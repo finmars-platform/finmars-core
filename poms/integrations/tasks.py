@@ -2150,7 +2150,7 @@ def complex_transaction_csv_file_import(self, task_id):
 
             return result, processed_scenarios
 
-        def _process_csv_file(file, original_file):
+        def _process_csv_file(file, original_file, original_file_path):
 
             _l.info('_process_csv_file %s ' % instance.file_path)
 
@@ -2168,7 +2168,7 @@ def complex_transaction_csv_file_import(self, task_id):
             elif '.xlsx' in instance.file_path:
                 _l.info('trying to parse excel %s ' % instance.file_path)
 
-                wb = load_workbook(filename=original_file)
+                wb = load_workbook(filename=original_file_path)
 
                 if instance.scheme.spreadsheet_active_tab_name and instance.scheme.spreadsheet_active_tab_name in wb.sheetnames:
                     ws = wb[instance.scheme.spreadsheet_active_tab_name]
@@ -2551,20 +2551,22 @@ def complex_transaction_csv_file_import(self, task_id):
                         tmpf.write(chunk)
                     tmpf.flush()
 
+                    os.link(f.name, f.name + '.xlsx')
+
                     if '.csv' in instance.file_path or (execution_context and execution_context["started_by"] == 'procedure'):
 
                         with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
                             instance.total_rows = _row_count_csv(cfr)
 
                         with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
-                            _process_csv_file(cf, f)
+                            _process_csv_file(cf, f, '')
 
                     elif '.xlsx' in instance.file_path:
 
                         instance.total_rows = _row_count_xlsx(f)
 
                         with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
-                            _process_csv_file(cf, f)
+                            _process_csv_file(cf, f, f.name + '.xlsx')
 
 
 
@@ -2999,7 +3001,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
             return row
 
-        def _validate_process_csv_file(file):
+        def _validate_process_csv_file(file, orignal_file, original_file_name):
 
             delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
 
@@ -3355,6 +3357,24 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                 }, level="member",
                     context={"master_user": master_user, "member": member})
 
+        def _row_count_xlsx(file):
+
+            wb = load_workbook(filename=file)
+
+            if instance.scheme.spreadsheet_active_tab_name and instance.scheme.spreadsheet_active_tab_name in wb.sheetnames:
+                ws = wb[instance.scheme.spreadsheet_active_tab_name]
+            else:
+                ws = wb.active
+
+            reader = []
+
+            row_index = 0
+
+            for r in ws.rows:
+                row_index = row_index + 1
+
+            return row_index
+
         def _row_count(file):
 
             delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
@@ -3379,14 +3399,26 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                     for chunk in f.chunks():
                         tmpf.write(chunk)
                     tmpf.flush()
-                    # with open(tmpf.name, mode='rt', encoding=instance.encoding) as cfr:
-                    with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
-                        instance.total_rows = _row_count(cfr)
 
-                        _l.info('Total rows in %s: %s' % (instance.file_path, instance.total_rows))
-                        
-                    with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
-                        _validate_process_csv_file(cf)
+                    os.link(tmpf.name, tmpf.name + '.xlsx')
+
+                    os.link(f.name, f.name + '.xlsx')
+
+                    if '.csv' in instance.file_path:
+
+                        with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
+                            instance.total_rows = _row_count(cfr)
+
+                        with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
+                            _validate_process_csv_file(cf, f, '')
+
+                    elif '.xlsx' in instance.file_path:
+
+                        instance.total_rows = _row_count_xlsx(f)
+
+                        with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
+                            _validate_process_csv_file(cf, f, f.name + '.xlsx')
+
         except Exception:
             _l.info('Can\'t process file', exc_info=True)
             instance.error_message = ugettext("Invalid file format or file already deleted.")
