@@ -17,77 +17,86 @@ _l = logging.getLogger('poms.instruments')
 
 class GeneratedEventProcess(TransactionTypeProcess):
     def __init__(self, generated_event=None, action=None, **kwargs):
-        self.generated_event = generated_event
-        self.action = action
-        # kwargs['transaction_type'] = action.transaction_type
 
-        kwargs['transaction_type'] = TransactionType.objects.get(master_user=generated_event.master_user,
-                                                                 user_code=action.transaction_type)
+        try:
+            self.generated_event = generated_event
+            self.action = action
+            # kwargs['transaction_type'] = action.transaction_type
 
-        # Some Inputs can choose from which context variable it will take value
+            kwargs['transaction_type'] = TransactionType.objects.get(master_user=generated_event.master_user,
+                                                                     user_code=action.transaction_type)
 
-        context_values = kwargs.get('context_values', None) or {}
-        context_values.update({
-            'context_instrument': generated_event.instrument,
-            'context_pricing_currency': generated_event.instrument.pricing_currency,
-            'context_accrued_currency': generated_event.instrument.accrued_currency,
-            'context_portfolio': generated_event.portfolio,
-            'context_account': generated_event.account,
-            'context_strategy1': generated_event.strategy1,
-            'context_strategy2': generated_event.strategy2,
-            'context_strategy3': generated_event.strategy3,
-            'context_position': generated_event.position,
-            'context_effective_date': generated_event.effective_date,
-            'context_notification_date': generated_event.notification_date,  # not in context variables
-            # 'final_date': generated_event.event_schedule.final_date,
-            # 'maturity_date': generated_event.instrument.maturity_date
-        })
+            # Some Inputs can choose from which context variable it will take value
 
-        _l.info('generated_event data %s' % generated_event.data)
+            context_values = kwargs.get('context_values', None) or {}
+            context_values.update({
+                'context_instrument': generated_event.instrument,
+                'context_pricing_currency': generated_event.instrument.pricing_currency,
+                'context_accrued_currency': generated_event.instrument.accrued_currency,
+                'context_portfolio': generated_event.portfolio,
+                'context_account': generated_event.account,
+                'context_strategy1': generated_event.strategy1,
+                'context_strategy2': generated_event.strategy2,
+                'context_strategy3': generated_event.strategy3,
+                'context_position': generated_event.position,
+                'context_effective_date': generated_event.effective_date,
+                'context_notification_date': generated_event.notification_date,  # not in context variables
+                # 'final_date': generated_event.event_schedule.final_date,
+                # 'maturity_date': generated_event.instrument.maturity_date
+            })
 
-        if generated_event.data:
-            if 'actions_parameters' in generated_event.data:
+            _l.info('generated_event data %s' % generated_event.data)
 
-                if action.button_position in generated_event.data['actions_parameters']:
+            if generated_event.data:
+                if 'actions_parameters' in generated_event.data:
 
-                    for key, value in generated_event.data['actions_parameters'][action.button_position].items():
-                        context_values[key] = value
+                    if action.button_position in generated_event.data['actions_parameters']:
 
-        kwargs['context_values'] = context_values
+                        for key, value in generated_event.data['actions_parameters'][action.button_position].items():
+                            context_values[key] = value
 
-        # But by default Context Variables overwrites default value
+            kwargs['context_values'] = context_values
 
-        # default_values = kwargs.get('default_values', None) or {}
-        # default_values.update({
-        #     'instrument': generated_event.instrument,
-        #     'pricing_currency': generated_event.instrument.pricing_currency,
-        #     'accrued_currency': generated_event.instrument.accrued_currency,
-        #     'portfolio': generated_event.portfolio,
-        #     'account': generated_event.account,
-        #     'strategy1': generated_event.strategy1,
-        #     'strategy2': generated_event.strategy2,
-        #     'strategy3': generated_event.strategy3,
-        #     'position': generated_event.position,
-        #     'effective_date': generated_event.effective_date,
-        #     'notification_date': generated_event.notification_date, # not in context variables
-        #     # 'final_date': generated_event.event_schedule.final_date,
-        #     # 'maturity_date': generated_event.instrument.maturity_date
-        # })
-        # kwargs['default_values'] = default_values
+            # But by default Context Variables overwrites default value
 
-        if generated_event.status == GeneratedEvent.ERROR:
-            kwargs['complex_transaction_status'] = ComplexTransaction.PENDING
-        else:
-            if action.is_sent_to_pending:
+            # default_values = kwargs.get('default_values', None) or {}
+            # default_values.update({
+            #     'instrument': generated_event.instrument,
+            #     'pricing_currency': generated_event.instrument.pricing_currency,
+            #     'accrued_currency': generated_event.instrument.accrued_currency,
+            #     'portfolio': generated_event.portfolio,
+            #     'account': generated_event.account,
+            #     'strategy1': generated_event.strategy1,
+            #     'strategy2': generated_event.strategy2,
+            #     'strategy3': generated_event.strategy3,
+            #     'position': generated_event.position,
+            #     'effective_date': generated_event.effective_date,
+            #     'notification_date': generated_event.notification_date, # not in context variables
+            #     # 'final_date': generated_event.event_schedule.final_date,
+            #     # 'maturity_date': generated_event.instrument.maturity_date
+            # })
+            # kwargs['default_values'] = default_values
+
+            if generated_event.status == GeneratedEvent.ERROR:
                 kwargs['complex_transaction_status'] = ComplexTransaction.PENDING
             else:
-                kwargs['complex_transaction_status'] = ComplexTransaction.PRODUCTION
+                if action.is_sent_to_pending:
+                    kwargs['complex_transaction_status'] = ComplexTransaction.PENDING
+                else:
+                    kwargs['complex_transaction_status'] = ComplexTransaction.PRODUCTION
 
-        # context = kwargs.get('context', None) or {}
-        # if 'master_user' not in context:
-        #     context['master_user'] = generated_event.master_user
+            # context = kwargs.get('context', None) or {}
+            # if 'master_user' not in context:
+            #     context['master_user'] = generated_event.master_user
 
-        super(GeneratedEventProcess, self).__init__(**kwargs)
+            super(GeneratedEventProcess, self).__init__(**kwargs)
+
+        except Exception as e:
+
+            _l.info("GeneratedEventProcess.error %s" % e)
+            _l.info("GeneratedEventProcess.trace %s" % traceback.print_exc())
+
+            raise Exception(e)
 
 
 class InstrumentTypeProcess(object):
