@@ -1480,6 +1480,8 @@ class BalanceReportBuilderSql:
 
             updated_result = []
 
+            _l.info('item %s' % result[0])
+
             for item in result:
 
                 # item["currency_id"] = item["settlement_currency_id"]
@@ -1718,8 +1720,6 @@ class BalanceReportBuilderSql:
         for instrument in instruments:
             ids.append(instrument.instrument_type_id)
 
-        print('add_data_items_instrument_types %s' % ids)
-
         self.instance.item_instrument_types = InstrumentType.objects.prefetch_related(
             'attributes',
             'attributes__attribute_type',
@@ -1758,21 +1758,21 @@ class BalanceReportBuilderSql:
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
+        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_strategies2(self, ids):
-        self.instance.item_strategies1 = Strategy2.objects.prefetch_related(
+        self.instance.item_strategies2 = Strategy2.objects.prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
+        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_strategies3(self, ids):
-        self.instance.item_strategies1 = Strategy3.objects.prefetch_related(
+        self.instance.item_strategies3 = Strategy3.objects.prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
+        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
 
 
     def add_data_items(self):
@@ -1835,6 +1835,17 @@ class BalanceReportBuilderSql:
             if 'strategy3_cash_id' in item:
                 strategies3_ids.append(item['strategy3_cash_id'])
 
+
+        instrument_ids = list(set(instrument_ids))
+        portfolio_ids = list(set(portfolio_ids))
+        account_ids = list(set(account_ids))
+        currencies_ids = list(set(currencies_ids))
+        strategies1_ids = list(set(strategies1_ids))
+        strategies2_ids = list(set(strategies2_ids))
+        strategies3_ids = list(set(strategies3_ids))
+
+        _l.info('strategies1_ids %s' % strategies1_ids)
+
         self.add_data_items_instruments(instrument_ids)
         self.add_data_items_portfolios(portfolio_ids)
         self.add_data_items_accounts(account_ids)
@@ -1843,8 +1854,12 @@ class BalanceReportBuilderSql:
         self.add_data_items_strategies2(strategies2_ids)
         self.add_data_items_strategies3(strategies3_ids)
 
+        _l.info('add_data_items_strategies1 %s ' % self.instance.item_strategies1)
+
         self.add_data_items_instrument_types(self.instance.item_instruments)
 
         self.instance.custom_fields = BalanceReportCustomField.objects.filter(master_user=self.instance.master_user)
 
-        _l.debug('_refresh_with_perms_optimized item relations done: %s', "{:3.3f}".format(time.perf_counter() - item_relations_st))
+        _l.info('_refresh_with_perms_optimized item relations done: %s', "{:3.3f}".format(time.perf_counter() - item_relations_st))
+
+        _l.info('add_data_items_strategies1 %s ' % self.instance.item_strategies1)
