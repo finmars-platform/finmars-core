@@ -38,13 +38,15 @@ class ScheduleSerializer(serializers.ModelSerializer):
     next_run_at = DateTimeTzAwareField(read_only=True)
 
     procedures = ScheduleProcedureSerializer(required=False, many=True)
+    data = serializers.JSONField(allow_null=False)
 
     class Meta:
         model = Schedule
         fields = [
             'id', 'master_user', 'name', 'user_code', 'notes',
             'is_enabled', 'cron_expr', 'procedures',
-            'last_run_at', 'next_run_at', 'error_handler'
+            'last_run_at', 'next_run_at', 'error_handler',
+            'data'
         ]
         read_only_fields = ['last_run_at', 'next_run_at']
 
