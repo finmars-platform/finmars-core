@@ -1989,6 +1989,9 @@ def complex_transaction_csv_file_import(self, task_id):
             if i.value_type == TransactionTypeInput.STRING:
                 return str(value)
 
+            if i.value_type == TransactionTypeInput.SELECTOR:
+                return str(value)
+
             elif i.value_type == TransactionTypeInput.NUMBER:
                 return float(value)
 
@@ -2941,6 +2944,9 @@ def complex_transaction_csv_file_import_validate(self, task_id):
             i = field.transaction_type_input
 
             if i.value_type == TransactionTypeInput.STRING:
+                return str(value)
+
+            if i.value_type == TransactionTypeInput.SELECTOR:
                 return str(value)
 
             elif i.value_type == TransactionTypeInput.NUMBER:
