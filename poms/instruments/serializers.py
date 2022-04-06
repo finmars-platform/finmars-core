@@ -966,6 +966,9 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
         self.calculate_prices_accrued_price(instance, False)
         # self.rebuild_event_schedules(instance, False)
 
+        # get instrument with updated accrual_calculation_schedules and event_schedules
+        instance = Instrument.objects.get(id=instance.id)
+
         return instance
 
     def save_pricing_policies(self, instance, pricing_policies):
