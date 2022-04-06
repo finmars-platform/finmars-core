@@ -209,7 +209,7 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
         self.fields['currency_object'] = CurrencyViewSerializer(source='currency', read_only=True)
 
         self.fields['counterparty_object'] = CounterpartyViewSerializer(source='counterparty', read_only=True)
-        self.fields['responsible_object'] = ResponsibleViewSerializer(source='counterpresponsible', read_only=True)
+        self.fields['responsible_object'] = ResponsibleViewSerializer(source='responsible', read_only=True)
 
         self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
 
@@ -226,57 +226,57 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         value_type = data['value_type']
-        if value_type == TransactionTypeInput.RELATION:
-            content_type = data.get('content_type', None)
-            if content_type is None:
-                self.content_type.fail('required')
-            else:
-                model_class = content_type.model_class()
-                if issubclass(model_class, Account):
-                    target_attr = 'account'
-                elif issubclass(model_class, Currency):
-                    target_attr = 'currency'
-                elif issubclass(model_class, Instrument):
-                    target_attr = 'instrument'
-                elif issubclass(model_class, InstrumentType):
-                    target_attr = 'instrument_type'
-                elif issubclass(model_class, Counterparty):
-                    target_attr = 'counterparty'
-                elif issubclass(model_class, Responsible):
-                    target_attr = 'responsible'
-                elif issubclass(model_class, Strategy1):
-                    target_attr = 'strategy1'
-                elif issubclass(model_class, Strategy2):
-                    target_attr = 'strategy2'
-                elif issubclass(model_class, Strategy3):
-                    target_attr = 'strategy3'
-                elif issubclass(model_class, DailyPricingModel):
-                    target_attr = 'daily_pricing_model'
-                elif issubclass(model_class, PaymentSizeDetail):
-                    target_attr = 'payment_size_detail'
-                elif issubclass(model_class, Portfolio):
-                    target_attr = 'portfolio'
-                elif issubclass(model_class, PricingPolicy):
-                    target_attr = 'pricing_policy'
-                elif issubclass(model_class, Periodicity):
-                    target_attr = 'periodicity'
-                elif issubclass(model_class, AccrualCalculationModel):
-                    target_attr = 'accrual_calculation_model'
-                elif issubclass(model_class, EventClass):
-                    target_attr = 'event_class'
-                elif issubclass(model_class, NotificationClass):
-                    target_attr = 'notification_class'
-                else:
-                    raise ValidationError('Unknown content_type')
-
-                attrs = ['account', 'instrument_type', 'instrument', 'currency', 'counterparty', 'responsible',
-                         'portfolio', 'strategy1', 'strategy2', 'strategy3', 'daily_pricing_model',
-                         'payment_size_detail', 'pricing_policy', 'periodicity',
-                         'accrual_calculation_model']
-
-                for attr in attrs:
-                    if attr != target_attr:
-                        data[attr] = None
+        # if value_type == TransactionTypeInput.RELATION:
+        #     content_type = data.get('content_type', None)
+        #     if content_type is None:
+        #         self.content_type.fail('required')
+        #     else:
+        #         model_class = content_type.model_class()
+        #         if issubclass(model_class, Account):
+        #             target_attr = 'account'
+        #         elif issubclass(model_class, Currency):
+        #             target_attr = 'currency'
+        #         elif issubclass(model_class, Instrument):
+        #             target_attr = 'instrument'
+        #         elif issubclass(model_class, InstrumentType):
+        #             target_attr = 'instrument_type'
+        #         elif issubclass(model_class, Counterparty):
+        #             target_attr = 'counterparty'
+        #         elif issubclass(model_class, Responsible):
+        #             target_attr = 'responsible'
+        #         elif issubclass(model_class, Strategy1):
+        #             target_attr = 'strategy1'
+        #         elif issubclass(model_class, Strategy2):
+        #             target_attr = 'strategy2'
+        #         elif issubclass(model_class, Strategy3):
+        #             target_attr = 'strategy3'
+        #         elif issubclass(model_class, DailyPricingModel):
+        #             target_attr = 'daily_pricing_model'
+        #         elif issubclass(model_class, PaymentSizeDetail):
+        #             target_attr = 'payment_size_detail'
+        #         elif issubclass(model_class, Portfolio):
+        #             target_attr = 'portfolio'
+        #         elif issubclass(model_class, PricingPolicy):
+        #             target_attr = 'pricing_policy'
+        #         elif issubclass(model_class, Periodicity):
+        #             target_attr = 'periodicity'
+        #         elif issubclass(model_class, AccrualCalculationModel):
+        #             target_attr = 'accrual_calculation_model'
+        #         elif issubclass(model_class, EventClass):
+        #             target_attr = 'event_class'
+        #         elif issubclass(model_class, NotificationClass):
+        #             target_attr = 'notification_class'
+        #         else:
+        #             raise ValidationError('Unknown content_type')
+        # 
+        #         attrs = ['account', 'instrument_type', 'instrument', 'currency', 'counterparty', 'responsible',
+        #                  'portfolio', 'strategy1', 'strategy2', 'strategy3', 'daily_pricing_model',
+        #                  'payment_size_detail', 'pricing_policy', 'periodicity',
+        #                  'accrual_calculation_model']
+        # 
+        #         for attr in attrs:
+        #             if attr != target_attr:
+        #                 data[attr] = None
         return data
 
     def create(self, validated_data):

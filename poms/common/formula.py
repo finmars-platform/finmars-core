@@ -10,6 +10,7 @@ from collections import OrderedDict
 
 from dateutil import relativedelta
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.utils import numberformat
 from django.utils.functional import Promise, SimpleLazyObject
 
@@ -475,6 +476,78 @@ def _get_ttype_default_input(evaluator, input):
 
 
 _get_ttype_default_input.evaluator = True
+
+
+def _get_relation_by_user_code(evaluator, content_type, user_code):
+    from poms.transactions.models import TransactionTypeInput
+
+    from poms.accounts.models import Account
+    from poms.counterparties.models import Counterparty, Responsible
+    from poms.currencies.models import Currency
+    from poms.instruments.models import Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail, PricingPolicy, \
+        Periodicity, AccrualCalculationModel
+    from poms.integrations.models import PriceDownloadScheme
+    from poms.portfolios.models import Portfolio
+    from poms.strategies.models import Strategy1, Strategy2, Strategy3
+    from poms.transactions.models import EventClass, NotificationClass
+
+    context = evaluator.context
+    from poms.users.utils import get_master_user_from_context
+
+    master_user = get_master_user_from_context(context)
+
+    def _get_val_by_model_cls(model_class, user_code):
+        if issubclass(model_class, Account):
+            return Account.objects.get(master_user=master_user, user_code=user_code)
+        elif issubclass(model_class, Currency):
+            return Currency.objects.get(master_user=master_user, user_code=user_code)
+        elif issubclass(model_class, Instrument):
+            return Instrument.objects.get(master_user=master_user, user_code=user_code)
+        elif issubclass(model_class, InstrumentType):
+            return InstrumentType.objects.get(master_user=master_user, user_code=user_code)
+        elif issubclass(model_class, Counterparty):
+            return Counterparty.objects.get(master_user=master_user, user_code=user_code)
+        elif issubclass(model_class, Responsible):
+            return Responsible.objects.get(master_user=master_user, user_code=user_code)
+        elif issubclass(model_class, Strategy1):
+            return Strategy1.objects.get(master_user=master_user, user_code=user_code)
+        elif issubclass(model_class, Strategy2):
+            return Strategy2.objects.get(master_user=master_user, user_code=user_code)
+        elif issubclass(model_class, Strategy3):
+            return Strategy3.objects.get(master_user=master_user, user_code=user_code)
+        elif issubclass(model_class, DailyPricingModel):
+            return DailyPricingModel.objects.get(user_code=user_code)
+        elif issubclass(model_class, PaymentSizeDetail):
+            return PaymentSizeDetail.objects.get(user_code=user_code)
+        elif issubclass(model_class, Portfolio):
+            return Portfolio.objects.get(master_user=master_user, user_code=user_code)
+        elif issubclass(model_class, PricingPolicy):
+            return PricingPolicy.objects.get(master_user=master_user, user_code=user_code)
+        elif issubclass(model_class, Periodicity):
+            return Periodicity.objects.get(user_code=user_code)
+        elif issubclass(model_class, AccrualCalculationModel):
+            return AccrualCalculationModel.objects.get(user_code=user_code)
+        elif issubclass(model_class, EventClass):
+            return EventClass.objects.get(user_code=user_code)
+        elif issubclass(model_class, NotificationClass):
+            return NotificationClass.objects.get(user_code=user_code)
+        return None
+
+    app_label, model = content_type.split('.')
+    model_class = ContentType.objects.get_by_natural_key(app_label, model).model_class()
+
+    print('model_class %s' % model_class)
+
+    result = _get_val_by_model_cls(model_class, user_code).__dict__
+
+    # print('result relation.name %s' % result.name)
+    print('result relation[name] %s' % result['name'])
+
+    return result
+
+
+_get_relation_by_user_code.evaluator = True
+
 
 
 def _convert_to_number(evaluator, text_number, thousand_separator="", decimal_separator=".", has_braces=False):
@@ -1928,6 +2001,7 @@ FUNCTIONS = [
     SimpleEval2Def('get_instrument_user_attribute_value', _get_instrument_user_attribute_value),
 
     SimpleEval2Def('get_ttype_default_input', _get_ttype_default_input),
+    SimpleEval2Def('get_relation_by_user_code', _get_relation_by_user_code),
     SimpleEval2Def('get_rt_value', _get_rt_value),
     SimpleEval2Def('convert_to_number', _convert_to_number),
     SimpleEval2Def('if_null', _if_null),
