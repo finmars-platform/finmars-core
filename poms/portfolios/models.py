@@ -69,6 +69,16 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         verbose_name = ugettext_lazy('portfolio register')
         verbose_name_plural = ugettext_lazy('portfolio registers')
 
+    def save(self, *args, **kwargs):
+
+        super(PortfolioRegister, self).save(*args, **kwargs)
+
+        if self.linked_instrument:
+            self.linked_instrument.has_linked_with_portfolio = True
+            self.linked_instrument.save()
+
+
+
 
 class PortfolioRegisterRecord(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='portfolio_register_records',

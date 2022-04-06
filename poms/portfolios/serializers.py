@@ -6,7 +6,7 @@ from poms.accounts.fields import AccountField
 from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
 from poms.counterparties.fields import ResponsibleField, CounterpartyField
 from poms.currencies.serializers import CurrencyViewSerializer
-from poms.instruments.serializers import InstrumentViewSerializer
+from poms.instruments.serializers import InstrumentViewSerializer, PricingPolicySerializer
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord
@@ -104,14 +104,32 @@ class PortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWith
 class PortfolioRegisterEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
+    valuation_currency_object = serializers.PrimaryKeyRelatedField(source='valuation_currency', read_only=True)
+    portfolio_object = serializers.PrimaryKeyRelatedField(source='portfolio', read_only=True)
+    linked_instrument_object = serializers.PrimaryKeyRelatedField(source='linked_instrument', read_only=True)
+    valuation_pricing_policy_object = serializers.PrimaryKeyRelatedField(source='valuation_pricing_policy', read_only=True)
+
+
     class Meta:
         model = PortfolioRegister
         fields = [
             'id', 'master_user',
             'user_code', 'name', 'short_name', 'public_name', 'notes',
-         'is_deleted', 'is_enabled',
+            'is_deleted', 'is_enabled',
             'portfolio', 'linked_instrument', 'valuation_pricing_policy', 'valuation_currency',
+
+            'valuation_currency_object', 'portfolio_object', 'linked_instrument_object', 'valuation_pricing_policy_object'
         ]
+
+    def __init__(self, *args, **kwargs):
+        super(PortfolioRegisterEvSerializer, self).__init__(*args, **kwargs)
+
+        from poms.portfolios.serializers import PortfolioViewSerializer
+        self.fields['valuation_currency_object'] = CurrencyViewSerializer(source='valuation_currency', read_only=True)
+        self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
+        self.fields['linked_instrument_object'] = InstrumentViewSerializer(source='linked_instrument', read_only=True)
+        self.fields['pricing_policy_object'] = PricingPolicySerializer(source="valuation_pricing_policy", read_only=True)
+
 
 
 class PortfolioRegisterRecordSerializer(ModelWithObjectPermissionSerializer):
