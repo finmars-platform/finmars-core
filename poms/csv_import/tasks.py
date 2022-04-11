@@ -1927,10 +1927,10 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
         else:
             instrument_object['exposure_calculation_model'] = None
 
-        if instrument_type.price_condition:
-            instrument_object['price_condition'] = instrument_type.price_condition.id
+        if instrument_type.pricing_condition:
+            instrument_object['pricing_condition'] = instrument_type.pricing_condition.id
         else:
-            instrument_object['price_condition'] = None
+            instrument_object['pricing_condition'] = None
 
         instrument_object['long_underlying_instrument'] = instrument_type.long_underlying_instrument
         instrument_object['underlying_long_multiplier'] = instrument_type.underlying_long_multiplier
