@@ -875,6 +875,8 @@ class InstrumentDatabaseSearchViewSet(APIView):
 
         result = {}
 
+        _l.info('headers %s' % headers)
+
         url = str(settings.CBONDS_BROKER_URL) + '/instr/find/name/%s?page=%s' % (name, page)
 
         if instrument_type:
