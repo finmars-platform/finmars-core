@@ -549,6 +549,17 @@ def _get_relation_by_user_code(evaluator, content_type, user_code):
 _get_relation_by_user_code.evaluator = True
 
 
+def _calculate_accrued(evaluator, instrument, date):
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    result = instrument.get_accrued_price(date)
+
+    return result
+
+
+_calculate_accrued.evaluator = True
+
 
 def _convert_to_number(evaluator, text_number, thousand_separator="", decimal_separator=".", has_braces=False):
     result = text_number.replace(thousand_separator, '')
@@ -2002,6 +2013,7 @@ FUNCTIONS = [
 
     SimpleEval2Def('get_ttype_default_input', _get_ttype_default_input),
     SimpleEval2Def('get_relation_by_user_code', _get_relation_by_user_code),
+    SimpleEval2Def('calculate_accrued', _calculate_accrued),
     SimpleEval2Def('get_rt_value', _get_rt_value),
     SimpleEval2Def('convert_to_number', _convert_to_number),
     SimpleEval2Def('if_null', _if_null),
