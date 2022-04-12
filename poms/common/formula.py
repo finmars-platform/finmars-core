@@ -552,6 +552,7 @@ _get_relation_by_user_code.evaluator = True
 def _calculate_accrued(evaluator, instrument, date):
 
     instrument = _safe_get_instrument(evaluator, instrument)
+    date = _parse_date(date)
 
     result = instrument.get_accrued_price(date)
 
