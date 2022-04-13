@@ -23,7 +23,9 @@ from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.obj_perms.utils import has_view_perms, get_permissions_prefetch_lookups, obj_perms_filter_objects_for_view
 from poms.users.fields import MasterUserField, HiddenMemberField
 from poms.users.utils import get_member_from_context, get_master_user_from_context
-
+# metestig
+import logging
+_l = logging.getLogger('poms.obj_attrs')
 
 class ModelWithAttributesSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
@@ -273,6 +275,7 @@ class GenericClassifierRecursiveField(serializers.Serializer):
 class GenericClassifierListSerializer(serializers.ListSerializer):
     def get_attribute(self, instance):
         tree = get_cached_trees(instance.classifiers.all())
+
         return tree
 
 
@@ -406,6 +409,9 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
 
         self.create_attribute_for_entity_if_not_exist(instance)
 
+        # Do not delete, somehow this awfulness make it works
+        instance = GenericAttributeType.objects.get(id=instance.id)
+
         return instance
 
     def update(self, instance, validated_data):
@@ -413,10 +419,16 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
         is_hidden = validated_data.pop('is_hidden', empty)
         classifiers = validated_data.pop('classifiers', empty)
         instance = super(GenericAttributeTypeSerializer, self).update(instance, validated_data)
+
         if is_hidden is not empty:
             instance.options.update_or_create(member=member, defaults={'is_hidden': is_hidden})
+
         if classifiers is not empty:
             self.save_classifiers(instance, classifiers)
+
+        # Do not delete, somehow this awfulness make it works (same magic here)
+        instance = GenericAttributeType.objects.get(id=instance.id)
+
         return instance
 
     def save_classifiers(self, instance, classifier_tree):
@@ -430,18 +442,24 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
             return
 
         processed = set()
+        prev_node = None
+
         for node in classifier_tree:
-            self.save_classifier(instance, node, None, processed)
+            prev_node = self.save_classifier(instance, node, None, processed, prev_node)
 
         instance.classifiers.exclude(pk__in=processed).delete()
 
-    def save_classifier(self, instance, node, parent, processed):
+    def save_classifier(self, instance, node, parent, processed, previous_node=None):
 
         is_new_node = False
+        previous_node_id = None
+
+        if previous_node is not None and hasattr(previous_node, 'id'):  # 'id' in previous_node:
+            previous_node_id = previous_node.id
 
         if 'id' in node:
             try:
-                o = instance.classifiers.get(pk=node.pop('id'))
+                o = instance.classifiers.get(pk=node['id'])
             except ObjectDoesNotExist:
                 o = GenericClassifier()
                 is_new_node = True
@@ -463,14 +481,35 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
 
             o.save()
 
+            prev_sibling = o.get_previous_sibling()
+            prev_sibling_id = None
+
+            if prev_sibling is not None:
+                prev_sibling_id = prev_sibling.id
+
+            # prev_sibling is None and previous_node is not None or prev_sibling is not None and previous_node is None or prev_sibling.id != previous_node_id
+            if prev_sibling_id != previous_node_id:
+
+                if previous_node_id is not None:
+                    o.move_to(previous_node, 'right')
+                else:
+                    o.move_to(parent, 'first-child')
+
+            # if  and o.id == prev_sibling.id:
+
+
             self.create_classifier_node_mapping(instance, o)
 
         except IntegrityError:
             raise ValidationError("non unique user_code")
+
         processed.add(o.id)
+        prev_node = None
 
         for c in children:
-            self.save_classifier(instance, c, o, processed)
+            prev_node = self.save_classifier(instance, c, o, processed, prev_node)
+
+        return o
 
     def create_classifier_node_mapping(self, instance, node):
 
