@@ -30,6 +30,16 @@ class PrimaryKeyRelatedFilteredField(PrimaryKeyRelatedField):
                 queryset = backend().filter_queryset(request, queryset, None)
         return queryset
 
+    def to_representation(self, value):
+
+        if type(value) == dict:
+            return value['pk']
+        else:
+            if self.pk_field is not None:
+                return self.pk_field.to_representation(value.pk)
+            return value.pk
+
+
 
 class SlugRelatedFilteredField(SlugRelatedField):
     filter_backends = None

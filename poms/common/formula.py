@@ -539,6 +539,7 @@ def _get_relation_by_user_code(evaluator, content_type, user_code):
     _l.info('model_class %s' % model_class)
 
     result = _get_val_by_model_cls(model_class, user_code).__dict__
+    result['pk'] = result['id']
 
     # print('result relation.name %s' % result.name)
     _l.info('result relation[name] %s' % result['name'])
