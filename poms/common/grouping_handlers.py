@@ -431,6 +431,7 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
     # _l.info('groups_types %s' % groups_types)
     # _l.info('group_values %s' % group_values)
 
+    # _l.info('qs %s' % qs[0])
 
     for item in qs:
 
@@ -484,9 +485,15 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
 
                 if attribute_type.value_type == 30:
 
-                    attribute_options["attributes__classifier__name"] = value
+                    attribute_options["attributes__classifier"] = value
 
                     result = Model.objects.filter(Q(**attribute_options)).values_list('id', flat=True)
+
+
+                    # _l.info('attributes__classifier__name group_values %s ' % group_values)
+                    # _l.info('attributes__classifier__name index %s ' % index)
+                    # _l.info('attributes__classifier__name value %s ' % value)
+                    # _l.info('attributes__classifier__name result %s ' % result)
 
                 if attribute_type.value_type == 40:
 
