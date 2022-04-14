@@ -536,12 +536,12 @@ def _get_relation_by_user_code(evaluator, content_type, user_code):
     app_label, model = content_type.split('.')
     model_class = ContentType.objects.get_by_natural_key(app_label, model).model_class()
 
-    print('model_class %s' % model_class)
+    _l.info('model_class %s' % model_class)
 
     result = _get_val_by_model_cls(model_class, user_code).__dict__
 
     # print('result relation.name %s' % result.name)
-    print('result relation[name] %s' % result['name'])
+    _l.info('result relation[name] %s' % result['name'])
 
     return result
 

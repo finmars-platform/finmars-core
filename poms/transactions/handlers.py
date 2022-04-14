@@ -326,56 +326,25 @@ class TransactionTypeProcess(object):
 
             if value is None:
 
-                if i.value_type == TransactionTypeInput.RELATION:
+                if i.value:
+                    errors = {}
+                    try:
+                        # i.value = _if_null(effective_date)
+                        # names = {
+                        #   'effective_date': 2020-02-10
+                        #
+                        # }
 
-                    model_class = i.content_type.model_class()
+                        value = formula.safe_eval(i.value, names=self.values, now=self._now, context=self._context)
 
-                    if i.value:
-                        errors = {}
-                        try:
-                            # i.value = _if_null(effective_date)
-                            # names = {
-                            #   'effective_date': 2020-02-10
-                            #
-                            # }
+                        _l.debug("Set from default. input %s value %s" % (i.name, i.value))
 
-                            value = formula.safe_eval(i.value, names=self.values, now=self._now, context=self._context)
-
-                            _l.debug("Set from default. input %s value %s" % (i.name, i.value))
-
-                        except formula.InvalidExpression as e:
-                            self._set_eval_error(errors, i.name, i.value, e)
-                            self.value_errors.append(errors)
-                            _l.debug("ERROR Set from default. input %s" % i.name)
-                            _l.debug("ERROR Set from default. error %s" % e)
-                            value = None
-
-                    # value = _get_val_by_model_cls_for_transaction_type_input(self.complex_transaction.master_user, i,
-                    #                                                          model_class)
-
-                    _l.debug("Set from default. Relation input %s value %s" % (i.name, value))
-
-                else:
-
-                    if i.value:
-                        errors = {}
-                        try:
-                            # i.value = _if_null(effective_date)
-                            # names = {
-                            #   'effective_date': 2020-02-10
-                            #
-                            # }
-
-                            value = formula.safe_eval(i.value, names=self.values, now=self._now, context=self._context)
-
-                            _l.debug("Set from default. input %s value %s" % (i.name, i.value))
-
-                        except formula.InvalidExpression as e:
-                            self._set_eval_error(errors, i.name, i.value, e)
-                            self.value_errors.append(errors)
-                            _l.debug("ERROR Set from default. input %s" % i.name)
-                            _l.debug("ERROR Set from default. error %s" % e)
-                            value = None
+                    except formula.InvalidExpression as e:
+                        self._set_eval_error(errors, i.name, i.value, e)
+                        self.value_errors.append(errors)
+                        _l.debug("ERROR Set from default. input %s" % i.name)
+                        _l.debug("ERROR Set from default. error %s" % e)
+                        value = None
 
             if value or value == 0:
                 self.values[i.name] = value
