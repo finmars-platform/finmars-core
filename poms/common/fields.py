@@ -32,12 +32,17 @@ class PrimaryKeyRelatedFilteredField(PrimaryKeyRelatedField):
 
     def to_representation(self, value):
 
-        if type(value) == dict:
-            return value['pk']
-        else:
+        try:
+
             if self.pk_field is not None:
                 return self.pk_field.to_representation(value.pk)
             return value.pk
+
+        except Exception as e:
+
+            if type(value) == dict:
+                return value['pk']
+
 
 
 
