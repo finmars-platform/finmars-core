@@ -2241,22 +2241,29 @@ class TransactionTypeProcess(object):
         setattr(target, target_attr_name, value)
 
     def _set_rel(self, errors, values, default_value, target, target_attr_name, source, source_attr_name, model):
-        value = getattr(source, source_attr_name, None)  # got user_code
-        if value:
+        user_code = getattr(source, source_attr_name, None)  # got user_code
+        value = None
+        if user_code:
             # convert to id
             if model:
+
+                _l.info('_set_rel model %s ' % model)
+                _l.info('_set_rel value %s ' % user_code)
+
                 try:
                     if model._meta.get_field('master_user'):
-                        value = model.objects.get(master_user=self.transaction_type.master_user, user_code=value)
+                        value = model.objects.get(master_user=self.transaction_type.master_user, user_code=user_code)
 
                 except Exception as e:
                     try:
-                        value = model.objects.get(user_code=value)
+                        value = model.objects.get(user_code=user_code)
                     except Exception as e:
-                        _l.info("User code for default value is not found")
+                        _l.info("User code for default value is not found %s" % e   )
         else:
             from_input = getattr(source, '%s_input' % source_attr_name)
             if from_input:
+                _l.info('_set_rel values %s ' % values)
+
                 value = values[from_input.name]
         if not value:
             value = default_value
