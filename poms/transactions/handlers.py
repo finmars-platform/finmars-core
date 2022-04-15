@@ -198,42 +198,42 @@ class TransactionTypeProcess(object):
             return False
 
     def _set_values(self):
-        def _get_val_by_model_cls_for_transaction_type_input(master_user, obj, model_class):
+        def _get_val_by_model_cls_for_transaction_type_input(master_user, value, model_class):
             try:
                 if issubclass(model_class, Account):
-                    return Account.objects.get(master_user=master_user, user_code=obj.value)
+                    return Account.objects.get(master_user=master_user, user_code=value)
                 elif issubclass(model_class, Currency):
-                    return Currency.objects.get(master_user=master_user, user_code=obj.value)
+                    return Currency.objects.get(master_user=master_user, user_code=value)
                 elif issubclass(model_class, Instrument):
-                    return Instrument.objects.get(master_user=master_user, user_code=obj.value)
+                    return Instrument.objects.get(master_user=master_user, user_code=value)
                 elif issubclass(model_class, InstrumentType):
-                    return InstrumentType.objects.get(master_user=master_user, user_code=obj.value)
+                    return InstrumentType.objects.get(master_user=master_user, user_code=value)
                 elif issubclass(model_class, Counterparty):
-                    return Counterparty.objects.get(master_user=master_user, user_code=obj.value)
+                    return Counterparty.objects.get(master_user=master_user, user_code=value)
                 elif issubclass(model_class, Responsible):
-                    return Responsible.objects.get(master_user=master_user, user_code=obj.value)
+                    return Responsible.objects.get(master_user=master_user, user_code=value)
                 elif issubclass(model_class, Strategy1):
-                    return Strategy1.objects.get(master_user=master_user, user_code=obj.value)
+                    return Strategy1.objects.get(master_user=master_user, user_code=value)
                 elif issubclass(model_class, Strategy2):
-                    return Strategy2.objects.get(master_user=master_user, user_code=obj.value)
+                    return Strategy2.objects.get(master_user=master_user, user_code=value)
                 elif issubclass(model_class, Strategy3):
-                    return Strategy3.objects.get(master_user=master_user, user_code=obj.value)
+                    return Strategy3.objects.get(master_user=master_user, user_code=value)
                 elif issubclass(model_class, PaymentSizeDetail):
-                    return PaymentSizeDetail.objects.get(user_code=obj.value)
+                    return PaymentSizeDetail.objects.get(user_code=value)
                 elif issubclass(model_class, Portfolio):
-                    return Portfolio.objects.get(master_user=master_user, user_code=obj.value)
+                    return Portfolio.objects.get(master_user=master_user, user_code=value)
                 elif issubclass(model_class, PricingPolicy):
-                    return PricingPolicy.objects.get(master_user=master_user, user_code=obj.value)
+                    return PricingPolicy.objects.get(master_user=master_user, user_code=value)
                 elif issubclass(model_class, Periodicity):
-                    return Periodicity.objects.get(user_code=obj.value)
+                    return Periodicity.objects.get(user_code=value)
                 elif issubclass(model_class, AccrualCalculationModel):
-                    return AccrualCalculationModel.objects.get(user_code=obj.value)
+                    return AccrualCalculationModel.objects.get(user_code=value)
                 elif issubclass(model_class, EventClass):
-                    return EventClass.objects.get(user_code=obj.value)
+                    return EventClass.objects.get(user_code=value)
                 elif issubclass(model_class, NotificationClass):
-                    return NotificationClass.objects.get(user_code=obj.value)
+                    return NotificationClass.objects.get(user_code=value)
             except Exception:
-                _l.info("Could not find default value relation %s " % obj.value)
+                _l.info("Could not find default value relation %s " % value)
                 return None
 
         def _get_val_by_model_cls_for_complex_transaction_input(master_user, obj, model_class):
@@ -326,25 +326,55 @@ class TransactionTypeProcess(object):
 
             if value is None:
 
+                if i.value_type == TransactionTypeInput.RELATION:
+
+                    model_class = i.content_type.model_class()
+
+                    if i.value:
+                        errors = {}
+                        try:
+                            # i.value = _if_null(effective_date)
+                            # names = {
+                            #   'effective_date': 2020-02-10
+                            #
+                            # }
+
+                            value = formula.safe_eval(i.value, names=self.values, now=self._now, context=self._context)
+
+                            _l.debug("Set from default. input %s value %s" % (i.name, i.value))
+
+                        except formula.InvalidExpression as e:
+                            self._set_eval_error(errors, i.name, i.value, e)
+                            self.value_errors.append(errors)
+                            _l.debug("ERROR Set from default. input %s" % i.name)
+                            _l.debug("ERROR Set from default. error %s" % e)
+                            value = None
+
+                    value = _get_val_by_model_cls_for_transaction_type_input(self.complex_transaction.master_user, value,
+                                                                             model_class)
+
+                    _l.debug("Set from default. Relation input %s value %s" % (i.name, value))
+
+            else:
                 if i.value:
-                    errors = {}
-                    try:
-                        # i.value = _if_null(effective_date)
-                        # names = {
-                        #   'effective_date': 2020-02-10
-                        #
-                        # }
+                        errors = {}
+                        try:
+                            # i.value = _if_null(effective_date)
+                            # names = {
+                            #   'effective_date': 2020-02-10
+                            #
+                            # }
 
-                        value = formula.safe_eval(i.value, names=self.values, now=self._now, context=self._context)
+                            value = formula.safe_eval(i.value, names=self.values, now=self._now, context=self._context)
 
-                        _l.debug("Set from default. input %s value %s" % (i.name, i.value))
+                            _l.debug("Set from default. input %s value %s" % (i.name, i.value))
 
-                    except formula.InvalidExpression as e:
-                        self._set_eval_error(errors, i.name, i.value, e)
-                        self.value_errors.append(errors)
-                        _l.debug("ERROR Set from default. input %s" % i.name)
-                        _l.debug("ERROR Set from default. error %s" % e)
-                        value = None
+                        except formula.InvalidExpression as e:
+                            self._set_eval_error(errors, i.name, i.value, e)
+                            self.value_errors.append(errors)
+                            _l.debug("ERROR Set from default. input %s" % i.name)
+                            _l.debug("ERROR Set from default. error %s" % e)
+                            value = None
 
             if value or value == 0:
                 self.values[i.name] = value
