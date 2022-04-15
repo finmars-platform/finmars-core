@@ -415,6 +415,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
         return instance
 
     def update(self, instance, validated_data):
+
         member = get_member_from_context(self.context)
         is_hidden = validated_data.pop('is_hidden', empty)
         classifiers = validated_data.pop('classifiers', empty)
@@ -449,13 +450,13 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
 
         instance.classifiers.exclude(pk__in=processed).delete()
 
-    def save_classifier(self, instance, node, parent, processed, previous_node=None):
+    def save_classifier(self, instance, node, parent, processed, prev_node_instance=None):
 
         is_new_node = False
         previous_node_id = None
 
-        if previous_node is not None and hasattr(previous_node, 'id'):  # 'id' in previous_node:
-            previous_node_id = previous_node.id
+        if prev_node_instance is not None and hasattr(prev_node_instance, 'id'):  # 'id' in prev_node_instance:
+            previous_node_id = prev_node_instance.id
 
         if 'id' in node:
             try:
@@ -487,11 +488,15 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
             if prev_sibling is not None:
                 prev_sibling_id = prev_sibling.id
 
-            # prev_sibling is None and previous_node is not None or prev_sibling is not None and previous_node is None or prev_sibling.id != previous_node_id
             if prev_sibling_id != previous_node_id:
 
                 if previous_node_id is not None:
-                    o.move_to(previous_node, 'right')
+
+                    # instance may contain old data after previous saves, update it
+                    prev_node_instance.refresh_from_db()
+
+                    o.move_to(prev_node_instance, 'right')
+
                 else:
                     o.move_to(parent, 'first-child')
 
