@@ -1973,6 +1973,9 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
                         "name": item.name
                     }
                 except Exception as e:
+
+                    _l.info("Exception %s e " % e)
+
                     attr['classifier'] = None
 
             if attribute.value_type == 40:
@@ -2061,7 +2064,7 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
         except Exception as e:
             _l.info("Can't set default pricing policy %s" % e)
 
-
+        _l.info('instrument_object %s' % instrument_object)
 
         return instrument_object
 
@@ -2171,12 +2174,12 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
 
         object_data['payment_size_detail'] = ecosystem_default.payment_size_detail.id
 
-    try:
-        object_data['pricing_condition'] = PricingCondition.objects.get(
-            user_code=source_data['pricing_condition']).id
-    except Exception as e:
-
-        object_data['pricing_condition'] = ecosystem_default.pricing_condition.id
+    # try:
+    #     object_data['pricing_condition'] = PricingCondition.objects.get(
+    #         user_code=source_data['pricing_condition']).id
+    # except Exception as e:
+    #
+    #     object_data['pricing_condition'] = ecosystem_default.pricing_condition.id
 
 
 
@@ -2192,7 +2195,12 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     else:
         object_data['maturity_date'] = '2999-01-01'
 
-    object_data['attributes'] = []
+    # object_data['attributes'] = []
+
+    _tmp_attributes_dict = {}
+
+    for item in object_data['attributes']:
+        _tmp_attributes_dict[item['attribute_type']] = item
 
     for attribute_type in attribute_types:
 
@@ -2225,7 +2233,9 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
             if attribute_type.value_type == 40:
                 attribute['value_date'] = source_data[lower_user_code]
 
-            object_data['attributes'].append(attribute)
+            _tmp_attributes_dict[attribute['attribute_type']] = attribute
+
+    object_data['attributes'] = _tmp_attributes_dict.items()
 
     _l.info("Settings attributes for instrument done")
 
