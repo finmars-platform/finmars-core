@@ -2235,7 +2235,10 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
 
             _tmp_attributes_dict[attribute['attribute_type']] = attribute
 
-    object_data['attributes'] = _tmp_attributes_dict.values()
+    object_data['attributes'] = []
+
+    for key, value in _tmp_attributes_dict.items():
+        object_data['attributes'].append(value)
 
     _l.info("Settings attributes for instrument done")
 
