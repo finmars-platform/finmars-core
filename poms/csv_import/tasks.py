@@ -1963,8 +1963,15 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
 
             if attribute.value_type == 30:
                 try:
-                    attr['classifier'] = GenericClassifier.objects.get(attribute_type=attribute.attribute_type,
-                                                           name=attribute.value_classifier).id
+
+                    item = GenericClassifier.objects.get(attribute_type=attribute.attribute_type,
+                                                         name=attribute.value_classifier)
+
+                    attr['classifier'] = item.id
+                    attr['classifier_object'] = {
+                        "id": item.id,
+                        "name": item.name
+                    }
                 except Exception as e:
                     attr['classifier'] = None
 
@@ -2034,6 +2041,8 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
         # Set Pricing Policy
 
         try:
+
+            instrument_object['pricing_policies'] = []
 
             for it_pricing_policy in instrument_type.pricing_policies.all():
 
