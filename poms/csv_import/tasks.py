@@ -1904,13 +1904,13 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
     try:
         # Set system attributes
 
-        if instrument_type.payment_size_detail:
-            instrument_object['payment_size_detail'] = instrument_type.payment_size_detail.id
+        if instrument_type.payment_size_detail_id:
+            instrument_object['payment_size_detail'] = instrument_type.payment_size_detail_id
         else:
             instrument_object['payment_size_detail'] = None
 
-        if instrument_type.accrued_currency:
-            instrument_object['accrued_currency'] = instrument_type.accrued_currency.id
+        if instrument_type.accrued_currency_id:
+            instrument_object['accrued_currency'] = instrument_type.accrued_currency_id
         else:
             instrument_object['accrued_currency'] = None
 
@@ -1922,13 +1922,13 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
         instrument_object['accrued_multiplier'] = instrument_type.accrued_multiplier
         instrument_object['default_accrued'] = instrument_type.default_accrued
 
-        if instrument_type.exposure_calculation_model:
-            instrument_object['exposure_calculation_model'] = instrument_type.exposure_calculation_model.id
+        if instrument_type.exposure_calculation_model_id:
+            instrument_object['exposure_calculation_model'] = instrument_type.exposure_calculation_model_id
         else:
             instrument_object['exposure_calculation_model'] = None
 
-        if instrument_type.pricing_condition:
-            instrument_object['pricing_condition'] = instrument_type.pricing_condition.id
+        if instrument_type.pricing_condition_id:
+            instrument_object['pricing_condition'] = instrument_type.pricing_condition_id
         else:
             instrument_object['pricing_condition'] = None
 
