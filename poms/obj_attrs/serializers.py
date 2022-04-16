@@ -23,7 +23,9 @@ from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.obj_perms.utils import has_view_perms, get_permissions_prefetch_lookups, obj_perms_filter_objects_for_view
 from poms.users.fields import MasterUserField, HiddenMemberField
 from poms.users.utils import get_member_from_context, get_master_user_from_context
-
+# metestig
+import logging
+_l = logging.getLogger('poms.obj_attrs')
 
 class ModelWithAttributesSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
@@ -273,6 +275,7 @@ class GenericClassifierRecursiveField(serializers.Serializer):
 class GenericClassifierListSerializer(serializers.ListSerializer):
     def get_attribute(self, instance):
         tree = get_cached_trees(instance.classifiers.all())
+
         return tree
 
 
@@ -412,10 +415,12 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
         return instance
 
     def update(self, instance, validated_data):
+
         member = get_member_from_context(self.context)
         is_hidden = validated_data.pop('is_hidden', empty)
         classifiers = validated_data.pop('classifiers', empty)
         instance = super(GenericAttributeTypeSerializer, self).update(instance, validated_data)
+
         if is_hidden is not empty:
             instance.options.update_or_create(member=member, defaults={'is_hidden': is_hidden})
 
@@ -438,20 +443,24 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
             return
 
         processed = set()
-        for node in classifier_tree:
-            self.save_classifier(instance, node, None, processed)
+        prev_node = None
 
-        print('save_classifiers instance.classifiers %s' % len(list(instance.classifiers.all())))
+        for node in classifier_tree:
+            prev_node = self.save_classifier(instance, node, None, processed, prev_node)
 
         instance.classifiers.exclude(pk__in=processed).delete()
 
-    def save_classifier(self, instance, node, parent, processed):
+    def save_classifier(self, instance, node, parent, processed, prev_node_instance=None):
 
         is_new_node = False
+        previous_node_id = None
+
+        if prev_node_instance is not None and hasattr(prev_node_instance, 'id'):  # 'id' in prev_node_instance:
+            previous_node_id = prev_node_instance.id
 
         if 'id' in node:
             try:
-                o = instance.classifiers.get(pk=node.pop('id'))
+                o = instance.classifiers.get(pk=node['id'])
             except ObjectDoesNotExist:
                 o = GenericClassifier()
                 is_new_node = True
@@ -471,23 +480,41 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
             for k, v in node.items():
                 setattr(o, k, v)
 
-            print('save o %s' % o)
-
             o.save()
 
-            print('save o  id %s' % o.id)
+            prev_sibling = o.get_previous_sibling()
+            prev_sibling_id = None
+
+            if prev_sibling is not None:
+                prev_sibling_id = prev_sibling.id
+
+            if prev_sibling_id != previous_node_id:
+
+                if previous_node_id is not None:
+
+                    # instance may contain old data after previous saves, update it
+                    prev_node_instance.refresh_from_db()
+
+                    o.move_to(prev_node_instance, 'right')
+
+                else:
+                    o.move_to(parent, 'first-child')
+
+            # if  and o.id == prev_sibling.id:
+
 
             self.create_classifier_node_mapping(instance, o)
 
-        except IntegrityError as e:
-
-            print('classifier save error %s' % e)
-
+        except IntegrityError:
             raise ValidationError("non unique user_code")
+
         processed.add(o.id)
+        prev_node = None
 
         for c in children:
-            self.save_classifier(instance, c, o, processed)
+            prev_node = self.save_classifier(instance, c, o, processed, prev_node)
+
+        return o
 
     def create_classifier_node_mapping(self, instance, node):
 

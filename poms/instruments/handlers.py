@@ -1,10 +1,14 @@
 import time
 import traceback
 
+from collections import OrderedDict
+
 from django.contrib.contenttypes.models import ContentType
 
-from poms.instruments.models import GeneratedEvent
+from poms.instruments.models import GeneratedEvent, PricingPolicy
+from poms.pricing.models import InstrumentPricingScheme, InstrumentPricingSchemeType
 from poms.obj_attrs.models import GenericClassifier, GenericAttributeType
+
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import ComplexTransaction, TransactionType
 
@@ -137,6 +141,62 @@ class InstrumentTypeProcess(object):
                 instrument_object['pricing_currency'] = instrument_type.pricing_currency_id
             else:
                 instrument_object['pricing_currency'] = None
+
+            instrument_object['pricing_policies'] = []
+
+            if instrument_type.pricing_policies:
+                for itype_pp in list(instrument_type.pricing_policies.all().select_related('pricing_policy', 'pricing_scheme')):
+
+                    pricing_policy = PricingPolicy.objects.get(master_user=instrument_type.master_user,
+                                                               user_code=itype_pp.pricing_policy.user_code)
+
+                    instrument_type_pricing_policy = {
+                        'pricing_policy': pricing_policy.id,
+                        'pricing_scheme': None,
+                        'notes': itype_pp.notes,
+                        'default_value': itype_pp.default_value,
+                        'attribute_key': itype_pp.attribute_key,
+                        'pricing_policy_object': {
+                            'id': pricing_policy.id,
+                            'user_code': pricing_policy.user_code,
+                            'name': pricing_policy.name,
+                            'short_name': pricing_policy.short_name,
+                            'notes': pricing_policy.notes,
+                            'expr':	pricing_policy.expr,
+                        },
+                        'pricing_scheme_object': None
+                    }
+
+                    if itype_pp.pricing_scheme is not None:
+
+                        pricing_scheme = InstrumentPricingScheme.objects.get(master_user=instrument_type.master_user,
+                                                                             user_code=itype_pp.pricing_scheme.user_code)
+
+                        pricing_scheme_type = InstrumentPricingSchemeType.objects.get(pk=pricing_scheme.type.pk)
+
+                        instrument_type_pricing_policy['pricing_scheme'] = pricing_scheme.id
+
+                        instrument_type_pricing_policy['pricing_scheme_object'] = {
+                            'id': pricing_scheme.id,
+                            'name':	pricing_scheme.name,
+                            'user_code': pricing_scheme.user_code,
+                            'notes': pricing_scheme.notes,
+                            'notes_for_users': pricing_scheme.notes_for_users,
+                            'notes_for_parameter': pricing_scheme.notes_for_parameter,
+                            'error_handler': pricing_scheme.error_handler,
+                            'modified': pricing_scheme.modified,
+
+                            'type':	pricing_scheme_type.id,
+                            # "type_settings": {}
+                            'type_object': {
+                                'id': pricing_scheme_type.id,
+                                'name':	pricing_scheme_type.name,
+                                'notes': pricing_scheme_type.notes,
+                                'input_type': pricing_scheme_type.input_type
+                            }
+                        }
+
+                    instrument_object['pricing_policies'].append(instrument_type_pricing_policy)
 
             instrument_object['default_price'] = instrument_type.default_price
             instrument_object['maturity_date'] = instrument_type.maturity_date
