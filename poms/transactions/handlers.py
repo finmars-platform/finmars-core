@@ -355,26 +355,26 @@ class TransactionTypeProcess(object):
 
                     _l.debug("Set from default. Relation input %s value %s" % (i.name, value))
 
-            else:
-                if i.value:
-                        errors = {}
-                        try:
-                            # i.value = _if_null(effective_date)
-                            # names = {
-                            #   'effective_date': 2020-02-10
-                            #
-                            # }
+                else:
+                    if i.value:
+                            errors = {}
+                            try:
+                                # i.value = _if_null(effective_date)
+                                # names = {
+                                #   'effective_date': 2020-02-10
+                                #
+                                # }
 
-                            value = formula.safe_eval(i.value, names=self.values, now=self._now, context=self._context)
+                                value = formula.safe_eval(i.value, names=self.values, now=self._now, context=self._context)
 
-                            _l.debug("Set from default. input %s value %s" % (i.name, i.value))
+                                _l.debug("Set from default. input %s value %s" % (i.name, i.value))
 
-                        except formula.InvalidExpression as e:
-                            self._set_eval_error(errors, i.name, i.value, e)
-                            self.value_errors.append(errors)
-                            _l.debug("ERROR Set from default. input %s" % i.name)
-                            _l.debug("ERROR Set from default. error %s" % e)
-                            value = None
+                            except formula.InvalidExpression as e:
+                                self._set_eval_error(errors, i.name, i.value, e)
+                                self.value_errors.append(errors)
+                                _l.debug("ERROR Set from default. input %s" % i.name)
+                                _l.debug("ERROR Set from default. error %s" % e)
+                                value = None
 
             if value or value == 0:
                 self.values[i.name] = value
