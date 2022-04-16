@@ -132,6 +132,11 @@ class InstrumentTypeProcess(object):
             else:
                 instrument_object['payment_size_detail'] = None
 
+            if instrument_type.pricing_condition:
+                instrument_object['pricing_condition'] = instrument_type.pricing_condition_id
+            else:
+                instrument_object['pricing_condition'] = None
+
             if instrument_type.accrued_currency:
                 instrument_object['accrued_currency'] = instrument_type.accrued_currency_id
             else:
@@ -264,6 +269,8 @@ class InstrumentTypeProcess(object):
                 if attribute.value_type == 30:
                     try:
 
+                        _l.info('attribute.value_classifier %s' % attribute.value_classifier)
+
                         classifier = GenericClassifier.objects.filter(name=attribute.value_classifier,
                                                                       attribute_type=attribute_type)[0]
 
@@ -275,6 +282,8 @@ class InstrumentTypeProcess(object):
                             "name": classifier.name
                         }
                     except Exception as e:
+
+                        _l.info('GenericClassifier e %s' % e)
                         attr['classifier'] = None
                         attr['classifier_object'] = None
 
