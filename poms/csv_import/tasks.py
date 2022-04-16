@@ -1964,7 +1964,7 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
             if attribute.value_type == 30:
                 try:
 
-                    item = GenericClassifier.objects.get(attribute_type=attribute.attribute_type,
+                    item = GenericClassifier.objects.get(attribute_type__user_code=attribute.attribute_type_user_code,
                                                          name=attribute.value_classifier)
 
                     attr['classifier'] = item.id
