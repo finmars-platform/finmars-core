@@ -226,7 +226,7 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
         filtered_qs = handle_groups(filtered_qs, groups_types, groups_values, groups_order, master_user,
                                     self.get_queryset(), content_type)
 
-        filtered_qs = count_groups(filtered_qs, groups_types, groups_values, master_user, self.get_queryset(), content_type, filter_settings, ev_options)
+        filtered_qs = count_groups(filtered_qs, groups_types, groups_values, master_user, self.get_queryset(), content_type, filter_settings, ev_options, global_table_search)
 
         # print('len after handle groups %s' % len(filtered_qs))
 
