@@ -38,7 +38,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
     next_run_at = DateTimeTzAwareField(read_only=True)
 
     procedures = ScheduleProcedureSerializer(required=False, many=True)
-    data = serializers.JSONField(allow_null=False)
+    data = serializers.JSONField(required=False, allow_null=True)
 
     class Meta:
         model = Schedule

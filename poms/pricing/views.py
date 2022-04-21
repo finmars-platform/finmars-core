@@ -116,7 +116,7 @@ class PricingBrokerBloombergHandler(APIView):
 
         procedure_id = request.data['procedure']
 
-        _l.debug("> handle_callback broker bloomberg: procedure_id %s" % procedure_id)
+        _l.info("> handle_callback broker bloomberg: procedure_id %s" % procedure_id)
 
         try:
 
