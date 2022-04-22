@@ -42,7 +42,8 @@ from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDo
     BloombergDataProviderCredential, PricingConditionMapping, TransactionFileResult, DataProvider
 from poms.integrations.providers.base import get_provider, ProviderException
 from poms.integrations.storage import import_file_storage
-from poms.integrations.tasks import download_instrument, test_certificate, download_instrument_cbond, download_unified_data
+from poms.integrations.tasks import download_instrument, test_certificate, download_instrument_cbond, \
+    download_unified_data, download_currency_cbond
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, GenericAttributeTypeSerializer, \
     GenericClassifierSerializer
@@ -61,6 +62,7 @@ from poms.users.models import EcosystemDefault
 _l = getLogger('poms.integrations')
 
 from storages.backends.sftpstorage import SFTPStorage
+
 SFS = SFTPStorage()
 
 
@@ -273,6 +275,7 @@ class InstrumentDownloadSchemeLightSerializer(serializers.ModelSerializer):
             'user_code', 'name', 'short_name', 'provider',
             'provider_object',
         ]
+
 
 class PriceDownloadSchemeSerializer(serializers.ModelSerializer):
     master_user = MasterUserField()
@@ -960,7 +963,7 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObj
         self.fields['accrued_currency_object'] = CurrencyViewSerializer(source='accrued_currency', read_only=True)
 
         from poms.instruments.serializers import InstrumentTypeViewSerializer, PaymentSizeDetailSerializer, \
-             EventScheduleSerializer
+            EventScheduleSerializer
         self.fields['instrument_type_object'] = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
         self.fields['payment_size_detail_object'] = PaymentSizeDetailSerializer(source='payment_size_detail',
                                                                                 read_only=True)
@@ -1009,6 +1012,30 @@ class ImportInstrumentEntry(object):
         self.member = member
         self.instrument_code = instrument_code
         self.instrument_download_scheme = instrument_download_scheme
+        self.task = task
+        self._task_object = None
+        self.task_result_overrides = task_result_overrides
+        self.instrument = instrument
+        self.errors = errors
+
+    @property
+    def task_object(self):
+        if not self._task_object and self.task:
+            self._task_object = self.master_user.tasks.get(pk=self.task)
+        return self._task_object
+
+    @task_object.setter
+    def task_object(self, value):
+        self._task_object = value
+        self.task = getattr(value, 'pk', None)
+
+
+class ImportCurrencyEntry(object):
+    def __init__(self, master_user=None, member=None, currency_code=None,
+                 task=None, task_result_overrides=None, instrument=None, errors=None):
+        self.master_user = master_user
+        self.member = member
+        self.currency_code = currency_code
         self.task = task
         self._task_object = None
         self.task_result_overrides = task_result_overrides
@@ -1150,7 +1177,6 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
     errors = serializers.ReadOnlyField()
 
     def create(self, validated_data):
-
         task_result_overrides = validated_data.get('task_result_overrides', None)
         instance = ImportInstrumentEntry(**validated_data)
 
@@ -1168,6 +1194,33 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
         return instance
 
 
+class ImportCurrencyCbondsSerializer(serializers.Serializer):
+    master_user = MasterUserField()
+    member = HiddenMemberField()
+    currency_code = serializers.CharField(required=True, initial='USD')
+    task = serializers.IntegerField(required=False, allow_null=True)
+    result_id = serializers.IntegerField(required=False, allow_null=True)
+
+    errors = serializers.ReadOnlyField()
+
+    def create(self, validated_data):
+        task_result_overrides = validated_data.get('task_result_overrides', None)
+        instance = ImportCurrencyEntry(**validated_data)
+
+        task, errors = download_currency_cbond(
+            currency_code=instance.currency_code,
+            master_user=instance.master_user,
+            member=instance.member
+        )
+        instance.task_object = task
+        instance.errors = errors
+
+        if task and task.result_object:
+            instance.result_id = task.result_object['currency_id']
+
+        return instance
+
+
 class ImportUnifiedDataProviderSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
@@ -1179,7 +1232,6 @@ class ImportUnifiedDataProviderSerializer(serializers.Serializer):
     errors = serializers.ReadOnlyField()
 
     def create(self, validated_data):
-
         instance = UnifiedDataEntry(**validated_data)
 
         task, errors = download_unified_data(
@@ -1456,7 +1508,6 @@ class ComplexTransactionImportSchemeCalculatedInputSerializer(serializers.ModelS
 
 
 class ComplexTransactionImportSchemeSelectorValueSerializer(serializers.ModelSerializer):
-
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
 
     class Meta:
@@ -1487,8 +1538,6 @@ class ComplexTransactionImportSchemeReconScenarioSerializer(serializers.ModelSer
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionImportSchemeReconScenarioSerializer, self).__init__(*args, **kwargs)
 
-
-
     def to_representation(self, instance):
         ret = super(ComplexTransactionImportSchemeReconScenarioSerializer, self).to_representation(instance)
 
@@ -1500,7 +1549,6 @@ class ComplexTransactionImportSchemeReconScenarioSerializer(serializers.ModelSer
         return ret
 
     def to_internal_value(self, data):
-
         selector_values = data.pop('selector_values', [])
 
         ret = super(ComplexTransactionImportSchemeReconScenarioSerializer, self).to_internal_value(data)
@@ -1509,7 +1557,6 @@ class ComplexTransactionImportSchemeReconScenarioSerializer(serializers.ModelSer
         ret['selector_values'] = selector_values
 
         return ret
-
 
 
 class ComplexTransactionImportSchemeFieldSerializer(serializers.ModelSerializer):
@@ -1552,7 +1599,6 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
 
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionImportSchemeRuleScenarioSerializer, self).__init__(*args, **kwargs)
-
 
         # TODO: circular import error
         # from poms.transactions.serializers import TransactionTypeViewSerializer
@@ -1602,7 +1648,8 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
     rule_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
 
     inputs = ComplexTransactionImportSchemeInputSerializer(many=True, read_only=False)
-    calculated_inputs = ComplexTransactionImportSchemeCalculatedInputSerializer(many=True, read_only=False, required=False)
+    calculated_inputs = ComplexTransactionImportSchemeCalculatedInputSerializer(many=True, read_only=False,
+                                                                                required=False)
     selector_values = ComplexTransactionImportSchemeSelectorValueSerializer(many=True, read_only=False)
 
     rule_scenarios = ComplexTransactionImportSchemeRuleScenarioSerializer(many=True, read_only=False)
@@ -1741,10 +1788,8 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
             if rule_values['is_default_rule_scenario']:
 
                 if 'transaction_type' not in rule_values:
-
                     _l.info("Set default transaction type to default scenario")
                     rule_values['transaction_type'] = default_transaction_type
-
 
             rule_id = rule_values.pop('id', None)
             rule0 = None
@@ -1841,9 +1886,9 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
 
     def save_fields(self, rule_scenario, fields):
         pk_set = set()
-        
+
         # print('save_fie fields %s' % fields)
-        
+
         if fields:
             for field_values in fields:
                 field_id = field_values.pop('id', None)
@@ -1864,7 +1909,7 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
 
                 field0.save()
                 pk_set.add(field0.id)
-    
+
         rule_scenario.fields.exclude(pk__in=pk_set).delete()
 
 
@@ -1883,7 +1928,6 @@ class ComplexTransactionCsvFileImport:
                  error_handling=None, missing_data_handler=None, error=None, error_message=None, error_row_index=None,
                  error_rows=None,
                  total_rows=None, processed_rows=None, filename=None, stats_file_report=None):
-
         self.task_id = task_id
         self.task_status = task_status
 
@@ -1936,9 +1980,9 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
     def create(self, validated_data):
 
         if 'scheme' in validated_data:
-
             validated_data['delimiter'] = validated_data['scheme'].delimiter
-            validated_data['error_handling'] = validated_data['scheme'].error_handler # Warning - prop is - error_handling
+            validated_data['error_handling'] = validated_data[
+                'scheme'].error_handler  # Warning - prop is - error_handling
             validated_data['missing_data_handler'] = validated_data['scheme'].missing_data_handler
 
             _l.debug('scheme missing data helper:  %s' % validated_data['scheme'].missing_data_handler)
@@ -2056,7 +2100,6 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
 
 
 class TransactionFileResultSerializer(ModelWithTimeStampSerializer):
-
     master_user = MasterUserField()
 
     class Meta:
@@ -2067,7 +2110,6 @@ class TransactionFileResultSerializer(ModelWithTimeStampSerializer):
 
 
 class DataProviderSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = DataProvider
         fields = [

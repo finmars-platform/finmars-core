@@ -1,12 +1,15 @@
 from __future__ import unicode_literals
 
 import django_filters
+import requests
 from django_filters.rest_framework import FilterSet
 
 from rest_framework.settings import api_settings
+from rest_framework.views import APIView
 
 from poms.common.filters import CharFilter, ModelExtMultipleChoiceFilter, NoOpFilter, AttributeFilter, \
     GroupsAttributeFilter, EntitySpecificFilter
+from poms.common.jwt import encode_with_jwt
 from poms.common.pagination import CustomPaginationMixin
 from poms.common.views import AbstractModelViewSet
 from poms.currencies.filters import OwnerByCurrencyFilter
@@ -23,6 +26,14 @@ from poms.obj_perms.views import AbstractEvGroupWithObjectPermissionViewSet, Abs
 from poms.tags.filters import TagFilter
 from poms.tags.utils import get_tag_prefetch
 from poms.users.filters import OwnerByMasterUserFilter
+from rest_framework.response import Response
+
+import logging
+_l = logging.getLogger('poms.currencies')
+
+
+
+from poms_app import settings
 
 
 class CurrencyAttributeTypeViewSet(GenericAttributeTypeViewSet):
@@ -209,3 +220,52 @@ class CurrencyHistoryEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, 
         OwnerByCurrencyFilter,
         AttributeFilter
     ]
+
+
+class CurrencyDatabaseSearchViewSet(APIView):
+
+    permission_classes = []
+
+    def get(self, request):
+
+        headers = {'Content-type': 'application/json'}
+
+        payload_jwt = {
+            "sub":  settings.BASE_API_URL, #"user_id_or_name",
+            "role": 0 # 0 -- ordinary user, 1 -- admin (access to /loadfi and /loadeq)
+        }
+
+        token = encode_with_jwt(payload_jwt)
+
+        name = request.query_params.get('name', '')
+        page = request.query_params.get('page', 1)
+
+        headers['Authorization'] = 'Bearer %s' % token
+
+        result = {}
+
+        _l.info('headers %s' % headers)
+
+        url = str(settings.CBONDS_BROKER_URL) + '/instr/currency/%s?page=%s' % (name, page)
+
+
+        _l.info("Requesting URL %s" % url)
+
+        response = None
+
+        try:
+            response = requests.get(url=url, headers=headers)
+        except Exception as e:
+            _l.info("Request error %s" % e)
+            result = {}
+
+        try:
+            result = response.json()
+        except Exception as e:
+            if response:
+                _l.info('response %s' % response.text )
+                _l.info("Response parse error %s" % e)
+            result = {}
+
+
+        return Response(result)

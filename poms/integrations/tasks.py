@@ -359,6 +359,72 @@ def create_instrument_cbond(data, master_user, member):
         raise Exception(e)
 
 
+def create_currency_cbond(data, master_user, member):
+
+    try:
+
+        from poms.currencies.serializers import CurrencySerializer
+
+        ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
+        content_type = ContentType.objects.get(model="currency", app_label="currencies")
+
+        proxy_user = ProxyUser(member, master_user)
+        proxy_request = ProxyRequest(proxy_user)
+
+        context = {'master_user': master_user,
+                   'request': proxy_request}
+
+        currency_data = {}
+
+        for key, value in data.items():
+
+            if key == 'attributes':
+
+                for attr_key, attr_value in data['attributes'].items():
+
+                    if attr_value == 'null':
+                        currency_data[attr_key] = None
+                    else:
+                        currency_data[attr_key] = attr_value
+
+            else:
+
+                if value == 'null':
+                    currency_data[key] = None
+                else:
+                    currency_data[key] = value
+
+
+
+        attribute_types =  GenericAttributeType.objects.filter(master_user=master_user,
+                                                               content_type=content_type)
+
+        try:
+
+            instance = Currency.objects.get(master_user=master_user, user_code=currency_data['user_code'])
+
+            serializer = CurrencySerializer(data=currency_data, context=context, instance=instance)
+        except Currency.DoesNotExist:
+
+            serializer = CurrencySerializer(data=currency_data, context=context)
+
+        is_valid = serializer.is_valid()
+
+        if is_valid:
+            currency = serializer.save()
+
+            _l.info("Currency is imported successfully")
+
+            return currency
+        else:
+            _l.info('CurrencyExternalAPIViewSet error %s' % serializer.errors)
+            raise Exception(serializer.errors)
+
+    except Exception as e:
+        _l.info('CurrencyExternalAPIViewSet error %s' % e)
+        _l.info(traceback.format_exc())
+        raise Exception(e)
+
 
 def download_instrument_cbond(instrument_code=None, master_user=None, member=None):
 
@@ -449,6 +515,110 @@ def download_instrument_cbond(instrument_code=None, master_user=None, member=Non
 
             except Exception as e:
                 errors.append("Could not create instrument. %s" % str(e))
+                return task, errors
+
+            _l.info('data %s ' % data)
+
+            return task, errors
+
+    except Exception as e:
+        _l.info("error %s " % e)
+        _l.info(traceback.format_exc())
+
+        errors.append('Something went wrong. %s' % str(e))
+
+        return None, errors
+
+
+def download_currency_cbond(currency_code=None, master_user=None, member=None):
+
+    errors = []
+
+    try:
+        _l.debug('download_currency_cbond: master_user_id=%s, currency_code=%s',
+                 getattr(master_user, 'id', None), currency_code)
+
+        options = {
+            'code': currency_code,
+        }
+        with transaction.atomic():
+            task = Task(
+                master_user=master_user,
+                member=member,
+                status=Task.STATUS_PENDING,
+                action=Task.ACTION_INSTRUMENT
+            )
+            task.options_object = options
+            task.save()
+
+            headers = {'Content-type': 'application/json'}
+
+            payload_jwt = {
+                "sub":  settings.BASE_API_URL, #"user_id_or_name",
+                "role": 0 # 0 -- ordinary user, 1 -- admin (access to /loadfi and /loadeq)
+            }
+
+            token = encode_with_jwt(payload_jwt)
+
+            headers['Authorization'] = 'Bearer %s' % token
+
+            options['request_id'] = task.pk
+            options['base_api_url'] = settings.BASE_API_URL
+            options['token'] = 'fd09a190279e45a2bbb52fcabb7899bd'
+
+            options['data'] = {}
+
+
+            response = None
+
+            # OLD ASYNC CODE
+            # try:
+            #     response = requests.post(url=str(settings.CBONDS_BROKER_URL) + '/request-instrument/', data=json.dumps(options), headers=headers)
+            #     _l.info('response download_instrument_cbond %s' % response)
+            # except Exception as e:
+            #     _l.debug("Can't send request to CBONDS BROKER. %s" % e)
+
+            _l.info('options %s' % options)
+            _l.info('settings.CBONDS_BROKER_URL %s' % settings.CBONDS_BROKER_URL)
+
+            try:
+                # TODO refactor to /export/currency when available
+                response = requests.get(url=str(settings.CBONDS_BROKER_URL) + '/instr/currency/' + currency_code, headers=headers)
+                _l.info('response download_currency_cbond %s' % response)
+                _l.info('data response.text %s ' % response.text)
+            except Exception as e:
+                _l.debug("Can't send request to CBONDS BROKER. %s" % e)
+
+                errors.append('Request to broker failed. %s' % str(e))
+
+            try:
+                data = response.json()
+            except Exception as e:
+
+                errors.append("Could not parse response from broker. %s" % response.text)
+                return task, errors
+            try:
+
+                if 'items' in data['data']:
+
+                    for item in data['data']['items']:
+                        currency = create_currency_cbond(item, master_user, member)
+
+                else:
+
+                    currency = create_currency_cbond(data['data'], master_user, member)
+
+                result = {
+                    "currency_id": currency.pk
+                }
+
+                task.result_object = result
+
+                task.save()
+                return task, errors
+
+            except Exception as e:
+                errors.append("Could not create currency. %s" % str(e))
                 return task, errors
 
             _l.info('data %s ' % data)

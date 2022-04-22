@@ -398,6 +398,7 @@ router.register(r'import/pricing-condition-mapping', integrations.PricingConditi
 
 router.register(r'import/instrument', integrations.ImportInstrumentViewSet, 'importinstrument')
 router.register(r'import/instrument-cbonds', integrations.ImportInstrumentCbondsViewSet, 'importinstrumentcbonds')
+router.register(r'import/currency-cbonds', integrations.ImportCurrencyCbondsViewSet, 'importcurrencycbonds')
 router.register(r'import/unified-data-provider', integrations.ImportUnifiedDataProviderViewSet, 'importunifieddataprovider')
 router.register(r'import/pricing', integrations.ImportPricingViewSet, 'importpricing')
 router.register(r'import/test-certificate', integrations.TestCertificateViewSet, 'testcertificate')
@@ -494,6 +495,7 @@ urlpatterns = [
     # external callbacks
 
     url(r'instruments/instrument-database-search', instruments.InstrumentDatabaseSearchViewSet.as_view()),
+    url(r'currencies/currency-database-search', currencies.CurrencyDatabaseSearchViewSet.as_view()),
     url(r'internal/brokers/bloomberg/callback', csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view())),
     url(r'internal/brokers/bloomberg-forwards/callback', csrf_exempt(pricing.PricingBrokerBloombergForwardsHandler.as_view())),
     url(r'internal/brokers/wtrade/callback', csrf_exempt(pricing.PricingBrokerWtradeHandler.as_view())),
