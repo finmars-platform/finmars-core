@@ -1732,6 +1732,7 @@ class InstrumentTypeProcessSerializer(serializers.Serializer):
             pricing_policy = {
                 'pricing_policy': pricing_policy_data['pricing_policy'],
                 'pricing_scheme': pricing_policy_data['pricing_scheme'],
+                'data': pricing_policy_data['data'],
                 'notes': pricing_policy_data['notes'],
                 'default_value': pricing_policy_data['default_value'],
                 'attribute_key': pricing_policy_data['attribute_key'],
@@ -1741,7 +1742,7 @@ class InstrumentTypeProcessSerializer(serializers.Serializer):
 
             obj.instrument['pricing_policies'].append(pricing_policy)
 
-        # remove after usage
+        # delete data after creating 'pricing_policies'
         obj.instrument.pop('_instrument_type_pricing_policies')
 
         return obj.instrument
