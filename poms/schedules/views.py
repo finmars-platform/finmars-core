@@ -45,66 +45,72 @@ class ScheduleViewSet(AbstractModelViewSet):
     @action(detail=True, methods=['post'], url_path='run-schedule', serializer_class=ScheduleSerializer)
     def run_schedule(self, request, pk=None):
 
-        _l.debug("Run Procedure %s" % pk)
+        try:
 
-        _l.debug("Run Procedure data %s" % request.data)
+            _l.info("Run Procedure %s" % pk)
 
-        schedule = Schedule.objects.get(pk=pk)
+            _l.info("Run Procedure data %s" % request.data)
 
-        master_user = request.user.master_user
+            schedule = Schedule.objects.get(pk=pk)
 
-        with timezone.override(master_user.timezone or settings.TIME_ZONE):
-            next_run_at = timezone.localtime(schedule.next_run_at)
-            schedule.schedule(save=True)
+            master_user = request.user.master_user
 
-            _l.debug('Schedule: master_user=%s, next_run_at=%s. STARTED',
-                    master_user.id, schedule.next_run_at)
+            with timezone.override(master_user.timezone or settings.TIME_ZONE):
+                next_run_at = timezone.localtime(schedule.next_run_at)
+                schedule.schedule(save=True)
 
-            _l.debug('Schedule: procedures count %s' % len(schedule.procedures.all()))
+                _l.info('Schedule: master_user=%s, next_run_at=%s. STARTED',
+                        master_user.id, schedule.next_run_at)
 
-            schedule_instance = ScheduleInstance(schedule=schedule, master_user=master_user)
-            schedule_instance.save()
+                _l.info('Schedule: procedures count %s' % len(schedule.procedures.all()))
 
-            total_procedures = len(schedule.procedures.all())
+                schedule_instance = ScheduleInstance(schedule=schedule, master_user=master_user)
+                schedule_instance.save()
 
-            for procedure in schedule.procedures.all():
+                total_procedures = len(schedule.procedures.all())
 
-                try:
+                for procedure in schedule.procedures.all():
 
-                    if procedure.order == 0:
+                    try:
 
-                        schedule_instance.current_processing_procedure_number = 0
-                        schedule_instance.status = ScheduleInstance.STATUS_PENDING
+                        if procedure.order == 0:
+
+                            schedule_instance.current_processing_procedure_number = 0
+                            schedule_instance.status = ScheduleInstance.STATUS_PENDING
+                            schedule_instance.save()
+
+                            send_system_message(master_user=master_user,
+                                                source="Schedule Service",
+                                                text="Schedule %s. Start processing step %s/%s" % (schedule.name, schedule_instance.current_processing_procedure_number, total_procedures))
+
+
+                            process_procedure_async.apply_async(kwargs={'procedure':procedure, 'master_user':master_user, 'schedule_instance': schedule_instance})
+
+                            _l.info('Schedule: Process first procedure master_user=%s, next_run_at=%s', master_user.id, schedule.next_run_at)
+
+                    except Exception as e:
+
+                        schedule_instance.status = ScheduleInstance.STATUS_ERROR
                         schedule_instance.save()
+
+                        _l.info('Schedule: master_user=%s, next_run_at=%s. Error',
+                                master_user.id, schedule.next_run_at)
+
+                        _l.info('Schedule: Error %s' % e)
 
                         send_system_message(master_user=master_user,
                                             source="Schedule Service",
-                                            text="Schedule %s. Start processing step %s/%s" % (schedule.name, schedule_instance.current_processing_procedure_number, total_procedures))
+                                            text="Schedule %s. Error occurred" % schedule.name)
 
+                        pass
 
-                        process_procedure_async.apply_async(kwargs={'procedure':procedure, 'master_user':master_user, 'schedule_instance': schedule_instance})
+            schedule.last_run_at = timezone.now()
+            schedule.save(update_fields=['last_run_at'])
 
-                        _l.debug('Schedule: Process first procedure master_user=%s, next_run_at=%s', master_user.id, schedule.next_run_at)
+            serializer = self.get_serializer(instance=schedule)
 
-                except Exception as e:
+            return Response(serializer.data)
 
-                    schedule_instance.status = ScheduleInstance.STATUS_ERROR
-                    schedule_instance.save()
+        except Exception as e:
 
-                    _l.debug('Schedule: master_user=%s, next_run_at=%s. Error',
-                            master_user.id, schedule.next_run_at)
-
-                    _l.debug('Schedule: Error %s' % e)
-
-                    send_system_message(master_user=master_user,
-                                        source="Schedule Service",
-                                        text="Schedule %s. Error occurred" % schedule.name)
-
-                    pass
-
-        schedule.last_run_at = timezone.now()
-        schedule.save(update_fields=['last_run_at'])
-
-        serializer = self.get_serializer(instance=schedule)
-
-        return Response(serializer.data)
+            return Response(e)

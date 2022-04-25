@@ -17,6 +17,8 @@ _l = logging.getLogger('poms.schedules')
 def process_procedure_async(self, procedure, master_user, schedule_instance):
     _l.info("Schedule: Subprocess process. Master User: %s. Procedure: %s" % (master_user, procedure.type))
 
+    schedule = Schedule.objects.get(id=schedule_instance.schedule_id)
+
     if procedure.type == 'pricing':
 
         try:
@@ -26,26 +28,27 @@ def process_procedure_async(self, procedure, master_user, schedule_instance):
             date_from = None
             date_to = None
 
-            if schedule_instance.data:
-                if 'pl_first_date' in schedule_instance.data:
-                    date_from = schedule_instance.data['date_from']
-                    if 'report_date' in schedule_instance.data:
-                        date_to = schedule_instance.data['report_date']
+            if schedule.data:
+                if 'pl_first_date' in schedule.data:
+                    date_from = schedule.data['date_from']
+                    if 'report_date' in schedule.data:
+                        date_to = schedule.data['report_date']
                 elif 'report_date' in schedule_instance.data:
-                    date_from = schedule_instance.data['report_date']
-                    date_to = schedule_instance.data['report_date']
-                elif 'begin_date' in schedule_instance.data:
-                    date_from = schedule_instance.data['begin_date']
-                    if 'end_date' in schedule_instance.data:
-                        date_to = schedule_instance.data['end_date']
+                    date_from = schedule.data['report_date']
+                    date_to = schedule.data['report_date']
+                elif 'begin_date' in schedule.data:
+                    date_from = schedule.data['begin_date']
+                    if 'end_date' in schedule.data:
+                        date_to = schedule.data['end_date']
 
             instance = PricingProcedureProcess(procedure=item, master_user=master_user,
                                                schedule_instance=schedule_instance, date_from=date_from, date_to=date_to)
             instance.process()
 
-        except PricingProcedure.DoesNotExist:
+        except Exception as e:
 
-            _l.info("Can't find Pricing Procedure %s" % procedure.user_code)
+            _l.info("Can't find Pricing Procedure error %s" % e)
+            _l.info("Can't find Pricing Procedure  user_code %s" % procedure.user_code)
 
     if procedure.type == 'data_provider':
 
