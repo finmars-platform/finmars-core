@@ -479,7 +479,7 @@ def download_instrument_cbond(instrument_code=None, master_user=None, member=Non
             _l.info('settings.CBONDS_BROKER_URL %s' % settings.CBONDS_BROKER_URL)
 
             try:
-                response = requests.post(url=str(settings.CBONDS_BROKER_URL) + '/export/', data=json.dumps(options), headers=headers)
+                response = requests.post(url=str(settings.CBONDS_BROKER_URL) + 'export/', data=json.dumps(options), headers=headers)
                 _l.info('response download_instrument_cbond %s' % response)
                 _l.info('data response.text %s ' % response.text)
             except Exception as e:
@@ -583,7 +583,7 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
 
             try:
                 # TODO refactor to /export/currency when available
-                response = requests.get(url=str(settings.CBONDS_BROKER_URL) + '/instr/currency/' + currency_code, headers=headers)
+                response = requests.get(url=str(settings.CBONDS_BROKER_URL) + 'instr/currency/' + currency_code, headers=headers)
                 _l.info('response download_currency_cbond %s' % response)
                 _l.info('data response.text %s ' % response.text)
             except Exception as e:
