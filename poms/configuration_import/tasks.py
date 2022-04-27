@@ -2670,7 +2670,7 @@ class ImportManager(object):
 
         for item in configuration_section['items']:
 
-            if 'pricing.pricingprocedure' in item['entity']:
+            if 'procedures.pricingprocedure' in item['entity']:
 
                 self.instance.stats['configuration'][item['entity']] = []
 
@@ -2794,7 +2794,7 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Pricing Procedure done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Data Procedure done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     # Configuration import logic end
 
