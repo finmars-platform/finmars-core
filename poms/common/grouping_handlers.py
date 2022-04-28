@@ -138,9 +138,9 @@ def is_attribute(item):
 
 
 def get_root_system_attr_group(qs, root_group, groups_order):
+
     if is_relation(root_group):
 
-        print("pricing currency?")
         qs = qs.values(root_group) \
             .annotate(group_identifier=F(root_group + '__user_code')) \
             .distinct() \

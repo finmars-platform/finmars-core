@@ -1593,6 +1593,9 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
     transaction_type = TransactionTypeField()
     fields = ComplexTransactionImportSchemeFieldSerializer(many=True, read_only=False)
 
+
+    # selector_values = serializers.SerializerMethodField()
+
     class Meta:
         model = ComplexTransactionImportSchemeRuleScenario
         fields = ['id', 'is_default_rule_scenario', 'name', 'selector_values', 'transaction_type', 'fields']
@@ -1606,32 +1609,24 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
         #                                                                        read_only=True)
         pass
 
+
+
     def to_representation(self, instance):
         ret = super(ComplexTransactionImportSchemeRuleScenarioSerializer, self).to_representation(instance)
 
-        if instance.transaction_type:
-            from poms.transactions.serializers import TransactionTypeViewSerializer
-            s = TransactionTypeViewSerializer(instance=instance.transaction_type, read_only=True, context=self.context)
-            ret['transaction_type_object'] = s.data
-
-        ret['selector_values'] = []
+        selector_values = []
 
         for item in list(instance.selector_values.all()):
-            ret['selector_values'].append(item.value)
+            selector_values.append(item.value)
+
+        ret['selector_values'] = selector_values
 
         return ret
 
-        # def to_internal_value(self, data):
-        #     _l.error('ComplexTransactionImportSchemeRuleSerializer.to_internal_value >')
-        #     ret = super(ComplexTransactionImportSchemeRuleSerializer, self).to_internal_value(data)
-        #     _l.error('ComplexTransactionImportSchemeRuleSerializer.to_internal_value <')
-        #     return ret
-        #
-        # def validate(self, attrs):
-        #     _l.error('ComplexTransactionImportSchemeRuleSerializer.validate')
-        #     return attrs
 
     def to_internal_value(self, data):
+
+        # _l.info('ComplexTransactionImportSchemeRuleScenarioSerializer %s' % data['selector_values'])
 
         selector_values = data.pop('selector_values', [])
 
@@ -1792,23 +1787,25 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
                     rule_values['transaction_type'] = default_transaction_type
 
             rule_id = rule_values.pop('id', None)
-            rule0 = None
+            rule = None
             if rule_id:
                 try:
-                    rule0 = instance.rule_scenarios.get(pk=rule_id)
+                    rule = instance.rule_scenarios.get(pk=rule_id)
                 except ObjectDoesNotExist:
                     pass
-            if rule0 is None:
-                rule0 = ComplexTransactionImportSchemeRuleScenario(scheme=instance)
+            else:
+                rule = ComplexTransactionImportSchemeRuleScenario(scheme=instance)
 
             fields = rule_values.pop('fields', []) or []
+
+            _l.info('rule_values before %s' % rule_values )
+
             selector_values = rule_values.pop('selector_values', []) or []
             for name, value in rule_values.items():
-                setattr(rule0, name, value)
-            rule0.save()
+                setattr(rule, name, value)
+            rule.save()
 
-            print("save_rule_scenarios selector_values %s" % selector_values)
-
+    
             selector_values_instances = []
 
             if selector_values:
@@ -1820,10 +1817,12 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
                     except ComplexTransactionImportSchemeSelectorValue.DoesNotExist:
                         pass
 
-                rule0.selector_values.set(selector_values_instances)
-            self.save_fields(rule0, fields)
+                rule.selector_values.set(selector_values_instances)
+            else:
+                rule.selector_values.set([])
+            self.save_fields(rule, fields)
             # self.save_rule_selector_values(rule0, selector_values)
-            pk_set.add(rule0.id)
+            pk_set.add(rule.id)
 
         instance.rule_scenarios.exclude(pk__in=pk_set).delete()
 

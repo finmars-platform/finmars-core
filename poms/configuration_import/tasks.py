@@ -1,3 +1,4 @@
+import copy
 import time
 from celery import shared_task
 from django.contrib.contenttypes.models import ContentType
@@ -1839,7 +1840,7 @@ class ImportManager(object):
                             self.update_progress()
                             continue
 
-                        serializer = ComplexTransactionImportSchemeSerializer(data=content_object,
+                        serializer = ComplexTransactionImportSchemeSerializer(data=copy.deepcopy(content_object),
                                                                               context=self.get_serializer_context())
 
                         try:
@@ -1853,11 +1854,12 @@ class ImportManager(object):
 
                                 try:
 
+
                                     instance = ComplexTransactionImportScheme.objects.get(master_user=self.master_user,
                                                                                           user_code=content_object[
                                                                                               'user_code'])
 
-                                    serializer = ComplexTransactionImportSchemeSerializer(data=content_object,
+                                    serializer = ComplexTransactionImportSchemeSerializer(data=copy.deepcopy(content_object),
                                                                                           instance=instance,
                                                                                           context=self.get_serializer_context())
                                     serializer.is_valid(raise_exception=True)
