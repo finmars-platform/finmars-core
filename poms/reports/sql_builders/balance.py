@@ -1480,8 +1480,6 @@ class BalanceReportBuilderSql:
 
             updated_result = []
 
-            _l.info('item %s' % result[0])
-
             for item in result:
 
                 # item["currency_id"] = item["settlement_currency_id"]
