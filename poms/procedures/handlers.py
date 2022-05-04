@@ -1,5 +1,6 @@
+import requests
 
-
+from poms.celery_tasks.models import CeleryTask
 from poms.common import formula
 from poms.common.crypto.RSACipher import RSACipher
 from poms.credentials.models import Credentials
@@ -8,6 +9,7 @@ from poms.integrations.models import TransactionFileResult
 
 import logging
 
+from poms.integrations.tasks import complex_transaction_csv_file_import_parallel
 from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.procedures.tasks import procedure_request_data_file
 
@@ -15,7 +17,7 @@ from poms.procedures.tasks import procedure_request_data_file
 from django.db import transaction
 
 from poms.system_messages.handlers import send_system_message
-from poms.users.models import Member
+from poms.users.models import Member, MasterUser
 from poms_app import settings
 
 _l = logging.getLogger('poms.procedures')
@@ -51,7 +53,79 @@ class RequestDataFileProcedureProcess(object):
 
     def process(self):
 
-        if settings.DATA_FILE_SERVICE_URL:
+        if self.procedure.provider.user_code == 'exante':
+
+            procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
+                                                                                 master_user=self.master_user,
+                                                                                 status=RequestDataFileProcedureInstance.STATUS_PENDING,
+
+                                                                                 action='request_transaction_file',
+                                                                                 provider='exante',
+
+                                                                                 action_verbose='Request file with Transactions',
+                                                                                 provider_verbose='Exante'
+
+                                                                                 )
+
+            headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+
+            url = self.procedure.data['url']
+            access_token = self.procedure.data['access_token']
+
+            data = {
+                'access_token': access_token,
+                "id": procedure_instance.id,
+                "user": {
+                    "token": self.master_user.token,
+                    "credentials": {}
+                },
+                "provider": self.procedure.provider.user_code,
+                "scheme_name": self.procedure.scheme_user_code,
+                "scheme_type": self.procedure.scheme_type,
+                "data": [],
+
+                "error_status": 0,
+                "error_message": "",
+            }
+
+            if self.procedure.date_from:
+                data["date_from"] = str(self.procedure.date_from)
+
+            if self.procedure.date_to:
+                data["date_to"] = str(self.procedure.date_to)
+
+            _l.info('request exante url %s' % url)
+            _l.info('request exante data %s' % data)
+
+            response = requests.post(url=url, json=data, headers=headers)
+
+            response_data = None
+
+            try:
+                response_data = response.json()
+            except Exception as e:
+                _l.info('response %s' % response.text )
+                _l.info("Response parse error %s" % e)
+                raise Exception("Broker response error")
+
+            procedure_id = response_data['procedure_id']
+
+            master_user = MasterUser.objects.get(token=response_data['user']['token'])
+
+            procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_id, master_user=master_user)
+
+            celery_task = CeleryTask.objects.create(master_user=master_user,
+                                                    type='transaction_import')
+
+            celery_task.options_object = {
+                'items': response_data['data']['items']
+            }
+            celery_task.save()
+
+            complex_transaction_csv_file_import_parallel(task_id=celery_task.pk)
+
+
+        elif settings.DATA_FILE_SERVICE_URL:
 
             with transaction.atomic():
 

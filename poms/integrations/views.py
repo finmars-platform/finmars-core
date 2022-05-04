@@ -1144,6 +1144,41 @@ class TransactionFileResultViewSet(AbstractModelViewSet):
     permission_classes = []
 
 
+class TransactionImportJson(APIView):
+
+    permission_classes = []
+
+    def get(self, request):
+
+        _l.debug("BACKEND_ROLES %s" % settings.BACKEND_ROLES )
+
+        return Response({'status': 'ok'})
+
+    def post(self, request):
+
+        # _l.debug('request.data %s' % request.data)
+
+        _l.debug('request.data %s' % request.data)
+
+        procedure_id = request.data['procedure_id']
+
+        master_user = MasterUser.objects.get(token=request.data['user']['token'])
+
+        procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_id, master_user=master_user)
+
+        celery_task = CeleryTask.objects.create(master_user=master_user,
+                                                type='transaction_import')
+
+        celery_task.options_object = {
+            'reader': request.data['transactions']
+        }
+        celery_task.save()
+
+        complex_transaction_csv_file_import_parallel(task_id=celery_task.pk)
+
+
+
+
 class TransactionFileResultUploadHandler(APIView):
 
     permission_classes = []

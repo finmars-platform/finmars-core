@@ -60,6 +60,11 @@ class IntegrationsConfig(AppConfig):
                 "name": "Email Provider",
                 "user_code": "email_provider",
             },
+            {
+                "id": 6,
+                "name": "Exante Provider",
+                "user_code": "exante",
+            },
         ]
 
         providers_exists = DataProvider.objects.values_list('pk', flat=True)

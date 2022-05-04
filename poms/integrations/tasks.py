@@ -2331,7 +2331,10 @@ def complex_transaction_csv_file_import(self, task_id):
 
             reader = []
 
-            if '.csv' in instance.file_path or (execution_context and execution_context["started_by"] == 'procedure'):
+            if celery_task.options and 'items' in celery_task.options:
+                    reader = json.loads(celery_task.options['items'])
+
+            elif '.csv' in instance.file_path or (execution_context and execution_context["started_by"] == 'procedure'):
 
                 delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
 
@@ -2387,6 +2390,8 @@ def complex_transaction_csv_file_import(self, task_id):
             first_row = None
 
             input_column_name_map = {}
+
+            # reader = [{}]
 
             for row_index, row in enumerate(reader):
 

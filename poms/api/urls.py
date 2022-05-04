@@ -504,6 +504,7 @@ urlpatterns = [
     url(r'internal/brokers/fixer/callback', csrf_exempt(pricing.PricingBrokerFixerHandler.as_view())),
     url(r'internal/brokers/alphav/callback', csrf_exempt(pricing.PricingBrokerAlphavHandler.as_view())),
     url(r'internal/data/transactions/callback', csrf_exempt(integrations.TransactionFileResultUploadHandler.as_view())),
+    url(r'internal/data/transactions/json', csrf_exempt(integrations.TransactionImportJson.as_view())),
     url(r'instruments/instrument-external-api', csrf_exempt(instruments.InstrumentExternalAPIViewSet.as_view())),
 
     url(r'^authorizer/token-auth/', ObtainAuthToken.as_view(), name='api-token-auth'),
