@@ -25,6 +25,7 @@ class CreateMasterUserSerializer(serializers.Serializer):
     name = serializers.CharField(label=_("name"))
     unique_id = serializers.CharField(label=_("Unique id"))
     user_unique_id = serializers.CharField(label=_("User Unique id"))
+    old_backup_name = serializers.CharField(label=_("Old backup name"),  required=False, allow_blank=True)
 
 
 

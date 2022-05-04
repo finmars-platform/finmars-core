@@ -242,15 +242,18 @@ class CreateMasterUser(APIView):
         user_profile = UserProfile.objects.get(user_unique_id=user_unique_id)
         user = User.objects.get(id=user_profile.user_id)
 
-        try:
-            # If From backup
-            master_user = MasterUser.objects.get(name=name)
+        _l.info('Create master_user validated data %s' % serializer.validated_data)
 
+        if 'old_backup_name' in serializer.validated_data:
+            # If From backup
+            master_user = MasterUser.objects.get(name=serializer.validated_data['old_backup_name'])
+
+            master_user.name = serializer.validated_data['old_backup_name']
             master_user.unique_id = unique_id
 
             master_user.save()
 
-        except MasterUser.DoesNotExist:
+        else:
             master_user = MasterUser.objects.create_master_user(
                 user=user,
                 language=translation.get_language(), name=name)
