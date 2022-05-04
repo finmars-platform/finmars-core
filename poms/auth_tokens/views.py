@@ -253,6 +253,8 @@ class CreateMasterUser(APIView):
 
             master_user.save()
 
+            Member.objects.filter(is_owner=False).delete()
+
         else:
             master_user = MasterUser.objects.create_master_user(
                 user=user,
