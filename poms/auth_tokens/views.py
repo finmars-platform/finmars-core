@@ -242,20 +242,29 @@ class CreateMasterUser(APIView):
         user_profile = UserProfile.objects.get(user_unique_id=user_unique_id)
         user = User.objects.get(id=user_profile.user_id)
 
-        master_user = MasterUser.objects.create_master_user(
-            user=user,
-            language=translation.get_language(), name=name)
+        try:
+            # If From backup
+            master_user = MasterUser.objects.get(name=name)
 
-        master_user.unique_id = unique_id
+            master_user.unique_id = unique_id
 
-        master_user.save()
+            master_user.save()
 
-        member = Member.objects.create(user=user, master_user=master_user, is_owner=True, is_admin=True)
-        member.save()
+        except MasterUser.DoesNotExist:
+            master_user = MasterUser.objects.create_master_user(
+                user=user,
+                language=translation.get_language(), name=name)
 
-        admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
-        admin_group.members.add(member.id)
-        admin_group.save()
+            master_user.unique_id = unique_id
+
+            master_user.save()
+
+            member = Member.objects.create(user=user, master_user=master_user, is_owner=True, is_admin=True)
+            member.save()
+
+            admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
+            admin_group.members.add(member.id)
+            admin_group.save()
 
         return Response({'status': 'ok'})
 
