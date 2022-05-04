@@ -248,7 +248,7 @@ class CreateMasterUser(APIView):
             # If From backup
             master_user = MasterUser.objects.get(name=serializer.validated_data['old_backup_name'])
 
-            master_user.name = serializer.validated_data['old_backup_name']
+            master_user.name = name
             master_user.unique_id = unique_id
 
             master_user.save()
