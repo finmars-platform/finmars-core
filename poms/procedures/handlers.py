@@ -108,7 +108,7 @@ class RequestDataFileProcedureProcess(object):
                 _l.info("Response parse error %s" % e)
                 raise Exception("Broker response error")
 
-            procedure_id = response_data['procedure_id']
+            procedure_id = response_data['id']
 
             master_user = MasterUser.objects.get(token=response_data['user']['token'])
 
