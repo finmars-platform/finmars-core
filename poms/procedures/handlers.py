@@ -101,6 +101,8 @@ class RequestDataFileProcedureProcess(object):
 
             response_data = None
 
+            _l.info('response %s' % response.text )
+
             try:
                 response_data = response.json()
             except Exception as e:
