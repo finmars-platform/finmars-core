@@ -120,7 +120,7 @@ class RequestDataFileProcedureProcess(object):
                                                     type='transaction_import')
 
             celery_task.options_object = {
-                'items': response_data['data']['items']
+                'items': response_data['data']
             }
             celery_task.save()
 
