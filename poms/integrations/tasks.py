@@ -2331,10 +2331,7 @@ def complex_transaction_csv_file_import(self, task_id):
 
             reader = []
 
-            if celery_task.options and 'items' in celery_task.options:
-                    reader = json.loads(celery_task.options['items'])
-
-            elif '.csv' in instance.file_path or (execution_context and execution_context["started_by"] == 'procedure'):
+            if '.csv' in instance.file_path or (execution_context and execution_context["started_by"] == 'procedure'):
 
                 delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
 
@@ -2389,11 +2386,17 @@ def complex_transaction_csv_file_import(self, task_id):
 
             first_row = None
 
-            input_column_name_map = {}
+
 
             # reader = [{}]
 
-            for row_index, row in enumerate(reader):
+            _process_list_of_items(reader)
+
+        def _process_list_of_items(items):
+
+            input_column_name_map = {}
+
+            for row_index, row in enumerate(items):
 
                 _l.info('process row %s ' % row_index)
 
@@ -2668,14 +2671,14 @@ def complex_transaction_csv_file_import(self, task_id):
                 send_websocket_message(data={
                     'type': 'transaction_import_status',
                     'payload': {
-                                'parent_task_id': celery_task.parent_id,
-                                'task_id': instance.task_id,
-                                'state': Task.STATUS_PENDING,
-                                'processed_rows': instance.processed_rows,
-                                'parent_total_rows': parent_celery_task.options_object['total_rows'],
-                                'total_rows': instance.total_rows,
-                                'scheme_name': scheme.user_code,
-                                'file_name': instance.filename}
+                        'parent_task_id': celery_task.parent_id,
+                        'task_id': instance.task_id,
+                        'state': Task.STATUS_PENDING,
+                        'processed_rows': instance.processed_rows,
+                        'parent_total_rows': parent_celery_task.options_object['total_rows'],
+                        'total_rows': instance.total_rows,
+                        'scheme_name': scheme.user_code,
+                        'file_name': instance.filename}
                 }, level="member",
                     context={"master_user": master_user, "member": member})
 
@@ -2717,36 +2720,46 @@ def complex_transaction_csv_file_import(self, task_id):
 
         try:
 
-            _l.info("Open file %s" % instance.file_path)
+            if celery_task.options and 'items' in celery_task.options:
 
-            # with import_file_storage.open(instance.file_path, 'rb') as f:
-            with SFS.open(instance.file_path, 'rb') as f:
+                _l.info("Parse json data")
 
+                items = json.loads(celery_task.options['items'])
 
-                with NamedTemporaryFile() as tmpf:
+                instance.total_rows = len(items)
 
-                    for chunk in f.chunks():
-                        tmpf.write(chunk)
-                    tmpf.flush()
+                _process_list_of_items(items)
 
-                    os.link(tmpf.name, tmpf.name + '.xlsx')
+            else:
 
-                    if '.csv' in instance.file_path or (execution_context and execution_context["started_by"] == 'procedure'):
-
-                        with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
-                            instance.total_rows = _row_count_csv(cfr)
-
-                        with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
-                            _process_csv_file(cf, f, '')
-
-                    elif '.xlsx' in instance.file_path:
-
-                        instance.total_rows = _row_count_xlsx(tmpf.name + '.xlsx')
-
-                        with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
-                            _process_csv_file(cf, f, tmpf.name + '.xlsx')
+                _l.info("Open file %s" % instance.file_path)
+                # with import_file_storage.open(instance.file_path, 'rb') as f:
+                with SFS.open(instance.file_path, 'rb') as f:
 
 
+                    with NamedTemporaryFile() as tmpf:
+
+                        for chunk in f.chunks():
+                            tmpf.write(chunk)
+                        tmpf.flush()
+
+                        os.link(tmpf.name, tmpf.name + '.xlsx')
+
+
+                        if '.csv' in instance.file_path or (execution_context and execution_context["started_by"] == 'procedure'):
+
+                            with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
+                                instance.total_rows = _row_count_csv(cfr)
+
+                            with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
+                                _process_csv_file(cf, f, '')
+
+                        elif '.xlsx' in instance.file_path:
+
+                            instance.total_rows = _row_count_xlsx(tmpf.name + '.xlsx')
+
+                            with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
+                                _process_csv_file(cf, f, tmpf.name + '.xlsx')
 
 
         except Exception:

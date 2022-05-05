@@ -70,10 +70,10 @@ class RequestDataFileProcedureProcess(object):
             headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
             url = self.procedure.data['url']
-            access_token = self.procedure.data['access_token']
+            security_token = self.procedure.data['security_token']
 
             data = {
-                'access_token': access_token,
+                'security_token': security_token,
                 "id": procedure_instance.id,
                 "user": {
                     "token": self.master_user.token,
