@@ -2724,7 +2724,7 @@ def complex_transaction_csv_file_import(self, task_id):
 
                 _l.info("Parse json data")
 
-                items = json.loads(celery_task.options_object['items'])
+                items = celery_task.options_object['items']
 
                 instance.total_rows = len(items)
 
@@ -2776,7 +2776,11 @@ def complex_transaction_csv_file_import(self, task_id):
         finally:
             # import_file_storage.delete(instance.file_path)
 
-            SFS.delete(instance.file_path)
+
+            if celery_task.options_object and 'items' in celery_task.options_object:
+                pass
+            else:
+                SFS.delete(instance.file_path)
 
             instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
 
