@@ -4,6 +4,8 @@ from poms.celery_tasks.models import CeleryTask
 from poms.common import formula
 from poms.common.crypto.RSACipher import RSACipher
 from poms.credentials.models import Credentials
+from poms.file_reports.models import FileReport
+from django.utils.timezone import now
 
 from poms.integrations.models import TransactionFileResult
 
@@ -55,6 +57,11 @@ class RequestDataFileProcedureProcess(object):
 
         if self.procedure.provider.user_code == 'exante':
 
+            send_system_message(master_user=self.master_user,
+                                source="Data File Procedure Service",
+                                text="Exante Broker. Start Procedure",
+                                )
+
             procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
                                                                                  master_user=self.master_user,
                                                                                  status=RequestDataFileProcedureInstance.STATUS_PENDING,
@@ -101,7 +108,27 @@ class RequestDataFileProcedureProcess(object):
 
             response_data = None
 
-            _l.info('response %s' % response.text )
+            _l.info('response %s' % response.text)
+
+            current_date_time = now().strftime("%Y-%m-%d-%H-%M")
+
+            file_report = FileReport()
+
+            file_name = "Exante Broker Response %s.json" % current_date_time
+
+            file_report.upload_file(file_name=file_name, text=response.text, master_user=self.master_user)
+            file_report.master_user = self.master_user
+            file_report.name = file_name
+            file_report.file_name = file_name
+            file_report.type = 'procedure.requestdatafileprocedure'
+            file_report.notes = 'System File'
+
+            file_report.save()
+
+            send_system_message(master_user=procedure_instance.master_user,
+                                source="Data File Procedure Service",
+                                text="Exante Broker. Response Received",
+                                file_report_id=file_report.id)
 
             try:
                 response_data = response.json()
