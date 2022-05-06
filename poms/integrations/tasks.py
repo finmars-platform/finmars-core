@@ -2526,7 +2526,7 @@ def complex_transaction_csv_file_import(self, task_id):
 
                     try:
                         inputs[i.name] = formula.safe_eval(i.name_expr, names=inputs_raw)
-                        error_rows['error_data']['data']['converted_imported_columns'].append(row[i.column - 1])
+                        error_rows['error_data']['data']['converted_imported_columns'].append(inputs_raw[i.name])
                     except Exception:
                         _l.debug('can\'t process conversion input: %s|%s', i.name, i.column, exc_info=True)
                         error_rows['error_data']['data']['converted_imported_columns'].append(
