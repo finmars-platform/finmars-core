@@ -3984,6 +3984,8 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance_id
 def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_task_id):
     with transaction.atomic():
 
+        _l.info('complex_transaction_csv_file_import_by_procedure_json  procedure_instance_id %s celery_task_id %s' % (procedure_instance_id, celery_task_id))
+
         from poms.integrations.serializers import ComplexTransactionCsvFileImport
         from poms.procedures.models import RequestDataFileProcedureInstance
 
@@ -3992,8 +3994,8 @@ def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instan
 
         try:
 
-            _l.debug(
-                'complex_transaction_csv_file_import_by_procedure looking for scheme %s ' % procedure_instance.procedure.scheme_user_code)
+            _l.info(
+                'complex_transaction_csv_file_import_by_procedure_json looking for scheme %s ' % procedure_instance.procedure.scheme_user_code)
 
             scheme = ComplexTransactionImportScheme.objects.get(master_user=procedure_instance.master_user,
                                                                 user_code=procedure_instance.procedure.scheme_user_code)

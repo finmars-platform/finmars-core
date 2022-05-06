@@ -1,3 +1,5 @@
+import json
+
 import requests
 
 from poms.celery_tasks.models import CeleryTask
@@ -124,7 +126,20 @@ class RequestDataFileProcedureProcess(object):
 
                 file_name = "Exante Broker Response %s.json" % current_date_time
 
-                file_report.upload_file(file_name=file_name, text=response.text, master_user=self.master_user)
+                file_content = ''
+
+                try:
+
+                    response_data = response.json()
+
+                    file_content = json.dumps(json.loads(response_data), indent=4)
+                except Exception as e:
+
+                    _l.info('response %s' % response.text )
+                    _l.info("Response parse error %s" % e)
+                    file_content = response.text
+
+                file_report.upload_file(file_name=file_name, text=file_content, master_user=self.master_user)
                 file_report.master_user = self.master_user
                 file_report.name = file_name
                 file_report.file_name = file_name
@@ -138,12 +153,6 @@ class RequestDataFileProcedureProcess(object):
                                     text="Exante Broker. Procedure %s. Response Received" % procedure_instance.id,
                                     file_report_id=file_report.id)
 
-                try:
-                    response_data = response.json()
-                except Exception as e:
-                    _l.info('response %s' % response.text )
-                    _l.info("Response parse error %s" % e)
-                    raise Exception("Broker response error")
 
                 procedure_id = response_data['id']
 
@@ -157,7 +166,7 @@ class RequestDataFileProcedureProcess(object):
                 send_system_message(master_user=procedure_instance.master_user,
                                     source="Data File Procedure Service",
                                     text="Exante Broker. Procedure %s. Done, start import" % procedure_instance.id,
-                                    file_report_id=file_report.id)
+                                    )
 
                 celery_task = CeleryTask.objects.create(master_user=master_user,
                                                         type='transaction_import')
