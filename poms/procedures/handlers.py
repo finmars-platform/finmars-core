@@ -57,101 +57,110 @@ class RequestDataFileProcedureProcess(object):
 
         if self.procedure.provider.user_code == 'exante':
 
-            send_system_message(master_user=self.master_user,
-                                source="Data File Procedure Service",
-                                text="Exante Broker. Start Procedure",
-                                )
-
-            procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
-                                                                                 master_user=self.master_user,
-                                                                                 status=RequestDataFileProcedureInstance.STATUS_PENDING,
-
-                                                                                 action='request_transaction_file',
-                                                                                 provider='exante',
-
-                                                                                 action_verbose='Request file with Transactions',
-                                                                                 provider_verbose='Exante'
-
-                                                                                 )
-
-            headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
-
-            url = self.procedure.data['url']
-            security_token = self.procedure.data['security_token']
-
-            data = {
-                'security_token': security_token,
-                "id": procedure_instance.id,
-                "user": {
-                    "token": self.master_user.token,
-                    "credentials": {}
-                },
-                "provider": self.procedure.provider.user_code,
-                "scheme_name": self.procedure.scheme_user_code,
-                "scheme_type": self.procedure.scheme_type,
-                "data": [],
-
-                "error_status": 0,
-                "error_message": "",
-            }
-
-            if self.procedure.date_from:
-                data["date_from"] = str(self.procedure.date_from)
-
-            if self.procedure.date_to:
-                data["date_to"] = str(self.procedure.date_to)
-
-            _l.info('request exante url %s' % url)
-            _l.info('request exante data %s' % data)
-
-            response = requests.post(url=url, json=data, headers=headers)
-
-            response_data = None
-
-            _l.info('response %s' % response.text)
-
-            current_date_time = now().strftime("%Y-%m-%d-%H-%M")
-
-            file_report = FileReport()
-
-            file_name = "Exante Broker Response %s.json" % current_date_time
-
-            file_report.upload_file(file_name=file_name, text=response.text, master_user=self.master_user)
-            file_report.master_user = self.master_user
-            file_report.name = file_name
-            file_report.file_name = file_name
-            file_report.type = 'procedure.requestdatafileprocedure'
-            file_report.notes = 'System File'
-
-            file_report.save()
-
-            send_system_message(master_user=procedure_instance.master_user,
-                                source="Data File Procedure Service",
-                                text="Exante Broker. Response Received",
-                                file_report_id=file_report.id)
-
             try:
-                response_data = response.json()
+
+                send_system_message(master_user=self.master_user,
+                                    source="Data File Procedure Service",
+                                    text="Exante Broker. Start Procedure",
+                                    )
+
+                procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
+                                                                                     master_user=self.master_user,
+                                                                                     status=RequestDataFileProcedureInstance.STATUS_PENDING,
+
+                                                                                     action='request_transaction_file',
+                                                                                     provider='exante',
+
+                                                                                     action_verbose='Request file with Transactions',
+                                                                                     provider_verbose='Exante'
+
+                                                                                     )
+
+                headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+
+                url = self.procedure.data['url']
+                security_token = self.procedure.data['security_token']
+
+                data = {
+                    'security_token': security_token,
+                    "id": procedure_instance.id,
+                    "user": {
+                        "token": self.master_user.token,
+                        "credentials": {}
+                    },
+                    "provider": self.procedure.provider.user_code,
+                    "scheme_name": self.procedure.scheme_user_code,
+                    "scheme_type": self.procedure.scheme_type,
+                    "data": [],
+
+                    "error_status": 0,
+                    "error_message": "",
+                }
+
+                if self.procedure.date_from:
+                    data["date_from"] = str(self.procedure.date_from)
+
+                if self.procedure.date_to:
+                    data["date_to"] = str(self.procedure.date_to)
+
+                _l.info('request exante url %s' % url)
+                _l.info('request exante data %s' % data)
+
+                response = requests.post(url=url, json=data, headers=headers)
+
+                response_data = None
+
+                _l.info('response %s' % response.text)
+
+                current_date_time = now().strftime("%Y-%m-%d-%H-%M")
+
+                file_report = FileReport()
+
+                file_name = "Exante Broker Response %s.json" % current_date_time
+
+                file_report.upload_file(file_name=file_name, text=response.text, master_user=self.master_user)
+                file_report.master_user = self.master_user
+                file_report.name = file_name
+                file_report.file_name = file_name
+                file_report.type = 'procedure.requestdatafileprocedure'
+                file_report.notes = 'System File'
+
+                file_report.save()
+
+                send_system_message(master_user=procedure_instance.master_user,
+                                    source="Data File Procedure Service",
+                                    text="Exante Broker. Response Received",
+                                    file_report_id=file_report.id)
+
+                try:
+                    response_data = response.json()
+                except Exception as e:
+                    _l.info('response %s' % response.text )
+                    _l.info("Response parse error %s" % e)
+                    raise Exception("Broker response error")
+
+                procedure_id = response_data['id']
+
+                master_user = MasterUser.objects.get(token=response_data['user']['token'])
+
+                procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_id, master_user=master_user)
+
+                celery_task = CeleryTask.objects.create(master_user=master_user,
+                                                        type='transaction_import')
+
+                celery_task.options_object = {
+                    'items': response_data['data']
+                }
+                celery_task.save()
+
+                complex_transaction_csv_file_import_parallel(task_id=celery_task.pk)
+
             except Exception as e:
-                _l.info('response %s' % response.text )
-                _l.info("Response parse error %s" % e)
-                raise Exception("Broker response error")
-
-            procedure_id = response_data['id']
-
-            master_user = MasterUser.objects.get(token=response_data['user']['token'])
-
-            procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_id, master_user=master_user)
-
-            celery_task = CeleryTask.objects.create(master_user=master_user,
-                                                    type='transaction_import')
-
-            celery_task.options_object = {
-                'items': response_data['data']
-            }
-            celery_task.save()
-
-            complex_transaction_csv_file_import_parallel(task_id=celery_task.pk)
+                _l.info("Exante broker error %s" % e)
+                send_system_message(master_user=self.master_user,
+                                    source="Data File Procedure Service",
+                                    text="Exante Broker. Something went wrong %s" % e,
+                                    )
 
 
         elif settings.DATA_FILE_SERVICE_URL:
