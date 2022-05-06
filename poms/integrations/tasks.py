@@ -2862,6 +2862,28 @@ def complex_transaction_csv_file_import(self, task_id):
             celery_task.status = CeleryTask.STATUS_DONE
             celery_task.save()
 
+
+            # if JSON IMPORT
+            if celery_task.options_object and 'items' in celery_task.options_object:
+
+                result_object['stats_file_report'] = generate_file_report(result_object, master_user, scheme, 'transaction_import.import',
+                                                                          'Transaction Import', celery_task.options_object['execution_context'])
+
+                if celery_task.options_object['execution_context'] and celery_task.options_object['execution_context']["started_by"] == 'procedure':
+
+                    _l.info('complex_transaction_csv_file_import_parallel_finish send final import message')
+
+                    send_system_message(master_user=celery_task.master_user,
+                                        source="Transaction Import Service",
+                                        text="Import Finished",
+                                        file_report_id=result_object['stats_file_report'])
+
+                celery_task.result_object = result_object
+
+                celery_task.status = CeleryTask.STATUS_DONE
+                celery_task.save()
+
+
         return instance
     except Exception as e:
 
