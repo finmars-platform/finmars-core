@@ -2724,7 +2724,7 @@ def complex_transaction_csv_file_import(self, task_id):
 
                 _l.info("Parse json data")
 
-                items = json.loads(celery_task.options['items'])
+                items = json.loads(celery_task.options_object['items'])
 
                 instance.total_rows = len(items)
 
