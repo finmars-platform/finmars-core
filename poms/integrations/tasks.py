@@ -2402,7 +2402,8 @@ def complex_transaction_csv_file_import(self, task_id):
 
             for row_index, row in enumerate(items):
 
-                _l.info('process row %s ' % row_index)
+                _l.info('process row_index %s ' % row_index)
+                _l.info('process row %s ' % row)
 
                 if row_index == 0:
                     first_row = row
