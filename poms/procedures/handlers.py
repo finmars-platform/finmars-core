@@ -59,10 +59,7 @@ class RequestDataFileProcedureProcess(object):
 
             try:
 
-                send_system_message(master_user=self.master_user,
-                                    source="Data File Procedure Service",
-                                    text="Exante Broker. Start Procedure",
-                                    )
+
 
                 procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
                                                                                      master_user=self.master_user,
@@ -75,6 +72,11 @@ class RequestDataFileProcedureProcess(object):
                                                                                      provider_verbose='Exante'
 
                                                                                      )
+
+                send_system_message(master_user=self.master_user,
+                                    source="Data File Procedure Service",
+                                    text="Exante Broker.  Procedure %s. Start" % procedure_instance.id,
+                                    )
 
                 headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
@@ -129,7 +131,7 @@ class RequestDataFileProcedureProcess(object):
 
                 send_system_message(master_user=procedure_instance.master_user,
                                     source="Data File Procedure Service",
-                                    text="Exante Broker. Response Received",
+                                    text="Exante Broker. Procedure %s. Response Received" % procedure_instance.id,
                                     file_report_id=file_report.id)
 
                 try:
@@ -145,6 +147,14 @@ class RequestDataFileProcedureProcess(object):
 
                 procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_id, master_user=master_user)
 
+                procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
+                procedure_instance.save()
+
+                send_system_message(master_user=procedure_instance.master_user,
+                                    source="Data File Procedure Service",
+                                    text="Exante Broker. Procedure %s. Done, start import" % procedure_instance.id,
+                                    file_report_id=file_report.id)
+
                 celery_task = CeleryTask.objects.create(master_user=master_user,
                                                         type='transaction_import')
 
@@ -159,7 +169,7 @@ class RequestDataFileProcedureProcess(object):
                 _l.info("Exante broker error %s" % e)
                 send_system_message(master_user=self.master_user,
                                     source="Data File Procedure Service",
-                                    text="Exante Broker. Something went wrong %s" % e,
+                                    text="Exante Broker. Procedure is not created.  Something went wrong %s" % e,
                                     )
 
 
