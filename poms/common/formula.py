@@ -262,7 +262,7 @@ def _unix_to_date(unix, format=None):
         format = '%Y-%m-%d'
     else:
         format = str(format)
-    return datetime.utcfromtimestamp(unix).strftime(format)
+    return datetime.datetime.utcfromtimestamp(unix).strftime(format)
 
 
 def _get_date_last_week_end_business(date):
