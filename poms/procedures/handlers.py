@@ -108,6 +108,9 @@ class RequestDataFileProcedureProcess(object):
                 _l.info('request exante url %s' % url)
                 _l.info('request exante data %s' % data)
 
+                procedure_instance.request_data = data
+                procedure_instance.save()
+
                 response = requests.post(url=url, json=data, headers=headers)
 
                 response_data = None
