@@ -3999,6 +3999,15 @@ def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instan
                                                                 user_code=procedure_instance.procedure.scheme_user_code)
 
 
+            options_object = celery_task.options_object
+
+            options_object['file_path'] = ''
+            options_object['scheme_id'] = scheme.id
+            options_object['execution_context'] =  {'started_by': 'procedure'}
+
+            celery_task.options_object = options_object
+            celery_task.save()
+
             text = "Data File Procedure %s. File is received. Importing JSON" % (
                 procedure_instance.procedure.user_code)
 

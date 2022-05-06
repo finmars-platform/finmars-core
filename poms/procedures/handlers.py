@@ -165,8 +165,6 @@ class RequestDataFileProcedureProcess(object):
                 options_object = {}
 
                 options_object['items'] = response_data['data']
-                options_object['execution_context'] = {'started_by': 'procedure'}
-                options_object['file_path'] = ''
 
                 celery_task.options_object = options_object
 
