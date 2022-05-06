@@ -2673,6 +2673,15 @@ def complex_transaction_csv_file_import(self, task_id):
 
                 instance.processed_rows = instance.processed_rows + 1
 
+                total_rows = 0
+
+                if parent_celery_task:
+                    total_rows = parent_celery_task.options_object['total_rows'],
+                else:
+                    total_rows = instance.total_rows
+
+
+
                 send_websocket_message(data={
                     'type': 'transaction_import_status',
                     'payload': {
@@ -2680,7 +2689,7 @@ def complex_transaction_csv_file_import(self, task_id):
                         'task_id': instance.task_id,
                         'state': Task.STATUS_PENDING,
                         'processed_rows': instance.processed_rows,
-                        'parent_total_rows': parent_celery_task.options_object['total_rows'],
+                        'parent_total_rows': total_rows,
                         'total_rows': instance.total_rows,
                         'scheme_name': scheme.user_code,
                         'file_name': instance.filename}
@@ -2805,6 +2814,13 @@ def complex_transaction_csv_file_import(self, task_id):
             #                         text="Import Finished",
             #                         file_report_id=instance.stats_file_report)
 
+            total_rows = 0
+
+            if parent_celery_task:
+                total_rows = parent_celery_task.options_object['total_rows'],
+            else:
+                total_rows = instance.total_rows
+
             send_websocket_message(data={
                 'type': 'transaction_import_status',
                 'payload': {
@@ -2812,7 +2828,7 @@ def complex_transaction_csv_file_import(self, task_id):
                             'task_id': instance.task_id,
                             'state': Task.STATUS_DONE,
                             'processed_rows': instance.processed_rows,
-                            'parent_total_rows': parent_celery_task.options_object['total_rows'],
+                            'parent_total_rows': total_rows,
                             'total_rows': instance.total_rows,
                             'file_name': instance.filename,
                             'error_rows': instance.error_rows,
