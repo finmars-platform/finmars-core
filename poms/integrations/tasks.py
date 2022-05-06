@@ -2083,9 +2083,13 @@ def complex_transaction_csv_file_import(self, task_id):
         rule_scenarios = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields',
                                                                 'fields__transaction_type_input').all()
 
-        _l.debug('scheme %s - inputs=%s, rules=%s', scheme,
+        _l.info('scheme %s - inputs=%s, rules=%s', scheme,
                             [(i.name, i.column) for i in scheme_inputs],
                             [(r.transaction_type.user_code) for r in rule_scenarios])
+
+
+        _l.info('scheme %s - column_matcher %s', (scheme, scheme.column_matcher))
+        _l.info('scheme %s - has_header_row %s', (scheme, scheme.has_header_row))
 
         default_rule_scenario = None
 
@@ -2467,11 +2471,12 @@ def complex_transaction_csv_file_import(self, task_id):
                     if instance.scheme.column_matcher == 'name':
 
                         try:
-
-                            _col_index = input_column_name_map[i.name]
-
-                            inputs_raw[i.name] = row[_col_index]
-                            error_rows['error_data']['data']['imported_columns'].append(row[_col_index])
+                            if type(row) is dict:
+                                inputs_raw[i.name] = row[i.name]
+                            else:
+                                _col_index = input_column_name_map[i.name]
+                                inputs_raw[i.name] = row[_col_index]
+                                error_rows['error_data']['data']['imported_columns'].append(row[_col_index])
                         except Exception:
                             _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                             _l.debug('can\'t process inputs_raw: %s|%s', inputs_raw)
