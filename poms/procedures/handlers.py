@@ -11,7 +11,8 @@ from poms.integrations.models import TransactionFileResult
 
 import logging
 
-from poms.integrations.tasks import complex_transaction_csv_file_import_parallel
+from poms.integrations.tasks import complex_transaction_csv_file_import_parallel, \
+    complex_transaction_csv_file_import_by_procedure, complex_transaction_csv_file_import_by_procedure_json
 from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.procedures.tasks import procedure_request_data_file
 
@@ -161,12 +162,19 @@ class RequestDataFileProcedureProcess(object):
                 celery_task = CeleryTask.objects.create(master_user=master_user,
                                                         type='transaction_import')
 
-                celery_task.options_object = {
-                    'items': response_data['data']
-                }
+                options_object = {}
+
+                options_object['items'] = response_data['data']
+                options_object['execution_context'] = {'started_by': 'procedure'}
+                options_object['file_path'] = ''
+
+                celery_task.options_object = options_object
+
                 celery_task.save()
 
-                complex_transaction_csv_file_import_parallel(task_id=celery_task.pk)
+                complex_transaction_csv_file_import_by_procedure_json.apply_async(kwargs={'procedure_instance_id': procedure_instance.id,
+                                                                                     'celery_task_id': celery_task.id,
+                                                                                     })
 
             except Exception as e:
                 _l.info("Exante broker error %s" % e)

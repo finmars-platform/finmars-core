@@ -3978,3 +3978,49 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance_id
 
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
             procedure_instance.save()
+
+
+@shared_task(name='integrations.complex_transaction_csv_file_import_by_procedure_json', bind=True)
+def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_task_id):
+    with transaction.atomic():
+
+        from poms.integrations.serializers import ComplexTransactionCsvFileImport
+        from poms.procedures.models import RequestDataFileProcedureInstance
+
+        procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_instance_id)
+        celery_task = CeleryTask.objects.get(id=celery_task_id)
+
+        try:
+
+            _l.debug(
+                'complex_transaction_csv_file_import_by_procedure looking for scheme %s ' % procedure_instance.procedure.scheme_user_code)
+
+            scheme = ComplexTransactionImportScheme.objects.get(master_user=procedure_instance.master_user,
+                                                                user_code=procedure_instance.procedure.scheme_user_code)
+
+
+            text = "Data File Procedure %s. File is received. Importing JSON" % (
+                procedure_instance.procedure.user_code)
+
+            send_system_message(master_user=procedure_instance.master_user,
+                                source="Data File Procedure Service",
+                                text=text)
+
+            ct = complex_transaction_csv_file_import.s(task_id=celery_task.id)
+
+
+
+        except ComplexTransactionImportScheme.DoesNotExist:
+
+            text = "Data File Procedure %s. Can't import json, Import scheme %s is not found" % (
+                procedure_instance.procedure.user_code, procedure_instance.procedure.scheme_name)
+
+            send_system_message(master_user=procedure_instance.master_user,
+                                source="Data File Procedure Service",
+                                text=text)
+
+            _l.debug(
+                'complex_transaction_csv_file_import_by_procedure scheme %s not found' % procedure_instance.procedure.scheme_name)
+
+            procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
+            procedure_instance.save()
