@@ -2852,101 +2852,126 @@ def complex_transaction_csv_file_import_parallel(task_id):
         celery_task.save()
 
         options_object = celery_task.options_object
-
         sub_tasks = []
-
-        lines_per_file = 300
-        header_line = None
-
-        def _get_path(master_user, file_name, ext):
-            return '%s/transaction_import_files/%s.%s' % (master_user.token, file_name, ext)
-
-        chunk = None
-
-
-        with SFS.open(celery_task.options_object['file_path'], 'rb') as f:
-
-            _l.info("Start reading file to split it into chunks")
-
-            ext = celery_task.options_object['file_path'].split('.')[-1]
-
-            for lineno, line in enumerate(f):
-
-                # _l.info('line %s' % lineno)
-
-                if lineno == 0:
-                    header_line = line
-                    # _l.info('set header line %s' % lineno)
-
-                if lineno % lines_per_file == 0:
-
-                    if chunk is not None:
-                        # _l.info("Saving chunk %s" % chunk)
-                        SFS.save(chunk_path, chunk) # save working chunk before creating new one
-
-                    chunk_filename = '%s_chunk_file_%s' % (celery_task.id, str(lineno) + '_' + str(lineno + lines_per_file))
-                    chunk_path = _get_path(celery_task.master_user, chunk_filename, ext)
-
-                    # _l.info('creating chunk file %s' % chunk_path)
-
-                    chunk = BytesIO()
-                    if lineno != 0:
-                        chunk.write(header_line)
-
-                    _l.info("creating chunk %s" % chunk_filename)
-
-                    # _l.info('creating sub task for %s' % chunk_filename)
-
-                    sub_task = CeleryTask.objects.create(master_user=celery_task.master_user, member=celery_task.member, parent=celery_task)
-
-                    sub_task_options_object = copy.deepcopy(celery_task.options_object)
-                    sub_task_options_object['file_path'] = chunk_path
-
-                    sub_task.options_object = sub_task_options_object
-                    sub_task.save()
-
-                    sub_tasks.append(sub_task)
-
-                chunk.write(line)
-
-            _l.info("Saving last chunk")
-            SFS.save(chunk_path, chunk) # save working chunk before creating new one
-
-        _l.info('sub_tasks created %s' % len(sub_tasks))
-        _l.info('original file total rows %s' % lineno)
-
-        options_object['total_rows'] = lineno
-
-        celery_task.options_object = options_object
-        celery_task.save()
-
         celery_sub_tasks = []
 
-        # for sub_task in sub_tasks:
-        #
-        #     _l.info('initializing sub_task %s' % sub_task.options_object['file_path'])
-        #
-        #     ct = complex_transaction_csv_file_import.s(task_id=sub_task.id)
-        #     celery_sub_tasks.append(ct)
-        #
-        # # chord(celery_sub_tasks, complex_transaction_csv_file_import_parallel_finish.si(task_id=task_id)).apply_async()
-        # chord(celery_sub_tasks)(complex_transaction_csv_file_import_parallel_finish.si(task_id=task_id))
+        if 'items' in options_object:
 
-        for sub_task in sub_tasks:
+            sub_task = CeleryTask.objects.create(master_user=celery_task.master_user, member=celery_task.member, parent=celery_task)
 
-            _l.info('initializing sub_task %s' % sub_task.options_object['file_path'])
+            sub_task_options_object = copy.deepcopy(celery_task.options_object)
 
-            ct = complex_transaction_csv_file_import.s(task_id=sub_task.id)
-            celery_sub_tasks.append(ct)
+            sub_task.options_object = sub_task_options_object
+            sub_task.save()
 
-        _l.info('celery_sub_tasks len %s' % len(celery_sub_tasks))
-        _l.info('celery_sub_tasks %s' % celery_sub_tasks)
+            sub_tasks.append(sub_task)
 
-        # chord(celery_sub_tasks, complex_transaction_csv_file_import_validate_parallel_finish.si(task_id=task_id)).apply_async()
-        # chord(celery_sub_tasks)(complex_transaction_csv_file_import_parallel_finish.si(task_id=task_id))
+            for sub_task in sub_tasks:
 
-        transaction.on_commit(
-            lambda:  chord(celery_sub_tasks, complex_transaction_csv_file_import_parallel_finish.si(task_id=task_id)).apply_async())
+                ct = complex_transaction_csv_file_import.s(task_id=sub_task.id)
+                celery_sub_tasks.append(ct)
+
+
+            transaction.on_commit(
+                lambda:  chord(celery_sub_tasks, complex_transaction_csv_file_import_parallel_finish.si(task_id=task_id)).apply_async())
+
+
+        else:
+
+            sub_tasks = []
+
+            lines_per_file = 300
+            header_line = None
+
+            def _get_path(master_user, file_name, ext):
+                return '%s/transaction_import_files/%s.%s' % (master_user.token, file_name, ext)
+
+            chunk = None
+
+
+            with SFS.open(celery_task.options_object['file_path'], 'rb') as f:
+
+                _l.info("Start reading file to split it into chunks")
+
+                ext = celery_task.options_object['file_path'].split('.')[-1]
+
+                for lineno, line in enumerate(f):
+
+                    # _l.info('line %s' % lineno)
+
+                    if lineno == 0:
+                        header_line = line
+                        # _l.info('set header line %s' % lineno)
+
+                    if lineno % lines_per_file == 0:
+
+                        if chunk is not None:
+                            # _l.info("Saving chunk %s" % chunk)
+                            SFS.save(chunk_path, chunk) # save working chunk before creating new one
+
+                        chunk_filename = '%s_chunk_file_%s' % (celery_task.id, str(lineno) + '_' + str(lineno + lines_per_file))
+                        chunk_path = _get_path(celery_task.master_user, chunk_filename, ext)
+
+                        # _l.info('creating chunk file %s' % chunk_path)
+
+                        chunk = BytesIO()
+                        if lineno != 0:
+                            chunk.write(header_line)
+
+                        _l.info("creating chunk %s" % chunk_filename)
+
+                        # _l.info('creating sub task for %s' % chunk_filename)
+
+                        sub_task = CeleryTask.objects.create(master_user=celery_task.master_user, member=celery_task.member, parent=celery_task)
+
+                        sub_task_options_object = copy.deepcopy(celery_task.options_object)
+                        sub_task_options_object['file_path'] = chunk_path
+
+                        sub_task.options_object = sub_task_options_object
+                        sub_task.save()
+
+                        sub_tasks.append(sub_task)
+
+                    chunk.write(line)
+
+                _l.info("Saving last chunk")
+                SFS.save(chunk_path, chunk) # save working chunk before creating new one
+
+            _l.info('sub_tasks created %s' % len(sub_tasks))
+            _l.info('original file total rows %s' % lineno)
+
+            options_object['total_rows'] = lineno
+
+            celery_task.options_object = options_object
+            celery_task.save()
+
+            celery_sub_tasks = []
+
+            # for sub_task in sub_tasks:
+            #
+            #     _l.info('initializing sub_task %s' % sub_task.options_object['file_path'])
+            #
+            #     ct = complex_transaction_csv_file_import.s(task_id=sub_task.id)
+            #     celery_sub_tasks.append(ct)
+            #
+            # # chord(celery_sub_tasks, complex_transaction_csv_file_import_parallel_finish.si(task_id=task_id)).apply_async()
+            # chord(celery_sub_tasks)(complex_transaction_csv_file_import_parallel_finish.si(task_id=task_id))
+
+            for sub_task in sub_tasks:
+
+                _l.info('initializing sub_task %s' % sub_task.options_object['file_path'])
+
+                ct = complex_transaction_csv_file_import.s(task_id=sub_task.id)
+                celery_sub_tasks.append(ct)
+
+            _l.info('celery_sub_tasks len %s' % len(celery_sub_tasks))
+            _l.info('celery_sub_tasks %s' % celery_sub_tasks)
+
+            # chord(celery_sub_tasks, complex_transaction_csv_file_import_validate_parallel_finish.si(task_id=task_id)).apply_async()
+            # chord(celery_sub_tasks)(complex_transaction_csv_file_import_parallel_finish.si(task_id=task_id))
+
+            transaction.on_commit(
+                lambda:  chord(celery_sub_tasks, complex_transaction_csv_file_import_parallel_finish.si(task_id=task_id)).apply_async())
 
     except Exception as e:
 
