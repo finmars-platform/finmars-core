@@ -2473,7 +2473,7 @@ def complex_transaction_csv_file_import(self, task_id):
 
                         try:
                             if type(row) is dict:
-                                inputs_raw[i.name] = row[i.name]
+                                inputs_raw[i.name] = row[i.column_name]
                             else:
                                 _col_index = input_column_name_map[i.name]
                                 inputs_raw[i.name] = row[_col_index]
