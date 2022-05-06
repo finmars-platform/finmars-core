@@ -132,7 +132,7 @@ class RequestDataFileProcedureProcess(object):
 
                     response_data = response.json()
 
-                    file_content = json.dumps(json.loads(response_data), indent=4)
+                    file_content = json.dumps(response_data, indent=4)
                 except Exception as e:
 
                     _l.info('response %s' % response.text )
