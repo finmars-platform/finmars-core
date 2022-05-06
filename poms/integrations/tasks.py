@@ -2720,7 +2720,7 @@ def complex_transaction_csv_file_import(self, task_id):
 
         try:
 
-            if celery_task.options and 'items' in celery_task.options:
+            if celery_task.options_object and 'items' in celery_task.options_object:
 
                 _l.info("Parse json data")
 
