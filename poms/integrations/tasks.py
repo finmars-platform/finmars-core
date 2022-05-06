@@ -4017,14 +4017,15 @@ def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instan
                                 source="Data File Procedure Service",
                                 text=text)
 
-            ct = complex_transaction_csv_file_import.s(task_id=celery_task.id)
+            ct = complex_transaction_csv_file_import.apply_async(kwargs={"task_id": celery_task.id})
 
 
+        except Exception as e:
 
-        except ComplexTransactionImportScheme.DoesNotExist:
+            _l.info('complex_transaction_csv_file_import_by_procedure_json e %s' % e)
 
-            text = "Data File Procedure %s. Can't import json, Import scheme %s is not found" % (
-                procedure_instance.procedure.user_code, procedure_instance.procedure.scheme_name)
+            text = "Data File Procedure %s. Can't import json, Error %s" % (
+                procedure_instance.procedure.user_code, e)
 
             send_system_message(master_user=procedure_instance.master_user,
                                 source="Data File Procedure Service",
