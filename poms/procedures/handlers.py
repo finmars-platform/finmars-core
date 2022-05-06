@@ -169,6 +169,7 @@ class RequestDataFileProcedureProcess(object):
                                     )
 
                 celery_task = CeleryTask.objects.create(master_user=master_user,
+                                                        member=self.member,
                                                         type='transaction_import')
 
                 options_object = {}
