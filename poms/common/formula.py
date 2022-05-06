@@ -252,6 +252,19 @@ def _parse_date(date_string, format=None):
     return datetime.datetime.strptime(date_string, format).date()
 
 
+def _unix_to_date(unix, format=None):
+    if not unix:
+        return None
+    if isinstance(unix, datetime.date):
+        return unix
+    unix = int(unix)
+    if not format:
+        format = '%Y-%m-%d'
+    else:
+        format = str(format)
+    return datetime.utcfromtimestamp(unix).strftime(format)
+
+
 def _get_date_last_week_end_business(date):
     date = _parse_date(date)
 
@@ -1960,6 +1973,7 @@ FUNCTIONS = [
 
     SimpleEval2Def('format_date', _format_date),
     SimpleEval2Def('parse_date', _parse_date),
+    SimpleEval2Def('unix_to_date', _unix_to_date),
     SimpleEval2Def('get_date_last_week_end_business', _get_date_last_week_end_business),
     SimpleEval2Def('get_date_last_month_end_business', _get_date_last_month_end_business),
     SimpleEval2Def('get_date_last_quarter_end_business', _get_date_last_quarter_end_business),
