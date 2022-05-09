@@ -489,23 +489,45 @@ def download_instrument_cbond(instrument_code=None, master_user=None, member=Non
 
             try:
                 data = response.json()
+                _l.info("Cbond response data %s" % data)
             except Exception as e:
 
                 errors.append("Could not parse response from broker. %s" % response.text)
                 return task, errors
             try:
 
-                if 'items' in data['data']:
+                result_instrument = None
+
+                if 'instruments' in data:
+
+                    for item in data['instruments']:
+                        instrument = create_instrument_cbond(item, master_user, member)
+
+                        if instrument.user_code == instrument_code:
+                            result_instrument = instrument
+
+                    if 'currencies' in data:
+                        for item in data['currencies']:
+                            currency = create_currency_cbond(item, master_user, member)
+
+                elif 'items' in data['data']:
 
                     for item in data['data']['items']:
                         instrument = create_instrument_cbond(item, master_user, member)
 
+                        if instrument.user_code == instrument_code:
+                            result_instrument = instrument
+
                 else:
 
                     instrument = create_instrument_cbond(data['data'], master_user, member)
+                    result_instrument = instrument
+
+
+
 
                 result = {
-                    "instrument_id": instrument.pk
+                    "instrument_id": result_instrument.pk
                 }
 
                 task.result_object = result
