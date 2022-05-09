@@ -246,7 +246,7 @@ class CurrencyDatabaseSearchViewSet(APIView):
 
         _l.info('headers %s' % headers)
 
-        url = str(settings.CBONDS_BROKER_URL) + 'find/currency/name/%s?page=%s' % (name, page)
+        url = str(settings.CBONDS_BROKER_URL) + 'instr/find/currency/%s?page=%s' % (name, page)
 
         _l.info("Requesting URL %s" % url)
 
