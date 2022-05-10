@@ -97,7 +97,7 @@ class RequestDataFileProcedureProcess(object):
                     "scheme_name": self.procedure.scheme_user_code,
                     "scheme_type": self.procedure.scheme_type,
                     "data": [],
-
+                    "options": {},
                     "error_status": 0,
                     "error_message": "",
                 }
@@ -107,6 +107,9 @@ class RequestDataFileProcedureProcess(object):
 
                 if self.procedure.date_to:
                     data["date_to"] = str(self.procedure.date_to)
+
+                if self.procedure.data['currencies']:
+                    data["options"]['currencies'] = self.procedure.data['currencies']
 
                 _l.info('request exante url %s' % url)
                 _l.info('request exante data %s' % data)
