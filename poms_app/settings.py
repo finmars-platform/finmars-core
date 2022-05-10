@@ -507,11 +507,11 @@ REST_FRAMEWORK = {
     # 'DATETIME_INPUT_FORMATS': (ISO_8601, '%c', '%Y-%m-%d %H:%M:%S %Z'),
 }
 
-if DEBUG:
-    REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] += (
-        'rest_framework.renderers.BrowsableAPIRenderer',
-        'rest_framework.renderers.AdminRenderer',
-    )
+# if DEBUG:
+REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] += (
+    'rest_framework.renderers.BrowsableAPIRenderer',
+    'rest_framework.renderers.AdminRenderer',
+)
 
 if SERVER_TYPE == 'development' or SERVER_TYPE == 'local':
     REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] += (
