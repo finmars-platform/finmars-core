@@ -28,6 +28,10 @@ class CreateMasterUserSerializer(serializers.Serializer):
     old_backup_name = serializers.CharField(label=_("Old backup name"),  required=False, allow_blank=True)
 
 
+class RenameMasterUserSerializer(serializers.Serializer):
+    name = serializers.CharField(label=_("name"))
+    unique_id = serializers.CharField(label=_("Unique id"))
+
 
 class CreateMemberSerializer(serializers.Serializer):
     groups = serializers.CharField(required=False, label=_("Groups"))
