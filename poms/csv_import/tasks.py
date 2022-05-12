@@ -442,13 +442,14 @@ def process_csv_file(master_user,
 
     processed_row_index = 0
 
-    delimiter = task_instance.delimiter.encode('utf-8').decode('unicode_escape')
 
     if celery_task and celery_task.options_object and 'items' in celery_task.options_object:
 
         reader = celery_task.options_object['items']
 
     elif '.csv' in task_instance.filename or (execution_context and execution_context["started_by"] == 'procedure'):
+
+        delimiter = task_instance.delimiter.encode('utf-8').decode('unicode_escape')
 
         reader = csv.reader(file, delimiter=delimiter, quotechar=task_instance.quotechar,
                             strict=False, skipinitialspace=True)
