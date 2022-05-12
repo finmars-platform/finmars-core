@@ -71,7 +71,6 @@ class SchemeLightViewSet(AbstractModelViewSet):
     ]
 
 
-
 class CsvDataImportViewSet(AbstractAsyncViewSet):
     serializer_class = CsvDataImportSerializer
     celery_task = data_csv_file_import
@@ -87,100 +86,37 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
     def create(self, request, *args, **kwargs):
 
-        _l.debug('TASK: data_csv_file_import')
+        st = time.perf_counter()
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
-        task_id = instance.task_id
+        # REFACTOR THIS
 
-        # signer = TimestampSigner()
+        options_object = {}
+        options_object['file_path'] = instance.file_path
+        options_object['scheme_id'] = instance.scheme.id
+        options_object['execution_context'] = None
 
-        if task_id:
+        celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
+                                                member=request.user.member,
+                                                options_object=options_object,
+                                                type='simple_import')
 
-            # res = AsyncResult(signer.unsign(task_id))
-            res = AsyncResult(task_id)
+        _l.info('celery_task %s created ' % celery_task.pk)
 
-            try:
-                celery_task = CeleryTask.objects.get(master_user=request.user.master_user, celery_task_id=task_id)
-            except CeleryTask.DoesNotExist:
-                # celery_task = None
-                _l.debug("Cant create Celery Task")
-                raise PermissionDenied()
+        # celery_task.save()
 
-            st = time.perf_counter()
+        send_system_message(master_user=request.user.master_user,
+                            source="Simple Import Service",
+                            text='Member %s started Simple Import (scheme %s)' % (request.user.member.username, instance.scheme.name))
 
-            if res.ready():
+        data_csv_file_import.apply_async(task_id=celery_task.pk)
 
-                instance = res.result
+        _l.info('CsvDataImportViewSet done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
-                if celery_task:
-                    celery_task.finished_at = datetime_now()
-                    celery_task.file_report_id = instance.stats_file_report
-
-            else:
-
-                if res.result:
-
-                    #  DEPRECATED, REMOVE IN FUTURE
-                    if 'processed_rows' in res.result:
-                        instance.processed_rows = res.result['processed_rows']
-                    if 'total_rows' in res.result:
-                        instance.total_rows = res.result['total_rows']
-
-                    if celery_task:
-
-                        celery_task_data = {}
-
-                        if 'total_rows' in res.result:
-                            celery_task_data["total_rows"] = res.result['total_rows']
-
-                        if 'processed_rows' in res.result:
-                            celery_task_data["processed_rows"] = res.result['processed_rows']
-
-                        if 'user_code' in res.result:
-                            celery_task_data["user_code"] = res.result['user_code']
-
-                        if 'file_name' in res.result:
-                            celery_task_data["file_name"]  = res.result['file_name']
-
-                        celery_task.data = celery_task_data
-
-            _l.debug('AsyncResult res.ready: %s' % (time.perf_counter() - st))
-
-            if instance.master_user.id != request.user.master_user.id:
-                raise PermissionDenied()
-
-            instance.task_id = task_id
-            instance.task_status = res.status
-
-            if celery_task:
-                celery_task.task_status = res.status
-                celery_task.save()
-
-            serializer = self.get_serializer(instance=instance, many=False)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        else:
-
-            res = self.celery_task.apply_async(kwargs={'instance': instance})
-            # instance.task_id = signer.sign('%s' % res.id)
-            instance.task_id = res.id
-
-            celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
-                                                    member=request.user.member,
-                                                    type='simple_import', celery_task_id=res.id)
-
-            celery_task.save()
-
-            send_system_message(master_user=request.user.master_user,
-                                source="Simple Import Service",
-                                text='Member %s started Data Import (scheme %s)' % (request.user.member.username, instance.scheme.name))
-
-            instance.task_status = res.status
-            serializer = self.get_serializer(instance=instance, many=False)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({"task_id": celery_task.pk, "task_status": celery_task.status}, status=status.HTTP_200_OK)
 
 
 class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
@@ -198,97 +134,39 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
 
     def create(self, request, *args, **kwargs):
 
-        _l.debug('CsvDataImportValidateViewSet TASK: data_csv_file_import_validate')
+        st = time.perf_counter()
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
-        task_id = instance.task_id
+        # REFACTOR THIS
 
-        # signer = TimestampSigner()
+        options_object = {}
+        options_object['file_path'] = instance.file_path
+        options_object['scheme_id'] = instance.scheme.id
+        options_object['execution_context'] = None
 
-        _l.info('CsvDataImportValidateViewSet task_id %s ' % task_id)
+        celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
+                                                member=request.user.member,
+                                                options_object=options_object,
+                                                type='simple_import')
 
-        if task_id:
+        _l.info('celery_task %s created ' % celery_task.pk)
 
-            # res = AsyncResult(signer.unsign(task_id))
-            res = AsyncResult(task_id)
+        # celery_task.save()
 
-            try:
-                celery_task = CeleryTask.objects.get(master_user=request.user.master_user, celery_task_id=task_id)
-            except CeleryTask.DoesNotExist:
-                celery_task = None
-                _l.debug("Cant create Celery Task")
-                raise PermissionDenied()
+        send_system_message(master_user=request.user.master_user,
+                            source="Simple Import Service",
+                            text='Member %s started Simple Import (scheme %s)' % (request.user.member.username, instance.scheme.name))
 
-            st = time.perf_counter()
+        data_csv_file_import_validate.apply_async(kwargs={"task_id":celery_task.pk})
 
-            if res.ready():
 
-                instance = res.result
 
-                if celery_task:
-                    celery_task.finished_at = datetime_now()
-                    celery_task.file_report_id = instance.stats_file_report
+        _l.info('CsvDataImportValidateViewSet done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
-            else:
-
-                if res.result:
-                    if 'processed_rows' in res.result:
-                        instance.processed_rows = res.result['processed_rows']
-                    if 'total_rows' in res.result:
-                        instance.total_rows = res.result['total_rows']
-
-                    if celery_task:
-
-                        celery_task_data = {}
-
-                        if 'total_rows' in res.result:
-                            celery_task_data["total_rows"] = res.result['total_rows']
-
-                        if 'processed_rows' in res.result:
-                            celery_task_data["processed_rows"] = res.result['processed_rows']
-
-                        if 'user_code' in res.result:
-                            celery_task_data["user_code"] = res.result['user_code']
-
-                        if 'file_name' in res.result:
-                            celery_task_data["file_name"]  = res.result['file_name']
-
-                        celery_task.data = celery_task_data
-
-            if instance.master_user.id != request.user.master_user.id:
-                raise PermissionDenied()
-
-            instance.task_id = task_id
-            instance.task_status = res.status
-
-            if celery_task:
-                celery_task.task_status = res.status
-                celery_task.save()
-
-            serializer = self.get_serializer(instance=instance, many=False)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        else:
-
-            # delattr(instance, 'file')
-
-            res = self.celery_task.apply_async(kwargs={'instance': instance})
-            # instance.task_id = signer.sign('%s' % res.id)
-            instance.task_id = res.id
-
-            celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
-                                                    member=request.user.member,
-                                                    type='validate_simple_import', celery_task_id=instance.task_id)
-
-            celery_task.save()
-
-            instance.task_status = res.status
-            serializer = self.get_serializer(instance=instance, many=False)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
+        return Response({"task_id": celery_task.pk, "task_status": celery_task.status}, status=status.HTTP_200_OK)
 
 
 class UnifiedCsvDataImportViewSet(AbstractAsyncViewSet):
@@ -362,7 +240,7 @@ class UnifiedCsvDataImportViewSet(AbstractAsyncViewSet):
                             celery_task_data["user_code"] = res.result['user_code']
 
                         if 'file_name' in res.result:
-                            celery_task_data["file_name"]  = res.result['file_name']
+                            celery_task_data["file_name"] = res.result['file_name']
 
                         celery_task.data = celery_task_data
 
@@ -400,4 +278,3 @@ class UnifiedCsvDataImportViewSet(AbstractAsyncViewSet):
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
-

@@ -48,6 +48,7 @@ from django.utils.translation import ugettext
 from logging import getLogger
 from openpyxl import load_workbook
 
+from ..celery_tasks.models import CeleryTask
 from ..common.websockets import send_websocket_message
 
 import traceback
@@ -287,17 +288,28 @@ def get_row_data(row, csv_fields, scheme, first_row):
 
     if scheme.column_matcher == 'name':
 
-        index_map = {}
-        index = 0
-        for item in first_row:
-            index_map[item] = index
-            index = index + 1
-
-        for key, value in index_map.items():
+        if type(row) is dict:
 
             for csv_field in csv_fields:
-                if key == csv_field.column_name:
-                    csv_row_dict[csv_field.name] = row[value]
+
+                if csv_field.column_name in row:
+                    csv_row_dict[csv_field.name] = row[csv_field.column_name]
+                else:
+                    csv_row_dict[csv_field.name] = None
+
+        else:
+
+            index_map = {}
+            index = 0
+            for item in first_row:
+                index_map[item] = index
+                index = index + 1
+
+            for key, value in index_map.items():
+
+                for csv_field in csv_fields:
+                    if key == csv_field.column_name:
+                        csv_row_dict[csv_field.name] = row[value]
 
     return csv_row_dict
 
@@ -417,7 +429,8 @@ def process_csv_file(master_user,
                      mode,
                      process_result_handler,
                      member,
-                     execution_context=None):
+                     execution_context=None,
+                     celery_task=None):
     csv_fields = scheme.csv_fields.all()
     entity_fields = scheme.entity_fields.all()
     calculated_inputs = list(scheme.calculated_inputs.all())
@@ -431,7 +444,11 @@ def process_csv_file(master_user,
 
     delimiter = task_instance.delimiter.encode('utf-8').decode('unicode_escape')
 
-    if '.csv' in task_instance.filename or (execution_context and execution_context["started_by"] == 'procedure'):
+    if celery_task and celery_task.options_object and 'items' in celery_task.options_object:
+
+        reader = celery_task.options_object['items']
+
+    elif '.csv' in task_instance.filename or (execution_context and execution_context["started_by"] == 'procedure'):
 
         reader = csv.reader(file, delimiter=delimiter, quotechar=task_instance.quotechar,
                             strict=False, skipinitialspace=True)
@@ -499,7 +516,7 @@ def process_csv_file(master_user,
         if row_index == 0:
             first_row = row
 
-        if row_index != 0:
+        if row_index != 0 or (celery_task.options_object and 'items' in celery_task.options_object):
 
             try:
 
@@ -1077,20 +1094,24 @@ class ValidateHandler:
 
         return row_index
 
-    def process(self, instance, update_state):
+    def process(self, celery_task, update_state):
 
         _l.debug('ValidateHandler.process: initialized')
 
-        scheme_id = instance.scheme.id
-        error_handler = instance.error_handler
-        missing_data_handler = instance.missing_data_handler
-        classifier_handler = instance.classifier_handler
-        delimiter = instance.delimiter
-        mode = instance.mode
+        instance = CsvDataFileImport(task_id=celery_task.id, master_user=celery_task.master_user, member=celery_task.member)
+
+        scheme = CsvImportScheme.objects.get(pk=celery_task.options_object['scheme_id'])
+
+        error_handler = scheme.error_handler
+        missing_data_handler = scheme.missing_data_handler
+        classifier_handler = scheme.classifier_handler
+        delimiter = scheme.delimiter
+        mode = scheme.mode
         master_user = instance.master_user
         member = instance.member
 
-        scheme = CsvImportScheme.objects.get(pk=scheme_id)
+        execution_context = celery_task.options_object['execution_context']
+
 
         try:
             with SFS.open(instance.file_path, 'rb') as f:
@@ -1185,14 +1206,12 @@ class ValidateHandler:
 
 
 @shared_task(name='csv_import.data_csv_file_import_validate', bind=True)
-def data_csv_file_import_validate(self, instance):
+def data_csv_file_import_validate(self, task_id):
     handler = ValidateHandler()
 
-    setattr(instance, 'task_id', current_task.request.id)
+    celery_task = CeleryTask.objects.get(pk=task_id)
 
-    handler.process(instance, self.update_state)
-
-    return instance
+    handler.process(celery_task, self.update_state)
 
 
 class ImportHandler:
@@ -1608,18 +1627,23 @@ class ImportHandler:
 
         return row_index
 
-    def process(self, instance, update_state, execution_context=None):
+    def process(self, celery_task, update_state):
 
         _l.debug('ImportHandler.process: initialized')
 
-        scheme_id = instance.scheme.id
-        error_handler = instance.error_handler
-        missing_data_handler = instance.missing_data_handler
-        classifier_handler = instance.classifier_handler
-        delimiter = instance.delimiter
-        mode = instance.mode
+        instance = CsvDataFileImport(task_id=celery_task.id, master_user=celery_task.master_user, member=celery_task.member)
+
+        scheme = CsvImportScheme.objects.get(pk=celery_task.options_object['scheme_id'])
+
+        error_handler = scheme.error_handler
+        missing_data_handler = scheme.missing_data_handler
+        classifier_handler = scheme.classifier_handler
+        delimiter = scheme.delimiter
+        mode = scheme.mode
         master_user = instance.master_user
         member = instance.member
+
+        execution_context = celery_task.options_object['execution_context']
 
         proxy_user = ProxyUser(member, master_user)
         proxy_request = ProxyRequest(proxy_user)
@@ -1629,64 +1653,84 @@ class ImportHandler:
 
         _l.debug('ImportHandler.mode %s' % mode)
 
-        scheme = CsvImportScheme.objects.get(pk=scheme_id)
-
         try:
-            with SFS.open(instance.file_path, 'rb') as f:
 
-                with NamedTemporaryFile() as tmpf:
-                    for chunk in f.chunks():
-                        tmpf.write(chunk)
-                    tmpf.flush()
+            if celery_task.options_object and 'items' in celery_task.options_object:
 
-                    if '.csv' in instance.filename or (execution_context and execution_context["started_by"] == 'procedure'):
+                _l.info("Parse json data")
 
-                        with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
-                            instance.total_rows = self._row_count(cfr, instance)
+                items = celery_task.options_object['items']
+
+                context = {}
+
+                instance.total_rows = len(items)
+
+                results, process_errors = process_csv_file(master_user, scheme, None, None, error_handler,
+                                                           missing_data_handler,
+                                                           classifier_handler,
+                                                           context, instance, update_state, mode,
+                                                           self.import_result, member, execution_context, celery_task)
+
+                instance.imported = len(results)
+                instance.stats = process_errors
+
+            else:
+
+                with SFS.open(instance.file_path, 'rb') as f:
+
+                    with NamedTemporaryFile() as tmpf:
+                        for chunk in f.chunks():
+                            tmpf.write(chunk)
+                        tmpf.flush()
+
+                        if '.csv' in instance.filename or (execution_context and execution_context["started_by"] == 'procedure'):
+
+                            with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
+                                instance.total_rows = self._row_count(cfr, instance)
+                                update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
+                                             meta={'total_rows': instance.total_rows,
+                                                   'user_code': instance.scheme.user_code, 'file_name': instance.filename})
+
+                        elif '.xlsx' in instance.filename:
+
+                            wb = load_workbook(filename=f)
+
+                            if instance.scheme.spreadsheet_active_tab_name and instance.scheme.spreadsheet_active_tab_name in wb.sheetnames:
+                                ws = wb[instance.scheme.spreadsheet_active_tab_name]
+                            else:
+                                ws = wb.active
+
+                            _l.info('ws %s' % ws)
+
+                            reader = []
+
+                            row_index = 0
+
+                            for r in ws.rows:
+                                row_index = row_index + 1
+
+                            instance.total_rows = row_index
+
                             update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
                                          meta={'total_rows': instance.total_rows,
                                                'user_code': instance.scheme.user_code, 'file_name': instance.filename})
 
-                    elif '.xlsx' in instance.filename:
-
-                        wb = load_workbook(filename=f)
-
-                        if instance.scheme.spreadsheet_active_tab_name and instance.scheme.spreadsheet_active_tab_name in wb.sheetnames:
-                            ws = wb[instance.scheme.spreadsheet_active_tab_name]
-                        else:
-                            ws = wb.active
-
-                        _l.info('ws %s' % ws)
-
-                        reader = []
-
-                        row_index = 0
-
-                        for r in ws.rows:
-                            row_index = row_index + 1
-
-                        instance.total_rows = row_index
-
-                        update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
-                                     meta={'total_rows': instance.total_rows,
-                                           'user_code': instance.scheme.user_code, 'file_name': instance.filename})
 
 
+                        with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
+                            context = {}
 
-                    with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
-                        context = {}
+                            results, process_errors = process_csv_file(master_user, scheme, f, cf, error_handler,
+                                                                       missing_data_handler,
+                                                                       classifier_handler,
+                                                                       context, instance, update_state, mode,
+                                                                       self.import_result, member, execution_context, celery_task)
 
-                        results, process_errors = process_csv_file(master_user, scheme, f, cf, error_handler,
-                                                                   missing_data_handler,
-                                                                   classifier_handler,
-                                                                   context, instance, update_state, mode,
-                                                                   self.import_result, member, execution_context)
+                            _l.debug('ImportHandler.process_csv_file: finished')
+                            _l.debug('ImportHandler.process_csv_file process_errors %s: ' % len(process_errors))
 
-                        _l.debug('ImportHandler.process_csv_file: finished')
-                        _l.debug('ImportHandler.process_csv_file process_errors %s: ' % len(process_errors))
-
-                        instance.imported = len(results)
-                        instance.stats = process_errors
+                            instance.imported = len(results)
+                            instance.stats = process_errors
         except Exception as e:
 
             _l.debug(e)
@@ -1743,19 +1787,15 @@ class ImportHandler:
 
 
 @shared_task(name='csv_import.data_csv_file_import', bind=True)
-def data_csv_file_import(self, instance, execution_context=None):
+def data_csv_file_import(self, task_id):
 
     try:
 
-        _l.info('data_csv_file_import %s' % instance)
-
         handler = ImportHandler()
 
-        setattr(instance, 'task_id', current_task.request.id)
+        celery_task = CeleryTask.objects.get(pk=task_id)
 
-        handler.process(instance, self.update_state, execution_context)
-
-        return instance
+        handler.process(celery_task, self.update_state)
 
     except Exception as e:
 
@@ -1897,6 +1937,66 @@ def data_csv_file_import_by_procedure(self, procedure_instance_id, transaction_f
 
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
             procedure_instance.save()
+
+
+@shared_task(name='csv_import.data_csv_file_import_by_procedure_json', bind=True)
+def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_task_id):
+
+    with transaction.atomic():
+
+        _l.info('data_csv_file_import_by_procedure_json  procedure_instance_id %s celery_task_id %s' % (procedure_instance_id, celery_task_id))
+
+        from poms.integrations.serializers import ComplexTransactionCsvFileImport
+        from poms.procedures.models import RequestDataFileProcedureInstance
+
+        procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_instance_id)
+        celery_task = CeleryTask.objects.get(id=celery_task_id)
+
+        try:
+
+            _l.info(
+                'data_csv_file_import_by_procedure_json looking for scheme %s ' % procedure_instance.procedure.scheme_user_code)
+
+            scheme = CsvImportScheme.objects.get(master_user=procedure_instance.master_user,
+                                                                user_code=procedure_instance.procedure.scheme_user_code)
+
+
+            options_object = celery_task.options_object
+
+            options_object['file_path'] = ''
+            options_object['scheme_id'] = scheme.id
+            options_object['execution_context'] =  {'started_by': 'procedure'}
+
+            celery_task.options_object = options_object
+            celery_task.save()
+
+            text = "Data File Procedure %s. File is received. Importing JSON" % (
+                procedure_instance.procedure.user_code)
+
+            send_system_message(master_user=procedure_instance.master_user,
+                                source="Data File Procedure Service",
+                                text=text)
+
+            ct = data_csv_file_import.apply_async(kwargs={"task_id": celery_task.id})
+
+
+        except Exception as e:
+
+            _l.info('data_csv_file_import_by_procedure_json e %s' % e)
+
+            text = "Data File Procedure %s. Can't import json, Error %s" % (
+                procedure_instance.procedure.user_code, e)
+
+            send_system_message(master_user=procedure_instance.master_user,
+                                source="Data File Procedure Service",
+                                text=text)
+
+            _l.debug(
+                'data_csv_file_import_by_procedure_json scheme %s not found' % procedure_instance.procedure.scheme_name)
+
+            procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
+            procedure_instance.save()
+
 
 
 def set_defaults_from_instrument_type(instrument_object, instrument_type):
