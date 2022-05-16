@@ -405,7 +405,7 @@ def create_currency_cbond(data, master_user, member):
 
         try:
 
-            instance = Currency.objects.get(master_user=master_user, user_code=currency_data['code'])
+            instance = Currency.objects.get(master_user=master_user, user_code=currency_data['user_code'])
 
             serializer = CurrencySerializer(data=currency_data, context=context, instance=instance)
         except Currency.DoesNotExist:
