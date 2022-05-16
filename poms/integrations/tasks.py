@@ -378,7 +378,7 @@ def create_currency_cbond(data, master_user, member):
 
         currency_data['user_code'] = data['code']
         currency_data['name'] = data['name']
-        currency_data['short_name'] = data['short_name']
+        currency_data['short_name'] = data['shortName']
 
         # for key, value in data.items():
         #
