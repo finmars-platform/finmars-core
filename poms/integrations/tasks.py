@@ -621,14 +621,16 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
                 return task, errors
             try:
 
-                if 'items' in data['data']:
+                currency = create_currency_cbond(data, master_user, member)
 
-                    for item in data['data']['items']:
-                        currency = create_currency_cbond(item, master_user, member)
-
-                else:
-
-                    currency = create_currency_cbond(data['data'], master_user, member)
+                # if 'items' in data['data']:
+                # 
+                #     for item in data['data']['items']:
+                #         currency = create_currency_cbond(item, master_user, member)
+                # 
+                # else:
+                # 
+                #     currency = create_currency_cbond(data['data'], master_user, member)
 
                 result = {
                     "currency_id": currency.pk
