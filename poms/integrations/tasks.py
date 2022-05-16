@@ -376,23 +376,27 @@ def create_currency_cbond(data, master_user, member):
 
         currency_data = {}
 
-        for key, value in data.items():
+        currency_data['user_code'] = data['code']
+        currency_data['name'] = data['name']
+        currency_data['short_name'] = data['short_name']
 
-            if key == 'attributes':
-
-                for attr_key, attr_value in data['attributes'].items():
-
-                    if attr_value == 'null':
-                        currency_data[attr_key] = None
-                    else:
-                        currency_data[attr_key] = attr_value
-
-            else:
-
-                if value == 'null':
-                    currency_data[key] = None
-                else:
-                    currency_data[key] = value
+        # for key, value in data.items():
+        #
+        #     if key == 'attributes':
+        #
+        #         for attr_key, attr_value in data['attributes'].items():
+        #
+        #             if attr_value == 'null':
+        #                 currency_data[attr_key] = None
+        #             else:
+        #                 currency_data[attr_key] = attr_value
+        #
+        #     else:
+        #
+        #         if value == 'null':
+        #             currency_data[key] = None
+        #         else:
+        #             currency_data[key] = value
 
 
 
@@ -401,7 +405,7 @@ def create_currency_cbond(data, master_user, member):
 
         try:
 
-            instance = Currency.objects.get(master_user=master_user, user_code=currency_data['user_code'])
+            instance = Currency.objects.get(master_user=master_user, user_code=currency_data['code'])
 
             serializer = CurrencySerializer(data=currency_data, context=context, instance=instance)
         except Currency.DoesNotExist:
