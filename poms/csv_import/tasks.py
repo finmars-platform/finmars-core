@@ -2365,6 +2365,24 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
                 if 'first_payment_date' in source_data['accrual_calculation_schedules'][0]:
                     coupon_event['effective_date'] = source_data['accrual_calculation_schedules'][0]['first_payment_date']
 
+    accrual_map = {
+        'Actual/Actual (ICMA)': AccrualCalculationModel.ACT_ACT,
+        'Actual/Actual (ISDA)': AccrualCalculationModel.ACT_ACT_ISDA,
+        'Actual/360': AccrualCalculationModel.ACT_360,
+        'Actual/364': AccrualCalculationModel.ACT_365,
+        'Actual/365 (Actual/365F)': AccrualCalculationModel.ACT_365,
+        'Actual/366': AccrualCalculationModel.ACT_365_366,
+        'Actual/365L': AccrualCalculationModel.ACT_365_366,
+        'Actual/365A': AccrualCalculationModel.ACT_1_365,
+        '30/360 US': AccrualCalculationModel.C_30_360,
+        '30E+/360': AccrualCalculationModel.C_30E_P_360,
+        'NL/365': AccrualCalculationModel.NL_365,
+        'BD/252': AccrualCalculationModel.BUS_DAYS_252,
+        '30E/360': AccrualCalculationModel.GERMAN_30_360_EOM,
+        '30/360 (30/360 ISDA)': AccrualCalculationModel.GERMAN_30_360_NO_EOM,
+        '30/360 German': AccrualCalculationModel.GERMAN_30_360_NO_EOM,
+    }
+
     if 'accrual_calculation_schedules' in source_data:
 
         if len(source_data['accrual_calculation_schedules']):
@@ -2376,6 +2394,9 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
                 _l.info("Setting up accrual schedules. Overwrite Existing")
 
                 accrual = object_data['accrual_calculation_schedules'][0]
+
+                if 'day_count_convention' in source_data:
+                    accrual['accrual_calculation_model'] = accrual_map[source_data['day_count_convention']]
 
                 if 'accrual_start_date' in source_data['accrual_calculation_schedules'][0]:
                     accrual['accrual_start_date'] = source_data['accrual_calculation_schedules'][0]['accrual_start_date']
