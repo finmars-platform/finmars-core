@@ -258,6 +258,8 @@ class CurrencyDatabaseSearchViewSet(APIView):
             _l.info("Request error %s" % e)
             result = {}
 
+        _l.info("response.text %s" % response.text)
+
         try:
             result = response.json()
         except Exception as e:
