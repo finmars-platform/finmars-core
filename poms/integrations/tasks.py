@@ -506,7 +506,8 @@ def download_instrument_cbond(instrument_code=None, master_user=None, member=Non
 
                     if 'currencies' in data:
                         for item in data['currencies']:
-                            currency = create_currency_cbond(item, master_user, member)
+                            if item:
+                                currency = create_currency_cbond(item, master_user, member)
 
                     for item in data['instruments']:
                         instrument = create_instrument_cbond(item, master_user, member)
