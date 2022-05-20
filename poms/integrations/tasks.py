@@ -44,7 +44,7 @@ from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.file_reports.models import FileReport
 from poms.instruments.models import Instrument, DailyPricingModel, PricingPolicy, PriceHistory, InstrumentType, \
-    PaymentSizeDetail, Periodicity, AccrualCalculationModel
+    PaymentSizeDetail, Periodicity, AccrualCalculationModel, PricingCondition
 from poms.integrations.models import Task, PriceDownloadScheme, InstrumentDownloadScheme, PricingAutomatedSchedule, \
     AccountMapping, CurrencyMapping, PortfolioMapping, CounterpartyMapping, InstrumentTypeMapping, ResponsibleMapping, \
     Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, DailyPricingModelMapping, PaymentSizeDetailMapping, \
@@ -379,6 +379,7 @@ def create_currency_cbond(data, master_user, member):
         currency_data['user_code'] = data['code']
         currency_data['name'] = data['name']
         currency_data['short_name'] = data['shortName']
+        currency_data['pricing_condition'] = PricingCondition.RUN_VALUATION_IF_NON_ZERO
 
         # for key, value in data.items():
         #
@@ -416,6 +417,12 @@ def create_currency_cbond(data, master_user, member):
 
         if is_valid:
             currency = serializer.save()
+
+            for policy in currency.pricing_policies:
+
+                policy.default_value = currency_data['user_code']
+
+                policy.save()
 
             _l.info("Currency is imported successfully")
 
@@ -506,7 +513,8 @@ def download_instrument_cbond(instrument_code=None, master_user=None, member=Non
 
                     if 'currencies' in data:
                         for item in data['currencies']:
-                            currency = create_currency_cbond(item, master_user, member)
+                            if item:
+                                currency = create_currency_cbond(item, master_user, member)
 
                     for item in data['instruments']:
                         instrument = create_instrument_cbond(item, master_user, member)
