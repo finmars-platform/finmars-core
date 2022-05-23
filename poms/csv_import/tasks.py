@@ -2379,7 +2379,7 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
         'NL/365': AccrualCalculationModel.NL_365,
         'BD/252': AccrualCalculationModel.BUS_DAYS_252,
         '30E/360': AccrualCalculationModel.GERMAN_30_360_EOM,
-        '30/360 (30/360 ISDA)': AccrualCalculationModel.GERMAN_30_360_NO_EOM,
+        '30/360 (30/360 ISDA)': AccrualCalculationModel.GERMAN_30_360_EOM,
         '30/360 German': AccrualCalculationModel.GERMAN_30_360_NO_EOM,
     }
 
