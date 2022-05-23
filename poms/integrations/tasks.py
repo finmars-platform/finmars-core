@@ -418,7 +418,7 @@ def create_currency_cbond(data, master_user, member):
         if is_valid:
             currency = serializer.save()
 
-            for policy in currency.pricing_policies:
+            for policy in currency.pricing_policies.all():
 
                 policy.default_value = currency_data['user_code']
 
