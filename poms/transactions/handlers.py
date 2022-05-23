@@ -416,13 +416,10 @@ class TransactionTypeProcess(object):
                         exist = True
                     except Instrument.DoesNotExist:
                         exist = False
-                else:
-                    exist = True
 
                 _l.info('action_instrument.rebook_reaction %s ' % action_instrument.rebook_reaction)
 
-                if not exist and isinstance(user_code,
-                                            str) and action_instrument.rebook_reaction == RebookReactionChoice.TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT and pass_download == False:
+                if not exist and isinstance(user_code, str) and action_instrument.rebook_reaction == RebookReactionChoice.TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT and pass_download == False:
 
                     try:
                         from poms.integrations.tasks import download_instrument_cbond
@@ -447,13 +444,11 @@ class TransactionTypeProcess(object):
 
                 else:
 
+                    _l.debug('action_instrument user_code %s' % user_code)
                     _l.debug('action_instrument %s' % action_instrument)
-                    _l.debug('self.process_mode == self.MODE_REBOOK')
                     _l.debug('self.process_mode %s ' % self.process_mode)
-                    _l.debug(self.process_mode == self.MODE_REBOOK)
                     _l.debug('action_instrument.rebook_reaction %s' % action_instrument.rebook_reaction)
 
-                    _l.debug('process instrument: %s', action_instrument)
 
                     instrument = None
                     instrument_exists = False
@@ -513,15 +508,15 @@ class TransactionTypeProcess(object):
                                       target=instrument, target_attr_name='instrument_type',
                                       model=InstrumentType,
                                       source=action_instrument, source_attr_name='instrument_type',
-                                      values=self.values, default_value=master_user.instrument_type)
-                        self._set_rel(errors=errors, values=self.values, default_value=master_user.currency,
+                                      values=self.values, default_value=ecosystem_default.instrument_type)
+                        self._set_rel(errors=errors, values=self.values, default_value=ecosystem_default.currency,
                                       model=Currency,
                                       target=instrument, target_attr_name='pricing_currency',
                                       source=action_instrument, source_attr_name='pricing_currency')
                         self._set_val(errors=errors, values=self.values, default_value=0.0,
                                       target=instrument, target_attr_name='price_multiplier',
                                       source=action_instrument, source_attr_name='price_multiplier')
-                        self._set_rel(errors=errors, values=self.values, default_value=master_user.currency,
+                        self._set_rel(errors=errors, values=self.values, default_value=ecosystem_default.currency,
                                       model=Currency,
                                       target=instrument, target_attr_name='accrued_currency',
                                       source=action_instrument, source_attr_name='accrued_currency')
