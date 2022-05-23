@@ -444,6 +444,8 @@ class TransactionTypeProcess(object):
 
                 else:
 
+                    if pass_download:
+                        _l.debug('action_instrument download passed. Trying to create from scratch %s' % user_code)
                     _l.debug('action_instrument user_code %s' % user_code)
                     _l.debug('action_instrument %s' % action_instrument)
                     _l.debug('self.process_mode %s ' % self.process_mode)
@@ -577,6 +579,11 @@ class TransactionTypeProcess(object):
 
                                 instrument.save()
 
+                            if rebook_reaction == RebookReactionChoice.TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT and not instrument_exists:
+                                _l.debug('Book  TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT')
+
+                                instrument.save()
+
                         else:
 
                             if rebook_reaction == RebookReactionChoice.OVERWRITE:
@@ -591,6 +598,11 @@ class TransactionTypeProcess(object):
 
                             if rebook_reaction == RebookReactionChoice.FIND_OR_CREATE and not instrument_exists:
                                 _l.debug('Book  FIND_OR_CREATE')
+
+                                instrument.save()
+
+                            if rebook_reaction == RebookReactionChoice.TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT and not instrument_exists:
+                                _l.debug('Book  TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT')
 
                                 instrument.save()
 
@@ -1855,6 +1867,8 @@ class TransactionTypeProcess(object):
             except Exception as e:
 
                 _l.debug("Cant process text %s" % e)
+                _l.debug("Cant process names %s" % names)
+                _l.debug("Cant process self.complex_transaction.transaction_type.display_expr %s" % self.complex_transaction.transaction_type.display_expr  )
 
                 self.complex_transaction.text = '<InvalidExpression>'
 
