@@ -312,9 +312,6 @@ if SERVER_TYPE == "production":
 if SERVER_TYPE == "development":
 
     CORS_ORIGIN_ALLOW_ALL = True
-    CORS_URLS_REGEX = r'^/api/.*$'
-    USE_X_FORWARDED_HOST = True
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     CORS_ALLOW_CREDENTIALS = True
 
 if SERVER_TYPE == "local":
