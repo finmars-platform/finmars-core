@@ -619,6 +619,11 @@ class TransactionTypeProcess(object):
                         self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
                     else:
                         instrument_map[action.id] = instrument
+
+                        self.values['phantom_instrument_%s' % order] = instrument
+
+                        _l.info('self.values %s updated values with phantom', self.values)
+
                     finally:
 
                         _l.debug("Instrument action errors %s " % errors)
