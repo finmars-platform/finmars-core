@@ -312,6 +312,9 @@ def create_instrument_cbond(data, master_user, member):
                     instrument_data[key] = value
 
 
+        if instrument_data['instrument_type'] == 'stocks':
+            _l.info("Overwrite Pricing Currency for stock")
+            instrument_data['pricing_currency'] = instrument_data['default_currency_code']
 
         attribute_types =  GenericAttributeType.objects.filter(master_user=master_user,
                                                                content_type=content_type)
@@ -420,7 +423,7 @@ def create_currency_cbond(data, master_user, member):
 
             for policy in currency.pricing_policies.all():
 
-                policy.default_value = currency_data['user_code']
+                policy.default_value = currency_data['user_code'] + '.USD'
 
                 policy.save()
 
