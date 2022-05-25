@@ -442,7 +442,6 @@ def process_csv_file(master_user,
 
     processed_row_index = 0
 
-
     if celery_task and celery_task.options_object and 'items' in celery_task.options_object:
 
         reader = celery_task.options_object['items']
@@ -456,7 +455,6 @@ def process_csv_file(master_user,
 
     elif '.xlsx' in task_instance.filename:
         _l.info('trying to parse excel %s ' % task_instance.filename)
-
 
         wb = load_workbook(filename=original_file)
 
@@ -487,7 +485,6 @@ def process_csv_file(master_user,
             _l.info('start_cell_column_number %s ' % start_cell_column_number)
             _l.info('start_cell_row_number %s ' % start_cell_row_number)
 
-
             row_number = 1
 
             for r in ws.rows:
@@ -506,7 +503,6 @@ def process_csv_file(master_user,
                     reader.append(row_values)
 
                 row_number = row_number + 1
-
 
         _l.info('reader %s' % reader)
 
@@ -670,7 +666,7 @@ def process_csv_file(master_user,
                                     # context=self.report.context
 
                                     if entity_field.use_default and scheme.content_type.model == 'instrument':
-                                        instance[key] = None # will be set from instrument type
+                                        instance[key] = None  # will be set from instrument type
                                     else:
 
                                         executed_expression = safe_eval(entity_field.expression, names=csv_row_dict,
@@ -689,8 +685,9 @@ def process_csv_file(master_user,
 
                                                 try:
 
-                                                    instance[key] = relation_map[key].objects.get(master_user=master_user,
-                                                                                                  user_code=executed_expression)
+                                                    instance[key] = relation_map[key].objects.get(
+                                                        master_user=master_user,
+                                                        user_code=executed_expression)
 
                                                 except (relation_map[key].DoesNotExist, KeyError):
 
@@ -702,7 +699,8 @@ def process_csv_file(master_user,
                                                         eco_key = key
 
                                                         if key in instance_property_to_default_ecosystem_property:
-                                                            eco_key = instance_property_to_default_ecosystem_property[key]
+                                                            eco_key = instance_property_to_default_ecosystem_property[
+                                                                key]
 
                                                         if hasattr(ecosystem_default, eco_key):
                                                             instance[key] = getattr(ecosystem_default, eco_key)
@@ -993,7 +991,8 @@ class ValidateHandler:
                 error_row['level'] = 'error'
                 error_row['error_message'] = error_row['error_message'] + ugettext(
                     'Validation error %(error)s ') % {
-                                                 'error': 'Cannot create attribute. Attribute type %s, value %s. Exception: %s' % (attr_type_user_code, result_attr['executed_expression'], e)
+                                                 'error': 'Cannot create attribute. Attribute type %s, value %s. Exception: %s' % (
+                                                 attr_type_user_code, result_attr['executed_expression'], e)
                                              }
 
     def instance_full_clean(self, scheme, result, error_handler, error_row):
@@ -1099,7 +1098,8 @@ class ValidateHandler:
 
         _l.debug('ValidateHandler.process: initialized')
 
-        instance = CsvDataFileImport(task_id=celery_task.id, master_user=celery_task.master_user, member=celery_task.member)
+        instance = CsvDataFileImport(task_id=celery_task.id, master_user=celery_task.master_user,
+                                     member=celery_task.member)
 
         scheme = CsvImportScheme.objects.get(pk=celery_task.options_object['scheme_id'])
 
@@ -1112,7 +1112,6 @@ class ValidateHandler:
         member = instance.member
 
         execution_context = celery_task.options_object['execution_context']
-
 
         try:
             with SFS.open(instance.file_path, 'rb') as f:
@@ -1152,7 +1151,6 @@ class ValidateHandler:
                         update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
                                      meta={'total_rows': instance.total_rows,
                                            'user_code': instance.scheme.user_code, 'file_name': instance.filename})
-
 
                     with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
                         context = {}
@@ -1273,14 +1271,11 @@ class ImportHandler:
         result_without_many_to_many = {}
 
         if scheme.content_type.model == 'instrument':
-
             process = InstrumentTypeProcess(instrument_type=result['instrument_type'])
 
             result_without_many_to_many = process.instrument
 
             _l.info('create_simple_instance result_without_many_to_many %s ' % result_without_many_to_many)
-
-
 
         many_to_many_fields = ['counterparties', 'responsibles', 'accounts', 'portfolios']
         system_fields = ['_row_index', '_row']
@@ -1327,7 +1322,6 @@ class ImportHandler:
             _l.info('create_simple_instance %s' % e)
 
             instance = None
-
 
             error_row['error_reaction'] = 'Continue import'
             error_row['level'] = 'error'
@@ -1573,7 +1567,6 @@ class ImportHandler:
         else:
             _l.info("ISIN For instrument download is not found")
 
-
     def import_result(self, result_item, error_row, scheme, error_handler, mode, member, master_user):
 
         # _l.debug('ImportHandler.result_item %s' % result_item)
@@ -1609,7 +1602,6 @@ class ImportHandler:
         if scheme.content_type.model == 'instrument' and scheme.instrument_reference_column:
             self.add_instrument_to_download_queue(scheme, result_item, error_handler, error_row, member, master_user)
 
-
         return result_item, error_row
 
     def _row_count(self, file, instance):
@@ -1632,7 +1624,8 @@ class ImportHandler:
 
         _l.debug('ImportHandler.process: initialized')
 
-        instance = CsvDataFileImport(task_id=celery_task.id, master_user=celery_task.master_user, member=celery_task.member)
+        instance = CsvDataFileImport(task_id=celery_task.id, master_user=celery_task.master_user,
+                                     member=celery_task.member)
 
         scheme = CsvImportScheme.objects.get(pk=celery_task.options_object['scheme_id'])
 
@@ -1650,7 +1643,7 @@ class ImportHandler:
         proxy_request = ProxyRequest(proxy_user)
 
         self.context = {'master_user': master_user,
-                   'request': proxy_request}
+                        'request': proxy_request}
 
         _l.debug('ImportHandler.mode %s' % mode)
 
@@ -1684,13 +1677,15 @@ class ImportHandler:
                             tmpf.write(chunk)
                         tmpf.flush()
 
-                        if '.csv' in instance.filename or (execution_context and execution_context["started_by"] == 'procedure'):
+                        if '.csv' in instance.filename or (
+                                execution_context and execution_context["started_by"] == 'procedure'):
 
                             with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cfr:
                                 instance.total_rows = self._row_count(cfr, instance)
                                 update_state(task_id=instance.task_id, state=Task.STATUS_PENDING,
                                              meta={'total_rows': instance.total_rows,
-                                                   'user_code': instance.scheme.user_code, 'file_name': instance.filename})
+                                                   'user_code': instance.scheme.user_code,
+                                                   'file_name': instance.filename})
 
                         elif '.xlsx' in instance.filename:
 
@@ -1716,8 +1711,6 @@ class ImportHandler:
                                          meta={'total_rows': instance.total_rows,
                                                'user_code': instance.scheme.user_code, 'file_name': instance.filename})
 
-
-
                         with open(tmpf.name, mode='rt', encoding=instance.encoding, errors='ignore') as cf:
                             context = {}
 
@@ -1725,7 +1718,8 @@ class ImportHandler:
                                                                        missing_data_handler,
                                                                        classifier_handler,
                                                                        context, instance, update_state, mode,
-                                                                       self.import_result, member, execution_context, celery_task)
+                                                                       self.import_result, member, execution_context,
+                                                                       celery_task)
 
                             _l.debug('ImportHandler.process_csv_file: finished')
                             _l.debug('ImportHandler.process_csv_file process_errors %s: ' % len(process_errors))
@@ -1789,7 +1783,6 @@ class ImportHandler:
 
 @shared_task(name='csv_import.data_csv_file_import', bind=True)
 def data_csv_file_import(self, task_id):
-
     try:
 
         handler = ImportHandler()
@@ -1807,7 +1800,6 @@ def data_csv_file_import(self, task_id):
 
 @shared_task(name='csv_import.data_csv_file_import_by_procedure', bind=True)
 def data_csv_file_import_by_procedure(self, procedure_instance_id, transaction_file_result_id):
-
     with transaction.atomic():
 
         from poms.integrations.serializers import ComplexTransactionCsvFileImport
@@ -1942,10 +1934,10 @@ def data_csv_file_import_by_procedure(self, procedure_instance_id, transaction_f
 
 @shared_task(name='csv_import.data_csv_file_import_by_procedure_json', bind=True)
 def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_task_id):
-
     with transaction.atomic():
 
-        _l.info('data_csv_file_import_by_procedure_json  procedure_instance_id %s celery_task_id %s' % (procedure_instance_id, celery_task_id))
+        _l.info('data_csv_file_import_by_procedure_json  procedure_instance_id %s celery_task_id %s' % (
+        procedure_instance_id, celery_task_id))
 
         from poms.integrations.serializers import ComplexTransactionCsvFileImport
         from poms.procedures.models import RequestDataFileProcedureInstance
@@ -1959,14 +1951,13 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
                 'data_csv_file_import_by_procedure_json looking for scheme %s ' % procedure_instance.procedure.scheme_user_code)
 
             scheme = CsvImportScheme.objects.get(master_user=procedure_instance.master_user,
-                                                                user_code=procedure_instance.procedure.scheme_user_code)
-
+                                                 user_code=procedure_instance.procedure.scheme_user_code)
 
             options_object = celery_task.options_object
 
             options_object['file_path'] = ''
             options_object['scheme_id'] = scheme.id
-            options_object['execution_context'] =  {'started_by': 'procedure'}
+            options_object['execution_context'] = {'started_by': 'procedure'}
 
             celery_task.options_object = options_object
             celery_task.save()
@@ -1999,9 +1990,7 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
             procedure_instance.save()
 
 
-
 def set_defaults_from_instrument_type(instrument_object, instrument_type):
-
     try:
         # Set system attributes
 
@@ -2043,14 +2032,16 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
         instrument_object['short_underlying_exposure'] = instrument_type.short_underlying_exposure
 
         instrument_object['co_directional_exposure_currency'] = instrument_type.co_directional_exposure_currency
-        instrument_object['counter_directional_exposure_currency'] = instrument_type.counter_directional_exposure_currency
+        instrument_object[
+            'counter_directional_exposure_currency'] = instrument_type.counter_directional_exposure_currency
 
         # Set attributes
         instrument_object['attributes'] = []
 
         for attribute in instrument_type.instrument_attributes.all():
 
-            attribute_type = GenericAttributeType.objects.get(master_user=instrument_type.master_user, user_code=attribute.attribute_type_user_code)
+            attribute_type = GenericAttributeType.objects.get(master_user=instrument_type.master_user,
+                                                              user_code=attribute.attribute_type_user_code)
 
             attr = {
                 'attribute_type': attribute_type.id
@@ -2139,7 +2130,6 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
                 if 'default_value' in item:
                     accrual[item['key']] = item['default_value']
 
-
             instrument_object['accrual_calculation_schedules'].append(accrual)
 
         # Set Pricing Policy
@@ -2149,7 +2139,6 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
             instrument_object['pricing_policies'] = []
 
             for it_pricing_policy in instrument_type.pricing_policies.all():
-
                 pricing_policy = {}
 
                 pricing_policy['pricing_policy'] = it_pricing_policy.pricing_policy.id
@@ -2158,7 +2147,6 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
                 pricing_policy['default_value'] = it_pricing_policy.default_value
                 pricing_policy['attribute_key'] = it_pricing_policy.attribute_key
                 pricing_policy['json_data'] = it_pricing_policy.json_data
-
 
                 instrument_object['pricing_policies'].append(pricing_policy)
 
@@ -2200,7 +2188,6 @@ def set_events_for_instrument(instrument_object, data_object, instrument_type_ob
                 if 'first_coupon_date' in data_object:
                     coupon_event['effective_date'] = data_object['first_coupon_date']
 
-
                 coupon_event['final_date'] = maturity
 
                 if len(instrument_object['event_schedules']) == 2:
@@ -2239,12 +2226,10 @@ def set_accruals_for_instrument(instrument_object, data_object, instrument_type_
 
 # Global method for create instrument object from Instrument Type Defaults
 def handler_instrument_object(source_data, instrument_type, master_user, ecosystem_default, attribute_types):
-
     object_data = {}
     object_data = source_data.copy()
 
     object_data['instrument_type'] = instrument_type.id
-
 
     set_defaults_from_instrument_type(object_data, instrument_type)
 
@@ -2282,12 +2267,10 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     #
     #     object_data['pricing_condition'] = ecosystem_default.pricing_condition.id
 
-
-
     if 'maturity' in source_data and source_data['maturity'] != '':
         object_data['maturity_date'] = source_data['maturity']
 
-    elif  'maturity_date' in source_data and source_data['maturity_date'] != '':
+    elif 'maturity_date' in source_data and source_data['maturity_date'] != '':
 
         if source_data['maturity_date'] == 'null' or source_data['maturity_date'] == '9999-00-00':
             object_data['maturity_date'] = '2999-01-01'
@@ -2349,7 +2332,6 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     # object_data['event_schedules'] = []
     object_data['factor_schedules'] = []
 
-
     set_events_for_instrument(object_data, source_data, instrument_type)
     _l.info("Settings events for instrument done")
 
@@ -2363,7 +2345,8 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
                 coupon_event = object_data['event_schedules'][0]
 
                 if 'first_payment_date' in source_data['accrual_calculation_schedules'][0]:
-                    coupon_event['effective_date'] = source_data['accrual_calculation_schedules'][0]['first_payment_date']
+                    coupon_event['effective_date'] = source_data['accrual_calculation_schedules'][0][
+                        'first_payment_date']
 
     accrual_map = {
         'Actual/Actual (ICMA)': AccrualCalculationModel.ACT_ACT,
@@ -2396,13 +2379,21 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
                 accrual = object_data['accrual_calculation_schedules'][0]
 
                 if 'day_count_convention' in source_data:
-                    accrual['accrual_calculation_model'] = accrual_map[source_data['day_count_convention']]
+
+                    if source_data['day_count_convention'] in accrual_map:
+
+                        accrual['accrual_calculation_model'] = accrual_map[source_data['day_count_convention']]
+
+                    else:
+                        accrual['accrual_calculation_model'] = AccrualCalculationModel.DEFAULT
 
                 if 'accrual_start_date' in source_data['accrual_calculation_schedules'][0]:
-                    accrual['accrual_start_date'] = source_data['accrual_calculation_schedules'][0]['accrual_start_date']
+                    accrual['accrual_start_date'] = source_data['accrual_calculation_schedules'][0][
+                        'accrual_start_date']
 
                 if 'first_payment_date' in source_data['accrual_calculation_schedules'][0]:
-                    accrual['first_payment_date'] = source_data['accrual_calculation_schedules'][0]['first_payment_date']
+                    accrual['first_payment_date'] = source_data['accrual_calculation_schedules'][0][
+                        'first_payment_date']
 
                 try:
                     accrual['accrual_size'] = float(source_data['accrual_calculation_schedules'][0]['accrual_size'])
@@ -2443,12 +2434,13 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
                 accrual['accrual_calculation_model'] = AccrualCalculationModel.ACT_365
                 accrual['periodicity'] = Periodicity.ANNUALLY
 
-
                 if 'accrual_start_date' in source_data['accrual_calculation_schedules'][0]:
-                    accrual['accrual_start_date'] = source_data['accrual_calculation_schedules'][0]['accrual_start_date']
+                    accrual['accrual_start_date'] = source_data['accrual_calculation_schedules'][0][
+                        'accrual_start_date']
 
                 if 'first_payment_date' in source_data['accrual_calculation_schedules'][0]:
-                    accrual['first_payment_date'] = source_data['accrual_calculation_schedules'][0]['first_payment_date']
+                    accrual['first_payment_date'] = source_data['accrual_calculation_schedules'][0][
+                        'first_payment_date']
 
                 try:
                     accrual['accrual_size'] = float(source_data['accrual_calculation_schedules'][0]['accrual_size'])
@@ -2478,7 +2470,6 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
                 except Exception as e:
                     accrual['periodicity_n'] = 0
 
-
                 object_data['accrual_calculation_schedules'].append(accrual)
     else:
         set_accruals_for_instrument(object_data, source_data, instrument_type)
@@ -2490,7 +2481,6 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
         object_data['short_name'] = object_data['user_code']
 
     return object_data
-
 
 
 class UnifiedImportHandler():
@@ -2533,7 +2523,6 @@ class UnifiedImportHandler():
 
         from poms.instruments.serializers import InstrumentSerializer
 
-
         try:
 
             row_as_dict = self.get_row_data(row, first_row)
@@ -2563,7 +2552,8 @@ class UnifiedImportHandler():
 
             if skip == False:
 
-                row_data = handler_instrument_object(row_as_dict, instrument_type, self.instance.master_user, self.ecosystem_default, self.attribute_types)
+                row_data = handler_instrument_object(row_as_dict, instrument_type, self.instance.master_user,
+                                                     self.ecosystem_default, self.attribute_types)
 
                 if self.instance.mode == 'skip':
 
