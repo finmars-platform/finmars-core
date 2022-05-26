@@ -504,47 +504,48 @@ def download_instrument_cbond(instrument_code=None, instrument_name=None, instru
                 response = requests.post(url=str(settings.CBONDS_BROKER_URL) + 'export/', data=json.dumps(options), headers=headers)
                 _l.info('response download_instrument_cbond %s' % response)
                 _l.info('data response.text %s ' % response.text)
-            except requests.exceptions.Timeout:
+                _l.info('data response.status_code %s ' % response.status_code)
 
-                _l.info("Finmars Database Timeout. Trying to create simple instrument %s" % instrument_code)
+                if response.status_code == 504:
+                    _l.info("Finmars Database Timeout. Trying to create simple instrument %s" % instrument_code)
 
-                try:
-                    instrument = Instrument.objects.get(master_user=master_user, user_code=instrument_code)
+                    try:
+                        instrument = Instrument.objects.get(master_user=master_user, user_code=instrument_code)
 
-                    _l.info("Finmars Database Timeout. Simple instrument %s exist. Abort." % instrument_code)
+                        _l.info("Finmars Database Timeout. Simple instrument %s exist. Abort." % instrument_code)
 
-                except Exception as e:
+                    except Exception as e:
 
-                    if instrument_type_code:
-                        try:
-                            itype = InstrumentType.objects.get(master_user=master_user, user_code=instrument_type_code)
-                        except Exception as e:
-                            itype = None
+                        if instrument_type_code:
+                            try:
+                                itype = InstrumentType.objects.get(master_user=master_user, user_code=instrument_type_code)
+                            except Exception as e:
+                                itype = None
 
-                    if not instrument_name:
-                        instrument_name = instrument_code
+                        if not instrument_name:
+                            instrument_name = instrument_code
 
-                    instrument = Instrument.objects.create(
-                        master_user=master_user,
-                        isin=instrument_code,
-                        name=instrument_name,
-                    )
+                        instrument = Instrument.objects.create(
+                            master_user=master_user,
+                            isin=instrument_code,
+                            name=instrument_name,
+                        )
 
-                    instrument.is_active = False
+                        instrument.is_active = False
 
-                    if itype:
-                        instrument.instrument_type=itype
+                        if itype:
+                            instrument.instrument_type=itype
 
-                        small_item = {
-                            'user_code': instrument_code,
-                            'instrument_type': instrument_type_code
-                        }
+                            small_item = {
+                                'user_code': instrument_code,
+                                'instrument_type': instrument_type_code
+                            }
 
-                        create_instrument_cbond(small_item, master_user, member)
+                            create_instrument_cbond(small_item, master_user, member)
 
-                    instrument.save()
+                        instrument.save()
 
-                return task, errors
+                    return task, errors
 
             except Exception as e:
                 _l.debug("Can't send request to CBONDS BROKER. %s" % e)
@@ -555,6 +556,8 @@ def download_instrument_cbond(instrument_code=None, instrument_name=None, instru
                 data = response.json()
                 _l.info("Cbond response data %s" % data)
             except Exception as e:
+
+                _l.info("Cbond response data Exception %s" % e)
 
                 errors.append("Could not parse response from broker. %s" % response.text)
                 return task, errors
