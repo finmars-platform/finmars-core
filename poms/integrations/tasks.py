@@ -482,7 +482,7 @@ def download_instrument_cbond(instrument_code=None, instrument_name=None, instru
 
             options['request_id'] = task.pk
             options['base_api_url'] = settings.BASE_API_URL
-            options['callback_url'] = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/instruments/fdb-create-from-callback'
+            options['callback_url'] = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/instruments/fdb-create-from-callback/'
             options['token'] = 'fd09a190279e45a2bbb52fcabb7899bd'
 
             options['data'] = {}

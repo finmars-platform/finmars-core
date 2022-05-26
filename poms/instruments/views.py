@@ -788,6 +788,12 @@ class InstrumentFDBCreateFromCallbackViewSet(APIView):
 
     permission_classes = []
 
+    def get(self, request):
+
+        _l.info("InstrumentFDBCreateFromCallbackViewSet get")
+
+        return Response({'ok'})
+
     def post(self, request):
 
         from poms.integrations.models import Task
