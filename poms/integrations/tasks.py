@@ -481,6 +481,9 @@ def download_instrument_cbond(instrument_code=None, instrument_name=None, instru
 
             options['data'] = {}
 
+            task.options_object = options
+            task.save()
+
             response = None
 
             # OLD ASYNC CODE
