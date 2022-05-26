@@ -313,7 +313,21 @@ def create_instrument_cbond(data, master_user, member):
                 else:
                     instrument_data[key] = value
 
+
+
         if instrument_data['instrument_type'] == 'stocks':
+
+            if 'default_exchange' in instrument_data:
+                if instrument_data['default_exchange']:
+
+                    if 'default_currency_code' in instrument_data:
+                        if instrument_data['default_currency_code']:
+
+                            instrument_data['reference_for_pricing'] = instrument_data['user_code'] + '.' + instrument_data['default_exchange'] + ':' + instrument_data['default_currency_code']
+
+                            _l.info('Reference for pricing updated %s' % instrument_data['reference_for_pricing'])
+
+
             _l.info("Overwrite Pricing Currency for stock")
             if 'default_currency_code' in instrument_data:
                 instrument_data['pricing_currency'] = instrument_data['default_currency_code']
