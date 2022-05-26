@@ -498,64 +498,65 @@ def download_instrument_cbond(instrument_code=None, instrument_name=None, instru
 
             try:
                 response = requests.post(url=str(settings.CBONDS_BROKER_URL) + 'export/', data=json.dumps(options),
-                                         headers=headers, timeout=20)
+                                         headers=headers, timeout=15)
                 _l.info('response download_instrument_cbond %s' % response)
                 _l.info('data response.text %s ' % response.text)
                 _l.info('data response.status_code %s ' % response.status_code)
 
-                if response.status_code == 504:
-                    _l.info("Finmars Database Timeout. Trying to create simple instrument %s" % instrument_code)
+            except requests.exceptions.Timeout as e:
 
-                    try:
-                        instrument = Instrument.objects.get(master_user=master_user, user_code=instrument_code)
+                _l.info("Finmars Database Timeout. Trying to create simple instrument %s" % instrument_code)
 
-                        _l.info("Finmars Database Timeout. Simple instrument %s exist. Abort." % instrument_code)
+                try:
+                    instrument = Instrument.objects.get(master_user=master_user, user_code=instrument_code)
 
-                    except Exception as e:
+                    _l.info("Finmars Database Timeout. Simple instrument %s exist. Abort." % instrument_code)
 
-                        itype = None
+                except Exception as e:
 
-                        _l.info('Finmars Database Timeout. instrument_type_code %s' % instrument_type_code)
-                        _l.info('Finmars Database Timeout. instrument_name %s' % instrument_name)
+                    itype = None
 
-                        if instrument_type_code:
-                            try:
-                                itype = InstrumentType.objects.get(master_user=master_user,
-                                                                   user_code=instrument_type_code)
-                            except Exception as e:
-                                itype = None
+                    _l.info('Finmars Database Timeout. instrument_type_code %s' % instrument_type_code)
+                    _l.info('Finmars Database Timeout. instrument_name %s' % instrument_name)
 
-                        if not instrument_name:
-                            instrument_name = instrument_code
+                    if instrument_type_code:
+                        try:
+                            itype = InstrumentType.objects.get(master_user=master_user,
+                                                               user_code=instrument_type_code)
+                        except Exception as e:
+                            itype = None
 
-                        ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
+                    if not instrument_name:
+                        instrument_name = instrument_code
 
-                        instrument = Instrument.objects.create(
-                            master_user=master_user,
-                            user_code=instrument_code,
-                            name=instrument_name,
-                            instrument_type=ecosystem_defaults.instrument_type,
-                            accrued_currency=ecosystem_defaults.currency,
-                            pricing_currency=ecosystem_defaults.currency,
-                            co_directional_exposure_currency=ecosystem_defaults.currency,
-                            counter_directional_exposure_currency=ecosystem_defaults.currency
-                        )
+                    ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
 
-                        instrument.is_active = False
+                    instrument = Instrument.objects.create(
+                        master_user=master_user,
+                        user_code=instrument_code,
+                        name=instrument_name,
+                        instrument_type=ecosystem_defaults.instrument_type,
+                        accrued_currency=ecosystem_defaults.currency,
+                        pricing_currency=ecosystem_defaults.currency,
+                        co_directional_exposure_currency=ecosystem_defaults.currency,
+                        counter_directional_exposure_currency=ecosystem_defaults.currency
+                    )
 
-                        if itype:
-                            instrument.instrument_type = itype
+                    instrument.is_active = False
 
-                            small_item = {
-                                'user_code': instrument_code,
-                                'instrument_type': instrument_type_code
-                            }
+                    if itype:
+                        instrument.instrument_type = itype
 
-                            create_instrument_cbond(small_item, master_user, member)
+                        small_item = {
+                            'user_code': instrument_code,
+                            'instrument_type': instrument_type_code
+                        }
 
-                        instrument.save()
+                        create_instrument_cbond(small_item, master_user, member)
 
-                    return task, errors
+                    instrument.save()
+
+                return task, errors
 
             except Exception as e:
                 _l.debug("Can't send request to CBONDS BROKER. %s" % e)
