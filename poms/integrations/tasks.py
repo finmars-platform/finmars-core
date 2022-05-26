@@ -510,6 +510,8 @@ def download_instrument_cbond(instrument_code=None, instrument_name=None, instru
 
                     except Exception as e:
 
+                        itype = None
+
                         if instrument_type_code:
                             try:
                                 itype = InstrumentType.objects.get(master_user=master_user,
