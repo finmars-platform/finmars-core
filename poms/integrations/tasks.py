@@ -323,7 +323,17 @@ def create_instrument_cbond(data, master_user, member):
                     if 'default_currency_code' in instrument_data:
                         if instrument_data['default_currency_code']:
 
-                            instrument_data['reference_for_pricing'] = instrument_data['user_code'] + '.' + instrument_data['default_exchange'] + ':' + instrument_data['default_currency_code']
+                            # isin.exchange:currency
+
+                            if '.' in instrument_data['user_code']:
+
+                                if ':' in instrument_data['user_code']:
+                                    instrument_data['reference_for_pricing'] = instrument_data['user_code']
+                                else:
+
+                                    instrument_data['reference_for_pricing'] = instrument_data['user_code'] + ':' + instrument_data['default_currency_code']
+                            else:
+                                instrument_data['reference_for_pricing'] = instrument_data['user_code'] + '.' + instrument_data['default_exchange'] + ':' + instrument_data['default_currency_code']
 
                             _l.info('Reference for pricing updated %s' % instrument_data['reference_for_pricing'])
 
