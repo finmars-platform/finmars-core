@@ -796,47 +796,52 @@ class InstrumentFDBCreateFromCallbackViewSet(APIView):
 
     def post(self, request):
 
-        from poms.integrations.models import Task
+        try:
+
+            from poms.integrations.models import Task
+
+            _l.info("InstrumentFDBCreateFromCallbackViewSet.data %s" % request.data)
+
+            task = Task.objects.get(id=request.data['request_id'])
+
+            context = {'request': request, 'master_user': task.master_user}
+
+            data = request.data
 
 
-        token = request.data["token"]
+            result_instrument = None
+            instrument_code = data['isin']
 
-        master_user = MasterUser.objects.get(token=token)
+            if 'instruments' in data:
 
-        context = {'request': request, 'master_user': master_user}
+                if 'currencies' in data:
+                    for item in data['currencies']:
+                        if item:
+                            currency = create_currency_cbond(item, task.master_user, task.member)
 
-        data = request.data
+                for item in data['instruments']:
+                    instrument = create_instrument_cbond(item, task.master_user, task.member)
 
-        task = Task.objects.get(id=data['request_id'])
+                    if instrument.user_code == instrument_code:
+                        result_instrument = instrument
 
-        result_instrument = None
-        instrument_code = data['isin']
+            elif 'items' in data['data']:
 
-        if 'instruments' in data:
+                for item in data['data']['items']:
+                    instrument = create_instrument_cbond(item, task.master_user, task.member)
 
-            if 'currencies' in data:
-                for item in data['currencies']:
-                    if item:
-                        currency = create_currency_cbond(item, master_user, task.member)
+                    if instrument.user_code == instrument_code:
+                        result_instrument = instrument
 
-            for item in data['instruments']:
-                instrument = create_instrument_cbond(item, master_user, task.member)
+            _l.info("Instrument created")
 
-                if instrument.user_code == instrument_code:
-                    result_instrument = instrument
+            return Response({'status': 'ok'})
 
-        elif 'items' in data['data']:
+        except Exception as e:
 
-            for item in data['data']['items']:
-                instrument = create_instrument_cbond(item, master_user, task.member)
+            _l.info("InstrumentFDBCreateFromCallbackViewSet error %s" % e)
 
-                if instrument.user_code == instrument_code:
-                    result_instrument = instrument
-
-        _l.info("Instrument created")
-
-        return Response({'ok'})
-
+            return Response({'status': 'error'})
 
 
 class InstrumentLightFilterSet(FilterSet):
