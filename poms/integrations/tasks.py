@@ -527,7 +527,7 @@ def download_instrument_cbond(instrument_code=None, instrument_name=None, instru
                             user_code=instrument_code,
                             name=instrument_name,
                             instrument_type=ecosystem_defaults.instrument_type,
-                            accured_currency=ecosystem_defaults.currency,
+                            accrued_currency=ecosystem_defaults.currency,
                             pricing_currency=ecosystem_defaults.currency,
                             co_directional_exposure_currency=ecosystem_defaults.currency,
                             counter_directional_exposure_currency=ecosystem_defaults.currency
