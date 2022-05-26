@@ -2564,7 +2564,7 @@ def _get_supported_models_serializer_class():
     from poms.counterparties.models import Counterparty, Responsible
     from poms.counterparties.serializers import CounterpartySerializer, ResponsibleSerializer
     from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDetail, GeneratedEvent
-    from poms.instruments.serializers import InstrumentSerializer, DailyPricingModelSerializer, InstrumentTypeSerializer \
+    from poms.instruments.serializers import InstrumentSerializer, DailyPricingModelSerializer, InstrumentTypeSerializer, \
         PaymentSizeDetailSerializer, GeneratedEventSerializer
     from poms.currencies.models import Currency
     from poms.currencies.serializers import CurrencySerializer
