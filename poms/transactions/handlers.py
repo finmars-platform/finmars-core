@@ -193,7 +193,7 @@ class TransactionTypeProcess(object):
 
         except formula.InvalidExpression as e:
 
-            _l.debug('Action is skipped')
+            _l.debug('Action is skipped %s' % e)
 
             return False
 
