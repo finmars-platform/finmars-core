@@ -1173,8 +1173,8 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
     instrument_code = serializers.CharField(required=True, initial='USP16394AG62 Corp')
-    instrument_name = serializers.CharField(required=True, initial='USP16394AG62 Corp')
-    instrument_type_code = serializers.CharField(required=True, initial='bonds')
+    instrument_name = serializers.CharField(required=False, allow_null=True, initial='USP16394AG62 Corp')
+    instrument_type_code = serializers.CharField(required=False, allow_null=True, initial='bonds')
     task = serializers.IntegerField(required=False, allow_null=True)
     result_id = serializers.IntegerField(required=False, allow_null=True)
 
