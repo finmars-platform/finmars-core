@@ -527,7 +527,7 @@ def download_instrument_cbond(instrument_code=None, instrument_name=None, instru
 
                         instrument = Instrument.objects.create(
                             master_user=master_user,
-                            isin=instrument_code,
+                            user_code=instrument_code,
                             name=instrument_name,
                         )
 
