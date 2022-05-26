@@ -516,6 +516,9 @@ def download_instrument_cbond(instrument_code=None, instrument_name=None, instru
 
                     itype = None
 
+                    if instrument_type_code == 'equity':
+                        instrument_type_code = 'stocks'
+
                     _l.info('Finmars Database Timeout. instrument_type_code %s' % instrument_type_code)
                     _l.info('Finmars Database Timeout. instrument_name %s' % instrument_name)
 
@@ -545,6 +548,7 @@ def download_instrument_cbond(instrument_code=None, instrument_name=None, instru
                     instrument.is_active = False
 
                     if itype:
+
                         instrument.instrument_type = itype
 
                         small_item = {
