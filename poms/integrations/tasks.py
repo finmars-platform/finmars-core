@@ -512,6 +512,9 @@ def download_instrument_cbond(instrument_code=None, instrument_name=None, instru
 
                         itype = None
 
+                        _l.info('Finmars Database Timeout. instrument_type_code %s' % instrument_type_code)
+                        _l.info('Finmars Database Timeout. instrument_name %s' % instrument_name)
+
                         if instrument_type_code:
                             try:
                                 itype = InstrumentType.objects.get(master_user=master_user,
