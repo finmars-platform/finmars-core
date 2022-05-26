@@ -9,6 +9,7 @@ from poms.procedures.handlers import RequestDataFileProcedureProcess
 from poms.procedures.models import RequestDataFileProcedure, PricingProcedure
 from poms.schedules.models import Schedule, ScheduleInstance
 from poms.system_messages.handlers import send_system_message
+from poms.users.models import Member
 
 _l = logging.getLogger('poms.schedules')
 
@@ -18,6 +19,8 @@ def process_procedure_async(self, procedure, master_user, schedule_instance):
     _l.info("Schedule: Subprocess process. Master User: %s. Procedure: %s" % (master_user, procedure.type))
 
     schedule = Schedule.objects.get(id=schedule_instance.schedule_id)
+
+    owner_member = Member.objects.filter(master_user=master_user, is_owner=True)[0]
 
     if procedure.type == 'pricing':
 
@@ -41,7 +44,7 @@ def process_procedure_async(self, procedure, master_user, schedule_instance):
                     if 'end_date' in schedule.data:
                         date_to = schedule.data['end_date']
 
-            instance = PricingProcedureProcess(procedure=item, master_user=master_user,
+            instance = PricingProcedureProcess(procedure=item, master_user=master_user, member=owner_member,
                                                schedule_instance=schedule_instance, date_from=date_from, date_to=date_to)
             instance.process()
 
@@ -57,6 +60,7 @@ def process_procedure_async(self, procedure, master_user, schedule_instance):
             item = RequestDataFileProcedure.objects.get(master_user=master_user, user_code=procedure.user_code)
 
             instance = RequestDataFileProcedureProcess(procedure=item, master_user=master_user,
+                                                       member=owner_member,
                                                        schedule_instance=schedule_instance)
             instance.process()
 
