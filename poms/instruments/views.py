@@ -50,6 +50,7 @@ from poms.instruments.tasks import calculate_prices_accrued_price, generate_even
     only_generate_events_at_date, generate_events_do_not_inform_apply_default0, \
     generate_events_do_not_inform_apply_default, only_generate_events_at_date_for_single_instrument
 from poms.integrations.models import PriceDownloadScheme
+from poms.integrations.tasks import create_currency_cbond, create_instrument_cbond
 from poms.obj_attrs.models import GenericAttributeType, GenericAttribute, GenericClassifier
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
@@ -781,6 +782,55 @@ class InstrumentExternalAPIViewSet(APIView):
         _l.info("Instrument created")
 
         return Response({'ok'})
+
+
+class InstrumentFDBCreateFromCallbackViewSet(APIView):
+
+    permission_classes = []
+
+    def post(self, request):
+
+        from poms.integrations.models import Task
+
+
+        token = request.data["token"]
+
+        master_user = MasterUser.objects.get(token=token)
+
+        context = {'request': request, 'master_user': master_user}
+
+        data = request.data
+
+        task = Task.objects.get(id=data['request_id'])
+
+        result_instrument = None
+        instrument_code = data['isin']
+
+        if 'instruments' in data:
+
+            if 'currencies' in data:
+                for item in data['currencies']:
+                    if item:
+                        currency = create_currency_cbond(item, master_user, task.member)
+
+            for item in data['instruments']:
+                instrument = create_instrument_cbond(item, master_user, task.member)
+
+                if instrument.user_code == instrument_code:
+                    result_instrument = instrument
+
+        elif 'items' in data['data']:
+
+            for item in data['data']['items']:
+                instrument = create_instrument_cbond(item, master_user, task.member)
+
+                if instrument.user_code == instrument_code:
+                    result_instrument = instrument
+
+        _l.info("Instrument created")
+
+        return Response({'ok'})
+
 
 
 class InstrumentLightFilterSet(FilterSet):

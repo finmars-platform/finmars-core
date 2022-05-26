@@ -293,6 +293,10 @@ def create_instrument_cbond(data, master_user, member):
 
         instrument_data = {}
 
+        # instrument_type is required
+        # user_code is required
+        # other is optional
+
         for key, value in data.items():
 
             if key == 'attributes':
@@ -314,7 +318,8 @@ def create_instrument_cbond(data, master_user, member):
 
         if instrument_data['instrument_type'] == 'stocks':
             _l.info("Overwrite Pricing Currency for stock")
-            instrument_data['pricing_currency'] = instrument_data['default_currency_code']
+            if 'default_currency_code' in instrument_data:
+                instrument_data['pricing_currency'] = instrument_data['default_currency_code']
 
         attribute_types =  GenericAttributeType.objects.filter(master_user=master_user,
                                                                content_type=content_type)
@@ -338,6 +343,8 @@ def create_instrument_cbond(data, master_user, member):
         try:
 
             instance = Instrument.objects.get(master_user=master_user, user_code=object_data['user_code'])
+
+            instance.is_active = True
 
             serializer = InstrumentSerializer(data=object_data, context=context, instance=instance)
         except Instrument.DoesNotExist:
@@ -440,7 +447,7 @@ def create_currency_cbond(data, master_user, member):
         raise Exception(e)
 
 
-def download_instrument_cbond(instrument_code=None, master_user=None, member=None):
+def download_instrument_cbond(instrument_code=None, instrument_name=None, instrument_type_code=None, master_user=None, member=None):
 
     errors = []
 
@@ -475,6 +482,7 @@ def download_instrument_cbond(instrument_code=None, master_user=None, member=Non
 
             options['request_id'] = task.pk
             options['base_api_url'] = settings.BASE_API_URL
+            options['callback_url'] = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/instruments/fdb-create-from-callback'
             options['token'] = 'fd09a190279e45a2bbb52fcabb7899bd'
 
             options['data'] = {}
@@ -496,6 +504,48 @@ def download_instrument_cbond(instrument_code=None, master_user=None, member=Non
                 response = requests.post(url=str(settings.CBONDS_BROKER_URL) + 'export/', data=json.dumps(options), headers=headers)
                 _l.info('response download_instrument_cbond %s' % response)
                 _l.info('data response.text %s ' % response.text)
+            except requests.exceptions.Timeout:
+
+                _l.info("Finmars Database Timeout. Trying to create simple instrument %s" % instrument_code)
+
+                try:
+                    instrument = Instrument.objects.get(master_user=master_user, user_code=instrument_code)
+
+                    _l.info("Finmars Database Timeout. Simple instrument %s exist. Abort." % instrument_code)
+
+                except Exception as e:
+
+                    if instrument_type_code:
+                        try:
+                            itype = InstrumentType.objects.get(master_user=master_user, user_code=instrument_type_code)
+                        except Exception as e:
+                            itype = None
+
+                    if not instrument_name:
+                        instrument_name = instrument_code
+
+                    instrument = Instrument.objects.create(
+                        master_user=master_user,
+                        isin=instrument_code,
+                        name=instrument_name,
+                    )
+
+                    instrument.is_active = False
+
+                    if itype:
+                        instrument.instrument_type=itype
+
+                        small_item = {
+                            'user_code': instrument_code,
+                            'instrument_type': instrument_type_code
+                        }
+
+                        create_instrument_cbond(small_item, master_user, member)
+
+                    instrument.save()
+
+                return task, errors
+
             except Exception as e:
                 _l.debug("Can't send request to CBONDS BROKER. %s" % e)
 
@@ -508,6 +558,10 @@ def download_instrument_cbond(instrument_code=None, master_user=None, member=Non
 
                 errors.append("Could not parse response from broker. %s" % response.text)
                 return task, errors
+
+
+
+
             try:
 
                 result_instrument = None
@@ -678,7 +732,16 @@ def download_instrument_cbond_task(self, task_id):
 
     task = Task.objects.get(pk=task_id)
 
-    download_instrument_cbond(task.options['user_code'], task.master_user, task.member)
+    name = None
+    instrument_type_code = None
+
+    if 'name' in task.options:
+        name = task.options['name']
+
+    if 'instrument_type_code' in task.options:
+        instrument_type_code = task.options['instrument_type_code']
+
+    download_instrument_cbond(task.options['user_code'], name, instrument_type_code, task.master_user, task.member)
 
 
 def download_unified_data(id=None, entity_type=None, master_user=None, member=None,

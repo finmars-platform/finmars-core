@@ -1006,11 +1006,13 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObj
 
 
 class ImportInstrumentEntry(object):
-    def __init__(self, master_user=None, member=None, instrument_code=None, instrument_download_scheme=None,
+    def __init__(self, master_user=None, member=None, instrument_code=None, instrument_name=None, instrument_type_code=None, instrument_download_scheme=None,
                  task=None, task_result_overrides=None, instrument=None, errors=None):
         self.master_user = master_user
         self.member = member
         self.instrument_code = instrument_code
+        self.instrument_name = instrument_name
+        self.instrument_type_code = instrument_type_code
         self.instrument_download_scheme = instrument_download_scheme
         self.task = task
         self._task_object = None
@@ -1171,6 +1173,8 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
     instrument_code = serializers.CharField(required=True, initial='USP16394AG62 Corp')
+    instrument_name = serializers.CharField(required=True, initial='USP16394AG62 Corp')
+    instrument_type_code = serializers.CharField(required=True, initial='bonds')
     task = serializers.IntegerField(required=False, allow_null=True)
     result_id = serializers.IntegerField(required=False, allow_null=True)
 
@@ -1182,6 +1186,8 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
 
         task, errors = download_instrument_cbond(
             instrument_code=instance.instrument_code,
+            instrument_name=instance.instrument_name,
+            instrument_type_code=instance.instrument_type_code,
             master_user=instance.master_user,
             member=instance.member
         )
@@ -1593,7 +1599,6 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
     transaction_type = TransactionTypeField()
     fields = ComplexTransactionImportSchemeFieldSerializer(many=True, read_only=False)
 
-
     # selector_values = serializers.SerializerMethodField()
 
     class Meta:
@@ -1609,8 +1614,6 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
         #                                                                        read_only=True)
         pass
 
-
-
     def to_representation(self, instance):
         ret = super(ComplexTransactionImportSchemeRuleScenarioSerializer, self).to_representation(instance)
 
@@ -1623,9 +1626,7 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
 
         return ret
 
-
     def to_internal_value(self, data):
-
         # _l.info('ComplexTransactionImportSchemeRuleScenarioSerializer %s' % data['selector_values'])
 
         selector_values = data.pop('selector_values', [])
@@ -1798,14 +1799,13 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
 
             fields = rule_values.pop('fields', []) or []
 
-            _l.info('rule_values before %s' % rule_values )
+            _l.info('rule_values before %s' % rule_values)
 
             selector_values = rule_values.pop('selector_values', []) or []
             for name, value in rule_values.items():
                 setattr(rule, name, value)
             rule.save()
 
-    
             selector_values_instances = []
 
             if selector_values:

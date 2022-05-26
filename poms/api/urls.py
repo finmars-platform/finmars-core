@@ -506,6 +506,7 @@ urlpatterns = [
     url(r'internal/data/transactions/callback', csrf_exempt(integrations.TransactionFileResultUploadHandler.as_view())),
     url(r'internal/data/transactions/json', csrf_exempt(integrations.TransactionImportJson.as_view())),
     url(r'instruments/instrument-external-api', csrf_exempt(instruments.InstrumentExternalAPIViewSet.as_view())),
+    url(r'instruments/fdb-create-from-callback', csrf_exempt(instruments.InstrumentFDBCreateFromCallbackViewSet.as_view())),
 
     url(r'^authorizer/token-auth/', ObtainAuthToken.as_view(), name='api-token-auth'),
     url(r'^authorizer/set-token-auth/', SetAuthToken.as_view(), name='set-token-auth'),

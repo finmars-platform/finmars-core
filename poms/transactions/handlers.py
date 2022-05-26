@@ -424,7 +424,7 @@ class TransactionTypeProcess(object):
                     try:
                         from poms.integrations.tasks import download_instrument_cbond
                         _l.info("Trying to download instrument from provider")
-                        task, errors = download_instrument_cbond(user_code, master_user, self.member)
+                        task, errors = download_instrument_cbond(user_code, None, None, master_user, self.member)
 
                         _l.info("Download Instrument from provider. Task %s" % task)
                         _l.info("Download Instrument from provider. Errors %s" % errors)

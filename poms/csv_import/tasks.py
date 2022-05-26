@@ -2337,7 +2337,7 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
 
     _l.info('source_data %s' % source_data)
 
-    if 'accrual_calculation_schedules':
+    if 'accrual_calculation_schedules' in source_data:
         if len(source_data['accrual_calculation_schedules']):
 
             if len(object_data['event_schedules']):
