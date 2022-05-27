@@ -440,6 +440,8 @@ class TransactionTypeProcess(object):
 
                         instrument_map[action.id] = instrument
 
+                        self.values['phantom_instrument_%s' % order] = instrument
+
                         _l.info("Download instrument from provider. Success")
 
                     except Exception as e:
