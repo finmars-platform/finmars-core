@@ -146,6 +146,9 @@ class TransactionTypeProcess(object):
         else:
             self.values = values
 
+            for i in range(10):
+                self.values['phantom_instrument_%s' % i] = None
+
     @property
     def is_book(self):
         return self.process_mode == self.MODE_BOOK
