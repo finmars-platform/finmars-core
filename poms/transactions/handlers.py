@@ -278,6 +278,9 @@ class TransactionTypeProcess(object):
         self.values.update(self.default_values)
         self.values.update(self.context_values)
 
+        for i in range(10):
+            self.values['phantom_instrument_%s' % i] = None
+
         _l.info("Transaction type values %s" % self.values)
 
         # if complex transaction already exists
