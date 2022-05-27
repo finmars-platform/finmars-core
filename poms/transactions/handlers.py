@@ -2113,10 +2113,7 @@ class TransactionTypeProcess(object):
         _l.debug('TransactionTypeProcess: book_create_event_actions done: %s',
                  "{:3.3f}".format(time.perf_counter() - create_event_st))
 
-        execute_commands_st = time.perf_counter()
-        self.book_execute_commands(actions)
-        _l.debug('TransactionTypeProcess: book_execute_commands done: %s',
-                 "{:3.3f}".format(time.perf_counter() - execute_commands_st))
+
 
         # complex_transaction
         complex_transaction_errors = {}
@@ -2140,7 +2137,14 @@ class TransactionTypeProcess(object):
 
         self.complex_transaction.save()
 
+        self._context['complex_transaction'] = self.complex_transaction
+
         self._save_inputs()
+
+        execute_commands_st = time.perf_counter()
+        self.book_execute_commands(actions)
+        _l.debug('TransactionTypeProcess: book_execute_commands done: %s',
+                 "{:3.3f}".format(time.perf_counter() - execute_commands_st))
 
         # _l.debug(self.complex_transaction.transactions.all())
 

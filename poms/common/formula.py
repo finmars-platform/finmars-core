@@ -492,6 +492,59 @@ def _get_ttype_default_input(evaluator, input):
 _get_ttype_default_input.evaluator = True
 
 
+def _set_complex_transaction_input(evaluator, input, value):
+
+    try:
+
+        from poms.transactions.models import TransactionTypeInput
+
+        context = evaluator.context
+
+        try:
+            complex_transaction = context['complex_transaction']
+        except ValueError:
+            raise ExpressionEvalError('Missing context: Complex Transaction')
+
+        inputs = list(complex_transaction.inputs.all())
+
+        input_obj = None
+
+        for ct_input in inputs:
+
+            if input == ct_input.transaction_type_input.name:
+                input_obj = ct_input
+
+        print('input_obj %s' % input_obj)
+
+        if input_obj is None:
+            raise ExpressionEvalError('Input is not found')
+
+        print('input_obj.value_type %s' % input_obj.value_type)
+        print('input_obj.value %s' % input_obj.value)
+
+        if input_obj.transaction_type_input.value_type == TransactionTypeInput.RELATION:
+            input_obj.value_relation = value
+        elif input_obj.transaction_type_input.value_type == TransactionTypeInput.STRING:
+            input_obj.value_string = value
+        elif input_obj.transaction_type_input.value_type == TransactionTypeInput.NUMBER:
+            input_obj.value_float = value
+        elif input_obj.transaction_type_input.value_type == TransactionTypeInput.DATE:
+            input_obj.value_date = value
+        elif input_obj.transaction_type_input.value_type == TransactionTypeInput.SELECTOR:
+            input_obj.value_string = value
+
+        input_obj.save()
+
+        return True
+    except Exception as e:
+        _l.info("_set_complex_transaction_input exception %s " % e)
+        return False
+
+
+_set_complex_transaction_input.evaluator = True
+
+
+
 def _get_relation_by_user_code(evaluator, content_type, user_code):
     from poms.transactions.models import TransactionTypeInput
 
@@ -2012,6 +2065,7 @@ FUNCTIONS = [
     SimpleEval2Def('get_instrument_user_attribute_value', _get_instrument_user_attribute_value),
 
     SimpleEval2Def('get_ttype_default_input', _get_ttype_default_input),
+    SimpleEval2Def('set_complex_transaction_input', _set_complex_transaction_input),
     SimpleEval2Def('get_relation_by_user_code', _get_relation_by_user_code),
     SimpleEval2Def('get_rt_value', _get_rt_value),
     SimpleEval2Def('convert_to_number', _convert_to_number),
