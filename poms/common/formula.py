@@ -519,8 +519,8 @@ def _set_complex_transaction_input(evaluator, input, value):
         if input_obj is None:
             raise ExpressionEvalError('Input is not found')
 
-        print('input_obj.value_type %s' % input_obj.value_type)
-        print('input_obj.value %s' % input_obj.value)
+        print('input_obj.transaction_type_input.value_type  %s' % input_obj.transaction_type_input.value_type )
+        print('value %s' % value)
 
         if input_obj.transaction_type_input.value_type == TransactionTypeInput.RELATION:
             input_obj.value_relation = value
