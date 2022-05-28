@@ -2147,6 +2147,7 @@ class TransactionTypeProcess(object):
 
         self._context['complex_transaction'] = self.complex_transaction
 
+
         self._save_inputs()
 
         execute_commands_st = time.perf_counter()

@@ -544,6 +544,54 @@ def _set_complex_transaction_input(evaluator, input, value):
 _set_complex_transaction_input.evaluator = True
 
 
+def _set_complex_transaction_form_data(evaluator, key, value):
+
+    try:
+
+        from poms.transactions.models import TransactionTypeInput
+
+        context = evaluator.context
+
+        try:
+            values = context['values']
+        except ValueError:
+            raise ExpressionEvalError('Missing context: Complex Transaction')
+
+        values[key] = value
+
+        return True
+    except Exception as e:
+        _l.info("_set_complex_transaction_input exception %s " % e)
+        return False
+
+
+_set_complex_transaction_form_data.evaluator = True
+
+
+def _set_complex_transaction_user_field(evaluator, field, value):
+
+    try:
+
+        from poms.transactions.models import TransactionTypeInput
+
+        context = evaluator.context
+
+        try:
+            complex_transaction = context['complex_transaction']
+        except ValueError:
+            raise ExpressionEvalError('Missing context: Complex Transaction')
+
+        setattr(complex_transaction, field, value)
+
+        return True
+    except Exception as e:
+        _l.info("_set_complex_transaction_user_field exception %s " % e)
+        return False
+
+
+_set_complex_transaction_user_field.evaluator = True
+
+
 
 def _get_relation_by_user_code(evaluator, content_type, user_code):
     from poms.transactions.models import TransactionTypeInput
@@ -2066,6 +2114,8 @@ FUNCTIONS = [
 
     SimpleEval2Def('get_ttype_default_input', _get_ttype_default_input),
     SimpleEval2Def('set_complex_transaction_input', _set_complex_transaction_input),
+    SimpleEval2Def('set_complex_transaction_user_field', _set_complex_transaction_user_field),
+    SimpleEval2Def('set_complex_transaction_form_data', _set_complex_transaction_form_data),
     SimpleEval2Def('get_relation_by_user_code', _get_relation_by_user_code),
     SimpleEval2Def('get_rt_value', _get_rt_value),
     SimpleEval2Def('convert_to_number', _convert_to_number),
