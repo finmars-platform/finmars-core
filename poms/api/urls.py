@@ -46,7 +46,7 @@ import poms.layout_recovery.views as layout_recovery
 
 import poms.common.views as common
 from poms.auth_tokens.views import ObtainAuthToken, SetAuthToken, CreateUser, CreateMasterUser, CreateMember, \
-    DeleteMember, RenameMasterUser
+    DeleteMember, RenameMasterUser, MasterUserChangeOwner
 
 router = routers.DefaultRouter()
 
@@ -514,7 +514,8 @@ urlpatterns = [
     url(r'^authorizer/create-master-user/', CreateMasterUser.as_view(), name='create-master-user'),
     url(r'^authorizer/rename-master-user/', RenameMasterUser.as_view(), name='rename-master-user'),
     url(r'^authorizer/create-member/', CreateMember.as_view(), name='create-member'),
-    url(r'^authorizer/delete-member/', DeleteMember.as_view(), name='delete-member')
+    url(r'^authorizer/delete-member/', DeleteMember.as_view(), name='delete-member'),
+    url(r'^authorizer/master-user-change-owner/', MasterUserChangeOwner.as_view(), name='master-user-change-owner')
 ]
 
 if 'rest_framework_swagger' in settings.INSTALLED_APPS:

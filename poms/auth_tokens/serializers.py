@@ -33,6 +33,11 @@ class RenameMasterUserSerializer(serializers.Serializer):
     unique_id = serializers.CharField(label=_("Unique id"))
 
 
+class MasterUserChangeOwnerSerializer(serializers.Serializer):
+    target_member_username = serializers.CharField(label=_("target member username"))
+    unique_id = serializers.CharField(label=_("Unique id"))
+
+
 class CreateMemberSerializer(serializers.Serializer):
     groups = serializers.CharField(required=False, label=_("Groups"))
     user_id = serializers.CharField(label=_("User Id"))

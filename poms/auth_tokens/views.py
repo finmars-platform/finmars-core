@@ -13,7 +13,7 @@ from poms.auth_tokens.models import AuthToken
 import logging
 
 from poms.auth_tokens.serializers import SetAuthTokenSerializer, CreateUserSerializer, CreateMasterUserSerializer, \
-    CreateMemberSerializer, DeleteMemberSerializer, RenameMasterUserSerializer
+    CreateMemberSerializer, DeleteMemberSerializer, RenameMasterUserSerializer, MasterUserChangeOwnerSerializer
 from poms.auth_tokens.utils import generate_random_string
 from poms.users.models import MasterUser, Member, UserProfile, Group
 from django.utils import translation
@@ -307,6 +307,45 @@ class RenameMasterUser(APIView):
 
         return Response({'status': 'ok'})
 
+
+class MasterUserChangeOwner(APIView):
+    throttle_classes = ()
+    permission_classes = ()
+    parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)
+    renderer_classes = (renderers.JSONRenderer,)
+    serializer_class = MasterUserChangeOwnerSerializer
+
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'format': self.format_kwarg,
+            'view': self
+        }
+
+    def get_serializer(self, *args, **kwargs):
+        kwargs['context'] = self.get_serializer_context()
+        return self.serializer_class(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        target_member_username = serializer.validated_data['target_member_username']
+        unique_id = serializer.validated_data['unique_id']
+
+        master_user = MasterUser.objects.get(unique_id=unique_id)
+
+        members = Member.objects.filter(master_user=master_user)
+
+        for member in members:
+            member.is_owner = False
+            member.save()
+
+        new_owner_member = Member.objects.get(master_user=master_user, user__username=target_member_username)
+
+        new_owner_member.is_owner = True
+        new_owner_member.save()
+        return Response({'status': 'ok'})
 
 class CreateMember(APIView):
     throttle_classes = ()
