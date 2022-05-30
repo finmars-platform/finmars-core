@@ -2190,8 +2190,13 @@ def complex_transaction_csv_file_import(self, task_id):
         celery_task.status = CeleryTask.STATUS_PENDING
         celery_task.save()
 
+
+
         master_user = celery_task.master_user
         member = celery_task.member
+
+        proxy_user = ProxyUser(member, master_user)
+        proxy_request = ProxyRequest(proxy_user)
 
         instance = ComplexTransactionCsvFileImport(task_id=task_id, master_user=master_user, member=member,
                                                    skip_first_line=True)
@@ -2416,6 +2421,7 @@ def complex_transaction_csv_file_import(self, task_id):
                         context={
                             'master_user': instance.master_user,
                             'member': instance.member,
+                            'request': proxy_request
                         },
                         uniqueness_reaction=instance.scheme.book_uniqueness_settings,
                         member=instance.member
