@@ -66,7 +66,7 @@ def get_report_fx_rate(instance, date):
 
     try:
         item = CurrencyHistory.objects.get(currency_id=instance.report_currency.id,
-                                           date=date)
+                                           date=date, pricing_policy_id=instance.pricing_policy.id)
         report_fx_rate = item.fx_rate
     except CurrencyHistory.DoesNotExist:
         report_fx_rate = 1
