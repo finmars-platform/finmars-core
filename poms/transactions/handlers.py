@@ -1546,8 +1546,10 @@ class TransactionTypeProcess(object):
                                   target=transaction, target_attr_name='instrument',
                                   model=Instrument,
                                   source=action_transaction, source_attr_name='instrument')
+
                     if action_transaction.instrument_phantom is not None:
                         transaction.instrument = instrument_map[action_transaction.instrument_phantom_id]
+
                     self._set_rel(errors=errors, values=self.values, default_value=master_user.currency,
                                   model=Currency,
                                   target=transaction, target_attr_name='transaction_currency',
@@ -2268,14 +2270,9 @@ class TransactionTypeProcess(object):
 
                         try:
 
-                            # pricedownloadscheme
-                            if inp.content_type.model == 'pricedownloadscheme':
-                                self.values[name] = Model.objects.get(
-                                    master_user=self.transaction_type.master_user,
-                                    user_code='-')
-                            else:
-                                self.values[name] = Model.objects.get(master_user=self.transaction_type.master_user,
-                                                                      user_code=res)
+                            self.values[name] = Model.objects.get(master_user=self.transaction_type.master_user,
+                                                                  user_code=res)
+
                         except Model.DoesNotExist:
                             raise formula.InvalidExpression
 
@@ -2283,7 +2280,7 @@ class TransactionTypeProcess(object):
 
                         ecosystem_default = EcosystemDefault.objects.get(master_user=self.transaction_type.master_user)
 
-                        _l.debug('error')
+                        _l.debug('error %s' % e)
                         _l.debug(inp.content_type)
 
                         entity_map = {
