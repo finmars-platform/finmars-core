@@ -1289,7 +1289,11 @@ class TransactionTypeProcess(object):
 
                     # _l.debug('result %s', result)
 
-                except (ValueError, TypeError, IntegrityError, formula.InvalidExpression):
+                except (ValueError, TypeError, IntegrityError, formula.InvalidExpression) as e:
+
+                    _l.info("Execute command execute_command.expr %s " % execute_command.expr)
+                    _l.info("Execute command execute_command.names %s " % names)
+                    _l.info("Execute command error %s " % e)
 
                     self._add_err_msg(errors, 'non_field_errors',
                                       ugettext(
@@ -1846,6 +1850,8 @@ class TransactionTypeProcess(object):
 
                 except Exception as e:
 
+                    _l.debug("User Field Expression Eval error expression %s" % getattr(self.complex_transaction.transaction_type, field_key))
+                    _l.debug("User Field Expression Eval error names %s" % names)
                     _l.debug("User Field Expression Eval error %s" % e)
 
                     try:
