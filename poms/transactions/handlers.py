@@ -1803,8 +1803,6 @@ class TransactionTypeProcess(object):
 
     def execute_user_fields_expressions(self):
 
-        _l.debug('execute_user_fields_expressions')
-
         ctrn = formula.value_prepare(self.complex_transaction)
         trns = self.complex_transaction.transactions.all()
 
@@ -1815,6 +1813,8 @@ class TransactionTypeProcess(object):
 
         for key, value in self.values.items():
             names[key] = value
+
+        _l.debug('execute_user_fields_expressions %s' % names)
 
         fields = [
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
@@ -2209,6 +2209,8 @@ class TransactionTypeProcess(object):
         self._save_inputs()
 
         execute_commands_st = time.perf_counter()
+
+        self._context['values'] = self.values
         self.book_execute_commands(actions)
         _l.debug('TransactionTypeProcess: book_execute_commands done: %s',
                  "{:3.3f}".format(time.perf_counter() - execute_commands_st))

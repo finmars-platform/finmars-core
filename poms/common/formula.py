@@ -563,7 +563,7 @@ def _set_complex_transaction_form_data(evaluator, key, value):
 
         return True
     except Exception as e:
-        _l.info("_set_complex_transaction_input exception %s " % e)
+        _l.info("_set_complex_transaction_form_data exception %s " % e)
         return False
 
 
