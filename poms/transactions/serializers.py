@@ -3164,6 +3164,9 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
 
             elif i.value_type == TransactionTypeInput.RELATION:
 
+                # field = serializers.CharField(required=False, allow_blank=True, allow_null=True,
+                #                           label=i.name, help_text=i.verbose_name)
+
                 model_class = i.content_type.model_class()
 
                 # print('model_class %s' % model_class)
@@ -3264,6 +3267,7 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
                     field = EventScheduleField(required=False, allow_null=True,
                                                label=i.name, help_text=i.verbose_name)
                     field_object = EventScheduleSerializer(source=name, read_only=True)
+
 
             elif i.value_type == TransactionTypeInput.BUTTON:
                 field = serializers.JSONField(allow_null=True, required=False)
@@ -3499,24 +3503,24 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
         self.fields['book_transaction_layout'] = serializers.SerializerMethodField()
 
     def validate(self, attrs):
-        if attrs['process_mode'] == TransactionTypeProcess.MODE_BOOK:
-            values = attrs['values']
-            fvalues = self.fields['values']
-            errors = {}
-            for k, v in values.items():
-                if v is None or v == '':
-                    try:
-
-                        if fvalues.fields[k].label != 'notes':
-
-                            if not 'context_' in fvalues.fields[k].label:
-
-                                fvalues.fields[k].fail('required')
-
-                    except ValidationError as e:
-                        errors[k] = e.detail
-            if errors:
-                raise ValidationError({'values': errors})
+        # if attrs['process_mode'] == TransactionTypeProcess.MODE_BOOK:
+        #     values = attrs['values']
+        #     fvalues = self.fields['values']
+        #     errors = {}
+        #     for k, v in values.items():
+        #         if v is None or v == '':
+        #             try:
+        #
+        #                 if fvalues.fields[k].label != 'notes':
+        #
+        #                     if not 'context_' in fvalues.fields[k].label:
+        #
+        #                         fvalues.fields[k].fail('required')
+        #
+        #             except ValidationError as e:
+        #                 errors[k] = e.detail
+        #     if errors:
+        #         raise ValidationError({'values': errors})
         return attrs
 
     def get_book_transaction_layout(self, obj):
