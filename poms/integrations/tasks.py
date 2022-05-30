@@ -584,6 +584,14 @@ def download_instrument_cbond(instrument_code=None, instrument_name=None, instru
 
                     instrument.save()
 
+                    result = {
+                        "instrument_id": instrument.pk
+                    }
+
+                    task.result_object = result
+
+                    task.save()
+
                 return task, errors
 
             except Exception as e:
