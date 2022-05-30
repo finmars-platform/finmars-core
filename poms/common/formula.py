@@ -522,18 +522,20 @@ def _set_complex_transaction_input(evaluator, input, value):
         print('input_obj.transaction_type_input.value_type  %s' % input_obj.transaction_type_input.value_type )
         print('value %s' % value)
 
-        if input_obj.transaction_type_input.value_type == TransactionTypeInput.RELATION:
-            input_obj.value_relation = value
-        elif input_obj.transaction_type_input.value_type == TransactionTypeInput.STRING:
-            input_obj.value_string = value
-        elif input_obj.transaction_type_input.value_type == TransactionTypeInput.NUMBER:
-            input_obj.value_float = value
-        elif input_obj.transaction_type_input.value_type == TransactionTypeInput.DATE:
-            input_obj.value_date = value
-        elif input_obj.transaction_type_input.value_type == TransactionTypeInput.SELECTOR:
-            input_obj.value_string = value
+        if value:
 
-        input_obj.save()
+            if input_obj.transaction_type_input.value_type == TransactionTypeInput.RELATION:
+                input_obj.value_relation = value
+            elif input_obj.transaction_type_input.value_type == TransactionTypeInput.STRING:
+                input_obj.value_string = value
+            elif input_obj.transaction_type_input.value_type == TransactionTypeInput.NUMBER:
+                input_obj.value_float = value
+            elif input_obj.transaction_type_input.value_type == TransactionTypeInput.DATE:
+                input_obj.value_date = value
+            elif input_obj.transaction_type_input.value_type == TransactionTypeInput.SELECTOR:
+                input_obj.value_string = value
+
+            input_obj.save()
 
         return True
     except Exception as e:
