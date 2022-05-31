@@ -522,7 +522,7 @@ def download_instrument_cbond(instrument_code=None, instrument_name=None, instru
 
             try:
                 response = requests.post(url=str(settings.CBONDS_BROKER_URL) + 'export/', data=json.dumps(options),
-                                         headers=headers, timeout=15)
+                                         headers=headers, timeout=25)
                 _l.info('response download_instrument_cbond %s' % response)
                 _l.info('data response.text %s ' % response.text)
                 _l.info('data response.status_code %s ' % response.status_code)
