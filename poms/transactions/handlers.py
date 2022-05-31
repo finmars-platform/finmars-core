@@ -445,7 +445,7 @@ class TransactionTypeProcess(object):
                             instrument = Instrument.objects.get(id=task.result_object['instrument_id'],
                                                                 master_user=master_user)
 
-                            instrument_map[action.id] = instrument
+                            instrument_map[action.order] = instrument
 
                             self.values['phantom_instrument_%s' % order] = instrument
 
@@ -677,9 +677,9 @@ class TransactionTypeProcess(object):
                         except DatabaseError:
                             self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
                         else:
-                            instrument_map[action.id] = instrument
+                            instrument_map[action.order] = instrument
 
-                            self.values['phantom_instrument_%s' % order] = instrument
+                            self.values['phantom_instrument_%s' % action.order] = instrument
 
                             _l.info('self.values %s updated values with phantom', self.values)
 
