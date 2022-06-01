@@ -1538,7 +1538,8 @@ class TransactionTypeProcess(object):
                     _l.debug('process transaction: %s', action_transaction)
                     _l.debug('process transaction instrument_map: %s', instrument_map)
                     _l.debug('process transaction id: %s', action_transaction.id)
-                    _l.debug('process transaction instrument_phantom_id: %s', action_transaction.instrument_phantom_id)
+                    if action_transaction.instrument_phantom is not None:
+                        _l.debug('process transaction instrument_phantom.order: %s', action_transaction.instrument_phantom.order)
                     errors = {}
                     transaction = Transaction(master_user=master_user)
                     transaction.complex_transaction = self.complex_transaction
@@ -1551,7 +1552,7 @@ class TransactionTypeProcess(object):
                                   source=action_transaction, source_attr_name='instrument')
 
                     if action_transaction.instrument_phantom is not None:
-                        transaction.instrument = instrument_map[action_transaction.instrument_phantom_id]
+                        transaction.instrument = instrument_map[action_transaction.instrument_phantom.order]
 
                     self._set_rel(errors=errors, values=self.values, default_value=master_user.currency,
                                   model=Currency,
