@@ -1536,6 +1536,9 @@ class TransactionTypeProcess(object):
                 if self.execute_action_condition(action_transaction):
 
                     _l.debug('process transaction: %s', action_transaction)
+                    _l.debug('process transaction instrument_map: %s', instrument_map)
+                    _l.debug('process transaction id: %s', action_transaction.id)
+                    _l.debug('process transaction instrument_phantom_id: %s', action_transaction.instrument_phantom_id)
                     errors = {}
                     transaction = Transaction(master_user=master_user)
                     transaction.complex_transaction = self.complex_transaction
