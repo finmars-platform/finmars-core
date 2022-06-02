@@ -2326,6 +2326,9 @@ class TransactionTypeProcess(object):
                     try:
                         res = formula.safe_eval(inp.value_expr, names=self.values, now=self._now, context=self._context)
                         self.values[name] = res
+
+                        _l.info('process_recalculate self.values %s' % self.values)
+
                     except formula.InvalidExpression as e:
 
                         if inp.value_type == TransactionTypeInput.STRING:
