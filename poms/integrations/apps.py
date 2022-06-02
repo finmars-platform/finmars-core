@@ -62,8 +62,8 @@ class IntegrationsConfig(AppConfig):
             },
             {
                 "id": 6,
-                "name": "Exante Provider",
-                "user_code": "exante",
+                "name": "Universal Provider",
+                "user_code": "universal",
             },
         ]
 

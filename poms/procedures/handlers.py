@@ -59,7 +59,7 @@ class RequestDataFileProcedureProcess(object):
 
     def process(self):
 
-        if self.procedure.provider.user_code == 'exante':
+        if self.procedure.provider.user_code == 'universal':
 
             try:
 
@@ -70,16 +70,16 @@ class RequestDataFileProcedureProcess(object):
                                                                                      status=RequestDataFileProcedureInstance.STATUS_PENDING,
 
                                                                                      action='request_transaction_file',
-                                                                                     provider='exante',
+                                                                                     provider='universal',
 
                                                                                      action_verbose='Request file with Transactions',
-                                                                                     provider_verbose='Exante'
+                                                                                     provider_verbose='universal'
 
                                                                                      )
 
                 send_system_message(master_user=self.master_user,
                                     source="Data File Procedure Service",
-                                    text="Exante Broker.  Procedure %s. Start" % procedure_instance.id,
+                                    text="universal Broker.  Procedure %s. Start" % procedure_instance.id,
                                     )
 
                 headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
@@ -98,7 +98,7 @@ class RequestDataFileProcedureProcess(object):
                     "scheme_name": self.procedure.scheme_user_code,
                     "scheme_type": self.procedure.scheme_type,
                     "data": [],
-                    "options": {},
+                    "options": self.procedure.data,
                     "error_status": 0,
                     "error_message": "",
                 }
@@ -109,11 +109,11 @@ class RequestDataFileProcedureProcess(object):
                 if self.procedure.date_to:
                     data["date_to"] = str(self.procedure.date_to)
 
-                if self.procedure.data['currencies']:
-                    data["options"]['currencies'] = self.procedure.data['currencies']
+                # if self.procedure.data['currencies']:
+                #     data["options"]['currencies'] = self.procedure.data['currencies']
 
-                _l.info('request exante url %s' % url)
-                _l.info('request exante data %s' % data)
+                _l.info('request universal url %s' % url)
+                _l.info('request universal data %s' % data)
 
                 procedure_instance.request_data = data
                 procedure_instance.save()
@@ -128,7 +128,7 @@ class RequestDataFileProcedureProcess(object):
 
                 file_report = FileReport()
 
-                file_name = "Exante Broker Response %s.json" % current_date_time
+                file_name = "universal Broker Response %s.json" % current_date_time
 
                 file_content = ''
 
@@ -154,7 +154,7 @@ class RequestDataFileProcedureProcess(object):
 
                 send_system_message(master_user=procedure_instance.master_user,
                                     source="Data File Procedure Service",
-                                    text="Exante Broker. Procedure %s. Response Received" % procedure_instance.id,
+                                    text="universal Broker. Procedure %s. Response Received" % procedure_instance.id,
                                     file_report_id=file_report.id)
 
 
@@ -169,7 +169,7 @@ class RequestDataFileProcedureProcess(object):
 
                 send_system_message(master_user=procedure_instance.master_user,
                                     source="Data File Procedure Service",
-                                    text="Exante Broker. Procedure %s. Done, start import" % procedure_instance.id,
+                                    text="universal Broker. Procedure %s. Done, start import" % procedure_instance.id,
                                     )
 
                 celery_task = CeleryTask.objects.create(master_user=master_user,
@@ -197,10 +197,10 @@ class RequestDataFileProcedureProcess(object):
                                                                                               })
 
             except Exception as e:
-                _l.info("Exante broker error %s" % e)
+                _l.info("universal broker error %s" % e)
                 send_system_message(master_user=self.master_user,
                                     source="Data File Procedure Service",
-                                    text="Exante Broker. Procedure is not created.  Something went wrong %s" % e,
+                                    text="universal Broker. Procedure is not created.  Something went wrong %s" % e,
                                     )
 
 
