@@ -2239,9 +2239,10 @@ class TransactionTypeProcess(object):
 
         self.assign_permissions_to_complex_transaction()
 
-        if not self.has_errors and self.transactions:
-            for trn in self.transactions:
-                trn.calc_cash_by_formulas()
+        # LMAO what is this
+        # if not self.has_errors and self.transactions:
+        #     for trn in self.transactions:
+        #         trn.calc_cash_by_formulas()
 
         if self.complex_transaction.status_id == ComplexTransaction.PENDING:
             self.complex_transaction.transactions.all().delete()
