@@ -1108,10 +1108,23 @@ class PLReportBuilderSql:
                         end as net_position_return_loc,
         
                         -- will be taken from balance
-                        mv_carry+mv_principal as market_value,
+                        -- mv_carry+mv_principal as market_value,
                         mv_carry+mv_principal as exposure,
                         
-                        (mv_carry+mv_principal) * cross_loc_prc_fx as market_value_loc,
+                        case
+                             when instrument_class_id = 5
+                                 then (position_size * (instrument_principal_price - principal_cost_price_loc) * price_multiplier * pch_fx_rate) / rep_cur_fx
+                             else mv_carry+mv_principal
+                         end as market_value,
+            
+                        case
+                             when instrument_class_id = 5
+                                 then (position_size * (instrument_principal_price - principal_cost_price_loc) * price_multiplier)
+                             else (mv_carry+mv_principal) * cross_loc_prc_fx
+                        end as market_value_loc,
+                        
+                        
+                        -- (mv_carry+mv_principal) * cross_loc_prc_fx as market_value_loc,
                         (mv_carry+mv_principal) * cross_loc_prc_fx as exposure_loc,
                         
                         principal_invested,
@@ -1139,6 +1152,31 @@ class PLReportBuilderSql:
                             
                             i.ytm,
                             i.modified_duration,
+                            
+                            it.instrument_class_id,
+                            
+                            
+                            (select 
+                                principal_price
+                            from instruments_pricehistory
+                            where 
+                                instrument_id=i.id and 
+                                date = '{report_date}' and
+                                pricing_policy_id = {pricing_policy_id})
+                            as instrument_principal_price,
+                            
+                            case when i.pricing_currency_id = {default_currency_id}
+                                then 1
+                                else
+                                    (select
+                                fx_rate
+                             from currencies_currencyhistory
+                             where
+                                currency_id = i.pricing_currency_id and
+                                date = '{report_date}' and
+                                pricing_policy_id = {pricing_policy_id}
+                            )
+                            end as pch_fx_rate,
                             
                             case
                                 when position_size != 0
@@ -1488,6 +1526,8 @@ class PLReportBuilderSql:
                         ) as i
                         on 
                             instrument_id = i.id
+                        left join instruments_instrumenttype as it
+                        ON i.instrument_type_id = it.id
                     ) as partially_calculated_columns
                 ) as loc_calculated_columns
             
