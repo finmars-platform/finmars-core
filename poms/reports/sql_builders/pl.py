@@ -3285,7 +3285,7 @@ class PLReportBuilderSql:
 
                     result_item_closed['position_size'] = item['position_size']
                     result_item_closed['mismatch'] = item['mismatch']
-                    result_item_closed['market_value'] = item['market_value']
+
                     result_item_closed['exposure'] = item['exposure']
                     result_item_closed['ytm'] = item['ytm']
                     result_item_closed['modified_duration'] = item['modified_duration']
