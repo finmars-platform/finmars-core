@@ -1735,7 +1735,8 @@ class ImportHandler:
             instance.error_message = ugettext("Invalid file format or file already deleted.")
         finally:
             # import_file_storage.delete(instance.file_path)
-            SFS.delete(instance.file_path)
+            if instance.file_path:
+                SFS.delete(instance.file_path)
 
         if instance.stats and len(instance.stats):
             instance.stats_file_report = generate_file_report(instance, master_user, 'csv_import.import',
