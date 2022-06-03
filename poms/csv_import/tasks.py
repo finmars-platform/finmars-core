@@ -82,7 +82,7 @@ class ProxyRequest(object):
         self.user = user
 
 
-def generate_file_report(instance, master_user, type, name):
+def generate_file_report(instance, master_user, scheme, type, name):
     columns = ['Row number']
 
     columns = columns + instance.stats[0]['error_data']['columns']['imported_columns']
@@ -118,11 +118,11 @@ def generate_file_report(instance, master_user, type, name):
 
     result = []
 
-    result.append('Type, ' + 'Transaction Import')
-    result.append('Error handle, ' + instance.error_handler)
+    result.append('Type, ' + 'Simple Import')
+    result.append('Error handle, ' + scheme.error_handler)
     # result.append('Filename, ' + instance.file.name)
-    result.append('Mode, ' + instance.mode)
-    result.append('Import Rules - if object is not found, ' + instance.missing_data_handler)
+    result.append('Mode, ' + scheme.mode)
+    result.append('Import Rules - if object is not found, ' + scheme.missing_data_handler)
     # result.push('Entity, ' + vm.scheme.content_type)
 
     result.append('Rows total, ' + str(instance.total_rows - 1))
@@ -1178,7 +1178,7 @@ class ValidateHandler:
             SFS.delete(instance.file_path)
 
         if instance.stats and len(instance.stats):
-            instance.stats_file_report = generate_file_report(instance, master_user, 'csv_import.validate',
+            instance.stats_file_report = generate_file_report(instance, master_user, scheme, 'csv_import.validate',
                                                               'Simple Data Import Validation')
 
             send_websocket_message(data={
@@ -1739,8 +1739,7 @@ class ImportHandler:
                 SFS.delete(instance.file_path)
 
         if instance.stats and len(instance.stats):
-            instance.stats_file_report = generate_file_report(instance, master_user, 'csv_import.import',
-                                                              'Simple Data Import')
+            instance.stats_file_report = generate_file_report(instance, master_user, scheme, 'csv_import.import', 'Simple Data Import')
 
             send_websocket_message(data={
                 'type': 'simple_import_status',
