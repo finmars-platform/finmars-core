@@ -1795,9 +1795,8 @@ def data_csv_file_import(self, task_id):
 
     except Exception as e:
 
-        traceback.format_exc()
-
         _l.debug('data_csv_file_import exception error %s' % e)
+        _l.info(traceback.format_exc())
 
 
 @shared_task(name='csv_import.data_csv_file_import_by_procedure', bind=True)
