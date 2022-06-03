@@ -112,6 +112,8 @@ def generate_file_report(instance, master_user, type, name):
 
         rows_content.append(localResultWrapper)
 
+    columns = list(map(str, columns))
+
     columnRow = ','.join(columns)
 
     result = []
@@ -1795,7 +1797,7 @@ def data_csv_file_import(self, task_id):
 
         traceback.format_exc()
 
-        _l.debug('data_csv_file_import decryption error %s' % e)
+        _l.debug('data_csv_file_import exception error %s' % e)
 
 
 @shared_task(name='csv_import.data_csv_file_import_by_procedure', bind=True)
