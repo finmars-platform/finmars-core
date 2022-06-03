@@ -74,6 +74,7 @@ import traceback
 from ..counterparties.serializers import CounterpartySerializer
 from ..csv_import.tasks import handler_instrument_object
 from ..obj_attrs.models import GenericAttributeType
+from ..procedures.models import RequestDataFileProcedureInstance
 
 _l = logging.getLogger('poms.integrations')
 
@@ -2186,7 +2187,7 @@ def complex_transaction_csv_file_import_parallel_finish(self, task_id):
 
 
 @shared_task(name='integrations.complex_transaction_csv_file_import', bind=True)
-def complex_transaction_csv_file_import(self, task_id):
+def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=None):
     try:
 
         from poms.transactions.models import TransactionTypeInput
@@ -2198,7 +2199,9 @@ def complex_transaction_csv_file_import(self, task_id):
         celery_task.status = CeleryTask.STATUS_PENDING
         celery_task.save()
 
-
+        procedure_instance = None
+        if procedure_instance_id:
+            procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_instance_id)
 
         master_user = celery_task.master_user
         member = celery_task.member
@@ -3021,6 +3024,11 @@ def complex_transaction_csv_file_import(self, task_id):
 
                 celery_task.status = CeleryTask.STATUS_DONE
                 celery_task.save()
+
+
+        if procedure_instance and procedure_instance.schedule_instance:
+            procedure_instance.schedule_instance.run_next_procedure()
+
 
         return instance
     except Exception as e:
@@ -4211,7 +4219,7 @@ def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instan
                                 source="Data File Procedure Service",
                                 text=text)
 
-            ct = complex_transaction_csv_file_import.apply_async(kwargs={"task_id": celery_task.id})
+            ct = complex_transaction_csv_file_import.apply_async(kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id})
 
 
         except Exception as e:

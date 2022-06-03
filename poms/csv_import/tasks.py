@@ -54,6 +54,7 @@ from ..common.websockets import send_websocket_message
 import traceback
 
 from ..instruments.handlers import InstrumentTypeProcess
+from ..procedures.models import RequestDataFileProcedureInstance
 
 _l = getLogger('poms.csv_import')
 
@@ -1622,7 +1623,7 @@ class ImportHandler:
 
         return row_index
 
-    def process(self, celery_task, update_state):
+    def process(self, celery_task, update_state, procedure_instance=None):
 
         _l.debug('ImportHandler.process: initialized')
 
@@ -1780,18 +1781,26 @@ class ImportHandler:
                                     text="User %s Import Finished" % member.username,
                                     file_report_id=instance.stats_file_report)
 
+
+        if procedure_instance and procedure_instance.schedule_instance:
+            procedure_instance.schedule_instance.run_next_procedure()
+
         return instance
 
 
 @shared_task(name='csv_import.data_csv_file_import', bind=True)
-def data_csv_file_import(self, task_id):
+def data_csv_file_import(self, task_id, procedure_instance_id=None):
     try:
 
         handler = ImportHandler()
 
         celery_task = CeleryTask.objects.get(pk=task_id)
+        procedure_instance = None
 
-        handler.process(celery_task, self.update_state)
+        if procedure_instance_id:
+            procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_instance_id)
+
+        handler.process(celery_task, self.update_state, procedure_instance)
 
     except Exception as e:
 
@@ -1970,7 +1979,7 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
                                 source="Data File Procedure Service",
                                 text=text)
 
-            ct = data_csv_file_import.apply_async(kwargs={"task_id": celery_task.id})
+            ct = data_csv_file_import.apply_async(kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id})
 
 
         except Exception as e:
