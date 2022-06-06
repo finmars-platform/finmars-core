@@ -328,6 +328,7 @@ def serialize_transaction_report_item(item):
         "cash_consideration": item["cash_consideration"],
         "carry_amount": item["carry_amount"],
         "carry_with_sign": item["carry_with_sign"],
+        "overheads_with_sign": item["overheads_with_sign"],
         "factor": item["factor"],
         "position_amount": item["position_amount"],
         "position_size_with_sign": item["position_size_with_sign"],
