@@ -535,7 +535,8 @@ class PLReportBuilderSql:
                              ( 
                                 select sum(tt_w_m.position_size_with_sign) as open_position_pl
                                 from transactions_with_multipliers tt_w_m
-                                where
+                                where  tt_w_m.rn_total < t_o.rn_total
+                                        and
                                    --- aggregation
                                    {transactions_all_with_multipliers_where_expression}
                                    tt_w_m.instrument_id = t_o.instrument_id
