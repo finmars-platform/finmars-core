@@ -93,6 +93,10 @@ def _contains(a, b):
     return str(b) in str(a)
 
 
+def _replace(text, oldvalue, newvalue, count):
+    return text.replace(oldvalue, newvalue, count)
+
+
 def _int(a):
     return int(a)
 
@@ -2042,6 +2046,7 @@ FUNCTIONS = [
     SimpleEval2Def('upper', _upper),
     SimpleEval2Def('lower', _lower),
     SimpleEval2Def('contains', _contains),
+    SimpleEval2Def('replace', _replace),
 
     SimpleEval2Def('reg_search', _reg_search),
     SimpleEval2Def('reg_replace', _reg_replace),
