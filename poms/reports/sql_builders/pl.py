@@ -371,9 +371,9 @@ class PLReportBuilderSql:
             transactions_ordered as (
                 select 
                    row_number() 
-                   over (partition by {tt_consolidation_columns} tt.instrument_id order by ttype,tt.accounting_date) as rn,
+                   over (partition by {tt_consolidation_columns} tt.instrument_id order by ttype,tt.accounting_date,tt.transaction_code) as rn,
                    row_number()
-                   over (partition by {tt_consolidation_columns} tt.instrument_id order by tt.accounting_date) as rn_total, -- used for core avco calc
+                   over (partition by {tt_consolidation_columns} tt.instrument_id order by tt.accounting_date,tt.transaction_code) as rn_total, -- used for core avco calc
                    tt.accounting_date,
                    tt.ttype,
                    tt.transaction_class_id,
