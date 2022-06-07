@@ -373,7 +373,7 @@ class PLReportBuilderSql:
                    row_number() 
                    over (partition by {tt_consolidation_columns} tt.instrument_id order by ttype,tt.accounting_date,tt.transaction_code) as rn,
                    row_number()
-                   over (partition by {tt_consolidation_columns} tt.instrument_id order by tt.accounting_date,tt.transaction_code) as rn_total, -- used for core avco calc
+                   over (partition by {tt_consolidation_columns} tt.instrument_id order by tt.accounting_date,ttype,tt.transaction_code) as rn_total, -- used for core avco calc
                    tt.accounting_date,
                    tt.ttype,
                    tt.transaction_class_id,
@@ -401,6 +401,8 @@ class PLReportBuilderSql:
                          overheads_with_sign,
                          {consolidation_columns}
                          instrument_id,
+                         
+                         transaction_code,
                          
                          transaction_currency_id,
                          settlement_currency_id,

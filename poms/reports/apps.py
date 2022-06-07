@@ -57,9 +57,10 @@ class ReportsConfig(AppConfig):
                     CREATE or REPLACE VIEW pl_transactions_with_ttype AS
                         SELECT
                         
-                           tt.id,
-                           tt.master_user_id,
+                           id,
+                           master_user_id,
                            transaction_class_id,
+                           transaction_code,
                            
                            transaction_date,
                            accounting_date,
@@ -98,16 +99,17 @@ class ReportsConfig(AppConfig):
                                then 0
                              else 1
                              end as ttype
-                        FROM transactions_transaction as tt
-                        WHERE transaction_class_id in (1,2,4) and NOT tt.is_canceled
+                        FROM transactions_transaction
+                        WHERE transaction_class_id in (1,2,4) and NOT is_canceled
                         
                         UNION ALL
                         
                         select
                         
-                          tt.id,
-                          tt.master_user_id,
+                          id,
+                          master_user_id,
                           (1) as transaction_class_id,
+                          transaction_code,
                           
                           transaction_date,
                           accounting_date,
@@ -142,16 +144,17 @@ class ReportsConfig(AppConfig):
                               then 0
                             else 1
                             end as ttype
-                        from transactions_transaction as tt
-                        WHERE transaction_class_id in (6) and NOT tt.is_canceled
+                        from transactions_transaction
+                        WHERE transaction_class_id in (6) and NOT is_canceled
                         
                         UNION ALL
                         
                         select
 
-                          tt.id,
-                          tt.master_user_id,
+                          id,
+                          master_user_id,
                           (2) as transaction_class_id,
+                          transaction_code,
                           
                           transaction_date,
                           accounting_date,
@@ -186,8 +189,8 @@ class ReportsConfig(AppConfig):
                               then 0
                             else 1
                             end as ttype
-                        from transactions_transaction as tt
-                        WHERE transaction_class_id in (6) and NOT tt.is_canceled;            
+                        from transactions_transaction 
+                        WHERE transaction_class_id in (6) and NOT is_canceled;            
                 """
 
                 cursor.execute(query)
