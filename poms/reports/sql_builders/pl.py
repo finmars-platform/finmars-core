@@ -1,5 +1,6 @@
 import logging
 import time
+import os
 
 from django.db import connection
 
@@ -3029,8 +3030,8 @@ class PLReportBuilderSql:
                                  final_consolidation_where_filters=self.get_final_consolidation_where_filters_columns()
                                  )
 
-            if settings.SERVER_TYPE == 'local':
-                with open('/tmp/query_result_before_execution_pl.txt', 'w') as the_file:
+            if settings.DEBUG:
+                with open(os.path.join(settings.BASE_DIR, 'query_result_before_execution_pl.txt'), 'w') as the_file:
                     the_file.write(query)
 
             cursor.execute(query)
