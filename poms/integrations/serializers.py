@@ -229,6 +229,9 @@ class InstrumentDownloadSchemeSerializer(ModelWithUserCodeSerializer, ModelWithT
         return instance
 
     def save_inputs(self, instance, inputs):
+
+
+
         pk_set = set()
         for input_values in inputs:
             input_id = input_values.pop('id', None)
@@ -1487,10 +1490,6 @@ class TestCertificateSerializer(serializers.Serializer):
 
 class ComplexTransactionImportSchemeInputSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
-    name = serializers.CharField(max_length=255, allow_null=False, allow_blank=False,
-                                 validators=[
-                                     RegexValidator(regex='\A[a-zA-Z_][a-zA-Z0-9_]*\Z'),
-                                 ])
 
     name_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
 
@@ -1695,8 +1694,6 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
 
     def update(self, instance, validated_data):
 
-        print("Here update?s")
-
         inputs = validated_data.pop('inputs', empty)
         calculated_inputs = validated_data.pop('calculated_inputs', None) or []
         rule_scenarios = validated_data.pop('rule_scenarios', empty)
@@ -1714,6 +1711,7 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
             self.save_rule_scenarios(instance, rule_scenarios)
         if recon_scenarios is not empty:
             self.save_recon_scenarios(instance, recon_scenarios)
+
         return instance
 
     def save_selector_values(self, instance, selector_values):
@@ -1739,6 +1737,12 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
         instance.selector_values.exclude(pk__in=pk_set).delete()
 
     def save_inputs(self, instance, inputs):
+
+        _l.info('inputs %s' % inputs[0])
+        _l.info('======================')
+        _l.info('inputs %s' % inputs)
+
+
         pk_set = set()
         for input_values in inputs:
             input_id = input_values.pop('id', None)
@@ -1754,6 +1758,7 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
                 setattr(input0, name, value)
             input0.save()
             pk_set.add(input0.id)
+
         instance.inputs.exclude(pk__in=pk_set).delete()
 
     def save_calculated_inputs(self, instance, inputs):
