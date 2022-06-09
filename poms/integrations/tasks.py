@@ -2364,13 +2364,13 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
 
                 try:
                     value = formula.safe_eval(i.name_expr, names=inputs)
-                    row.append(value)
+                    inputs[i.name] = value
 
                 except Exception:
                     _l.debug('can\'t process calculated input: %s|%s', i.name, i.column, exc_info=True)
                     row.append("Invalid Expression")
 
-            return row
+            # return row
 
         def _process_rule_scenario(processed_scenarios, scheme_rule, inputs, error_rows, row_index):
 
@@ -2700,26 +2700,26 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                         error_rows['error_reaction'] = 'Continue import'
                         continue
 
-                row = update_row_with_calculated_data(row, inputs)
+                update_row_with_calculated_data(row, inputs)
 
-                for i in scheme_calculated_inputs:
-
-                    error_rows['error_data']['columns']['calculated_columns'].append(i.name)
-
-                    try:
-
-                        index = original_columns_count + i.column - 1
-
-                        # print('index %s ' % index)
-                        # print('i.name %s ' % i.name)
-
-                        inputs[i.name] = row[index]
-
-                        error_rows['error_data']['data']['calculated_columns'].append(row[index])
-                    except Exception:
-                        _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
-                        error_rows['error_data']['data']['calculated_columns'].append(ugettext('Invalid expression'))
-                        calculated_columns_error.append(i)
+                # for i in scheme_calculated_inputs:
+                #
+                #     error_rows['error_data']['columns']['calculated_columns'].append(i.name)
+                #
+                #     try:
+                #
+                #         index = original_columns_count + i.column - 1
+                #
+                #         # print('index %s ' % index)
+                #         # print('i.name %s ' % i.name)
+                #
+                #         inputs[i.name] = row[index]
+                #
+                #         error_rows['error_data']['data']['calculated_columns'].append(row[index])
+                #     except Exception:
+                #         _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
+                #         error_rows['error_data']['data']['calculated_columns'].append(ugettext('Invalid expression'))
+                #         calculated_columns_error.append(i)
 
                 # _l.debug('Row %s inputs_with_calculated: %s' % (row_index, inputs))
 
