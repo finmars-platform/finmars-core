@@ -1500,10 +1500,6 @@ class ComplexTransactionImportSchemeInputSerializer(serializers.ModelSerializer)
 
 class ComplexTransactionImportSchemeCalculatedInputSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
-    name = serializers.CharField(max_length=255, allow_null=False, allow_blank=False,
-                                 validators=[
-                                     RegexValidator(regex='\A[a-zA-Z_][a-zA-Z0-9_]*\Z'),
-                                 ])
 
     name_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
 
