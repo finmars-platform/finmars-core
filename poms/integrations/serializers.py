@@ -1699,6 +1699,7 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
 
         if selector_values is not empty:
             self.save_selector_values(instance, selector_values)
+
         if inputs is not empty:
             self.save_inputs(instance, inputs)
         if calculated_inputs is not empty:
@@ -1712,7 +1713,7 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
 
     def save_selector_values(self, instance, selector_values):
 
-        pk_set = set()
+        pk_set = []
 
         for selector_value in selector_values:
             selector_id = selector_value.pop('id', None)
@@ -1728,7 +1729,7 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
             for name, value in selector_value.items():
                 setattr(selector0, name, value)
             selector0.save()
-            pk_set.add(selector0.id)
+            pk_set.append(selector0.id)
 
         instance.selector_values.exclude(pk__in=pk_set).delete()
 
@@ -1738,14 +1739,13 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
         _l.info('======================')
         _l.info('inputs %s' % inputs)
 
-
-        pk_set = set()
+        pk_set = []
         for input_values in inputs:
             input_id = input_values.pop('id', None)
             input0 = None
             if input_id:
                 try:
-                    input0 = instance.inputs.get(pk=input_id)
+                    input0 = ComplexTransactionImportSchemeInput.objects.get(pk=input_id)
                 except ObjectDoesNotExist:
                     pass
             if input0 is None:
@@ -1753,18 +1753,20 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
             for name, value in input_values.items():
                 setattr(input0, name, value)
             input0.save()
-            pk_set.add(input0.id)
+            pk_set.append(input0.id)
 
         instance.inputs.exclude(pk__in=pk_set).delete()
 
     def save_calculated_inputs(self, instance, inputs):
-        pk_set = set()
+
+        pk_set = []
+
         for input_values in inputs:
             input_id = input_values.pop('id', None)
             input0 = None
             if input_id:
                 try:
-                    input0 = instance.inputs.get(pk=input_id)
+                    input0 = ComplexTransactionImportSchemeCalculatedInput.objects.get(pk=input_id)
                 except ObjectDoesNotExist:
                     pass
             if input0 is None:
@@ -1772,11 +1774,11 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
             for name, value in input_values.items():
                 setattr(input0, name, value)
             input0.save()
-            pk_set.add(input0.id)
+            pk_set.append(input0.id)
         instance.calculated_inputs.exclude(pk__in=pk_set).delete()
 
     def save_rule_scenarios(self, instance, rules):
-        pk_set = set()
+        pk_set = []
 
         default_transaction_type = EcosystemDefault.objects.get(master_user=instance.master_user).transaction_type
 
@@ -1823,12 +1825,12 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
                 rule.selector_values.set([])
             self.save_fields(rule, fields)
             # self.save_rule_selector_values(rule0, selector_values)
-            pk_set.add(rule.id)
+            pk_set.append(rule.id)
 
         instance.rule_scenarios.exclude(pk__in=pk_set).delete()
 
     def save_recon_scenarios(self, instance, recons):
-        pk_set = set()
+        pk_set = []
         for recon_values in recons:
             recon_id = recon_values.pop('id', None)
             recon0 = None
@@ -1861,7 +1863,7 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
                 recon0.selector_values.set(selector_values_instances)
 
             self.save_recon_fields(recon0, fields)
-            pk_set.add(recon0.id)
+            pk_set.append(recon0.id)
         instance.recon_scenarios.exclude(pk__in=pk_set).delete()
 
     def save_recon_fields(self, recon, fields):
