@@ -4219,7 +4219,7 @@ def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instan
                                 source="Data File Procedure Service",
                                 text=text)
 
-            ct = complex_transaction_csv_file_import.apply_async(kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id})
+            transaction.on_commit(complex_transaction_csv_file_import.apply_async(kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}))
 
 
         except Exception as e:
