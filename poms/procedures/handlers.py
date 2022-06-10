@@ -110,7 +110,7 @@ class RequestDataFileProcedureProcess(object):
                 #     data["options"]['currencies'] = self.procedure.data['currencies']
 
                 _l.info('request universal url %s' % url)
-                _l.info('request universal data %s' % data)
+                # _l.info('request universal data %s' % data)
 
                 procedure_instance.request_data = data
                 procedure_instance.save()
