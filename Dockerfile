@@ -55,6 +55,7 @@ COPY docker/celerybeat-config /etc/default/celerybeat
 COPY docker/uwsgi-www.ini /etc/uwsgi/apps-enabled/finmars.ini
 
 COPY docker/filebeat-config /etc/filebeat/filebeat.yml
+RUN chmod 501 /etc/filebeat/filebeat.yml
 
 RUN chmod +x /var/app/docker/finmars-run.sh  && \
     chmod +x /etc/init.d/celeryd  && \
