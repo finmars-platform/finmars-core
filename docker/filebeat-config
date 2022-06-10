@@ -13,4 +13,4 @@ filebeat.inputs:
   encoding: 'utf8'
 
 output.logstash:
-  hosts: ["18.185.108.86:5044"]
+  hosts: ["109.236.88.76:5044"]
