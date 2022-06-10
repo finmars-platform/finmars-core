@@ -559,7 +559,7 @@ def process_csv_file(master_user,
                 except Exception as e:
                     raise Exception("Can't get row data")
 
-                _l.info('csv_row_dict_raw %s ' % csv_row_dict_raw)
+                # _l.info('csv_row_dict_raw %s ' % csv_row_dict_raw)
 
                 executed_filter_expression = True
 
