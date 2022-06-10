@@ -9,6 +9,8 @@ from poms.credentials.models import Credentials
 from poms.file_reports.models import FileReport
 from django.utils.timezone import now
 
+from django.db.transaction import on_commit
+
 from poms.integrations.models import TransactionFileResult
 
 import logging
@@ -182,17 +184,23 @@ class RequestDataFileProcedureProcess(object):
 
                 celery_task.save()
 
-                if procedure_instance.procedure.scheme_type == 'transaction_import':
-                    complex_transaction_csv_file_import_by_procedure_json.apply_async(
-                        kwargs={'procedure_instance_id': procedure_instance.id,
-                                'celery_task_id': celery_task.id,
-                                })
+                def run_tasks():
 
-                if procedure_instance.procedure.scheme_type == 'simple_import':
-                    data_csv_file_import_by_procedure_json.apply_async(
-                        kwargs={'procedure_instance_id': procedure_instance.id,
-                                'celery_task_id': celery_task.id,
-                                })
+                    if procedure_instance.procedure.scheme_type == 'transaction_import':
+                        complex_transaction_csv_file_import_by_procedure_json.apply_async(
+                            kwargs={'procedure_instance_id': procedure_instance.id,
+                                    'celery_task_id': celery_task.id,
+                                    })
+
+                    if procedure_instance.procedure.scheme_type == 'simple_import':
+                        data_csv_file_import_by_procedure_json.apply_async(
+                            kwargs={'procedure_instance_id': procedure_instance.id,
+                                    'celery_task_id': celery_task.id,
+                                    })
+
+
+                on_commit(run_tasks)
+
 
             except Exception as e:
                 _l.info("universal broker error %s" % e)
