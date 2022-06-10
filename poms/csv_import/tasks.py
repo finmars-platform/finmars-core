@@ -718,22 +718,22 @@ def process_csv_file(master_user,
 
                                         else:
 
-                                            if key == 'user_code':
+                                            # if key == 'user_code':
+                                            # 
+                                            #     if len(executed_expression) <= 25:
+                                            # 
+                                            #         instance[key] = executed_expression
+                                            # 
+                                            #     else:
+                                            # 
+                                            #         inputs_error.append(
+                                            #             {"field": entity_field,
+                                            #              "reason": "The imported User Code is too large. It should be limited with 25 symbols."}
+                                            #         )
+                                            # 
+                                            # else:
 
-                                                if len(executed_expression) <= 25:
-
-                                                    instance[key] = executed_expression
-
-                                                else:
-
-                                                    inputs_error.append(
-                                                        {"field": entity_field,
-                                                         "reason": "The imported User Code is too large. It should be limited with 25 symbols."}
-                                                    )
-
-                                            else:
-
-                                                instance[key] = executed_expression
+                                            instance[key] = executed_expression
 
                                 except (ExpressionEvalError, TypeError, Exception, KeyError):
 
