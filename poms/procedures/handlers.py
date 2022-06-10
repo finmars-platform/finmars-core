@@ -119,7 +119,8 @@ class RequestDataFileProcedureProcess(object):
 
                 response_data = None
 
-                _l.info('response %s' % response.text)
+                if len(response.text) < 5000:
+                    _l.info('response %s' % response.text)
 
                 current_date_time = now().strftime("%Y-%m-%d-%H-%M")
 
