@@ -93,8 +93,8 @@ def _contains(a, b):
     return str(b) in str(a)
 
 
-def _replace(text, oldvalue, newvalue, count):
-    return text.replace(oldvalue, newvalue, count)
+def _replace(text, oldvalue, newvalue):
+    return text.replace(oldvalue, newvalue)
 
 
 def _int(a):
