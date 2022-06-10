@@ -12,7 +12,6 @@ import logging
 import os
 import datetime
 
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from celery.schedules import crontab
 from django.utils.translation import ugettext_lazy
@@ -30,6 +29,7 @@ DJANGO_LOG_LEVEL = os.environ.get('DJANGO_LOG_LEVEL', 'INFO')
 
 print('DJANGO_LOG_LEVEL %s' % DJANGO_LOG_LEVEL)
 
+
 class BackendRole:
     ALL = 'ALL'
     SIMPLE = 'SIMPLE'
@@ -38,17 +38,16 @@ class BackendRole:
     DATA_PROVIDER = 'DATA_PROVIDER'
 
 
-SECRET_KEY =  os.environ.get('SECRET_KEY', None)
+SECRET_KEY = os.environ.get('SECRET_KEY', None)
 
 SERVER_TYPE = os.environ.get('SERVER_TYPE', 'local')
 
 print('SERVER_TYPE %s' % SERVER_TYPE)
 
 BASE_API_URL = os.environ.get('BASE_API_URL', 'main')
-
+HOST_LOCATION = os.environ.get('HOST_LOCATION', 'AWS')
 
 print('BASE_API_URL %s' % BASE_API_URL)
-
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -126,7 +125,6 @@ INSTALLED_APPS = [
     'poms.credentials',
     'poms.system_messages',
 
-
     'poms.layout_recovery',
 
     'poms.auth_tokens',
@@ -172,11 +170,9 @@ MIDDLEWARE = [
     # 'django_otp.middleware.OTPMiddleware',
     # 'django.middleware.cache.FetchFromCacheMiddleware',
 
-
     'corsheaders.middleware.CorsMiddleware',
     'corsheaders.middleware.CorsPostCsrfMiddleware',
     # 'debug_toolbar.middleware.DebugToolbarMiddleware',
-
 
     'poms.http_sessions.middleware.SessionMiddleware',
     'poms.common.middleware.CommonMiddleware',
@@ -187,24 +183,20 @@ MIDDLEWARE = [
     # 'poms.notifications.middleware.NotificationMiddleware',
     # 'poms.common.middleware.NoCacheMiddleware',
 
-
 ]
 
 if SERVER_TYPE == 'local':
     MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
-
 
 PROFILER = False
 if os.environ.get('PROFILER') == 'True':
     PROFILER = True
 
 if PROFILER:
-
     print("Profiler enabled")
 
     MIDDLEWARE.append('django_cprofile_middleware.middleware.ProfilerMiddleware')
     DJANGO_CPROFILE_MIDDLEWARE_REQUIRE_STAFF = False
-
 
 ROOT_URLCONF = 'poms_app.urls'
 
@@ -237,7 +229,6 @@ AWS_SECRETS_ACCESS_KEY_ID = os.environ.get('AWS_SECRETS_ACCESS_KEY_ID', None)
 AWS_SECRETS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRETS_SECRET_ACCESS_KEY', None)
 AWS_SECRET_NAME = os.environ.get('AWS_SECRET_NAME', None)
 
-
 DATABASES = {
     'default': {
         # 'ENGINE': 'django.contrib.gis.db.backends.postgis',
@@ -250,7 +241,6 @@ DATABASES = {
         # 'ATOMIC_REQUESTS': True,
     }
 }
-
 
 REGISTER_ACCESS_KEY = os.environ.get('REGISTER_ACCESS_KEY', None)
 
@@ -293,9 +283,7 @@ USE_ETAGS = True
 ENV_CSRF_COOKIE_DOMAIN = os.environ.get('ENV_CSRF_COOKIE_DOMAIN', '.finmars.com')
 ENV_CSRF_TRUSTED_ORIGINS = os.environ.get('ENV_CSRF_TRUSTED_ORIGINS', 'https://finmars.com')
 
-
 if SERVER_TYPE == "production":
-
     CORS_URLS_REGEX = r'^/api/.*$'
     CORS_REPLACE_HTTPS_REFERER = True
     CORS_ALLOW_CREDENTIALS = True
@@ -310,15 +298,12 @@ if SERVER_TYPE == "production":
     CSRF_TRUSTED_ORIGINS = ENV_CSRF_TRUSTED_ORIGINS.split(',')
 
 if SERVER_TYPE == "development":
-
     CORS_ORIGIN_ALLOW_ALL = True
     CORS_ALLOW_CREDENTIALS = True
 
 if SERVER_TYPE == "local":
-
     CORS_ORIGIN_ALLOW_ALL = True
     CORS_ALLOW_CREDENTIALS = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
@@ -429,7 +414,7 @@ LOGGING = {
     'version': 1,
     'formatters': {
         'verbose': {
-            'format': '[%(levelname)s] [%(asctime)s] [%(processName)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s',
+            'format': '[' + HOST_LOCATION + '] [' + BASE_API_URL + '] [%(levelname)s] [%(asctime)s] [%(processName)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s',
         },
     },
     'handlers': {
@@ -511,7 +496,6 @@ if SERVER_TYPE == 'development' or SERVER_TYPE == 'local':
     REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] += (
         'rest_framework.authentication.SessionAuthentication',
     )
-
 
 # CURRENCY_CODE = 'USD'
 
@@ -629,7 +613,6 @@ if SERVER_TYPE == 'local':
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
 print('DEFAULT_FILE_STORAGE %s' % DEFAULT_FILE_STORAGE)
-
 
 SFTP_HOST = os.environ.get('SFTP_HOST', None)
 if SFTP_HOST:
@@ -754,7 +737,6 @@ ROUND_NDIGITS = 6
 MEDIATOR_URL = os.environ.get('MEDIATOR_URL', None)
 DATA_FILE_SERVICE_URL = os.environ.get('DATA_FILE_SERVICE_URL', None)
 
-
 INSTRUMENT_EVENTS_REGULAR_MAX_INTERVALS = 1000
 
 try:
@@ -776,7 +758,6 @@ INTERNAL_IPS = [
 ]
 
 if DEBUG:
-
     DEBUG_TOOLBAR_PANELS = [
         'ddt_request_history.panels.request_history.RequestHistoryPanel',  # Here it is
         'debug_toolbar.panels.versions.VersionsPanel',
@@ -798,7 +779,6 @@ if DEBUG:
         "SHOW_TOOLBAR_CALLBACK": show_toolbar,
         'RESULTS_STORE_SIZE': 100,
     }
-
 
 TOKEN_TTL = datetime.timedelta(days=15)
 
