@@ -14,3 +14,4 @@ filebeat.inputs:
 
 output.logstash:
   hosts: ["109.236.88.76:5044"]
+  ssl.certificate_authorities: ["/var/filebeat-secrets/ca.crt"]
