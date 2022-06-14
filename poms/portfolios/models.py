@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+from datetime import timedelta
+
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils.translation import ugettext_lazy
@@ -9,7 +11,7 @@ from poms.common.models import NamedModel, FakeDeletableModel, DataTimeStampedMo
 from poms.common.utils import date_now
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.currencies.models import Currency
-from poms.instruments.models import PricingPolicy, Instrument
+from poms.instruments.models import PricingPolicy, Instrument, PriceHistory
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
 from poms.tags.models import TagLink
@@ -27,6 +29,8 @@ class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
                                             verbose_name=ugettext_lazy('counterparties'))
     transaction_types = models.ManyToManyField('transactions.TransactionType', related_name='portfolios', blank=True,
                                                verbose_name=ugettext_lazy('transaction types'))
+
+    default_price = models.FloatField(default=100.0, verbose_name=ugettext_lazy('default price'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
@@ -70,14 +74,11 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         verbose_name_plural = ugettext_lazy('portfolio registers')
 
     def save(self, *args, **kwargs):
-
         super(PortfolioRegister, self).save(*args, **kwargs)
 
         if self.linked_instrument:
             self.linked_instrument.has_linked_with_portfolio = True
             self.linked_instrument.save()
-
-
 
 
 class PortfolioRegisterRecord(models.Model):
@@ -88,14 +89,14 @@ class PortfolioRegisterRecord(models.Model):
                                   verbose_name=ugettext_lazy('portfolio'), on_delete=models.CASCADE)
 
     instrument = models.ForeignKey(Instrument,
-                                          verbose_name=ugettext_lazy('instrument'), on_delete=models.CASCADE)
+                                   verbose_name=ugettext_lazy('instrument'), on_delete=models.CASCADE)
 
     transaction_type = models.PositiveSmallIntegerField(default=0, verbose_name=ugettext_lazy(
         'transaction type'))
 
     transaction_code = models.IntegerField(default=0, verbose_name=ugettext_lazy('transaction code'))
 
-    transaction_date = models.DateField(editable=False, default=date_now, db_index=True,
+    transaction_date = models.DateField(default=date_now, db_index=True,
                                         verbose_name=ugettext_lazy("transaction date"))
 
     cash_amount = models.FloatField(default=0.0, verbose_name=ugettext_lazy("cash amount"),
@@ -107,36 +108,79 @@ class PortfolioRegisterRecord(models.Model):
 
     fx_rate = models.FloatField(default=0.0, verbose_name=ugettext_lazy("fx rate"))
 
-    cash_amount_valuation_currency = models.FloatField(default=0.0, verbose_name=ugettext_lazy("cash amount valuation currency"),
-                                    help_text=ugettext_lazy(
-                                        'Cash amount valuation currency'))
+    cash_amount_valuation_currency = models.FloatField(default=0.0,
+                                                       verbose_name=ugettext_lazy("cash amount valuation currency"),
+                                                       help_text=ugettext_lazy(
+                                                           'Cash amount valuation currency'))
 
     valuation_currency = models.ForeignKey(Currency, related_name='register_record_valuation_currency',
-                                      on_delete=models.PROTECT, verbose_name=ugettext_lazy("valuation currency"))
+                                           on_delete=models.PROTECT, verbose_name=ugettext_lazy("valuation currency"))
 
-    nav_previous_day_valuation_currency = models.FloatField(default=0.0, verbose_name=ugettext_lazy("nav previous day valuation currency"))
+    nav_previous_day_valuation_currency = models.FloatField(default=0.0, verbose_name=ugettext_lazy(
+        "nav previous day valuation currency"))
 
     n_shares_previous_day = models.FloatField(default=0.0, verbose_name=ugettext_lazy("n shares previous day"))
     n_shares_added = models.FloatField(default=0.0, verbose_name=ugettext_lazy("n shares added"))
 
-    dealing_price_valuation_currency = models.FloatField(default=0.0, verbose_name=ugettext_lazy("dealing price valuation currency"),
-                                                       help_text=ugettext_lazy(
-                                                           'Dealing price valuation currency'))
+    dealing_price_valuation_currency = models.FloatField(default=0.0,
+                                                         verbose_name=ugettext_lazy("dealing price valuation currency"),
+                                                         help_text=ugettext_lazy(
+                                                             'Dealing price valuation currency'))
 
-    n_shares_end_of_the_day = models.FloatField(default=0.0, verbose_name=ugettext_lazy("n shares end of the day"))
+    # n_shares_end_of_the_day = models.FloatField(default=0.0, verbose_name=ugettext_lazy("n shares end of the day"))
+    rolling_shares_of_the_day = models.FloatField(default=0.0, verbose_name=ugettext_lazy("rolling shares  of the day"))
 
-    transaction = models.ForeignKey('transactions.Transaction', on_delete=models.CASCADE, related_name="register_record_transaction",
-                                            verbose_name=ugettext_lazy('transaction'))
+    previous_date_record = models.ForeignKey('portfolios.PortfolioRegisterRecord', null=True, on_delete=models.SET_NULL,
+                                    verbose_name=ugettext_lazy('previous date record'))
 
-    complex_transaction = models.ForeignKey('transactions.ComplexTransaction', related_name="register_record_complex_transaction", on_delete=models.CASCADE,
-                                        verbose_name=ugettext_lazy('complex transaction'))
+    transaction = models.ForeignKey('transactions.Transaction', on_delete=models.CASCADE,
+                                    related_name="register_record_transaction",
+                                    verbose_name=ugettext_lazy('transaction'))
+
+    complex_transaction = models.ForeignKey('transactions.ComplexTransaction',
+                                            related_name="register_record_complex_transaction",
+                                            on_delete=models.CASCADE,
+                                            verbose_name=ugettext_lazy('complex transaction'))
 
     portfolio_register = models.ForeignKey(PortfolioRegister, on_delete=models.CASCADE,
-                                    verbose_name=ugettext_lazy('portfolio register'))
+                                           verbose_name=ugettext_lazy('portfolio register'))
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
-
 
     class Meta:
         verbose_name = ugettext_lazy('portfolio register record')
         verbose_name_plural = ugettext_lazy('portfolio registers record')
+
+    # def save(self, *args, **kwargs):
+    #
+    #     try:
+    #
+    #         previous = PortfolioRegisterRecord.objects.exclude(transaction_date=self.transaction_date).filter(
+    #             portfolio_register=self.portfolio_register).order_by('-transaction_date')[0]
+    #
+    #         date = self.transaction_date - timedelta(days=1)
+    #
+    #         price_history = None
+    #         try:
+    #             price_history = PriceHistory.objecst.get(instrument=self.instrument, date=date)
+    #         except Exception as e:
+    #             price_history = PriceHistory.objecst.create(instrument=self.instrument, date=date)
+    #
+    #
+    #         portfolio_share_price =  price_history.nav / previous.n_shares_end_of_the_day
+    #         nav = 123
+    #
+    #         price_history.portfolio_share_price = portfolio_share_price
+    #         price_history.nav = nav
+    #
+    #         price_history.save()
+    #
+    #         self.dealing_price_valuation_currency = portfolio_share_price
+    #
+    #     except Exception as e:
+    #
+    #         # ROOT RECORD
+    #
+    #         self.dealing_price_valuation_currency = self.portfolio.default_price
+    #
+    #     super(PortfolioRegisterRecord, self).save(*args, **kwargs)

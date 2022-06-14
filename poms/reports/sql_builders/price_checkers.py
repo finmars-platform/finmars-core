@@ -574,7 +574,7 @@ def execute_transaction_prices_sql(date, instance, cursor, ecosystem_defaults):
                 transaction_currency_user_code
                 
             from transactions_hist
-            where trn_hist_fx ISNULL and not transaction_class_id in (8,9)
+            where trn_hist_fx ISNULL and not transaction_class_id in (8,9,12,13)
             and  min_date <= '{report_date}'
             
             UNION 
@@ -587,7 +587,7 @@ def execute_transaction_prices_sql(date, instance, cursor, ecosystem_defaults):
                 transaction_currency_name,
                 transaction_currency_user_code
             from transactions_hist
-            where rep_hist_fx ISNULL and not transaction_class_id in (8,9)
+            where rep_hist_fx ISNULL and not transaction_class_id in (8,9,12,13)
             and  min_date <= '{report_date}'
             
             -- optional end
@@ -617,7 +617,7 @@ def execute_transaction_prices_sql(date, instance, cursor, ecosystem_defaults):
                 transaction_currency_name,
                 transaction_currency_user_code
             from transactions_hist
-            where trn_hist_fx ISNULL and transaction_class_id in (8,9)
+            where trn_hist_fx ISNULL and transaction_class_id in (8,9,12,13)
             and  min_date <= '{report_date}'
             
             UNION 
@@ -629,7 +629,7 @@ def execute_transaction_prices_sql(date, instance, cursor, ecosystem_defaults):
                 transaction_currency_name,
                 transaction_currency_user_code
             from transactions_hist
-            where rep_hist_fx ISNULL and transaction_class_id in (8,9)
+            where rep_hist_fx ISNULL and transaction_class_id in (8,9,12,13)
             and  min_date <= '{report_date}'
             
             -- required end

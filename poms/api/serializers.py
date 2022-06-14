@@ -54,8 +54,8 @@ class TimezoneSerializer(serializers.Serializer):
 class ExpressionSerializer(serializers.Serializer):
     expression = ExpressionField(required=True, style={'base_template': 'textarea.html'})
     names1 = serializers.DictField(required=False, allow_null=True, help_text='Raw names as JSON object')
-    names2 = ExpressionField(required=False, allow_null=True, help_text='Names as expression',
-                             style={'base_template': 'textarea.html'})
+    # names2 = ExpressionField(required=False, allow_null=True, help_text='Names as expression',
+    #                          style={'base_template': 'textarea.html'})
     names = serializers.ReadOnlyField()
     is_eval = serializers.BooleanField()
     result = serializers.ReadOnlyField()

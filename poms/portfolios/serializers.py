@@ -30,7 +30,9 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_default',
             'is_deleted', 'accounts', 'responsibles', 'counterparties', 'transaction_types',
-            'is_enabled'
+            'is_enabled',
+
+            'default_price'
         ]
 
     def __init__(self, *args, **kwargs):

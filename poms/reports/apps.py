@@ -375,7 +375,7 @@ class ReportsConfig(AppConfig):
                            
 
                     from transactions_transaction as tt
-                    where transaction_class_id in (8,9) and NOT tt.is_canceled
+                    where transaction_class_id in (8,9,12,13) and NOT tt.is_canceled
                     
                     union all
 

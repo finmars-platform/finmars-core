@@ -1870,7 +1870,7 @@ class PLReportBuilderSql:
                                         limit 1)
                                 end as rep_cur_fx
                             from pl_cash_fx_variations_transactions_with_ttype svfx
-                            where svfx.transaction_class_id in (8, 9)
+                            where svfx.transaction_class_id in (8, 9, 12, 13)
                               and accounting_date <= '{report_date}'
                               and master_user_id = {master_user_id}
                               {fx_trades_and_fx_variations_filter_sql_string}

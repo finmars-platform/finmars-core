@@ -45,7 +45,7 @@ SERVER_TYPE = os.environ.get('SERVER_TYPE', 'local')
 print('SERVER_TYPE %s' % SERVER_TYPE)
 
 BASE_API_URL = os.environ.get('BASE_API_URL', 'main')
-HOST_LOCATION = os.environ.get('HOST_LOCATION', 'AWS')
+HOST_LOCATION = os.environ.get('HOST_LOCATION', 'AWS') # azure, aws, or custom, only log purpose
 
 print('BASE_API_URL %s' % BASE_API_URL)
 
