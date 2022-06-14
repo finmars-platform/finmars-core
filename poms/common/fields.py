@@ -93,11 +93,24 @@ class ExpressionField(CharField):
         kwargs['allow_blank'] = kwargs.get('allow_blank', False)
         super(ExpressionField, self).__init__(**kwargs)
 
+    # def run_validation(self, data=empty):
+    #     value = super(ExpressionField, self).run_validation(data)
+    #     if value and value != empty:
+    #         formula.validate(value)
+    #     return value
+
+class Expression2Field(CharField):
+    def __init__(self, **kwargs):
+        kwargs['allow_null'] = kwargs.get('allow_null', False)
+        kwargs['allow_blank'] = kwargs.get('allow_blank', False)
+        super(Expression2Field, self).__init__(**kwargs)
+
     def run_validation(self, data=empty):
-        value = super(ExpressionField, self).run_validation(data)
-        if value and value != empty:
-            formula.validate(value)
+        value = super(Expression2Field, self).run_validation(data)
+        # if value and value != empty:
+        #     formula.validate(value)
         return value
+
 
 
 class FloatEvalField(FloatField):

@@ -243,6 +243,39 @@ def _format_date(date, format=None):
     return date.strftime(format)
 
 
+def _send_system_message(evaluator, message, level='info', source="Expression Engine"):
+
+    from poms.system_messages.handlers import send_system_message
+
+    context = evaluator.context
+    from poms.users.utils import get_master_user_from_context
+
+    master_user = get_master_user_from_context(context)
+
+    send_system_message(master_user=master_user,
+                        source=source,
+                        level=level,
+                        text=message)
+
+
+_send_system_message.evaluator = True
+
+def _get_current_member(evaluator):
+
+    context = evaluator.context
+    from poms.users.utils import get_member_from_context
+
+    member = get_member_from_context(context)
+
+    return member
+
+
+
+_get_current_member.evaluator = True
+
+
+
+
 def _parse_date(date_string, format=None):
     if not date_string:
         return None
@@ -2127,6 +2160,8 @@ FUNCTIONS = [
     SimpleEval2Def('get_rt_value', _get_rt_value),
     SimpleEval2Def('convert_to_number', _convert_to_number),
     SimpleEval2Def('if_null', _if_null),
+    SimpleEval2Def('send_system_message', _send_system_message),
+    SimpleEval2Def('get_current_member', _get_current_member),
 
     # SimpleEval2Def('get_instr_accrual_size', _get_instrument_accrual_size),
     # SimpleEval2Def('get_instr_accrual_factor', _get_instrument_accrual_factor),
@@ -2287,6 +2322,65 @@ class SimpleEval2(object):
             raise ExpressionEvalError(e)
         finally:
             self._table = save_table
+
+    def multiline_eval(self, expr,  names=None):
+
+        if not expr:
+            raise InvalidExpression('Empty expression')
+
+        self.expr = expr
+        self.expr_ast = SimpleEval2.try_parse(expr)
+
+        save_table = self._table
+        self._table = save_table.copy()
+
+
+        print('self.expr_ast.body %s' % self.expr_ast.body)
+
+        if names:
+            for k, v in names.items():
+                self._table[k] = v
+        try:
+            self.start_time = time.time()
+            self.result = self._eval(self.expr_ast.body)
+            return self.result
+        except InvalidExpression:
+            # _l.debug('InvalidExpression', exc_info=True)
+            raise
+        except Exception as e:
+            # _l.debug('Exception', exc_info=True)
+            raise ExpressionEvalError(e)
+        finally:
+            self._table = save_table
+
+        "Evaluate several lines of input, returning the result of the last line"
+
+        # self.expr_ast = SimpleEval2.try_parse(expr)
+        # eval_exprs = []
+        # exec_exprs = []
+        # for module in self.expr_ast.body:
+        #     if isinstance(module, ast.Expr):
+        #         eval_exprs.append(module.value)
+        #     else:
+        #         exec_exprs.append(module)
+        #
+        # print('exec_exprs %s' % exec_exprs)
+        # print('eval_exprs %s' % eval_exprs)
+        #
+        # exec_expr = ast.Module(exec_exprs, type_ignores=[])
+        #
+        # exec(compile(exec_expr, 'file', 'exec'), context)
+        #
+        # results = []
+        #
+        # for eval_expr in eval_exprs:
+        #
+        #     print(compile(ast.Expression((eval_expr)), 'file', 'eval'))
+        #
+        #     results.append(self._eval(compile(ast.Expression((eval_expr)), 'file', 'eval')))
+        #
+        #
+        # return '\n'.join([str(r) for r in results])
 
     def _eval(self, node):
         # _l.debug('%s - %s - %s', node, type(node), node.__class__)
@@ -2526,10 +2620,11 @@ def validate(expr):
         raise ValidationError('Invalid expression: %s' % e)
 
 
-def safe_eval(s, names=None, max_time=None, add_print=False, allow_assign=False, now=None, context=None):
+def safe_eval(s, names=None, max_time=None, add_print=False, allow_assign=True, now=None, context=None):
     e = SimpleEval2(names=names, max_time=max_time, add_print=add_print, allow_assign=allow_assign, now=now,
                     context=context)
     return e.eval(s)
+
 
 
 def validate_date(val):
@@ -2670,6 +2765,10 @@ def get_model_data(instance, object_class, serializer_class, many=False, context
 
 
 def _get_supported_models_serializer_class():
+
+    from poms.users.models import Member
+    from poms.users.serializers import MemberSerializer
+
     from poms.accounts.models import Account
     from poms.accounts.serializers import AccountSerializer
     from poms.counterparties.models import Counterparty, Responsible
@@ -2712,7 +2811,8 @@ def _get_supported_models_serializer_class():
         ReportItem: ReportItemEvalSerializer,
         TransactionReportItem: TransactionReportItemSerializer,
         CashFlowProjectionReportItem: CashFlowProjectionReportItemSerializer,
-        GeneratedEvent: GeneratedEventSerializer
+        GeneratedEvent: GeneratedEventSerializer,
+        Member: MemberSerializer
     }
 
 

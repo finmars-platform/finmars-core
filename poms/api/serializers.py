@@ -3,7 +3,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from poms.common import formula
-from poms.common.fields import ExpressionField
+from poms.common.fields import ExpressionField, Expression2Field
 
 
 class Language(object):

@@ -6,9 +6,9 @@ from poms.file_reports.models import FileReport
 
 class SystemMessage(models.Model):
 
-    LEVEL_INFO = 1
-    LEVEL_WARNING = 2
-    LEVEL_ERROR = 3
+    LEVEL_INFO = 'info'
+    LEVEL_WARNING = 'warn'
+    LEVEL_ERROR = 'error'
 
     LEVELS_CHOICES = (
         (LEVEL_INFO, ugettext_lazy('Info')),
@@ -23,7 +23,7 @@ class SystemMessage(models.Model):
     STATUS_ABANDONED = 5
 
     STATUS_CHOICES = (
-        (LEVEL_INFO, ugettext_lazy('New')),
+        (STATUS_NEW, ugettext_lazy('New')),
         (STATUS_SOLVED, ugettext_lazy('Solved')),
         (STATUS_VIEWED, ugettext_lazy('Viewed')),
         (STATUS_MARKED, ugettext_lazy('Marked')),
@@ -32,7 +32,7 @@ class SystemMessage(models.Model):
 
     master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user') , on_delete=models.CASCADE)
 
-    level = models.PositiveSmallIntegerField(default=LEVEL_INFO, choices=LEVELS_CHOICES,
+    level = models.CharField(max_length=255, default=LEVEL_INFO,  choices=LEVELS_CHOICES,
                                              verbose_name=ugettext_lazy('level'))
     status = models.PositiveSmallIntegerField(default=STATUS_NEW, choices=STATUS_CHOICES,
                                               verbose_name=ugettext_lazy('status'))
