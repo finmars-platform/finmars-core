@@ -275,18 +275,37 @@ _get_current_member.evaluator = True
 
 
 
-
 def _parse_date(date_string, format=None):
     if not date_string:
         return None
     if isinstance(date_string, datetime.date):
         return date_string
     date_string = str(date_string)
-    if not format:
-        format = '%Y-%m-%d'
+
+    result = None
+
+    if type(format) is list:
+
+        for f in format:
+            # print("Trying format %s" % f)
+            try:
+                result = datetime.datetime.strptime(date_string, f).date()
+                break
+            except Exception as e:
+                print("_parse_date date_string %s " % date_string)
+                print("_parse_date format %s " % f)
+                print("_parse_date error %s " % e)
     else:
-        format = str(format)
-    return datetime.datetime.strptime(date_string, format).date()
+        if not format:
+            format = '%Y-%m-%d'
+        else:
+            format = str(format)
+
+        result = datetime.datetime.strptime(date_string, format).date()
+
+
+
+    return result
 
 
 def _unix_to_date(unix, format=None):
