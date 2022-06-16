@@ -29,8 +29,7 @@ from poms.transactions.models import TransactionType, TransactionTypeGroup
 from poms.users.filters import OwnerByMasterUserFilter
 from rest_framework.decorators import action
 
-from poms.portfolios.tasks import calculate_portfolio_register_record
-
+from poms.portfolios.tasks import calculate_portfolio_register_record, calculate_portfolio_register_nav
 
 from rest_framework.settings import api_settings
 from rest_framework.response import Response
@@ -282,6 +281,16 @@ class PortfolioRegisterViewSet(AbstractWithObjectPermissionViewSet):
 
         return Response({'status': 'ok'})
 
+    @action(detail=False, methods=['post'], url_path='calculate-navs')
+    def calculate_navs(self, request):
+
+        _l.debug("Run Calculate Portfolio Registry navs data %s" % request.data)
+
+        master_user = request.user.master_user
+
+        calculate_portfolio_register_nav.apply_async()
+
+        return Response({'status': 'ok'})
 
 
 class PortfolioRegisterEvViewSet(AbstractWithObjectPermissionViewSet):

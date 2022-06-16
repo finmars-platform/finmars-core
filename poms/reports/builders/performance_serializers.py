@@ -11,7 +11,7 @@ from poms.common import formula
 from poms.common.fields import ExpressionField
 from poms.common.utils import date_now
 from poms.currencies.fields import CurrencyField, SystemCurrencyDefault
-from poms.instruments.fields import PricingPolicyField
+from poms.instruments.fields import PricingPolicyField, InstrumentField, RegisterField
 from poms.instruments.models import CostMethod
 from poms.portfolios.fields import PortfolioField
 from poms.portfolios.serializers import PortfolioViewSerializer
@@ -58,71 +58,76 @@ class PerformanceReportItemSerializer(serializers.Serializer):
 
 
 class PerformanceReportSerializer(serializers.Serializer):
-    task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
-    task_status = serializers.ReadOnlyField()
+    # task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    # task_status = serializers.ReadOnlyField()
 
     master_user = MasterUserField()
     member = HiddenMemberField()
     begin_date = serializers.DateField(required=False, allow_null=True, default=date.min)
     end_date = serializers.DateField(required=False, allow_null=True, default=date_now)
-    periods = ExpressionField(required=False, allow_blank=True, allow_null=True, default='',
-                              initial='date_group(transaction.accounting_date, [[None,None,timedelta(months=1),["[","%Y-%m-%d","/","","%Y-%m-%d","]"]]], "Err")')
-    report_currency = CurrencyField(required=False, allow_null=True, default=SystemCurrencyDefault())
-    pricing_policy = PricingPolicyField()
+    calculation_type = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    segmentation_type = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    registers = RegisterField(many=True, required=False, allow_null=True, allow_empty=True)
+    # periods = ExpressionField(required=False, allow_blank=True, allow_null=True, default='',
+    #                           initial='date_group(transaction.accounting_date, [[None,None,timedelta(months=1),["[","%Y-%m-%d","/","","%Y-%m-%d","]"]]], "Err")')
+    # report_currency = CurrencyField(required=False, allow_null=True, default=SystemCurrencyDefault())
+    # pricing_policy = PricingPolicyField()
 
-    portfolio_mode = serializers.ChoiceField(default=PerformanceReport.MODE_INDEPENDENT,
-                                             initial=PerformanceReport.MODE_INDEPENDENT,
-                                             choices=PerformanceReport.MODE_CHOICES,
-                                             required=False,
-                                             help_text='Portfolio consolidation')
-    account_mode = serializers.ChoiceField(default=PerformanceReport.MODE_INDEPENDENT,
-                                           initial=PerformanceReport.MODE_INDEPENDENT,
-                                           choices=PerformanceReport.MODE_CHOICES,
-                                           required=False,
-                                           help_text='Account consolidation')
-    strategy1_mode = serializers.ChoiceField(default=PerformanceReport.MODE_INDEPENDENT,
-                                             initial=PerformanceReport.MODE_INDEPENDENT,
-                                             choices=PerformanceReport.MODE_CHOICES,
-                                             required=False,
-                                             help_text='Strategy1 consolidation')
-    strategy2_mode = serializers.ChoiceField(default=PerformanceReport.MODE_INDEPENDENT,
-                                             initial=PerformanceReport.MODE_INDEPENDENT,
-                                             choices=PerformanceReport.MODE_CHOICES,
-                                             required=False,
-                                             help_text='Strategy2 consolidation')
-    strategy3_mode = serializers.ChoiceField(default=PerformanceReport.MODE_INDEPENDENT,
-                                             initial=PerformanceReport.MODE_INDEPENDENT,
-                                             choices=PerformanceReport.MODE_CHOICES,
-                                             required=False,
-                                             help_text='Strategy3 consolidation')
-    cost_method = serializers.PrimaryKeyRelatedField(queryset=CostMethod.objects, allow_null=True, allow_empty=True)
-    approach_multiplier = serializers.FloatField(default=0.5, initial=0.5, min_value=0.0, max_value=1.0, required=False)
 
-    portfolios = PortfolioField(many=True, required=False, allow_null=True, allow_empty=True)
-    accounts = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
-    accounts_position = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
-    accounts_cash = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
-    strategies1 = Strategy1Field(many=True, required=False, allow_null=True, allow_empty=True)
-    strategies2 = Strategy2Field(many=True, required=False, allow_null=True, allow_empty=True)
-    strategies3 = Strategy3Field(many=True, required=False, allow_null=True, allow_empty=True)
+    # portfolio_mode = serializers.ChoiceField(default=PerformanceReport.MODE_INDEPENDENT,
+    #                                          initial=PerformanceReport.MODE_INDEPENDENT,
+    #                                          choices=PerformanceReport.MODE_CHOICES,
+    #                                          required=False,
+    #                                          help_text='Portfolio consolidation')
+    # account_mode = serializers.ChoiceField(default=PerformanceReport.MODE_INDEPENDENT,
+    #                                        initial=PerformanceReport.MODE_INDEPENDENT,
+    #                                        choices=PerformanceReport.MODE_CHOICES,
+    #                                        required=False,
+    #                                        help_text='Account consolidation')
+    # strategy1_mode = serializers.ChoiceField(default=PerformanceReport.MODE_INDEPENDENT,
+    #                                          initial=PerformanceReport.MODE_INDEPENDENT,
+    #                                          choices=PerformanceReport.MODE_CHOICES,
+    #                                          required=False,
+    #                                          help_text='Strategy1 consolidation')
+    # strategy2_mode = serializers.ChoiceField(default=PerformanceReport.MODE_INDEPENDENT,
+    #                                          initial=PerformanceReport.MODE_INDEPENDENT,
+    #                                          choices=PerformanceReport.MODE_CHOICES,
+    #                                          required=False,
+    #                                          help_text='Strategy2 consolidation')
+    # strategy3_mode = serializers.ChoiceField(default=PerformanceReport.MODE_INDEPENDENT,
+    #                                          initial=PerformanceReport.MODE_INDEPENDENT,
+    #                                          choices=PerformanceReport.MODE_CHOICES,
+    #                                          required=False,
+    #                                          help_text='Strategy3 consolidation')
+    # cost_method = serializers.PrimaryKeyRelatedField(queryset=CostMethod.objects, allow_null=True, allow_empty=True)
+    # approach_multiplier = serializers.FloatField(default=0.5, initial=0.5, min_value=0.0, max_value=1.0, required=False)
+    #
+    # portfolios = PortfolioField(many=True, required=False, allow_null=True, allow_empty=True)
+    # accounts = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
+    # accounts_position = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
+    # accounts_cash = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
+    # strategies1 = Strategy1Field(many=True, required=False, allow_null=True, allow_empty=True)
+    # strategies2 = Strategy2Field(many=True, required=False, allow_null=True, allow_empty=True)
+    # strategies3 = Strategy3Field(many=True, required=False, allow_null=True, allow_empty=True)
     # custom_fields = CustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
 
-    portfolios_object = PortfolioViewSerializer(source='portfolios', read_only=True, many=True)
-    accounts_object = AccountViewSerializer(source='accounts', read_only=True, many=True)
-    accounts_position_object = AccountViewSerializer(source='accounts_position', read_only=True, many=True)
-    accounts_cash_object = AccountViewSerializer(source='accounts_cash', read_only=True, many=True)
-    strategies1_object = Strategy1ViewSerializer(source='strategies1', read_only=True, many=True)
-    strategies2_object = Strategy2ViewSerializer(source='strategies2', read_only=True, many=True)
-    strategies3_object = Strategy3ViewSerializer(source='strategies3', read_only=True, many=True)
+    # portfolios_object = PortfolioViewSerializer(source='portfolios', read_only=True, many=True)
+    # accounts_object = AccountViewSerializer(source='accounts', read_only=True, many=True)
+    # accounts_position_object = AccountViewSerializer(source='accounts_position', read_only=True, many=True)
+    # accounts_cash_object = AccountViewSerializer(source='accounts_cash', read_only=True, many=True)
+    # strategies1_object = Strategy1ViewSerializer(source='strategies1', read_only=True, many=True)
+    # strategies2_object = Strategy2ViewSerializer(source='strategies2', read_only=True, many=True)
+    # strategies3_object = Strategy3ViewSerializer(source='strategies3', read_only=True, many=True)
     # custom_fields_object = CustomFieldViewSerializer(source='custom_fields', read_only=True, many=True)
 
-    has_errors = serializers.ReadOnlyField()
+    # has_errors = serializers.ReadOnlyField()
     items = PerformanceReportItemSerializer(many=True, read_only=True)
-    item_portfolios = ReportPortfolioSerializer(many=True, read_only=True)
-    item_accounts = ReportAccountSerializer(many=True, read_only=True)
-    item_strategies1 = ReportStrategy1Serializer(many=True, read_only=True)
-    item_strategies2 = ReportStrategy2Serializer(many=True, read_only=True)
-    item_strategies3 = ReportStrategy3Serializer(many=True, read_only=True)
+    raw_items = serializers.JSONField(allow_null=True, required=False, read_only=True)
+    # item_portfolios = ReportPortfolioSerializer(many=True, read_only=True)
+    # item_accounts = ReportAccountSerializer(many=True, read_only=True)
+    # item_strategies1 = ReportStrategy1Serializer(many=True, read_only=True)
+    # item_strategies2 = ReportStrategy2Serializer(many=True, read_only=True)
+    # item_strategies3 = ReportStrategy3Serializer(many=True, read_only=True)
 
     def __init__(self, *args, **kwargs):
         super(PerformanceReportSerializer, self).__init__(*args, **kwargs)
@@ -130,112 +135,112 @@ class PerformanceReportSerializer(serializers.Serializer):
     def create(self, validated_data):
         return PerformanceReport(**validated_data)
 
-    def validate(self, attrs):
-        periods = attrs['periods']
-        if not periods.startswith('date_group('):
-            raise serializers.ValidationError({'periods': ugettext('function "date_group" not found')})
-        return attrs
+    # def validate(self, attrs):
+    #     periods = attrs['periods']
+    #     if not periods.startswith('date_group('):
+    #         raise serializers.ValidationError({'periods': ugettext('function "date_group" not found')})
+    #     return attrs
 
     def to_representation(self, instance):
         data = super(PerformanceReportSerializer, self).to_representation(instance)
 
-        items = data['items']
-        custom_fields = data['custom_fields_object']
-        if custom_fields and items:
-            item_portfolios = {o['id']: o for o in data['item_portfolios']}
-            item_accounts = {o['id']: o for o in data['item_accounts']}
-            item_strategies1 = {o['id']: o for o in data['item_strategies1']}
-            item_strategies2 = {o['id']: o for o in data['item_strategies2']}
-            item_strategies3 = {o['id']: o for o in data['item_strategies3']}
-
-            def _set_object(names, pk_attr, objs):
-                pk = names[pk_attr]
-                if pk is not None:
-                    names['%s_object' % pk_attr] = objs[pk]
-
-            for item in items:
-                names = {n: v for n, v in item.items()}
-
-                _set_object(names, 'portfolio', item_portfolios)
-                _set_object(names, 'account', item_accounts)
-                _set_object(names, 'strategy1', item_strategies1)
-                _set_object(names, 'strategy2', item_strategies2)
-                _set_object(names, 'strategy3', item_strategies3)
-
-                names = formula.value_prepare(names)
-
-                cfv = []
-
-                custom_fields_names = {}
-
-                # for i in range(5):
-                for i in range(2):
-
-                    for cf in custom_fields:
-
-                        if cf["name"] in data["custom_fields_to_calculate"]:
-
-                            expr = cf['expr']
-
-                            if expr:
-                                try:
-                                    value = formula.safe_eval(expr, names=names, context=self.context)
-                                except formula.InvalidExpression:
-                                    value = ugettext('Invalid expression')
-                            else:
-                                value = None
-
-                            if not cf['user_code'] in custom_fields_names:
-                                custom_fields_names[cf['user_code']] = value
-                            else:
-                                if custom_fields_names[cf['user_code']] == None or custom_fields_names[cf['user_code']] == ugettext('Invalid expression'):
-                                    custom_fields_names[cf['user_code']] = value
-
-                    names['custom_fields'] = custom_fields_names
-
-                for key, value in custom_fields_names.items():
-
-                    for cf in custom_fields:
-
-                        if cf['user_code'] == key:
-
-                            expr = cf['expr']
-
-                            if cf['value_type'] == 10:
-
-                                if expr:
-                                    try:
-                                        value = formula.safe_eval('str(item)', names={'item': value}, context=self.context)
-                                    except formula.InvalidExpression:
-                                        value = ugettext('Invalid expression')
-                                else:
-                                    value = None
-
-                            elif cf['value_type'] == 20:
-
-                                if expr:
-                                    try:
-                                        value = formula.safe_eval('float(item)', names={'item': value}, context=self.context)
-                                    except formula.InvalidExpression:
-                                        value = ugettext('Invalid expression')
-                                else:
-                                    value = None
-                            elif cf['value_type'] == 40:
-
-                                if expr:
-                                    try:
-                                        value = formula.safe_eval("parse_date(item, '%d/%m/%Y')", names={'item': value}, context=self.context)
-                                    except formula.InvalidExpression:
-                                        value = ugettext('Invalid expression')
-                                else:
-                                    value = None
-
-                            cfv.append({
-                                'custom_field': cf['id'],
-                                'user_code': cf['user_code'],
-                                'value': value,
-                            })
-
-                item['custom_fields'] = cfv
+        # items = data['items']
+        # custom_fields = data['custom_fields_object']
+        # if custom_fields and items:
+        #     item_portfolios = {o['id']: o for o in data['item_portfolios']}
+        #     item_accounts = {o['id']: o for o in data['item_accounts']}
+        #     item_strategies1 = {o['id']: o for o in data['item_strategies1']}
+        #     item_strategies2 = {o['id']: o for o in data['item_strategies2']}
+        #     item_strategies3 = {o['id']: o for o in data['item_strategies3']}
+        #
+        #     def _set_object(names, pk_attr, objs):
+        #         pk = names[pk_attr]
+        #         if pk is not None:
+        #             names['%s_object' % pk_attr] = objs[pk]
+        #
+        #     for item in items:
+        #         names = {n: v for n, v in item.items()}
+        #
+        #         _set_object(names, 'portfolio', item_portfolios)
+        #         _set_object(names, 'account', item_accounts)
+        #         _set_object(names, 'strategy1', item_strategies1)
+        #         _set_object(names, 'strategy2', item_strategies2)
+        #         _set_object(names, 'strategy3', item_strategies3)
+        #
+        #         names = formula.value_prepare(names)
+        #
+        #         cfv = []
+        #
+        #         custom_fields_names = {}
+        #
+        #         # for i in range(5):
+        #         for i in range(2):
+        #
+        #             for cf in custom_fields:
+        #
+        #                 if cf["name"] in data["custom_fields_to_calculate"]:
+        #
+        #                     expr = cf['expr']
+        #
+        #                     if expr:
+        #                         try:
+        #                             value = formula.safe_eval(expr, names=names, context=self.context)
+        #                         except formula.InvalidExpression:
+        #                             value = ugettext('Invalid expression')
+        #                     else:
+        #                         value = None
+        #
+        #                     if not cf['user_code'] in custom_fields_names:
+        #                         custom_fields_names[cf['user_code']] = value
+        #                     else:
+        #                         if custom_fields_names[cf['user_code']] == None or custom_fields_names[cf['user_code']] == ugettext('Invalid expression'):
+        #                             custom_fields_names[cf['user_code']] = value
+        #
+        #             names['custom_fields'] = custom_fields_names
+        #
+        #         for key, value in custom_fields_names.items():
+        #
+        #             for cf in custom_fields:
+        #
+        #                 if cf['user_code'] == key:
+        #
+        #                     expr = cf['expr']
+        #
+        #                     if cf['value_type'] == 10:
+        #
+        #                         if expr:
+        #                             try:
+        #                                 value = formula.safe_eval('str(item)', names={'item': value}, context=self.context)
+        #                             except formula.InvalidExpression:
+        #                                 value = ugettext('Invalid expression')
+        #                         else:
+        #                             value = None
+        #
+        #                     elif cf['value_type'] == 20:
+        #
+        #                         if expr:
+        #                             try:
+        #                                 value = formula.safe_eval('float(item)', names={'item': value}, context=self.context)
+        #                             except formula.InvalidExpression:
+        #                                 value = ugettext('Invalid expression')
+        #                         else:
+        #                             value = None
+        #                     elif cf['value_type'] == 40:
+        #
+        #                         if expr:
+        #                             try:
+        #                                 value = formula.safe_eval("parse_date(item, '%d/%m/%Y')", names={'item': value}, context=self.context)
+        #                             except formula.InvalidExpression:
+        #                                 value = ugettext('Invalid expression')
+        #                         else:
+        #                             value = None
+        #
+        #                     cfv.append({
+        #                         'custom_field': cf['id'],
+        #                         'user_code': cf['user_code'],
+        #                         'value': value,
+        #                     })
+        #
+        #         item['custom_fields'] = cfv
 
         return data

@@ -479,6 +479,9 @@ class PerformanceReport(BaseReport):
                  id=None,
                  task_id=None,
                  task_status=None,
+                 calculation_type=None,
+                 segmentation_type=None,
+                 registers=None,
                  master_user=None,
                  member=None,
                  begin_date=None,
@@ -513,6 +516,9 @@ class PerformanceReport(BaseReport):
         self.end_date = end_date or d
         self.report_currency = report_currency or master_user.system_currency
         self.pricing_policy = pricing_policy
+        self.calculation_type = calculation_type
+        self.segmentation_type = segmentation_type
+        self.registers = registers
         self.periods = periods
         self.portfolio_mode = portfolio_mode
         self.account_mode = account_mode

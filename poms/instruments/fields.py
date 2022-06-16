@@ -5,7 +5,7 @@ from poms.instruments.models import Instrument, InstrumentType, PricingPolicy, A
     EventSchedule
 from poms.obj_perms.fields import PrimaryKeyRelatedFilteredWithObjectPermissionField
 from poms.transactions.models import NotificationClass, EventClass, TransactionTypeInputSettings, TransactionTypeInput
-from poms.users.filters import OwnerByMasterUserFilter
+from poms.users.filters import OwnerByMasterUserFilter, LinkedWithPortfolioFilter
 
 
 # class InstrumentClassifierField(AttributeClassifierBaseField):
@@ -49,6 +49,13 @@ class InstrumentField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
     queryset = Instrument.objects
     filter_backends = [
         OwnerByMasterUserFilter,
+    ]
+
+class RegisterField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
+    queryset = Instrument.objects
+    filter_backends = [
+        OwnerByMasterUserFilter,
+        LinkedWithPortfolioFilter
     ]
 
 

@@ -20,6 +20,11 @@ class OwnerByMasterUserFilter(BaseFilterBackend):
         return []
 
 
+class LinkedWithPortfolioFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        return queryset.filter(has_linked_with_portfolio=True)
+
+
 class OwnerByMemberFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         # master_user = get_master_user(request)

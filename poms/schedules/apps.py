@@ -63,6 +63,12 @@ class SchedulesConfig(AppConfig):
                 "name": "Events Process",
                 "task": 'instruments.process_events',
                 "crontab": crontabs['daily_noon']
+            },
+            {
+                "id": 4,
+                "name": "Calculate Portfolio Register navs",
+                "task": 'portfolios.calculate_portfolio_register_nav',
+                "crontab": crontabs['daily_noon']
             }
         ]
 

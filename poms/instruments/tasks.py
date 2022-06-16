@@ -10,9 +10,10 @@ from django.utils import timezone
 from poms import notifications
 from poms.common.utils import date_now, isclose
 from poms.instruments.models import EventSchedule, Instrument, GeneratedEvent
+from poms.portfolios.models import PortfolioRegister
 from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
-from poms.transactions.models import NotificationClass
+from poms.transactions.models import NotificationClass, Transaction
 from poms.users.models import MasterUser
 
 import traceback
@@ -983,8 +984,8 @@ def process_events0(master_user):
 
     except Exception as e:
 
-        _l.info('process_events0 exception occurred %s' % e)
-        _l.info(traceback.format_exc())
+        _l.error('process_events0 exception occurred %s' % e)
+        _l.error(traceback.format_exc())
 
 
 @shared_task(name='instruments.process_events', ignore_result=True)
@@ -1006,5 +1007,8 @@ def process_events(master_users=None):
 
     except Exception as e:
 
-        _l.info('process_events exception occurred %s' % e)
-        _l.info(traceback.format_exc())
+        _l.error('process_events exception occurred %s' % e)
+        _l.error(traceback.format_exc())
+
+
+

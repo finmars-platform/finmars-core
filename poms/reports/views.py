@@ -27,6 +27,7 @@ from poms.reports.sql_builders.transaction import TransactionReportBuilderSql
 from poms.reports.tasks import balance_report, pl_report, transaction_report, cash_flow_projection_report, \
     performance_report
 from poms.reports.utils import generate_report_unique_hash
+from poms.reports.voila_constructrices.performance import PerformanceReportBuilder
 from poms.users.filters import OwnerByMasterUserFilter
 
 from rest_framework.response import Response
@@ -330,9 +331,9 @@ class CashFlowProjectionReportViewSet(AbstractAsyncViewSet):
         return context
 
 
-class PerformanceReportViewSet(AbstractAsyncViewSet):
-    serializer_class = PerformanceReportSerializer
-    celery_task = performance_report
+# class PerformanceReportViewSet(AbstractAsyncViewSet):
+#     serializer_class = PerformanceReportSerializer
+#     celery_task = performance_report
 
 
 class PriceHistoryCheckSqlSyncViewSet(AbstractViewSet):
@@ -359,3 +360,41 @@ class PriceHistoryCheckSqlSyncViewSet(AbstractViewSet):
         _l.debug('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class PerformanceReportViewSet(AbstractViewSet):
+    serializer_class = PerformanceReportSerializer
+
+
+    def create(self, request, *args, **kwargs):
+
+        serialize_report_st = time.perf_counter()
+
+        key = generate_report_unique_hash('report', 'performance', request.data, request.user.master_user, request.user.member)
+
+        cached_data = cache.get(key)
+
+        if not cached_data:
+
+            _l.info("Could not find in cache")
+
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            instance = serializer.save()
+
+            builder = PerformanceReportBuilder(instance=instance)
+            instance = builder.build_report()
+
+            instance.task_id = 1
+            instance.task_status = "SUCCESS"
+
+            serializer = self.get_serializer(instance=instance, many=False)
+
+            _l.debug('Performance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+
+            cached_data = serializer.data
+
+            cache.set(key, cached_data)
+
+        return Response(cached_data, status=status.HTTP_200_OK)
+
