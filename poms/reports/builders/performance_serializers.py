@@ -65,8 +65,8 @@ class PerformanceReportSerializer(serializers.Serializer):
     member = HiddenMemberField()
     begin_date = serializers.DateField(required=False, allow_null=True, default=date.min)
     end_date = serializers.DateField(required=False, allow_null=True, default=date_now)
-    calculation_type = serializers.CharField(allow_null=True, allow_blank=True, required=False)
-    segmentation_type = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    calculation_type = serializers.ChoiceField(allow_null=True,  initial=PerformanceReport.CALCULATION_TYPE_TIME_WEIGHTED, default=PerformanceReport.CALCULATION_TYPE_TIME_WEIGHTED, choices=PerformanceReport.CALCULATION_TYPE_CHOICES, allow_blank=True, required=False)
+    segmentation_type = serializers.ChoiceField(allow_null=True, initial=PerformanceReport.SEGMENTATION_TYPE_MONTHS, default=PerformanceReport.SEGMENTATION_TYPE_MONTHS, choices=PerformanceReport.SEGMENTATION_TYPE_CHOICES,allow_blank=True, required=False)
     registers = RegisterField(many=True, required=False, allow_null=True, allow_empty=True)
     # periods = ExpressionField(required=False, allow_blank=True, allow_null=True, default='',
     #                           initial='date_group(transaction.accounting_date, [[None,None,timedelta(months=1),["[","%Y-%m-%d","/","","%Y-%m-%d","]"]]], "Err")')

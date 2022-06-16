@@ -475,6 +475,19 @@ class PerformanceReport(BaseReport):
     report_type = 0  # VirtualTransaction
     report_date = date.min  # VirtualTransaction
 
+
+    CALCULATION_TYPE_TIME_WEIGHTED = 'time_weighted'
+    CALCULATION_TYPE_CHOICES = (
+        (CALCULATION_TYPE_TIME_WEIGHTED, 'Time Weighted'),
+    )
+
+    SEGMENTATION_TYPE_DAYS = 'days'
+    SEGMENTATION_TYPE_MONTHS = 'months'
+    SEGMENTATION_TYPE_CHOICES = (
+        (SEGMENTATION_TYPE_DAYS, 'Days'),
+        (SEGMENTATION_TYPE_MONTHS, 'Months'),
+    )
+
     def __init__(self,
                  id=None,
                  task_id=None,
