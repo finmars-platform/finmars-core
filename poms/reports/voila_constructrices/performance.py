@@ -190,7 +190,7 @@ class PerformanceReportBuilder:
 
             if year_month not in result_obj:
                 result_obj[year_month] = {
-                    'date_from': datetime.date(year, month, 1),
+                    'date_from': datetime.date(year, month, 1) - timedelta(days=1),
                     'date_to': month_end,
                     'items': [],
                     'total_nav': 0,
