@@ -43,16 +43,38 @@ class PerformanceReportBuilder:
         _l.info('self.instance master_user %s' % self.instance.master_user)
         _l.info('self.instance report_date %s' % self.instance.report_date)
 
+
+
     def build_report(self):
         st = time.perf_counter()
 
         self.instance.items = []
 
-        if self.instance.calculation_type == 'time_weighted':
-            self.build_time_weighted()
+        end_date = self.instance.end_date
 
-        if self.instance.calculation_type == 'money_weighted':
-            self.build_money_weighted()
+        if self.instance.end_date > timezone_today():
+            end_date = timezone_today() - timedelta(days=1)
+
+        self.instance.periods = self.get_periods(self.instance.begin_date, end_date, self.instance.segmentation_type)
+
+
+        for period in self.instance.periods:
+            if self.instance.calculation_type == 'time_weighted':
+                table = self.build_time_weighted(period['date_from'], period['date_to'])
+
+                for key, value in table.items():
+                    period['items'].append(table[key])
+
+            if self.instance.calculation_type == 'money_weighted':
+                table =  self.build_money_weighted(period['date_from'], period['date_to'])
+
+                for key, value in table.items():
+                    period['items'].append(table[key])
+
+            period = self.calculate_grand_values(period)
+
+        self.instance.items = []
+        self.instance.raw_items = json.loads(json.dumps(self.instance.periods, indent=4, sort_keys=True, default=str))
 
         _l.info('items total %s' % len(self.instance.items))
 
@@ -62,50 +84,90 @@ class PerformanceReportBuilder:
 
         return self.instance
 
-    def format_to_months(self, table):
+    def calculate_grand_values(self, period):
+
+        grand_nav = 0
+        grand_return = 1
+
+        for item in period['items']:
+
+            grand_nav = item['total_nav']
+
+            grand_return = grand_return * ( item['total_return'] + 1)
+
+        grand_return = grand_return - 1
+
+        period['grand_nav'] = grand_nav
+        period['grand_return'] = grand_return
+
+        return period
+
+    def get_list_of_dates_between_two_dates(self, date_from, date_to):
+        result = []
+
+        diff = date_to - date_from
+
+        for i in range(diff.days + 1):
+            day = date_from + timedelta(days=i)
+            result.append(day)
+
+        return result
+
+
+    def get_periods(self, date_from, date_to, segmentation_type):
+
+        _l.info("Getting periods %s from %s to %s" % (self.instance.segmentation_type, date_from, date_to))
+
+        result = []
+
+        dates = self.get_list_of_dates_between_two_dates(date_from, date_to)
+
+        if segmentation_type == 'days':
+            result = self.format_to_days(dates)
+
+        if segmentation_type == 'months':
+            result = self.format_to_months(dates)
+
+        return result
+
+
+    def format_to_months(self, dates):
 
         result = []
 
         result_obj = {}
 
-        for key, value in table.items():
+        for date in dates:
 
-            date_pieces = key.split('-')
+            date_str = str(date)
+
+            date_pieces = date_str.split('-')
 
             year = int(date_pieces[0])
             month = int(date_pieces[1])
 
             year_month = str(year) + '-' + str(month)
 
+            month_end = datetime.date(year, month, calendar.monthrange(year, month)[1])
+
+            if month_end > timezone_today():
+                month_end = timezone_today() - timedelta(days=1)
+
             if year_month not in result_obj:
                 result_obj[year_month] = {
                     'date_from': datetime.date(year, month, 1),
-                    'date_to': calendar.monthrange(year, month)[1],
+                    'date_to': month_end,
                     'items': [],
                     'grand_nav': 0,
                     'grand_return': 0
                 }
 
-            result_obj[year_month]['items'].append(table[key])
-
-
         for key, value in result_obj.items():
-
-            grand_nav = 0
-            grand_return = 1
-
-            for item in result_obj[key]['items']:
-
-                grand_nav = item['total_nav']
-
-                grand_return = grand_return * ( item['total_return'] + 1)
-
-            grand_return = grand_return - 1
-
-            result_obj[key]['grand_nav'] = grand_nav
-            result_obj[key]['grand_return'] = grand_return
-
             result.append(result_obj[key])
+
+
+        _l.info("result %s" % result)
+
 
         return result
 
@@ -115,25 +177,25 @@ class PerformanceReportBuilder:
 
         return result
 
-    def format_to_days(self, table):
+    def format_to_days(self, dates):
 
         result = []
 
-        for key, value in table.items():
+        for date in dates:
 
             result_item = {}
 
-            result_item['date_from'] = key
-            result_item['date_to'] = key
-            result_item['items'] = [table[key]]
-            result_item['grand_nav'] = table[key]['total_nav']
-            result_item['grand_return'] = table[key]['total_return']
+            result_item['date_from'] = date
+            result_item['date_to'] = date
+            result_item['items'] = []
+            result_item['grand_nav'] = 0
+            result_item['grand_return'] = 0
 
             result.append(result_item)
 
         return result
 
-    def build_time_weighted(self):
+    def build_time_weighted(self, date_from, date_to):
 
         _l.info("build portfolio records")
 
@@ -152,21 +214,10 @@ class PerformanceReportBuilder:
             portfolios.append(portfolio_register.portfolio_id)
             portfolio_registers_map[portfolio_register.portfolio_id] = portfolio_register
 
-        end_date = self.instance.end_date
-
-        if self.instance.end_date > timezone_today():
-            end_date = timezone_today() - timedelta(days=1)
-            # end_date = timezone_today() + timedelta(days=30)
-
-        _l.info('end_date %s' % end_date)
-
-        begin_date_str = str(self.instance.begin_date)
-        end_date_str = str(end_date)
-
 
         transactions = Transaction.objects.filter(portfolio__in=portfolios,
-                                                  accounting_date__lte=end_date,
-                                                  accounting_date__gte=self.instance.begin_date,
+                                                  accounting_date__gte=date_from,
+                                                  accounting_date__lte=date_to,
                                                   transaction_class__in=[TransactionClass.CASH_INFLOW,
                                                                          TransactionClass.CASH_OUTFLOW,
                                                                          TransactionClass.INJECTION,
@@ -174,6 +225,25 @@ class PerformanceReportBuilder:
             'accounting_date')
 
         table = {}
+
+        if date_from not in table:
+            table[date_from] = {}
+            table[date_from]['portfolios'] = {}
+            table[date_from]['total_nav'] = 0
+            table[date_from]['total_return'] = 0
+
+            for portfolio_id in portfolios:
+                table[date_from]['portfolios'][portfolio_id] = {
+                    'portfolio_register': portfolio_registers_map[portfolio_id],
+                    'portfolio_id': portfolio_id,
+                    'accounting_date_str': date_from,
+                    'accounting_date': date_from,
+                    'cash_in_out': 0,
+                    'previous_nav': 0,
+                    'nav': 0,
+                    'instrument_return': 0,
+                    'transactions': []
+                }
 
         for trn in transactions:
 
@@ -202,38 +272,19 @@ class PerformanceReportBuilder:
 
         previous_date = None
 
-        if begin_date_str not in table:
-            table[begin_date_str] = {}
-            table[begin_date_str]['portfolios'] = {}
-            table[begin_date_str]['total_nav'] = 0
-            table[begin_date_str]['total_return'] = 0
+
+        if date_to not in table:
+            table[date_to] = {}
+            table[date_to]['portfolios'] = {}
+            table[date_to]['total_nav'] = 0
+            table[date_to]['total_return'] = 0
 
             for portfolio_id in portfolios:
-                table[begin_date_str]['portfolios'][portfolio_id] = {
+                table[date_to]['portfolios'][portfolio_id] = {
                     'portfolio_register': portfolio_registers_map[portfolio_id],
                     'portfolio_id': portfolio_id,
-                    'accounting_date_str': begin_date_str,
-                    'accounting_date': self.instance.begin_date,
-                    'cash_in_out': 0,
-                    'previous_nav': 0,
-                    'nav': 0,
-                    'instrument_return': 0,
-                    'transactions': []
-                }
-
-
-        if end_date_str not in table:
-            table[end_date_str] = {}
-            table[end_date_str]['portfolios'] = {}
-            table[end_date_str]['total_nav'] = 0
-            table[end_date_str]['total_return'] = 0
-
-            for portfolio_id in portfolios:
-                table[end_date_str]['portfolios'][portfolio_id] = {
-                    'portfolio_register': portfolio_registers_map[portfolio_id],
-                    'portfolio_id': portfolio_id,
-                    'accounting_date_str': end_date_str,
-                    'accounting_date': end_date,
+                    'accounting_date_str': date_to,
+                    'accounting_date': date_to,
                     'cash_in_out': 0,
                     'previous_nav': 0,
                     'nav': 0,
@@ -322,24 +373,10 @@ class PerformanceReportBuilder:
 
         print('table %s' % table)
 
-        result_table = []
-
-        _l.info('self.instance.segmentation_type %s' % self.instance.segmentation_type)
-
-        if self.instance.segmentation_type == 'days':
-            result_table = self.format_to_days(table)
-
-        if self.instance.segmentation_type == 'weeks':
-            result_table = self.format_to_weeks(table)
-
-        if self.instance.segmentation_type == 'months':
-            result_table = self.format_to_months(table)
+        return table
 
 
-        self.instance.items = []
-        self.instance.raw_items = json.loads(json.dumps(result_table, indent=4, sort_keys=True, default=str))
-
-    def build_money_weighted(self):
+    def build_money_weighted(self, date_from, date_to):
 
         _l.info("build portfolio records")
 
