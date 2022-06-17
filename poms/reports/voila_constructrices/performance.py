@@ -473,10 +473,15 @@ class PerformanceReportBuilder:
                 if previous_nav:
                     instrument_return = (nav - cash_flow - previous_nav) / previous_nav
                 else:
-                    instrument_return = 0
+                    instrument_return = (nav - cash_flow) / nav
 
                 item['nav'] = nav
-                item['cash_flow'] = cash_flow
+
+                if item['accounting_date_str'] == date_from_str:
+                    item['cash_flow'] = 0
+                else:
+                    item['cash_flow'] = cash_flow
+
                 item['previous_nav'] = previous_nav
                 item['previous_nav_date'] = previous_nav_date
                 item['instrument_return'] = instrument_return
