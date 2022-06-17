@@ -44,6 +44,31 @@ class PerformanceReportBuilder:
         _l.info('self.instance report_date %s' % self.instance.report_date)
 
 
+    def get_first_transaction(self):
+
+        self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
+
+        portfolio_registers = PortfolioRegister.objects.filter(master_user=self.instance.master_user,
+                                                               linked_instrument__in=self.instance.bunch_portfolios)
+
+        portfolio_registers_map = {}
+
+        portfolios = []
+
+        for portfolio_register in portfolio_registers:
+            portfolios.append(portfolio_register.portfolio_id)
+            portfolio_registers_map[portfolio_register.portfolio_id] = portfolio_register
+
+        transaction = Transaction.objects.filter(portfolio__in=portfolios,
+                                                  accounting_date__gte=self.instance.begin_date,
+                                                  transaction_class__in=[TransactionClass.CASH_INFLOW,
+                                                                         TransactionClass.CASH_OUTFLOW,
+                                                                         TransactionClass.INJECTION,
+                                                                         TransactionClass.DISTRIBUTION]).order_by(
+            'accounting_date').first()
+
+        return transaction.accounting_date
+
 
     def build_report(self):
         st = time.perf_counter()
@@ -53,10 +78,15 @@ class PerformanceReportBuilder:
         end_date = self.instance.end_date
 
         if self.instance.end_date > timezone_today():
-            end_date = timezone_today() - timedelta(days=1)
+            # end_date = timezone_today() - timedelta(days=1)
+            end_date = timezone_today()
 
-        self.instance.periods = self.get_periods(self.instance.begin_date, end_date, self.instance.segmentation_type)
+        begin_date = self.get_first_transaction()
 
+        _l.info('build_report.begin_date %s' % begin_date)
+        _l.info('build_report.end_date %s' % end_date)
+
+        self.instance.periods = self.get_periods(begin_date, end_date, self.instance.segmentation_type)
 
         for period in self.instance.periods:
             if self.instance.calculation_type == 'time_weighted':
@@ -65,15 +95,18 @@ class PerformanceReportBuilder:
                 for key, value in table.items():
                     period['items'].append(table[key])
 
+                period = self.calculate_time_weighted_total_values(period)
+
             if self.instance.calculation_type == 'money_weighted':
-                table =  self.build_money_weighted(period['date_from'], period['date_to'])
+                table = self.build_money_weighted(period['date_from'], period['date_to'])
 
                 for key, value in table.items():
                     period['items'].append(table[key])
 
-            period = self.calculate_total_values(period)
+                period = self.calculate_money_weighted_total_values(period)
 
-        self.calculate_grand_total_values()
+        if self.instance.calculation_type == 'time_weighted':
+            self.calculate_time_weighted_grand_total_values()
 
         self.instance.items = []
         self.instance.raw_items = json.loads(json.dumps(self.instance.periods, indent=4, sort_keys=True, default=str))
@@ -86,7 +119,7 @@ class PerformanceReportBuilder:
 
         return self.instance
 
-    def calculate_grand_total_values(self):
+    def calculate_time_weighted_grand_total_values(self):
 
         grand_return = 1
 
@@ -96,12 +129,10 @@ class PerformanceReportBuilder:
         end_nav = 0
 
         for period in self.instance.periods:
-
-            grand_return = grand_return * ( period['total_return'] + 1)
+            grand_return = grand_return * (period['total_return'] + 1)
             grand_cash_flow = grand_cash_flow + period['total_cash_flow']
 
         grand_return = grand_return - 1
-
 
         begin_nav = self.instance.periods[0]['total_nav']
         grand_nav = self.instance.periods[-1]['total_nav']
@@ -113,18 +144,17 @@ class PerformanceReportBuilder:
         self.instance.begin_nav = begin_nav
         self.instance.end_nav = end_nav
 
-    def calculate_total_values(self, period):
+    def calculate_time_weighted_total_values(self, period):
 
         total_nav = 0
         total_cash_flow = 0
         total_return = 1
 
         for item in period['items']:
-
             total_nav = item['subtotal_nav']
             total_cash_flow = total_cash_flow + item['subtotal_cash_flow']
 
-            total_return = total_return * ( item['subtotal_return'] + 1)
+            total_return = total_return * (item['subtotal_return'] + 1)
 
         total_return = total_return - 1
 
@@ -132,6 +162,34 @@ class PerformanceReportBuilder:
         period['end_nav'] = period['items'][-1]['subtotal_nav']
 
         period['total_cash_flow'] = total_cash_flow
+        period['total_nav'] = total_nav
+        period['total_return'] = total_return
+
+        return period
+
+    def calculate_money_weighted_total_values(self, period):
+
+        total_nav = 0
+        total_cash_flow = 0
+        total_cash_flow_weighted = 0
+        total_return = 1
+
+        for item in period['items']:
+            total_nav = item['subtotal_nav']
+            total_cash_flow = total_cash_flow + item['subtotal_cash_flow']
+            total_cash_flow_weighted = total_cash_flow_weighted + item['subtotal_cash_flow_weighted']
+
+
+        period['begin_nav'] = period['items'][0]['subtotal_nav']
+        period['end_nav'] = period['items'][-1]['subtotal_nav']
+
+        try:
+            total_return = (period['end_nav'] - period['begin_nav'] - total_cash_flow) / (period['begin_nav'] + total_cash_flow_weighted)
+        except Exception:
+            total_return = 0
+
+        period['total_cash_flow'] = total_cash_flow
+        period['total_cash_flow_weighted'] = total_cash_flow_weighted
         period['total_nav'] = total_nav
         period['total_return'] = total_return
 
@@ -148,6 +206,22 @@ class PerformanceReportBuilder:
 
         return result
 
+    def get_dict_of_dates_between_two_dates_with_order(self, date_from, date_to):
+        list_result = []
+        result = {}
+
+        diff = date_to - date_from
+
+        for i in range(diff.days + 1):
+            day = date_from + timedelta(days=i)
+            list_result.append(day)
+
+        index = 0
+        for item in list_result:
+            result[str(item)] = index + 1
+            index = index + 1
+
+        return result
 
     def get_periods(self, date_from, date_to, segmentation_type):
 
@@ -165,12 +239,13 @@ class PerformanceReportBuilder:
 
         return result
 
-
     def format_to_months(self, dates):
 
         result = []
 
         result_obj = {}
+
+        begin_date = self.get_first_transaction()
 
         for date in dates:
 
@@ -188,9 +263,14 @@ class PerformanceReportBuilder:
             if month_end > timezone_today():
                 month_end = timezone_today() - timedelta(days=1)
 
+            month_start = datetime.date(year, month, 1) - timedelta(days=1)
+
+            if month_start < begin_date:
+                month_start = begin_date
+
             if year_month not in result_obj:
                 result_obj[year_month] = {
-                    'date_from': datetime.date(year, month, 1) - timedelta(days=1),
+                    'date_from': month_start,
                     'date_to': month_end,
                     'items': [],
                     'total_nav': 0,
@@ -200,9 +280,7 @@ class PerformanceReportBuilder:
         for key, value in result_obj.items():
             result.append(result_obj[key])
 
-
         _l.info("result %s" % result)
-
 
         return result
 
@@ -217,7 +295,6 @@ class PerformanceReportBuilder:
         result = []
 
         for date in dates:
-
             result_item = {}
 
             result_item['date_from'] = date - timedelta(days=1)
@@ -234,6 +311,9 @@ class PerformanceReportBuilder:
 
         _l.info("build portfolio records")
 
+        date_from_str = str(date_from)
+        date_to_str = str(date_to)
+
         result = []
 
         self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
@@ -249,7 +329,6 @@ class PerformanceReportBuilder:
             portfolios.append(portfolio_register.portfolio_id)
             portfolio_registers_map[portfolio_register.portfolio_id] = portfolio_register
 
-
         transactions = Transaction.objects.filter(portfolio__in=portfolios,
                                                   accounting_date__gte=date_from,
                                                   accounting_date__lte=date_to,
@@ -259,20 +338,24 @@ class PerformanceReportBuilder:
                                                                          TransactionClass.DISTRIBUTION]).order_by(
             'accounting_date')
 
+
+        # create empty structure start
+
         table = {}
 
-        if date_from not in table:
-            table[date_from] = {}
-            table[date_from]['portfolios'] = {}
-            table[date_from]['subtotal_cash_flow'] = 0
-            table[date_from]['subtotal_nav'] = 0
-            table[date_from]['subtotal_return'] = 0
+        if date_from_str not in table:
+            table[date_from_str] = {}
+            table[date_from_str]['date'] = date_from_str
+            table[date_from_str]['portfolios'] = {}
+            table[date_from_str]['subtotal_cash_flow'] = 0
+            table[date_from_str]['subtotal_nav'] = 0
+            table[date_from_str]['subtotal_return'] = 0
 
             for portfolio_id in portfolios:
                 table[date_from]['portfolios'][portfolio_id] = {
                     'portfolio_register': portfolio_registers_map[portfolio_id],
                     'portfolio_id': portfolio_id,
-                    'accounting_date_str': date_from,
+                    'accounting_date_str': date_from_str,
                     'accounting_date': date_from,
                     'cash_flow': 0,
                     'previous_nav': 0,
@@ -287,6 +370,7 @@ class PerformanceReportBuilder:
 
             if accounting_date_str not in table:
                 table[accounting_date_str] = {}
+                table[accounting_date_str]['date'] = accounting_date_str
                 table[accounting_date_str]['portfolios'] = {}
                 table[accounting_date_str]['subtotal_cash_flow'] = 0
                 table[accounting_date_str]['subtotal_nav'] = 0
@@ -307,21 +391,19 @@ class PerformanceReportBuilder:
 
             table[accounting_date_str]['portfolios'][trn.portfolio_id]['transactions'].append(trn)
 
-        previous_date = None
-
-
-        if date_to not in table:
-            table[date_to] = {}
-            table[date_to]['portfolios'] = {}
-            table[date_to]['subtotal_cash_flow'] = 0
-            table[date_to]['subtotal_nav'] = 0
-            table[date_to]['subtotal_return'] = 0
+        if date_to_str not in table:
+            table[date_to_str] = {}
+            table[date_to_str]['date'] = date_to_str
+            table[date_to_str]['portfolios'] = {}
+            table[date_to_str]['subtotal_cash_flow'] = 0
+            table[date_to_str]['subtotal_nav'] = 0
+            table[date_to_str]['subtotal_return'] = 0
 
             for portfolio_id in portfolios:
                 table[date_to]['portfolios'][portfolio_id] = {
                     'portfolio_register': portfolio_registers_map[portfolio_id],
                     'portfolio_id': portfolio_id,
-                    'accounting_date_str': date_to,
+                    'accounting_date_str': date_to_str,
                     'accounting_date': date_to,
                     'cash_flow': 0,
                     'previous_nav': 0,
@@ -329,6 +411,12 @@ class PerformanceReportBuilder:
                     'instrument_return': 0,
                     'transactions': []
                 }
+
+        # create empty structure end
+
+        # Fill with Data
+
+        previous_date = None
 
         for key, value in table.items():
 
@@ -356,8 +444,6 @@ class PerformanceReportBuilder:
                     previous_nav = previous_date['portfolios'][_key]['nav']
                     previous_nav_date = previous_date['portfolios'][_key]['accounting_date']
 
-
-
                 cash_flow = 0
 
                 for trn in item['transactions']:
@@ -369,8 +455,9 @@ class PerformanceReportBuilder:
                     else:
                         try:
 
-                            valuation_ccy_fx_rate = CurrencyHistory.objects.get(currency_id=item['portfolio_register'].valuation_currency_id,
-                                                                                date=trn.transaction_date).fx_rate
+                            valuation_ccy_fx_rate = CurrencyHistory.objects.get(
+                                currency_id=item['portfolio_register'].valuation_currency_id,
+                                date=trn.transaction_date).fx_rate
                             cash_ccy_fx_rate = CurrencyHistory.objects.get(currency_id=trn.settlement_currency_id,
                                                                            date=trn.transaction_date).fx_rate
 
@@ -394,7 +481,13 @@ class PerformanceReportBuilder:
                 item['previous_nav_date'] = previous_nav_date
                 item['instrument_return'] = instrument_return
 
-            # Calculate nav
+
+        # Calculate nav
+
+        for key, value in table.items():
+
+            item_date = table[key]
+
             for _key, _value in item_date['portfolios'].items():
 
                 item = item_date['portfolios'][_key]
@@ -406,7 +499,7 @@ class PerformanceReportBuilder:
 
                 if previous_date and previous_date['subtotal_nav']:
                     item_date['subtotal_return'] = item_date['subtotal_return'] + (
-                                item['instrument_return'] * item['previous_nav'] / previous_date['subtotal_nav'])
+                            item['instrument_return'] * item['previous_nav'] / previous_date['subtotal_nav'])
 
             previous_date = item_date
 
@@ -414,14 +507,18 @@ class PerformanceReportBuilder:
 
         return table
 
-
     def build_money_weighted(self, date_from, date_to):
 
         _l.info("build portfolio records")
 
+        date_from_str = str(date_from)
+        date_to_str = str(date_to)
+
         result = []
 
-        self.instance.bunch_portfolios = [44]  # instruments #debug szhitenev fund
+        dates_map = self.get_dict_of_dates_between_two_dates_with_order(date_from, date_to)
+
+        self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
 
         portfolio_registers = PortfolioRegister.objects.filter(master_user=self.instance.master_user,
                                                                linked_instrument__in=self.instance.bunch_portfolios)
@@ -435,13 +532,50 @@ class PerformanceReportBuilder:
             portfolio_registers_map[portfolio_register.portfolio_id] = portfolio_register
 
         transactions = Transaction.objects.filter(portfolio__in=portfolios,
+                                                  accounting_date__gte=date_from,
+                                                  accounting_date__lte=date_to,
                                                   transaction_class__in=[TransactionClass.CASH_INFLOW,
                                                                          TransactionClass.CASH_OUTFLOW,
                                                                          TransactionClass.INJECTION,
                                                                          TransactionClass.DISTRIBUTION]).order_by(
             'accounting_date')
 
+        # create empty structure start
+
         table = {}
+
+
+        table[date_from_str] = {}
+        table[date_from_str]['date'] = date_from_str
+        table[date_from_str]['portfolios'] = {}
+        table[date_from_str]['subtotal_cash_flow'] = 0
+        table[date_from_str]['subtotal_cash_flow_weighted'] = 0
+        table[date_from_str]['subtotal_nav'] = 0
+
+
+        for portfolio_id in portfolios:
+
+            nav = 0
+
+            try:
+                price_history = PriceHistory.objects.get(date=date_from,
+                                                         instrument=portfolio_registers_map[portfolio_id].linked_instrument,
+                                                         pricing_policy=portfolio_registers_map[portfolio_id].valuation_pricing_policy)
+
+                nav = price_history.nav
+            except Exception as e:
+                nav = 0
+
+            table[date_from_str]['portfolios'][portfolio_id] = {
+                'portfolio_register': portfolio_registers_map[portfolio_id],
+                'portfolio_id': portfolio_id,
+                'accounting_date_str': date_from_str,
+                'accounting_date': date_from,
+                'cash_flow': 0,
+                'cash_flow_weighted': nav * 1,
+                'nav': nav,
+                'transactions': []
+            }
 
         for trn in transactions:
 
@@ -449,9 +583,12 @@ class PerformanceReportBuilder:
 
             if accounting_date_str not in table:
                 table[accounting_date_str] = {}
+                table[accounting_date_str]['date'] = accounting_date_str
                 table[accounting_date_str]['portfolios'] = {}
-                table[accounting_date_str]['total_nav'] = 0
-                table[accounting_date_str]['total_return'] = 0
+                table[accounting_date_str]['subtotal_cash_flow'] = 0
+                table[accounting_date_str]['subtotal_cash_flow_weighted'] = 0
+                table[accounting_date_str]['subtotal_nav'] = 0
+
 
             if trn.portfolio_id not in table[accounting_date_str]['portfolios']:
                 table[accounting_date_str]['portfolios'][trn.portfolio_id] = {
@@ -460,15 +597,115 @@ class PerformanceReportBuilder:
                     'accounting_date_str': accounting_date_str,
                     'accounting_date': trn.accounting_date,
                     'cash_flow': 0,
-                    'previous_nav': 0,
                     'nav': 0,
-                    'instrument_return': 0,
                     'transactions': []
                 }
 
             table[accounting_date_str]['portfolios'][trn.portfolio_id]['transactions'].append(trn)
 
-        previous_date = None
+        table[date_to_str] = {}
+        table[date_to_str]['date'] = date_to_str
+        table[date_to_str]['portfolios'] = {}
+        table[date_to_str]['subtotal_cash_flow'] = 0
+        table[date_to_str]['subtotal_cash_flow_weighted'] = 0
+        table[date_to_str]['subtotal_nav'] = 0
+
+
+        for portfolio_id in portfolios:
+
+            nav = 0
+
+            try:
+                price_history = PriceHistory.objects.get(date=date_to,
+                                                         instrument=portfolio_registers_map[portfolio_id].linked_instrument,
+                                                         pricing_policy=portfolio_registers_map[portfolio_id].valuation_pricing_policy)
+
+                _l.info('price_history.nav %s' % price_history.nav)
+
+                nav = price_history.nav
+            except Exception as e:
+                _l.error("end date nav e %s" % e)
+                nav = 0
+
+
+            table[date_to_str]['portfolios'][portfolio_id] = {
+                'portfolio_register': portfolio_registers_map[portfolio_id],
+                'portfolio_id': portfolio_id,
+                'accounting_date_str': date_to_str,
+                'accounting_date': date_to,
+                'cash_flow': nav,
+                'cash_flow_weighted': nav * 0,
+                'previous_nav': 0,
+                'nav': nav,
+                'transactions': []
+            }
+
+        # print('table %s '  % table)
+
+        # create empty structure end
+
+        # Fill with Data
+
+        for key, value in table.items():
+
+            item_date = table[key]
+
+            if key != date_to_str and key != date_from_str:
+
+                for _key, _value in item_date['portfolios'].items():
+
+                    item = item_date['portfolios'][_key]
+
+                    nav = 0
+
+                    try:
+                        price_history = PriceHistory.objects.get(date=item['accounting_date'],
+                                                                 instrument=item['portfolio_register'].linked_instrument,
+                                                                 pricing_policy=item[
+                                                                     'portfolio_register'].valuation_pricing_policy)
+
+                        nav = price_history.nav
+                    except Exception as e:
+                        nav = 0
+
+                    cash_flow = 0
+
+                    for trn in item['transactions']:
+
+                        fx_rate = 0
+
+                        if trn.transaction_currency_id == item['portfolio_register'].valuation_currency_id:
+                            fx_rate = 1
+                        else:
+                            try:
+
+                                valuation_ccy_fx_rate = CurrencyHistory.objects.get(
+                                    currency_id=item['portfolio_register'].valuation_currency_id,
+                                    date=trn.transaction_date).fx_rate
+                                cash_ccy_fx_rate = CurrencyHistory.objects.get(currency_id=trn.settlement_currency_id,
+                                                                               date=trn.transaction_date).fx_rate
+
+                                fx_rate = valuation_ccy_fx_rate / cash_ccy_fx_rate
+
+                            except Exception:
+                                fx_rate = 0
+
+                        cash_flow = cash_flow + trn.cash_consideration * fx_rate
+
+                    date_n = dates_map[item['accounting_date_str']]
+                    date_to_n = dates_map[str(date_to)]
+                    date_from_n = dates_map[str(date_from)]
+
+                    time_weight = date_to_n - date_n / date_to_n - date_from_n
+
+                    item['cash_flow'] = cash_flow
+                    item['cash_flow_weighted'] = cash_flow * time_weight
+                    item['nav'] = nav
+
+            else:
+                print("Skip %s " % key)
+
+        #  Calculate subtotals
 
         for key, value in table.items():
 
@@ -478,56 +715,11 @@ class PerformanceReportBuilder:
 
                 item = item_date['portfolios'][_key]
 
-                price_history = PriceHistory.objects.get(date=item['accounting_date'],
-                                                         instrument=item['portfolio_register'].linked_instrument,
-                                                         pricing_policy=item[
-                                                             'portfolio_register'].valuation_pricing_policy)
+                item_date['subtotal_nav'] = item_date['subtotal_nav'] + item['nav']
+                item_date['subtotal_cash_flow'] = item_date['subtotal_cash_flow'] + item['cash_flow']
+                item_date['subtotal_cash_flow_weighted'] = item_date['subtotal_cash_flow_weighted'] + item['cash_flow_weighted']
 
-                previous_nav = 0
-                previous_nav_date = None
-                if previous_date:
-                    previous_nav = previous_date['portfolios'][_key]['nav']
-                    previous_nav_date = previous_date['portfolios'][_key]['accounting_date']
-
-                nav = price_history.nav
-
-                cash_flow = 0
-
-                for trn in item['transactions']:
-                    cash_flow = cash_flow + trn.cash_consideration  # TODO add fx conversion?
-
-                instrument_return = 0
-
-                if previous_nav:
-                    instrument_return = (nav - cash_flow - previous_nav) / previous_nav
-                else:
-                    instrument_return = 0
-
-                item['nav'] = nav
-                item['cash_flow'] = cash_flow
-                item['previous_nav'] = previous_nav
-                item['previous_nav_date'] = previous_nav_date
-                item['instrument_return'] = instrument_return
-
-            # Calculate nav
-            for _key, _value in item_date['portfolios'].items():
-
-                item = item_date['portfolios'][_key]
-
-                item_date['total_nav'] = item_date['total_nav'] + item['nav']
-
-                # Return[k,i] * NAV[k,i-1] / Total_NAV[i-1]
-
-                if previous_date:
-                    item_date['total_return'] = item_date['total_return'] + (
-                                item['instrument_return'] * item['previous_nav'] / previous_date['total_nav'])
-
-            previous_date = item_date
-
-        print('table %s' % table)
-
-        self.instance.items = []
-        self.instance.raw_items = json.loads(json.dumps(table, indent=4, sort_keys=True, default=str))
+        return table
 
     def add_data_items_instruments(self, ids):
 

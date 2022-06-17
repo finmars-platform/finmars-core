@@ -477,8 +477,10 @@ class PerformanceReport(BaseReport):
 
 
     CALCULATION_TYPE_TIME_WEIGHTED = 'time_weighted'
+    CALCULATION_TYPE_MONEY_WEIGHTED = 'money_weighted'
     CALCULATION_TYPE_CHOICES = (
         (CALCULATION_TYPE_TIME_WEIGHTED, 'Time Weighted'),
+        (CALCULATION_TYPE_MONEY_WEIGHTED, 'Money Weighted'),
     )
 
     SEGMENTATION_TYPE_DAYS = 'days'
