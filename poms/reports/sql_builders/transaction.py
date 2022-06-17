@@ -1,7 +1,9 @@
 import logging
 import time
+from datetime import timedelta
 
 from django.db import connection
+from django.views.generic.dates import timezone_today
 
 from poms.accounts.models import Account
 from poms.currencies.models import Currency
@@ -31,6 +33,12 @@ class TransactionReportBuilderSql:
         _l.debug('self.instance master_user %s' % self.instance.master_user)
         _l.debug('self.instance begin_date %s' % self.instance.begin_date)
         _l.debug('self.instance end_date %s' % self.instance.end_date)
+
+        if not self.instance.begin_date:
+            self.instance.begin_date = timezone_today() - timedelta(days=365)
+
+        if not self.instance.end_date:
+            self.instance.end_date = timezone_today()
 
     def build_transaction(self):
         st = time.perf_counter()

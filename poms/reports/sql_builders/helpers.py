@@ -304,7 +304,7 @@ def get_transaction_report_filter_sql_string(instance):
 def get_transaction_report_date_filter_sql_string(instance):
     result_string = ''
 
-    if 'user_' in instance.date_field:
+    if 'user_' in instance.date_field or 'date' == instance.date_field:
 
         result_string = "tc." + instance.date_field + " >= '" + str(instance.begin_date) + "' AND tc." + instance.date_field + "<= '" + str(instance.end_date) + "'"
 

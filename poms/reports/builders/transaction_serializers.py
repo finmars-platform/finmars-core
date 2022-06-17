@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+from datetime import timedelta
+
 from django.utils.translation import ugettext
 from rest_framework import serializers
 
@@ -26,7 +28,7 @@ import time
 import logging
 
 _l = logging.getLogger('poms.reports')
-
+from poms.common.utils import date_now
 
 class TransactionReportItemSerializer(serializers.Serializer):
     id = serializers.ReadOnlyField()
@@ -448,8 +450,8 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
                                              # ('user_date_10', ugettext('User Date 10')),
                                          ))
 
-    begin_date = serializers.DateField(required=False, allow_null=True)
-    end_date = serializers.DateField(required=False, allow_null=True)
+    begin_date = serializers.DateField(required=False, allow_null=True, initial=date_now() - timedelta(days=365), default=date_now() - timedelta(days=365))
+    end_date = serializers.DateField(required=False, allow_null=True,  initial=date_now, default=date_now)
     portfolios = PortfolioField(many=True, required=False, allow_null=True, allow_empty=True)
     accounts = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
     accounts_position = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
