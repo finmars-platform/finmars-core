@@ -441,11 +441,11 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
                                              ('user_date_3', ugettext('User Date 3')),
                                              ('user_date_4', ugettext('User Date 4')),
                                              ('user_date_5', ugettext('User Date 5')),
-                                             ('user_date_6', ugettext('User Date 6')),
-                                             ('user_date_7', ugettext('User Date 7')),
-                                             ('user_date_8', ugettext('User Date 8')),
-                                             ('user_date_9', ugettext('User Date 9')),
-                                             ('user_date_10', ugettext('User Date 10')),
+                                             # ('user_date_6', ugettext('User Date 6')),
+                                             # ('user_date_7', ugettext('User Date 7')),
+                                             # ('user_date_8', ugettext('User Date 8')),
+                                             # ('user_date_9', ugettext('User Date 9')),
+                                             # ('user_date_10', ugettext('User Date 10')),
                                          ))
 
     begin_date = serializers.DateField(required=False, allow_null=True)

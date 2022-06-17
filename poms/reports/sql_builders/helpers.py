@@ -12,7 +12,6 @@ def dictfetchall(cursor):
 
 
 def get_transaction_filter_sql_string(instance):
-
     result_string = ''
 
     filter_sql_list = []
@@ -61,7 +60,6 @@ def get_transaction_filter_sql_string(instance):
 
 
 def get_report_fx_rate(instance, date):
-
     report_fx_rate = 1
 
     try:
@@ -77,7 +75,6 @@ def get_report_fx_rate(instance, date):
 
 
 def get_fx_trades_and_fx_variations_transaction_filter_sql_string(instance):
-
     result_string = ''
 
     filter_sql_list = []
@@ -126,7 +123,6 @@ def get_fx_trades_and_fx_variations_transaction_filter_sql_string(instance):
 
 
 def get_where_expression_for_position_consolidation(instance, prefix, prefix_second):
-
     result = []
 
     if instance.portfolio_mode == Report.MODE_INDEPENDENT:
@@ -153,7 +149,6 @@ def get_where_expression_for_position_consolidation(instance, prefix, prefix_sec
 
 
 def get_position_consolidation_for_select(instance, prefix=''):
-
     result = []
 
     if instance.portfolio_mode == Report.MODE_INDEPENDENT:
@@ -201,13 +196,12 @@ def get_pl_left_join_consolidation(instance):
 
     if len(result):
         resultString = resultString + 'and '
-        resultString = resultString +  " and ".join(result)
+        resultString = resultString + " and ".join(result)
 
     return resultString
 
 
 def get_cash_consolidation_for_select(instance):
-
     result = []
 
     if instance.portfolio_mode == Report.MODE_INDEPENDENT:
@@ -234,7 +228,6 @@ def get_cash_consolidation_for_select(instance):
 
 
 def get_cash_as_position_consolidation_for_select(instance):
-
     result = []
 
     if instance.portfolio_mode == Report.MODE_INDEPENDENT:
@@ -261,7 +254,6 @@ def get_cash_as_position_consolidation_for_select(instance):
 
 
 def get_transaction_report_filter_sql_string(instance):
-
     result_string = ''
 
     filter_sql_list = []
@@ -305,5 +297,18 @@ def get_transaction_report_filter_sql_string(instance):
     if len(filter_sql_list):
         result_string = result_string + 'and '
         result_string = result_string + ' and '.join(filter_sql_list)
+
+    return result_string
+
+
+def get_transaction_report_date_filter_sql_string(instance):
+    result_string = ''
+
+    if 'user_' in instance.date_field:
+
+        result_string = "tc." + instance.date_field + " >= '" + str(instance.begin_date) + "' AND tc." + instance.date_field + "<= '" + str(instance.end_date) + "'"
+
+    else:
+        result_string = "t." + instance.date_field + " >= '" + str(instance.begin_date) + "' AND t." + instance.date_field + " <= '" + str(instance.end_date) + "'"
 
     return result_string
