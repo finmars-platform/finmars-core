@@ -123,6 +123,7 @@ class PerformanceReportSerializer(serializers.Serializer):
     # has_errors = serializers.ReadOnlyField()
     items = PerformanceReportItemSerializer(many=True, read_only=True)
     raw_items = serializers.JSONField(allow_null=True, required=False, read_only=True)
+    grand_return = serializers.ReadOnlyField()
     # item_portfolios = ReportPortfolioSerializer(many=True, read_only=True)
     # item_accounts = ReportAccountSerializer(many=True, read_only=True)
     # item_strategies1 = ReportStrategy1Serializer(many=True, read_only=True)

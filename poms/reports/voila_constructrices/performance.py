@@ -71,7 +71,9 @@ class PerformanceReportBuilder:
                 for key, value in table.items():
                     period['items'].append(table[key])
 
-            period = self.calculate_grand_values(period)
+            period = self.calculate_total_values(period)
+
+        self.instance.grand_return = 0
 
         self.instance.items = []
         self.instance.raw_items = json.loads(json.dumps(self.instance.periods, indent=4, sort_keys=True, default=str))
@@ -84,21 +86,21 @@ class PerformanceReportBuilder:
 
         return self.instance
 
-    def calculate_grand_values(self, period):
+    def calculate_total_values(self, period):
 
-        grand_nav = 0
-        grand_return = 1
+        total_nav = 0
+        total_return = 1
 
         for item in period['items']:
 
-            grand_nav = item['total_nav']
+            total_nav = item['subtotal_nav']
 
-            grand_return = grand_return * ( item['total_return'] + 1)
+            total_return = total_return * ( item['subtotal_return'] + 1)
 
-        grand_return = grand_return - 1
+        total_return = total_return - 1
 
-        period['grand_nav'] = grand_nav
-        period['grand_return'] = grand_return
+        period['total_nav'] = total_nav
+        period['total_return'] = total_return
 
         return period
 
@@ -158,8 +160,8 @@ class PerformanceReportBuilder:
                     'date_from': datetime.date(year, month, 1),
                     'date_to': month_end,
                     'items': [],
-                    'grand_nav': 0,
-                    'grand_return': 0
+                    'total_nav': 0,
+                    'total_return': 0
                 }
 
         for key, value in result_obj.items():
@@ -185,11 +187,11 @@ class PerformanceReportBuilder:
 
             result_item = {}
 
-            result_item['date_from'] = date
+            result_item['date_from'] = date - timedelta(days=1)
             result_item['date_to'] = date
             result_item['items'] = []
-            result_item['grand_nav'] = 0
-            result_item['grand_return'] = 0
+            result_item['total_nav'] = 0
+            result_item['total_return'] = 0
 
             result.append(result_item)
 
@@ -229,8 +231,8 @@ class PerformanceReportBuilder:
         if date_from not in table:
             table[date_from] = {}
             table[date_from]['portfolios'] = {}
-            table[date_from]['total_nav'] = 0
-            table[date_from]['total_return'] = 0
+            table[date_from]['subtotal_nav'] = 0
+            table[date_from]['subtotal_return'] = 0
 
             for portfolio_id in portfolios:
                 table[date_from]['portfolios'][portfolio_id] = {
@@ -252,8 +254,8 @@ class PerformanceReportBuilder:
             if accounting_date_str not in table:
                 table[accounting_date_str] = {}
                 table[accounting_date_str]['portfolios'] = {}
-                table[accounting_date_str]['total_nav'] = 0
-                table[accounting_date_str]['total_return'] = 0
+                table[accounting_date_str]['subtotal_nav'] = 0
+                table[accounting_date_str]['subtotal_return'] = 0
 
             if trn.portfolio_id not in table[accounting_date_str]['portfolios']:
                 table[accounting_date_str]['portfolios'][trn.portfolio_id] = {
@@ -276,8 +278,8 @@ class PerformanceReportBuilder:
         if date_to not in table:
             table[date_to] = {}
             table[date_to]['portfolios'] = {}
-            table[date_to]['total_nav'] = 0
-            table[date_to]['total_return'] = 0
+            table[date_to]['subtotal_nav'] = 0
+            table[date_to]['subtotal_return'] = 0
 
             for portfolio_id in portfolios:
                 table[date_to]['portfolios'][portfolio_id] = {
@@ -361,13 +363,13 @@ class PerformanceReportBuilder:
 
                 item = item_date['portfolios'][_key]
 
-                item_date['total_nav'] = item_date['total_nav'] + item['nav']
+                item_date['subtotal_nav'] = item_date['subtotal_nav'] + item['nav']
 
                 # Return[k,i] * NAV[k,i-1] / Total_NAV[i-1]
 
-                if previous_date and previous_date['total_nav']:
-                    item_date['total_return'] = item_date['total_return'] + (
-                                item['instrument_return'] * item['previous_nav'] / previous_date['total_nav'])
+                if previous_date and previous_date['subtotal_nav']:
+                    item_date['subtotal_return'] = item_date['subtotal_return'] + (
+                                item['instrument_return'] * item['previous_nav'] / previous_date['subtotal_nav'])
 
             previous_date = item_date
 
