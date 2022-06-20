@@ -1106,7 +1106,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
     for query in relation_queries_user_code:
         q = q | query
 
-    char_fields = [f for f in model._meta.fields if isinstance(f, CharField)]
+    char_fields = [f for f in model._meta.fields if isinstance(f, CharField and f.name != 'deleted_user_code' )]
     char_queries = [Q(**{f.name + '__icontains': global_table_search}) for f in char_fields]
 
     for query in char_queries:
