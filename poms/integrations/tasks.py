@@ -477,6 +477,9 @@ def download_instrument_cbond(instrument_code=None, instrument_name=None, instru
 
             'isin': instrument_code,
         }
+
+        task = None
+
         with transaction.atomic():
             task = Task(
                 master_user=master_user,
@@ -487,175 +490,175 @@ def download_instrument_cbond(instrument_code=None, instrument_name=None, instru
             task.options_object = options
             task.save()
 
-            headers = {'Content-type': 'application/json'}
+        headers = {'Content-type': 'application/json'}
 
-            payload_jwt = {
-                "sub": settings.BASE_API_URL,  # "user_id_or_name",
-                "role": 0  # 0 -- ordinary user, 1 -- admin (access to /loadfi and /loadeq)
-            }
+        payload_jwt = {
+            "sub": settings.BASE_API_URL,  # "user_id_or_name",
+            "role": 0  # 0 -- ordinary user, 1 -- admin (access to /loadfi and /loadeq)
+        }
 
-            token = encode_with_jwt(payload_jwt)
+        token = encode_with_jwt(payload_jwt)
 
-            headers['Authorization'] = 'Bearer %s' % token
+        headers['Authorization'] = 'Bearer %s' % token
 
-            options['request_id'] = task.pk
-            options['base_api_url'] = settings.BASE_API_URL
-            options[
-                'callback_url'] = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/api/instruments/fdb-create-from-callback/'
-            options['token'] = 'fd09a190279e45a2bbb52fcabb7899bd'
+        options['request_id'] = task.pk
+        options['base_api_url'] = settings.BASE_API_URL
+        options[
+            'callback_url'] = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/api/instruments/fdb-create-from-callback/'
+        options['token'] = 'fd09a190279e45a2bbb52fcabb7899bd'
 
-            options['data'] = {}
+        options['data'] = {}
 
-            task.options_object = options
-            task.save()
+        task.options_object = options
+        task.save()
 
-            response = None
+        response = None
 
-            # OLD ASYNC CODE
-            # try:
-            #     response = requests.post(url=str(settings.CBONDS_BROKER_URL) + '/request-instrument/', data=json.dumps(options), headers=headers)
-            #     _l.info('response download_instrument_cbond %s' % response)
-            # except Exception as e:
-            #     _l.debug("Can't send request to CBONDS BROKER. %s" % e)
+        # OLD ASYNC CODE
+        # try:
+        #     response = requests.post(url=str(settings.CBONDS_BROKER_URL) + '/request-instrument/', data=json.dumps(options), headers=headers)
+        #     _l.info('response download_instrument_cbond %s' % response)
+        # except Exception as e:
+        #     _l.debug("Can't send request to CBONDS BROKER. %s" % e)
 
-            _l.info('options %s' % options)
-            _l.info('settings.CBONDS_BROKER_URL %s' % settings.CBONDS_BROKER_URL)
+        _l.info('options %s' % options)
+        _l.info('settings.CBONDS_BROKER_URL %s' % settings.CBONDS_BROKER_URL)
+
+        try:
+            response = requests.post(url=str(settings.CBONDS_BROKER_URL) + 'export/', data=json.dumps(options),
+                                     headers=headers, timeout=25)
+            _l.info('response download_instrument_cbond %s' % response)
+            _l.info('data response.text %s ' % response.text)
+            _l.info('data response.status_code %s ' % response.status_code)
+
+        except requests.exceptions.Timeout as e:
+
+            _l.info("Finmars Database Timeout. Trying to create simple instrument %s" % instrument_code)
 
             try:
-                response = requests.post(url=str(settings.CBONDS_BROKER_URL) + 'export/', data=json.dumps(options),
-                                         headers=headers, timeout=25)
-                _l.info('response download_instrument_cbond %s' % response)
-                _l.info('data response.text %s ' % response.text)
-                _l.info('data response.status_code %s ' % response.status_code)
+                instrument = Instrument.objects.get(master_user=master_user, user_code=instrument_code)
 
-            except requests.exceptions.Timeout as e:
+                _l.info("Finmars Database Timeout. Simple instrument %s exist. Abort." % instrument_code)
 
-                _l.info("Finmars Database Timeout. Trying to create simple instrument %s" % instrument_code)
+            except Exception as e:
 
-                try:
-                    instrument = Instrument.objects.get(master_user=master_user, user_code=instrument_code)
+                itype = None
 
-                    _l.info("Finmars Database Timeout. Simple instrument %s exist. Abort." % instrument_code)
+                if instrument_type_code == 'equity':
+                    instrument_type_code = 'stocks'
 
-                except Exception as e:
+                _l.info('Finmars Database Timeout. instrument_type_code %s' % instrument_type_code)
+                _l.info('Finmars Database Timeout. instrument_name %s' % instrument_name)
 
-                    itype = None
+                if instrument_type_code:
+                    try:
+                        itype = InstrumentType.objects.get(master_user=master_user,
+                                                           user_code=instrument_type_code)
+                    except Exception as e:
+                        itype = None
 
-                    if instrument_type_code == 'equity':
-                        instrument_type_code = 'stocks'
+                if not instrument_name:
+                    instrument_name = instrument_code
 
-                    _l.info('Finmars Database Timeout. instrument_type_code %s' % instrument_type_code)
-                    _l.info('Finmars Database Timeout. instrument_name %s' % instrument_name)
+                ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
 
-                    if instrument_type_code:
-                        try:
-                            itype = InstrumentType.objects.get(master_user=master_user,
-                                                               user_code=instrument_type_code)
-                        except Exception as e:
-                            itype = None
+                instrument = Instrument.objects.create(
+                    master_user=master_user,
+                    user_code=instrument_code,
+                    name=instrument_name,
+                    instrument_type=ecosystem_defaults.instrument_type,
+                    accrued_currency=ecosystem_defaults.currency,
+                    pricing_currency=ecosystem_defaults.currency,
+                    co_directional_exposure_currency=ecosystem_defaults.currency,
+                    counter_directional_exposure_currency=ecosystem_defaults.currency
+                )
 
-                    if not instrument_name:
-                        instrument_name = instrument_code
+                instrument.is_active = False
 
-                    ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
+                if itype:
 
-                    instrument = Instrument.objects.create(
-                        master_user=master_user,
-                        user_code=instrument_code,
-                        name=instrument_name,
-                        instrument_type=ecosystem_defaults.instrument_type,
-                        accrued_currency=ecosystem_defaults.currency,
-                        pricing_currency=ecosystem_defaults.currency,
-                        co_directional_exposure_currency=ecosystem_defaults.currency,
-                        counter_directional_exposure_currency=ecosystem_defaults.currency
-                    )
+                    instrument.instrument_type = itype
 
-                    instrument.is_active = False
-
-                    if itype:
-
-                        instrument.instrument_type = itype
-
-                        small_item = {
-                            'user_code': instrument_code,
-                            'instrument_type': instrument_type_code
-                        }
-
-                        create_instrument_cbond(small_item, master_user, member)
-
-                    instrument.save()
-
-                    result = {
-                        "instrument_id": instrument.pk
+                    small_item = {
+                        'user_code': instrument_code,
+                        'instrument_type': instrument_type_code
                     }
 
-                    task.result_object = result
+                    create_instrument_cbond(small_item, master_user, member)
 
-                    task.save()
-
-                return task, errors
-
-            except Exception as e:
-                _l.debug("Can't send request to CBONDS BROKER. %s" % e)
-
-                errors.append('Request to broker failed. %s' % str(e))
-
-            try:
-                data = response.json()
-                _l.info("Cbond response data %s" % data)
-            except Exception as e:
-
-                _l.info("Cbond response data Exception %s" % e)
-
-                errors.append("Could not parse response from broker. %s" % response.text)
-                return task, errors
-
-            try:
-
-                result_instrument = None
-
-                if 'instruments' in data:
-
-                    if 'currencies' in data:
-                        for item in data['currencies']:
-                            if item:
-                                currency = create_currency_cbond(item, master_user, member)
-
-                    for item in data['instruments']:
-                        instrument = create_instrument_cbond(item, master_user, member)
-
-                        if instrument.user_code == instrument_code:
-                            result_instrument = instrument
-
-                elif 'items' in data['data']:
-
-                    for item in data['data']['items']:
-                        instrument = create_instrument_cbond(item, master_user, member)
-
-                        if instrument.user_code == instrument_code:
-                            result_instrument = instrument
-
-                else:
-
-                    instrument = create_instrument_cbond(data['data'], master_user, member)
-                    result_instrument = instrument
+                instrument.save()
 
                 result = {
-                    "instrument_id": result_instrument.pk
+                    "instrument_id": instrument.pk
                 }
 
                 task.result_object = result
 
                 task.save()
-                return task, errors
-
-            except Exception as e:
-                errors.append("Could not create instrument. %s" % str(e))
-                return task, errors
-
-            _l.info('data %s ' % data)
 
             return task, errors
+
+        except Exception as e:
+            _l.debug("Can't send request to CBONDS BROKER. %s" % e)
+
+            errors.append('Request to broker failed. %s' % str(e))
+
+        try:
+            data = response.json()
+            _l.info("Cbond response data %s" % data)
+        except Exception as e:
+
+            _l.info("Cbond response data Exception %s" % e)
+
+            errors.append("Could not parse response from broker. %s" % response.text)
+            return task, errors
+
+        try:
+
+            result_instrument = None
+
+            if 'instruments' in data:
+
+                if 'currencies' in data:
+                    for item in data['currencies']:
+                        if item:
+                            currency = create_currency_cbond(item, master_user, member)
+
+                for item in data['instruments']:
+                    instrument = create_instrument_cbond(item, master_user, member)
+
+                    if instrument.user_code == instrument_code:
+                        result_instrument = instrument
+
+            elif 'items' in data['data']:
+
+                for item in data['data']['items']:
+                    instrument = create_instrument_cbond(item, master_user, member)
+
+                    if instrument.user_code == instrument_code:
+                        result_instrument = instrument
+
+            else:
+
+                instrument = create_instrument_cbond(data['data'], master_user, member)
+                result_instrument = instrument
+
+            result = {
+                "instrument_id": result_instrument.pk
+            }
+
+            task.result_object = result
+
+            task.save()
+            return task, errors
+
+        except Exception as e:
+            errors.append("Could not create instrument. %s" % str(e))
+            return task, errors
+
+        _l.info('data %s ' % data)
+
+        return task, errors
 
     except Exception as e:
         _l.info("error %s " % e)
