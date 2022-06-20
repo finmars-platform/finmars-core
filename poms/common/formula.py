@@ -2629,6 +2629,16 @@ class SimpleEval2(object):
     def _on_ast_Expr(self, node):
         return self._eval(node.value)
 
+    def _on_ast_Slice(self, node):
+        lower = upper = step = None
+        if node.lower is not None:
+            lower = self._eval(node.lower)
+        if node.upper is not None:
+            upper = self._eval(node.upper)
+        if node.step is not None:
+            step = self._eval(node.step)
+        return slice(lower, upper, step)
+
 
 def validate(expr):
     from rest_framework.exceptions import ValidationError
