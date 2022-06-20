@@ -1136,7 +1136,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
         q = q | string_attr_query
         q = q | date_attr_query
 
-    qs = qs.filter(q).distinct()
+    qs = qs.filter(q, is_deleted=False).distinct()
 
     _l.debug("handle_global_table_search done in %s seconds " % "{:3.3f}".format(time.time() - start_time))
 

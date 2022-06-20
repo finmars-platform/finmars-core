@@ -2332,14 +2332,17 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                 v = None
 
                 try:
-                    v = model_map_class.objects.get(master_user=instance.master_user, value=value).content_object
+
+                    v = model_class.objects.get(master_user=instance.master_user, user_code=value)
+
+
                 except Exception:
 
                     try:
 
-                        v = model_class.objects.get(master_user=instance.master_user, user_code=value)
+                        v = model_map_class.objects.get(master_user=instance.master_user, value=value).content_object
 
-                    except (model_class.DoesNotExist, KeyError):
+                    except Exception:
                         v = None
 
                         _l.info("User code %s not found for %s " % (value, field.transaction_type_input.name))
