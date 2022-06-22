@@ -1,9 +1,11 @@
 from __future__ import unicode_literals
 
+import json
 from datetime import timedelta, date
 
 import time
 from django.conf import settings
+from django.db.models import ForeignKey
 from django.utils.translation import ugettext_lazy, ugettext
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -28,6 +30,7 @@ from poms.reports.builders.base_serializers import ReportPortfolioSerializer, \
     ReportSerializerWithLogs
 # from poms.reports.fields import CustomFieldField
 from poms.reports.fields import BalanceReportCustomFieldField
+from poms.reports.models import BalanceReportInstance, BalanceReportInstanceItem
 from poms.reports.serializers import BalanceReportCustomFieldSerializer
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
 from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, Strategy3ViewSerializer
@@ -354,8 +357,6 @@ class ReportItemEvalSerializer(ReportItemSerializer):
         self.fields.pop('detail')
 
 
-
-
 # class ReportSerializer(serializers.Serializer):
 class ReportSerializer(ReportSerializerWithLogs):
     task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
@@ -406,7 +407,7 @@ class ReportSerializer(ReportSerializerWithLogs):
 
     custom_fields = BalanceReportCustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
 
-    custom_fields_to_calculate = serializers.CharField( allow_null=True, allow_blank=True, required=False)
+    custom_fields_to_calculate = serializers.CharField(allow_null=True, allow_blank=True, required=False)
 
     portfolios = PortfolioField(many=True, required=False, allow_null=True, allow_empty=True)
     accounts = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
@@ -660,7 +661,8 @@ class ReportSerializer(ReportSerializerWithLogs):
 
                                     if expr:
                                         try:
-                                            value = formula.safe_eval("parse_date(item, '%d/%m/%Y')", names={'item': value},
+                                            value = formula.safe_eval("parse_date(item, '%d/%m/%Y')",
+                                                                      names={'item': value},
                                                                       context=self.context)
                                         except formula.InvalidExpression:
                                             value = ugettext('Invalid expression (Type conversion error)')
@@ -689,7 +691,6 @@ class PLReportSerializer(ReportSerializer):
 
 
 def serialize_balance_report_item(item):
-
     result = {
         # "id": ','.join(str(x) for x in item['pk']),
         "id": '-',
@@ -721,13 +722,11 @@ def serialize_balance_report_item(item):
     else:
         result["exposure_currency"] = item["exposure_currency_id"]
 
-
     # Check if logic is right
     result["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
     result["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
     result["instrument_principal_price"] = item["instrument_principal_price"]
     result["instrument_accrued_price"] = item["instrument_accrued_price"]
-
 
     result["account"] = item["account_position_id"]
 
@@ -754,13 +753,11 @@ def serialize_balance_report_item(item):
     # result["pricing_currency"] = item["pricing_currency_id"]
     # result["currency"] = None
 
-
     result["position_size"] = item["position_size"]
     result["market_value"] = item["market_value"]
     result["market_value_loc"] = item["market_value_loc"]
     result["exposure"] = item["exposure"]
     result["exposure_loc"] = item["exposure_loc"]
-
 
     result["ytm"] = item["ytm"]
     result["ytm_at_cost"] = item["ytm_at_cost"]
@@ -878,7 +875,7 @@ def serialize_pl_report_item(item):
         result["instrument"] = item["instrument_id"]
 
     if item["pricing_currency_id"] == -1:
-            result["pricing_currency"] = None
+        result["pricing_currency"] = None
     else:
         result["pricing_currency"] = item["pricing_currency_id"]
 
@@ -895,21 +892,20 @@ def serialize_pl_report_item(item):
     ids.append(str(result["item_type"]))
     ids.append(str(result["item_group"]))
 
-    if item['item_type'] == 1: # instrument
+    if item['item_type'] == 1:  # instrument
         ids.append(str(result["instrument"]))
 
-    if item['item_type'] == 3: # FX Variations
+    if item['item_type'] == 3:  # FX Variations
         ids.append(str(result["name"]))
 
-    if item['item_type'] == 4: # FX Trades
+    if item['item_type'] == 4:  # FX Trades
         ids.append(str(result["name"]))
 
     if item['item_type'] == 5:
         ids.append(str(result["name"]))
 
-    if item['item_type'] == 6: # mismatch
+    if item['item_type'] == 6:  # mismatch
         ids.append(str(result["instrument"]))
-
 
     ids.append(str(result["account"]))
     ids.append(str(result["strategy1"]))
@@ -917,7 +913,6 @@ def serialize_pl_report_item(item):
     ids.append(str(result["strategy3"]))
 
     result['id'] = ','.join(ids)
-
 
     result["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
     result["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
@@ -990,7 +985,6 @@ def serialize_pl_report_item(item):
 
 
 def serialize_report_item_instrument(item):
-
     attributes = []
 
     for attribute in item.attributes.all():
@@ -1025,7 +1019,6 @@ def serialize_report_item_instrument(item):
         "user_code": item.instrument_type.user_code,
         "short_name": item.instrument_type.short_name
     }
-
 
     result = {
         "id": item.id,
@@ -1076,6 +1069,106 @@ class BalanceReportSqlSerializer(ReportSerializer):
 
         return result
 
+    def to_representation(self, instance):
+
+        to_representation_st = time.perf_counter()
+
+        data = super(BalanceReportSqlSerializer, self).to_representation(instance)
+
+        report_instance = BalanceReportInstance.objects.create(
+            master_user=instance.master_user,
+            member=instance.member,
+            report_date=instance.report_date,
+            report_currency=instance.report_currency,
+            pricing_policy=instance.pricing_policy,
+            cost_method=instance.cost_method
+        )
+
+
+        custom_fields_map = {}
+
+        for custom_field in instance.custom_fields:
+            custom_fields_map[custom_field.id] = custom_field
+
+        for item in data['items']:
+
+            instance_item = BalanceReportInstanceItem(report_instance=report_instance,
+                                                      master_user=instance.master_user,
+                                                      member=instance.member,
+                                                      report_date=instance.report_date,
+                                                      report_currency=instance.report_currency,
+                                                      pricing_policy=instance.pricing_policy,
+                                                      cost_method=instance.cost_method)
+
+            instance_item.item_id = item['id']
+
+            for field in BalanceReportInstanceItem._meta.fields:
+
+                if field.name not in ['id']:
+
+                    if field.name in item:
+
+                        if isinstance(field, ForeignKey):
+
+                            try:
+                                setattr(instance_item, field.name + '_id', item[field.name])
+                            except Exception as e:
+                                print('exception field %s : %s' % (field.name, e))
+                                setattr(instance_item, field.name, None)
+
+                        else:
+
+                            try:
+                                setattr(instance_item, field.name, item[field.name])
+                            except Exception as e:
+                                print('exception field %s : %s' % (field.name, e))
+                                setattr(instance_item, field.name, None)
+
+            index_text = 1
+            index_number = 1
+            index_date = 1
+            for custom_field_item in item['custom_fields']:
+
+                cc = custom_fields_map[custom_field_item['custom_field']]
+
+                try:
+
+                    if cc.value_type == 10:
+
+                         setattr(instance_item, 'custom_field_text_' + str(index_text), custom_field_item['value'])
+
+                         index_text = index_text + 1
+
+                    if cc.value_type == 20:
+
+                        setattr(instance_item, 'custom_field_number_' + str(index_number), float(custom_field_item['value']))
+
+                        index_number = index_number + 1
+
+                    if cc.value_type == 40:
+
+                        setattr(instance_item, 'custom_field_date_' + str(index_date), custom_field_item['value'])
+
+                        index_date = index_date + 1
+
+                except Exception as e:
+                    print("Custom field save error %s" % e)
+
+                    if cc.value_type == 10:
+                        index_text = index_text + 1
+                    if cc.value_type == 20:
+                        index_number = index_number + 1
+                    if cc.value_type == 40:
+                        index_date = index_date + 1
+
+
+            instance_item.save()
+
+        _l.debug('BalanceReportSqlSerializer.to_representation done: %s' % "{:3.3f}".format(
+            time.perf_counter() - to_representation_st))
+
+        return data
+
 
 class PLReportSqlSerializer(ReportSerializer):
     items = serializers.SerializerMethodField()
@@ -1104,7 +1197,6 @@ class PLReportSqlSerializer(ReportSerializer):
 
 
 def serialize_price_checker_item(item):
-
     result = {
         "type": item["type"]
     }
@@ -1140,6 +1232,7 @@ def serialize_price_checker_item(item):
         result["settlement_currency_user_code"] = item["settlement_currency_user_code"]
 
     return result
+
 
 def serialize_price_checker_item_instrument(item):
     # id', 'instrument_type',  'user_code', 'name', 'short_name',
@@ -1191,7 +1284,6 @@ def serialize_price_checker_item_instrument(item):
         }
 
         if policy.pricing_scheme_id:
-
             policy_result["pricing_scheme"] = policy.pricing_scheme_id,
             policy_result["pricing_scheme_object"] = {
                 "id": policy.pricing_scheme.id,
@@ -1258,7 +1350,3 @@ class PriceHistoryCheckSqlSerializer(ReportSerializer):
             result.append(serialize_price_checker_item_instrument(item))
 
         return result
-
-
-
-
