@@ -169,6 +169,8 @@ class BalanceReportInstance(DataTimeStampedModel):
     cost_method = models.ForeignKey(CostMethod, on_delete=models.CASCADE, null=True, blank=True,
                                     verbose_name=ugettext_lazy('cost method'))
 
+    report_uuid = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('report uuid'))
+
     report_settings_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('report settings data'))
 
 
@@ -334,6 +336,8 @@ class PLReportInstance(DataTimeStampedModel):
                                     verbose_name=ugettext_lazy('cost method'))
 
     report_settings_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('report settings data'))
+
+    report_uuid = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('report uuid'))
 
 
 class PLReportInstanceItem(models.Model):

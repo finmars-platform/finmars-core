@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import json
+import uuid
 from datetime import timedelta, date
 
 import time
@@ -1049,9 +1050,9 @@ class BalanceReportSqlSerializer(ReportSerializer):
             report_date=instance.report_date,
             report_currency=instance.report_currency,
             pricing_policy=instance.pricing_policy,
-            cost_method=instance.cost_method
+            cost_method=instance.cost_method,
+        report_uuid=str(uuid.uuid4())
         )
-
 
         custom_fields_map = {}
 
@@ -1102,19 +1103,17 @@ class BalanceReportSqlSerializer(ReportSerializer):
                 try:
 
                     if cc.value_type == 10:
+                        setattr(instance_item, 'custom_field_text_' + str(index_text), custom_field_item['value'])
 
-                         setattr(instance_item, 'custom_field_text_' + str(index_text), custom_field_item['value'])
-
-                         index_text = index_text + 1
+                        index_text = index_text + 1
 
                     if cc.value_type == 20:
-
-                        setattr(instance_item, 'custom_field_number_' + str(index_number), float(custom_field_item['value']))
+                        setattr(instance_item, 'custom_field_number_' + str(index_number),
+                                float(custom_field_item['value']))
 
                         index_number = index_number + 1
 
                     if cc.value_type == 40:
-
                         setattr(instance_item, 'custom_field_date_' + str(index_date), custom_field_item['value'])
 
                         index_date = index_date + 1
@@ -1128,7 +1127,6 @@ class BalanceReportSqlSerializer(ReportSerializer):
                         index_number = index_number + 1
                     if cc.value_type == 40:
                         index_date = index_date + 1
-
 
             instance_item.save()
 
@@ -1176,9 +1174,9 @@ class PLReportSqlSerializer(ReportSerializer):
             pl_first_date=instance.pl_first_date,
             report_currency=instance.report_currency,
             pricing_policy=instance.pricing_policy,
-            cost_method=instance.cost_method
+            cost_method=instance.cost_method,
+            report_uuid=str(uuid.uuid4())
         )
-
 
         custom_fields_map = {}
 
@@ -1188,13 +1186,13 @@ class PLReportSqlSerializer(ReportSerializer):
         for item in data['items']:
 
             instance_item = PLReportInstanceItem(report_instance=report_instance,
-                                                      master_user=instance.master_user,
-                                                      member=instance.member,
-                                                      report_date=instance.report_date,
-                                                      pl_first_date=instance.pl_first_date,
-                                                      report_currency=instance.report_currency,
-                                                      pricing_policy=instance.pricing_policy,
-                                                      cost_method=instance.cost_method)
+                                                 master_user=instance.master_user,
+                                                 member=instance.member,
+                                                 report_date=instance.report_date,
+                                                 pl_first_date=instance.pl_first_date,
+                                                 report_currency=instance.report_currency,
+                                                 pricing_policy=instance.pricing_policy,
+                                                 cost_method=instance.cost_method)
 
             instance_item.item_id = item['id']
 
@@ -1230,19 +1228,17 @@ class PLReportSqlSerializer(ReportSerializer):
                 try:
 
                     if cc.value_type == 10:
-
                         setattr(instance_item, 'custom_field_text_' + str(index_text), custom_field_item['value'])
 
                         index_text = index_text + 1
 
                     if cc.value_type == 20:
-
-                        setattr(instance_item, 'custom_field_number_' + str(index_number), float(custom_field_item['value']))
+                        setattr(instance_item, 'custom_field_number_' + str(index_number),
+                                float(custom_field_item['value']))
 
                         index_number = index_number + 1
 
                     if cc.value_type == 40:
-
                         setattr(instance_item, 'custom_field_date_' + str(index_date), custom_field_item['value'])
 
                         index_date = index_date + 1
@@ -1257,13 +1253,13 @@ class PLReportSqlSerializer(ReportSerializer):
                     if cc.value_type == 40:
                         index_date = index_date + 1
 
-
             instance_item.save()
 
         _l.debug('PLReportSqlSerializer.to_representation done: %s' % "{:3.3f}".format(
             time.perf_counter() - to_representation_st))
 
         return data
+
 
 def serialize_price_checker_item(item):
     result = {
