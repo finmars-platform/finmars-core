@@ -6,6 +6,7 @@ import datetime
 import logging
 import random
 import time
+import uuid
 from collections import OrderedDict
 
 from dateutil import relativedelta
@@ -652,68 +653,72 @@ _set_complex_transaction_user_field.evaluator = True
 
 
 def _get_relation_by_user_code(evaluator, content_type, user_code):
-    from poms.transactions.models import TransactionTypeInput
 
-    from poms.accounts.models import Account
-    from poms.counterparties.models import Counterparty, Responsible
-    from poms.currencies.models import Currency
-    from poms.instruments.models import Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail, PricingPolicy, \
-        Periodicity, AccrualCalculationModel
-    from poms.integrations.models import PriceDownloadScheme
-    from poms.portfolios.models import Portfolio
-    from poms.strategies.models import Strategy1, Strategy2, Strategy3
-    from poms.transactions.models import EventClass, NotificationClass
+    try:
+        from poms.transactions.models import TransactionTypeInput
 
-    context = evaluator.context
-    from poms.users.utils import get_master_user_from_context
+        from poms.accounts.models import Account
+        from poms.counterparties.models import Counterparty, Responsible
+        from poms.currencies.models import Currency
+        from poms.instruments.models import Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail, PricingPolicy, \
+            Periodicity, AccrualCalculationModel
+        from poms.integrations.models import PriceDownloadScheme
+        from poms.portfolios.models import Portfolio
+        from poms.strategies.models import Strategy1, Strategy2, Strategy3
+        from poms.transactions.models import EventClass, NotificationClass
 
-    master_user = get_master_user_from_context(context)
+        context = evaluator.context
+        from poms.users.utils import get_master_user_from_context
 
-    def _get_val_by_model_cls(model_class, user_code):
-        if issubclass(model_class, Account):
-            return Account.objects.get(master_user=master_user, user_code=user_code)
-        elif issubclass(model_class, Currency):
-            return Currency.objects.get(master_user=master_user, user_code=user_code)
-        elif issubclass(model_class, Instrument):
-            return Instrument.objects.get(master_user=master_user, user_code=user_code)
-        elif issubclass(model_class, InstrumentType):
-            return InstrumentType.objects.get(master_user=master_user, user_code=user_code)
-        elif issubclass(model_class, Counterparty):
-            return Counterparty.objects.get(master_user=master_user, user_code=user_code)
-        elif issubclass(model_class, Responsible):
-            return Responsible.objects.get(master_user=master_user, user_code=user_code)
-        elif issubclass(model_class, Strategy1):
-            return Strategy1.objects.get(master_user=master_user, user_code=user_code)
-        elif issubclass(model_class, Strategy2):
-            return Strategy2.objects.get(master_user=master_user, user_code=user_code)
-        elif issubclass(model_class, Strategy3):
-            return Strategy3.objects.get(master_user=master_user, user_code=user_code)
-        elif issubclass(model_class, DailyPricingModel):
-            return DailyPricingModel.objects.get(user_code=user_code)
-        elif issubclass(model_class, PaymentSizeDetail):
-            return PaymentSizeDetail.objects.get(user_code=user_code)
-        elif issubclass(model_class, Portfolio):
-            return Portfolio.objects.get(master_user=master_user, user_code=user_code)
-        elif issubclass(model_class, PricingPolicy):
-            return PricingPolicy.objects.get(master_user=master_user, user_code=user_code)
-        elif issubclass(model_class, Periodicity):
-            return Periodicity.objects.get(user_code=user_code)
-        elif issubclass(model_class, AccrualCalculationModel):
-            return AccrualCalculationModel.objects.get(user_code=user_code)
-        elif issubclass(model_class, EventClass):
-            return EventClass.objects.get(user_code=user_code)
-        elif issubclass(model_class, NotificationClass):
-            return NotificationClass.objects.get(user_code=user_code)
+        master_user = get_master_user_from_context(context)
+
+        def _get_val_by_model_cls(model_class, user_code):
+            if issubclass(model_class, Account):
+                return Account.objects.get(master_user=master_user, user_code=user_code)
+            elif issubclass(model_class, Currency):
+                return Currency.objects.get(master_user=master_user, user_code=user_code)
+            elif issubclass(model_class, Instrument):
+                return Instrument.objects.get(master_user=master_user, user_code=user_code)
+            elif issubclass(model_class, InstrumentType):
+                return InstrumentType.objects.get(master_user=master_user, user_code=user_code)
+            elif issubclass(model_class, Counterparty):
+                return Counterparty.objects.get(master_user=master_user, user_code=user_code)
+            elif issubclass(model_class, Responsible):
+                return Responsible.objects.get(master_user=master_user, user_code=user_code)
+            elif issubclass(model_class, Strategy1):
+                return Strategy1.objects.get(master_user=master_user, user_code=user_code)
+            elif issubclass(model_class, Strategy2):
+                return Strategy2.objects.get(master_user=master_user, user_code=user_code)
+            elif issubclass(model_class, Strategy3):
+                return Strategy3.objects.get(master_user=master_user, user_code=user_code)
+            elif issubclass(model_class, DailyPricingModel):
+                return DailyPricingModel.objects.get(user_code=user_code)
+            elif issubclass(model_class, PaymentSizeDetail):
+                return PaymentSizeDetail.objects.get(user_code=user_code)
+            elif issubclass(model_class, Portfolio):
+                return Portfolio.objects.get(master_user=master_user, user_code=user_code)
+            elif issubclass(model_class, PricingPolicy):
+                return PricingPolicy.objects.get(master_user=master_user, user_code=user_code)
+            elif issubclass(model_class, Periodicity):
+                return Periodicity.objects.get(user_code=user_code)
+            elif issubclass(model_class, AccrualCalculationModel):
+                return AccrualCalculationModel.objects.get(user_code=user_code)
+            elif issubclass(model_class, EventClass):
+                return EventClass.objects.get(user_code=user_code)
+            elif issubclass(model_class, NotificationClass):
+                return NotificationClass.objects.get(user_code=user_code)
+            return None
+
+        app_label, model = content_type.split('.')
+        model_class = ContentType.objects.get_by_natural_key(app_label, model).model_class()
+
+        _l.info('model_class %s' % model_class)
+
+        result = model_to_dict(_get_val_by_model_cls(model_class, user_code))
+
+        return result
+    except Exception as e:
         return None
-
-    app_label, model = content_type.split('.')
-    model_class = ContentType.objects.get_by_natural_key(app_label, model).model_class()
-
-    _l.info('model_class %s' % model_class)
-
-    result = model_to_dict(_get_val_by_model_cls(model_class, user_code))
-
-    return result
 
 
 _get_relation_by_user_code.evaluator = True
@@ -1967,6 +1972,10 @@ def _random():
     return random.random()
 
 
+def _uuid():
+    return str(uuid.uuid4())
+
+
 def _print(message, *args, **kwargs):
     _l.debug(message, *args, **kwargs)
 
@@ -2113,12 +2122,14 @@ FUNCTIONS = [
     SimpleEval2Def('random', _random),
     SimpleEval2Def('min', _min),
     SimpleEval2Def('max', _max),
+    SimpleEval2Def('uuid', _uuid),
 
     SimpleEval2Def('iff', _iff),
     SimpleEval2Def('len', _len),
     SimpleEval2Def('range', _range),
 
     SimpleEval2Def('now', _now),
+
     SimpleEval2Def('date', _date),
     SimpleEval2Def('date_min', _date_min),
     SimpleEval2Def('date_max', _date_max),

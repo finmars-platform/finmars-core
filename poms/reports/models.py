@@ -207,11 +207,11 @@ class BalanceReportInstanceItem(models.Model):
     instrument = models.ForeignKey('instruments.Instrument', null=True, blank=True, on_delete=models.SET_NULL,
                                   verbose_name=ugettext_lazy('instrument'))
 
-    currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.SET_NULL, related_name="report_instance_item_currency",
+    currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.SET_NULL, related_name="balance_report_instance_item_currency",
                                    verbose_name=ugettext_lazy('currency'))
-    pricing_currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.SET_NULL, related_name="report_instance_item_pricing_currency",
+    pricing_currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.SET_NULL, related_name="balance_report_instance_item_pricing_currency",
                                  verbose_name=ugettext_lazy('pricing currency'))
-    exposure_currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.SET_NULL, related_name="report_instance_item_exposure_currency",
+    exposure_currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.SET_NULL, related_name="balance_report_instance_item_exposure_currency",
                                  verbose_name=ugettext_lazy('exposure currency'))
     account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.SET_NULL,
                                       verbose_name=ugettext_lazy('account'))
@@ -260,65 +260,35 @@ class BalanceReportInstanceItem(models.Model):
 
     time_invested = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('time_invested'))
 
-    principal_opened = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('principal_opened'))
-    carry_opened = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('carry_opened'))
-    overheads_opened = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('overheads_opened'))
-    total_opened = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('total_opened'))
+    principal = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('principal'))
+    carry = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('carry'))
+    overheads = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('overheads'))
+    total = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('total'))
 
-    principal_fx_opened = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('principal_fx_opened'))
-    carry_fx_opened = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('carry_fx_opened'))
-    overheads_fx_opened = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('overheads_fx_opened'))
-    total_fx_opened = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('total_fx_opened'))
+    principal_fx = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('principal_fx'))
+    carry_fx = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('carry_fx'))
+    overheads_fx = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('overheads_fx'))
+    total_fx = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('total_fx'))
 
-    principal_fixed_opened = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('principal_fixed_opened'))
-    carry_fixed_opened = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('carry_fixed_opened'))
-    overheads_fixed_opened = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('overheads_fixed_opened'))
-    total_fixed_opened = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('total_fixed_opened'))
+    principal_fixed = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('principal_fixed'))
+    carry_fixed = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('carry_fixed'))
+    overheads_fixed = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('overheads_fixed'))
+    total_fixed = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('total_fixed'))
 
-    principal_opened_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('principal_opened_loc'))
-    carry_opened_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('carry_opened_loc'))
-    overheads_opened_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('overheads_opened_loc'))
-    total_opened_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('total_opened_loc'))
+    principal_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('principal_loc'))
+    carry_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('carry_loc'))
+    overheads_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('overheads_loc'))
+    total_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('total_loc'))
 
-    principal_fx_opened_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('principal_fx_opened_loc'))
-    carry_fx_opened_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('carry_fx_opened_loc'))
-    overheads_fx_opened_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('overheads_fx_opened_loc'))
-    total_fx_opened_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('total_fx_opened_loc'))
+    principal_fx_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('principal_fx_loc'))
+    carry_fx_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('carry_fx_loc'))
+    overheads_fx_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('overheads_fx_loc'))
+    total_fx_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('total_fx_loc'))
 
-    principal_fixed_opened_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('principal_fixed_opened_loc'))
-    carry_fixed_opened_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('carry_fixed_opened_loc'))
-    overheads_fixed_opened_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('overheads_fixed_opened_loc'))
-    total_fixed_opened_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('total_fixed_opened_loc'))
-
-    principal_closed = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('principal_closed'))
-    carry_closed = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('carry_closed'))
-    overheads_closed = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('overheads_closed'))
-    total_closed = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('total_closed'))
-
-    principal_fx_closed = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('principal_fx_closed'))
-    carry_fx_closed = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('carry_fx_closed'))
-    overheads_fx_closed = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('overheads_fx_closed'))
-    total_fx_closed = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('total_fx_closed'))
-
-    principal_fixed_closed = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('principal_fixed_closed'))
-    carry_fixed_closed = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('carry_fixed_closed'))
-    overheads_fixed_closed = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('overheads_fixed_closed'))
-    total_fixed_closed = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('total_fixed_closed'))
-
-    principal_closed_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('principal_closed_loc'))
-    carry_closed_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('carry_closed_loc'))
-    overheads_closed_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('overheads_closed_loc'))
-    total_closed_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('total_closed_loc'))
-
-    principal_fx_closed_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('principal_fx_closed_loc'))
-    carry_fx_closed_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('carry_fx_closed_loc'))
-    overheads_fx_closed_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('overheads_fx_closed_loc'))
-    total_fx_closed_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('total_fx_closed_loc'))
-
-    principal_fixed_closed_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('principal_fixed_closed_loc'))
-    carry_fixed_closed_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('carry_fixed_closed_loc'))
-    overheads_fixed_closed_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('overheads_fixed_closed_loc'))
-    total_fixed_closed_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('total_fixed_closed_loc'))
+    principal_fixed_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('principal_fixed_loc'))
+    carry_fixed_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('carry_fixed_loc'))
+    overheads_fixed_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('overheads_fixed_loc'))
+    total_fixed_loc = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('total_fixed_loc'))
 
     custom_field_text_1 = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('custom_field_text_1'))
     custom_field_text_2 = models.CharField(max_length=255, null=True, blank=True,verbose_name=ugettext_lazy('custom_field_text_2'))
@@ -341,3 +311,106 @@ class BalanceReportInstanceItem(models.Model):
     class Meta:
         verbose_name = ugettext_lazy('balance report instance item')
         verbose_name_plural = ugettext_lazy('balance reports instance item')
+
+
+class PLReportInstance(DataTimeStampedModel):
+
+    master_user = models.ForeignKey(MasterUser,
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+
+    member = models.ForeignKey(Member,
+                               verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
+
+    report_date = models.DateField(db_index=True, verbose_name=ugettext_lazy('report date'))
+    pl_first_date = models.DateField(db_index=True, verbose_name=ugettext_lazy('pl first date'))
+
+    report_currency = models.ForeignKey('currencies.Currency', on_delete=models.CASCADE,
+                                        verbose_name=ugettext_lazy('report currency'))
+
+    pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE, null=True, blank=True,
+                                       verbose_name=ugettext_lazy('pricing policy'))
+
+    cost_method = models.ForeignKey(CostMethod, on_delete=models.CASCADE, null=True, blank=True,
+                                    verbose_name=ugettext_lazy('cost method'))
+
+    report_settings_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('report settings data'))
+
+
+class PLReportInstanceItem(models.Model):
+
+    report_instance = models.ForeignKey(PLReportInstance, related_name="items",
+                                        verbose_name=ugettext_lazy('report instance'), on_delete=models.CASCADE)
+
+    master_user = models.ForeignKey(MasterUser,
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+
+    member = models.ForeignKey(Member,
+                               verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
+
+    report_date = models.DateField(db_index=True, verbose_name=ugettext_lazy('report date'))
+    pl_first_date = models.DateField(db_index=True, verbose_name=ugettext_lazy('pl first date'))
+
+    report_currency = models.ForeignKey('currencies.Currency', on_delete=models.CASCADE,
+                                        verbose_name=ugettext_lazy('report currency'))
+
+    pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE, null=True, blank=True,
+                                       verbose_name=ugettext_lazy('pricing policy'))
+
+    cost_method = models.ForeignKey(CostMethod, on_delete=models.CASCADE, null=True, blank=True,
+                                    verbose_name=ugettext_lazy('cost method'))
+
+    report_settings_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('report settings data'))
+
+
+    name = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('name'))
+    short_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('short name'))
+    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
+
+    portfolio = models.ForeignKey('portfolios.Portfolio', null=True, blank=True, on_delete=models.SET_NULL,
+                                  verbose_name=ugettext_lazy('portfolio'))
+
+    instrument = models.ForeignKey('instruments.Instrument', null=True, blank=True, on_delete=models.SET_NULL,
+                                   verbose_name=ugettext_lazy('instrument'))
+
+    currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.SET_NULL, related_name="pl_report_instance_item_currency",
+                                 verbose_name=ugettext_lazy('currency'))
+    pricing_currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.SET_NULL, related_name="pl_report_instance_item_pricing_currency",
+                                         verbose_name=ugettext_lazy('pricing currency'))
+    exposure_currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.SET_NULL, related_name="pl_report_instance_item_exposure_currency",
+                                          verbose_name=ugettext_lazy('exposure currency'))
+    account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.SET_NULL,
+                                verbose_name=ugettext_lazy('account'))
+    strategy1 = models.ForeignKey('strategies.Strategy1', null=True, blank=True, on_delete=models.SET_NULL,
+                                  verbose_name=ugettext_lazy('strategy1'))
+    strategy2 = models.ForeignKey('strategies.Strategy2', null=True, blank=True, on_delete=models.SET_NULL,
+                                  verbose_name=ugettext_lazy('strategy2'))
+    strategy3 = models.ForeignKey('strategies.Strategy3', null=True, blank=True, on_delete=models.SET_NULL,
+                                  verbose_name=ugettext_lazy('strategy3'))
+
+    item_id = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('item id'))
+    item_type = models.IntegerField(default=0, verbose_name=ugettext_lazy('portfolio'))
+    item_type_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('item type name'))
+
+
+
+    custom_field_text_1 = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('custom_field_text_1'))
+    custom_field_text_2 = models.CharField(max_length=255, null=True, blank=True,verbose_name=ugettext_lazy('custom_field_text_2'))
+    custom_field_text_3 = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('custom_field_text_3'))
+    custom_field_text_4 = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('custom_field_text_4'))
+    custom_field_text_5 = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('custom_field_text_5'))
+
+    custom_field_number_1 = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('custom_field_number_1'))
+    custom_field_number_2 = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('custom_field_number_2'))
+    custom_field_number_3 = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('custom_field_number_3'))
+    custom_field_number_4 = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('custom_field_number_4'))
+    custom_field_number_5 = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('custom_field_number_5'))
+
+    custom_field_date_1 = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('custom_field_date_1'))
+    custom_field_date_2 = models.DateField(null=True, blank=True,verbose_name=ugettext_lazy('custom_field_date_2'))
+    custom_field_date_3 = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('custom_field_date_3'))
+    custom_field_date_4 = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('custom_field_date_4'))
+    custom_field_date_5 = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('custom_field_date_5'))
+
+    class Meta:
+        verbose_name = ugettext_lazy('pl report instance item')
+        verbose_name_plural = ugettext_lazy('pl reports instance item')

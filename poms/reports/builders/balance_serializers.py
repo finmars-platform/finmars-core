@@ -30,7 +30,7 @@ from poms.reports.builders.base_serializers import ReportPortfolioSerializer, \
     ReportSerializerWithLogs
 # from poms.reports.fields import CustomFieldField
 from poms.reports.fields import BalanceReportCustomFieldField
-from poms.reports.models import BalanceReportInstance, BalanceReportInstanceItem
+from poms.reports.models import BalanceReportInstance, BalanceReportInstanceItem, PLReportInstance, PLReportInstanceItem
 from poms.reports.serializers import BalanceReportCustomFieldSerializer
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
 from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, Strategy3ViewSerializer
@@ -785,69 +785,37 @@ def serialize_balance_report_item(item):
 
     # performance
 
-    result["principal_opened"] = item["principal_opened"]
-    result["carry_opened"] = item["carry_opened"]
-    result["overheads_opened"] = item["overheads_opened"]
-    result["total_opened"] = item["total_opened"]
+    result["principal"] = item["principal"]
+    result["carry"] = item["carry"]
+    result["overheads"] = item["overheads"]
+    result["total"] = item["total"]
 
-    result["principal_fx_opened"] = item["principal_fx_opened"]
-    result["carry_fx_opened"] = item["carry_fx_opened"]
-    result["overheads_fx_opened"] = item["overheads_fx_opened"]
-    result["total_fx_opened"] = item["total_fx_opened"]
+    result["principal_fx"] = item["principal_fx"]
+    result["carry_fx"] = item["carry_fx"]
+    result["overheads_fx"] = item["overheads_fx"]
+    result["total_fx"] = item["total_fx"]
 
-    result["principal_fixed_opened"] = item["principal_fixed_opened"]
-    result["carry_fixed_opened"] = item["carry_fixed_opened"]
-    result["overheads_fixed_opened"] = item["overheads_fixed_opened"]
-    result["total_fixed_opened"] = item["total_fixed_opened"]
-
-    # loc started
-
-    result["principal_opened_loc"] = item["principal_opened_loc"]
-    result["carry_opened_loc"] = item["carry_opened_loc"]
-    result["overheads_opened_loc"] = item["overheads_opened_loc"]
-    result["total_opened_loc"] = item["total_opened_loc"]
-
-    result["principal_fx_opened_loc"] = item["principal_fx_opened_loc"]
-    result["carry_fx_opened_loc"] = item["carry_fx_opened_loc"]
-    result["overheads_fx_opened_loc"] = item["overheads_fx_opened_loc"]
-    result["total_fx_opened_loc"] = item["total_fx_opened_loc"]
-
-    result["principal_fixed_opened_loc"] = item["principal_fixed_opened_loc"]
-    result["carry_fixed_opened_loc"] = item["carry_fixed_opened_loc"]
-    result["overheads_fixed_opened_loc"] = item["overheads_fixed_opened_loc"]
-    result["total_fixed_opened_loc"] = item["total_fixed_opened_loc"]
-
-    result["principal_closed"] = item["principal_closed"]
-    result["carry_closed"] = item["carry_closed"]
-    result["overheads_closed"] = item["overheads_closed"]
-    result["total_closed"] = item["total_closed"]
-
-    result["principal_fx_closed"] = item["principal_fx_closed"]
-    result["carry_fx_closed"] = item["carry_fx_closed"]
-    result["overheads_fx_closed"] = item["overheads_fx_closed"]
-    result["total_fx_closed"] = item["total_fx_closed"]
-
-    result["principal_fixed_closed"] = item["principal_fixed_closed"]
-    result["carry_fixed_closed"] = item["carry_fixed_closed"]
-    result["overheads_fixed_closed"] = item["overheads_fixed_closed"]
-    result["total_fixed_closed"] = item["total_fixed_closed"]
+    result["principal_fixed"] = item["principal_fixed"]
+    result["carry_fixed"] = item["carry_fixed"]
+    result["overheads_fixed"] = item["overheads_fixed"]
+    result["total_fixed"] = item["total_fixed"]
 
     # loc started
 
-    result["principal_closed_loc"] = item["principal_closed_loc"]
-    result["carry_closed_loc"] = item["carry_closed_loc"]
-    result["overheads_closed_loc"] = item["overheads_closed_loc"]
-    result["total_closed_loc"] = item["total_closed_loc"]
+    result["principal_loc"] = item["principal_loc"]
+    result["carry_loc"] = item["carry_loc"]
+    result["overheads_loc"] = item["overheads_loc"]
+    result["total_loc"] = item["total_loc"]
 
-    result["principal_fx_closed_loc"] = item["principal_fx_closed_loc"]
-    result["carry_fx_closed_loc"] = item["carry_fx_closed_loc"]
-    result["overheads_fx_closed_loc"] = item["overheads_fx_closed_loc"]
-    result["total_fx_closed_loc"] = item["total_fx_closed_loc"]
+    result["principal_fx_loc"] = item["principal_fx_loc"]
+    result["carry_fx_loc"] = item["carry_fx_loc"]
+    result["overheads_fx_loc"] = item["overheads_fx_loc"]
+    result["total_fx_loc"] = item["total_fx_loc"]
 
-    result["principal_fixed_closed_loc"] = item["principal_fixed_closed_loc"]
-    result["carry_fixed_closed_loc"] = item["carry_fixed_closed_loc"]
-    result["overheads_fixed_closed_loc"] = item["overheads_fixed_closed_loc"]
-    result["total_fixed_closed_loc"] = item["total_fixed_closed_loc"]
+    result["principal_fixed_loc"] = item["principal_fixed_loc"]
+    result["carry_fixed_loc"] = item["carry_fixed_loc"]
+    result["overheads_fixed_loc"] = item["overheads_fixed_loc"]
+    result["total_fixed_loc"] = item["total_fixed_loc"]
 
     return result
 
@@ -1195,6 +1163,107 @@ class PLReportSqlSerializer(ReportSerializer):
 
         return result
 
+    def to_representation(self, instance):
+
+        to_representation_st = time.perf_counter()
+
+        data = super(PLReportSqlSerializer, self).to_representation(instance)
+
+        report_instance = PLReportInstance.objects.create(
+            master_user=instance.master_user,
+            member=instance.member,
+            report_date=instance.report_date,
+            pl_first_date=instance.pl_first_date,
+            report_currency=instance.report_currency,
+            pricing_policy=instance.pricing_policy,
+            cost_method=instance.cost_method
+        )
+
+
+        custom_fields_map = {}
+
+        for custom_field in instance.custom_fields:
+            custom_fields_map[custom_field.id] = custom_field
+
+        for item in data['items']:
+
+            instance_item = PLReportInstanceItem(report_instance=report_instance,
+                                                      master_user=instance.master_user,
+                                                      member=instance.member,
+                                                      report_date=instance.report_date,
+                                                      pl_first_date=instance.pl_first_date,
+                                                      report_currency=instance.report_currency,
+                                                      pricing_policy=instance.pricing_policy,
+                                                      cost_method=instance.cost_method)
+
+            instance_item.item_id = item['id']
+
+            for field in PLReportInstanceItem._meta.fields:
+
+                if field.name not in ['id']:
+
+                    if field.name in item:
+
+                        if isinstance(field, ForeignKey):
+
+                            try:
+                                setattr(instance_item, field.name + '_id', item[field.name])
+                            except Exception as e:
+                                print('exception field %s : %s' % (field.name, e))
+                                setattr(instance_item, field.name, None)
+
+                        else:
+
+                            try:
+                                setattr(instance_item, field.name, item[field.name])
+                            except Exception as e:
+                                print('exception field %s : %s' % (field.name, e))
+                                setattr(instance_item, field.name, None)
+
+            index_text = 1
+            index_number = 1
+            index_date = 1
+            for custom_field_item in item['custom_fields']:
+
+                cc = custom_fields_map[custom_field_item['custom_field']]
+
+                try:
+
+                    if cc.value_type == 10:
+
+                        setattr(instance_item, 'custom_field_text_' + str(index_text), custom_field_item['value'])
+
+                        index_text = index_text + 1
+
+                    if cc.value_type == 20:
+
+                        setattr(instance_item, 'custom_field_number_' + str(index_number), float(custom_field_item['value']))
+
+                        index_number = index_number + 1
+
+                    if cc.value_type == 40:
+
+                        setattr(instance_item, 'custom_field_date_' + str(index_date), custom_field_item['value'])
+
+                        index_date = index_date + 1
+
+                except Exception as e:
+                    print("Custom field save error %s" % e)
+
+                    if cc.value_type == 10:
+                        index_text = index_text + 1
+                    if cc.value_type == 20:
+                        index_number = index_number + 1
+                    if cc.value_type == 40:
+                        index_date = index_date + 1
+
+
+            instance_item.save()
+
+        _l.debug('PLReportSqlSerializer.to_representation done: %s' % "{:3.3f}".format(
+            time.perf_counter() - to_representation_st))
+
+        return data
 
 def serialize_price_checker_item(item):
     result = {
