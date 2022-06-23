@@ -91,8 +91,10 @@ class PortfolioRegisterRecord(models.Model):
     instrument = models.ForeignKey(Instrument,
                                    verbose_name=ugettext_lazy('instrument'), on_delete=models.CASCADE)
 
-    transaction_type = models.PositiveSmallIntegerField(default=0, verbose_name=ugettext_lazy(
-        'transaction type'))
+    transaction_type = models.ForeignKey('transactions.TransactionType',
+                                            related_name="register_record_transaction_type",
+                                            on_delete=models.CASCADE,
+                                            verbose_name=ugettext_lazy('transaction type'))
 
     transaction_code = models.IntegerField(default=0, verbose_name=ugettext_lazy('transaction code'))
 

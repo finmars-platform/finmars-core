@@ -162,7 +162,7 @@ class PortfolioRegisterRecordSerializer(ModelWithObjectPermissionSerializer):
 
             'n_shares_previous_day', 'n_shares_added',
 
-            'dealing_price_valuation_currency', 'n_shares_end_of_the_day',
+            'dealing_price_valuation_currency', 'rolling_shares_of_the_day',
             'transaction', 'complex_transaction', 'portfolio_register'
 
         ]
@@ -185,16 +185,16 @@ class PortfolioRegisterRecordEvSerializer(ModelWithObjectPermissionSerializer):
 
             'n_shares_previous_day', 'n_shares_added',
 
-            'dealing_price_valuation_currency', 'n_shares_end_of_the_day',
+            'dealing_price_valuation_currency', 'rolling_shares_of_the_day',
             'transaction', 'complex_transaction', 'portfolio_register'
         ]
 
     def __init__(self, *args, **kwargs):
         super(PortfolioRegisterRecordEvSerializer, self).__init__(*args, **kwargs)
 
-        # from poms.transactions.serializers import TransactionTypeViewSerializer
-        # self.fields['transaction_type_object'] = TransactionTypeViewSerializer(
-        #     source='transaction_type', read_only=True)
+        from poms.transactions.serializers import TransactionTypeViewSerializer
+        self.fields['transaction_type_object'] = TransactionTypeViewSerializer(
+            source='transaction_type', read_only=True)
         self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
         self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
 

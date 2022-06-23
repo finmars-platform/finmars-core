@@ -98,7 +98,7 @@ def calculate_portfolio_register_record(self, portfolio_register_ids, master_use
                 record.transaction_code = trn.transaction_code
                 record.transaction_type = trn.transaction_class_id
                 record.cash_amount = trn.cash_consideration
-                record.cash_currency_id = trn.settlement_currency_id
+                record.cash_currency_id = trn.transaction_currency_id
 
                 record.valuation_currency_id = portfolio_register.valuation_currency_id
 
@@ -126,7 +126,7 @@ def calculate_portfolio_register_record(self, portfolio_register_ids, master_use
                     except Exception:
                         record.fx_rate = 0
                 # why  use cashamount after , not    record.cash_amount_valuation_currency
-                record.cash_amount_valuation_currency = record.cash_amount * record.fx_rate
+                record.cash_amount_valuation_currency = record.cash_amount * record.fx_rate * trn.reference_fx_rate
                 # start block NAV
 
                 report_date = trn.accounting_date - timedelta(days=1)
@@ -247,6 +247,21 @@ def calculate_portfolio_register_nav0(master_user_id):
                         nav = nav + item['market_value']
 
                 price_history = None
+
+
+                cash_flow = 0
+                principal_price = 0
+
+                try:
+                    registry_record = PortfolioRegisterRecord.objects.get(instrument=portfolio_register.linked_instrument, date=date)
+
+                    cash_flow = registry_record.cash_amount_valuation_currency
+                    principal_price = registry_record.dealing_price_valuation_currency
+
+                except Exception as e:
+                    cash_flow = 0
+                    principal_price = 0
+
                 try:
 
                     price_history = PriceHistory.objects.get(instrument=portfolio_register.linked_instrument, date=date, pricing_policy=portfolio_register.valuation_pricing_policy)
@@ -254,6 +269,8 @@ def calculate_portfolio_register_nav0(master_user_id):
                     price_history = PriceHistory(instrument=portfolio_register.linked_instrument, date=date, pricing_policy=portfolio_register.valuation_pricing_policy)
 
                 price_history.nav = nav
+                price_history.cash_flow = cash_flow
+                price_history.principal_price = principal_price
 
                 _l.info("Save price history id %s" % price_history.id)
                 _l.info("Save price history %s" % price_history)

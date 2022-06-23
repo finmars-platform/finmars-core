@@ -531,31 +531,27 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
         else:
             options['master_user_id'] = master_user.pk
 
-            if ev_options['entity_filters']:
+            if content_type.model not in ['portfolioregisterrecord']:
+                if ev_options['entity_filters']:
 
-                if content_type.model not in ['objecthistory4entry', 'generatedevent']:
+                    if content_type.model not in ['objecthistory4entry', 'generatedevent']:
 
-                    if 'deleted' not in ev_options['entity_filters']:
-                        options['is_deleted'] = False
+                        if 'deleted' not in ev_options['entity_filters']:
+                            options['is_deleted'] = False
 
-                if content_type.model in ['instrument']:
-                    if 'active' in ev_options['entity_filters'] and not 'inactive' in ev_options['entity_filters']:
-                        options['is_active'] = True
+                    if content_type.model in ['instrument']:
+                        if 'active' in ev_options['entity_filters'] and not 'inactive' in ev_options['entity_filters']:
+                            options['is_active'] = True
 
-                    if 'inactive' in ev_options['entity_filters'] and not 'active' in ev_options['entity_filters']:
-                        options['is_active'] = False
+                        if 'inactive' in ev_options['entity_filters'] and not 'active' in ev_options['entity_filters']:
+                            options['is_active'] = False
 
-                if content_type.model not in ['complextransaction']:
-                    if 'disabled' not in ev_options['entity_filters']:
-                        options['is_enabled'] = True
-
-
-
+                    if content_type.model not in ['complextransaction']:
+                        if 'disabled' not in ev_options['entity_filters']:
+                            options['is_enabled'] = True
 
 
         # _l.info('options %s' % options)
-
-
 
         # item['items_count'] = Model.objects.filter(Q(**options)).count()
         count_cs = Model.objects.filter(Q(**options))
