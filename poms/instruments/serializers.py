@@ -1512,6 +1512,7 @@ class PriceHistorySerializer(serializers.ModelSerializer):
             'procedure_modified_datetime',
 
             'nav',
+            'cash_flow',
 
             'long_delta',
             'short_delta'
