@@ -92,7 +92,7 @@ def calculate_portfolio_register_record0(master_user_id):
                 record.master_user = master_user
 
                 record.portfolio_id = key
-                record.instrument_id = trn.instrument_id
+                record.instrument_id = portfolio_register.linked_instrument_id
                 record.transaction_date = trn.accounting_date
                 record.transaction_code = trn.transaction_code
                 record.transaction_class_id = trn.transaction_class_id
