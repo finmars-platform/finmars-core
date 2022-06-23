@@ -197,6 +197,7 @@ class PortfolioRegisterRecordEvSerializer(ModelWithObjectPermissionSerializer):
             source='transaction_class', read_only=True)
         self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
         self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
+        self.fields['portfolio_register_object'] = PortfolioRegisterSerializer(source='portfolio_register', read_only=True)
 
         self.fields['cash_currency_object'] = CurrencyViewSerializer(source='cash_currency', read_only=True)
         self.fields['valuation_currency_object'] = CurrencyViewSerializer(source='valuation_currency', read_only=True)
