@@ -418,3 +418,68 @@ class PLReportInstanceItem(models.Model):
     class Meta:
         verbose_name = ugettext_lazy('pl report instance item')
         verbose_name_plural = ugettext_lazy('pl reports instance item')
+
+
+class PerformanceReportInstance(DataTimeStampedModel):
+
+    master_user = models.ForeignKey(MasterUser,
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+
+    member = models.ForeignKey(Member,
+                               verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
+
+    begin_date = models.DateField(db_index=True, verbose_name=ugettext_lazy('begin date'))
+    end_date = models.DateField(db_index=True, verbose_name=ugettext_lazy('end date'))
+
+    report_currency = models.ForeignKey('currencies.Currency', on_delete=models.CASCADE,
+                                        verbose_name=ugettext_lazy('report currency'))
+
+    calculation_type = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('calculation type'))
+    segmentation_type = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('segmentation type'))
+    registers = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('registers'))
+    registers_names = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('registers names'))
+
+    report_settings_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('report settings data'))
+
+    report_uuid = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('report uuid'))
+
+
+
+class PerformanceReportInstanceItem(models.Model):
+
+    report_instance = models.ForeignKey(PerformanceReportInstance, related_name="items",
+                                        verbose_name=ugettext_lazy('report instance'), on_delete=models.CASCADE)
+
+    master_user = models.ForeignKey(MasterUser,
+                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+
+    member = models.ForeignKey(Member,
+                               verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
+
+    begin_date = models.DateField(db_index=True, verbose_name=ugettext_lazy('begin date'))
+    end_date = models.DateField(db_index=True, verbose_name=ugettext_lazy('end date'))
+
+    report_currency = models.ForeignKey('currencies.Currency', on_delete=models.CASCADE,
+                                        verbose_name=ugettext_lazy('report currency'))
+
+    calculation_type = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('calculation type'))
+    segmentation_type = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('segmentation type'))
+
+    registers = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('registers'))
+    registers_names = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('registers names'))
+
+    report_settings_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('report settings data'))
+
+    date_from = models.DateField(db_index=True, verbose_name=ugettext_lazy('date from'))
+    date_to = models.DateField(db_index=True, verbose_name=ugettext_lazy('date to'))
+
+    begin_nav = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('begin nav'))
+    end_nav = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('end nav'))
+    cash_flow = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('cash flow'))
+    nav = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('nav'))
+    instrument_return = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('instrument return'))
+
+
+    class Meta:
+        verbose_name = ugettext_lazy('performance report instance item')
+        verbose_name_plural = ugettext_lazy('performance reports instance item')

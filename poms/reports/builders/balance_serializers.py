@@ -1051,7 +1051,7 @@ class BalanceReportSqlSerializer(ReportSerializer):
             report_currency=instance.report_currency,
             pricing_policy=instance.pricing_policy,
             cost_method=instance.cost_method,
-        report_uuid=str(uuid.uuid4())
+            report_uuid=str(uuid.uuid4())
         )
 
         custom_fields_map = {}

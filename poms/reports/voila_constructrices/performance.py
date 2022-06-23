@@ -59,6 +59,8 @@ class PerformanceReportBuilder:
             portfolios.append(portfolio_register.portfolio_id)
             portfolio_registers_map[portfolio_register.portfolio_id] = portfolio_register
 
+        _l.info('get_first_transaction.portfolios %s ' % portfolios)
+
         transaction = Transaction.objects.filter(portfolio__in=portfolios,
                                                   accounting_date__gte=self.instance.begin_date,
                                                   transaction_class__in=[TransactionClass.CASH_INFLOW,
@@ -110,6 +112,22 @@ class PerformanceReportBuilder:
 
         self.instance.items = []
         self.instance.raw_items = json.loads(json.dumps(self.instance.periods, indent=4, sort_keys=True, default=str))
+
+        for period in self.instance.periods:
+
+            item = {}
+
+            item['date_from'] = period['date_from']
+            item['date_to'] = period['date_to']
+
+            item['begin_nav'] = period['begin_nav']
+            item['end_nav'] = period['end_nav']
+
+            item['cash_flow'] = period['total_cash_flow']
+            item['nav'] = period['total_nav']
+            item['instrument_return'] = period['total_return']
+
+            self.instance.items.append(item)
 
         _l.info('items total %s' % len(self.instance.items))
 
@@ -352,7 +370,7 @@ class PerformanceReportBuilder:
             table[date_from_str]['subtotal_return'] = 0
 
             for portfolio_id in portfolios:
-                table[date_from]['portfolios'][portfolio_id] = {
+                table[date_from_str]['portfolios'][portfolio_id] = {
                     'portfolio_register': portfolio_registers_map[portfolio_id],
                     'portfolio_id': portfolio_id,
                     'accounting_date_str': date_from_str,
@@ -400,7 +418,7 @@ class PerformanceReportBuilder:
             table[date_to_str]['subtotal_return'] = 0
 
             for portfolio_id in portfolios:
-                table[date_to]['portfolios'][portfolio_id] = {
+                table[date_to_str]['portfolios'][portfolio_id] = {
                     'portfolio_register': portfolio_registers_map[portfolio_id],
                     'portfolio_id': portfolio_id,
                     'accounting_date_str': date_to_str,

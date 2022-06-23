@@ -2,7 +2,8 @@ from django.contrib import admin
 
 from poms.common.admin import AbstractModelAdmin
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField, \
-    BalanceReportInstance, BalanceReportInstanceItem, PLReportInstance, PLReportInstanceItem
+    BalanceReportInstance, BalanceReportInstanceItem, PLReportInstance, PLReportInstanceItem, \
+    PerformanceReportInstanceItem, PerformanceReportInstance
 
 
 class BalanceReportCustomFieldAdmin(AbstractModelAdmin):
@@ -83,3 +84,25 @@ class PLReportInstanceItemAdmin(AbstractModelAdmin):
 
 
 admin.site.register(PLReportInstanceItem, PLReportInstanceItemAdmin)
+
+
+class PerformanceReportInstanceAdmin(AbstractModelAdmin):
+    model = PerformanceReportInstance
+    master_user_path = 'master_user'
+    list_display = ['id', 'master_user', 'begin_date', 'end_date', 'report_currency']
+    list_select_related = ['master_user']
+    raw_id_fields = ['master_user']
+
+
+admin.site.register(PerformanceReportInstance, PerformanceReportInstanceAdmin)
+
+
+class PerformanceReportInstanceItemAdmin(AbstractModelAdmin):
+    model = PerformanceReportInstanceItem
+    master_user_path = 'master_user'
+    list_display = ['id', 'master_user', 'report_instance', 'begin_date', 'end_date', 'report_currency']
+    list_select_related = ['master_user', 'report_instance']
+    raw_id_fields = ['master_user', 'report_instance']
+
+
+admin.site.register(PerformanceReportInstanceItem, PerformanceReportInstanceItemAdmin)

@@ -1,7 +1,9 @@
 from __future__ import unicode_literals
 
+import uuid
 from datetime import date
 
+from django.db.models import ForeignKey
 from django.utils.translation import ugettext
 from rest_framework import serializers
 
@@ -18,6 +20,8 @@ from poms.portfolios.serializers import PortfolioViewSerializer
 from poms.reports.builders.base_serializers import ReportPortfolioSerializer, ReportAccountSerializer, \
     ReportStrategy1Serializer, ReportStrategy2Serializer, ReportStrategy3Serializer
 from poms.reports.builders.performance_item import PerformanceReport
+from poms.reports.models import BalanceReportInstance, BalanceReportInstanceItem, PerformanceReportInstance, \
+    PerformanceReportInstanceItem
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
 from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, Strategy3ViewSerializer
 from poms.users.fields import MasterUserField, HiddenMemberField
@@ -26,30 +30,40 @@ from poms.users.fields import MasterUserField, HiddenMemberField
 class PerformanceReportItemSerializer(serializers.Serializer):
     id = serializers.ReadOnlyField()
 
-    period_name = serializers.CharField(read_only=True)
-    period_begin = serializers.DateField(read_only=True)
-    period_end = serializers.DateField(read_only=True)
+    date_from = serializers.CharField(read_only=True)
+    date_to = serializers.CharField(read_only=True)
 
-    portfolio = serializers.PrimaryKeyRelatedField(read_only=True)
-    account = serializers.PrimaryKeyRelatedField(read_only=True)
-    strategy1 = serializers.PrimaryKeyRelatedField(read_only=True)
-    strategy2 = serializers.PrimaryKeyRelatedField(read_only=True)
-    strategy3 = serializers.PrimaryKeyRelatedField(read_only=True)
-    source_transactions = serializers.ListField(source='src_trns_id', child=serializers.IntegerField(), read_only=True)
+    begin_nav = serializers.FloatField(read_only=True)
+    end_nav = serializers.FloatField(read_only=True)
 
-    return_pl = serializers.FloatField(read_only=True)
-    return_nav = serializers.FloatField(read_only=True)
-    pl_in_period = serializers.FloatField(read_only=True)
-    nav_change = serializers.FloatField(read_only=True)
-    nav_period_start = serializers.FloatField(read_only=True)
-    nav_period_end = serializers.FloatField(read_only=True)
-    cash_inflows = serializers.FloatField(read_only=True)
-    cash_outflows = serializers.FloatField(read_only=True)
-    time_weighted_cash_inflows = serializers.FloatField(read_only=True)
-    time_weighted_cash_outflows = serializers.FloatField(read_only=True)
-    avg_nav_in_period = serializers.FloatField(read_only=True)
-    cumulative_return_pl = serializers.FloatField(read_only=True)
-    cumulative_return_nav = serializers.FloatField(read_only=True)
+    cash_flow = serializers.FloatField(read_only=True)
+    nav = serializers.FloatField(read_only=True)
+    instrument_return = serializers.FloatField(read_only=True)
+
+    # period_name = serializers.CharField(read_only=True)
+    # period_begin = serializers.DateField(read_only=True)
+    # period_end = serializers.DateField(read_only=True)
+    #
+    # portfolio = serializers.PrimaryKeyRelatedField(read_only=True)
+    # account = serializers.PrimaryKeyRelatedField(read_only=True)
+    # strategy1 = serializers.PrimaryKeyRelatedField(read_only=True)
+    # strategy2 = serializers.PrimaryKeyRelatedField(read_only=True)
+    # strategy3 = serializers.PrimaryKeyRelatedField(read_only=True)
+    # source_transactions = serializers.ListField(source='src_trns_id', child=serializers.IntegerField(), read_only=True)
+    #
+    # return_pl = serializers.FloatField(read_only=True)
+    # return_nav = serializers.FloatField(read_only=True)
+    # pl_in_period = serializers.FloatField(read_only=True)
+    # nav_change = serializers.FloatField(read_only=True)
+    # nav_period_start = serializers.FloatField(read_only=True)
+    # nav_period_end = serializers.FloatField(read_only=True)
+    # cash_inflows = serializers.FloatField(read_only=True)
+    # cash_outflows = serializers.FloatField(read_only=True)
+    # time_weighted_cash_inflows = serializers.FloatField(read_only=True)
+    # time_weighted_cash_outflows = serializers.FloatField(read_only=True)
+    # avg_nav_in_period = serializers.FloatField(read_only=True)
+    # cumulative_return_pl = serializers.FloatField(read_only=True)
+    # cumulative_return_nav = serializers.FloatField(read_only=True)
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('read_only', True)
@@ -65,14 +79,20 @@ class PerformanceReportSerializer(serializers.Serializer):
     member = HiddenMemberField()
     begin_date = serializers.DateField(required=False, allow_null=True, default=date.min)
     end_date = serializers.DateField(required=False, allow_null=True, default=date_now)
-    calculation_type = serializers.ChoiceField(allow_null=True,  initial=PerformanceReport.CALCULATION_TYPE_TIME_WEIGHTED, default=PerformanceReport.CALCULATION_TYPE_TIME_WEIGHTED, choices=PerformanceReport.CALCULATION_TYPE_CHOICES, allow_blank=True, required=False)
-    segmentation_type = serializers.ChoiceField(allow_null=True, initial=PerformanceReport.SEGMENTATION_TYPE_MONTHS, default=PerformanceReport.SEGMENTATION_TYPE_MONTHS, choices=PerformanceReport.SEGMENTATION_TYPE_CHOICES,allow_blank=True, required=False)
+    calculation_type = serializers.ChoiceField(allow_null=True,
+                                               initial=PerformanceReport.CALCULATION_TYPE_TIME_WEIGHTED,
+                                               default=PerformanceReport.CALCULATION_TYPE_TIME_WEIGHTED,
+                                               choices=PerformanceReport.CALCULATION_TYPE_CHOICES, allow_blank=True,
+                                               required=False)
+    segmentation_type = serializers.ChoiceField(allow_null=True, initial=PerformanceReport.SEGMENTATION_TYPE_MONTHS,
+                                                default=PerformanceReport.SEGMENTATION_TYPE_MONTHS,
+                                                choices=PerformanceReport.SEGMENTATION_TYPE_CHOICES, allow_blank=True,
+                                                required=False)
     registers = RegisterField(many=True, required=False, allow_null=True, allow_empty=True)
     # periods = ExpressionField(required=False, allow_blank=True, allow_null=True, default='',
     #                           initial='date_group(transaction.accounting_date, [[None,None,timedelta(months=1),["[","%Y-%m-%d","/","","%Y-%m-%d","]"]]], "Err")')
     # report_currency = CurrencyField(required=False, allow_null=True, default=SystemCurrencyDefault())
     # pricing_policy = PricingPolicyField()
-
 
     # portfolio_mode = serializers.ChoiceField(default=PerformanceReport.MODE_INDEPENDENT,
     #                                          initial=PerformanceReport.MODE_INDEPENDENT,
@@ -128,6 +148,7 @@ class PerformanceReportSerializer(serializers.Serializer):
     grand_return = serializers.ReadOnlyField()
     grand_cash_flow = serializers.ReadOnlyField()
     grand_nav = serializers.ReadOnlyField()
+
     # item_portfolios = ReportPortfolioSerializer(many=True, read_only=True)
     # item_accounts = ReportAccountSerializer(many=True, read_only=True)
     # item_strategies1 = ReportStrategy1Serializer(many=True, read_only=True)
@@ -148,6 +169,74 @@ class PerformanceReportSerializer(serializers.Serializer):
 
     def to_representation(self, instance):
         data = super(PerformanceReportSerializer, self).to_representation(instance)
+
+        register_ids_list = []
+        register_names_list = []
+        register_ids = ''
+        register_names = ''
+
+        for r in instance.registers:
+            register_ids_list.append(str(r.id))
+            register_names_list.append(str(r.name))
+
+        register_ids = ", ".join(register_ids_list)
+        register_names = ", ".join(register_names_list)
+
+        report_instance = PerformanceReportInstance.objects.create(
+            master_user=instance.master_user,
+            member=instance.member,
+            begin_date=instance.begin_date,
+            end_date=instance.end_date,
+            calculation_type=instance.calculation_type,
+            segmentation_type=instance.segmentation_type,
+            registers=register_ids,
+            registers_names=register_names,
+            report_currency=instance.report_currency,
+            report_uuid=str(uuid.uuid4())
+        )
+
+        custom_fields_map = {}
+
+        for custom_field in instance.custom_fields:
+            custom_fields_map[custom_field.id] = custom_field
+
+        for item in data['items']:
+
+            instance_item = PerformanceReportInstanceItem(report_instance=report_instance,
+                                                          master_user=instance.master_user,
+                                                          member=instance.member,
+                                                          begin_date=instance.begin_date,
+                                                          end_date=instance.end_date,
+                                                          calculation_type=instance.calculation_type,
+                                                          segmentation_type=instance.segmentation_type,
+                                                          registers=register_ids,
+                                                          registers_names=register_names,
+                                                          report_currency=instance.report_currency,
+                                                          )
+
+            for field in PerformanceReportInstanceItem._meta.fields:
+
+                if field.name not in ['id']:
+
+                    if field.name in item:
+
+                        if isinstance(field, ForeignKey):
+
+                            try:
+                                setattr(instance_item, field.name + '_id', item[field.name])
+                            except Exception as e:
+                                print('exception field %s : %s' % (field.name, e))
+                                setattr(instance_item, field.name, None)
+
+                        else:
+
+                            try:
+                                setattr(instance_item, field.name, item[field.name])
+                            except Exception as e:
+                                print('exception field %s : %s' % (field.name, e))
+                                setattr(instance_item, field.name, None)
+
+            instance_item.save()
 
         # items = data['items']
         # custom_fields = data['custom_fields_object']
