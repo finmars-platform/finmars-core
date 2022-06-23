@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from poms.procedures.models import RequestDataFileProcedure, RequestDataFileProcedureInstance, PricingProcedure, \
-    PricingParentProcedureInstance, PricingProcedureInstance
+    PricingParentProcedureInstance, PricingProcedureInstance, ExpressionProcedureInstance, ExpressionProcedure
 
 
 class PricingProcedureAdmin(admin.ModelAdmin):
@@ -50,3 +50,21 @@ class RequestDataFileProcedureInstanceAdmin(admin.ModelAdmin):
 admin.site.register(RequestDataFileProcedureInstance, RequestDataFileProcedureInstanceAdmin)
 
 
+class ExpressionProcedureAdmin(admin.ModelAdmin):
+    model = ExpressionProcedure
+    list_display = ['id', 'master_user', 'name', 'user_code',
+                    'date_from', 'date_from_expr',
+                    'date_to', 'date_to_expr']
+    raw_id_fields = ['master_user']
+
+
+admin.site.register(ExpressionProcedure, ExpressionProcedureAdmin)
+
+
+class ExpressionProcedureInstanceAdmin(admin.ModelAdmin):
+    model = ExpressionProcedureInstance
+    list_display = ['id', 'master_user', 'procedure', 'created', 'modified', 'status']
+    raw_id_fields = ['master_user']
+
+
+admin.site.register(ExpressionProcedureInstance, ExpressionProcedureInstanceAdmin)

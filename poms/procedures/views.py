@@ -6,10 +6,11 @@ from poms.integrations.providers.base import parse_date_iso
 from poms.pricing.handlers import PricingProcedureProcess
 from poms.procedures.handlers import RequestDataFileProcedureProcess
 from poms.procedures.models import RequestDataFileProcedure, PricingProcedure, PricingParentProcedureInstance, \
-    RequestDataFileProcedureInstance
+    RequestDataFileProcedureInstance, ExpressionProcedure, ExpressionProcedureInstance
 from poms.procedures.serializers import RequestDataFileProcedureSerializer, RunRequestDataFileProcedureSerializer, \
     PricingProcedureSerializer, RunProcedureSerializer, PricingParentProcedureInstanceSerializer, \
-    RequestDataFileProcedureInstanceSerializer
+    RequestDataFileProcedureInstanceSerializer, ExpressionProcedureSerializer, RunExpressionProcedureSerializer, \
+    ExpressionProcedureInstanceSerializer
 from poms.system_messages.handlers import send_system_message
 
 from poms.users.filters import OwnerByMasterUserFilter
@@ -168,3 +169,68 @@ class RequestDataFileProcedureInstanceViewSet(AbstractModelViewSet):
 
 
 
+
+
+class ExpressionProcedureFilterSet(FilterSet):
+    user_code = CharFilter()
+    name = CharFilter()
+
+    class Meta:
+        model = ExpressionProcedure
+        fields = []
+
+
+class ExpressionProcedureViewSet(AbstractModelViewSet):
+    queryset = ExpressionProcedure.objects
+    serializer_class = ExpressionProcedureSerializer
+    filter_class = ExpressionProcedureFilterSet
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+
+    permission_classes = []
+
+    @action(detail=True, methods=['post'], url_path='run-procedure', serializer_class=RunExpressionProcedureSerializer)
+    def run_procedure(self, request, pk=None):
+
+        _l.debug("Run Procedure %s" % pk)
+
+        _l.debug("Run Procedure data %s" % request.data)
+
+        procedure = RequestDataFileProcedure.objects.get(pk=pk)
+
+        master_user = request.user.master_user
+        member = request.user.member
+
+
+        instance = ExpressionProcedureProcess(procedure=procedure, master_user=master_user, member=member)
+        instance.process()
+
+        text = "Expression Procedure %s. Start processing" % procedure.name
+
+        send_system_message(master_user=master_user,
+                            source="Expression Procedure Service",
+                            text=text)
+
+        serializer = self.get_serializer(instance=instance)
+
+        return Response(serializer.data)
+
+
+class ExpressionProcedureInstanceFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    class Meta:
+        model = ExpressionProcedureInstance
+        fields = []
+
+
+class ExpressionProcedureInstanceViewSet(AbstractModelViewSet):
+    queryset = ExpressionProcedureInstance.objects.select_related(
+        'master_user',
+    )
+    serializer_class = ExpressionProcedureInstanceSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = ExpressionProcedureInstanceFilterSet

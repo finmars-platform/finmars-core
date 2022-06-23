@@ -376,3 +376,68 @@ class RequestDataFileProcedureInstance(BaseProcedureInstance):
             self.json_request_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
         else:
             self.json_request_data = None
+
+
+
+class ExpressionProcedure(BaseProcedure):
+
+    date_from = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price date from'))
+
+    date_from_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                      verbose_name=ugettext_lazy('price date from expr'))
+
+    date_to = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price date to'))
+
+    date_to_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                    verbose_name=ugettext_lazy('price date to expr'))
+
+    code = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('code'))
+
+    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+
+    @property
+    def data(self):
+        if self.json_data:
+            try:
+                return json.loads(self.json_data)
+            except (ValueError, TypeError):
+                return None
+        else:
+            return None
+
+    @data.setter
+    def data(self, val):
+        if val:
+            self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+        else:
+            self.json_data = None
+
+
+class ExpressionProcedureInstance(BaseProcedureInstance):
+
+    procedure = models.ForeignKey(RequestDataFileProcedure, on_delete=models.CASCADE,
+                                  verbose_name=ugettext_lazy('procedure'))
+
+    calculated_options_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('calculated options'))
+
+    result = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('result'))
+
+    class Meta:
+        ordering = ['-created']
+
+    @property
+    def calculated_options(self):
+        if self.calculated_options_data:
+            try:
+                return json.loads(self.calculated_options_data)
+            except (ValueError, TypeError):
+                return None
+        else:
+            return None
+
+    @calculated_options.setter
+    def calculated_options(self, val):
+        if val:
+            self.calculated_options_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+        else:
+            self.calculated_options_data = None

@@ -475,8 +475,13 @@ router.register(r'system-messages/message', system_messages.MessageViewSet)
 
 router.register(r'procedures/pricing-procedure', procedures.PricingProcedureViewSet, 'pricing_procedure')
 router.register(r'procedures/pricing-parent-procedure-instance', procedures.PricingParentProcedureInstanceViewSet, 'pricing_parent_procedure_instance')
+
 router.register(r'procedures/request-data-procedure', procedures.RequestDataFileProcedureViewSet)
 router.register(r'procedures/data-procedure-instance', procedures.RequestDataFileProcedureInstanceViewSet)
+
+router.register(r'procedures/expression-procedure', procedures.ExpressionProcedureViewSet)
+router.register(r'procedures/expression-procedure-instance', procedures.ExpressionProcedureInstanceViewSet)
+
 router.register(r'credentials/credentials', credentials.CredentialsViewSet)
 router.register(r'integrations/data-provider', integrations.DataProviderViewSet)
 
