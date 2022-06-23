@@ -1085,7 +1085,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
 
     relation_fields = [f for f in model._meta.fields if
                        isinstance(f,
-                                  ForeignKey) and f.name != 'master_user' and f.name != 'procedure_instance' and f.name != 'complex_transaction' and f.name != 'event_schedule' and f.name !='member' and f.name != 'action']
+                                  ForeignKey) and f.name != 'master_user' and f.name != 'procedure_instance' and f.name != 'complex_transaction' and f.name != 'event_schedule' and f.name != 'member' and f.name != 'action']
 
     _l.info('relation_fields %s' % relation_fields)
 
@@ -1106,7 +1106,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
     for query in relation_queries_user_code:
         q = q | query
 
-    char_fields = [f for f in model._meta.fields if isinstance(f, CharField  ) and f.name != 'deleted_user_code']
+    char_fields = [f for f in model._meta.fields if isinstance(f, CharField) and f.name != 'deleted_user_code']
     char_queries = [Q(**{f.name + '__icontains': global_table_search}) for f in char_fields]
 
     for query in char_queries:
@@ -1136,7 +1136,9 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
         q = q | string_attr_query
         q = q | date_attr_query
 
-    qs = qs.filter(q, is_deleted=False).distinct()
+        q = q | Q({"is_deleted": False})
+
+    qs = qs.filter(q).distinct()
 
     _l.debug("handle_global_table_search done in %s seconds " % "{:3.3f}".format(time.time() - start_time))
 

@@ -198,9 +198,9 @@ router.register(r'portfolios/portfolio-light', portfolios.PortfolioLightViewSet)
 router.register(r'portfolios/portfolio-register-attribute-type', portfolios.PortfolioRegisterAttributeTypeViewSet,
                 'portfolioregisterattributetype')
 
-router.register(r'portfolios/portfolio-register', portfolios.PortfolioRegisterViewSet)
-router.register(r'portfolios/portfolio-register-ev', portfolios.PortfolioRegisterEvViewSet)
-router.register(r'portfolios/portfolio-register-ev-group', portfolios.PortfolioRegisterEvGroupViewSet)
+router.register(r'portfolios/portfolio-register', portfolios.PortfolioRegisterViewSet, 'portfolioregister')
+router.register(r'portfolios/portfolio-register-ev', portfolios.PortfolioRegisterEvViewSet, 'portfolioregisterev')
+router.register(r'portfolios/portfolio-register-ev-group', portfolios.PortfolioRegisterEvGroupViewSet, 'portfolioregisterevgroup')
 
 
 router.register(r'portfolios/portfolio-register-record', portfolios.PortfolioRegisterRecordViewSet)
