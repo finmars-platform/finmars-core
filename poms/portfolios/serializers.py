@@ -157,7 +157,7 @@ class PortfolioRegisterRecordSerializer(ModelWithObjectPermissionSerializer):
         fields = [
             'id', 'master_user',
 
-            'portfolio', 'instrument', 'transaction_type', 'transaction_code', 'transaction_date', 'cash_amount', 'cash_currency',
+            'portfolio', 'instrument', 'transaction_class', 'transaction_code', 'transaction_date', 'cash_amount', 'cash_currency',
             'fx_rate', 'cash_amount_valuation_currency', 'valuation_currency', 'nav_previous_day_valuation_currency',
 
             'n_shares_previous_day', 'n_shares_added',
@@ -180,7 +180,7 @@ class PortfolioRegisterRecordEvSerializer(ModelWithObjectPermissionSerializer):
         fields = [
             'id', 'master_user',
 
-            'portfolio', 'instrument', 'transaction_type', 'transaction_code', 'transaction_date', 'cash_amount', 'cash_currency',
+            'portfolio', 'instrument', 'transaction_class', 'transaction_code', 'transaction_date', 'cash_amount', 'cash_currency',
             'fx_rate', 'cash_amount_valuation_currency', 'valuation_currency', 'nav_previous_day_valuation_currency',
 
             'n_shares_previous_day', 'n_shares_added',
