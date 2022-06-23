@@ -128,7 +128,7 @@ def calculate_portfolio_register_record0(master_user_id):
 
                         cash_ccy_fx_rate = 1
 
-                        if record.valuation_currency_id == ecosystem_defaults.currency_id:
+                        if record.cash_currency_id == ecosystem_defaults.currency_id:
 
                             cash_ccy_fx_rate = 1
 
