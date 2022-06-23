@@ -99,8 +99,8 @@ def calculate_portfolio_register_record0(master_user_id):
                 record.transaction_code = trn.transaction_code
                 record.transaction_class_id = trn.transaction_class_id
                 record.cash_amount = trn.cash_consideration
-                record.cash_currency_id = trn.transaction_currency_id
 
+                record.cash_currency_id = trn.transaction_currency_id
                 record.valuation_currency_id = portfolio_register.valuation_currency_id
 
                 try:
@@ -137,6 +137,9 @@ def calculate_portfolio_register_record0(master_user_id):
                             cash_ccy_fx_rate = CurrencyHistory.objects.get(currency_id=record.cash_currency_id,
                                                                            pricing_policy=portfolio_register.valuation_pricing_policy,
                                                                            date=record.transaction_date).fx_rate
+
+                        _l.info("calculate_portfolio_register_record0_valuation_ccy_fx_rate %s " % valuation_ccy_fx_rate)
+                        _l.info("calculate_portfolio_register_record0_cash_ccy_fx_rate %s " % cash_ccy_fx_rate)
 
                         record.fx_rate = valuation_ccy_fx_rate / cash_ccy_fx_rate
 
