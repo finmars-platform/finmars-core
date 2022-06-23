@@ -4,7 +4,7 @@ from poms.common.filters import CharFilter, NoOpFilter
 from poms.common.views import AbstractModelViewSet
 from poms.integrations.providers.base import parse_date_iso
 from poms.pricing.handlers import PricingProcedureProcess
-from poms.procedures.handlers import RequestDataFileProcedureProcess
+from poms.procedures.handlers import RequestDataFileProcedureProcess, ExpressionProcedureProcess
 from poms.procedures.models import RequestDataFileProcedure, PricingProcedure, PricingParentProcedureInstance, \
     RequestDataFileProcedureInstance, ExpressionProcedure, ExpressionProcedureInstance
 from poms.procedures.serializers import RequestDataFileProcedureSerializer, RunRequestDataFileProcedureSerializer, \
@@ -197,7 +197,7 @@ class ExpressionProcedureViewSet(AbstractModelViewSet):
 
         _l.debug("Run Procedure data %s" % request.data)
 
-        procedure = RequestDataFileProcedure.objects.get(pk=pk)
+        procedure = ExpressionProcedure.objects.get(pk=pk)
 
         master_user = request.user.master_user
         member = request.user.member

@@ -202,7 +202,7 @@ class RunExpressionProcedureSerializer(serializers.Serializer):
 
 class ExpressionProcedureInstanceSerializer(serializers.ModelSerializer):
 
-    procedure_object = RequestDataFileProcedureSerializer(source='procedure', read_only=True)
+    procedure_object = ExpressionProcedureSerializer(source='procedure', read_only=True)
 
     request_data = serializers.JSONField(allow_null=True, required=False)
 

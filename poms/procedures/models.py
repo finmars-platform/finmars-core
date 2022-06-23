@@ -415,7 +415,7 @@ class ExpressionProcedure(BaseProcedure):
 
 class ExpressionProcedureInstance(BaseProcedureInstance):
 
-    procedure = models.ForeignKey(RequestDataFileProcedure, on_delete=models.CASCADE,
+    procedure = models.ForeignKey(ExpressionProcedure, on_delete=models.CASCADE,
                                   verbose_name=ugettext_lazy('procedure'))
 
     calculated_options_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('calculated options'))
