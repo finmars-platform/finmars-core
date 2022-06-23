@@ -14,7 +14,7 @@ from poms.reports.builders.balance_item import Report
 from poms.reports.builders.balance_pl import ReportBuilder
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.transactions.models import Transaction, TransactionClass
-from poms.users.models import MasterUser
+from poms.users.models import MasterUser, EcosystemDefault
 
 _l = logging.getLogger('poms.portfolios')
 
@@ -52,6 +52,8 @@ def calculate_portfolio_register_record0(master_user_id):
         _l.info("calculate_portfolio_register_record0 master_user %s" % master_user)
 
         portfolio_registers = PortfolioRegister.objects.filter(master_user_id=master_user)
+
+        ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
 
         portfolio_ids = []
         portfolio_registers_map = {}
@@ -115,12 +117,26 @@ def calculate_portfolio_register_record0(master_user_id):
                 else:
                     try:
 
-                        valuation_ccy_fx_rate = CurrencyHistory.objects.get(currency_id=record.valuation_currency_id,
-                                                                            pricing_policy=portfolio_register.valuation_pricing_policy,
-                                                                            date=record.transaction_date).fx_rate
-                        cash_ccy_fx_rate = CurrencyHistory.objects.get(currency_id=record.cash_currency_id,
-                                                                       pricing_policy=portfolio_register.valuation_pricing_policy,
-                                                                       date=record.transaction_date).fx_rate
+                        valuation_ccy_fx_rate = 1
+
+                        if record.valuation_currency_id == ecosystem_defaults.currency_id:
+                            valuation_ccy_fx_rate = 1
+                        else:
+                            valuation_ccy_fx_rate = CurrencyHistory.objects.get(currency_id=record.valuation_currency_id,
+                                                                                pricing_policy=portfolio_register.valuation_pricing_policy,
+                                                                                date=record.transaction_date).fx_rate
+
+                        cash_ccy_fx_rate = 1
+
+                        if record.valuation_currency_id == ecosystem_defaults.currency_id:
+
+                            cash_ccy_fx_rate = 1
+
+                        else:
+
+                            cash_ccy_fx_rate = CurrencyHistory.objects.get(currency_id=record.cash_currency_id,
+                                                                           pricing_policy=portfolio_register.valuation_pricing_policy,
+                                                                           date=record.transaction_date).fx_rate
 
                         record.fx_rate = valuation_ccy_fx_rate / cash_ccy_fx_rate
 
