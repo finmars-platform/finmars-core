@@ -81,7 +81,7 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             self.linked_instrument.save()
 
 
-class PortfolioRegisterRecord(models.Model):
+class PortfolioRegisterRecord(DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='portfolio_register_records',
                                     verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 

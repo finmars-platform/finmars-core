@@ -147,7 +147,7 @@ class PortfolioRegisterEvSerializer(ModelWithObjectPermissionSerializer, ModelWi
 
 
 
-class PortfolioRegisterRecordSerializer(ModelWithObjectPermissionSerializer):
+class PortfolioRegisterRecordSerializer(ModelWithObjectPermissionSerializer, ModelWithTimeStampSerializer):
 
     master_user = MasterUserField()
 
@@ -172,7 +172,7 @@ class PortfolioRegisterRecordSerializer(ModelWithObjectPermissionSerializer):
 
 
 
-class PortfolioRegisterRecordEvSerializer(ModelWithObjectPermissionSerializer):
+class PortfolioRegisterRecordEvSerializer(ModelWithObjectPermissionSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
     class Meta:
