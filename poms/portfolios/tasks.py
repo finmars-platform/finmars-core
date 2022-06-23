@@ -141,7 +141,7 @@ def calculate_portfolio_register_record0(master_user_id):
                         _l.info("calculate_portfolio_register_record0_valuation_ccy_fx_rate %s " % valuation_ccy_fx_rate)
                         _l.info("calculate_portfolio_register_record0_cash_ccy_fx_rate %s " % cash_ccy_fx_rate)
 
-                        record.fx_rate = valuation_ccy_fx_rate / cash_ccy_fx_rate
+                        record.fx_rate = cash_ccy_fx_rate / valuation_ccy_fx_rate
 
                     except Exception as e:
                         _l.info("calculate_portfolio_register_record0 fx rate lookup error %s " % e)
