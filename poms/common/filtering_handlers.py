@@ -782,7 +782,7 @@ def add_filter(qs, filter_config):
         if len(filter_config['value']):
             value = filter_config['value'][0]
 
-        if value:
+        if value or value == 0:
 
             options = {}
             options[key + '__exact'] = value
@@ -798,7 +798,7 @@ def add_filter(qs, filter_config):
         if len(filter_config['value']):
             value = filter_config['value'][0]
 
-        if value:
+        if value or value == 0:
 
             options = {}
             options[key + '__exact'] = value
@@ -816,7 +816,7 @@ def add_filter(qs, filter_config):
         if len(filter_config['value']):
             value = filter_config['value'][0]
 
-        if value:
+        if value or value == 0:
 
             options = {}
             options[key + '__gt'] = value
@@ -832,7 +832,7 @@ def add_filter(qs, filter_config):
         if len(filter_config['value']):
             value = filter_config['value'][0]
 
-        if value:
+        if value or value == 0:
 
             options = {}
             options[key + '__gte'] = value
@@ -848,7 +848,7 @@ def add_filter(qs, filter_config):
         if len(filter_config['value']):
             value = filter_config['value'][0]
 
-        if value:
+        if value or value == 0:
 
             options = {}
             options[key + '__lt'] = value
@@ -865,7 +865,7 @@ def add_filter(qs, filter_config):
         if len(filter_config['value']):
             value = filter_config['value'][0]
 
-        if value:
+        if value or value == 0:
 
             options = {}
             options[key + '__lte'] = value
