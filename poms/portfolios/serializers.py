@@ -192,9 +192,9 @@ class PortfolioRegisterRecordEvSerializer(ModelWithObjectPermissionSerializer):
     def __init__(self, *args, **kwargs):
         super(PortfolioRegisterRecordEvSerializer, self).__init__(*args, **kwargs)
 
-        from poms.transactions.serializers import TransactionTypeViewSerializer
-        self.fields['transaction_type_object'] = TransactionTypeViewSerializer(
-            source='transaction_type', read_only=True)
+        from poms.transactions.serializers import TransactionClassSerializer
+        self.fields['transaction_class_object'] = TransactionClassSerializer(
+            source='transaction_class', read_only=True)
         self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
         self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
 

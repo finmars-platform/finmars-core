@@ -1,4 +1,5 @@
 import json
+from datetime import timedelta
 
 import requests
 
@@ -417,6 +418,17 @@ class ExpressionProcedureProcess(object):
 
         self.execute_procedure_date_expressions()
 
+    def get_list_of_dates_between_two_dates(self, date_from, date_to):
+        result = []
+
+        diff = date_to - date_from
+
+        for i in range(diff.days + 1):
+            day = date_from + timedelta(days=i)
+            result.append(day)
+
+        return result
+
     def execute_procedure_date_expressions(self):
 
         if self.procedure.date_from_expr:
@@ -450,10 +462,26 @@ class ExpressionProcedureProcess(object):
                             text="Procedure %s. Start" % procedure_instance.id,
                             )
 
-        try:
-            result = formula.safe_eval(self.procedure.code, names={})
+        dates = self.get_list_of_dates_between_two_dates(self.procedure.date_from, self.procedure.date_to)
 
-            procedure_instance.result = result
+        procedure_instance.result = ''
+
+        try:
+
+            names = self.procedure.data
+
+            if not names:
+                names = {}
+
+            for date in dates:
+
+                names['date'] = str(date)
+
+                result = formula.safe_eval(self.procedure.code, names=names)
+
+                if result:
+                    procedure_instance.result = procedure_instance.result + ' \n' + result
+
 
             send_system_message(master_user=self.master_user,
                                 source="Expression Procedure Service",

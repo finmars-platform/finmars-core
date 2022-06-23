@@ -15,6 +15,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.utils import numberformat
 from django.utils.functional import Promise, SimpleLazyObject
 
+from celery import Celery
+
 from poms.common.utils import date_now, isclose
 import re
 
@@ -1863,6 +1865,28 @@ def _get_default_strategy3(evaluator):
 _get_default_strategy3.evaluator = True
 
 
+
+def _run_task(evaluator, task_name, **kwargs):
+
+    _l.info('_run_task task_name: %s' % task_name)
+
+    try:
+
+        app = Celery('poms_app')
+
+        app.config_from_object('django.conf:settings', namespace='CELERY')
+
+        app.autodiscover_tasks()
+
+        app.send_task(task_name, [], kwargs)
+
+    except Exception as e:
+        _l.debug("_run_task.exception %s" % e)
+
+
+_run_task.evaluator = True
+
+
 def _simple_group(val, ranges, default=None):
     for begin, end, text in ranges:
         if begin is None:
@@ -2145,6 +2169,7 @@ FUNCTIONS = [
     SimpleEval2Def('format_date', _format_date),
     SimpleEval2Def('parse_date', _parse_date),
     SimpleEval2Def('unix_to_date', _unix_to_date),
+
     SimpleEval2Def('get_date_last_week_end_business', _get_date_last_week_end_business),
     SimpleEval2Def('get_date_last_month_end_business', _get_date_last_month_end_business),
     SimpleEval2Def('get_date_last_quarter_end_business', _get_date_last_quarter_end_business),
@@ -2222,6 +2247,8 @@ FUNCTIONS = [
     SimpleEval2Def('get_default_strategy1', _get_default_strategy1),
     SimpleEval2Def('get_default_strategy2', _get_default_strategy2),
     SimpleEval2Def('get_default_strategy3', _get_default_strategy3),
+
+    SimpleEval2Def('run_task', _run_task),
 
 
 ]

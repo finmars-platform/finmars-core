@@ -40,18 +40,18 @@ def calculate_simple_balance_report(report_date, portfolio_register):
 
     return instance
 
+@shared_task(name='portfolios.calculate_portfolio_register_record0', ignore_result=True)
+def calculate_portfolio_register_record0(master_user_id):
 
-@shared_task(name='portfolios.calculate_portfolio_register_record', bind=True)
-def calculate_portfolio_register_record(self, portfolio_register_ids, master_user_id):
     try:
+
         st = time.perf_counter()
 
         master_user = MasterUser.objects.get(id=master_user_id)
 
-        _l.info("calculate_portfolio_register_record master_user %s" % master_user)
+        _l.info("calculate_portfolio_register_record0 master_user %s" % master_user)
 
-        portfolio_registers = PortfolioRegister.objects.filter(master_user_id=master_user,
-                                                               id__in=portfolio_register_ids)
+        portfolio_registers = PortfolioRegister.objects.filter(master_user_id=master_user)
 
         portfolio_ids = []
         portfolio_registers_map = {}
@@ -69,8 +69,7 @@ def calculate_portfolio_register_record(self, portfolio_register_ids, master_use
 
         transactions_dict = {}
 
-        PortfolioRegisterRecord.objects.filter(master_user=master_user,
-                                               portfolio_register_id__in=portfolio_register_ids).delete()
+        PortfolioRegisterRecord.objects.filter(master_user=master_user).delete()
 
         for item in transactions:
 
@@ -96,7 +95,7 @@ def calculate_portfolio_register_record(self, portfolio_register_ids, master_use
                 record.instrument_id = trn.instrument_id
                 record.transaction_date = trn.accounting_date
                 record.transaction_code = trn.transaction_code
-                record.transaction_type = trn.transaction_class_id
+                record.transaction_class_id = trn.transaction_class_id
                 record.cash_amount = trn.cash_consideration
                 record.cash_currency_id = trn.transaction_currency_id
 
@@ -189,8 +188,33 @@ def calculate_portfolio_register_record(self, portfolio_register_ids, master_use
 
     except Exception as e:
 
-        _l.info('calculate_portfolio_register_record error %s' % e)
-        _l.info(traceback.format_exc())
+        _l.error('calculate_portfolio_register_record error %s' % e)
+        _l.error(traceback.format_exc())
+
+
+@shared_task(name='portfolios.calculate_portfolio_register_record', ignore_result=True)
+def calculate_portfolio_register_record(master_users=None):
+
+    _l.info('calculate_portfolio_register_records')
+
+    try:
+
+        master_user_qs = MasterUser.objects.prefetch_related(
+            'members'
+        )
+        if master_users:
+            master_user_qs = master_user_qs.filter(pk__in=master_users)
+
+        for master_user in master_user_qs:
+            _l.debug('calculate_portfolio_register_nav: master_user=%s', master_user.id)
+
+            calculate_portfolio_register_record0.apply_async(kwargs={'master_user_id': master_user.id})
+
+
+    except Exception as e:
+
+        _l.error('calculate_portfolio_register_records error %s' % e)
+        _l.error(traceback.format_exc())
 
 
 def get_list_of_dates_between_two_dates(date_from, date_to):
@@ -227,11 +251,11 @@ def calculate_portfolio_register_nav0(master_user_id):
             date_to = timezone_today() - timedelta(days=1)
 
 
-            _l.info('date_from %s' % date_from)
-            _l.info('date_to %s' % date_to)
+            _l.info('calculate_portfolio_register_nav0.date_from %s' % date_from)
+            _l.info('calculate_portfolio_register_nav0.date_to %s' % date_to)
             dates = get_list_of_dates_between_two_dates(date_from, date_to)
 
-            _l.info('dates %s ' % len(dates))
+            _l.info('calculate_portfolio_register_nav0.dates %s ' % len(dates))
 
             previous = None
 
@@ -272,8 +296,8 @@ def calculate_portfolio_register_nav0(master_user_id):
                 price_history.cash_flow = cash_flow
                 price_history.principal_price = principal_price
 
-                _l.info("Save price history id %s" % price_history.id)
-                _l.info("Save price history %s" % price_history)
+                _l.info("calculate_portfolio_register_nav0.Save price history id %s" % price_history.id)
+                _l.info("calculate_portfolio_register_nav0.Save price history %s" % price_history)
 
                 price_history.save()
 
@@ -285,9 +309,10 @@ def calculate_portfolio_register_nav0(master_user_id):
 
 @shared_task(name='portfolios.calculate_portfolio_register_nav', ignore_result=True)
 def calculate_portfolio_register_nav(master_users=None):
+
     try:
 
-        _l.debug('process_events: master_users=%s', master_users)
+        _l.debug('calculate_portfolio_register_nav: master_users=%s', master_users)
 
         master_user_qs = MasterUser.objects.prefetch_related(
             'members'
@@ -296,11 +321,11 @@ def calculate_portfolio_register_nav(master_users=None):
             master_user_qs = master_user_qs.filter(pk__in=master_users)
 
         for master_user in master_user_qs:
-            _l.debug('process_events: master_user=%s', master_user.id)
+            _l.debug('calculate_portfolio_register_nav: master_user=%s', master_user.id)
 
             calculate_portfolio_register_nav0.apply_async(kwargs={'master_user_id': master_user.id})
 
     except Exception as e:
 
-        _l.error('process_events exception occurred %s' % e)
+        _l.error('calculate_portfolio_register_nav exception occurred %s' % e)
         _l.error(traceback.format_exc())

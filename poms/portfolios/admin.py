@@ -57,7 +57,7 @@ admin.site.register(PortfolioRegister, PortfolioRegisterAdmin)
 class PortfolioRegisterRecordAdmin(AbstractModelAdmin):
     model = PortfolioRegisterRecord
     master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'transaction_date', 'portfolio', 'instrument', 'transaction_type', 'portfolio_register']
+    list_display = ['id', 'master_user', 'transaction_date', 'portfolio', 'instrument', 'transaction_class', 'portfolio_register']
     raw_id_fields = ['master_user', 'portfolio', 'instrument', 'portfolio_register']
 
 

@@ -277,7 +277,7 @@ class PortfolioRegisterViewSet(AbstractWithObjectPermissionViewSet):
 
         master_user = request.user.master_user
 
-        calculate_portfolio_register_record.apply_async(kwargs={'portfolio_register_ids': portfolio_register_ids, 'master_user_id':master_user.id})
+        calculate_portfolio_register_record.apply_async(kwargs={'portfolio_register_ids': portfolio_register_ids, 'master_users': [master_user.id]})
 
         return Response({'status': 'ok'})
 
