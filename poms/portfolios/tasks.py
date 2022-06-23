@@ -116,8 +116,10 @@ def calculate_portfolio_register_record0(master_user_id):
                     try:
 
                         valuation_ccy_fx_rate = CurrencyHistory.objects.get(currency_id=record.valuation_currency_id,
+                                                                            pricing_policy=portfolio_register.valuation_pricing_policy,
                                                                             date=record.transaction_date).fx_rate
                         cash_ccy_fx_rate = CurrencyHistory.objects.get(currency_id=record.cash_currency_id,
+                                                                       pricing_policy=portfolio_register.valuation_pricing_policy,
                                                                        date=record.transaction_date).fx_rate
 
                         record.fx_rate = valuation_ccy_fx_rate / cash_ccy_fx_rate
