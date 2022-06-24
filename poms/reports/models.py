@@ -478,6 +478,7 @@ class PerformanceReportInstanceItem(models.Model):
     cash_flow = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('cash flow'))
     nav = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('nav'))
     instrument_return = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('instrument return'))
+    cumulative_return = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('cumulative return'))
 
 
     class Meta:
