@@ -9,6 +9,7 @@ from django.db import transaction
 from django.views.generic.dates import timezone_today
 
 from poms.currencies.models import CurrencyHistory
+from poms.instruments.models import PriceHistory
 from poms.portfolios.models import PortfolioRegister, PortfolioRegisterRecord
 from poms.reports.builders.balance_item import Report
 from poms.reports.builders.balance_pl import ReportBuilder
@@ -40,9 +41,9 @@ def calculate_simple_balance_report(report_date, portfolio_register):
 
     return instance
 
+
 @shared_task(name='portfolios.calculate_portfolio_register_record0', ignore_result=True)
 def calculate_portfolio_register_record0(master_user_id):
-
     try:
 
         st = time.perf_counter()
@@ -122,9 +123,10 @@ def calculate_portfolio_register_record0(master_user_id):
                         if record.valuation_currency_id == ecosystem_defaults.currency_id:
                             valuation_ccy_fx_rate = 1
                         else:
-                            valuation_ccy_fx_rate = CurrencyHistory.objects.get(currency_id=record.valuation_currency_id,
-                                                                                pricing_policy=portfolio_register.valuation_pricing_policy,
-                                                                                date=record.transaction_date).fx_rate
+                            valuation_ccy_fx_rate = CurrencyHistory.objects.get(
+                                currency_id=record.valuation_currency_id,
+                                pricing_policy=portfolio_register.valuation_pricing_policy,
+                                date=record.transaction_date).fx_rate
 
                         cash_ccy_fx_rate = 1
 
@@ -138,7 +140,8 @@ def calculate_portfolio_register_record0(master_user_id):
                                                                            pricing_policy=portfolio_register.valuation_pricing_policy,
                                                                            date=record.transaction_date).fx_rate
 
-                        _l.info("calculate_portfolio_register_record0_valuation_ccy_fx_rate %s " % valuation_ccy_fx_rate)
+                        _l.info(
+                            "calculate_portfolio_register_record0_valuation_ccy_fx_rate %s " % valuation_ccy_fx_rate)
                         _l.info("calculate_portfolio_register_record0_cash_ccy_fx_rate %s " % cash_ccy_fx_rate)
 
                         record.fx_rate = cash_ccy_fx_rate / valuation_ccy_fx_rate
@@ -206,6 +209,22 @@ def calculate_portfolio_register_record0(master_user_id):
                 record.previous_date_record = previous_date_record
                 record.save()
 
+                # Probably trash
+                # price_history = None
+                # try:
+                #     price_history = PriceHistory.objects.get(instrument_id=record.instrument_id,
+                #                                              pricing_policy=portfolio_register.valuation_pricing_policy,
+                #                                              date=record.transaction_date)
+                # except Exception as e:
+                #     price_history = PriceHistory.objects.create(instrument_id=record.instrument_id,
+                #                                                 pricing_policy=portfolio_register.valuation_pricing_policy,
+                #                                                 date=record.transaction_date)
+                #
+                # price_history.nav = nav
+                # price_history.cash_flow = record.cash_amount_valuation_currency
+                #
+                # price_history.save()
+
                 previous_record = record
 
     except Exception as e:
@@ -216,7 +235,6 @@ def calculate_portfolio_register_record0(master_user_id):
 
 @shared_task(name='portfolios.calculate_portfolio_register_record', ignore_result=True)
 def calculate_portfolio_register_record(master_users=None):
-
     _l.info('calculate_portfolio_register_records')
 
     try:
@@ -265,13 +283,12 @@ def calculate_portfolio_register_nav0(master_user_id):
         for portfolio_register in portfolio_registers:
 
             first_transaction = \
-            Transaction.objects.filter(portfolio=portfolio_register.portfolio).order_by('accounting_date')[0]
+                Transaction.objects.filter(portfolio=portfolio_register.portfolio).order_by('accounting_date')[0]
             last_transaction = \
-            Transaction.objects.filter(portfolio=portfolio_register.portfolio).order_by('-accounting_date')[0]
+                Transaction.objects.filter(portfolio=portfolio_register.portfolio).order_by('-accounting_date')[0]
 
             date_from = first_transaction.accounting_date
             date_to = timezone_today() - timedelta(days=1)
-
 
             _l.info('calculate_portfolio_register_nav0.date_from %s' % date_from)
             _l.info('calculate_portfolio_register_nav0.date_to %s' % date_to)
@@ -294,12 +311,12 @@ def calculate_portfolio_register_nav0(master_user_id):
 
                 price_history = None
 
-
                 cash_flow = 0
                 principal_price = 0
 
                 try:
-                    registry_record = PortfolioRegisterRecord.objects.get(instrument=portfolio_register.linked_instrument, date=date)
+                    registry_record = PortfolioRegisterRecord.objects.get(
+                        instrument=portfolio_register.linked_instrument, date=date)
 
                     cash_flow = registry_record.cash_amount_valuation_currency
                     principal_price = registry_record.dealing_price_valuation_currency
@@ -310,9 +327,11 @@ def calculate_portfolio_register_nav0(master_user_id):
 
                 try:
 
-                    price_history = PriceHistory.objects.get(instrument=portfolio_register.linked_instrument, date=date, pricing_policy=portfolio_register.valuation_pricing_policy)
+                    price_history = PriceHistory.objects.get(instrument=portfolio_register.linked_instrument, date=date,
+                                                             pricing_policy=portfolio_register.valuation_pricing_policy)
                 except Exception as e:
-                    price_history = PriceHistory(instrument=portfolio_register.linked_instrument, date=date, pricing_policy=portfolio_register.valuation_pricing_policy)
+                    price_history = PriceHistory(instrument=portfolio_register.linked_instrument, date=date,
+                                                 pricing_policy=portfolio_register.valuation_pricing_policy)
 
                 price_history.nav = nav
                 price_history.cash_flow = cash_flow
@@ -331,7 +350,6 @@ def calculate_portfolio_register_nav0(master_user_id):
 
 @shared_task(name='portfolios.calculate_portfolio_register_nav', ignore_result=True)
 def calculate_portfolio_register_nav(master_users=None):
-
     try:
 
         _l.debug('calculate_portfolio_register_nav: master_users=%s', master_users)
