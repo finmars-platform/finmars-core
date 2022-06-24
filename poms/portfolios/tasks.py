@@ -209,21 +209,23 @@ def calculate_portfolio_register_record0(master_user_id):
                 record.previous_date_record = previous_date_record
                 record.save()
 
-                # Probably trash
-                # price_history = None
-                # try:
-                #     price_history = PriceHistory.objects.get(instrument_id=record.instrument_id,
-                #                                              pricing_policy=portfolio_register.valuation_pricing_policy,
-                #                                              date=record.transaction_date)
-                # except Exception as e:
-                #     price_history = PriceHistory.objects.create(instrument_id=record.instrument_id,
-                #                                                 pricing_policy=portfolio_register.valuation_pricing_policy,
-                #                                                 date=record.transaction_date)
-                #
-                # price_history.nav = nav
-                # price_history.cash_flow = record.cash_amount_valuation_currency
-                #
-                # price_history.save()
+
+                price_history = None
+                try:
+                    price_history = PriceHistory.objects.get(instrument_id=record.instrument_id,
+                                                             pricing_policy=portfolio_register.valuation_pricing_policy,
+                                                             date=record.transaction_date)
+                except Exception as e:
+                    price_history = PriceHistory.objects.create(instrument_id=record.instrument_id,
+                                                                pricing_policy=portfolio_register.valuation_pricing_policy,
+                                                                date=record.transaction_date)
+
+                price_history.nav = nav
+
+                if record.rolling_shares_of_the_day:
+                    price_history.principal_price = nav / record.rolling_shares_of_the_day
+
+                price_history.save()
 
                 previous_record = record
 
