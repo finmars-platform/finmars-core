@@ -44,7 +44,6 @@ class PerformanceReportBuilder:
         _l.info('self.instance master_user %s' % self.instance.master_user)
         _l.info('self.instance report_date %s' % self.instance.report_date)
 
-
     def get_first_transaction(self):
 
         self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
@@ -63,15 +62,14 @@ class PerformanceReportBuilder:
         _l.info('get_first_transaction.portfolios %s ' % portfolios)
 
         transaction = Transaction.objects.filter(portfolio__in=portfolios,
-                                                  transaction_date__gte=self.instance.begin_date,
-                                                  transaction_class__in=[TransactionClass.CASH_INFLOW,
-                                                                         TransactionClass.CASH_OUTFLOW,
-                                                                         TransactionClass.INJECTION,
-                                                                         TransactionClass.DISTRIBUTION]).order_by(
+                                                 transaction_date__gte=self.instance.begin_date,
+                                                 transaction_class__in=[TransactionClass.CASH_INFLOW,
+                                                                        TransactionClass.CASH_OUTFLOW,
+                                                                        TransactionClass.INJECTION,
+                                                                        TransactionClass.DISTRIBUTION]).order_by(
             'transaction_date').first()
 
         return transaction.transaction_date
-
 
     def build_report(self):
         st = time.perf_counter()
@@ -111,7 +109,6 @@ class PerformanceReportBuilder:
         if self.instance.calculation_type == 'time_weighted':
             self.calculate_time_weighted_grand_total_values()
 
-
         for period in self.instance.periods:
             for item in period['items']:
 
@@ -120,18 +117,15 @@ class PerformanceReportBuilder:
                     result_dicts = []
 
                     for record in item['portfolios'][key]['records']:
-
                         record_json = model_to_dict(record)
                         result_dicts.append(record_json)
 
                     item['portfolios'][key]['records'] = result_dicts
 
-
         self.instance.items = []
         self.instance.raw_items = json.loads(json.dumps(self.instance.periods, indent=4, sort_keys=True, default=str))
 
         for period in self.instance.periods:
-
             item = {}
 
             item['date_from'] = period['date_from']
@@ -214,12 +208,12 @@ class PerformanceReportBuilder:
             total_cash_flow = total_cash_flow + item['subtotal_cash_flow']
             total_cash_flow_weighted = total_cash_flow_weighted + item['subtotal_cash_flow_weighted']
 
-
         period['begin_nav'] = period['items'][0]['subtotal_nav']
         period['end_nav'] = period['items'][-1]['subtotal_nav']
 
         try:
-            total_return = (period['end_nav'] - period['begin_nav'] - total_cash_flow) / (period['begin_nav'] + total_cash_flow_weighted)
+            total_return = (period['end_nav'] - period['begin_nav'] - total_cash_flow) / (
+                        period['begin_nav'] + total_cash_flow_weighted)
         except Exception:
             total_return = 0
 
@@ -300,8 +294,14 @@ class PerformanceReportBuilder:
 
             month_start = datetime.date(year, month, 1) - timedelta(days=1)
 
-            if month_start < begin_date:
-                month_start = begin_date
+            begin_date_year = begin_date.year
+            begin_date_month = begin_date.month
+
+            previous_end_of_month_of_begin_date = datetime.date(begin_date_year, begin_date_month, 1) - timedelta(
+                days=1)
+
+            if month_start < previous_end_of_month_of_begin_date:
+                month_start = previous_end_of_month_of_begin_date
 
             if year_month not in result_obj:
                 result_obj[year_month] = {
@@ -376,12 +376,11 @@ class PerformanceReportBuilder:
         records = PortfolioRegisterRecord.objects.filter(portfolio_register__in=portfolio_registers,
                                                          transaction_date__gte=date_from,
                                                          transaction_date__lte=date_to,
-                                                  transaction_class__in=[TransactionClass.CASH_INFLOW,
-                                                                         TransactionClass.CASH_OUTFLOW,
-                                                                         TransactionClass.INJECTION,
-                                                                         TransactionClass.DISTRIBUTION]).order_by(
+                                                         transaction_class__in=[TransactionClass.CASH_INFLOW,
+                                                                                TransactionClass.CASH_OUTFLOW,
+                                                                                TransactionClass.INJECTION,
+                                                                                TransactionClass.DISTRIBUTION]).order_by(
             'transaction_date')
-
 
         # create empty structure start
 
@@ -491,15 +490,17 @@ class PerformanceReportBuilder:
                 cash_flow = 0
 
                 for record in item['records']:
-
-                    cash_flow = cash_flow + record.cash_amount_valuation_currency # TODO add fx to report currency?
+                    cash_flow = cash_flow + record.cash_amount_valuation_currency  # TODO add fx to report currency?
 
                 instrument_return = 0
 
                 if previous_nav:
                     instrument_return = (nav - cash_flow - previous_nav) / previous_nav
                 else:
-                    instrument_return = (nav - cash_flow) / nav
+                    if nav:
+                        instrument_return = (nav - cash_flow) / nav
+                    else:
+                        instrument_return = 0
 
                 item['nav'] = nav
 
@@ -511,7 +512,6 @@ class PerformanceReportBuilder:
                 item['previous_nav'] = previous_nav
 
                 item['instrument_return'] = instrument_return
-
 
         # Calculate nav
 
@@ -592,15 +592,16 @@ class PerformanceReportBuilder:
         table[date_from_str]['subtotal_cash_flow_weighted'] = 0
         table[date_from_str]['subtotal_nav'] = 0
 
-
         for portfolio_id in portfolios:
 
             nav = 0
 
             try:
                 price_history = PriceHistory.objects.get(date=date_from,
-                                                         instrument=portfolio_registers_map[portfolio_id].linked_instrument,
-                                                         pricing_policy=portfolio_registers_map[portfolio_id].valuation_pricing_policy)
+                                                         instrument=portfolio_registers_map[
+                                                             portfolio_id].linked_instrument,
+                                                         pricing_policy=portfolio_registers_map[
+                                                             portfolio_id].valuation_pricing_policy)
 
                 nav = price_history.nav
             except Exception as e:
@@ -631,7 +632,6 @@ class PerformanceReportBuilder:
                 table[transaction_date_str]['subtotal_cash_flow_weighted'] = 0
                 table[transaction_date_str]['subtotal_nav'] = 0
 
-
             if record.portfolio_id not in table[transaction_date_str]['portfolios']:
                 table[transaction_date_str]['portfolios'][record.portfolio_id] = {
                     'portfolio_register': portfolio_registers_map[record.portfolio_id],
@@ -654,15 +654,16 @@ class PerformanceReportBuilder:
         table[date_to_str]['subtotal_cash_flow_weighted'] = 0
         table[date_to_str]['subtotal_nav'] = 0
 
-
         for portfolio_id in portfolios:
 
             nav = 0
 
             try:
                 price_history = PriceHistory.objects.get(date=date_to,
-                                                         instrument=portfolio_registers_map[portfolio_id].linked_instrument,
-                                                         pricing_policy=portfolio_registers_map[portfolio_id].valuation_pricing_policy)
+                                                         instrument=portfolio_registers_map[
+                                                             portfolio_id].linked_instrument,
+                                                         pricing_policy=portfolio_registers_map[
+                                                             portfolio_id].valuation_pricing_policy)
 
                 _l.info('price_history.nav %s' % price_history.nav)
 
@@ -670,7 +671,6 @@ class PerformanceReportBuilder:
             except Exception as e:
                 _l.error("end date nav e %s" % e)
                 nav = 0
-
 
             table[date_to_str]['portfolios'][portfolio_id] = {
                 'portfolio_register': portfolio_registers_map[portfolio_id],
@@ -706,7 +706,8 @@ class PerformanceReportBuilder:
 
                     try:
                         price_history = PriceHistory.objects.get(date=item['transaction_date'],
-                                                                 instrument=item['portfolio_register'].linked_instrument,
+                                                                 instrument=item[
+                                                                     'portfolio_register'].linked_instrument,
                                                                  pricing_policy=item[
                                                                      'portfolio_register'].valuation_pricing_policy)
 
@@ -717,8 +718,6 @@ class PerformanceReportBuilder:
                     cash_flow = 0
 
                     for record in item['records']:
-
-
                         cash_flow = cash_flow + record.cash_amount_valuation_currency  # TODO probably add fx to report_currency
 
                     date_n = dates_map[item['transaction_date_str']]
@@ -741,12 +740,12 @@ class PerformanceReportBuilder:
             item_date = table[key]
 
             for _key, _value in item_date['portfolios'].items():
-
                 item = item_date['portfolios'][_key]
 
                 item_date['subtotal_nav'] = item_date['subtotal_nav'] + item['nav']
                 item_date['subtotal_cash_flow'] = item_date['subtotal_cash_flow'] + item['cash_flow']
-                item_date['subtotal_cash_flow_weighted'] = item_date['subtotal_cash_flow_weighted'] + item['cash_flow_weighted']
+                item_date['subtotal_cash_flow_weighted'] = item_date['subtotal_cash_flow_weighted'] + item[
+                    'cash_flow_weighted']
 
         return table
 
