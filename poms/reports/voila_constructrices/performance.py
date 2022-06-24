@@ -728,7 +728,7 @@ class PerformanceReportBuilder:
                     date_to_n = dates_map[str(date_to)]
                     date_from_n = dates_map[str(date_from)]
 
-                    time_weight = date_to_n - date_n / date_to_n - date_from_n
+                    time_weight = (date_to_n - date_n) / (date_to_n - date_from_n)
 
                     item['cash_flow'] = cash_flow
                     item['cash_flow_weighted'] = cash_flow * time_weight
