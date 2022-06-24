@@ -89,7 +89,7 @@ class PerformanceReportBuilder:
 
         self.instance.periods = self.get_periods(begin_date, end_date, self.instance.segmentation_type)
 
-        cumulative_return = 1
+        cumulative_return = 0
         for period in self.instance.periods:
             if self.instance.calculation_type == 'time_weighted':
                 table = self.build_time_weighted(period['date_from'], period['date_to'])
@@ -99,7 +99,7 @@ class PerformanceReportBuilder:
 
                 period = self.calculate_time_weighted_total_values(period)
 
-                period["cumulative_return"] = cumulative_return * (period['total_return'] + 1) - 1
+                period["cumulative_return"] = (cumulative_return + 1) * (period['total_return'] + 1) - 1
 
                 cumulative_return = period["cumulative_return"]
 
