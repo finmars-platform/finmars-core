@@ -513,7 +513,11 @@ class PerformanceReportBuilder:
 
                 item['instrument_return'] = instrument_return
 
+            previous_date = item_date
+
         # Calculate nav
+
+        previous_date = None
 
         for key, value in table.items():
 
