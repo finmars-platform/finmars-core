@@ -1133,6 +1133,8 @@ class BalanceReportSqlSerializer(ReportSerializer):
         _l.debug('BalanceReportSqlSerializer.to_representation done: %s' % "{:3.3f}".format(
             time.perf_counter() - to_representation_st))
 
+        data['report_uuid'] = report_instance.report_uuid
+
         return data
 
 
@@ -1257,6 +1259,8 @@ class PLReportSqlSerializer(ReportSerializer):
 
         _l.debug('PLReportSqlSerializer.to_representation done: %s' % "{:3.3f}".format(
             time.perf_counter() - to_representation_st))
+
+        data['report_uuid'] = report_instance.report_uuid
 
         return data
 

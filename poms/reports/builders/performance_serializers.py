@@ -238,6 +238,9 @@ class PerformanceReportSerializer(serializers.Serializer):
 
             instance_item.save()
 
+
+        data['report_uuid'] = report_instance.report_uuid
+
         # items = data['items']
         # custom_fields = data['custom_fields_object']
         # if custom_fields and items:
