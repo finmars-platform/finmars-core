@@ -39,6 +39,7 @@ class PerformanceReportItemSerializer(serializers.Serializer):
     cash_flow = serializers.FloatField(read_only=True)
     nav = serializers.FloatField(read_only=True)
     instrument_return = serializers.FloatField(read_only=True)
+    cumulative_return = serializers.FloatField(read_only=True)
 
     # period_name = serializers.CharField(read_only=True)
     # period_begin = serializers.DateField(read_only=True)

@@ -89,6 +89,7 @@ class PerformanceReportBuilder:
 
         self.instance.periods = self.get_periods(begin_date, end_date, self.instance.segmentation_type)
 
+        cumulative_return = 1
         for period in self.instance.periods:
             if self.instance.calculation_type == 'time_weighted':
                 table = self.build_time_weighted(period['date_from'], period['date_to'])
@@ -97,6 +98,10 @@ class PerformanceReportBuilder:
                     period['items'].append(table[key])
 
                 period = self.calculate_time_weighted_total_values(period)
+
+                period["cumulative_return"] = cumulative_return * (period['total_return'] + 1) - 1
+
+                cumulative_return = period["cumulative_return"]
 
             if self.instance.calculation_type == 'money_weighted':
                 table = self.build_money_weighted(period['date_from'], period['date_to'])
@@ -137,6 +142,8 @@ class PerformanceReportBuilder:
             item['cash_flow'] = period['total_cash_flow']
             item['nav'] = period['total_nav']
             item['instrument_return'] = period['total_return']
+            if 'cumulative_return' in period:
+                item['cumulative_return'] = period['cumulative_return']
 
             self.instance.items.append(item)
 
@@ -213,7 +220,7 @@ class PerformanceReportBuilder:
 
         try:
             total_return = (period['end_nav'] - period['begin_nav'] - total_cash_flow) / (
-                        period['begin_nav'] + total_cash_flow_weighted)
+                    period['begin_nav'] + total_cash_flow_weighted)
         except Exception:
             total_return = 0
 
