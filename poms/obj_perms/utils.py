@@ -306,6 +306,7 @@ def append_perms3(obj, perms=None):
 
 
 def get_perms_codename(model, actions):
+
     params = {
         'action': None,
         'app_label': model._meta.app_label,

@@ -26,7 +26,6 @@ from datetime import date
 from django.forms.models import model_to_dict
 import traceback
 
-
 _l = logging.getLogger('poms.formula')
 
 MAX_STR_LEN = 2000
@@ -262,6 +261,71 @@ def _send_system_message(evaluator, message, level='info', source="Expression En
 
 
 _send_system_message.evaluator = True
+
+
+def _calculate_performance_report(evaluator, name, date_from, date_to, report_currency, calculation_type, segmentation_type, registers):
+
+    try:
+
+
+
+        from poms.system_messages.handlers import send_system_message
+
+        context = evaluator.context
+        from poms.users.utils import get_master_user_from_context, get_member_from_context
+
+        master_user = get_master_user_from_context(context)
+        member = get_member_from_context(context)
+
+        from poms.reports.builders.performance_item import PerformanceReport
+        from poms.reports.voila_constructrices.performance import PerformanceReportBuilder
+        from poms.reports.builders.performance_serializers import PerformanceReportSerializer
+        from poms.instruments.models import Instrument
+
+        currency = _safe_get_currency(evaluator, report_currency)
+        
+        _l.info('_calculate_performance_report master_user %s' % master_user)
+        _l.info('_calculate_performance_report member %s' % member)
+        _l.info('_calculate_performance_report date_from  %s' % date_from)
+        _l.info('_calculate_performance_report date_to %s' % date_to)
+        _l.info('_calculate_performance_report currency %s' % currency)
+
+        d_from = datetime.datetime.strptime(date_from, "%Y-%m-%d").date()
+        d_to = datetime.datetime.strptime(date_to, "%Y-%m-%d").date()
+
+        registers_instances = Instrument.objects.filter(id__in=registers)
+
+        instance = PerformanceReport(
+            report_instance_name=name,
+            master_user=master_user,
+            member=member,
+            report_currency=currency,
+            begin_date= d_from,
+            end_date= d_to,
+            calculation_type=calculation_type,
+            segmentation_type=segmentation_type,
+            registers=registers_instances,
+            save_report=True
+        )
+
+
+        builder = PerformanceReportBuilder(instance=instance)
+        instance = builder.build_report()
+
+
+        serializer = PerformanceReportSerializer(instance=instance, context=context)
+
+        serializer.to_representation(instance)
+
+
+
+    except Exception as e:
+        _l.error("_calculate_performance_report.Exception %s" % e)
+        _l.error("_calculate_performance_report.Trace %s" % traceback.format_exc())
+
+
+_calculate_performance_report.evaluator = True
+
 
 def _get_current_member(evaluator):
 
@@ -2216,6 +2280,9 @@ FUNCTIONS = [
     SimpleEval2Def('convert_to_number', _convert_to_number),
     SimpleEval2Def('if_null', _if_null),
     SimpleEval2Def('send_system_message', _send_system_message),
+    SimpleEval2Def('calculate_performance_report', _calculate_performance_report),
+    # SimpleEval2Def('calculate_balance_report', _calculate_balance_report),
+    # SimpleEval2Def('calculate_pl_report', _calculate_pl_report),
     SimpleEval2Def('get_current_member', _get_current_member),
 
     # SimpleEval2Def('get_instr_accrual_size', _get_instrument_accrual_size),

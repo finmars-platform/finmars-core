@@ -2135,6 +2135,8 @@ class Report(BaseReport):
                  member=None,
                  task_id=None,
                  task_status=None,
+                 report_instance_name=None,
+                 save_report=False,
                  pl_first_date=None,
                  report_type=TYPE_BALANCE,
                  report_date=None,
@@ -2186,6 +2188,8 @@ class Report(BaseReport):
         self.report_date = report_date or (date_now() - timedelta(days=1))
         self.cost_method = cost_method or CostMethod.objects.get(pk=CostMethod.AVCO)
 
+        self.report_instance_name=report_instance_name
+        self.save_report=save_report
         self.portfolio_mode = portfolio_mode
         self.account_mode = account_mode
         self.strategy1_mode = strategy1_mode

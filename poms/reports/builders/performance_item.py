@@ -494,6 +494,9 @@ class PerformanceReport(BaseReport):
                  id=None,
                  task_id=None,
                  task_status=None,
+                 name=None,
+                 report_instance_name=None,
+                 save_report=False,
                  calculation_type=None,
                  segmentation_type=None,
                  registers=None,
@@ -535,6 +538,9 @@ class PerformanceReport(BaseReport):
         self.segmentation_type = segmentation_type
         self.registers = registers
         self.periods = periods
+        self.name = name
+        self.report_instance_name = report_instance_name
+        self.save_report = save_report
         self.portfolio_mode = portfolio_mode
         self.account_mode = account_mode
         self.strategy1_mode = strategy1_mode

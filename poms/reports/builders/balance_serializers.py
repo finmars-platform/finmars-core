@@ -365,6 +365,9 @@ class ReportSerializer(ReportSerializerWithLogs):
 
     master_user = MasterUserField()
     member = HiddenMemberField()
+
+    save_report = serializers.BooleanField(default=False)
+
     pl_first_date = serializers.DateField(required=False, allow_null=True,
                                           help_text=ugettext_lazy('First date for pl report'))
     report_type = serializers.ChoiceField(read_only=True, choices=Report.TYPE_CHOICES)
@@ -1044,96 +1047,112 @@ class BalanceReportSqlSerializer(ReportSerializer):
 
         data = super(BalanceReportSqlSerializer, self).to_representation(instance)
 
-        report_instance = BalanceReportInstance.objects.create(
-            master_user=instance.master_user,
-            member=instance.member,
-            report_date=instance.report_date,
-            report_currency=instance.report_currency,
-            pricing_policy=instance.pricing_policy,
-            cost_method=instance.cost_method,
-            report_uuid=str(uuid.uuid4())
-        )
+        report_uuid = str(uuid.uuid4())
 
-        custom_fields_map = {}
+        if instance.save_report:
 
-        for custom_field in instance.custom_fields:
-            custom_fields_map[custom_field.id] = custom_field
+            report_instance_name = ''
+            if self.instance.report_instance_name:
+                report_instance_name = self.instance.report_instance_name
+            else:
+                report_instance_name = report_uuid
 
-        for item in data['items']:
+            report_instance, created = BalanceReportInstance.objects.get_or_create(
+                master_user=instance.master_user,
+                member=instance.member,
+                name=report_instance_name,
+            )
 
-            instance_item = BalanceReportInstanceItem(report_instance=report_instance,
-                                                      master_user=instance.master_user,
-                                                      member=instance.member,
-                                                      report_date=instance.report_date,
-                                                      report_currency=instance.report_currency,
-                                                      pricing_policy=instance.pricing_policy,
-                                                      cost_method=instance.cost_method)
+            report_instance.report_date = instance.report_date
+            report_instance.report_currency = instance.report_currency
+            report_instance.pricing_policy = instance.pricing_policy
+            report_instance.cost_method = instance.cost_method
 
-            instance_item.item_id = item['id']
+            report_instance.report_uuid = report_uuid
+            report_instance.save()
 
-            for field in BalanceReportInstanceItem._meta.fields:
+            BalanceReportInstanceItem.objects.filter(report_instance=report_instance).delete()
 
-                if field.name not in ['id']:
+            custom_fields_map = {}
 
-                    if field.name in item:
+            for custom_field in instance.custom_fields:
+                custom_fields_map[custom_field.id] = custom_field
 
-                        if isinstance(field, ForeignKey):
+            for item in data['items']:
 
-                            try:
-                                setattr(instance_item, field.name + '_id', item[field.name])
-                            except Exception as e:
-                                print('exception field %s : %s' % (field.name, e))
-                                setattr(instance_item, field.name, None)
+                instance_item = BalanceReportInstanceItem(report_instance=report_instance,
+                                                          master_user=instance.master_user,
+                                                          member=instance.member,
+                                                          report_date=instance.report_date,
+                                                          report_currency=instance.report_currency,
+                                                          pricing_policy=instance.pricing_policy,
+                                                          cost_method=instance.cost_method)
 
-                        else:
+                instance_item.item_id = item['id']
 
-                            try:
-                                setattr(instance_item, field.name, item[field.name])
-                            except Exception as e:
-                                print('exception field %s : %s' % (field.name, e))
-                                setattr(instance_item, field.name, None)
+                for field in BalanceReportInstanceItem._meta.fields:
 
-            index_text = 1
-            index_number = 1
-            index_date = 1
-            for custom_field_item in item['custom_fields']:
+                    if field.name not in ['id']:
 
-                cc = custom_fields_map[custom_field_item['custom_field']]
+                        if field.name in item:
 
-                try:
+                            if isinstance(field, ForeignKey):
 
-                    if cc.value_type == 10:
-                        setattr(instance_item, 'custom_field_text_' + str(index_text), custom_field_item['value'])
+                                try:
+                                    setattr(instance_item, field.name + '_id', item[field.name])
+                                except Exception as e:
+                                    print('exception field %s : %s' % (field.name, e))
+                                    setattr(instance_item, field.name, None)
 
-                        index_text = index_text + 1
+                            else:
 
-                    if cc.value_type == 20:
-                        setattr(instance_item, 'custom_field_number_' + str(index_number),
-                                float(custom_field_item['value']))
+                                try:
+                                    setattr(instance_item, field.name, item[field.name])
+                                except Exception as e:
+                                    print('exception field %s : %s' % (field.name, e))
+                                    setattr(instance_item, field.name, None)
 
-                        index_number = index_number + 1
+                index_text = 1
+                index_number = 1
+                index_date = 1
+                for custom_field_item in item['custom_fields']:
 
-                    if cc.value_type == 40:
-                        setattr(instance_item, 'custom_field_date_' + str(index_date), custom_field_item['value'])
+                    cc = custom_fields_map[custom_field_item['custom_field']]
 
-                        index_date = index_date + 1
+                    try:
 
-                except Exception as e:
-                    print("Custom field save error %s" % e)
+                        if cc.value_type == 10:
+                            setattr(instance_item, 'custom_field_text_' + str(index_text), custom_field_item['value'])
 
-                    if cc.value_type == 10:
-                        index_text = index_text + 1
-                    if cc.value_type == 20:
-                        index_number = index_number + 1
-                    if cc.value_type == 40:
-                        index_date = index_date + 1
+                            index_text = index_text + 1
 
-            instance_item.save()
+                        if cc.value_type == 20:
+                            setattr(instance_item, 'custom_field_number_' + str(index_number),
+                                    float(custom_field_item['value']))
 
-        _l.debug('BalanceReportSqlSerializer.to_representation done: %s' % "{:3.3f}".format(
-            time.perf_counter() - to_representation_st))
+                            index_number = index_number + 1
 
-        data['report_uuid'] = report_instance.report_uuid
+                        if cc.value_type == 40:
+                            setattr(instance_item, 'custom_field_date_' + str(index_date), custom_field_item['value'])
+
+                            index_date = index_date + 1
+
+                    except Exception as e:
+                        print("Custom field save error %s" % e)
+
+                        if cc.value_type == 10:
+                            index_text = index_text + 1
+                        if cc.value_type == 20:
+                            index_number = index_number + 1
+                        if cc.value_type == 40:
+                            index_date = index_date + 1
+
+                instance_item.save()
+
+            _l.debug('BalanceReportSqlSerializer.to_representation done: %s' % "{:3.3f}".format(
+                time.perf_counter() - to_representation_st))
+
+        data['report_uuid'] = report_uuid
 
         return data
 
@@ -1169,98 +1188,114 @@ class PLReportSqlSerializer(ReportSerializer):
 
         data = super(PLReportSqlSerializer, self).to_representation(instance)
 
-        report_instance = PLReportInstance.objects.create(
-            master_user=instance.master_user,
-            member=instance.member,
-            report_date=instance.report_date,
-            pl_first_date=instance.pl_first_date,
-            report_currency=instance.report_currency,
-            pricing_policy=instance.pricing_policy,
-            cost_method=instance.cost_method,
-            report_uuid=str(uuid.uuid4())
-        )
+        report_uuid = str(uuid.uuid4())
 
-        custom_fields_map = {}
+        if instance.save_report:
 
-        for custom_field in instance.custom_fields:
-            custom_fields_map[custom_field.id] = custom_field
+            report_instance_name = ''
+            if self.instance.report_instance_name:
+                report_instance_name = self.instance.report_instance_name
+            else:
+                report_instance_name = report_uuid
 
-        for item in data['items']:
+            report_instance, created = PLReportInstance.objects.get_or_create(
+                master_user=instance.master_user,
+                member=instance.member,
+                name=report_instance_name,
+            )
 
-            instance_item = PLReportInstanceItem(report_instance=report_instance,
-                                                 master_user=instance.master_user,
-                                                 member=instance.member,
-                                                 report_date=instance.report_date,
-                                                 pl_first_date=instance.pl_first_date,
-                                                 report_currency=instance.report_currency,
-                                                 pricing_policy=instance.pricing_policy,
-                                                 cost_method=instance.cost_method)
+            report_instance.report_uuid = report_uuid
+            report_instance.report_date = instance.report_date
+            report_instance.pl_first_date = instance.pl_first_date
+            report_instance.report_currency = instance.report_currency
+            report_instance.pricing_policy = instance.pricing_policy
+            report_instance.cost_method = instance.cost_method
 
-            instance_item.item_id = item['id']
+            report_instance.save()
 
-            for field in PLReportInstanceItem._meta.fields:
+            PLReportInstanceItem.objects.filter(report_instance=report_instance).delete()
 
-                if field.name not in ['id']:
+            custom_fields_map = {}
 
-                    if field.name in item:
+            for custom_field in instance.custom_fields:
+                custom_fields_map[custom_field.id] = custom_field
 
-                        if isinstance(field, ForeignKey):
+            for item in data['items']:
 
-                            try:
-                                setattr(instance_item, field.name + '_id', item[field.name])
-                            except Exception as e:
-                                print('exception field %s : %s' % (field.name, e))
-                                setattr(instance_item, field.name, None)
+                instance_item = PLReportInstanceItem(report_instance=report_instance,
+                                                     master_user=instance.master_user,
+                                                     member=instance.member,
+                                                     report_date=instance.report_date,
+                                                     pl_first_date=instance.pl_first_date,
+                                                     report_currency=instance.report_currency,
+                                                     pricing_policy=instance.pricing_policy,
+                                                     cost_method=instance.cost_method)
 
-                        else:
+                instance_item.item_id = item['id']
 
-                            try:
-                                setattr(instance_item, field.name, item[field.name])
-                            except Exception as e:
-                                print('exception field %s : %s' % (field.name, e))
-                                setattr(instance_item, field.name, None)
+                for field in PLReportInstanceItem._meta.fields:
 
-            index_text = 1
-            index_number = 1
-            index_date = 1
-            for custom_field_item in item['custom_fields']:
+                    if field.name not in ['id']:
 
-                cc = custom_fields_map[custom_field_item['custom_field']]
+                        if field.name in item:
 
-                try:
+                            if isinstance(field, ForeignKey):
 
-                    if cc.value_type == 10:
-                        setattr(instance_item, 'custom_field_text_' + str(index_text), custom_field_item['value'])
+                                try:
+                                    setattr(instance_item, field.name + '_id', item[field.name])
+                                except Exception as e:
+                                    print('exception field %s : %s' % (field.name, e))
+                                    setattr(instance_item, field.name, None)
 
-                        index_text = index_text + 1
+                            else:
 
-                    if cc.value_type == 20:
-                        setattr(instance_item, 'custom_field_number_' + str(index_number),
-                                float(custom_field_item['value']))
+                                try:
+                                    setattr(instance_item, field.name, item[field.name])
+                                except Exception as e:
+                                    print('exception field %s : %s' % (field.name, e))
+                                    setattr(instance_item, field.name, None)
 
-                        index_number = index_number + 1
+                index_text = 1
+                index_number = 1
+                index_date = 1
+                for custom_field_item in item['custom_fields']:
 
-                    if cc.value_type == 40:
-                        setattr(instance_item, 'custom_field_date_' + str(index_date), custom_field_item['value'])
+                    cc = custom_fields_map[custom_field_item['custom_field']]
 
-                        index_date = index_date + 1
+                    try:
 
-                except Exception as e:
-                    print("Custom field save error %s" % e)
+                        if cc.value_type == 10:
+                            setattr(instance_item, 'custom_field_text_' + str(index_text), custom_field_item['value'])
 
-                    if cc.value_type == 10:
-                        index_text = index_text + 1
-                    if cc.value_type == 20:
-                        index_number = index_number + 1
-                    if cc.value_type == 40:
-                        index_date = index_date + 1
+                            index_text = index_text + 1
 
-            instance_item.save()
+                        if cc.value_type == 20:
+                            setattr(instance_item, 'custom_field_number_' + str(index_number),
+                                    float(custom_field_item['value']))
 
-        _l.debug('PLReportSqlSerializer.to_representation done: %s' % "{:3.3f}".format(
-            time.perf_counter() - to_representation_st))
+                            index_number = index_number + 1
 
-        data['report_uuid'] = report_instance.report_uuid
+                        if cc.value_type == 40:
+                            setattr(instance_item, 'custom_field_date_' + str(index_date), custom_field_item['value'])
+
+                            index_date = index_date + 1
+
+                    except Exception as e:
+                        print("Custom field save error %s" % e)
+
+                        if cc.value_type == 10:
+                            index_text = index_text + 1
+                        if cc.value_type == 20:
+                            index_number = index_number + 1
+                        if cc.value_type == 40:
+                            index_date = index_date + 1
+
+                instance_item.save()
+
+            _l.debug('PLReportSqlSerializer.to_representation done: %s' % "{:3.3f}".format(
+                time.perf_counter() - to_representation_st))
+
+        data['report_uuid'] = report_uuid
 
         return data
 

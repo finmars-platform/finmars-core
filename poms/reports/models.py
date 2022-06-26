@@ -150,7 +150,7 @@ class TransactionReport(models.Model):
         verbose_name_plural = ugettext_lazy('transaction reports')
 
 
-class BalanceReportInstance(DataTimeStampedModel):
+class BalanceReportInstance(DataTimeStampedModel, NamedModel):
 
     master_user = models.ForeignKey(MasterUser,
                                     verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
@@ -315,7 +315,7 @@ class BalanceReportInstanceItem(models.Model):
         verbose_name_plural = ugettext_lazy('balance reports instance item')
 
 
-class PLReportInstance(DataTimeStampedModel):
+class PLReportInstance(DataTimeStampedModel, NamedModel):
 
     master_user = models.ForeignKey(MasterUser,
                                     verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
@@ -420,13 +420,14 @@ class PLReportInstanceItem(models.Model):
         verbose_name_plural = ugettext_lazy('pl reports instance item')
 
 
-class PerformanceReportInstance(DataTimeStampedModel):
+class PerformanceReportInstance(DataTimeStampedModel, NamedModel):
 
     master_user = models.ForeignKey(MasterUser,
                                     verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
 
     member = models.ForeignKey(Member,
                                verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
+
 
     begin_date = models.DateField(db_index=True, verbose_name=ugettext_lazy('begin date'))
     end_date = models.DateField(db_index=True, verbose_name=ugettext_lazy('end date'))

@@ -78,6 +78,9 @@ class PerformanceReportSerializer(serializers.Serializer):
 
     master_user = MasterUserField()
     member = HiddenMemberField()
+
+    save_report = serializers.BooleanField(default=False)
+
     begin_date = serializers.DateField(required=False, allow_null=True, default=date.min)
     end_date = serializers.DateField(required=False, allow_null=True, default=date_now)
     calculation_type = serializers.ChoiceField(allow_null=True,
@@ -171,76 +174,106 @@ class PerformanceReportSerializer(serializers.Serializer):
     def to_representation(self, instance):
         data = super(PerformanceReportSerializer, self).to_representation(instance)
 
-        register_ids_list = []
-        register_names_list = []
-        register_ids = ''
-        register_names = ''
+        report_uuid = str(uuid.uuid4())
 
-        for r in instance.registers:
-            register_ids_list.append(str(r.id))
-            register_names_list.append(str(r.name))
+        if instance.save_report:
 
-        register_ids = ", ".join(register_ids_list)
-        register_names = ", ".join(register_names_list)
+            register_ids_list = []
+            register_names_list = []
+            register_ids = ''
+            register_names = ''
 
-        report_instance = PerformanceReportInstance.objects.create(
-            master_user=instance.master_user,
-            member=instance.member,
-            begin_date=instance.begin_date,
-            end_date=instance.end_date,
-            calculation_type=instance.calculation_type,
-            segmentation_type=instance.segmentation_type,
-            registers=register_ids,
-            registers_names=register_names,
-            report_currency=instance.report_currency,
-            report_uuid=str(uuid.uuid4())
-        )
+            for r in instance.registers:
+                register_ids_list.append(str(r.id))
+                register_names_list.append(str(r.name))
 
-        custom_fields_map = {}
+            register_ids = ", ".join(register_ids_list)
+            register_names = ", ".join(register_names_list)
 
-        for custom_field in instance.custom_fields:
-            custom_fields_map[custom_field.id] = custom_field
+            report_instance_name = ''
+            if self.instance.report_instance_name:
+                report_instance_name = self.instance.report_instance_name
+            else:
+                report_instance_name = report_uuid
 
-        for item in data['items']:
+            report_instance = None
 
-            instance_item = PerformanceReportInstanceItem(report_instance=report_instance,
-                                                          master_user=instance.master_user,
-                                                          member=instance.member,
-                                                          begin_date=instance.begin_date,
-                                                          end_date=instance.end_date,
-                                                          calculation_type=instance.calculation_type,
-                                                          segmentation_type=instance.segmentation_type,
-                                                          registers=register_ids,
-                                                          registers_names=register_names,
-                                                          report_currency=instance.report_currency,
-                                                          )
+            try:
 
-            for field in PerformanceReportInstanceItem._meta.fields:
+                report_instance = PerformanceReportInstance.objects.get(
+                    master_user=instance.master_user,
+                    member=instance.member,
+                    user_code=report_instance_name,
+                )
 
-                if field.name not in ['id']:
+            except Exception as e:
 
-                    if field.name in item:
+                report_instance = PerformanceReportInstance.objects.create(
+                    master_user=instance.master_user,
+                    member=instance.member,
+                    user_code=report_instance_name,
+                    report_currency=instance.report_currency,
+                    begin_date=instance.begin_date,
+                    end_date=instance.end_date,
+                )
 
-                        if isinstance(field, ForeignKey):
+            report_instance.report_currency = instance.report_currency
+            report_instance.begin_date = instance.begin_date
+            report_instance.end_date = instance.end_date
+            report_instance.calculation_type = instance.calculation_type
+            report_instance.segmentation_type = instance.segmentation_type
+            report_instance.registers = register_ids
+            report_instance.registers_names = register_names
 
-                            try:
-                                setattr(instance_item, field.name + '_id', item[field.name])
-                            except Exception as e:
-                                print('exception field %s : %s' % (field.name, e))
-                                setattr(instance_item, field.name, None)
+            report_instance.report_uuid = report_uuid
+            report_instance.save()
 
-                        else:
+            PerformanceReportInstanceItem.objects.filter(report_instance=report_instance).delete()
 
-                            try:
-                                setattr(instance_item, field.name, item[field.name])
-                            except Exception as e:
-                                print('exception field %s : %s' % (field.name, e))
-                                setattr(instance_item, field.name, None)
+            custom_fields_map = {}
 
-            instance_item.save()
+            for custom_field in instance.custom_fields:
+                custom_fields_map[custom_field.id] = custom_field
 
+            for item in data['items']:
 
-        data['report_uuid'] = report_instance.report_uuid
+                instance_item = PerformanceReportInstanceItem(report_instance=report_instance,
+                                                              master_user=instance.master_user,
+                                                              member=instance.member,
+                                                              begin_date=instance.begin_date,
+                                                              end_date=instance.end_date,
+                                                              calculation_type=instance.calculation_type,
+                                                              segmentation_type=instance.segmentation_type,
+                                                              registers=register_ids,
+                                                              registers_names=register_names,
+                                                              report_currency=instance.report_currency,
+                                                              )
+
+                for field in PerformanceReportInstanceItem._meta.fields:
+
+                    if field.name not in ['id']:
+
+                        if field.name in item:
+
+                            if isinstance(field, ForeignKey):
+
+                                try:
+                                    setattr(instance_item, field.name + '_id', item[field.name])
+                                except Exception as e:
+                                    print('exception field %s : %s' % (field.name, e))
+                                    setattr(instance_item, field.name, None)
+
+                            else:
+
+                                try:
+                                    setattr(instance_item, field.name, item[field.name])
+                                except Exception as e:
+                                    print('exception field %s : %s' % (field.name, e))
+                                    setattr(instance_item, field.name, None)
+
+                instance_item.save()
+
+        data['report_uuid'] = report_uuid
 
         # items = data['items']
         # custom_fields = data['custom_fields_object']

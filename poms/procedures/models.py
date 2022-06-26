@@ -308,6 +308,8 @@ SCHEME_TYPE_CHOICES = [
 
 class RequestDataFileProcedure(BaseProcedure):
 
+
+
     provider = models.ForeignKey(DataProvider, verbose_name=ugettext_lazy('provider'), on_delete=models.CASCADE)
 
     scheme_type = models.CharField(max_length=255, choices=SCHEME_TYPE_CHOICES, default='transaction_import')
@@ -390,6 +392,8 @@ class ExpressionProcedure(BaseProcedure):
 
     date_to_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                     verbose_name=ugettext_lazy('price date to expr'))
+
+    use_dates = models.BooleanField(default=False, verbose_name=ugettext_lazy('use_dates'))
 
     code = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('code'))
 

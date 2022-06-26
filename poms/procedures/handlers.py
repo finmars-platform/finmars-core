@@ -416,7 +416,10 @@ class ExpressionProcedureProcess(object):
         self.member = member
         self.schedule_instance = schedule_instance
 
-        self.execute_procedure_date_expressions()
+        if self.procedure.use_dates:
+            self.execute_procedure_date_expressions()
+
+        self.context = {'master_user': master_user, 'member': member}
 
     def get_list_of_dates_between_two_dates(self, date_from, date_to):
         result = []
@@ -462,25 +465,57 @@ class ExpressionProcedureProcess(object):
                             text="Procedure %s. Start" % procedure_instance.id,
                             )
 
-        dates = self.get_list_of_dates_between_two_dates(self.procedure.date_from, self.procedure.date_to)
+        if self.procedure.use_dates:
+            dates = self.get_list_of_dates_between_two_dates(self.procedure.date_from, self.procedure.date_to)
 
-        procedure_instance.result = ''
+            procedure_instance.result = ''
 
-        try:
+            try:
+
+                names = self.procedure.data
+
+                if not names:
+                    names = {}
+
+                for date in dates:
+
+                    names['date'] = str(date)
+
+                    result = formula.safe_eval(self.procedure.code, names=names,  context=self.context)
+
+                    if result:
+                        procedure_instance.result = procedure_instance.result + ' \n' + result
+
+
+                send_system_message(master_user=self.master_user,
+                                    source="Expression Procedure Service",
+                                    text="Procedure %s. Done" % procedure_instance.id,
+                                    )
+
+                procedure_instance.status = ExpressionProcedureInstance.STATUS_DONE
+
+            except Exception as e:
+                _l.error("ExpressionProcedureProcess.Exception %s" % e)
+
+                send_system_message(master_user=self.master_user,
+                                    source="Expression Procedure Service",
+                                    text="Procedure %s. Error" % procedure_instance.id,
+                                    )
+
+                procedure_instance.status = ExpressionProcedureInstance.STATUS_ERROR
+
+                procedure_instance.error_message = str(e)
+        else:
 
             names = self.procedure.data
 
             if not names:
                 names = {}
 
-            for date in dates:
+            result = formula.safe_eval(self.procedure.code, names=names,  context=self.context)
 
-                names['date'] = str(date)
-
-                result = formula.safe_eval(self.procedure.code, names=names)
-
-                if result:
-                    procedure_instance.result = procedure_instance.result + ' \n' + result
+            if result:
+                procedure_instance.result = procedure_instance.result + ' \n' + result
 
 
             send_system_message(master_user=self.master_user,
@@ -489,18 +524,6 @@ class ExpressionProcedureProcess(object):
                                 )
 
             procedure_instance.status = ExpressionProcedureInstance.STATUS_DONE
-
-        except Exception as e:
-            _l.error("ExpressionProcedureProcess.Exception %s" % e)
-
-            send_system_message(master_user=self.master_user,
-                                source="Expression Procedure Service",
-                                text="Procedure %s. Error" % procedure_instance.id,
-                                )
-
-            procedure_instance.status = ExpressionProcedureInstance.STATUS_ERROR
-
-            procedure_instance.error_message = str(e)
 
 
         procedure_instance.save()

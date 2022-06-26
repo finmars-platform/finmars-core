@@ -44,7 +44,7 @@ admin.site.register(TransactionReportCustomField, TransactionReportCustomFieldAd
 class BalanceReportInstanceAdmin(AbstractModelAdmin):
     model = BalanceReportInstance
     master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'report_date', 'report_currency']
+    list_display = ['id', 'name', 'master_user', 'report_date', 'report_currency']
     list_select_related = ['master_user']
     raw_id_fields = ['master_user']
 
@@ -67,7 +67,7 @@ admin.site.register(BalanceReportInstanceItem, BalanceReportInstanceItemAdmin)
 class PLReportInstanceAdmin(AbstractModelAdmin):
     model = PLReportInstance
     master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'report_date', 'pl_first_date', 'report_currency']
+    list_display = ['id','name',  'master_user', 'report_date', 'pl_first_date', 'report_currency']
     list_select_related = ['master_user']
     raw_id_fields = ['master_user']
 
@@ -78,7 +78,7 @@ admin.site.register(PLReportInstance, PLReportInstanceAdmin)
 class PLReportInstanceItemAdmin(AbstractModelAdmin):
     model = PLReportInstanceItem
     master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'report_instance', 'report_date', 'pl_first_date', 'report_currency']
+    list_display = ['id',  'master_user', 'report_instance', 'report_date', 'pl_first_date', 'report_currency']
     list_select_related = ['master_user', 'report_instance']
     raw_id_fields = ['master_user', 'report_instance']
 
@@ -89,7 +89,7 @@ admin.site.register(PLReportInstanceItem, PLReportInstanceItemAdmin)
 class PerformanceReportInstanceAdmin(AbstractModelAdmin):
     model = PerformanceReportInstance
     master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'begin_date', 'end_date', 'report_currency']
+    list_display = ['id', 'name', 'master_user', 'begin_date', 'end_date', 'report_currency']
     list_select_related = ['master_user']
     raw_id_fields = ['master_user']
 
