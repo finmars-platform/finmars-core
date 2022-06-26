@@ -83,6 +83,7 @@ def _check_float(val):
 def _str(a):
     return str(a)
 
+
 def _upper(a):
     return str(a).upper()
 
@@ -106,8 +107,10 @@ def _int(a):
 def _float(a):
     return float(a)
 
+
 def _bool(a):
     return bool(a)
+
 
 def _round(a, ndigits=None):
     if ndigits is not None:
@@ -246,7 +249,6 @@ def _format_date(date, format=None):
 
 
 def _send_system_message(evaluator, message, level='info', source="Expression Engine"):
-
     from poms.system_messages.handlers import send_system_message
 
     context = evaluator.context
@@ -263,11 +265,9 @@ def _send_system_message(evaluator, message, level='info', source="Expression En
 _send_system_message.evaluator = True
 
 
-def _calculate_performance_report(evaluator, name, date_from, date_to, report_currency, calculation_type, segmentation_type, registers):
-
+def _calculate_performance_report(evaluator, name, date_from, date_to, report_currency, calculation_type,
+                                  segmentation_type, registers):
     try:
-
-
 
         from poms.system_messages.handlers import send_system_message
 
@@ -283,7 +283,7 @@ def _calculate_performance_report(evaluator, name, date_from, date_to, report_cu
         from poms.instruments.models import Instrument
 
         currency = _safe_get_currency(evaluator, report_currency)
-        
+
         _l.info('_calculate_performance_report master_user %s' % master_user)
         _l.info('_calculate_performance_report member %s' % member)
         _l.info('_calculate_performance_report date_from  %s' % date_from)
@@ -293,25 +293,26 @@ def _calculate_performance_report(evaluator, name, date_from, date_to, report_cu
         d_from = datetime.datetime.strptime(date_from, "%Y-%m-%d").date()
         d_to = datetime.datetime.strptime(date_to, "%Y-%m-%d").date()
 
-        registers_instances = Instrument.objects.filter(id__in=registers)
+        registers_instances = []
+
+        for register in registers:
+            registers_instances.append(Instrument.objects.filter(master_user=master_user, user_code=register))
 
         instance = PerformanceReport(
             report_instance_name=name,
             master_user=master_user,
             member=member,
             report_currency=currency,
-            begin_date= d_from,
-            end_date= d_to,
+            begin_date=d_from,
+            end_date=d_to,
             calculation_type=calculation_type,
             segmentation_type=segmentation_type,
             registers=registers_instances,
             save_report=True
         )
 
-
         builder = PerformanceReportBuilder(instance=instance)
         instance = builder.build_report()
-
 
         serializer = PerformanceReportSerializer(instance=instance, context=context)
 
@@ -327,8 +328,8 @@ def _calculate_performance_report(evaluator, name, date_from, date_to, report_cu
 _calculate_performance_report.evaluator = True
 
 
-def _calculate_balance_report(evaluator, name, report_date, report_currency, pricing_policy=None, cost_method="AVCO"):
-
+def _calculate_balance_report(evaluator, name, report_date, report_currency, pricing_policy=None, cost_method="AVCO",
+                              portfolios=[]):
     try:
 
         from poms.system_messages.handlers import send_system_message
@@ -363,6 +364,13 @@ def _calculate_balance_report(evaluator, name, report_date, report_currency, pri
 
         report_date_d = datetime.datetime.strptime(report_date, "%Y-%m-%d").date()
 
+        from poms.portfolios.models import Portfolio
+
+        portfolios_instances = []
+
+        if portfolios:
+            for portfolio in portfolios:
+                portfolios_instances.append(Portfolio.objects.get(master_user=master_user, user_code=portfolio))
 
         instance = Report(
             report_instance_name=name,
@@ -371,15 +379,14 @@ def _calculate_balance_report(evaluator, name, report_date, report_currency, pri
             report_currency=currency,
             report_date=report_date_d,
             cost_method=cost_method,
+            portfolios=portfolios_instances,
             pricing_policy=pricing_policy,
             custom_fields=[],
             save_report=True
         )
 
-
         builder = BalanceReportBuilderSql(instance=instance)
         instance = builder.build_balance()
-
 
         serializer = BalanceReportSqlSerializer(instance=instance, context=context)
 
@@ -393,8 +400,8 @@ def _calculate_balance_report(evaluator, name, report_date, report_currency, pri
 _calculate_balance_report.evaluator = True
 
 
-def _calculate_pl_report(evaluator, name, pl_first_date, report_date, report_currency, pricing_policy=None, cost_method="AVCO"):
-
+def _calculate_pl_report(evaluator, name, pl_first_date, report_date, report_currency, pricing_policy=None,
+                         cost_method="AVCO", portfolios=[]):
     try:
 
         from poms.system_messages.handlers import send_system_message
@@ -431,6 +438,13 @@ def _calculate_pl_report(evaluator, name, pl_first_date, report_date, report_cur
         report_date_d = datetime.datetime.strptime(report_date, "%Y-%m-%d").date()
         pl_first_date_d = datetime.datetime.strptime(pl_first_date, "%Y-%m-%d").date()
 
+        from poms.portfolios.models import Portfolio
+
+        portfolios_instances = []
+
+        if portfolios:
+            for portfolio in portfolios:
+                portfolios_instances.append(Portfolio.objects.get(master_user=master_user, user_code=portfolio))
 
         instance = Report(
             report_instance_name=name,
@@ -441,14 +455,13 @@ def _calculate_pl_report(evaluator, name, pl_first_date, report_date, report_cur
             pl_first_date=pl_first_date_d,
             cost_method=cost_method,
             pricing_policy=pricing_policy,
+            portfolios=portfolios_instances,
             custom_fields=[],
             save_report=True
         )
 
-
         builder = PLReportBuilderSql(instance=instance)
         instance = builder.build_balance()
-
 
         serializer = PLReportSqlSerializer(instance=instance, context=context)
 
@@ -462,12 +475,7 @@ def _calculate_pl_report(evaluator, name, pl_first_date, report_date, report_cur
 _calculate_pl_report.evaluator = True
 
 
-
-
-
-
 def _get_current_member(evaluator):
-
     context = evaluator.context
     from poms.users.utils import get_member_from_context
 
@@ -476,9 +484,7 @@ def _get_current_member(evaluator):
     return member
 
 
-
 _get_current_member.evaluator = True
-
 
 
 def _parse_date(date_string, format=None):
@@ -508,8 +514,6 @@ def _parse_date(date_string, format=None):
             format = str(format)
 
         result = datetime.datetime.strptime(date_string, format).date()
-
-
 
     return result
 
@@ -755,7 +759,6 @@ _get_ttype_default_input.evaluator = True
 
 
 def _set_complex_transaction_input(evaluator, input, value):
-
     try:
 
         from poms.transactions.models import TransactionTypeInput
@@ -781,7 +784,7 @@ def _set_complex_transaction_input(evaluator, input, value):
         if input_obj is None:
             raise ExpressionEvalError('Input is not found')
 
-        print('input_obj.transaction_type_input.value_type  %s' % input_obj.transaction_type_input.value_type )
+        print('input_obj.transaction_type_input.value_type  %s' % input_obj.transaction_type_input.value_type)
         print('value %s' % value)
 
         if value:
@@ -809,7 +812,6 @@ _set_complex_transaction_input.evaluator = True
 
 
 def _set_complex_transaction_form_data(evaluator, key, value):
-
     try:
 
         from poms.transactions.models import TransactionTypeInput
@@ -833,7 +835,6 @@ _set_complex_transaction_form_data.evaluator = True
 
 
 def _set_complex_transaction_user_field(evaluator, field, value):
-
     try:
 
         from poms.transactions.models import TransactionTypeInput
@@ -856,16 +857,15 @@ def _set_complex_transaction_user_field(evaluator, field, value):
 _set_complex_transaction_user_field.evaluator = True
 
 
-
 def _get_relation_by_user_code(evaluator, content_type, user_code):
-
     try:
         from poms.transactions.models import TransactionTypeInput
 
         from poms.accounts.models import Account
         from poms.counterparties.models import Counterparty, Responsible
         from poms.currencies.models import Currency
-        from poms.instruments.models import Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail, PricingPolicy, \
+        from poms.instruments.models import Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail, \
+            PricingPolicy, \
             Periodicity, AccrualCalculationModel
         from poms.integrations.models import PriceDownloadScheme
         from poms.portfolios.models import Portfolio
@@ -954,6 +954,7 @@ def _if_null(evaluator, input, default):
 
 _if_null.evaluator = True
 
+
 def _substr(evaluator, text, start_index, end_index):
     return text[start_index:end_index]
 
@@ -962,7 +963,6 @@ _substr.evaluator = True
 
 
 def _reg_search(evaluator, text, expression):
-
     return re.search(expression, text).group()
 
 
@@ -1114,12 +1114,9 @@ _add_price_history.evaluator = True
 
 
 def _get_latest_principal_price(evaluator, date_from, date_to, instrument, pricing_policy, default_value):
-
     try:
         from poms.users.utils import get_master_user_from_context
         from poms.instruments.models import PriceHistory
-
-
 
         context = evaluator.context
         master_user = get_master_user_from_context(context)
@@ -1131,7 +1128,6 @@ def _get_latest_principal_price(evaluator, date_from, date_to, instrument, prici
 
         _l.info("_get_latest_principal_price instrument %s " % instrument)
         _l.info("_get_latest_principal_price  pricing_policy %s " % pricing_policy)
-
 
         results = PriceHistory.objects.filter(date__gte=date_from, date__lte=date_to, instrument=instrument,
                                               pricing_policy=pricing_policy).order_by('-date')
@@ -1271,7 +1267,6 @@ def _get_next_coupon_date(evaluator, date, instrument):
     items = instrument.get_future_coupons(begin_date=date, with_maturity=False)
 
     if len(items):
-
         next_date = items[0]
 
         return next_date[0]
@@ -1280,7 +1275,6 @@ def _get_next_coupon_date(evaluator, date, instrument):
 
 
 _get_next_coupon_date.evaluator = True
-
 
 
 def _get_factor_schedule(evaluator, date, instrument):
@@ -1664,7 +1658,6 @@ _get_instrument_accrual_factor.evaluator = True
 
 
 def _get_instrument_coupon(evaluator, instrument, date):
-
     try:
 
         _l.info("_get_instrument_coupon instrument %s" % instrument)
@@ -1713,7 +1706,6 @@ _get_instrument_factor.evaluator = True
 
 
 def _get_rt_value(evaluator, key, table_name, default=None):
-
     from poms.users.utils import get_master_user_from_context
 
     context = evaluator.context
@@ -1744,7 +1736,6 @@ _get_rt_value.evaluator = True
 
 
 def _get_default_portfolio(evaluator):
-
     from poms.users.utils import get_master_user_from_context
 
     context = evaluator.context
@@ -1769,7 +1760,6 @@ _get_default_portfolio.evaluator = True
 
 
 def _get_default_instrument(evaluator):
-
     from poms.users.utils import get_master_user_from_context
 
     context = evaluator.context
@@ -1794,7 +1784,6 @@ _get_default_instrument.evaluator = True
 
 
 def _get_default_account(evaluator):
-
     from poms.users.utils import get_master_user_from_context
 
     context = evaluator.context
@@ -1819,7 +1808,6 @@ _get_default_account.evaluator = True
 
 
 def _get_default_currency(evaluator):
-
     from poms.users.utils import get_master_user_from_context
 
     context = evaluator.context
@@ -1844,7 +1832,6 @@ _get_default_currency.evaluator = True
 
 
 def _get_default_transaction_type(evaluator):
-
     from poms.users.utils import get_master_user_from_context
 
     context = evaluator.context
@@ -1869,7 +1856,6 @@ _get_default_transaction_type.evaluator = True
 
 
 def _get_default_instrument_type(evaluator):
-
     from poms.users.utils import get_master_user_from_context
 
     context = evaluator.context
@@ -1894,7 +1880,6 @@ _get_default_instrument_type.evaluator = True
 
 
 def _get_default_account_type(evaluator):
-
     from poms.users.utils import get_master_user_from_context
 
     context = evaluator.context
@@ -1919,7 +1904,6 @@ _get_default_account_type.evaluator = True
 
 
 def _get_default_pricing_policy(evaluator):
-
     from poms.users.utils import get_master_user_from_context
 
     context = evaluator.context
@@ -1944,7 +1928,6 @@ _get_default_pricing_policy.evaluator = True
 
 
 def _get_default_responsible(evaluator):
-
     from poms.users.utils import get_master_user_from_context
 
     context = evaluator.context
@@ -1969,7 +1952,6 @@ _get_default_responsible.evaluator = True
 
 
 def _get_default_counterparty(evaluator):
-
     from poms.users.utils import get_master_user_from_context
 
     context = evaluator.context
@@ -1994,7 +1976,6 @@ _get_default_counterparty.evaluator = True
 
 
 def _get_default_strategy1(evaluator):
-
     from poms.users.utils import get_master_user_from_context
 
     context = evaluator.context
@@ -2019,7 +2000,6 @@ _get_default_strategy1.evaluator = True
 
 
 def _get_default_strategy2(evaluator):
-
     from poms.users.utils import get_master_user_from_context
 
     context = evaluator.context
@@ -2044,7 +2024,6 @@ _get_default_strategy2.evaluator = True
 
 
 def _get_default_strategy3(evaluator):
-
     from poms.users.utils import get_master_user_from_context
 
     context = evaluator.context
@@ -2068,9 +2047,7 @@ def _get_default_strategy3(evaluator):
 _get_default_strategy3.evaluator = True
 
 
-
 def _run_task(evaluator, task_name, **kwargs):
-
     _l.info('_run_task task_name: %s' % task_name)
 
     try:
@@ -2327,7 +2304,6 @@ class _UserDef(object):
         return ret
 
 
-
 FUNCTIONS = [
     SimpleEval2Def('str', _str),
     SimpleEval2Def('substr', _substr),
@@ -2439,7 +2415,6 @@ FUNCTIONS = [
     SimpleEval2Def('has_var', _has_var),
     SimpleEval2Def('get_var', _get_var),
 
-
     SimpleEval2Def('get_default_portfolio', _get_default_portfolio),
     SimpleEval2Def('get_default_instrument', _get_default_instrument),
     SimpleEval2Def('get_default_account', _get_default_account),
@@ -2455,7 +2430,6 @@ FUNCTIONS = [
     SimpleEval2Def('get_default_strategy3', _get_default_strategy3),
 
     SimpleEval2Def('run_task', _run_task),
-
 
 ]
 empty = object()
@@ -2586,7 +2560,7 @@ class SimpleEval2(object):
         finally:
             self._table = save_table
 
-    def multiline_eval(self, expr,  names=None):
+    def multiline_eval(self, expr, names=None):
 
         if not expr:
             raise InvalidExpression('Empty expression')
@@ -2596,7 +2570,6 @@ class SimpleEval2(object):
 
         save_table = self._table
         self._table = save_table.copy()
-
 
         print('self.expr_ast.body %s' % self.expr_ast.body)
 
@@ -2899,7 +2872,6 @@ def safe_eval(s, names=None, max_time=None, add_print=False, allow_assign=True, 
     return e.eval(s)
 
 
-
 def validate_date(val):
     return _parse_date(val)
 
@@ -3038,7 +3010,6 @@ def get_model_data(instance, object_class, serializer_class, many=False, context
 
 
 def _get_supported_models_serializer_class():
-
     from poms.users.models import Member
     from poms.users.serializers import MemberSerializer
 
@@ -3047,7 +3018,8 @@ def _get_supported_models_serializer_class():
     from poms.counterparties.models import Counterparty, Responsible
     from poms.counterparties.serializers import CounterpartySerializer, ResponsibleSerializer
     from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDetail, GeneratedEvent, InstrumentType
-    from poms.instruments.serializers import InstrumentSerializer, DailyPricingModelSerializer, InstrumentTypeSerializer, \
+    from poms.instruments.serializers import InstrumentSerializer, DailyPricingModelSerializer, \
+        InstrumentTypeSerializer, \
         PaymentSizeDetailSerializer, GeneratedEventSerializer
     from poms.currencies.models import Currency
     from poms.currencies.serializers import CurrencySerializer
@@ -3682,7 +3654,7 @@ accrual_NL_365_NO_EOM(date(2000, 1, 1), date(2000, 1, 25))
         _l.debug(safe_eval('account.attributes.str1.value', names=names, context=context))
         _l.debug(safe_eval('account.attributes["SomeClassifier"].value', names=names, context=context))
         _l.debug(safe_eval('account.attributes["SomeClassifier"].value.parent.parent.parent.name', names=names,
-                          context=context))
+                           context=context))
 
         pass
 
@@ -3735,33 +3707,33 @@ accrual_NL_365_NO_EOM(date(2000, 1, 1), date(2000, 1, 25))
         _l.debug('13: %s', safe_eval('simple_group(25, [[None,10,"o1"],[10,None,"o2"]], "o3")'))
 
         _l.debug('100: %s', safe_eval('date_group("2000-11-21", ['
-                                     '["2000-01-01","2001-01-01",10,"o1"],'
-                                     '["2001-01-01","2002-01-01", timedelta(months=1, day=31),"o2"]'
-                                     '], "o3")'))
+                                      '["2000-01-01","2001-01-01",10,"o1"],'
+                                      '["2001-01-01","2002-01-01", timedelta(months=1, day=31),"o2"]'
+                                      '], "o3")'))
         _l.debug('101: %s', safe_eval('date_group("2002-11-21", ['
-                                     '["2000-01-01","2001-01-01",10,"o1"],'
-                                     '["2001-01-01","2002-01-01",timedelta(months=1, day=31),"o2"]'
-                                     '], "o3")'))
+                                      '["2000-01-01","2001-01-01",10,"o1"],'
+                                      '["2001-01-01","2002-01-01",timedelta(months=1, day=31),"o2"]'
+                                      '], "o3")'))
         _l.debug('102: %s', safe_eval('date_group("2000-11-21", ['
-                                     '["2000-01-01","2001-01-01", None,"o1"],'
-                                     '["2001-01-01","2002-01-01",timedelta(months=1, day=31),"o2"]'
-                                     '], "o3")'))
+                                      '["2000-01-01","2001-01-01", None,"o1"],'
+                                      '["2001-01-01","2002-01-01",timedelta(months=1, day=31),"o2"]'
+                                      '], "o3")'))
 
         _l.debug('110: %s', safe_eval('date_group("2000-11-21", ['
-                                     '["2000-01-01","2001-01-01", 10, ["<","%Y-%m-%d-%B",">","<","%Y-%m-%d",">"]],'
-                                     '["2000-01-01","2002-01-01",timedelta(months=1, day=31),"o2"]'
-                                     '], "o3")'))
+                                      '["2000-01-01","2001-01-01", 10, ["<","%Y-%m-%d-%B",">","<","%Y-%m-%d",">"]],'
+                                      '["2000-01-01","2002-01-01",timedelta(months=1, day=31),"o2"]'
+                                      '], "o3")'))
 
         _l.debug('120: %s', safe_eval('date_group("2002-11-21", ['
-                                     '["","2001-01-01",None, "o1"],'
-                                     '["2001-01-01","2002-01-01",10, "o2"],'
-                                     '["2002-01-01","",None,"o3"]'
-                                     '], "o4")'))
+                                      '["","2001-01-01",None, "o1"],'
+                                      '["2001-01-01","2002-01-01",10, "o2"],'
+                                      '["2002-01-01","",None,"o3"]'
+                                      '], "o4")'))
         _l.debug('121: %s', safe_eval('date_group("2000-11-21", ['
-                                     '["","2001-01-01",None, "o1"],'
-                                     '["2001-01-01","2002-01-01",10, "o2"],'
-                                     '["2002-01-01","",None,"o3"]'
-                                     '], "o4")'))
+                                      '["","2001-01-01",None, "o1"],'
+                                      '["2001-01-01","2002-01-01",10, "o2"],'
+                                      '["2002-01-01","",None,"o3"]'
+                                      '], "o4")'))
 
         # timedelta(years=0, months=0, days=0, leapdays=0, weeks=0,
         #        year=None, month=None, day=None, weekday=None,
@@ -3779,10 +3751,10 @@ accrual_NL_365_NO_EOM(date(2000, 1, 1), date(2000, 1, 25))
         # {id: 11, caption: "Yearly (+12m)", step: "timedelta(years=1)",
         # {id: 12, caption: "Yearly (EoY)"}
         _l.debug('200: %s', safe_eval('date_group("2001-04-09", ['
-                                     '["","2001-02-01",None, "o1"],'
-                                     '["2001-02-01","2020-02-01", timedelta(weeks=1, weekday=1), ["<","%Y-%m-%d-%a-%b","/","","%Y-%m-%d-%a-%b",">"]],'
-                                     '["2020-02-01","",None,"o3"]'
-                                     '], "o4")'))
+                                      '["","2001-02-01",None, "o1"],'
+                                      '["2001-02-01","2020-02-01", timedelta(weeks=1, weekday=1), ["<","%Y-%m-%d-%a-%b","/","","%Y-%m-%d-%a-%b",">"]],'
+                                      '["2020-02-01","",None,"o3"]'
+                                      '], "o4")'))
 
         # simple_group("expr", [["begin","end","name"],...], default="Olala")
         # date_group("expr", [["begin","end", "step" or None,"str" or ["str1","begin_date_fmt", "str3", "str4","end_date_fmt", "str6"]],...], default="Olala")
