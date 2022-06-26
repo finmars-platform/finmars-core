@@ -1057,11 +1057,25 @@ class BalanceReportSqlSerializer(ReportSerializer):
             else:
                 report_instance_name = report_uuid
 
-            report_instance, created = BalanceReportInstance.objects.get_or_create(
-                master_user=instance.master_user,
-                member=instance.member,
-                name=report_instance_name,
-            )
+            try:
+
+                report_instance = BalanceReportInstance.objects.get(
+                    master_user=instance.master_user,
+                    member=instance.member,
+                    user_code=report_instance_name,
+                )
+            except Exception as e:
+                report_instance = BalanceReportInstance.objects.create(
+                    master_user=instance.master_user,
+                    member=instance.member,
+                    user_code=report_instance_name,
+                    name=report_instance_name,
+                    short_name=report_instance_name,
+                    report_date=instance.report_date,
+                    report_currency=instance.report_currency,
+                    pricing_policy=instance.pricing_policy,
+                    cost_method=instance.cost_method,
+                )
 
             report_instance.report_date = instance.report_date
             report_instance.report_currency = instance.report_currency
@@ -1115,37 +1129,39 @@ class BalanceReportSqlSerializer(ReportSerializer):
                 index_text = 1
                 index_number = 1
                 index_date = 1
-                for custom_field_item in item['custom_fields']:
 
-                    cc = custom_fields_map[custom_field_item['custom_field']]
+                if 'custom_fields' in item:
+                    for custom_field_item in item['custom_fields']:
 
-                    try:
+                        cc = custom_fields_map[custom_field_item['custom_field']]
 
-                        if cc.value_type == 10:
-                            setattr(instance_item, 'custom_field_text_' + str(index_text), custom_field_item['value'])
+                        try:
 
-                            index_text = index_text + 1
+                            if cc.value_type == 10:
+                                setattr(instance_item, 'custom_field_text_' + str(index_text), custom_field_item['value'])
 
-                        if cc.value_type == 20:
-                            setattr(instance_item, 'custom_field_number_' + str(index_number),
-                                    float(custom_field_item['value']))
+                                index_text = index_text + 1
 
-                            index_number = index_number + 1
+                            if cc.value_type == 20:
+                                setattr(instance_item, 'custom_field_number_' + str(index_number),
+                                        float(custom_field_item['value']))
 
-                        if cc.value_type == 40:
-                            setattr(instance_item, 'custom_field_date_' + str(index_date), custom_field_item['value'])
+                                index_number = index_number + 1
 
-                            index_date = index_date + 1
+                            if cc.value_type == 40:
+                                setattr(instance_item, 'custom_field_date_' + str(index_date), custom_field_item['value'])
 
-                    except Exception as e:
-                        print("Custom field save error %s" % e)
+                                index_date = index_date + 1
 
-                        if cc.value_type == 10:
-                            index_text = index_text + 1
-                        if cc.value_type == 20:
-                            index_number = index_number + 1
-                        if cc.value_type == 40:
-                            index_date = index_date + 1
+                        except Exception as e:
+                            print("Custom field save error %s" % e)
+
+                            if cc.value_type == 10:
+                                index_text = index_text + 1
+                            if cc.value_type == 20:
+                                index_number = index_number + 1
+                            if cc.value_type == 40:
+                                index_date = index_date + 1
 
                 instance_item.save()
 
@@ -1198,11 +1214,28 @@ class PLReportSqlSerializer(ReportSerializer):
             else:
                 report_instance_name = report_uuid
 
-            report_instance, created = PLReportInstance.objects.get_or_create(
-                master_user=instance.master_user,
-                member=instance.member,
-                name=report_instance_name,
-            )
+            try:
+                report_instance = PLReportInstance.objects.get(
+                    master_user=instance.master_user,
+                    member=instance.member,
+                    name=report_instance_name,
+                )
+
+            except Exception as e:
+
+                report_instance = PLReportInstance.objects.create(
+                    master_user=instance.master_user,
+                    member=instance.member,
+                    user_code=report_instance_name,
+                    name=report_instance_name,
+                    short_name=report_instance_name,
+                    report_date=instance.report_date,
+                    pl_first_date=instance.pl_first_date,
+                    report_currency=instance.report_currency,
+                    pricing_policy=instance.pricing_policy,
+                    cost_method=instance.cost_method,
+                )
+
 
             report_instance.report_uuid = report_uuid
             report_instance.report_date = instance.report_date
@@ -1258,37 +1291,39 @@ class PLReportSqlSerializer(ReportSerializer):
                 index_text = 1
                 index_number = 1
                 index_date = 1
-                for custom_field_item in item['custom_fields']:
 
-                    cc = custom_fields_map[custom_field_item['custom_field']]
+                if 'custom_fields' in item:
+                    for custom_field_item in item['custom_fields']:
 
-                    try:
+                        cc = custom_fields_map[custom_field_item['custom_field']]
 
-                        if cc.value_type == 10:
-                            setattr(instance_item, 'custom_field_text_' + str(index_text), custom_field_item['value'])
+                        try:
 
-                            index_text = index_text + 1
+                            if cc.value_type == 10:
+                                setattr(instance_item, 'custom_field_text_' + str(index_text), custom_field_item['value'])
 
-                        if cc.value_type == 20:
-                            setattr(instance_item, 'custom_field_number_' + str(index_number),
-                                    float(custom_field_item['value']))
+                                index_text = index_text + 1
 
-                            index_number = index_number + 1
+                            if cc.value_type == 20:
+                                setattr(instance_item, 'custom_field_number_' + str(index_number),
+                                        float(custom_field_item['value']))
 
-                        if cc.value_type == 40:
-                            setattr(instance_item, 'custom_field_date_' + str(index_date), custom_field_item['value'])
+                                index_number = index_number + 1
 
-                            index_date = index_date + 1
+                            if cc.value_type == 40:
+                                setattr(instance_item, 'custom_field_date_' + str(index_date), custom_field_item['value'])
 
-                    except Exception as e:
-                        print("Custom field save error %s" % e)
+                                index_date = index_date + 1
 
-                        if cc.value_type == 10:
-                            index_text = index_text + 1
-                        if cc.value_type == 20:
-                            index_number = index_number + 1
-                        if cc.value_type == 40:
-                            index_date = index_date + 1
+                        except Exception as e:
+                            print("Custom field save error %s" % e)
+
+                            if cc.value_type == 10:
+                                index_text = index_text + 1
+                            if cc.value_type == 20:
+                                index_number = index_number + 1
+                            if cc.value_type == 40:
+                                index_date = index_date + 1
 
                 instance_item.save()
 

@@ -327,6 +327,145 @@ def _calculate_performance_report(evaluator, name, date_from, date_to, report_cu
 _calculate_performance_report.evaluator = True
 
 
+def _calculate_balance_report(evaluator, name, report_date, report_currency, pricing_policy=None, cost_method="AVCO"):
+
+    try:
+
+        from poms.system_messages.handlers import send_system_message
+
+        context = evaluator.context
+        from poms.users.utils import get_master_user_from_context, get_member_from_context
+
+        master_user = get_master_user_from_context(context)
+        member = get_member_from_context(context)
+
+        from poms.reports.sql_builders.balance import BalanceReportBuilderSql
+        from poms.reports.builders.balance_serializers import BalanceReportSqlSerializer
+        from poms.reports.builders.balance_item import Report
+        from poms.instruments.models import Instrument
+
+        from poms.users.models import EcosystemDefault
+        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+
+        currency = _safe_get_currency(evaluator, report_currency)
+        if pricing_policy:
+            pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
+        else:
+            pricing_policy = ecosystem_default.pricing_policy
+
+        from poms.instruments.models import CostMethod
+        cost_method = CostMethod.objects.get(user_code=cost_method)
+
+        _l.info('_calculate_balance_report master_user %s' % master_user)
+        _l.info('_calculate_balance_report member %s' % member)
+        _l.info('_calculate_balance_report report_date  %s' % report_date)
+        _l.info('_calculate_balance_report currency %s' % currency)
+
+        report_date_d = datetime.datetime.strptime(report_date, "%Y-%m-%d").date()
+
+
+        instance = Report(
+            report_instance_name=name,
+            master_user=master_user,
+            member=member,
+            report_currency=currency,
+            report_date=report_date_d,
+            cost_method=cost_method,
+            pricing_policy=pricing_policy,
+            custom_fields=[],
+            save_report=True
+        )
+
+
+        builder = BalanceReportBuilderSql(instance=instance)
+        instance = builder.build_balance()
+
+
+        serializer = BalanceReportSqlSerializer(instance=instance, context=context)
+
+        serializer.to_representation(instance)
+
+    except Exception as e:
+        _l.error("_calculate_balance_report.Exception %s" % e)
+        _l.error("_calculate_balance_report.Trace %s" % traceback.format_exc())
+
+
+_calculate_balance_report.evaluator = True
+
+
+def _calculate_pl_report(evaluator, name, pl_first_date, report_date, report_currency, pricing_policy=None, cost_method="AVCO"):
+
+    try:
+
+        from poms.system_messages.handlers import send_system_message
+
+        context = evaluator.context
+        from poms.users.utils import get_master_user_from_context, get_member_from_context
+
+        master_user = get_master_user_from_context(context)
+        member = get_member_from_context(context)
+
+        from poms.reports.sql_builders.balance import PLReportBuilderSql
+        from poms.reports.builders.balance_serializers import PLReportSqlSerializer
+        from poms.reports.builders.balance_item import Report
+        from poms.instruments.models import Instrument
+
+        from poms.users.models import EcosystemDefault
+        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+
+        currency = _safe_get_currency(evaluator, report_currency)
+        if pricing_policy:
+            pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
+        else:
+            pricing_policy = ecosystem_default.pricing_policy
+
+        from poms.instruments.models import CostMethod
+        cost_method = CostMethod.objects.get(user_code=cost_method)
+
+        _l.info('_calculate_pl_report master_user %s' % master_user)
+        _l.info('_calculate_pl_report member %s' % member)
+        _l.info('_calculate_pl_report report_date  %s' % report_date)
+        _l.info('_calculate_pl_report pl_first_date  %s' % pl_first_date)
+        _l.info('_calculate_pl_report currency %s' % currency)
+
+        report_date_d = datetime.datetime.strptime(report_date, "%Y-%m-%d").date()
+        pl_first_date_d = datetime.datetime.strptime(pl_first_date, "%Y-%m-%d").date()
+
+
+        instance = Report(
+            report_instance_name=name,
+            master_user=master_user,
+            member=member,
+            report_currency=currency,
+            report_date=report_date_d,
+            pl_first_date=pl_first_date_d,
+            cost_method=cost_method,
+            pricing_policy=pricing_policy,
+            custom_fields=[],
+            save_report=True
+        )
+
+
+        builder = PLReportBuilderSql(instance=instance)
+        instance = builder.build_balance()
+
+
+        serializer = PLReportSqlSerializer(instance=instance, context=context)
+
+        serializer.to_representation(instance)
+
+    except Exception as e:
+        _l.error("_calculate_pl_report.Exception %s" % e)
+        _l.error("_calculate_pl_report.Trace %s" % traceback.format_exc())
+
+
+_calculate_pl_report.evaluator = True
+
+
+
+
+
+
 def _get_current_member(evaluator):
 
     context = evaluator.context
@@ -2281,8 +2420,8 @@ FUNCTIONS = [
     SimpleEval2Def('if_null', _if_null),
     SimpleEval2Def('send_system_message', _send_system_message),
     SimpleEval2Def('calculate_performance_report', _calculate_performance_report),
-    # SimpleEval2Def('calculate_balance_report', _calculate_balance_report),
-    # SimpleEval2Def('calculate_pl_report', _calculate_pl_report),
+    SimpleEval2Def('calculate_balance_report', _calculate_balance_report),
+    SimpleEval2Def('calculate_pl_report', _calculate_pl_report),
     SimpleEval2Def('get_current_member', _get_current_member),
 
     # SimpleEval2Def('get_instr_accrual_size', _get_instrument_accrual_size),

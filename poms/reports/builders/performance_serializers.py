@@ -212,6 +212,8 @@ class PerformanceReportSerializer(serializers.Serializer):
                     master_user=instance.master_user,
                     member=instance.member,
                     user_code=report_instance_name,
+                    name=report_instance_name,
+                    short_name=report_instance_name,
                     report_currency=instance.report_currency,
                     begin_date=instance.begin_date,
                     end_date=instance.end_date,
