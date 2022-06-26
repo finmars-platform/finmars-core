@@ -88,3 +88,4 @@ pyjwt==2.3.0
 python-jose==3.3.0
 openpyxl==3.0.9
 filtration==2.3.0
+colorlog==6.6.0

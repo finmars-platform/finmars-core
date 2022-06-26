@@ -414,17 +414,23 @@ LOGGING = {
     'version': 1,
     'formatters': {
         'verbose': {
-            'format': '[' + HOST_LOCATION + '] [' + BASE_API_URL + '] [%(levelname)s] [%(asctime)s] [%(processName)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s',
+            '()': 'colorlog.ColoredFormatter',
+            'format': '%(log_color)s[' + HOST_LOCATION + '] [' + BASE_API_URL + '] [%(levelname)s] [%(asctime)s] [%(processName)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s',
+            'log_colors': {
+                'DEBUG':    'white',
+                'INFO':     'blue',
+                'WARNING':  'yellow',
+                'ERROR':    'red',
+                'CRITICAL': 'bold_red',
+            },
         },
     },
     'handlers': {
         'console': {
-            'level': DJANGO_LOG_LEVEL,
             'class': 'logging.StreamHandler',
             'formatter': 'verbose'
         },
         'file': {
-            'level': DJANGO_LOG_LEVEL,
             'class': 'logging.FileHandler',
             'filename': '/var/log/finmars/django.log',
             'formatter': 'verbose'
@@ -432,16 +438,13 @@ LOGGING = {
     },
     'loggers': {
         'django.request': {
-            "level": "ERROR",
             "handlers": ["console", "file"]
         },
         "django": {
             "handlers": ["file"],
-            "level": "ERROR",
             "propagate": True
         },
         "poms": {
-            "level": DJANGO_LOG_LEVEL,
             "handlers": ["console", "file"],
             "propagate": True
         }

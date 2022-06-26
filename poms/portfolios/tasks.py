@@ -237,7 +237,7 @@ def calculate_portfolio_register_record0(master_user_id):
 
 @shared_task(name='portfolios.calculate_portfolio_register_record', ignore_result=True)
 def calculate_portfolio_register_record(master_users=None):
-    _l.info('calculate_portfolio_register_records')
+    _l.info('calculate_portfolio_register_record')
 
     try:
 
@@ -248,7 +248,7 @@ def calculate_portfolio_register_record(master_users=None):
             master_user_qs = master_user_qs.filter(pk__in=master_users)
 
         for master_user in master_user_qs:
-            _l.debug('calculate_portfolio_register_nav: master_user=%s', master_user.id)
+            _l.debug('calculate_portfolio_register_records: master_user=%s', master_user.id)
 
             calculate_portfolio_register_record0.apply_async(kwargs={'master_user_id': master_user.id})
 

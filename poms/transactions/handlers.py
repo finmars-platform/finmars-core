@@ -75,6 +75,7 @@ class TransactionTypeProcess(object):
                  context=None,  # for formula engine
                  context_values=None,  # context_values = CONTEXT VARIABLES
                  uniqueness_reaction=None,
+                 execution_context='manual',
                  member=None):
 
         self.transaction_type = transaction_type
@@ -83,6 +84,7 @@ class TransactionTypeProcess(object):
         self.member = member
 
         self.process_mode = process_mode
+        self.execution_context = execution_context
 
         if self.process_mode is None:
             self.process_mode = TransactionTypeProcess.MODE_BOOK
@@ -493,7 +495,8 @@ class TransactionTypeProcess(object):
                                     instrument = ecosystem_default.instrument
                                     instrument_exists = True
 
-                                    _l.debug('Rebook: Instrument is not exists, return Default %s' % instrument.user_code)
+                                    _l.debug(
+                                        'Rebook: Instrument is not exists, return Default %s' % instrument.user_code)
 
                         if instrument is None:
                             instrument = Instrument.objects.create(master_user=master_user,
@@ -514,7 +517,6 @@ class TransactionTypeProcess(object):
                             'user_code': instrument.user_code
                         }
 
-
                         if instrument.user_code != '-' and instrument.user_code != ecosystem_default.instrument.user_code:
 
                             self._set_rel(errors=errors,
@@ -527,7 +529,6 @@ class TransactionTypeProcess(object):
 
                             _l.info('set rel instrument.instrument_type %s' % instrument.instrument_type.id)
 
-
                             from poms.csv_import.tasks import set_defaults_from_instrument_type
                             set_defaults_from_instrument_type(object_data, instrument.instrument_type)
 
@@ -536,72 +537,87 @@ class TransactionTypeProcess(object):
                                           source=action_instrument, source_attr_name='name', object_data=object_data)
                             self._set_val(errors=errors, values=self.values, default_value='',
                                           target=instrument, target_attr_name='short_name',
-                                          source=action_instrument, source_attr_name='short_name', object_data=object_data)
+                                          source=action_instrument, source_attr_name='short_name',
+                                          object_data=object_data)
                             self._set_val(errors=errors, values=self.values, default_value='',
                                           target=instrument, target_attr_name='public_name',
-                                          source=action_instrument, source_attr_name='public_name', object_data=object_data)
+                                          source=action_instrument, source_attr_name='public_name',
+                                          object_data=object_data)
 
                             if getattr(action_instrument, 'notes'):
                                 self._set_val(errors=errors, values=self.values, default_value='',
                                               target=instrument, target_attr_name='notes',
-                                              source=action_instrument, source_attr_name='notes', object_data=object_data)
-
+                                              source=action_instrument, source_attr_name='notes',
+                                              object_data=object_data)
 
                             self._set_rel(errors=errors, values=self.values, default_value=ecosystem_default.currency,
                                           model=Currency,
                                           target=instrument, target_attr_name='pricing_currency',
-                                          source=action_instrument, source_attr_name='pricing_currency', object_data=object_data)
+                                          source=action_instrument, source_attr_name='pricing_currency',
+                                          object_data=object_data)
 
                             self._set_rel(errors=errors, values=self.values, default_value=ecosystem_default.currency,
                                           model=Currency,
                                           target=instrument, target_attr_name='counter_directional_exposure_currency',
-                                          source=action_instrument, source_attr_name='pricing_currency', object_data=object_data)
+                                          source=action_instrument, source_attr_name='pricing_currency',
+                                          object_data=object_data)
 
                             self._set_rel(errors=errors, values=self.values, default_value=ecosystem_default.currency,
                                           model=Currency,
                                           target=instrument, target_attr_name='co_directional_exposure_currency',
-                                          source=action_instrument, source_attr_name='pricing_currency', object_data=object_data)
-
+                                          source=action_instrument, source_attr_name='pricing_currency',
+                                          object_data=object_data)
 
                             self._set_val(errors=errors, values=self.values, default_value=0.0,
                                           target=instrument, target_attr_name='price_multiplier',
-                                          source=action_instrument, source_attr_name='price_multiplier', object_data=object_data)
+                                          source=action_instrument, source_attr_name='price_multiplier',
+                                          object_data=object_data)
                             self._set_rel(errors=errors, values=self.values, default_value=ecosystem_default.currency,
                                           model=Currency,
                                           target=instrument, target_attr_name='accrued_currency',
-                                          source=action_instrument, source_attr_name='accrued_currency', object_data=object_data)
+                                          source=action_instrument, source_attr_name='accrued_currency',
+                                          object_data=object_data)
                             self._set_val(errors=errors, values=self.values, default_value=0.0,
                                           target=instrument, target_attr_name='accrued_multiplier',
-                                          source=action_instrument, source_attr_name='accrued_multiplier', object_data=object_data)
+                                          source=action_instrument, source_attr_name='accrued_multiplier',
+                                          object_data=object_data)
                             self._set_rel(errors=errors, values=self.values, default_value=None,
                                           target=instrument, target_attr_name='payment_size_detail',
                                           model=PaymentSizeDetail,
-                                          source=action_instrument, source_attr_name='payment_size_detail', object_data=object_data)
+                                          source=action_instrument, source_attr_name='payment_size_detail',
+                                          object_data=object_data)
                             self._set_val(errors=errors, values=self.values, default_value=0.0,
                                           target=instrument, target_attr_name='default_price',
-                                          source=action_instrument, source_attr_name='default_price', object_data=object_data)
+                                          source=action_instrument, source_attr_name='default_price',
+                                          object_data=object_data)
                             self._set_val(errors=errors, values=self.values, default_value=0.0,
                                           target=instrument, target_attr_name='default_accrued',
-                                          source=action_instrument, source_attr_name='default_accrued', object_data=object_data)
+                                          source=action_instrument, source_attr_name='default_accrued',
+                                          object_data=object_data)
                             self._set_val(errors=errors, values=self.values, default_value='',
                                           target=instrument, target_attr_name='user_text_1',
-                                          source=action_instrument, source_attr_name='user_text_1', object_data=object_data)
+                                          source=action_instrument, source_attr_name='user_text_1',
+                                          object_data=object_data)
                             self._set_val(errors=errors, values=self.values, default_value='',
                                           target=instrument, target_attr_name='user_text_2',
-                                          source=action_instrument, source_attr_name='user_text_2', object_data=object_data)
+                                          source=action_instrument, source_attr_name='user_text_2',
+                                          object_data=object_data)
                             self._set_val(errors=errors, values=self.values, default_value='',
                                           target=instrument, target_attr_name='user_text_3',
-                                          source=action_instrument, source_attr_name='user_text_3', object_data=object_data)
+                                          source=action_instrument, source_attr_name='user_text_3',
+                                          object_data=object_data)
                             self._set_val(errors=errors, values=self.values, default_value='',
                                           target=instrument, target_attr_name='reference_for_pricing',
-                                          source=action_instrument, source_attr_name='reference_for_pricing', object_data=object_data)
+                                          source=action_instrument, source_attr_name='reference_for_pricing',
+                                          object_data=object_data)
                             self._set_val(errors=errors, values=self.values, default_value=date.max,
                                           target=instrument, target_attr_name='maturity_date',
                                           source=action_instrument, source_attr_name='maturity_date',
                                           validator=formula.validate_date, object_data=object_data)
                             self._set_val(errors=errors, values=self.values, default_value=0.0,
                                           target=instrument, target_attr_name='maturity_price',
-                                          source=action_instrument, source_attr_name='maturity_price', object_data=object_data)
+                                          source=action_instrument, source_attr_name='maturity_price',
+                                          object_data=object_data)
 
                         try:
 
@@ -613,7 +629,8 @@ class TransactionTypeProcess(object):
 
                             from poms.instruments.serializers import InstrumentSerializer
 
-                            serializer = InstrumentSerializer(data=object_data, instance=instrument, context=self._context)
+                            serializer = InstrumentSerializer(data=object_data, instance=instrument,
+                                                              context=self._context)
 
                             is_valid = serializer.is_valid(raise_exception=True)
 
@@ -673,7 +690,8 @@ class TransactionTypeProcess(object):
                             _l.info("Instrument save error %s" % e)
 
                             self._add_err_msg(errors, 'non_field_errors',
-                                              ugettext('Invalid instrument action fields (please, use type convertion).'))
+                                              ugettext(
+                                                  'Invalid instrument action fields (please, use type convertion).'))
                         except DatabaseError:
                             self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
                         else:
@@ -1539,7 +1557,8 @@ class TransactionTypeProcess(object):
                     _l.debug('process transaction instrument_map: %s', instrument_map)
                     _l.debug('process transaction id: %s', action_transaction.id)
                     if action_transaction.instrument_phantom is not None:
-                        _l.debug('process transaction instrument_phantom.order: %s', action_transaction.instrument_phantom.order)
+                        _l.debug('process transaction instrument_phantom.order: %s',
+                                 action_transaction.instrument_phantom.order)
                     errors = {}
                     transaction = Transaction(master_user=master_user)
                     transaction.complex_transaction = self.complex_transaction
@@ -1651,7 +1670,8 @@ class TransactionTypeProcess(object):
                                   target=transaction, target_attr_name='allocation_balance',
                                   source=action_transaction, source_attr_name='allocation_balance')
                     if action_transaction.allocation_balance_phantom is not None:
-                        transaction.allocation_balance = instrument_map[action_transaction.allocation_balance_phantom_id]
+                        transaction.allocation_balance = instrument_map[
+                            action_transaction.allocation_balance_phantom_id]
 
                     self._set_rel(errors=errors, values=self.values, default_value=None,
                                   model=Instrument,
@@ -1856,7 +1876,8 @@ class TransactionTypeProcess(object):
 
                 except Exception as e:
 
-                    _l.debug("User Field Expression Eval error expression %s" % getattr(self.complex_transaction.transaction_type, field_key))
+                    _l.debug("User Field Expression Eval error expression %s" % getattr(
+                        self.complex_transaction.transaction_type, field_key))
                     _l.debug("User Field Expression Eval error names %s" % names)
                     _l.debug("User Field Expression Eval error %s" % e)
 
@@ -2113,6 +2134,27 @@ class TransactionTypeProcess(object):
             else:
                 self.complex_transaction.transaction_unique_code = None
 
+    def run_procedures_after_book(self):
+
+        from celery import Celery
+
+        _l.info("TransactionTypeProcess.run_procedures_after_book")
+
+        from poms.portfolios.tasks import calculate_portfolio_register_record, calculate_portfolio_register_nav
+
+        if self.execution_context == 'manual':
+
+            # app = Celery('poms_app')
+            # app.config_from_object('django.conf:settings', namespace='CELERY')
+            # app.autodiscover_tasks()
+            #
+            # app.send_task('calculate_portfolio_register_record', [])
+            # app.send_task('calculate_portfolio_register_nav', [])
+
+            calculate_portfolio_register_record.apply_async(link=[calculate_portfolio_register_nav.s()])
+
+
+
     def process_as_pending(self):
 
         _l.debug("Process as pending")
@@ -2142,6 +2184,8 @@ class TransactionTypeProcess(object):
         self._save_inputs()
 
         self.assign_permissions_to_pending_complex_transaction()
+
+        self.run_procedures_after_book()
 
     def process(self):
 
@@ -2244,11 +2288,14 @@ class TransactionTypeProcess(object):
         #     for trn in self.transactions:
         #         trn.calc_cash_by_formulas()
 
+        self.run_procedures_after_book()
+
         if self.complex_transaction.status_id == ComplexTransaction.PENDING:
             self.complex_transaction.transactions.all().delete()
 
         if self.complex_transaction.transaction_type.type == TransactionType.TYPE_PROCEDURE:
             self.complex_transaction.delete()
+
 
     def process_recalculate(self):
         if not self.recalculate_inputs:
@@ -2368,7 +2415,8 @@ class TransactionTypeProcess(object):
         if object_data:
             object_data[target_attr_name] = value
 
-    def _set_rel(self, errors, values, default_value, target, target_attr_name, source, source_attr_name, model, object_data=None):
+    def _set_rel(self, errors, values, default_value, target, target_attr_name, source, source_attr_name, model,
+                 object_data=None):
         user_code = getattr(source, source_attr_name, None)  # got user_code
         value = None
         if user_code:
