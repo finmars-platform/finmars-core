@@ -296,7 +296,7 @@ def _calculate_performance_report(evaluator, name, date_from, date_to, report_cu
         registers_instances = []
 
         for register in registers:
-            registers_instances.append(Instrument.objects.filter(master_user=master_user, user_code=register))
+            registers_instances.append(Instrument.objects.get(master_user=master_user, user_code=register))
 
         instance = PerformanceReport(
             report_instance_name=name,
