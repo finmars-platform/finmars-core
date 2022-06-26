@@ -438,13 +438,16 @@ LOGGING = {
     },
     'loggers': {
         'django.request': {
+            "level": "ERROR",
             "handlers": ["console", "file"]
         },
         "django": {
             "handlers": ["file"],
+            "level": "ERROR",
             "propagate": True
         },
         "poms": {
+            "level": DJANGO_LOG_LEVEL,
             "handlers": ["console", "file"],
             "propagate": True
         }
