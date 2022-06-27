@@ -415,9 +415,9 @@ LOGGING = {
     'formatters': {
         'verbose': {
             '()': 'colorlog.ColoredFormatter',
-            'format': '%(log_color)s[' + HOST_LOCATION + '] [' + BASE_API_URL + '] [%(levelname)s] [%(asctime)s] [%(processName)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s',
+            'format': '%(log_color)s [' + HOST_LOCATION + '] [' + BASE_API_URL + '] [%(levelname)s] [%(asctime)s] [%(processName)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s',
             'log_colors': {
-                'DEBUG':    'white',
+                'DEBUG':    'cyan',
                 'INFO':     'blue',
                 'WARNING':  'yellow',
                 'ERROR':    'red',

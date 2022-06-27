@@ -688,8 +688,8 @@ class PerformanceReportBuilder:
                 'portfolio_id': portfolio_id,
                 'transaction_date_str': date_to_str,
                 'transaction_date': date_to,
-                'cash_flow': nav,
-                'cash_flow_weighted': nav * 0,
+                'cash_flow': 0,
+                'cash_flow_weighted': 0,
                 'previous_nav': 0,
                 'nav': nav,
                 'records': []
@@ -737,7 +737,11 @@ class PerformanceReportBuilder:
 
                     time_weight = (date_to_n - date_n) / (date_to_n - date_from_n)
 
-                    item['cash_flow'] = cash_flow
+                    if item['transaction_date_str'] == date_from_str:
+                        item['cash_flow'] = 0
+                    else:
+                        item['cash_flow'] = cash_flow
+
                     item['cash_flow_weighted'] = cash_flow * time_weight
                     item['nav'] = nav
 
