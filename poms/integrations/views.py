@@ -1305,7 +1305,7 @@ class SupersetGetSecurityToken(APIView):
 
     def get(self, request):
 
-        dashboard_id = request.query_params.get('dashboard_id', None)
+        id = request.query_params.get('id', None)
 
         tokens = self.get_admin_access_token()
 
@@ -1319,7 +1319,7 @@ class SupersetGetSecurityToken(APIView):
             },
             "resources": [{
                 "type": "dashboard",
-                "id": dashboard_id
+                "id": id
             }],
             "rls": [
             ]
