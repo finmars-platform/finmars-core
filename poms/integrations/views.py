@@ -84,6 +84,8 @@ _l = logging.getLogger('poms.integrations')
 from rest_framework import permissions, status
 from rest_framework.exceptions import PermissionDenied
 
+import requests
+import json
 import time
 
 
@@ -1177,8 +1179,6 @@ class TransactionImportJson(APIView):
         complex_transaction_csv_file_import_parallel(task_id=celery_task.pk)
 
 
-
-
 class TransactionFileResultUploadHandler(APIView):
 
     permission_classes = []
@@ -1277,3 +1277,69 @@ class DataProviderViewSet(AbstractReadOnlyModelViewSet):
     queryset = DataProvider.objects
     serializer_class = DataProviderSerializer
 
+
+
+class SupersetGetSecurityToken(APIView):
+
+    def get_admin_access_token(self):
+
+        data = {
+            'username': 'admin',
+            "provider": "db",
+            "refresh": True,
+            'password': 'lr1018hxvb10yq95ip'
+        }
+
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        }
+
+        url = settings.SUPERSET_URL + 'api/v1/security/login'
+        response = requests.post(url=url, data=json.dumps(data), headers=headers)
+
+        response_json = response.json()
+
+        return response_json
+
+
+    def get(self, request):
+
+        dashboard_id = request.query_params.get('dashboard_id', None)
+
+        tokens = self.get_admin_access_token()
+
+        _l.info("SupersetGetSecurityToken.got tokens %s" % tokens)
+
+        data = {
+            "user": {
+                "username": "admin",
+                "first_name": "Superset",
+                "last_name": "Admin"
+            },
+            "resources": [{
+                "type": "dashboard",
+                "id": dashboard_id
+            }],
+            "rls": [
+            ]
+        }
+
+
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": "Bearer %s" %  tokens["access_token"]
+        }
+
+        url = settings.SUPERSET_URL + 'api/v1/security/guest_token'
+
+        _l.info("SupersetGetSecurityToken.Requesting url %s" % url)
+
+        response = requests.post(url=url, data=json.dumps(data), headers=headers)
+
+        _l.info('SupersetGetSecurityToken.response %s' % response.text)
+
+        response_json = response.json()
+
+        return Response(response_json)

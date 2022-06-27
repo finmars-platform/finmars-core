@@ -510,6 +510,7 @@ urlpatterns = [
     url(r'internal/brokers/alphav/callback', csrf_exempt(pricing.PricingBrokerAlphavHandler.as_view())),
     url(r'internal/data/transactions/callback', csrf_exempt(integrations.TransactionFileResultUploadHandler.as_view())),
     url(r'internal/data/transactions/json', csrf_exempt(integrations.TransactionImportJson.as_view())),
+    url(r'integrations/superset/get-security-token', csrf_exempt(integrations.SupersetGetSecurityToken.as_view())),
     url(r'instruments/instrument-external-api', csrf_exempt(instruments.InstrumentExternalAPIViewSet.as_view())),
     url(r'instruments/fdb-create-from-callback', csrf_exempt(instruments.InstrumentFDBCreateFromCallbackViewSet.as_view())),
 
