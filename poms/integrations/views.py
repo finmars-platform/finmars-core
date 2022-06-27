@@ -78,8 +78,8 @@ from poms.users.models import Member, MasterUser
 from poms.users.permissions import SuperUserOrReadOnly, SuperUserOnly
 
 import logging
-_l = logging.getLogger('poms.integrations')
 
+_l = logging.getLogger('poms.integrations')
 
 from rest_framework import permissions, status
 from rest_framework.exceptions import PermissionDenied
@@ -104,8 +104,7 @@ class AccrualScheduleDownloadMethodViewSet(AbstractClassModelViewSet):
     serializer_class = AccrualScheduleDownloadMethodSerializer
 
 
-
-class BloombergDataProviderCredentialViewSet(AbstractApiView,  UpdateModelMixinExt, DestroyModelFakeMixin,
+class BloombergDataProviderCredentialViewSet(AbstractApiView, UpdateModelMixinExt, DestroyModelFakeMixin,
                                              BulkModelMixin, ModelViewSet):
     queryset = BloombergDataProviderCredential.objects
     serializer_class = BloombergDataProviderCredentialSerializer
@@ -810,7 +809,6 @@ class ComplexTransactionImportSchemeFilterSet(FilterSet):
 
 
 class ComplexTransactionImportSchemeViewSet(AbstractApiView, UpdateModelMixinExt, ModelViewSet):
-
     permission_classes = [
         IsAuthenticated,
         PomsConfigurationPermission
@@ -829,7 +827,6 @@ class ComplexTransactionImportSchemeViewSet(AbstractApiView, UpdateModelMixinExt
     ordering_fields = [
         'scheme_name',
     ]
-
 
 
 class ComplexTransactionImportSchemeLightViewSet(AbstractModelViewSet):
@@ -911,7 +908,7 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
                             celery_task_data["scheme_name"] = res.result['scheme_name']
 
                         if 'file_name' in res.result:
-                            celery_task_data["file_name"]  = res.result['file_name']
+                            celery_task_data["file_name"] = res.result['file_name']
 
                         celery_task.data = celery_task_data
 
@@ -939,7 +936,6 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
 
             return Response({"message": "Task not found"}, status=status.HTTP_400_BAD_REQUEST)
 
-
     def create(self, request, *args, **kwargs):
 
         st = time.perf_counter()
@@ -956,9 +952,9 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         options_object['execution_context'] = None
 
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
-                                 member=request.user.member,
-                                 options_object=options_object,
-                                 type='transaction_import')
+                                                member=request.user.member,
+                                                options_object=options_object,
+                                                type='transaction_import')
 
         _l.info('celery_task %s created ' % celery_task.pk)
 
@@ -966,10 +962,10 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
 
         send_system_message(master_user=request.user.master_user,
                             source="Transaction Import Service",
-                            text='Member %s started Transaction Import (scheme %s)' % (request.user.member.username, instance.scheme.name))
+                            text='Member %s started Transaction Import (scheme %s)' % (
+                            request.user.member.username, instance.scheme.name))
 
         complex_transaction_csv_file_import_parallel(task_id=celery_task.pk)
-
 
         # def oncommit():
         #
@@ -1001,12 +997,11 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
         context['show_object_permissions'] = False
         return context
 
-    def get_status(self,  request, *args, **kwargs):
+    def get_status(self, request, *args, **kwargs):
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
-
 
         task_id = instance.task_id
 
@@ -1058,7 +1053,7 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
                             celery_task_data["scheme_name"] = res.result['scheme_name']
 
                         if 'file_name' in res.result:
-                            celery_task_data["file_name"]  = res.result['file_name']
+                            celery_task_data["file_name"] = res.result['file_name']
 
                         celery_task.data = celery_task_data
 
@@ -1147,17 +1142,14 @@ class TransactionFileResultViewSet(AbstractModelViewSet):
 
 
 class TransactionImportJson(APIView):
-
     permission_classes = []
 
     def get(self, request):
-
-        _l.debug("BACKEND_ROLES %s" % settings.BACKEND_ROLES )
+        _l.debug("BACKEND_ROLES %s" % settings.BACKEND_ROLES)
 
         return Response({'status': 'ok'})
 
     def post(self, request):
-
         # _l.debug('request.data %s' % request.data)
 
         _l.debug('request.data %s' % request.data)
@@ -1180,12 +1172,11 @@ class TransactionImportJson(APIView):
 
 
 class TransactionFileResultUploadHandler(APIView):
-
     permission_classes = []
 
     def get(self, request):
 
-        _l.debug("BACKEND_ROLES %s" % settings.BACKEND_ROLES )
+        _l.debug("BACKEND_ROLES %s" % settings.BACKEND_ROLES)
 
         return Response({'status': 'ok'})
 
@@ -1231,16 +1222,16 @@ class TransactionFileResultUploadHandler(APIView):
                         procedure_instance.schedule_instance.run_next_procedure()
 
                     if procedure_instance.procedure.scheme_type == 'transaction_import':
-
-                        complex_transaction_csv_file_import_by_procedure.apply_async(kwargs={'procedure_instance_id': procedure_instance.id,
-                                                                                         'transaction_file_result_id': item.id,
-                                                                                         })
+                        complex_transaction_csv_file_import_by_procedure.apply_async(
+                            kwargs={'procedure_instance_id': procedure_instance.id,
+                                    'transaction_file_result_id': item.id,
+                                    })
 
                     if procedure_instance.procedure.scheme_type == 'simple_import':
-
-                        data_csv_file_import_by_procedure.apply_async(kwargs={'procedure_instance_id': procedure_instance.id,
-                                                                                             'transaction_file_result_id': item.id,
-                                                                                             })
+                        data_csv_file_import_by_procedure.apply_async(
+                            kwargs={'procedure_instance_id': procedure_instance.id,
+                                    'transaction_file_result_id': item.id,
+                                    })
 
                 else:
                     _l.debug("No files found")
@@ -1278,11 +1269,9 @@ class DataProviderViewSet(AbstractReadOnlyModelViewSet):
     serializer_class = DataProviderSerializer
 
 
-
 class SupersetGetSecurityToken(APIView):
 
     def get_admin_access_token(self):
-
         data = {
             'username': 'admin',
             "provider": "db",
@@ -1302,20 +1291,35 @@ class SupersetGetSecurityToken(APIView):
 
         return response_json
 
+    def get_csrf_token(self, tokens):
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "Authorization": "Bearer %s" % tokens["access_token"]
+        }
+
+        url = settings.SUPERSET_URL + 'api/v1/security/csrf_token/'
+        response = requests.get(url=url, headers=headers)
+
+        response_json = response.json()
+
+        return response_json['result']
 
     def get(self, request):
-
         id = request.query_params.get('id', None)
 
         tokens = self.get_admin_access_token()
 
+        csrf_token = self.get_csrf_token(tokens)
+
         _l.info("SupersetGetSecurityToken.got tokens %s" % tokens)
+        _l.info("SupersetGetSecurityToken.got csrf_token %s" % csrf_token)
 
         data = {
             "user": {
-                "username": "admin",
-                "first_name": "Superset",
-                "last_name": "Admin"
+                "username": "finmars",
+                "first_name": "finmars",
+                "last_name": "finmars"
             },
             "resources": [{
                 "type": "dashboard",
@@ -1325,14 +1329,14 @@ class SupersetGetSecurityToken(APIView):
             ]
         }
 
-
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
-            "Authorization": "Bearer %s" %  tokens["access_token"]
+            "Authorization": "Bearer %s" % tokens["access_token"],
+            'X-CSRFToken': csrf_token
         }
 
-        url = settings.SUPERSET_URL + 'api/v1/security/guest_token'
+        url = settings.SUPERSET_URL + 'api/v1/security/guest_token/'
 
         _l.info("SupersetGetSecurityToken.Requesting url %s" % url)
 
