@@ -62,7 +62,6 @@ class PerformanceReportBuilder:
         _l.info('get_first_transaction.portfolios %s ' % portfolios)
 
         transaction = Transaction.objects.filter(portfolio__in=portfolios,
-                                                 transaction_date__gte=self.instance.begin_date,
                                                  transaction_class__in=[TransactionClass.CASH_INFLOW,
                                                                         TransactionClass.CASH_OUTFLOW,
                                                                         TransactionClass.INJECTION,
