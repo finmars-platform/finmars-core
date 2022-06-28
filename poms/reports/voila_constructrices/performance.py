@@ -81,10 +81,18 @@ class PerformanceReportBuilder:
             # end_date = timezone_today() - timedelta(days=1)
             end_date = timezone_today()
 
-        begin_date = self.get_first_transaction()
+        first_transaction_date = self.get_first_transaction()
+
+        begin_date = self.instance.begin_date
+
+        if begin_date < first_transaction_date:
+            begin_date = first_transaction_date
 
         _l.info('build_report.begin_date %s' % begin_date)
         _l.info('build_report.end_date %s' % end_date)
+
+        if end_date < begin_date:
+            end_date = begin_date
 
         self.instance.periods = self.get_periods(begin_date, end_date, self.instance.segmentation_type)
 
