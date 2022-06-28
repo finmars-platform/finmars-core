@@ -118,6 +118,9 @@ class PerformanceReportBuilder:
         if self.instance.calculation_type == 'time_weighted':
             self.calculate_time_weighted_grand_total_values()
 
+        if self.instance.calculation_type == 'money_weighted':
+            self.calculate_money_weighted_grand_total_values()
+
         for period in self.instance.periods:
             for item in period['items']:
 
@@ -183,6 +186,33 @@ class PerformanceReportBuilder:
         self.instance.grand_nav = grand_nav
         self.instance.begin_nav = begin_nav
         self.instance.end_nav = end_nav
+
+    def calculate_money_weighted_grand_total_values(self):
+
+        grand_return = 1
+
+        grand_cash_flow = 0
+        grand_nav = 0
+        begin_nav = 0
+        end_nav = 0
+
+        for period in self.instance.periods:
+            grand_return = grand_return * (period['total_return'] + 1)
+            grand_cash_flow = grand_cash_flow + period['total_cash_flow']
+
+        grand_return = grand_return - 1
+
+        begin_nav = self.instance.periods[0]['total_nav']
+        grand_nav = self.instance.periods[-1]['total_nav']
+        end_nav = self.instance.periods[-1]['total_nav']
+
+        self.instance.grand_return = grand_return
+        self.instance.grand_cash_flow = grand_cash_flow
+        self.instance.grand_nav = grand_nav
+        self.instance.begin_nav = begin_nav
+        self.instance.end_nav = end_nav
+
+
 
     def calculate_time_weighted_total_values(self, period):
 
