@@ -615,6 +615,10 @@ def _parse_number(a):
     return float(a)
 
 
+def _join(data, separator):
+    return separator.join(data)
+
+
 def _parse_bool(a):
     if isinstance(a, (bool)):
         return a
@@ -2358,6 +2362,7 @@ FUNCTIONS = [
 
     SimpleEval2Def('format_number', _format_number),
     SimpleEval2Def('parse_number', _parse_number),
+    SimpleEval2Def('join', _join),
 
     SimpleEval2Def('simple_price', _simple_price),
 

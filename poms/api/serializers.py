@@ -5,6 +5,8 @@ from rest_framework.exceptions import ValidationError
 from poms.common import formula
 from poms.common.fields import ExpressionField, Expression2Field
 
+import logging
+_l = logging.getLogger('poms.api')
 
 class Language(object):
     def __init__(self, code='', name=''):
@@ -89,6 +91,7 @@ class ExpressionSerializer(serializers.Serializer):
             try:
                 attrs['result'] = formula.safe_eval(expression, names, context=self.context)
             except formula.InvalidExpression as e:
+                _l.error("Manual expression error %s" % e)
                 raise ValidationError({'expression': ugettext_lazy('Invalid expression.')})
         return attrs
 
