@@ -536,7 +536,7 @@ def _get_date_last_week_end_business(date):
 
     offset = BDay()
 
-    return offset.rollback(date)
+    return offset.rollback(date).date()
 
 
 def _get_date_last_month_end_business(date):
@@ -544,7 +544,7 @@ def _get_date_last_month_end_business(date):
 
     offset = BMonthEnd()
 
-    return offset.rollback(date)
+    return offset.rollback(date).date()
 
 
 def _get_date_last_quarter_end_business(date):
@@ -552,7 +552,7 @@ def _get_date_last_quarter_end_business(date):
 
     offset = BQuarterEnd()
 
-    return offset.rollback(date)
+    return offset.rollback(date).date()
 
 
 def _get_date_last_year_end_business(date):
@@ -560,7 +560,7 @@ def _get_date_last_year_end_business(date):
 
     offset = BYearEnd()
 
-    return offset.rollback(date)
+    return offset.rollback(date).date()
 
 
 def _format_date2(date, format=None, locale=None):
