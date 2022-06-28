@@ -91,6 +91,7 @@ class PerformanceReportBuilder:
 
         cumulative_return = 0
         for period in self.instance.periods:
+
             if self.instance.calculation_type == 'time_weighted':
                 table = self.build_time_weighted(period['date_from'], period['date_to'])
 
@@ -99,9 +100,7 @@ class PerformanceReportBuilder:
 
                 period = self.calculate_time_weighted_total_values(period)
 
-                period["cumulative_return"] = (cumulative_return + 1) * (period['total_return'] + 1) - 1
 
-                cumulative_return = period["cumulative_return"]
 
             if self.instance.calculation_type == 'money_weighted':
                 table = self.build_money_weighted(period['date_from'], period['date_to'])
@@ -110,6 +109,11 @@ class PerformanceReportBuilder:
                     period['items'].append(table[key])
 
                 period = self.calculate_money_weighted_total_values(period)
+
+
+            period["cumulative_return"] = (cumulative_return + 1) * (period['total_return'] + 1) - 1
+
+            cumulative_return = period["cumulative_return"]
 
         if self.instance.calculation_type == 'time_weighted':
             self.calculate_time_weighted_grand_total_values()

@@ -1,5 +1,6 @@
 import math
 from collections import OrderedDict
+from datetime import timedelta
 
 from django.contrib.contenttypes.models import ContentType
 from django.views.generic.dates import timezone_today
@@ -242,3 +243,13 @@ def get_content_type_by_name(name):
     return content_type
 
 
+def get_list_of_dates_between_two_dates(date_from, date_to):
+    result = []
+
+    diff = date_to - date_from
+
+    for i in range(diff.days + 1):
+        day = date_from + timedelta(days=i)
+        result.append(day)
+
+    return result
