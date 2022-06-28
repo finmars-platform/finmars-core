@@ -2140,7 +2140,7 @@ class TransactionTypeProcess(object):
 
         _l.info("TransactionTypeProcess.run_procedures_after_book")
 
-        from poms.portfolios.tasks import calculate_portfolio_register_record, calculate_portfolio_register_nav
+        from poms.portfolios.tasks import calculate_portfolio_register_record, calculate_portfolio_register_price_history
 
         if self.execution_context == 'manual':
 
@@ -2151,7 +2151,7 @@ class TransactionTypeProcess(object):
             # app.send_task('calculate_portfolio_register_record', [])
             # app.send_task('calculate_portfolio_register_nav', [])
 
-            calculate_portfolio_register_record.apply_async(link=[calculate_portfolio_register_nav.s()])
+            calculate_portfolio_register_record.apply_async(link=[calculate_portfolio_register_price_history.s()])
 
 
 
