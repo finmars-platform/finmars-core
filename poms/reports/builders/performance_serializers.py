@@ -226,6 +226,11 @@ class PerformanceReportSerializer(serializers.Serializer):
             report_instance.segmentation_type = instance.segmentation_type
             report_instance.registers = register_ids
             report_instance.registers_names = register_names
+            report_instance.begin_nav = instance.begin_nav
+            report_instance.end_nav = instance.end_nav
+            report_instance.grand_return = instance.grand_return
+            report_instance.grand_cash_flow = instance.grand_cash_flow
+            report_instance.grand_nav = instance.grand_nav
 
             report_instance.report_uuid = report_uuid
             report_instance.save()

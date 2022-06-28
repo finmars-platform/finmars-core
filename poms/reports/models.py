@@ -444,6 +444,12 @@ class PerformanceReportInstance(DataTimeStampedModel, NamedModel):
 
     report_uuid = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('report uuid'))
 
+    begin_nav = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('begin nav'))
+    end_nav = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('end nav'))
+    grand_return = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('grand return'))
+    grand_cash_flow = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('grand cash flow'))
+    grand_nav = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('grand nav'))
+
 
 
 class PerformanceReportInstanceItem(models.Model):
