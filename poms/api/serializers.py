@@ -92,7 +92,7 @@ class ExpressionSerializer(serializers.Serializer):
                 attrs['result'] = formula.safe_eval(expression, names, context=self.context)
             except formula.InvalidExpression as e:
                 _l.error("Manual expression error %s" % e)
-                raise ValidationError({'expression': ugettext_lazy('Invalid expression.')})
+                raise ValidationError({'expression': ugettext_lazy('Invalid expression.'), "error_message": str(e)})
         return attrs
 
     def get_help(self, obj):

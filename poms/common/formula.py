@@ -17,7 +17,7 @@ from django.utils.functional import Promise, SimpleLazyObject
 
 from celery import Celery
 
-from poms.common.utils import date_now, isclose
+from poms.common.utils import date_now, isclose, get_list_of_dates_between_two_dates
 import re
 
 from pandas.tseries.offsets import BMonthEnd, BYearEnd, BQuarterEnd, BDay
@@ -28,7 +28,7 @@ import traceback
 
 _l = logging.getLogger('poms.formula')
 
-MAX_STR_LEN = 2000
+MAX_STR_LEN = 20000
 # MAX_EXPONENT = 4000000  # highest exponent
 MAX_EXPONENT = 10000  # highest exponent
 # MAX_SHIFT = 1000
@@ -246,6 +246,9 @@ def _format_date(date, format=None):
     else:
         format = str(format)
     return date.strftime(format)
+
+def _get_list_of_dates_between_two_dates(date_from, date_to):
+    return get_list_of_dates_between_two_dates(date_from, date_to)
 
 
 def _send_system_message(evaluator, message, level='info', source="Expression Engine"):
@@ -933,6 +936,68 @@ def _get_relation_by_user_code(evaluator, content_type, user_code):
 _get_relation_by_user_code.evaluator = True
 
 
+def _get_instruments(evaluator, **kwargs):
+    try:
+        from poms.transactions.models import TransactionTypeInput
+
+        from poms.accounts.models import Account
+        from poms.counterparties.models import Counterparty, Responsible
+        from poms.currencies.models import Currency
+        from poms.instruments.models import Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail, \
+            PricingPolicy, \
+            Periodicity, AccrualCalculationModel
+        from poms.integrations.models import PriceDownloadScheme
+        from poms.portfolios.models import Portfolio
+        from poms.strategies.models import Strategy1, Strategy2, Strategy3
+        from poms.transactions.models import EventClass, NotificationClass
+
+        context = evaluator.context
+        from poms.users.utils import get_master_user_from_context
+
+        master_user = get_master_user_from_context(context)
+
+        items = Instrument.objects.filter(master_user=master_user, **kwargs)
+        result = []
+
+        for item in items:
+            result.append(model_to_dict(item))
+
+        return result
+    except Exception as e:
+        _l.error("_get_instruments.exception %s" % e)
+        return None
+
+
+_get_instruments.evaluator = True
+
+
+def _get_currencies(evaluator, **kwargs):
+    try:
+
+        from poms.currencies.models import Currency
+
+        context = evaluator.context
+        from poms.users.utils import get_master_user_from_context
+
+        master_user = get_master_user_from_context(context)
+
+        items = Currency.objects.filter(master_user=master_user, **kwargs)
+
+        result = []
+
+        for item in items:
+            result.append(model_to_dict(item))
+
+        return result
+    except Exception as e:
+        _l.error("_get_currencies.exception %s" % e)
+        return None
+
+
+_get_currencies.evaluator = True
+
+
+
 def _convert_to_number(evaluator, text_number, thousand_separator="", decimal_separator=".", has_braces=False):
     result = text_number.replace(thousand_separator, '')
 
@@ -1117,7 +1182,7 @@ def _add_price_history(evaluator, date, instrument, pricing_policy, principal_pr
 _add_price_history.evaluator = True
 
 
-def _get_latest_principal_price(evaluator, date_from, date_to, instrument, pricing_policy, default_value):
+def _get_latest_principal_price(evaluator, date_from, date_to, instrument, pricing_policy, default_value=None):
     try:
         from poms.users.utils import get_master_user_from_context
         from poms.instruments.models import PriceHistory
@@ -1140,6 +1205,8 @@ def _get_latest_principal_price(evaluator, date_from, date_to, instrument, prici
 
         if len(list(results)):
             return results[0].principal_price
+
+        return default_value
     except Exception as e:
         _l.info("_get_latest_principal_price exception %s " % e)
         return default_value
@@ -2071,6 +2138,55 @@ def _run_task(evaluator, task_name, **kwargs):
 _run_task.evaluator = True
 
 
+def _run_pricing_procedure(evaluator, user_code, **kwargs):
+
+    try:
+        from poms.users.utils import get_master_user_from_context
+        from poms.procedures.models import PricingProcedure
+        from poms.pricing.handlers import PricingProcedureProcess
+
+        context = evaluator.context
+
+        master_user = get_master_user_from_context(context)
+
+        procedure = PricingProcedure.objects.get(master_user=master_user, user_code=user_code)
+
+        instance = PricingProcedureProcess(procedure=procedure, master_user=master_user, **kwargs)
+        instance.process()
+
+
+    except Exception as e:
+        _l.debug("_run_pricing_procedure.exception %s" % e)
+
+
+_run_pricing_procedure.evaluator = True
+
+
+def _run_data_procedure(evaluator, user_code, **kwargs):
+
+    try:
+        from poms.users.utils import get_master_user_from_context
+        from poms.procedures.models import RequestDataFileProcedure
+        from poms.procedures.handlers import RequestDataFileProcedureProcess
+
+        context = evaluator.context
+
+        master_user = get_master_user_from_context(context)
+
+        procedure = RequestDataFileProcedure.objects.get(master_user=master_user, user_code=user_code)
+
+
+        instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, **kwargs)
+        instance.process()
+
+
+    except Exception as e:
+        _l.debug("_run_data_procedure.exception %s" % e)
+
+
+_run_data_procedure.evaluator = True
+
+
 def _simple_group(val, ranges, default=None):
     for begin, end, text in ranges:
         if begin is None:
@@ -2350,6 +2466,7 @@ FUNCTIONS = [
     SimpleEval2Def('add_workdays', _add_workdays),
 
     SimpleEval2Def('format_date', _format_date),
+    SimpleEval2Def('get_list_of_dates_between_two_dates', _get_list_of_dates_between_two_dates),
     SimpleEval2Def('parse_date', _parse_date),
     SimpleEval2Def('unix_to_date', _unix_to_date),
 
@@ -2396,6 +2513,8 @@ FUNCTIONS = [
     SimpleEval2Def('set_complex_transaction_user_field', _set_complex_transaction_user_field),
     SimpleEval2Def('set_complex_transaction_form_data', _set_complex_transaction_form_data),
     SimpleEval2Def('get_relation_by_user_code', _get_relation_by_user_code),
+    SimpleEval2Def('get_instruments', _get_instruments),
+    SimpleEval2Def('get_currencies', _get_currencies),
     SimpleEval2Def('get_rt_value', _get_rt_value),
     SimpleEval2Def('convert_to_number', _convert_to_number),
     SimpleEval2Def('if_null', _if_null),
@@ -2435,6 +2554,8 @@ FUNCTIONS = [
     SimpleEval2Def('get_default_strategy3', _get_default_strategy3),
 
     SimpleEval2Def('run_task', _run_task),
+    SimpleEval2Def('run_pricing_procedure', _run_pricing_procedure),
+    SimpleEval2Def('run_data_procedure', _run_data_procedure),
 
 ]
 empty = object()
