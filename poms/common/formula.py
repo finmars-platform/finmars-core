@@ -2196,7 +2196,7 @@ def _run_pricing_procedure(evaluator, user_code, **kwargs):
 _run_pricing_procedure.evaluator = True
 
 
-def _run_data_procedure(evaluator, user_code, **kwargs):
+def _run_data_procedure(evaluator, user_code, user_context=None):
 
     try:
         from poms.users.utils import get_master_user_from_context
@@ -2211,10 +2211,20 @@ def _run_data_procedure(evaluator, user_code, **kwargs):
 
         _l.info('_run_data_procedure.context %s' % context)
 
+        merged_context = {}
+        merged_context.update(context)
+
+        if 'names' not in merged_context:
+            merged_context['names'] = {}
+
+        merged_context['names'].update(user_context)
+
+        _l.info('merged_context %s' % merged_context)
+
         procedure = RequestDataFileProcedure.objects.get(master_user=master_user, user_code=user_code)
 
 
-        instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, member=member, context=context, **kwargs)
+        instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, member=member, context=merged_context)
         instance.process()
 
 

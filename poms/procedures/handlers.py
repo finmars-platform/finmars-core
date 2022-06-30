@@ -489,8 +489,6 @@ class ExpressionProcedureProcess(object):
 
             self.context['names'] = names
 
-            _l.info('heeere context %s' % self.context)
-
             result = formula.safe_eval(self.procedure.code, names=names,  context=self.context)
 
             if result:
