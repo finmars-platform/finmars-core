@@ -416,8 +416,7 @@ class ExpressionProcedureProcess(object):
         self.member = member
         self.schedule_instance = schedule_instance
 
-        if self.procedure.use_dates:
-            self.execute_procedure_date_expressions()
+        self.execute_procedure_date_expressions()
 
         self.context = {'master_user': master_user, 'member': member}
 
@@ -465,65 +464,31 @@ class ExpressionProcedureProcess(object):
                             text="Procedure %s. Start" % procedure_instance.id,
                             )
 
-        if self.procedure.use_dates:
-            dates = self.get_list_of_dates_between_two_dates(self.procedure.date_from, self.procedure.date_to)
+        names = self.procedure.data
 
-            procedure_instance.result = ''
+        if not names:
+            names = {}
 
-            try:
+        names['context_date_from'] = self.procedure.date_from
+        names['context_date_to'] = self.procedure.date_to
 
-                names = self.procedure.data
+        result = formula.safe_eval(self.procedure.code, names=names,  context=self.context)
 
-                if not names:
-                    names = {}
+        if result:
 
-                for date in dates:
+            # _l.info('result %s' % result)
 
-                    names['context_date'] = str(date)
-
-                    result = formula.safe_eval(self.procedure.code, names=names,  context=self.context)
-
-                    if result:
-                        procedure_instance.result = procedure_instance.result + ' \n' + result
+            if not procedure_instance.result:
+                procedure_instance.result = ''
+            procedure_instance.result = procedure_instance.result + ' \n' + str(result)
 
 
-                send_system_message(master_user=self.master_user,
-                                    source="Expression Procedure Service",
-                                    text="Procedure %s. Done" % procedure_instance.id,
-                                    )
+        send_system_message(master_user=self.master_user,
+                            source="Expression Procedure Service",
+                            text="Procedure %s. Done" % procedure_instance.id,
+                            )
 
-                procedure_instance.status = ExpressionProcedureInstance.STATUS_DONE
-
-            except Exception as e:
-                _l.error("ExpressionProcedureProcess.Exception %s" % e)
-
-                send_system_message(master_user=self.master_user,
-                                    source="Expression Procedure Service",
-                                    text="Procedure %s. Error" % procedure_instance.id,
-                                    )
-
-                procedure_instance.status = ExpressionProcedureInstance.STATUS_ERROR
-
-                procedure_instance.error_message = str(e)
-        else:
-
-            names = self.procedure.data
-
-            if not names:
-                names = {}
-
-            result = formula.safe_eval(self.procedure.code, names=names,  context=self.context)
-
-            if result:
-                procedure_instance.result = procedure_instance.result + ' \n' + result
-
-
-            send_system_message(master_user=self.master_user,
-                                source="Expression Procedure Service",
-                                text="Procedure %s. Done" % procedure_instance.id,
-                                )
-
-            procedure_instance.status = ExpressionProcedureInstance.STATUS_DONE
+        procedure_instance.status = ExpressionProcedureInstance.STATUS_DONE
 
 
         procedure_instance.save()
