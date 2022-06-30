@@ -73,151 +73,153 @@ class RequestDataFileProcedureProcess(object):
 
             try:
 
-                procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
-                                                                                     master_user=self.master_user,
-                                                                                     status=RequestDataFileProcedureInstance.STATUS_PENDING,
-                                                                                     schedule_instance=self.schedule_instance,
-                                                                                     action='request_transaction_file',
-                                                                                     provider='universal',
+                with transaction.atomic():
 
-                                                                                     action_verbose='Request file with Transactions',
-                                                                                     provider_verbose='universal'
+                    procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
+                                                                                         master_user=self.master_user,
+                                                                                         status=RequestDataFileProcedureInstance.STATUS_PENDING,
+                                                                                         schedule_instance=self.schedule_instance,
+                                                                                         action='request_transaction_file',
+                                                                                         provider='universal',
 
-                                                                                     )
+                                                                                         action_verbose='Request file with Transactions',
+                                                                                         provider_verbose='universal'
 
-                send_system_message(master_user=self.master_user,
-                                    source="Data File Procedure Service",
-                                    text="universal Broker.  Procedure %s. Start" % procedure_instance.id,
-                                    )
+                                                                                         )
 
-                headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+                    send_system_message(master_user=self.master_user,
+                                        source="Data File Procedure Service",
+                                        text="universal Broker.  Procedure %s. Start" % procedure_instance.id,
+                                        )
 
-                url = self.procedure.data['url']
-                security_token = self.procedure.data['security_token']
+                    headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
-                data = {
-                    'security_token': security_token,
-                    "id": procedure_instance.id,
-                    "user": {
-                        "token": self.master_user.token,
-                        "credentials": {}
-                    },
-                    "provider": self.procedure.provider.user_code,
-                    "scheme_name": self.procedure.scheme_user_code,
-                    "scheme_type": self.procedure.scheme_type,
-                    "data": [],
-                    "options": self.procedure.data,
-                    "error_status": 0,
-                    "error_message": "",
-                }
+                    url = self.procedure.data['url']
+                    security_token = self.procedure.data['security_token']
 
-                if self.context:
-                    if 'names' in self.context:
-                        if "echo" in data['options']:
-                            for key, value in data['options']["echo"].items():
+                    data = {
+                        'security_token': security_token,
+                        "id": procedure_instance.id,
+                        "user": {
+                            "token": self.master_user.token,
+                            "credentials": {}
+                        },
+                        "provider": self.procedure.provider.user_code,
+                        "scheme_name": self.procedure.scheme_user_code,
+                        "scheme_type": self.procedure.scheme_type,
+                        "data": [],
+                        "options": self.procedure.data,
+                        "error_status": 0,
+                        "error_message": "",
+                    }
 
-                                if value in self.context['names']:
-                                    data['options']["echo"][key] = str(self.context['names'][value])
+                    if self.context:
+                        if 'names' in self.context:
+                            if "echo" in data['options']:
+                                for key, value in data['options']["echo"].items():
 
-                if self.procedure.date_from:
-                    data["date_from"] = str(self.procedure.date_from)
+                                    if value in self.context['names']:
+                                        data['options']["echo"][key] = str(self.context['names'][value])
 
-                if self.procedure.date_to:
-                    data["date_to"] = str(self.procedure.date_to)
+                    if self.procedure.date_from:
+                        data["date_from"] = str(self.procedure.date_from)
 
-                # if self.procedure.data['currencies']:
-                #     data["options"]['currencies'] = self.procedure.data['currencies']
+                    if self.procedure.date_to:
+                        data["date_to"] = str(self.procedure.date_to)
 
-                _l.info('request universal url %s' % url)
-                _l.info('request universal data %s' % data)
-                # _l.info('request universal self.context %s' % self.context)
+                    # if self.procedure.data['currencies']:
+                    #     data["options"]['currencies'] = self.procedure.data['currencies']
 
-                procedure_instance.request_data = data
-                procedure_instance.save()
+                    _l.info('request universal url %s' % url)
+                    _l.info('request universal data %s' % data)
+                    _l.info('request universal self.context %s' % self.context)
 
-                response = requests.post(url=url, json=data, headers=headers)
+                    procedure_instance.request_data = data
+                    procedure_instance.save()
 
-                response_data = None
+                    response = requests.post(url=url, json=data, headers=headers)
 
-                if len(response.text) < 5000:
-                    _l.info('response %s' % response.text)
+                    response_data = None
 
-                current_date_time = now().strftime("%Y-%m-%d-%H-%M")
+                    if len(response.text) < 5000:
+                        _l.info('response %s' % response.text)
 
-                file_report = FileReport()
+                    current_date_time = now().strftime("%Y-%m-%d-%H-%M")
 
-                file_name = "universal Broker Response %s.json" % current_date_time
+                    file_report = FileReport()
 
-                file_content = ''
+                    file_name = "universal Broker Response %s.json" % current_date_time
 
-                try:
+                    file_content = ''
 
-                    response_data = response.json()
+                    try:
 
-                    file_content = json.dumps(response_data, indent=4)
-                except Exception as e:
+                        response_data = response.json()
 
-                    _l.info('response %s' % response.text)
-                    _l.info("Response parse error %s" % e)
-                    file_content = response.text
+                        file_content = json.dumps(response_data, indent=4)
+                    except Exception as e:
 
-                file_report.upload_file(file_name=file_name, text=file_content, master_user=self.master_user)
-                file_report.master_user = self.master_user
-                file_report.name = file_name
-                file_report.file_name = file_name
-                file_report.type = 'procedure.requestdatafileprocedure'
-                file_report.notes = 'System File'
+                        _l.info('response %s' % response.text)
+                        _l.info("Response parse error %s" % e)
+                        file_content = response.text
 
-                file_report.save()
+                    file_report.upload_file(file_name=file_name, text=file_content, master_user=self.master_user)
+                    file_report.master_user = self.master_user
+                    file_report.name = file_name
+                    file_report.file_name = file_name
+                    file_report.type = 'procedure.requestdatafileprocedure'
+                    file_report.notes = 'System File'
 
-                send_system_message(master_user=procedure_instance.master_user,
-                                    source="Data File Procedure Service",
-                                    text="universal Broker. Procedure %s. Response Received" % procedure_instance.id,
-                                    file_report_id=file_report.id)
+                    file_report.save()
 
-                procedure_id = response_data['id']
+                    send_system_message(master_user=procedure_instance.master_user,
+                                        source="Data File Procedure Service",
+                                        text="universal Broker. Procedure %s. Response Received" % procedure_instance.id,
+                                        file_report_id=file_report.id)
 
-                master_user = MasterUser.objects.get(token=response_data['user']['token'])
+                    procedure_id = response_data['id']
 
-                procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_id,
-                                                                                  master_user=master_user)
+                    master_user = MasterUser.objects.get(token=response_data['user']['token'])
 
-                procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
-                procedure_instance.save()
+                    procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_id,
+                                                                                      master_user=master_user)
 
-                send_system_message(master_user=procedure_instance.master_user,
-                                    source="Data File Procedure Service",
-                                    text="universal Broker. Procedure %s. Done, start import" % procedure_instance.id,
-                                    )
+                    procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
+                    procedure_instance.save()
 
-                celery_task = CeleryTask.objects.create(master_user=master_user,
-                                                        member=self.member,
-                                                        type='transaction_import')
+                    send_system_message(master_user=procedure_instance.master_user,
+                                        source="Data File Procedure Service",
+                                        text="universal Broker. Procedure %s. Done, start import" % procedure_instance.id,
+                                        )
 
-                options_object = {}
+                    celery_task = CeleryTask.objects.create(master_user=master_user,
+                                                            member=self.member,
+                                                            type='transaction_import')
 
-                options_object['items'] = response_data['data']
+                    options_object = {}
 
-                celery_task.options_object = options_object
+                    options_object['items'] = response_data['data']
 
-                celery_task.save()
+                    celery_task.options_object = options_object
 
-                def run_tasks():
+                    celery_task.save()
 
-                    if procedure_instance.procedure.scheme_type == 'transaction_import':
-                        complex_transaction_csv_file_import_by_procedure_json.apply_async(
-                            kwargs={'procedure_instance_id': procedure_instance.id,
-                                    'celery_task_id': celery_task.id,
-                                    })
+                    def run_tasks():
 
-                    if procedure_instance.procedure.scheme_type == 'simple_import':
-                        data_csv_file_import_by_procedure_json.apply_async(
-                            kwargs={'procedure_instance_id': procedure_instance.id,
-                                    'celery_task_id': celery_task.id,
-                                    })
+                        if procedure_instance.procedure.scheme_type == 'transaction_import':
+                            complex_transaction_csv_file_import_by_procedure_json.apply_async(
+                                kwargs={'procedure_instance_id': procedure_instance.id,
+                                        'celery_task_id': celery_task.id,
+                                        })
+
+                        if procedure_instance.procedure.scheme_type == 'simple_import':
+                            data_csv_file_import_by_procedure_json.apply_async(
+                                kwargs={'procedure_instance_id': procedure_instance.id,
+                                        'celery_task_id': celery_task.id,
+                                        })
 
 
-                on_commit(run_tasks)
+                    on_commit(run_tasks)
 
 
             except Exception as e:
