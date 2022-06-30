@@ -383,18 +383,6 @@ class RequestDataFileProcedureInstance(BaseProcedureInstance):
 
 class ExpressionProcedure(BaseProcedure):
 
-    date_from = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price date from'))
-
-    date_from_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                      verbose_name=ugettext_lazy('price date from expr'))
-
-    date_to = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price date to'))
-
-    date_to_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('price date to expr'))
-
-    use_dates = models.BooleanField(default=False, verbose_name=ugettext_lazy('use_dates'))
-
     code = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('code'))
 
     json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
@@ -415,6 +403,17 @@ class ExpressionProcedure(BaseProcedure):
             self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
         else:
             self.json_data = None
+
+
+class ExpressionProcedureContextVariable(models.Model):
+    procedure = models.ForeignKey(ExpressionProcedure, on_delete=models.CASCADE,
+                                  related_name="context_variables",
+                                  verbose_name=ugettext_lazy('procedure'))
+    order = models.IntegerField(default=0, verbose_name=ugettext_lazy("order"))
+    name = models.CharField(max_length=255, choices=SCHEME_TYPE_CHOICES, default='name')
+    expression = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                  verbose_name=ugettext_lazy('expression'))
+    notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
 
 
 class ExpressionProcedureInstance(BaseProcedureInstance):

@@ -1541,24 +1541,32 @@ def _safe_get_instrument(evaluator, instrument):
 
 def _get_currency(evaluator, currency):
 
-    currency = _safe_get_currency(evaluator, currency)
+    try:
 
-    context = evaluator.context
+        currency = _safe_get_currency(evaluator, currency)
 
-    from poms.currencies.serializers import CurrencySerializer
-    return CurrencySerializer(instance=currency, context=context).data
+        context = evaluator.context
+
+        from poms.currencies.serializers import CurrencySerializer
+        return CurrencySerializer(instance=currency, context=context).data
+    except Exception as e:
+        return None
 
 _get_currency.evaluator = True
 
 
 def _get_instrument(evaluator, instrument):
 
-    instrument = _safe_get_instrument(evaluator, instrument)
+    try:
+        instrument = _safe_get_instrument(evaluator, instrument)
 
-    context = evaluator.context
+        context = evaluator.context
 
-    from poms.instruments.serializers import InstrumentSerializer
-    return InstrumentSerializer(instance=instrument, context=context).data
+        from poms.instruments.serializers import InstrumentSerializer
+        return InstrumentSerializer(instance=instrument, context=context).data
+
+    except Exception as e:
+        return None
 
 _get_instrument.evaluator = True
 
@@ -2201,10 +2209,12 @@ def _run_data_procedure(evaluator, user_code, **kwargs):
         master_user = get_master_user_from_context(context)
         member = get_member_from_context(context)
 
+        print('context %s' % context)
+
         procedure = RequestDataFileProcedure.objects.get(master_user=master_user, user_code=user_code)
 
 
-        instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, member=member, **kwargs)
+        instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, member=member, context=context, **kwargs)
         instance.process()
 
 

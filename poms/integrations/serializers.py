@@ -230,8 +230,6 @@ class InstrumentDownloadSchemeSerializer(ModelWithUserCodeSerializer, ModelWithT
 
     def save_inputs(self, instance, inputs):
 
-
-
         pk_set = set()
         for input_values in inputs:
             input_id = input_values.pop('id', None)

@@ -1,7 +1,8 @@
 from django.contrib import admin
 
 from poms.procedures.models import RequestDataFileProcedure, RequestDataFileProcedureInstance, PricingProcedure, \
-    PricingParentProcedureInstance, PricingProcedureInstance, ExpressionProcedureInstance, ExpressionProcedure
+    PricingParentProcedureInstance, PricingProcedureInstance, ExpressionProcedureInstance, ExpressionProcedure, \
+    ExpressionProcedureContextVariable
 
 
 class PricingProcedureAdmin(admin.ModelAdmin):
@@ -50,12 +51,16 @@ class RequestDataFileProcedureInstanceAdmin(admin.ModelAdmin):
 admin.site.register(RequestDataFileProcedureInstance, RequestDataFileProcedureInstanceAdmin)
 
 
+class ExpressionProcedureContextVariableInline(admin.TabularInline):
+    model = ExpressionProcedureContextVariable
+    fields = ['id', 'order', 'name', 'expression']
+
+
 class ExpressionProcedureAdmin(admin.ModelAdmin):
     model = ExpressionProcedure
-    list_display = ['id', 'master_user', 'name', 'user_code',
-                    'date_from', 'date_from_expr',
-                    'date_to', 'date_to_expr']
+    list_display = ['id', 'master_user', 'name', 'user_code']
     raw_id_fields = ['master_user']
+    inlines = [ExpressionProcedureContextVariableInline]
 
 
 admin.site.register(ExpressionProcedure, ExpressionProcedureAdmin)

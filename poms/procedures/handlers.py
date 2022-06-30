@@ -33,7 +33,7 @@ _l = logging.getLogger('poms.procedures')
 
 class RequestDataFileProcedureProcess(object):
 
-    def __init__(self, procedure=None, master_user=None, date_from=None, date_to=None, member=None, schedule_instance=None):
+    def __init__(self, procedure=None, master_user=None, date_from=None, date_to=None, member=None, schedule_instance=None, context=None):
 
         _l.debug('RequestDataFileProcedureProcess. Master user: %s. Procedure: %s' % (master_user, procedure))
 
@@ -42,6 +42,7 @@ class RequestDataFileProcedureProcess(object):
 
         self.member = member
         self.schedule_instance = schedule_instance
+        self.context = context
 
         self.execute_procedure_date_expressions()
 
@@ -108,6 +109,14 @@ class RequestDataFileProcedureProcess(object):
                     "error_status": 0,
                     "error_message": "",
                 }
+
+                if self.context:
+                    if 'names' in self.context:
+                        if "echo" in data['options']:
+                            for key, value in data['options']["echo"].items():
+
+                                if value in self.context['names']:
+                                    data['options']["echo"][key] = str(self.context['names'][value])
 
                 if self.procedure.date_from:
                     data["date_from"] = str(self.procedure.date_from)
@@ -422,34 +431,21 @@ class ExpressionProcedureProcess(object):
         self.member = member
         self.schedule_instance = schedule_instance
 
-        self.execute_procedure_date_expressions()
+        self.execute_context_variables_expressions()
 
         self.context = {'master_user': master_user, 'member': member}
 
-    def get_list_of_dates_between_two_dates(self, date_from, date_to):
-        result = []
+    def execute_context_variables_expressions(self):
 
-        diff = date_to - date_from
+        self.context_names = {}
 
-        for i in range(diff.days + 1):
-            day = date_from + timedelta(days=i)
-            result.append(day)
+        for item in self.procedure.context_variables:
 
-        return result
-
-    def execute_procedure_date_expressions(self):
-
-        if self.procedure.date_from_expr:
             try:
-                self.procedure.date_from = formula.safe_eval(self.procedure.date_from_expr, names={})
-            except formula.InvalidExpression as e:
-                _l.debug("Cant execute date from expression %s " % e)
+                self.context_names[item.name] = formula.safe_eval(self.procedure.code, names=self.context_names,  context=self.context)
 
-        if self.procedure.date_to_expr:
-            try:
-                self.procedure.date_to = formula.safe_eval(self.procedure.date_to_expr, names={})
-            except formula.InvalidExpression as e:
-                _l.debug("Cant execute date to expression %s " % e)
+            except Exception as e:
+                self.context_names[item.name] = 'Invalid Expression'
 
     def process(self):
 
@@ -475,8 +471,10 @@ class ExpressionProcedureProcess(object):
         if not names:
             names = {}
 
-        names['context_date_from'] = self.procedure.date_from
-        names['context_date_to'] = self.procedure.date_to
+        for key, value in self.context_names:
+            names[key] = value
+
+        self.context['names'] = names
 
         result = formula.safe_eval(self.procedure.code, names=names,  context=self.context)
 
