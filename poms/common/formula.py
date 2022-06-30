@@ -2166,16 +2166,18 @@ def _run_pricing_procedure(evaluator, user_code, **kwargs):
 
     try:
         from poms.users.utils import get_master_user_from_context
+        from poms.users.utils import get_member_from_context
         from poms.procedures.models import PricingProcedure
         from poms.pricing.handlers import PricingProcedureProcess
 
         context = evaluator.context
 
         master_user = get_master_user_from_context(context)
+        member = get_member_from_context(context)
 
         procedure = PricingProcedure.objects.get(master_user=master_user, user_code=user_code)
 
-        instance = PricingProcedureProcess(procedure=procedure, master_user=master_user, **kwargs)
+        instance = PricingProcedureProcess(procedure=procedure, master_user=master_user, member=member,**kwargs)
         instance.process()
 
 
@@ -2190,17 +2192,19 @@ def _run_data_procedure(evaluator, user_code, **kwargs):
 
     try:
         from poms.users.utils import get_master_user_from_context
+        from poms.users.utils import get_member_from_context
         from poms.procedures.models import RequestDataFileProcedure
         from poms.procedures.handlers import RequestDataFileProcedureProcess
 
         context = evaluator.context
 
         master_user = get_master_user_from_context(context)
+        member = get_member_from_context(context)
 
         procedure = RequestDataFileProcedure.objects.get(master_user=master_user, user_code=user_code)
 
 
-        instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, **kwargs)
+        instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, member=member, **kwargs)
         instance.process()
 
 
