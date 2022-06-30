@@ -493,11 +493,7 @@ class ExpressionProcedureProcess(object):
 
             if result:
 
-                # _l.info('result %s' % result)
-
-                if not procedure_instance.result:
-                    procedure_instance.result = ''
-                procedure_instance.result = procedure_instance.result + ' \n' + str(result)
+                procedure_instance.result = result
 
 
             send_system_message(master_user=self.master_user,
