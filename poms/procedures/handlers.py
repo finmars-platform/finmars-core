@@ -46,10 +46,10 @@ class RequestDataFileProcedureProcess(object):
         self.execute_procedure_date_expressions()
 
         if date_from:
-            self.procedure.price_date_from = date_from
+            self.procedure.date_from = date_from
         if date_to:
             _l.debug("Date To set from user Settings")
-            self.procedure.price_date_to = date_to
+            self.procedure.date_to = date_to
 
     def execute_procedure_date_expressions(self):
 
