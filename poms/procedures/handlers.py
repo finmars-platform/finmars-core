@@ -148,7 +148,7 @@ class RequestDataFileProcedureProcess(object):
 
                     file_report = FileReport()
 
-                    file_name = "universal Broker Response %s.json" % current_date_time
+                    file_name = "Universal Broker Response %s %s.json" % (procedure_instance.id, current_date_time)
 
                     file_content = ''
 
