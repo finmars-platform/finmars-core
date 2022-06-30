@@ -1,4 +1,5 @@
 import json
+import traceback
 from datetime import timedelta
 
 import requests
@@ -129,6 +130,7 @@ class RequestDataFileProcedureProcess(object):
 
                 _l.info('request universal url %s' % url)
                 # _l.info('request universal data %s' % data)
+                # _l.info('request universal self.context %s' % self.context)
 
                 procedure_instance.request_data = data
                 procedure_instance.save()
@@ -431,68 +433,85 @@ class ExpressionProcedureProcess(object):
         self.member = member
         self.schedule_instance = schedule_instance
 
+        self.context = {'master_user': master_user, 'member': member}
+
         self.execute_context_variables_expressions()
 
-        self.context = {'master_user': master_user, 'member': member}
 
     def execute_context_variables_expressions(self):
 
         self.context_names = {}
 
-        for item in self.procedure.context_variables:
+        _l.info('execute_context_variables_expressions %s ' % self.procedure.context_variables.all())
+
+        for item in self.procedure.context_variables.all():
+
+            _l.info("var %s" % item)
 
             try:
-                self.context_names[item.name] = formula.safe_eval(self.procedure.code, names=self.context_names,  context=self.context)
+                self.context_names[item.name] = formula.safe_eval(item.expression, names=self.context_names,  context=self.context)
 
             except Exception as e:
+                _l.info('execute_context_variables_expressions.e %s' % e)
                 self.context_names[item.name] = 'Invalid Expression'
+
+        _l.info('self.context_names %s' % self.context_names)
 
     def process(self):
 
-        procedure_instance = ExpressionProcedureInstance.objects.create(procedure=self.procedure,
-                                                                             master_user=self.master_user,
-                                                                             status=ExpressionProcedureInstance.STATUS_PENDING,
-                                                                             schedule_instance=self.schedule_instance,
-                                                                             action='execute_expression_procedure',
-                                                                             provider='finmars',
 
-                                                                             action_verbose='Execute Expression Procedure',
-                                                                             provider_verbose='Finmars'
+        try:
 
-                                                                             )
+            procedure_instance = ExpressionProcedureInstance.objects.create(procedure=self.procedure,
+                                                                                 master_user=self.master_user,
+                                                                                 status=ExpressionProcedureInstance.STATUS_PENDING,
+                                                                                 schedule_instance=self.schedule_instance,
+                                                                                 action='execute_expression_procedure',
+                                                                                 provider='finmars',
 
-        send_system_message(master_user=self.master_user,
-                            source="Expression Procedure Service",
-                            text="Procedure %s. Start" % procedure_instance.id,
-                            )
+                                                                                 action_verbose='Execute Expression Procedure',
+                                                                                 provider_verbose='Finmars'
 
-        names = self.procedure.data
+                                                                                 )
 
-        if not names:
-            names = {}
+            send_system_message(master_user=self.master_user,
+                                source="Expression Procedure Service",
+                                text="Procedure %s. Start" % procedure_instance.id,
+                                )
 
-        for key, value in self.context_names:
-            names[key] = value
+            names = self.procedure.data
 
-        self.context['names'] = names
+            if not names:
+                names = {}
 
-        result = formula.safe_eval(self.procedure.code, names=names,  context=self.context)
+            for key, value in self.context_names.items():
+                names[key] = value
 
-        if result:
+            self.context['names'] = names
 
-            # _l.info('result %s' % result)
+            _l.info('heeere context %s' % self.context)
 
-            if not procedure_instance.result:
-                procedure_instance.result = ''
-            procedure_instance.result = procedure_instance.result + ' \n' + str(result)
+            result = formula.safe_eval(self.procedure.code, names=names,  context=self.context)
 
+            if result:
 
-        send_system_message(master_user=self.master_user,
-                            source="Expression Procedure Service",
-                            text="Procedure %s. Done" % procedure_instance.id,
-                            )
+                # _l.info('result %s' % result)
 
-        procedure_instance.status = ExpressionProcedureInstance.STATUS_DONE
+                if not procedure_instance.result:
+                    procedure_instance.result = ''
+                procedure_instance.result = procedure_instance.result + ' \n' + str(result)
 
 
-        procedure_instance.save()
+            send_system_message(master_user=self.master_user,
+                                source="Expression Procedure Service",
+                                text="Procedure %s. Done" % procedure_instance.id,
+                                )
+
+            procedure_instance.status = ExpressionProcedureInstance.STATUS_DONE
+
+
+            procedure_instance.save()
+
+        except Exception as e:
+            _l.error("ExpressionProcedureProcess.process error %s" % e)
+            _l.error(traceback.print_exc())

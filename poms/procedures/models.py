@@ -410,11 +410,14 @@ class ExpressionProcedureContextVariable(models.Model):
                                   related_name="context_variables",
                                   verbose_name=ugettext_lazy('procedure'))
     order = models.IntegerField(default=0, verbose_name=ugettext_lazy("order"))
-    name = models.CharField(max_length=255, choices=SCHEME_TYPE_CHOICES, default='name')
+    name = models.CharField(max_length=255)
     expression = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                   verbose_name=ugettext_lazy('expression'))
     notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
 
+
+    def __str__(self):
+        return self.name or ''
 
 class ExpressionProcedureInstance(BaseProcedureInstance):
 

@@ -2209,7 +2209,7 @@ def _run_data_procedure(evaluator, user_code, **kwargs):
         master_user = get_master_user_from_context(context)
         member = get_member_from_context(context)
 
-        print('context %s' % context)
+        _l.info('_run_data_procedure.context %s' % context)
 
         procedure = RequestDataFileProcedure.objects.get(master_user=master_user, user_code=user_code)
 

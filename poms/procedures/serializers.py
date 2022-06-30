@@ -161,13 +161,13 @@ class RequestDataFileProcedureInstanceSerializer(serializers.ModelSerializer):
 
 class ExpressionProcedureContextVariableSerializer(serializers.ModelSerializer):
     class Meta:
-        model = ExpressionProcedureInstance
+        model = ExpressionProcedureContextVariable
         fields = ('id', 'order',
                   'name', 'expression', 'notes')
 
 
 class ExpressionProcedureSerializer(ModelWithTimeStampSerializer):
-    context_variables = ExpressionProcedureContextVariableSerializer(many=True, allow_null=True, required=False)
+    context_variables = ExpressionProcedureContextVariableSerializer(many=True, allow_null=True, required=False, read_only=False)
 
     master_user = MasterUserField()
     data = serializers.JSONField(allow_null=True, required=False)
@@ -187,6 +187,7 @@ class ExpressionProcedureSerializer(ModelWithTimeStampSerializer):
     def save_context_variables(self, instance, items):
 
         pk_set = set()
+
         for item_values in items:
             item_id = item_values.pop('id', None)
             item = None
@@ -201,6 +202,7 @@ class ExpressionProcedureSerializer(ModelWithTimeStampSerializer):
                 setattr(item, name, value)
             item.save()
             pk_set.add(item.id)
+
         instance.context_variables.exclude(pk__in=pk_set).delete()
 
     def create(self, validated_data):
