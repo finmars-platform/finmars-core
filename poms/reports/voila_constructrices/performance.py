@@ -85,8 +85,8 @@ class PerformanceReportBuilder:
 
         begin_date = self.instance.begin_date
 
-        if begin_date < first_transaction_date:
-            begin_date = first_transaction_date
+        # if begin_date < first_transaction_date:
+        #     begin_date = first_transaction_date
 
         _l.info('build_report.begin_date %s' % begin_date)
         _l.info('build_report.end_date %s' % end_date)
