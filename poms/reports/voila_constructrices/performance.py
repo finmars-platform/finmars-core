@@ -322,7 +322,12 @@ class PerformanceReportBuilder:
 
         result_obj = {}
 
-        begin_date = self.get_first_transaction()
+        begin_date = dates[0]
+
+        # try:
+        #     begin_date = self.get_first_transaction()
+        # except Exception as e:
+        #     begin_date = dates[0]
 
         for date in dates:
 
