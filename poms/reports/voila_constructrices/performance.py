@@ -81,7 +81,7 @@ class PerformanceReportBuilder:
             # end_date = timezone_today() - timedelta(days=1)
             end_date = timezone_today()
 
-        first_transaction_date = self.get_first_transaction()
+        # first_transaction_date = self.get_first_transaction()
 
         begin_date = self.instance.begin_date
 
