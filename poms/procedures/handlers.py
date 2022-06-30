@@ -479,7 +479,7 @@ class ExpressionProcedureProcess(object):
 
                 for date in dates:
 
-                    names['date'] = str(date)
+                    names['context_date'] = str(date)
 
                     result = formula.safe_eval(self.procedure.code, names=names,  context=self.context)
 
