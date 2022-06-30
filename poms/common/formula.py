@@ -1105,7 +1105,7 @@ def _get_fx_rate(evaluator, date, currency, pricing_policy, default_value=0):
 _get_fx_rate.evaluator = True
 
 
-def _add_fx_history(evaluator, date, currency, pricing_policy, fx_rate=0, overwrite=True):
+def _add_fx_rate(evaluator, date, currency, pricing_policy, fx_rate=0, overwrite=True):
     from poms.users.utils import get_master_user_from_context
     from poms.currencies.models import CurrencyHistory
 
@@ -2586,7 +2586,7 @@ FUNCTIONS = [
     SimpleEval2Def('get_accrued_price', _get_price_history_accrued_price),
     SimpleEval2Def('get_next_coupon_date', _get_next_coupon_date),
     SimpleEval2Def('get_factor', _get_factor_schedule),
-    SimpleEval2Def('add_fx_history', _add_fx_history),
+    SimpleEval2Def('add_fx_rate', _add_fx_rate),
     SimpleEval2Def('add_price_history', _add_price_history),
     SimpleEval2Def('generate_user_code', _generate_user_code),
     SimpleEval2Def('get_latest_principal_price', _get_latest_principal_price),
