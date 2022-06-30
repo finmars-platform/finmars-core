@@ -1215,6 +1215,39 @@ def _get_latest_principal_price(evaluator, date_from, date_to, instrument, prici
 _get_latest_principal_price.evaluator = True
 
 
+def _get_latest_fx_rate(evaluator, date_from, date_to, currency, pricing_policy, default_value=None):
+    try:
+        from poms.users.utils import get_master_user_from_context
+        from poms.currencies.models import CurrencyHistory
+
+        context = evaluator.context
+        master_user = get_master_user_from_context(context)
+
+        date_from = _parse_date(date_from)
+        date_to = _parse_date(date_to)
+        currency = _safe_get_currency(evaluator, currency)
+        pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
+
+        _l.info("_get_latest_fx_rate instrument %s " % currency)
+        _l.info("_get_latest_fx_rate  pricing_policy %s " % pricing_policy)
+
+        results = CurrencyHistory.objects.filter(date__gte=date_from, date__lte=date_to, currency=currency,
+                                              pricing_policy=pricing_policy).order_by('-date')
+
+        _l.info("_get_latest_fx_rate results %s " % results)
+
+        if len(list(results)):
+            return results[0].fx_rate
+
+        return default_value
+    except Exception as e:
+        _l.info("_get_latest_fx_rate exception %s " % e)
+        return default_value
+
+
+_get_latest_fx_rate.evaluator = True
+
+
 def _get_price_history_principal_price(evaluator, date, instrument, pricing_policy, default_value=0):
     from poms.users.utils import get_master_user_from_context
     from poms.instruments.models import PriceHistory, Instrument, PricingPolicy
@@ -2557,6 +2590,7 @@ FUNCTIONS = [
     SimpleEval2Def('add_price_history', _add_price_history),
     SimpleEval2Def('generate_user_code', _generate_user_code),
     SimpleEval2Def('get_latest_principal_price', _get_latest_principal_price),
+    SimpleEval2Def('get_latest_fx_rate', _get_latest_fx_rate),
 
     SimpleEval2Def('get_instrument_user_attribute_value', _get_instrument_user_attribute_value),
 
