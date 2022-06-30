@@ -178,14 +178,17 @@ def generate_file_report(instance, master_user, scheme, type, name, procedure_in
     current_date_time = now().strftime("%Y-%m-%d-%H-%M")
 
     file_name = 'file_report_%s.csv' % current_date_time
+    name = "%s %s" % (name, current_date_time)
 
     file_report = FileReport()
 
-    name = "%s %s" % (name, current_date_time)
 
     if procedure_instance:
-        file_name = file_name + '_procedure_instance_' + str(procedure_instance.id)
-        name = name + ' Procedure Instance ' + str(procedure_instance.id)
+        file_name = 'file_report_%s_procedure_instance_%s.csv' % (current_date_time, str(procedure_instance.id))
+        name = "%s %s Procedure Instance %s" % (name, current_date_time, str(procedure_instance.id))
+    else:
+        file_name = 'file_report_%s.csv' % current_date_time
+        name = "%s %s" % (name, current_date_time)
 
     file_report.upload_file(file_name=file_name, text=result, master_user=master_user)
     file_report.master_user = master_user
