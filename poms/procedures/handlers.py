@@ -33,7 +33,7 @@ _l = logging.getLogger('poms.procedures')
 
 class RequestDataFileProcedureProcess(object):
 
-    def __init__(self, procedure=None, master_user=None, member=None, schedule_instance=None):
+    def __init__(self, procedure=None, master_user=None, date_from=None, date_to=None, member=None, schedule_instance=None):
 
         _l.debug('RequestDataFileProcedureProcess. Master user: %s. Procedure: %s' % (master_user, procedure))
 
@@ -44,6 +44,12 @@ class RequestDataFileProcedureProcess(object):
         self.schedule_instance = schedule_instance
 
         self.execute_procedure_date_expressions()
+
+        if date_from:
+            self.procedure.price_date_from = date_from
+        if date_to:
+            _l.debug("Date To set from user Settings")
+            self.procedure.price_date_to = date_to
 
     def execute_procedure_date_expressions(self):
 
