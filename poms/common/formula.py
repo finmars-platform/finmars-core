@@ -2483,6 +2483,9 @@ FUNCTIONS = [
 
     SimpleEval2Def('simple_price', _simple_price),
 
+    SimpleEval2Def('get_instrument', _safe_get_instrument),
+    SimpleEval2Def('get_currency', _safe_get_currency),
+
     SimpleEval2Def('get_currency_field', _get_currency_field),
     SimpleEval2Def('set_currency_field', _set_currency_field),
 
