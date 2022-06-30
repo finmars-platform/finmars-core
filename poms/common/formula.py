@@ -1479,6 +1479,8 @@ def _safe_get_currency(evaluator, currency):
     return currency
 
 
+_safe_get_currency.evaluator = True
+
 def _safe_get_instrument(evaluator, instrument):
     from poms.users.utils import get_master_user_from_context, get_member_from_context
     from poms.instruments.models import Instrument
@@ -1537,6 +1539,9 @@ def _safe_get_instrument(evaluator, instrument):
         context[('_instrument_get_accrued_price', None, instrument.user_code)] = instrument
 
     return instrument
+
+
+_safe_get_instrument.evaluator = True
 
 
 def _set_instrument_field(evaluator, instrument, parameter_name, parameter_value):
