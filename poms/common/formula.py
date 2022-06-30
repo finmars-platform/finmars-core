@@ -956,7 +956,7 @@ def _get_instruments(evaluator, **kwargs):
 
         master_user = get_master_user_from_context(context)
 
-        items = Instrument.objects.filter(master_user=master_user, **kwargs)
+        items = Instrument.objects.filter(master_user=master_user, is_deleted=False, **kwargs)
         result = []
 
         for item in items:
@@ -981,7 +981,7 @@ def _get_currencies(evaluator, **kwargs):
 
         master_user = get_master_user_from_context(context)
 
-        items = Currency.objects.filter(master_user=master_user, **kwargs)
+        items = Currency.objects.filter(master_user=master_user, is_deleted=False, **kwargs)
 
         result = []
 
