@@ -83,7 +83,7 @@ class ProxyRequest(object):
         self.user = user
 
 
-def generate_file_report(instance, master_user, scheme, type, name):
+def generate_file_report(instance, master_user, scheme, type, name, procedure_instance):
     columns = ['Row number']
 
     columns = columns + instance.stats[0]['error_data']['columns']['imported_columns']
@@ -181,9 +181,15 @@ def generate_file_report(instance, master_user, scheme, type, name):
 
     file_report = FileReport()
 
+    name = "%s %s" % (name, current_date_time)
+
+    if procedure_instance:
+        file_name = file_name + '_procedure_instance_' + str(procedure_instance.id)
+        name = name + ' Procedure Instance ' + str(procedure_instance.id)
+
     file_report.upload_file(file_name=file_name, text=result, master_user=master_user)
     file_report.master_user = master_user
-    file_report.name = "%s %s" % (name, current_date_time)
+    file_report.name = name
     file_report.file_name = file_name
     file_report.type = type
     file_report.notes = 'System File'
@@ -1740,7 +1746,7 @@ class ImportHandler:
                 SFS.delete(instance.file_path)
 
         if instance.stats and len(instance.stats):
-            instance.stats_file_report = generate_file_report(instance, master_user, scheme, 'csv_import.import', 'Simple Data Import')
+            instance.stats_file_report = generate_file_report(instance, master_user, scheme, 'csv_import.import', 'Simple Data Import', procedure_instance)
 
             send_websocket_message(data={
                 'type': 'simple_import_status',
@@ -1972,7 +1978,8 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
             celery_task.options_object = options_object
             celery_task.save()
 
-            text = "Data File Procedure %s. File is received. Importing JSON" % (
+            text = "Data File Procedure %s. Procedure Instance %s. File is received. Importing JSON" % (
+                procedure_instance.id,
                 procedure_instance.procedure.user_code)
 
             send_system_message(master_user=procedure_instance.master_user,
