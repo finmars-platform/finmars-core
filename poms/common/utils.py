@@ -1,10 +1,13 @@
 import math
 from collections import OrderedDict
+import datetime
+
 from datetime import timedelta
 
 from django.contrib.contenttypes.models import ContentType
 from django.views.generic.dates import timezone_today
 from django.utils.timezone import now
+
 
 import copy
 
@@ -244,7 +247,15 @@ def get_content_type_by_name(name):
 
 
 def get_list_of_dates_between_two_dates(date_from, date_to):
+
     result = []
+    format = '%Y-%m-%d'
+
+    if not isinstance(date_from, datetime.date):
+        date_from = datetime.datetime.strptime(date_from, format).date()
+
+    if not isinstance(date_to, datetime.date):
+        date_to = datetime.datetime.strptime(date_to, format).date()
 
     diff = date_to - date_from
 
