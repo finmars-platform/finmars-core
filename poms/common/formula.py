@@ -1139,7 +1139,7 @@ def _add_fx_rate(evaluator, date, currency, pricing_policy, fx_rate=0, overwrite
     return True
 
 
-_add_fx_history.evaluator = True
+_add_fx_rate.evaluator = True
 
 
 def _add_price_history(evaluator, date, instrument, pricing_policy, principal_price=0, accrued_price=0, overwrite=True):
