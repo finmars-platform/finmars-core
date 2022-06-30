@@ -1479,8 +1479,6 @@ def _safe_get_currency(evaluator, currency):
     return currency
 
 
-_safe_get_currency.evaluator = True
-
 def _safe_get_instrument(evaluator, instrument):
     from poms.users.utils import get_master_user_from_context, get_member_from_context
     from poms.instruments.models import Instrument
@@ -1541,7 +1539,28 @@ def _safe_get_instrument(evaluator, instrument):
     return instrument
 
 
-_safe_get_instrument.evaluator = True
+def _get_currency(evaluator, currency):
+
+    currency = _safe_get_currency(evaluator, currency)
+
+    context = evaluator.context
+
+    from poms.currencies.serializers import CurrencySerializer
+    return CurrencySerializer(instance=currency, context=context).data
+
+_get_currency.evaluator = True
+
+
+def _get_instrument(evaluator, instrument):
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    context = evaluator.context
+
+    from poms.instruments.serializers import InstrumentSerializer
+    return InstrumentSerializer(instance=instrument, context=context).data
+
+_get_instrument.evaluator = True
 
 
 def _set_instrument_field(evaluator, instrument, parameter_name, parameter_value):
@@ -2488,8 +2507,8 @@ FUNCTIONS = [
 
     SimpleEval2Def('simple_price', _simple_price),
 
-    SimpleEval2Def('get_instrument', _safe_get_instrument),
-    SimpleEval2Def('get_currency', _safe_get_currency),
+    SimpleEval2Def('get_instrument', _get_instrument),
+    SimpleEval2Def('get_currency', _get_currency),
 
     SimpleEval2Def('get_currency_field', _get_currency_field),
     SimpleEval2Def('set_currency_field', _set_currency_field),
