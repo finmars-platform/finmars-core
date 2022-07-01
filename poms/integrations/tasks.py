@@ -2369,7 +2369,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
             for i in scheme_calculated_inputs:
 
                 try:
-                    value = formula.safe_eval(i.name_expr, names=inputs)
+                    value = formula.safe_eval(i.name_expr, names=inputs, context={"master_user": master_user, "member": member})
                     inputs[i.name] = value
 
                 except Exception:
@@ -2392,7 +2392,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
             fields_error = []
             for field in rule.fields.all():
                 try:
-                    field_value = formula.safe_eval(field.value_expr, names=inputs)
+                    field_value = formula.safe_eval(field.value_expr, names=inputs, context={"master_user": master_user, "member": member})
                     field_value = _convert_value(field, field_value, error_rows)
                     fields[field.transaction_type_input.name] = field_value
 
