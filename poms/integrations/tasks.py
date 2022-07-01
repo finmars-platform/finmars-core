@@ -2675,7 +2675,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                         i.name + ': Conversion Expression ' + '(' + i.name_expr + ')')
 
                     try:
-                        inputs[i.name] = formula.safe_eval(i.name_expr, names=inputs_raw)
+                        inputs[i.name] = formula.safe_eval(i.name_expr, names=inputs_raw, context={"master_user": master_user, "member": member})
                         error_rows['error_data']['data']['converted_imported_columns'].append(inputs_raw[i.name])
                     except Exception:
                         _l.debug('can\'t process conversion input: %s|%s', i.name, i.column, exc_info=True)
@@ -2730,7 +2730,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                 # _l.debug('Row %s inputs_with_calculated: %s' % (row_index, inputs))
 
                 try:
-                    rule_value = formula.safe_eval(scheme.rule_expr, names=inputs)
+                    rule_value = formula.safe_eval(scheme.rule_expr, names=inputs, context={"master_user": master_user, "member": member})
                 except Exception:
 
                     error_rows['level'] = 'error'
