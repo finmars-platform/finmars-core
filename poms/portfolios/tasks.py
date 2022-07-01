@@ -355,4 +355,5 @@ def calculate_portfolio_register_price_history(master_users=None):
 
     except Exception as e:
 
-        _l.error(traceback.format_exc())
+        _l.error("calculate_portfolio_register_price_history.exception %s" % e)
+        _l.error("calculate_portfolio_register_price_history.exception %s" % traceback.format_exc())
