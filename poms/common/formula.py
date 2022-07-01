@@ -1198,7 +1198,7 @@ def _get_latest_principal_price(evaluator, date_from, date_to, instrument, prici
         _l.info("_get_latest_principal_price instrument %s " % instrument)
         _l.info("_get_latest_principal_price  pricing_policy %s " % pricing_policy)
 
-        results = PriceHistory.objects.filter(date__gte=date_from, date__lte=date_to, instrument=instrument,
+        results = PriceHistory.objects.exclude(principal_price=0).filter(date__gte=date_from, date__lte=date_to, instrument=instrument,
                                               pricing_policy=pricing_policy).order_by('-date')
 
         _l.info("_get_latest_principal_price results %s " % results)
