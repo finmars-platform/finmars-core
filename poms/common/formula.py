@@ -1163,7 +1163,7 @@ def _add_price_history(evaluator, date, instrument, pricing_policy, principal_pr
             if principal_price is not None:
                 result.principal_price = principal_price
 
-            if principal_price is not None:
+            if accrued_price is not None:
                 result.accrued_price = accrued_price
 
             result.save()
