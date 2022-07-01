@@ -1160,8 +1160,11 @@ def _add_price_history(evaluator, date, instrument, pricing_policy, principal_pr
                                           pricing_policy=pricing_policy)
 
         if overwrite:
-            result.principal_price = principal_price
-            result.accrued_price = accrued_price
+            if principal_price is not None:
+                result.principal_price = principal_price
+
+            if principal_price is not None:
+                result.accrued_price = accrued_price
 
             result.save()
 
@@ -1757,7 +1760,7 @@ def _get_instrument_user_attribute_value(evaluator, instrument, attribute_user_c
 _get_instrument_user_attribute_value.evaluator = True
 
 
-def _get_instrument_accrued_price(evaluator, instrument, date):
+def _calculate_accrued_price(evaluator, instrument, date):
     if instrument is None or date is None:
         return 0.0
     instrument = _safe_get_instrument(evaluator, instrument)
@@ -1766,7 +1769,7 @@ def _get_instrument_accrued_price(evaluator, instrument, date):
     return _check_float(val)
 
 
-_get_instrument_accrued_price.evaluator = True
+_calculate_accrued_price.evaluator = True
 
 
 def _get_instrument_accrual_size(evaluator, instrument, date):
@@ -2576,7 +2579,7 @@ FUNCTIONS = [
 
     SimpleEval2Def('get_instrument_accrual_size', _get_instrument_accrual_size),
     SimpleEval2Def('get_instrument_accrual_factor', _get_instrument_accrual_factor),
-    SimpleEval2Def('get_instrument_accrued_price', _get_instrument_accrued_price),
+    SimpleEval2Def('calculate_accrued_price', _calculate_accrued_price),
     SimpleEval2Def('get_instrument_factor', _get_instrument_factor),
     SimpleEval2Def('get_instrument_coupon_factor', _get_instrument_coupon_factor),
     SimpleEval2Def('get_instrument_coupon', _get_instrument_coupon),
