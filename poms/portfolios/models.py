@@ -30,8 +30,6 @@ class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
     transaction_types = models.ManyToManyField('transactions.TransactionType', related_name='portfolios', blank=True,
                                                verbose_name=ugettext_lazy('transaction types'))
 
-    default_price = models.FloatField(default=100.0, verbose_name=ugettext_lazy('default price'))
-
     attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
     tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
@@ -68,6 +66,7 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
     attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
+    default_price = models.FloatField(default=1.0, verbose_name=ugettext_lazy('default price'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = ugettext_lazy('portfolio register')

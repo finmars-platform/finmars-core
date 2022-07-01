@@ -32,7 +32,6 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
             'is_deleted', 'accounts', 'responsibles', 'counterparties', 'transaction_types',
             'is_enabled',
 
-            'default_price'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -102,6 +101,7 @@ class PortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWith
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes',
             'is_deleted',  'is_enabled', 'portfolio', 'linked_instrument', 'valuation_pricing_policy', 'valuation_currency',
             'valuation_currency_object', 'portfolio_object', 'linked_instrument_object', 'valuation_pricing_policy_object',
+            'default_price'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -133,6 +133,7 @@ class PortfolioRegisterEvSerializer(ModelWithObjectPermissionSerializer, ModelWi
             'portfolio', 'linked_instrument', 'valuation_pricing_policy', 'valuation_currency',
 
             'valuation_currency_object', 'portfolio_object', 'linked_instrument_object', 'valuation_pricing_policy_object',
+            'default_price'
 
         ]
 
