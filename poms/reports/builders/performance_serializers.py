@@ -95,7 +95,7 @@ class PerformanceReportSerializer(serializers.Serializer):
     registers = RegisterField(many=True, required=False, allow_null=True, allow_empty=True)
     # periods = ExpressionField(required=False, allow_blank=True, allow_null=True, default='',
     #                           initial='date_group(transaction.accounting_date, [[None,None,timedelta(months=1),["[","%Y-%m-%d","/","","%Y-%m-%d","]"]]], "Err")')
-    # report_currency = CurrencyField(required=False, allow_null=True, default=SystemCurrencyDefault())
+    report_currency = CurrencyField(required=False, allow_null=True, default=SystemCurrencyDefault())
     # pricing_policy = PricingPolicyField()
 
     # portfolio_mode = serializers.ChoiceField(default=PerformanceReport.MODE_INDEPENDENT,
