@@ -343,7 +343,8 @@ def calculate_portfolio_register_price_history(master_users=None):
                         cash_flow = calculate_cash_flow(master_user, date, pricing_policy, portfolio_register)
 
 
-                        principal_price = nav / (registry_record.n_shares_previous_day + registry_record.n_shares_added)
+                        # principal_price = nav / (registry_record.n_shares_previous_day + registry_record.n_shares_added)
+                        principal_price = nav / registry_record.rolling_shares_of_the_day
 
 
                         price_history.nav = nav
