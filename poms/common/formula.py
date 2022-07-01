@@ -2234,6 +2234,8 @@ _run_pricing_procedure.evaluator = True
 
 def _run_data_procedure(evaluator, user_code, user_context=None, **kwargs):
 
+    _l.info('_run_data_procedure')
+
     try:
         from poms.users.utils import get_master_user_from_context
         from poms.users.utils import get_member_from_context

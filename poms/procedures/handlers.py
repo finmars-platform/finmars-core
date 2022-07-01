@@ -444,11 +444,9 @@ class ExpressionProcedureProcess(object):
 
         self.context_names = {}
 
-        _l.info('execute_context_variables_expressions %s ' % self.procedure.context_variables.all())
+        _l.info('ExpressionProcedureProcess.execute_context_variables_expressions %s ' % self.procedure.context_variables.all())
 
         for item in self.procedure.context_variables.all():
-
-            _l.info("var %s" % item)
 
             try:
                 self.context_names[item.name] = formula.safe_eval(item.expression, names=self.context_names,  context=self.context)
@@ -491,7 +489,12 @@ class ExpressionProcedureProcess(object):
 
             self.context['names'] = names
 
+            _l.info('ExpressionProcedureProcess.names %s' % names)
+            _l.info('ExpressionProcedureProcess.context %s' % self.context)
+
             result = formula.safe_eval(self.procedure.code, names=names,  context=self.context)
+
+            _l.debug('ExpressionProcedureProcess.result %s' % result)
 
             if result:
 
