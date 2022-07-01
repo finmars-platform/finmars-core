@@ -319,7 +319,7 @@ def calculate_portfolio_register_price_history(master_users=None):
                     for date in dates:
 
                         price_history = None
-                        registry_record = PortfolioRegisterRecord.objects.filter(instrument=portfolio_register.linked_instrument, transaction_date__lte=date).order_by('-transaction_date')[0]
+                        registry_record = PortfolioRegisterRecord.objects.filter(instrument=portfolio_register.linked_instrument, transaction_date__lte=date).order_by('-transaction_date', '-transaction_code')[0]
 
                         try:
 
