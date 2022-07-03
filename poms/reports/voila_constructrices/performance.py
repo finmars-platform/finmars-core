@@ -573,7 +573,7 @@ class PerformanceReportBuilder:
                                                                                           pricing_policy=item[
                                                                                               'portfolio_register'].valuation_pricing_policy).fx_rate
 
-                        fx_rate = report_currency_fx_rate / instrument_pricing_currency_fx_rate
+                        fx_rate = instrument_pricing_currency_fx_rate / report_currency_fx_rate
 
                     nav = price_history.nav * fx_rate
 
@@ -611,7 +611,7 @@ class PerformanceReportBuilder:
                                                                                         pricing_policy=record.portfolio_register.valuation_pricing_policy,
                                                                                         currency=record.valuation_currency).fx_rate
 
-                        fx_rate = report_currency_fx_rate / record_valuation_currency_fx_rate
+                        fx_rate = record_valuation_currency_fx_rate / report_currency_fx_rate
 
                     # report / valuation
 
@@ -769,7 +769,7 @@ class PerformanceReportBuilder:
                                                                                       pricing_policy=portfolio_registers_map[
                                                                                           portfolio_id].valuation_pricing_policy).fx_rate
 
-                    fx_rate = report_currency_fx_rate / instrument_pricing_currency_fx_rate
+                    fx_rate = instrument_pricing_currency_fx_rate / report_currency_fx_rate
 
                 nav = price_history.nav * fx_rate
             except Exception as e:
@@ -865,7 +865,7 @@ class PerformanceReportBuilder:
                                                                                       currency=portfolio_registers_map[
                                                                                           portfolio_id].linked_instrument.pricing_currency).fx_rate
 
-                    fx_rate = report_currency_fx_rate / instrument_pricing_currency_fx_rate
+                    fx_rate = instrument_pricing_currency_fx_rate / report_currency_fx_rate
 
                 nav = price_history.nav * fx_rate
 
@@ -937,7 +937,7 @@ class PerformanceReportBuilder:
                                                                                               pricing_policy=item[
                                                                                                   'portfolio_register'].valuation_pricing_policy).fx_rate
 
-                            fx_rate = report_currency_fx_rate / instrument_pricing_currency_fx_rate
+                            fx_rate = instrument_pricing_currency_fx_rate / report_currency_fx_rate
 
 
                         nav = price_history.nav * fx_rate
@@ -967,7 +967,7 @@ class PerformanceReportBuilder:
                                 pricing_policy=record.portfolio_register.valuation_pricing_policy,
                                 date=record.transaction_date, currency=record.valuation_currency).fx_rate
 
-                            fx_rate = report_currency_fx_rate / record_valuation_currency_fx_rate
+                            fx_rate = record_valuation_currency_fx_rate / report_currency_fx_rate
 
                         cash_flow = cash_flow + record.cash_amount_valuation_currency * fx_rate
 
