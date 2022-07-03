@@ -775,13 +775,13 @@ class PerformanceReportBuilder:
                                                                               pricing_policy=portfolio_registers_map[
                                                                                   portfolio_id].valuation_pricing_policy).fx_rate
                     if portfolio_registers_map[
-                        portfolio_id].linked_instrument.pricing_currency.pricing_currency.id == self.ecosystem_defaults.currency.id:
+                        portfolio_id].linked_instrument.pricing_currency.id == self.ecosystem_defaults.currency.id:
                         instrument_pricing_currency_fx_rate = 1
                     else:
                         instrument_pricing_currency_fx_rate = CurrencyHistory.objects.get(date=date_from,
                                                                                           currency=
                                                                                           portfolio_registers_map[
-                                                                                              portfolio_id].linked_instrument.pricing_currency.pricing_currency,
+                                                                                              portfolio_id].linked_instrument.pricing_currency,
                                                                                           pricing_policy=
                                                                                           portfolio_registers_map[
                                                                                               portfolio_id].valuation_pricing_policy).fx_rate
