@@ -362,6 +362,8 @@ def create_instrument_cbond(data, master_user, member):
         object_data = handler_instrument_object(instrument_data, instrument_type, master_user, ecosystem_defaults,
                                                 attribute_types)
 
+        object_data['short_name'] = object_data['name'] + ' (' + object_data['user_code'] + ')'
+
         try:
 
             instance = Instrument.objects.get(master_user=master_user, user_code=object_data['user_code'])
@@ -566,6 +568,7 @@ def download_instrument_cbond(instrument_code=None, instrument_name=None, instru
                     master_user=master_user,
                     user_code=instrument_code,
                     name=instrument_name,
+                    short_name=instrument_name + ' (' + instrument_code + ')',
                     instrument_type=ecosystem_defaults.instrument_type,
                     accrued_currency=ecosystem_defaults.currency,
                     pricing_currency=ecosystem_defaults.currency,

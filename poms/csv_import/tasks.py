@@ -2310,34 +2310,40 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
 
         lower_user_code = attribute_type.user_code.lower()
 
-        if lower_user_code in source_data:
+        if 'attributes' in source_data:
 
-            attribute = {
-                'attribute_type': attribute_type.id,
-            }
+            for key, value in source_data['attributes'].items():
 
-            if attribute_type.value_type == 10:
-                attribute['value_string'] = source_data[lower_user_code]
+                _l_key = key.lower()
 
-            if attribute_type.value_type == 20:
-                attribute['value_float'] = source_data[lower_user_code]
+                if _l_key == lower_user_code:
 
-            if attribute_type.value_type == 30:
+                    attribute = {
+                        'attribute_type': attribute_type.id,
+                    }
 
-                try:
+                    if attribute_type.value_type == 10:
+                        attribute['value_string'] = value
 
-                    classifier = GenericClassifier.objects.get(attribute_type=attribute_type,
-                                                               name=source_data[lower_user_code])
+                    if attribute_type.value_type == 20:
+                        attribute['value_float'] = value
 
-                    attribute['classifier'] = classifier.id
+                    if attribute_type.value_type == 30:
 
-                except Exception as e:
-                    attribute['classifier'] = None
+                        try:
 
-            if attribute_type.value_type == 40:
-                attribute['value_date'] = source_data[lower_user_code]
+                            classifier = GenericClassifier.objects.get(attribute_type=attribute_type,
+                                                                       name=value)
 
-            _tmp_attributes_dict[attribute['attribute_type']] = attribute
+                            attribute['classifier'] = classifier.id
+
+                        except Exception as e:
+                            attribute['classifier'] = None
+
+                    if attribute_type.value_type == 40:
+                        attribute['value_date'] = value
+
+                    _tmp_attributes_dict[attribute['attribute_type']] = attribute
 
     object_data['attributes'] = []
 
