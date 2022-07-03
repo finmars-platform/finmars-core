@@ -2306,11 +2306,11 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     for item in object_data['attributes']:
         _tmp_attributes_dict[item['attribute_type']] = item
 
-    for attribute_type in attribute_types:
+    if 'attributes' in source_data:
 
-        lower_user_code = attribute_type.user_code.lower()
+        for attribute_type in attribute_types:
 
-        if 'attributes' in source_data:
+            lower_user_code = attribute_type.user_code.lower()
 
             for key, value in source_data['attributes'].items():
 
@@ -2350,7 +2350,7 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     for key, value in _tmp_attributes_dict.items():
         object_data['attributes'].append(value)
 
-    _l.info("Settings attributes for instrument done")
+    _l.info("Settings attributes for instrument done %s " % object_data)
 
     object_data['master_user'] = master_user.id
     object_data['manual_pricing_formulas'] = []
