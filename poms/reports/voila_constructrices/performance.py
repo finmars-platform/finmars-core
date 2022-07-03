@@ -152,6 +152,8 @@ class PerformanceReportBuilder:
             item['end_nav'] = period['end_nav']
 
             item['cash_flow'] = period['total_cash_flow']
+            item['cash_inflow'] = period['total_cash_inflow']
+            item['cash_outflow'] = period['total_cash_outflow']
             item['nav'] = period['total_nav']
             item['instrument_return'] = period['total_return']
             if 'cumulative_return' in period:
