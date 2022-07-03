@@ -448,6 +448,8 @@ class PerformanceReportInstance(DataTimeStampedModel, NamedModel):
     end_nav = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('end nav'))
     grand_return = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('grand return'))
     grand_cash_flow = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('grand cash flow'))
+    grand_cash_inflow = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('grand cash inflow'))
+    grand_cash_outflow = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('grand cash outflow'))
     grand_nav = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('grand nav'))
 
 
@@ -483,6 +485,8 @@ class PerformanceReportInstanceItem(models.Model):
     begin_nav = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('begin nav'))
     end_nav = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('end nav'))
     cash_flow = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('cash flow'))
+    cash_inflow = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('cash inflow'))
+    cash_outflow = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('cash outflow'))
     nav = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('nav'))
     instrument_return = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('instrument return'))
     cumulative_return = models.FloatField(default=0.0, null=True, blank=True, verbose_name=ugettext_lazy('cumulative return'))

@@ -234,6 +234,8 @@ class PerformanceReportSerializer(serializers.Serializer):
             report_instance.end_nav = instance.end_nav
             report_instance.grand_return = instance.grand_return
             report_instance.grand_cash_flow = instance.grand_cash_flow
+            report_instance.grand_cash_inflow = instance.grand_cash_inflow
+            report_instance.grand_cash_outflow = instance.grand_cash_outflow
             report_instance.grand_nav = instance.grand_nav
 
             report_instance.report_uuid = report_uuid
