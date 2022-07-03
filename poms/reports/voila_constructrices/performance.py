@@ -11,6 +11,7 @@ from django.views.generic.dates import timezone_today
 from rest_framework.exceptions import APIException
 
 from poms.accounts.models import Account
+from poms.common.utils import get_list_of_dates_between_two_dates
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import Instrument, InstrumentType, LongUnderlyingExposure, ShortUnderlyingExposure, \
     ExposureCalculationModel, PriceHistory
@@ -171,6 +172,8 @@ class PerformanceReportBuilder:
         grand_return = 1
 
         grand_cash_flow = 0
+        grand_cash_inflow = 0
+        grand_cash_outflow = 0
         grand_nav = 0
         begin_nav = 0
         end_nav = 0
@@ -178,6 +181,8 @@ class PerformanceReportBuilder:
         for period in self.instance.periods:
             grand_return = grand_return * (period['total_return'] + 1)
             grand_cash_flow = grand_cash_flow + period['total_cash_flow']
+            grand_cash_inflow = grand_cash_inflow + period['total_cash_inflow']
+            grand_cash_outflow = grand_cash_outflow + period['total_cash_outflow']
 
         grand_return = grand_return - 1
 
@@ -187,6 +192,8 @@ class PerformanceReportBuilder:
 
         self.instance.grand_return = grand_return
         self.instance.grand_cash_flow = grand_cash_flow
+        self.instance.grand_cash_inflow = grand_cash_inflow
+        self.instance.grand_cash_outflow = grand_cash_outflow
         self.instance.grand_nav = grand_nav
         self.instance.begin_nav = begin_nav
         self.instance.end_nav = end_nav
@@ -196,6 +203,8 @@ class PerformanceReportBuilder:
         grand_return = 1
 
         grand_cash_flow = 0
+        grand_cash_inflow = 0
+        grand_cash_outflow = 0
         grand_nav = 0
         begin_nav = 0
         end_nav = 0
@@ -203,6 +212,8 @@ class PerformanceReportBuilder:
         for period in self.instance.periods:
             grand_return = grand_return * (period['total_return'] + 1)
             grand_cash_flow = grand_cash_flow + period['total_cash_flow']
+            grand_cash_inflow = grand_cash_inflow + period['total_cash_inflow']
+            grand_cash_outflow = grand_cash_outflow + period['total_cash_outflow']
 
         grand_return = grand_return - 1
 
@@ -212,6 +223,8 @@ class PerformanceReportBuilder:
 
         self.instance.grand_return = grand_return
         self.instance.grand_cash_flow = grand_cash_flow
+        self.instance.grand_cash_inflow = grand_cash_inflow
+        self.instance.grand_cash_outflow = grand_cash_outflow
         self.instance.grand_nav = grand_nav
         self.instance.begin_nav = begin_nav
         self.instance.end_nav = end_nav
@@ -220,11 +233,15 @@ class PerformanceReportBuilder:
 
         total_nav = 0
         total_cash_flow = 0
+        total_cash_inflow = 0
+        total_cash_outflow = 0
         total_return = 1
 
         for item in period['items']:
             total_nav = item['subtotal_nav']
             total_cash_flow = total_cash_flow + item['subtotal_cash_flow']
+            total_cash_inflow = total_cash_inflow + item['subtotal_cash_inflow']
+            total_cash_outflow = total_cash_outflow + item['subtotal_cash_outflow']
 
             total_return = total_return * (item['subtotal_return'] + 1)
 
@@ -234,6 +251,8 @@ class PerformanceReportBuilder:
         period['end_nav'] = period['items'][-1]['subtotal_nav']
 
         period['total_cash_flow'] = total_cash_flow
+        period['total_cash_inflow'] = total_cash_inflow
+        period['total_cash_outflow'] = total_cash_outflow
         period['total_nav'] = total_nav
         period['total_return'] = total_return
 
@@ -243,12 +262,16 @@ class PerformanceReportBuilder:
 
         total_nav = 0
         total_cash_flow = 0
+        total_cash_inflow = 0
+        total_cash_outflow = 0
         total_cash_flow_weighted = 0
         total_return = 1
 
         for item in period['items']:
             total_nav = item['subtotal_nav']
             total_cash_flow = total_cash_flow + item['subtotal_cash_flow']
+            total_cash_inflow = total_cash_inflow + item['subtotal_cash_inflow']
+            total_cash_outflow = total_cash_outflow + item['subtotal_cash_outflow']
             total_cash_flow_weighted = total_cash_flow_weighted + item['subtotal_cash_flow_weighted']
 
         period['begin_nav'] = period['items'][0]['subtotal_nav']
@@ -261,22 +284,13 @@ class PerformanceReportBuilder:
             total_return = 0
 
         period['total_cash_flow'] = total_cash_flow
+        period['total_cash_inflow'] = total_cash_inflow
+        period['total_cash_outflow'] = total_cash_outflow
         period['total_cash_flow_weighted'] = total_cash_flow_weighted
         period['total_nav'] = total_nav
         period['total_return'] = total_return
 
         return period
-
-    def get_list_of_dates_between_two_dates(self, date_from, date_to):
-        result = []
-
-        diff = date_to - date_from
-
-        for i in range(diff.days + 1):
-            day = date_from + timedelta(days=i)
-            result.append(day)
-
-        return result
 
     def get_dict_of_dates_between_two_dates_with_order(self, date_from, date_to):
         list_result = []
@@ -301,7 +315,7 @@ class PerformanceReportBuilder:
 
         result = []
 
-        dates = self.get_list_of_dates_between_two_dates(date_from, date_to)
+        dates = get_list_of_dates_between_two_dates(date_from, date_to)
 
         if segmentation_type == 'days':
             result = self.format_to_days(dates)
@@ -439,6 +453,8 @@ class PerformanceReportBuilder:
             table[date_from_str]['date'] = date_from_str
             table[date_from_str]['portfolios'] = {}
             table[date_from_str]['subtotal_cash_flow'] = 0
+            table[date_from_str]['subtotal_cash_inflow'] = 0
+            table[date_from_str]['subtotal_cash_outflow'] = 0
             table[date_from_str]['subtotal_nav'] = 0
             table[date_from_str]['subtotal_return'] = 0
 
@@ -449,6 +465,8 @@ class PerformanceReportBuilder:
                     'transaction_date_str': date_from_str,
                     'transaction_date': date_from,
                     'cash_flow': 0,
+                    'cash_inflow': 0,
+                    'cash_outflow': 0,
                     'previous_nav': 0,
                     'nav': 0,
                     'instrument_return': 0,
@@ -464,6 +482,8 @@ class PerformanceReportBuilder:
                 table[transaction_date_str]['date'] = transaction_date_str
                 table[transaction_date_str]['portfolios'] = {}
                 table[transaction_date_str]['subtotal_cash_flow'] = 0
+                table[transaction_date_str]['subtotal_cash_inflow'] = 0
+                table[transaction_date_str]['subtotal_cash_outflow'] = 0
                 table[transaction_date_str]['subtotal_nav'] = 0
                 table[transaction_date_str]['subtotal_return'] = 0
 
@@ -474,6 +494,8 @@ class PerformanceReportBuilder:
                     'transaction_date_str': transaction_date_str,
                     'transaction_date': record.transaction_date,
                     'cash_flow': 0,
+                    'cash_inflow': 0,
+                    'cash_outflow': 0,
                     'previous_nav': 0,
                     'nav': 0,
                     'instrument_return': 0,
@@ -487,6 +509,8 @@ class PerformanceReportBuilder:
             table[date_to_str]['date'] = date_to_str
             table[date_to_str]['portfolios'] = {}
             table[date_to_str]['subtotal_cash_flow'] = 0
+            table[date_to_str]['subtotal_cash_inflow'] = 0
+            table[date_to_str]['subtotal_cash_outflow'] = 0
             table[date_to_str]['subtotal_nav'] = 0
             table[date_to_str]['subtotal_return'] = 0
 
@@ -497,6 +521,8 @@ class PerformanceReportBuilder:
                     'transaction_date_str': date_to_str,
                     'transaction_date': date_to,
                     'cash_flow': 0,
+                    'cash_inflow': 0,
+                    'cash_outflow': 0,
                     'previous_nav': 0,
                     'nav': 0,
                     'instrument_return': 0,
@@ -563,6 +589,8 @@ class PerformanceReportBuilder:
                     previous_nav_date = previous_date['portfolios'][_key]['transaction_date']
 
                 cash_flow = 0
+                cash_inflow = 0
+                cash_outflow = 0
 
                 for record in item['records']:
 
@@ -589,6 +617,14 @@ class PerformanceReportBuilder:
 
                     cash_flow = cash_flow + record.cash_amount_valuation_currency * fx_rate
 
+                    if record.transaction_class_id == TransactionClass.CASH_INFLOW:
+                        cash_inflow = cash_inflow + record.cash_amount_valuation_currency * fx_rate
+
+                    if record.transaction_class_id == TransactionClass.CASH_OUTFLOW:
+                        cash_outflow = cash_outflow + record.cash_amount_valuation_currency * fx_rate
+
+
+
                 instrument_return = 0
 
                 if previous_nav:
@@ -605,6 +641,9 @@ class PerformanceReportBuilder:
                     item['cash_flow'] = 0
                 else:
                     item['cash_flow'] = cash_flow
+
+                item['cash_inflow'] = cash_inflow
+                item['cash_outflow'] = cash_outflow
 
                 item['previous_nav'] = previous_nav
 
@@ -626,6 +665,8 @@ class PerformanceReportBuilder:
 
                 item_date['subtotal_nav'] = item_date['subtotal_nav'] + item['nav']
                 item_date['subtotal_cash_flow'] = item_date['subtotal_cash_flow'] + item['cash_flow']
+                item_date['subtotal_cash_inflow'] = item_date['subtotal_cash_inflow'] + item['cash_inflow']
+                item_date['subtotal_cash_outflow'] = item_date['subtotal_cash_outflow'] + item['cash_outflow']
 
                 # Return[k,i] * NAV[k,i-1] / Total_NAV[i-1]
 
@@ -690,6 +731,8 @@ class PerformanceReportBuilder:
         table[date_from_str]['date'] = date_from_str
         table[date_from_str]['portfolios'] = {}
         table[date_from_str]['subtotal_cash_flow'] = 0
+        table[date_from_str]['subtotal_cash_inflow'] = 0
+        table[date_from_str]['subtotal_cash_outflow'] = 0
         table[date_from_str]['subtotal_cash_flow_weighted'] = 0
         table[date_from_str]['subtotal_nav'] = 0
 
@@ -738,6 +781,8 @@ class PerformanceReportBuilder:
                 'transaction_date_str': date_from_str,
                 'transaction_date': date_from,
                 'cash_flow': 0,
+                'cash_inflow': 0,
+                'cash_outflow': 0,
                 'cash_flow_weighted': nav * 1,
                 'nav': nav,
                 'records': []
@@ -754,6 +799,8 @@ class PerformanceReportBuilder:
                 table[transaction_date_str]['date'] = transaction_date_str
                 table[transaction_date_str]['portfolios'] = {}
                 table[transaction_date_str]['subtotal_cash_flow'] = 0
+                table[transaction_date_str]['subtotal_cash_inflow'] = 0
+                table[transaction_date_str]['subtotal_cash_outflow'] = 0
                 table[transaction_date_str]['subtotal_cash_flow_weighted'] = 0
                 table[transaction_date_str]['subtotal_nav'] = 0
 
@@ -764,6 +811,8 @@ class PerformanceReportBuilder:
                     'transaction_date_str': transaction_date_str,
                     'transaction_date': record.transaction_date,
                     'cash_flow': 0,
+                    'cash_inflow': 0,
+                    'cash_outflow': 0,
                     'nav': 0,
                     'records': []
                 }
@@ -776,6 +825,8 @@ class PerformanceReportBuilder:
         table[date_to_str]['date'] = date_to_str
         table[date_to_str]['portfolios'] = {}
         table[date_to_str]['subtotal_cash_flow'] = 0
+        table[date_to_str]['subtotal_cash_inflow'] = 0
+        table[date_to_str]['subtotal_cash_outflow'] = 0
         table[date_to_str]['subtotal_cash_flow_weighted'] = 0
         table[date_to_str]['subtotal_nav'] = 0
 
@@ -828,6 +879,8 @@ class PerformanceReportBuilder:
                 'transaction_date_str': date_to_str,
                 'transaction_date': date_to,
                 'cash_flow': 0,
+                'cash_inflow': 0,
+                'cash_outflow': 0,
                 'cash_flow_weighted': 0,
                 'previous_nav': 0,
                 'nav': nav,
@@ -892,6 +945,8 @@ class PerformanceReportBuilder:
                         nav = 0
 
                     cash_flow = 0
+                    cash_inflow = 0
+                    cash_outflow = 0
 
                     for record in item['records']:
 
@@ -914,7 +969,14 @@ class PerformanceReportBuilder:
 
                             fx_rate = report_currency_fx_rate / record_valuation_currency_fx_rate
 
-                        cash_flow = cash_flow + record.cash_amount_valuation_currency  # TODO probably add fx to report_currency
+                        cash_flow = cash_flow + record.cash_amount_valuation_currency * fx_rate
+
+                        if record.transaction_class_id == TransactionClass.CASH_INFLOW:
+                            cash_inflow = cash_inflow + record.cash_amount_valuation_currency * fx_rate
+
+                        if record.transaction_class_id == TransactionClass.CASH_OUTFLOW:
+                            cash_outflow = cash_outflow + record.cash_amount_valuation_currency * fx_rate
+
 
                     date_n = dates_map[item['transaction_date_str']]
                     date_to_n = dates_map[str(date_to)]
@@ -926,6 +988,9 @@ class PerformanceReportBuilder:
                         item['cash_flow'] = 0
                     else:
                         item['cash_flow'] = cash_flow
+
+                    item['cash_inflow'] = cash_inflow
+                    item['cash_outflow'] = cash_outflow
 
                     item['cash_flow_weighted'] = cash_flow * time_weight
                     item['nav'] = nav
@@ -943,7 +1008,11 @@ class PerformanceReportBuilder:
                 item = item_date['portfolios'][_key]
 
                 item_date['subtotal_nav'] = item_date['subtotal_nav'] + item['nav']
+
                 item_date['subtotal_cash_flow'] = item_date['subtotal_cash_flow'] + item['cash_flow']
+                item_date['subtotal_cash_inflow'] = item_date['subtotal_cash_inflow'] + item['cash_inflow']
+                item_date['subtotal_cash_outflow'] = item_date['subtotal_cash_outflow'] + item['cash_outflow']
+
                 item_date['subtotal_cash_flow_weighted'] = item_date['subtotal_cash_flow_weighted'] + item[
                     'cash_flow_weighted']
 

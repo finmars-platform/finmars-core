@@ -37,6 +37,8 @@ class PerformanceReportItemSerializer(serializers.Serializer):
     end_nav = serializers.FloatField(read_only=True)
 
     cash_flow = serializers.FloatField(read_only=True)
+    cash_inflow = serializers.FloatField(read_only=True)
+    cash_outflow = serializers.FloatField(read_only=True)
     nav = serializers.FloatField(read_only=True)
     instrument_return = serializers.FloatField(read_only=True)
     cumulative_return = serializers.FloatField(read_only=True)
@@ -151,6 +153,8 @@ class PerformanceReportSerializer(serializers.Serializer):
     end_nav = serializers.ReadOnlyField()
     grand_return = serializers.ReadOnlyField()
     grand_cash_flow = serializers.ReadOnlyField()
+    grand_cash_inflow = serializers.ReadOnlyField()
+    grand_cash_outflow = serializers.ReadOnlyField()
     grand_nav = serializers.ReadOnlyField()
 
     # item_portfolios = ReportPortfolioSerializer(many=True, read_only=True)
