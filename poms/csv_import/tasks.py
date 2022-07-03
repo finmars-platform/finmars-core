@@ -2247,7 +2247,7 @@ def set_accruals_for_instrument(instrument_object, data_object, instrument_type_
 # Global method for create instrument object from Instrument Type Defaults
 def handler_instrument_object(source_data, instrument_type, master_user, ecosystem_default, attribute_types):
     object_data = {}
-    object_data = source_data.copy()
+    # object_data = source_data.copy()
 
     object_data['instrument_type'] = instrument_type.id
 
@@ -2269,6 +2269,11 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     # 
     #     object_data['accrued_currency'] = ecosystem_default.currency.id
 
+    object_data['public_name'] = object_data['public_name']
+    object_data['user_code'] = object_data['user_code']
+    object_data['name'] = object_data['name']
+    object_data['short_name'] = object_data['short_name']
+
     object_data['accrued_currency'] = object_data['pricing_currency']
     object_data['co_directional_exposure_currency'] = object_data['pricing_currency']
     object_data['counter_directional_exposure_currency'] = object_data['pricing_currency']
@@ -2287,6 +2292,12 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     #
     #     object_data['pricing_condition'] = ecosystem_default.pricing_condition.id
 
+    if 'maturity_price' in source_data:
+        try:
+            object_data['maturity_price'] = float(source_data['maturity_price'])
+        except Exception as e:
+            _l.warn("Could not set maturity price")
+
     if 'maturity' in source_data and source_data['maturity'] != '':
         object_data['maturity_date'] = source_data['maturity']
 
@@ -2300,6 +2311,8 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
         object_data['maturity_date'] = '2999-01-01'
 
     # object_data['attributes'] = []
+
+    _l.info("Settings attributes for instrument done attribute_types %s " % attribute_types)
 
     _tmp_attributes_dict = {}
 
@@ -2347,10 +2360,13 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
 
     object_data['attributes'] = []
 
+    _l.info('_tmp_attributes_dict %s' % _tmp_attributes_dict)
+
     for key, value in _tmp_attributes_dict.items():
         object_data['attributes'].append(value)
 
-    _l.info("Settings attributes for instrument done %s " % object_data)
+
+    _l.info("Settings attributes for instrument done object_data %s " % object_data)
 
     object_data['master_user'] = master_user.id
     object_data['manual_pricing_formulas'] = []

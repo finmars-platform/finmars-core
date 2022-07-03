@@ -298,23 +298,10 @@ def create_instrument_cbond(data, master_user, member):
 
         for key, value in data.items():
 
-            if key == 'attributes':
-
-                for attr_key, attr_value in data['attributes'].items():
-
-                    if attr_value == 'null':
-                        instrument_data[attr_key] = None
-                    else:
-                        instrument_data[attr_key] = attr_value
-
+            if value == 'null':
+                instrument_data[key] = None
             else:
-
-                if value == 'null':
-                    instrument_data[key] = None
-                else:
-                    instrument_data[key] = value
-
-
+                instrument_data[key] = value
 
         if instrument_data['instrument_type'] == 'stocks':
 
