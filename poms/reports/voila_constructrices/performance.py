@@ -875,7 +875,7 @@ class PerformanceReportBuilder:
 
                     else:
 
-                        report_currency_fx_rate = CurrencyHistory.objects.get(date=record.transaction_date,
+                        report_currency_fx_rate = CurrencyHistory.objects.get(date=date_to,
                                                                               pricing_policy=portfolio_registers_map[
                                                                                   portfolio_id].valuation_pricing_policy,
                                                                               currency=self.instance.report_currency).fx_rate
@@ -885,7 +885,7 @@ class PerformanceReportBuilder:
                         instrument_pricing_currency_fx_rate = 1
 
                     else:
-                        instrument_pricing_currency_fx_rate = CurrencyHistory.objects.get(date=record.transaction_date,
+                        instrument_pricing_currency_fx_rate = CurrencyHistory.objects.get(date=date_to,
                                                                                           pricing_policy=
                                                                                           portfolio_registers_map[
                                                                                               portfolio_id].valuation_pricing_policy,
