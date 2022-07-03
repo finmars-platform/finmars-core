@@ -247,6 +247,7 @@ def _format_date(date, format=None):
         format = str(format)
     return date.strftime(format)
 
+
 def _get_list_of_dates_between_two_dates(date_from, date_to):
     return get_list_of_dates_between_two_dates(date_from, date_to)
 
@@ -620,6 +621,15 @@ def _parse_number(a):
 
 def _join(data, separator):
     return separator.join(data)
+
+
+def _reverse(items):
+    if isinstance(items, str):
+        return items[::-1]
+
+    items.reverse()
+
+    return items
 
 
 def _parse_bool(a):
@@ -997,7 +1007,6 @@ def _get_currencies(evaluator, **kwargs):
 _get_currencies.evaluator = True
 
 
-
 def _convert_to_number(evaluator, text_number, thousand_separator="", decimal_separator=".", has_braces=False):
     result = text_number.replace(thousand_separator, '')
 
@@ -1201,8 +1210,10 @@ def _get_latest_principal_price(evaluator, date_from, date_to, instrument, prici
         _l.info("_get_latest_principal_price instrument %s " % instrument)
         _l.info("_get_latest_principal_price  pricing_policy %s " % pricing_policy)
 
-        results = PriceHistory.objects.exclude(principal_price=0).filter(date__gte=date_from, date__lte=date_to, instrument=instrument,
-                                              pricing_policy=pricing_policy).order_by('-date')
+        results = PriceHistory.objects.exclude(principal_price=0).filter(date__gte=date_from, date__lte=date_to,
+                                                                         instrument=instrument,
+                                                                         pricing_policy=pricing_policy).order_by(
+            '-date')
 
         _l.info("_get_latest_principal_price results %s " % results)
 
@@ -1235,7 +1246,7 @@ def _get_latest_fx_rate(evaluator, date_from, date_to, currency, pricing_policy,
         _l.info("_get_latest_fx_rate  pricing_policy %s " % pricing_policy)
 
         results = CurrencyHistory.objects.filter(date__gte=date_from, date__lte=date_to, currency=currency,
-                                              pricing_policy=pricing_policy).order_by('-date')
+                                                 pricing_policy=pricing_policy).order_by('-date')
 
         _l.info("_get_latest_fx_rate results %s " % results)
 
@@ -1576,7 +1587,6 @@ def _safe_get_instrument(evaluator, instrument):
 
 
 def _get_currency(evaluator, currency):
-
     try:
 
         currency = _safe_get_currency(evaluator, currency)
@@ -1588,11 +1598,11 @@ def _get_currency(evaluator, currency):
     except Exception as e:
         return None
 
+
 _get_currency.evaluator = True
 
 
 def _get_instrument(evaluator, instrument):
-
     try:
         instrument = _safe_get_instrument(evaluator, instrument)
 
@@ -1603,6 +1613,7 @@ def _get_instrument(evaluator, instrument):
 
     except Exception as e:
         return None
+
 
 _get_instrument.evaluator = True
 
@@ -2207,7 +2218,6 @@ _run_task.evaluator = True
 
 
 def _run_pricing_procedure(evaluator, user_code, **kwargs):
-
     try:
         from poms.users.utils import get_master_user_from_context
         from poms.users.utils import get_member_from_context
@@ -2221,7 +2231,7 @@ def _run_pricing_procedure(evaluator, user_code, **kwargs):
 
         procedure = PricingProcedure.objects.get(master_user=master_user, user_code=user_code)
 
-        instance = PricingProcedureProcess(procedure=procedure, master_user=master_user, member=member,**kwargs)
+        instance = PricingProcedureProcess(procedure=procedure, master_user=master_user, member=member, **kwargs)
         instance.process()
 
 
@@ -2233,7 +2243,6 @@ _run_pricing_procedure.evaluator = True
 
 
 def _run_data_procedure(evaluator, user_code, user_context=None, **kwargs):
-
     _l.info('_run_data_procedure')
 
     try:
@@ -2263,7 +2272,8 @@ def _run_data_procedure(evaluator, user_code, user_context=None, **kwargs):
 
         kwargs.pop('user_context', None)
 
-        instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, member=member, context=merged_context, **kwargs)
+        instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, member=member,
+                                                   context=merged_context, **kwargs)
         instance.process()
 
 
@@ -2567,6 +2577,7 @@ FUNCTIONS = [
     SimpleEval2Def('format_number', _format_number),
     SimpleEval2Def('parse_number', _parse_number),
     SimpleEval2Def('join', _join),
+    SimpleEval2Def('reverse', _reverse),
 
     SimpleEval2Def('simple_price', _simple_price),
 
@@ -2658,7 +2669,7 @@ SAFE_TYPES = (bool, int, float, str, list, tuple, dict, OrderedDict,
 
 class SimpleEval2(object):
     def __init__(self, names=None, max_time=None, add_print=False, allow_assign=False, now=None, context=None):
-        self.max_time = max_time or 60 # one second
+        self.max_time = max_time or 60  # one second
         # self.max_time = 10000000000
         self.start_time = 0
         self.tik_time = 0
