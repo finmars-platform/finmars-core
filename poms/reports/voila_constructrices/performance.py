@@ -580,6 +580,7 @@ class PerformanceReportBuilder:
                     # report currency / linked_instrument.pricing currency
 
                 except Exception as e:
+                    _l.error("Could not calculate nav %s " % e)
                     nav = 0
 
                 previous_nav = 0
