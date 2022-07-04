@@ -632,7 +632,7 @@ class PerformanceReportBuilder:
 
                     cash_flow = cash_flow + record.cash_amount_valuation_currency * fx_rate
 
-                    if record.transaction_class_in in [TransactionClass.CASH_INFLOW, TransactionClass.INJECTION]:
+                    if record.transaction_class_id in [TransactionClass.CASH_INFLOW, TransactionClass.INJECTION]:
                         cash_inflow = cash_inflow + record.cash_amount_valuation_currency * fx_rate
 
                     if record.transaction_class_id in [TransactionClass.CASH_OUTFLOW, TransactionClass.DISTRIBUTION]:
