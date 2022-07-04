@@ -420,13 +420,13 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
         context_allocation_balance = None
         context_allocation_pl = None
 
-        context_position = request.query_params.get('context_position', None)
+        context_position_size = request.query_params.get('context_position_size', None)
 
-        if context_position:
+        if context_position_size:
             try:
-                context_position = float(context_position)
+                context_position_size = float(context_position_size)
             except Exception as e:
-                context_position = None
+                context_position_size = None
 
         context_effective_date = request.query_params.get('context_effective_date', None)
         context_notification_date = request.query_params.get('context_notification_date', None)
@@ -517,7 +517,7 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
             'context_strategy1': context_strategy1,
             'context_strategy2': context_strategy2,
             'context_strategy3': context_strategy3,
-            'context_position': context_position,
+            'context_position_size': context_position_size,
             'context_effective_date': context_effective_date,
             # 'notification_date': context_notification_date, # not in context variables
             # 'final_date': context_final_date,
