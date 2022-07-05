@@ -1795,13 +1795,15 @@ def _get_position_size_on_date(evaluator, instrument, date, accounts=None, portf
         instrument = _safe_get_instrument(evaluator, instrument)
         date = _parse_date(date)
 
-        transactions = Transaction.objects.filter(master_user=master_user, accounting_date=date, instrument=instrument)
+        transactions = Transaction.objects.filter(master_user=master_user, accounting_date__lte=date, instrument=instrument)
 
         if accounts:
             transactions = transactions.filter(account_position__in=accounts)
 
         if portfolios:
             transactions = transactions.filter(portfolios__in=portfolios)
+
+        # _l.info('transactions %s ' % transactions)
 
         for trn in transactions:
 
