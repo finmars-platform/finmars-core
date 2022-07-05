@@ -1229,6 +1229,39 @@ def _get_latest_principal_price(evaluator, date_from, date_to, instrument, prici
 _get_latest_principal_price.evaluator = True
 
 
+def _get_latest_principal_price_date(evaluator, instrument, pricing_policy, default_value=None):
+    try:
+        from poms.users.utils import get_master_user_from_context
+        from poms.instruments.models import PriceHistory
+
+        context = evaluator.context
+        master_user = get_master_user_from_context(context)
+
+        instrument = _safe_get_instrument(evaluator, instrument)
+        pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
+
+        _l.info("_get_latest_principal_price instrument %s " % instrument)
+        _l.info("_get_latest_principal_price  pricing_policy %s " % pricing_policy)
+
+        results = PriceHistory.objects.exclude(principal_price=0).filter(instrument=instrument,
+                                                                         pricing_policy=pricing_policy).order_by(
+            '-date')
+
+        _l.info("_get_latest_principal_price_date results %s " % results)
+
+        if len(list(results)):
+            return results[0].date
+
+        return default_value
+    except Exception as e:
+        _l.error("_get_latest_principal_price_date exception %s " % str(e))
+        _l.error("_get_latest_principal_price_date exception %s " % traceback.format_exc())
+        return default_value
+
+
+_get_latest_principal_price_date.evaluator = True
+
+
 def _get_latest_fx_rate(evaluator, date_from, date_to, currency, pricing_policy, default_value=None):
     try:
         from poms.users.utils import get_master_user_from_context
@@ -2648,6 +2681,7 @@ FUNCTIONS = [
     SimpleEval2Def('add_price_history', _add_price_history),
     SimpleEval2Def('generate_user_code', _generate_user_code),
     SimpleEval2Def('get_latest_principal_price', _get_latest_principal_price),
+    SimpleEval2Def('get_latest_principal_price_date', _get_latest_principal_price_date),
     SimpleEval2Def('get_latest_fx_rate', _get_latest_fx_rate),
 
     SimpleEval2Def('get_instrument_user_attribute_value', _get_instrument_user_attribute_value),
