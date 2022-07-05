@@ -114,6 +114,9 @@ class TransactionTypeProcess(object):
         if complex_transaction_status is not None:
             self.complex_transaction.status_id = complex_transaction_status
 
+        if complex_transaction and not complex_transaction_status:
+            self.complex_transaction_status = complex_transaction.status_id
+
         _l.info('complex_transaction_status %s' % complex_transaction_status)
         _l.info('self.complex_transaction.status %s' % self.complex_transaction.status_id)
 

@@ -3461,6 +3461,18 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
         # self.fields['expressions_error'] = serializers.ReadOnlyField()
         # self.fields['expressions_result'] = serializers.ReadOnlyField()
 
+        self.fields['complex_transaction_status'] = serializers.ChoiceField(
+            required=False,
+            allow_null=True,
+            initial=ComplexTransaction.PRODUCTION,
+            default=ComplexTransaction.PRODUCTION,
+            choices=(
+                (ComplexTransaction.PRODUCTION, 'Production'),
+                (ComplexTransaction.PENDING, 'Pending'),
+                (ComplexTransaction.IGNORE, 'Ignore'),
+            )
+        )
+
         self.fields['process_mode'] = serializers.ChoiceField(
             required=False,
             allow_null=True,
