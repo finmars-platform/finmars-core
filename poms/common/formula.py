@@ -1800,7 +1800,7 @@ def _get_position_size_on_date(evaluator, instrument, date, accounts=None, portf
         if accounts:
             transactions = transactions.filter(account_position__in=accounts)
 
-        _l.info('portfolios %s' % type(portfolios))
+        # _l.info('portfolios %s' % type(portfolios))
 
         if portfolios:
             transactions = transactions.filter(portfolio__in=portfolios)
