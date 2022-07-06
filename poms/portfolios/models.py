@@ -13,7 +13,6 @@ from poms.currencies.models import Currency
 from poms.instruments.models import PricingPolicy, Instrument, PriceHistory
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
-from poms.tags.models import TagLink
 from poms.users.models import MasterUser
 
 

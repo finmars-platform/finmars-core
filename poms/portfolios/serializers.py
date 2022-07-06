@@ -10,14 +10,13 @@ from poms.instruments.serializers import InstrumentViewSerializer, PricingPolicy
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord
-from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeField
 
 from poms.users.fields import MasterUserField
 
 
 class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
-                          ModelWithUserCodeSerializer, ModelWithTagSerializer, ModelWithTimeStampSerializer):
+                          ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
 
     master_user = MasterUserField()
     accounts = AccountField(many=True, allow_null=True, required=False)
