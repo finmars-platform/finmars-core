@@ -25,8 +25,7 @@ from poms.instruments.models import Instrument, InstrumentType, CostMethod, Inst
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.portfolios.models import Portfolio
-from poms.reports.pricing import FakeInstrumentPricingProvider, FakeCurrencyFxRateProvider, CurrencyFxRateProvider
-from poms.reports.pricing import InstrumentPricingProvider
+
 from poms.reports.utils import sprint_table
 from poms.strategies.models import Strategy1, Strategy2, Strategy3, Strategy1Subgroup, Strategy1Group, \
     Strategy2Subgroup, Strategy2Group, Strategy3Subgroup, Strategy3Group
